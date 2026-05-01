@@ -12,7 +12,16 @@ interface Practice {
   l1_type: string | null; l2_type: string | null; display_order: number
   is_special_input: boolean; elements: Element[]
 }
-interface TimelineItem { id: string; name: string; from_type: string; from_value: number; to_value: number; day_number: number; practices: Practice[] }
+interface PendingConditionalQuestion {
+  question_id: string; question_text: string; display_order: number
+}
+interface TimelineItem {
+  id: string; name: string; source: string   // CCA | CHA
+  from_date: string; to_date: string; day_number: number
+  practices: Practice[]
+  pending_conditional_question?: PendingConditionalQuestion
+  has_pending_question?: boolean
+}
 interface AdvisoryDay {
   subscription_id: string; client_id: string; package_id: string; package_name: string
   crop_cosh_id: string; crop_start_date: string | null; day_offset: number
@@ -37,6 +46,7 @@ export default function AdvisoryPage() {
   const [loading, setLoading] = useState(true)
   const [orderingPractice, setOrderingPractice] = useState<string | null>(null)
   const [orderSuccess, setOrderSuccess] = useState('')
+  const [answeringQuestion, setAnsweringQuestion] = useState<string | null>(null) // question_id being answered
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -69,6 +79,18 @@ export default function AdvisoryPage() {
       })
       await load()
     } finally { setSavingDate(false) }
+  }
+
+  async function answerConditional(questionId: string, answer: 'YES' | 'NO') {
+    setAnsweringQuestion(questionId)
+    try {
+      await api.post('/farmer/advisory/conditional-answer', {
+        subscription_id: subscriptionId,
+        question_id: questionId,
+        answer,
+      })
+      await load()  // Reload advisory with filtered practices
+    } finally { setAnsweringQuestion(null) }
   }
 
   async function orderPractice(practiceId: string) {
@@ -152,21 +174,58 @@ export default function AdvisoryPage() {
               <div key={tl.id}>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-px flex-1 bg-slate-200" />
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-2">{tl.name}</p>
+                  <div className="flex items-center gap-1.5 px-2">
+                    {tl.source === 'CHA' && (
+                      <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">🔬 CHA</span>
+                    )}
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{tl.name}</p>
+                  </div>
                   <div className="h-px flex-1 bg-slate-200" />
                 </div>
 
-                <div className="space-y-3">
-                  {tl.practices.map(p => (
-                    <PracticeCard
-                      key={p.id}
-                      practice={p}
-                      onOrder={() => orderPractice(p.id)}
-                      isOrdering={orderingPractice === p.id}
-                      ordered={orderSuccess === p.id}
-                    />
-                  ))}
-                </div>
+                {/* BL-02: Show conditional question BEFORE practices */}
+                {tl.has_pending_question && tl.pending_conditional_question ? (
+                  <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-3">
+                    <p className="text-xs font-semibold text-amber-700 mb-2 uppercase tracking-wide">Quick check before today's advice</p>
+                    <p className="font-medium text-slate-800 text-sm leading-relaxed mb-4">
+                      {tl.pending_conditional_question.question_text}
+                    </p>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => answerConditional(tl.pending_conditional_question!.question_id, 'NO')}
+                        disabled={answeringQuestion === tl.pending_conditional_question.question_id}
+                        className="flex-1 py-3 rounded-xl border-2 border-red-200 bg-red-50 text-red-700 font-bold disabled:opacity-50">
+                        ✗ No
+                      </button>
+                      <button
+                        onClick={() => answerConditional(tl.pending_conditional_question!.question_id, 'YES')}
+                        disabled={answeringQuestion === tl.pending_conditional_question.question_id}
+                        className="flex-1 py-3 rounded-xl border-2 border-green-500 bg-green-600 text-white font-bold disabled:opacity-50">
+                        ✓ Yes
+                      </button>
+                    </div>
+                    {answeringQuestion === tl.pending_conditional_question.question_id && (
+                      <p className="text-xs text-amber-600 text-center mt-2">Updating your advisory…</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {tl.practices.map(p => (
+                      <PracticeCard
+                        key={p.id}
+                        practice={p}
+                        onOrder={() => orderPractice(p.id)}
+                        isOrdering={orderingPractice === p.id}
+                        ordered={orderSuccess === p.id}
+                      />
+                    ))}
+                    {tl.practices.length === 0 && (
+                      <div className="bg-slate-50 rounded-xl px-4 py-3 text-center">
+                        <p className="text-xs text-slate-400">We will check this with you again tomorrow.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
 

@@ -11,11 +11,19 @@ interface Question {
   sub_part_cosh_id: string | null; sub_symptom_cosh_id: string | null
   question_type: string; display_text: string
 }
-interface ProblemInfo { cosh_id: string; name: string; type: string; parent_cosh_id?: string }
+interface ProblemInfo {
+  cosh_id: string; name: string; type: string; parent_cosh_id?: string
+  claude_description?: string    // 2-sentence farmer-friendly description from Claude
+}
 interface DiagnosisStep {
   session_id?: string; status: string
   remaining_count: number; question: Question | null
   diagnosed_problem_cosh_id?: string; problem_info?: ProblemInfo
+}
+interface ImageAnalysis {
+  problem_name: string; problem_cosh_id: string | null
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW'
+  description: string; symptoms_observed: string[]
 }
 
 const COLOUR = '#1A5C2A'
@@ -35,6 +43,11 @@ export default function DiagnosisPage() {
   const [cropCoshId, setCropCoshId] = useState<string | null>(null)
   const [answering, setAnswering] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // Claude image analysis
+  const [analyzingImage, setAnalyzingImage] = useState(false)
+  const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysis | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Question history for back navigation feel
   const [questionHistory, setQuestionHistory] = useState<Question[]>([])
@@ -108,6 +121,47 @@ export default function DiagnosisPage() {
         setCurrentQuestion(data.question)
       }
     } finally { setAnswering(false) }
+  }
+
+  async function handleImageCapture(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !cropCoshId || !selectedPart) return
+    setAnalyzingImage(true)
+    setImageAnalysis(null)
+    try {
+      // Convert to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      const { data } = await api.post<{ analysis: ImageAnalysis; note: string }>('/diagnosis/image-analysis', {
+        image_base64: base64,
+        media_type: file.type || 'image/jpeg',
+        crop_cosh_id: cropCoshId,
+        crop_name: cropCoshId.replace(/_/g, ' '),
+        plant_part_cosh_id: selectedPart,
+        plant_part_name: selectedPart.replace(/_/g, ' '),
+      })
+      setImageAnalysis(data.analysis)
+    } catch { setImageAnalysis(null) }
+    finally { setAnalyzingImage(false) }
+  }
+
+  async function useImageDiagnosis() {
+    if (!imageAnalysis?.problem_cosh_id || !sessionId) return
+    await api.post(`/diagnosis/${sessionId}/abort`, {
+      reason: 'KNOW_PROBLEM',
+      problem_cosh_id: imageAnalysis.problem_cosh_id,
+    })
+    // Get problem info
+    const { data } = await api.post<DiagnosisStep>(`/diagnosis/${sessionId}/abort`, {
+      reason: 'KNOW_PROBLEM',
+      problem_cosh_id: imageAnalysis.problem_cosh_id,
+    })
+    setDiagnosis(data.problem_info || null)
+    setStage('diagnosed')
   }
 
   async function dontKnow() {
@@ -219,6 +273,48 @@ export default function DiagnosisPage() {
               </div>
             </div>
 
+            {/* Camera: take photo for Claude analysis */}
+            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
+              <p className="text-xs font-semibold text-slate-500 mb-2">📷 Or take a photo for AI identification</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleImageCapture}
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={analyzingImage}
+                className="w-full py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-medium disabled:opacity-50">
+                {analyzingImage ? '🔄 Analysing with Claude AI…' : '📸 Take Photo of Problem'}
+              </button>
+
+              {/* Claude analysis result */}
+              {imageAnalysis && (
+                <div className={`mt-3 rounded-xl p-3 border ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-50 border-green-200' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-800">{imageAnalysis.problem_name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">{imageAnalysis.description}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                        {imageAnalysis.confidence} confidence
+                      </span>
+                    </div>
+                  </div>
+                  {imageAnalysis.problem_cosh_id && imageAnalysis.confidence !== 'LOW' && (
+                    <button
+                      onClick={useImageDiagnosis}
+                      className="mt-2 w-full py-2 rounded-xl text-white text-xs font-semibold"
+                      style={{ background: COLOUR }}>
+                      ✓ Use this diagnosis
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Escape options */}
             <div className="flex gap-2">
               <button onClick={dontKnow}
@@ -265,23 +361,37 @@ export default function DiagnosisPage() {
         {/* Diagnosis result */}
         {stage === 'diagnosed' && (
           <div className="mt-4 space-y-4">
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm text-center">
-              <span className="text-5xl">🔬</span>
-              <h2 className="text-xl font-bold text-slate-900 mt-4">Problem Identified</h2>
-              {diagnosis ? (
-                <>
-                  <p className="text-2xl font-bold mt-3" style={{ color: COLOUR }}>
-                    {diagnosis.name}
-                  </p>
-                  <p className="text-slate-400 text-xs mt-1 font-mono">{diagnosis.cosh_id}</p>
-                </>
-              ) : (
-                <p className="text-slate-600 mt-3">Problem recorded</p>
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+              <div className="text-center">
+                <span className="text-5xl">🔬</span>
+                <h2 className="text-xl font-bold text-slate-900 mt-4">Problem Identified</h2>
+                {diagnosis ? (
+                  <>
+                    <p className="text-2xl font-bold mt-3" style={{ color: COLOUR }}>
+                      {diagnosis.name}
+                    </p>
+                    <p className="text-slate-400 text-xs mt-1 font-mono">{diagnosis.cosh_id}</p>
+                  </>
+                ) : (
+                  <p className="text-slate-600 mt-3">Problem recorded</p>
+                )}
+              </div>
+
+              {/* Claude's 2-sentence description — the key feature */}
+              {diagnosis?.claude_description && (
+                <div className="mt-5 bg-green-50 border border-green-200 rounded-2xl px-4 py-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">🤖</span>
+                    <p className="text-xs font-semibold text-green-800">What this means for your crop</p>
+                  </div>
+                  <p className="text-sm text-green-900 leading-relaxed">{diagnosis.claude_description}</p>
+                </div>
               )}
-              <div className="mt-5 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 text-left">
-                <p className="text-sm font-semibold text-blue-800">Treatment Recommendations</p>
+
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
+                <p className="text-sm font-semibold text-blue-800">Treatment Added to Advisory</p>
                 <p className="text-xs text-blue-600 mt-1">
-                  CHA treatment recommendations for this problem have been added to your advisory timeline. Check your advisory for the treatment plan.
+                  Treatment recommendations for this problem have been added to your advisory timeline.
                 </p>
               </div>
             </div>
