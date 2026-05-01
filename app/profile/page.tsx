@@ -32,34 +32,30 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* My Roles */}
+        {/* My Roles — tap to switch context */}
         <div className="mt-5">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">My Roles</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">My Roles — tap to open</p>
           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            {roles.map(role => (
-              <div key={role} className="flex items-center gap-3 px-4 py-4 border-b border-slate-50 last:border-0">
-                <div className="w-3 h-3 rounded-full" style={{ background: ROLE_COLOURS[role] }} />
-                <div>
-                  <p className="text-sm font-medium text-slate-800">{ROLE_LABELS[role]}</p>
-                  <p className="text-xs text-slate-400">Active</p>
-                </div>
-              </div>
-            ))}
-            {!roles.includes('DEALER') && (
-              <button className="w-full text-left px-4 py-4 border-b border-slate-50 text-sm text-slate-400">
-                + Become a Dealer
-              </button>
-            )}
-            {!roles.includes('FACILITATOR') && (
-              <button className="w-full text-left px-4 py-4 border-b border-slate-50 text-sm text-slate-400">
-                + Become a Facilitator
-              </button>
-            )}
-            {!roles.includes('FARM_PUNDIT') && (
-              <button className="w-full text-left px-4 py-4 text-sm text-slate-400">
-                + Register as FarmPundit
-              </button>
-            )}
+            {roles.map(role => {
+              const destination = role === 'DEALER' ? '/dealer/orders'
+                : role === 'FACILITATOR' ? '/facilitator/orders'
+                : role === 'FARMER' ? '/home'
+                : null
+              return (
+                <button key={role} onClick={() => destination && router.push(destination)}
+                  className="w-full flex items-center gap-3 px-4 py-4 border-b border-slate-50 last:border-0 text-left active:bg-slate-50">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ background: ROLE_COLOURS[role] + '20' }}>
+                    <div className="w-3 h-3 rounded-full" style={{ background: ROLE_COLOURS[role] }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-800">{ROLE_LABELS[role]}</p>
+                    <p className="text-xs text-slate-400">Active · tap to open</p>
+                  </div>
+                  <span className="text-slate-300">›</span>
+                </button>
+              )
+            })}
           </div>
         </div>
 

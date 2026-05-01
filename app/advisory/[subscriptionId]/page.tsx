@@ -6,18 +6,37 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
-type Subscription = {
-  id: string; package_id: string; client_id: string
-  status: string; crop_start_date: string | null; reference_number: string | null
+interface Element { element_type: string; cosh_ref: string | null; value: string | null; unit_cosh_id: string | null }
+interface Practice {
+  id: string; l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
+  l1_type: string | null; l2_type: string | null; display_order: number
+  is_special_input: boolean; elements: Element[]
+}
+interface TimelineItem { id: string; name: string; from_type: string; from_value: number; to_value: number; day_number: number; practices: Practice[] }
+interface AdvisoryDay {
+  subscription_id: string; client_id: string; package_id: string; package_name: string
+  crop_cosh_id: string; crop_start_date: string | null; day_offset: number
+  reference_number: string | null; timelines: TimelineItem[]
+}
+interface Subscription { id: string; package_id: string; client_id: string; status: string; crop_start_date: string | null; reference_number: string | null }
+
+const L0_BG: Record<string, string> = {
+  INPUT: '#1d4ed8', NON_INPUT: '#7c3aed', INSTRUCTION: '#b45309', MEDIA: '#be185d',
+}
+const L0_LABEL: Record<string, string> = {
+  INPUT: 'Apply Input', NON_INPUT: 'Crop Activity', INSTRUCTION: 'Advisory', MEDIA: 'Reference',
 }
 
 export default function AdvisoryPage() {
   const router = useRouter()
-  const { subscriptionId } = useParams()
+  const { subscriptionId } = useParams<{ subscriptionId: string }>()
+  const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [startDate, setStartDate] = useState('')
   const [savingDate, setSavingDate] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [orderingPractice, setOrderingPractice] = useState<string | null>(null)
+  const [orderSuccess, setOrderSuccess] = useState('')
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -26,9 +45,18 @@ export default function AdvisoryPage() {
 
   async function load() {
     try {
-      const { data } = await api.get<Subscription[]>('/farmer/my-subscriptions')
-      const sub = data.find(s => s.id === subscriptionId)
-      if (sub) { setSubscription(sub); setStartDate(sub.crop_start_date?.split('T')[0] || '') }
+      const [subsRes, advisoryRes] = await Promise.allSettled([
+        api.get<Subscription[]>('/farmer/my-subscriptions'),
+        api.get<AdvisoryDay[]>('/farmer/advisory/today'),
+      ])
+      if (subsRes.status === 'fulfilled') {
+        const sub = subsRes.value.data.find(s => s.id === subscriptionId)
+        if (sub) { setSubscription(sub); setStartDate(sub.crop_start_date?.split('T')[0] || '') }
+      }
+      if (advisoryRes.status === 'fulfilled') {
+        const day = advisoryRes.value.data.find(a => a.subscription_id === subscriptionId)
+        setAdvisory(day || null)
+      }
     } finally { setLoading(false) }
   }
 
@@ -39,8 +67,26 @@ export default function AdvisoryPage() {
       await api.put(`/farmer/subscriptions/${subscriptionId}/start-date`, {
         crop_start_date: new Date(startDate).toISOString()
       })
-      load()
+      await load()
     } finally { setSavingDate(false) }
+  }
+
+  async function orderPractice(practiceId: string) {
+    if (!advisory) return
+    setOrderingPractice(practiceId)
+    try {
+      const today = new Date().toISOString()
+      await api.post('/farmer/orders', {
+        subscription_id: subscriptionId,
+        client_id: advisory.client_id,
+        date_from: today,
+        date_to: today,
+        practice_ids: [practiceId],
+      })
+      setOrderSuccess(practiceId)
+      setTimeout(() => setOrderSuccess(''), 3000)
+    } catch { /* show inline */ }
+    finally { setOrderingPractice(null) }
   }
 
   if (loading) return (
@@ -49,78 +95,162 @@ export default function AdvisoryPage() {
     </div>
   )
 
-  if (!subscription) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-slate-400">Advisory not found</p>
-    </div>
-  )
-
-  const hasStartDate = !!subscription.crop_start_date
+  const hasStartDate = !!subscription?.crop_start_date
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <PWAHeader title="Advisory" activeRole="FARMER" />
-      <div className="pt-16 pb-20">
+      <PWAHeader title={advisory?.package_name || 'Advisory'} activeRole="FARMER" />
+      <div className="pt-16 pb-24">
 
         {/* Start date gate */}
         {!hasStartDate && (
           <div className="mx-4 mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-5">
             <p className="font-semibold text-amber-800 text-sm mb-1">Set your crop start date</p>
             <p className="text-amber-600 text-xs mb-4">
-              Your advisory will be personalised once you tell us when you sowed or planted.
+              Advisory begins once you tell us when you sowed or transplanted.
             </p>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
               className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 mb-3" />
             <button onClick={saveStartDate} disabled={!startDate || savingDate}
               className="w-full py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
               style={{ background: '#1A5C2A' }}>
-              {savingDate ? 'Saving…' : 'Set start date'}
+              {savingDate ? 'Saving…' : 'Set start date and begin advisory'}
             </button>
           </div>
         )}
 
-        {/* Advisory content placeholder — practices load from BL-03 dedup engine */}
-        {hasStartDate && (
-          <div className="px-4 mt-4 space-y-3">
-            <div className="bg-white rounded-2xl p-4 border border-slate-100">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Current</p>
-                <p className="text-xs text-slate-400">
-                  Started: {new Date(subscription.crop_start_date!).toLocaleDateString()}
+        {/* Active advisory */}
+        {hasStartDate && advisory && (
+          <div className="px-4 mt-4 space-y-4">
+            {/* Day counter */}
+            <div className="bg-white rounded-2xl px-4 py-3 border border-slate-100 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400">Today</p>
+                <p className="font-bold text-slate-800">
+                  Day {advisory.day_offset >= 0 ? `+${advisory.day_offset}` : advisory.day_offset}
                 </p>
               </div>
-              <div className="text-center py-8">
-                <span className="text-3xl">🌱</span>
-                <p className="text-slate-700 font-medium mt-3">Advisory is active</p>
-                <p className="text-slate-400 text-sm mt-1">
-                  Practices will appear here as they become due during the crop cycle.
-                </p>
-                <p className="text-xs text-slate-300 mt-4">
-                  Ref: {subscription.reference_number || 'Pending'}
-                </p>
+              <div className="text-right">
+                <p className="text-xs text-slate-400">Reference</p>
+                <p className="text-xs font-mono text-slate-600">{advisory.reference_number || '—'}</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => router.push(`/advisory/${subscriptionId}/diagnose`)}
-                className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm">
+            {/* No active timelines today */}
+            {advisory.timelines.length === 0 && (
+              <div className="bg-white rounded-2xl p-6 text-center border border-slate-100">
+                <span className="text-3xl">☀️</span>
+                <p className="text-slate-700 font-medium mt-3">No tasks today</p>
+                <p className="text-slate-400 text-sm mt-1">
+                  No practices are scheduled for Day {advisory.day_offset}. Check back tomorrow.
+                </p>
+              </div>
+            )}
+
+            {/* Timeline sections */}
+            {advisory.timelines.map(tl => (
+              <div key={tl.id}>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-slate-200" />
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide px-2">{tl.name}</p>
+                  <div className="h-px flex-1 bg-slate-200" />
+                </div>
+
+                <div className="space-y-3">
+                  {tl.practices.map(p => (
+                    <PracticeCard
+                      key={p.id}
+                      practice={p}
+                      onOrder={() => orderPractice(p.id)}
+                      isOrdering={orderingPractice === p.id}
+                      ordered={orderSuccess === p.id}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Quick links */}
+            <div className="grid grid-cols-2 gap-3 mt-2">
+              <button onClick={() => router.push(`/advisory/${subscriptionId}/diagnose`)}
+                className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm active:scale-95 transition-transform">
                 <span className="text-2xl">🔍</span>
-                <p className="text-sm font-medium text-slate-800 mt-2">Diagnose</p>
-                <p className="text-xs text-slate-400">Identify crop problems</p>
+                <p className="text-sm font-medium text-slate-800 mt-2">Diagnose Problem</p>
+                <p className="text-xs text-slate-400">Identify crop issues</p>
               </button>
-              <button
-                onClick={() => router.push(`/advisory/${subscriptionId}/ask-expert`)}
-                className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm">
-                <span className="text-2xl">💬</span>
-                <p className="text-sm font-medium text-slate-800 mt-2">Ask Expert</p>
-                <p className="text-xs text-slate-400">Connect with a FarmPundit</p>
+              <button onClick={() => router.push('/orders')}
+                className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm active:scale-95 transition-transform">
+                <span className="text-2xl">📦</span>
+                <p className="text-sm font-medium text-slate-800 mt-2">My Orders</p>
+                <p className="text-xs text-slate-400">Track input orders</p>
               </button>
             </div>
           </div>
         )}
       </div>
       <BottomNav color="#1A5C2A" />
+    </div>
+  )
+}
+
+function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
+  practice: Practice
+  onOrder: () => void
+  isOrdering: boolean
+  ordered: boolean
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const colour = L0_BG[practice.l0_type] || '#1A5C2A'
+  const label = L0_LABEL[practice.l0_type] || practice.l0_type
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      {/* Card header */}
+      <div className="flex items-center gap-3 px-4 py-3.5" onClick={() => setExpanded(e => !e)}>
+        <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+              style={{ background: colour }}>{label}</span>
+            {practice.is_special_input && (
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
+            )}
+          </div>
+          <p className="text-sm font-medium text-slate-800 mt-1">
+            {[practice.l1_type, practice.l2_type].filter(Boolean).join(' — ') || 'General Advisory'}
+          </p>
+        </div>
+        {practice.l0_type === 'INPUT' && (
+          <button
+            onClick={e => { e.stopPropagation(); onOrder() }}
+            disabled={isOrdering || ordered}
+            className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
+            style={{ background: ordered ? '#16a34a' : '#1A5C2A' }}>
+            {ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
+          </button>
+        )}
+      </div>
+
+      {/* Expandable elements */}
+      {expanded && practice.elements.length > 0 && (
+        <div className="border-t border-slate-100 px-4 pb-3 pt-2 space-y-1.5">
+          {practice.elements.map((el, i) => (
+            <div key={i} className="flex items-start gap-2 text-sm">
+              <span className="text-slate-400 text-xs mt-0.5">•</span>
+              <div>
+                <span className="text-slate-600 font-medium">{el.element_type}</span>
+                {el.cosh_ref && <span className="text-slate-400 text-xs ml-1">({el.cosh_ref})</span>}
+                {el.value && <span className="text-slate-600 ml-1">{el.value}{el.unit_cosh_id ? ` ${el.unit_cosh_id}` : ''}</span>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {practice.elements.length > 0 && (
+        <div className="px-4 pb-2 text-xs text-slate-400 cursor-pointer" onClick={() => setExpanded(e => !e)}>
+          {expanded ? '▲ Hide details' : `▼ ${practice.elements.length} detail${practice.elements.length > 1 ? 's' : ''}`}
+        </div>
+      )}
     </div>
   )
 }
