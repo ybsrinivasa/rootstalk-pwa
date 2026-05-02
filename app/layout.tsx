@@ -5,10 +5,10 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "RootsTalk",
-  description: "Agricultural advisory, ordering and expert connect",
+  title: "rootsTALK.in",
+  description: "Your agricultural advisory network",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "RootsTalk" },
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "rootsTALK" },
 };
 
 export const viewport: Viewport = {
