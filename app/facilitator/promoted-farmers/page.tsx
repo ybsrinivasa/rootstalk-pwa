@@ -29,6 +29,13 @@ export default function FacilitatorPromotedFarmersPage() {
     <div className="min-h-screen bg-slate-50">
       <PWAHeader title="My Promoted Farmers" activeRole="FACILITATOR" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+        <div className="mt-4 mb-3 flex justify-end">
+          <button onClick={() => router.push('/facilitator/promoter-assign')}
+            className="text-sm font-semibold px-4 py-2.5 rounded-xl text-white"
+            style={{ background: '#7D4E00' }}>
+            + Assign advisory
+          </button>
+        </div>
         {loading ? (
           <div className="mt-4 space-y-3">{[1, 2].map(i => <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" />)}</div>
         ) : farmers.length === 0 ? (

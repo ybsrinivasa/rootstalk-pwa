@@ -7,12 +7,30 @@ import api from '@/lib/api'
 
 interface Relationship { id: string; manufacturer_name: string; manufacturer_client_id: string | null }
 
+interface DistrictAdvisory {
+  package_id: string
+  package_name: string
+  crop_cosh_id: string
+  client_id: string
+  client_name: string
+  client_colour: string | null
+}
+
+function formatCropName(coshId: string): string {
+  return coshId
+    .replace(/^crop_/, '')
+    .split('_')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
 export default function MyDealershipsPage() {
   const router = useRouter()
   const [list, setList] = useState<Relationship[]>([])
   const [adding, setAdding] = useState(false)
   const [newName, setNewName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [districtAdvisories, setDistrictAdvisories] = useState<DistrictAdvisory[]>([])
 
   const load = () =>
     api.get<Relationship[]>('/dealer/dealerships').then(r => setList(r.data)).catch(() => {})
@@ -20,6 +38,9 @@ export default function MyDealershipsPage() {
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
+    api.get<DistrictAdvisory[]>('/dealer/district-advisories')
+      .then(r => setDistrictAdvisories(r.data))
+      .catch(() => {})
   }, [])
 
   async function add() {
@@ -77,6 +98,33 @@ export default function MyDealershipsPage() {
         )}
 
         {/* Add form */}
+        {/* District Advisories Section */}
+        <div className="mt-8 mb-4">
+          <p className="text-sm font-bold text-slate-800">Active Advisories in My District</p>
+          <p className="text-xs text-slate-500 mt-0.5">What farmers in your area are being advised to buy</p>
+        </div>
+        {districtAdvisories.length === 0 ? (
+          <div className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-5 text-center mb-4">
+            <p className="text-xs text-slate-500">No active advisories in your district yet.</p>
+          </div>
+        ) : (
+          <div className="mb-4">
+            {districtAdvisories.map(adv => (
+              <div key={adv.package_id}
+                className="bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 mb-2 flex items-center gap-3">
+                <div className="rounded-full shrink-0"
+                  style={{ width: 10, height: 10, background: adv.client_colour || '#6b7280' }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800 truncate">{adv.client_name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {formatCropName(adv.crop_cosh_id)} &middot; {adv.package_name}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {adding ? (
           <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3">
             <p className="text-sm font-semibold text-slate-700">Add Company</p>
