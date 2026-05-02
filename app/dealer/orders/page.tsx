@@ -42,7 +42,18 @@ export default function DealerOrdersPage() {
     <div className="min-h-screen bg-slate-50">
       <PWAHeader title="Dealer — Orders" activeRole="DEALER" />
       <div className="pt-16 pb-20">
-        <div className="flex bg-white border-b border-slate-100">
+        {/* Shortcuts row */}
+        <div className="flex gap-2 px-4 pt-3">
+          <button onClick={() => router.push('/dealer/dealerships')}
+            className="flex-1 text-xs font-medium text-[#085041] bg-[#085041]/5 rounded-xl py-2">
+            🏭 My Dealerships
+          </button>
+          <button onClick={() => router.push('/dealer/profile')}
+            className="flex-1 text-xs font-medium text-slate-600 bg-slate-100 rounded-xl py-2">
+            ⚙ Shop Profile
+          </button>
+        </div>
+        <div className="flex bg-white border-b border-slate-100 mt-3">
           {(['pending', 'done'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-[#085041] text-[#085041]' : 'border-transparent text-slate-400'}`}>
