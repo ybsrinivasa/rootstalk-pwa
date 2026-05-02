@@ -273,7 +273,7 @@ export default function RootPage() {
                 :                       'What shall we call you?'
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: BG }}>
+    <div className="flex flex-col overflow-hidden" style={{ background: BG, height: '100svh' }}>
 
       {/* Green header */}
       <div className="w-full max-w-sm mx-auto px-5 relative z-10">
