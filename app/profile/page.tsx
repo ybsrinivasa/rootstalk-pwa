@@ -122,6 +122,13 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* My Subscriptions link */}
+        <button onClick={() => router.push('/my-subscriptions')}
+          className="w-full mt-5 py-3.5 bg-white border border-slate-100 text-slate-700 rounded-2xl text-sm font-medium flex items-center justify-between px-4 shadow-sm">
+          <span>🌾 My Subscriptions</span>
+          <span className="text-slate-300">›</span>
+        </button>
+
         {/* Sign out */}
         <button onClick={logout}
           className="w-full mt-6 py-3.5 border border-red-100 text-red-500 rounded-2xl text-sm font-medium">
