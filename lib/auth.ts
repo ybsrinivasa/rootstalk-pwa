@@ -6,6 +6,8 @@ export interface PWAUser {
   name: string | null;
   language_code: string;
   roles: { role_type: string; status: string }[];
+  portal_role?: string | null;
+  pwa_roles?: string[];
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {
@@ -45,7 +47,9 @@ export function getUser(): PWAUser | null {
 
 export function getActiveRoles(user: PWAUser | null): string[] {
   if (!user) return [];
-  return user.roles.filter(r => r.status === "ACTIVE").map(r => r.role_type);
+  const neytiriRoles = user.roles.filter(r => r.status === "ACTIVE").map(r => r.role_type);
+  const pwaRoles = user.pwa_roles || [];
+  return [...neytiriRoles, ...pwaRoles];
 }
 
 export function hasRole(user: PWAUser | null, role: string): boolean {

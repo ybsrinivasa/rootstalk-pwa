@@ -1,5 +1,5 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { getUser, getActiveRoles, logout, ROLE_COLOURS, ROLE_LABELS } from '@/lib/auth'
 
 interface Props {
@@ -11,26 +11,58 @@ interface Props {
 
 const ROLE_ORDER = ['FARMER', 'DEALER', 'FACILITATOR', 'FARM_PUNDIT']
 
-export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole = 'FARMER' }: Props) {
+function getActiveRoleFromPath(pathname: string): string {
+  if (pathname.startsWith('/dealer')) return 'DEALER'
+  if (pathname.startsWith('/facilitator')) return 'FACILITATOR'
+  if (pathname.startsWith('/pundit')) return 'FARM_PUNDIT'
+  return 'FARMER'
+}
+
+export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole: propActiveRole }: Props) {
   const router = useRouter()
+  const pathname = usePathname()
   const user = getUser()
   const userRoles = getActiveRoles(user)
+  const pwaRoles = user?.pwa_roles || []
+
+  // Derive active role from URL path; fall back to prop if provided
+  const activeRole = propActiveRole ?? getActiveRoleFromPath(pathname)
 
   function handleRoleClick(role: string) {
-    if (!userRoles.includes(role)) {
-      if (role === 'FARM_PUNDIT') {
+    const roleIsSetUp = role === 'FARMER' || userRoles.includes(role)
+
+    if (!roleIsSetUp) {
+      // Not yet set up — route to info/registration page
+      if (role === 'DEALER') {
+        router.push('/become-dealer')
+      } else if (role === 'FACILITATOR') {
+        router.push('/become-facilitator')
+      } else if (role === 'FARM_PUNDIT') {
         router.push('/pundit/register')
-        onClose()
       }
-      // For DEALER / FACILITATOR: show info (toast deferred — just close for now)
+      onClose()
       return
     }
-    if (role === activeRole) return
+
+    // Role is set up — switch to it
+    if (role === activeRole) {
+      onClose()
+      return
+    }
     onSwitch(role)
-    if (role === 'DEALER')       router.replace('/dealer/home')
-    else if (role === 'FACILITATOR') router.replace('/facilitator/home')
-    else if (role === 'FARM_PUNDIT') router.replace('/pundit/home')
+    if (role === 'DEALER')            router.replace('/dealer/home')
+    else if (role === 'FACILITATOR')  router.replace('/facilitator/home')
+    else if (role === 'FARM_PUNDIT')  router.replace('/pundit/home')
     else                              router.replace('/home')
+    onClose()
+  }
+
+  function getChipLabel(role: string): string {
+    const isActive = role === activeRole
+    if (isActive) return 'Active'
+    const roleIsSetUp = role === 'FARMER' || userRoles.includes(role)
+    if (roleIsSetUp) return 'Switch'
+    return 'Set up →'
   }
 
   return (
@@ -69,9 +101,10 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
 
           {ROLE_ORDER.map(role => {
             const isActive = role === activeRole
-            const hasRole  = userRoles.includes(role)
-            const colour   = ROLE_COLOURS[role] || '#1A5C2A'
-            const label    = ROLE_LABELS[role] || role
+            const roleIsSetUp = role === 'FARMER' || userRoles.includes(role)
+            const colour = ROLE_COLOURS[role] || '#1A5C2A'
+            const label = ROLE_LABELS[role] || role
+            const chipLabel = getChipLabel(role)
 
             return (
               <button key={role}
@@ -87,12 +120,12 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                   isActive
                     ? 'text-white'
-                    : hasRole
+                    : roleIsSetUp
                       ? 'text-stone-500 bg-stone-100'
                       : 'text-stone-400 bg-stone-50'
                 }`}
                   style={isActive ? { background: colour } : {}}>
-                  {isActive ? 'Active' : hasRole ? 'Switch' : 'Set up →'}
+                  {chipLabel}
                 </span>
               </button>
             )
