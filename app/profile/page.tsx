@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser, getActiveRoles, logout, ROLE_COLOURS, ROLE_LABELS } from '@/lib/auth'
+import { getToken, getUser, getActiveRoles, logout } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
@@ -36,9 +36,6 @@ export default function ProfilePage() {
   const [showLangSheet, setShowLangSheet] = useState(false)
   const [languages, setLanguages] = useState<{ language_code: string; language_name_native: string }[]>([])
   const [currentLang, setCurrentLang] = useState(user?.language_code || 'en')
-
-  // About sheet
-  const [showAboutSheet, setShowAboutSheet] = useState(false)
 
   // Delete account flow
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'otp'>('idle')
@@ -157,9 +154,12 @@ export default function ProfilePage() {
   const isFacilitator = pwaRoles.includes('FACILITATOR') || roles.includes('FACILITATOR')
   const isFarmPundit = pwaRoles.includes('FARM_PUNDIT') || roles.includes('FARM_PUNDIT')
 
+  // Pundit-only users (have FARM_PUNDIT role but no FARMER subscriptions) shouldn't see crops & companies
+  const isPunditOnly = isFarmPundit && subscriptions.length === 0 && !isDealer && !isFacilitator
+
   return (
     <div className="min-h-screen bg-slate-50">
-      <PWAHeader title="Profile" activeRole="FARMER" />
+      <PWAHeader title="My Profile" activeRole="FARMER" />
       <div className="pt-16 pb-20 px-4">
 
         {/* ── Hero user card ── */}
@@ -267,38 +267,8 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ── MY ROLES ── */}
-        <div className="mt-5">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">My Roles — tap to open</p>
-          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            {roles.length === 0 && (
-              <div className="px-4 py-4 text-sm text-slate-400">Farmer (default)</div>
-            )}
-            {roles.map(role => {
-              const destination = role === 'DEALER' ? '/dealer/orders'
-                : role === 'FACILITATOR' ? '/facilitator/orders'
-                : role === 'FARMER' ? '/home'
-                : null
-              return (
-                <button key={role} onClick={() => destination && router.push(destination)}
-                  className="w-full flex items-center gap-3 px-4 py-4 border-b border-slate-50 last:border-0 text-left active:bg-slate-50">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ background: (ROLE_COLOURS[role] || '#1A5C2A') + '20' }}>
-                    <div className="w-3 h-3 rounded-full" style={{ background: ROLE_COLOURS[role] || '#1A5C2A' }} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-800">{ROLE_LABELS[role] || role}</p>
-                    <p className="text-xs text-slate-400">Active · tap to open</p>
-                  </div>
-                  <span className="text-slate-300">›</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* ── CROPS & COMPANIES ── */}
-        {(isFarmer || isDealer || isFacilitator || isFarmPundit) && (
+        {/* ── CROPS & COMPANIES ── (hidden for pundit-only users) */}
+        {!isPunditOnly && (isFarmer || isDealer || isFacilitator || isFarmPundit) && (
           <div className="mt-5">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">Crops &amp; Companies</p>
             <div className="space-y-3">
@@ -452,68 +422,16 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ── ABOUT ── */}
-        <div className="mt-5">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">About</p>
-          <div className="space-y-2">
-            <button onClick={() => setShowAboutSheet(true)}
-              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-[#1A5C2A]" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="2.5" fill="#1A5C2A"/>
-                  <circle cx="4"  cy="6"  r="1.75" fill="#1A5C2A" opacity="0.7"/>
-                  <circle cx="20" cy="18" r="1.75" fill="#1A5C2A" opacity="0.7"/>
-                  <circle cx="4"  cy="18" r="1.75" fill="#1A5C2A" opacity="0.5"/>
-                  <circle cx="20" cy="6"  r="1.75" fill="#1A5C2A" opacity="0.5"/>
-                  <line x1="12" y1="12" x2="4"  y2="6"  stroke="#1A5C2A" strokeWidth="1" opacity="0.5"/>
-                  <line x1="12" y1="12" x2="20" y2="18" stroke="#1A5C2A" strokeWidth="1" opacity="0.5"/>
-                  <line x1="12" y1="12" x2="4"  y2="18" stroke="#1A5C2A" strokeWidth="1" opacity="0.35"/>
-                  <line x1="12" y1="12" x2="20" y2="6"  stroke="#1A5C2A" strokeWidth="1" opacity="0.35"/>
-                </svg>
-                <span className="text-sm font-medium text-slate-800">About rootsTALK</span>
-              </div>
-              <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-              </svg>
-            </button>
-
-            <button onClick={() => router.push('/privacy-policy')}
-              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
-              <div className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
-                </svg>
-                <span className="text-sm font-medium text-slate-800">Privacy Policy</span>
-              </div>
-              <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* ── ACCOUNT ── */}
-        <div className="mt-5">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">Account</p>
+        {/* ── Delete Account (separated from other sections at the bottom) ── */}
+        <div className="mt-12 pt-6 border-t border-stone-100">
           <button onClick={() => { setDeleteStep('confirm'); setDeleteError('') }}
-            className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
-            <div className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
-              </svg>
-              <span className="text-sm font-medium text-red-600">Delete Account</span>
-            </div>
-            <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-red-600 text-sm font-medium hover:bg-red-50 rounded-2xl">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
             </svg>
+            Delete my Account
           </button>
         </div>
-
-        {/* ── Sign out ── */}
-        <button onClick={logout}
-          className="w-full mt-6 py-3.5 border border-red-100 text-red-500 rounded-2xl text-sm font-medium">
-          Sign out
-        </button>
       </div>
 
       <BottomNav color="#1A5C2A" />
@@ -535,45 +453,6 @@ export default function ProfilePage() {
                 {currentLang === l.language_code && <span className="text-[#1A5C2A]">✓</span>}
               </button>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── About sheet ── */}
-      {showAboutSheet && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowAboutSheet(false)}>
-          <div className="bg-white rounded-t-3xl w-full pb-10 px-5 pt-6" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <div/>
-              <button onClick={() => setShowAboutSheet(false)} className="text-slate-400 text-xl">×</button>
-            </div>
-            <div className="flex flex-col items-center text-center gap-3 pb-4">
-              {/* Node mark */}
-              <div className="w-14 h-14 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(26,92,42,0.10)', border: '1px solid rgba(26,92,42,0.15)' }}>
-                <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-                  <circle cx="24" cy="24" r="5"   fill="#1A5C2A"/>
-                  <circle cx="8"  cy="12" r="3.5" fill="#1A5C2A" opacity="0.7"/>
-                  <circle cx="40" cy="36" r="3.5" fill="#1A5C2A" opacity="0.7"/>
-                  <circle cx="8"  cy="36" r="3.5" fill="#1A5C2A" opacity="0.5"/>
-                  <circle cx="40" cy="12" r="3.5" fill="#1A5C2A" opacity="0.5"/>
-                  <line x1="24" y1="24" x2="8"  y2="12" stroke="#1A5C2A" strokeWidth="1.5" opacity="0.6"/>
-                  <line x1="24" y1="24" x2="40" y2="36" stroke="#1A5C2A" strokeWidth="1.5" opacity="0.6"/>
-                  <line x1="24" y1="24" x2="8"  y2="36" stroke="#1A5C2A" strokeWidth="1"   opacity="0.35"/>
-                  <line x1="24" y1="24" x2="40" y2="12" stroke="#1A5C2A" strokeWidth="1"   opacity="0.35"/>
-                </svg>
-              </div>
-              <p className="font-bold text-slate-900 text-lg">rootsTALK.in</p>
-              <p className="text-slate-500 text-sm">Your agricultural advisory network</p>
-              <p className="text-slate-400 text-xs">by Neytiri Eywafarm Agritech</p>
-              <p className="text-slate-300 text-xs mt-1">Version 2.0</p>
-              <button
-                onClick={() => window.open('https://eywa.farm', '_blank')}
-                className="mt-3 px-6 py-2.5 rounded-xl text-white text-sm font-medium"
-                style={{ background: '#1A5C2A' }}>
-                Visit eywa.farm →
-              </button>
-            </div>
           </div>
         </div>
       )}

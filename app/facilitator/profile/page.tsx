@@ -93,7 +93,7 @@ export default function FacilitatorProfilePage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: COLOUR }}>
-      <PWAHeader title="Facilitator Profile" activeRole="FACILITATOR" customColour={COLOUR} />
+      <PWAHeader title="Service Profile" activeRole="FACILITATOR" customColour={COLOUR} />
       <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
 
         {/* Read-only info */}
