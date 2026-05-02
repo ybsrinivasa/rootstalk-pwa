@@ -16,8 +16,14 @@ export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {
 export async function verifyOtp(phone: string, otp_code: string): Promise<void> {
   const { data } = await api.post("/auth/verify-otp", { phone, otp_code });
   localStorage.setItem("rt_pwa_token", data.access_token);
-  const me = await api.get<PWAUser>("/auth/me");
-  localStorage.setItem("rt_pwa_user", JSON.stringify(me.data));
+  // Fetch user profile separately — if this fails, the token is still stored
+  // and the user IS logged in. Don't let a /me failure consume the OTP silently.
+  try {
+    const me = await api.get<PWAUser>("/auth/me");
+    localStorage.setItem("rt_pwa_user", JSON.stringify(me.data));
+  } catch {
+    // Token stored; user data will reload on next visit
+  }
 }
 
 export function logout(): void {

@@ -169,7 +169,11 @@ export default function RootPage() {
       const user = getUser()
       if (user && !user.name) setStage('profile')
       else roleHome(user ?? undefined)
-    } catch { setError("That code didn't match. Please try again.") }
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 401) setError("That code didn't match. Please try again.")
+      else setError('Something went wrong. Please try again.')
+    }
     finally { setBusy(false) }
   }
 
