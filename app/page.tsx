@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp } from '@/lib/auth'
 import { setLanguage, getLanguage } from '@/lib/language'
 import api from '@/lib/api'
+import InstallPrompt from '@/components/InstallPrompt'
 
 type Stage = 'landing' | 'phone' | 'otp' | 'profile'
 type Lang = { language_code: string; language_name_en: string; language_name_native: string; script_direction: string; status?: string }
@@ -298,6 +299,7 @@ export default function RootPage() {
   // ── PROFILE ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#F7F5F0] flex flex-col">
+      <InstallPrompt />
       <div className="px-5 pt-12 pb-4">
         <div className="flex items-center gap-2 mb-2">
           <svg width="20" height="20" viewBox="0 0 48 48" fill="none">

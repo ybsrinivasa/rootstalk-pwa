@@ -8,7 +8,14 @@ export const metadata: Metadata = {
   title: "rootsTALK.in",
   description: "Your agricultural advisory network",
   manifest: "/manifest.json",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "rootsTALK" },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "rootsTALK",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
