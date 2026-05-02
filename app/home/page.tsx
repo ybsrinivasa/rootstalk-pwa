@@ -1,9 +1,10 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser, logout } from '@/lib/auth'
+import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
 
 type Subscription = {
@@ -11,23 +12,33 @@ type Subscription = {
   status: string; reference_number: string | null; crop_start_date: string | null
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'
+type ClientInfo = {
+  id: string; display_name: string; primary_colour: string
+  tagline: string | null; logo_url: string | null
+  support_phone: string | null; website: string | null
+}
 
-type ClientBranding = {
-  display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
+function SeedlingIllustration() {
+  return (
+    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+      <line x1="30" y1="52" x2="30" y2="20" stroke="#1A5C2A" strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M30 35 C30 25 18 18 12 22 C18 22 28 28 30 35Z" fill="#1A5C2A" opacity="0.8"/>
+      <path d="M30 28 C30 18 42 12 48 16 C42 16 32 22 30 28Z" fill="#1A5C2A"/>
+      <ellipse cx="30" cy="53" rx="8" ry="2" fill="#1A5C2A" opacity="0.2"/>
+    </svg>
+  )
 }
 
 export default function HomePage() {
   const router = useRouter()
   const user = getUser()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
-  const [brandings, setBrandings] = useState<Record<string, ClientBranding>>({})
+  const [clientInfos, setClientInfos] = useState<Record<string, ClientInfo>>({})
   const [loading, setLoading] = useState(true)
-  const [qrSub, setQrSub] = useState<Subscription | null>(null)
-  const [qrUrl, setQrUrl] = useState<string | null>(null)
+  const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
   useEffect(() => {
-    if (!getToken()) { router.replace('/register'); return }
+    if (!getToken()) { router.replace('/'); return }
     load()
   }, [router])
 
@@ -35,145 +46,123 @@ export default function HomePage() {
     try {
       const { data } = await api.get<Subscription[]>('/farmer/my-subscriptions')
       setSubscriptions(data)
-      // Fetch branding for each unique client
       const clientIds = [...new Set(data.map(s => s.client_id))]
       const results = await Promise.allSettled(
-        clientIds.map(id => api.get<ClientBranding>(`/portal/${id}/branding`).then(r => ({ id, data: r.data })))
+        clientIds.map(id => api.get<ClientInfo>(`/client/${id}/info`).then(r => ({ id, data: r.data })))
       )
-      const map: Record<string, ClientBranding> = {}
+      const map: Record<string, ClientInfo> = {}
       results.forEach(r => { if (r.status === 'fulfilled') map[r.value.id] = r.value.data })
-      setBrandings(map)
+      setClientInfos(map)
     } finally { setLoading(false) }
   }
 
-  async function showCropQR(sub: Subscription) {
-    setQrSub(sub)
-    const token = getToken()
-    setQrUrl(`${API_URL}/farmer/subscriptions/${sub.id}/crop-qr`)
+  // Group subscriptions by client_id
+  const grouped: Record<string, Subscription[]> = {}
+  for (const sub of subscriptions) {
+    if (!grouped[sub.client_id]) grouped[sub.client_id] = []
+    grouped[sub.client_id].push(sub)
   }
-
-  const activeCount = subscriptions.filter(s => s.status === 'ACTIVE').length
+  const uniqueClientIds = Object.keys(grouped)
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <PWAHeader title="RootsTalk" activeRole="FARMER" />
+    <div className="min-h-screen bg-stone-50">
+      <PWAHeader
+        title="rootsTALK"
+        activeRole="FARMER"
+        onRoleSwitch={() => setShowRoleDrawer(true)}
+      />
 
       <div className="pt-16 pb-20 px-4">
         {/* Greeting */}
         <div className="mt-4 mb-5">
-          <p className="text-xl font-bold text-slate-900">
+          <p className="text-xl font-bold text-stone-900">
             {user?.name ? `Welcome, ${user.name.split(' ')[0]}` : 'Welcome'}
           </p>
-          <p className="text-slate-500 text-sm mt-0.5">
-            {activeCount > 0
-              ? `${activeCount} active advisory${activeCount > 1 ? 's' : ''}`
+          <p className="text-stone-400 text-sm mt-0.5">
+            {uniqueClientIds.length > 0
+              ? `${uniqueClientIds.length} compan${uniqueClientIds.length > 1 ? 'ies' : 'y'} — ${subscriptions.length} crop${subscriptions.length > 1 ? 's' : ''}`
               : 'No active advisories yet'}
           </p>
         </div>
 
-        {/* Company tiles */}
-        {loading
-          ? <div className="space-y-3">
-            {[1, 2].map(i => (
-              <div key={i} className="h-28 bg-white rounded-2xl animate-pulse border border-slate-100" />
-            ))}
+        {/* Content */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-stone-200 border-t-[#1A5C2A] rounded-full animate-spin"/>
           </div>
-          : subscriptions.length === 0
-            ? (
-              <div className="bg-white rounded-2xl p-6 text-center border border-slate-100">
-                <div className="text-4xl mb-3">🌱</div>
-                <p className="font-medium text-slate-800">No advisories yet</p>
-                <p className="text-slate-400 text-sm mt-1">Your agri-advisory will appear here once assigned</p>
-              </div>
-            )
-            : subscriptions.map(sub => {
-              const b = brandings[sub.client_id]
-              const colour = b?.primary_colour || '#1A5C2A'
-              const hasStartDate = !!sub.crop_start_date
+        ) : uniqueClientIds.length === 0 ? (
+          /* Empty state */
+          <div className="flex flex-col items-center justify-center py-16">
+            <SeedlingIllustration/>
+            <p className="text-stone-800 font-semibold text-lg mt-4">No advisories yet</p>
+            <p className="text-stone-400 text-sm text-center mt-2 max-w-[240px]">
+              Subscribe to a company&apos;s advisory to get started
+            </p>
+            <button
+              onClick={() => router.push('/subscribe')}
+              className="mt-6 py-3.5 px-8 rounded-2xl text-white font-medium"
+              style={{ background: '#1A5C2A' }}>
+              Subscribe now →
+            </button>
+          </div>
+        ) : (
+          /* Company tiles */
+          <div className="space-y-3">
+            {uniqueClientIds.map(clientId => {
+              const subs = grouped[clientId]
+              const info = clientInfos[clientId]
+              const colour = info?.primary_colour || '#1A5C2A'
+              const needsStartDate = subs.some(s => !s.crop_start_date)
+              const initials = (info?.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+
               return (
-                <button key={sub.id}
-                  onClick={() => router.push(`/crop-detail/${sub.id}`)}
-                  className="w-full mb-3 rounded-2xl overflow-hidden border border-slate-100 shadow-sm active:scale-98 transition-transform text-left">
+                <button key={clientId}
+                  onClick={() => router.push(`/home/${clientId}`)}
+                  className="w-full bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100 text-left active:scale-[0.98] transition-transform">
+
                   {/* Branded header */}
-                  <div className="px-4 py-3 flex items-center justify-between"
-                    style={{ background: colour }}>
-                    <div>
-                      <p className="text-white font-semibold text-sm">{b?.display_name || 'Loading…'}</p>
-                      {b?.tagline && <p className="text-white text-xs opacity-70">{b.tagline}</p>}
-                    </div>
-                    {hasStartDate
-                      ? <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">Active</span>
-                      : <span className="text-xs bg-white/20 text-white px-2 py-0.5 rounded-full">Set start date</span>
-                    }
+                  <div className="px-4 py-4 flex items-center gap-3" style={{ background: colour }}>
+                    {info?.logo_url ? (
+                      <img src={info.logo_url} alt={info.display_name}
+                        className="w-9 h-9 rounded-full object-contain bg-white p-1 shrink-0"/>
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shrink-0"
+                        style={{ color: colour }}>
+                        <span className="text-xs font-bold">{initials}</span>
+                      </div>
+                    )}
+                    <p className="text-white font-semibold text-base flex-1">
+                      {info?.display_name || 'Loading…'}
+                    </p>
+                    {needsStartDate && (
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-amber-400/90 text-white font-medium ml-auto shrink-0">
+                        Set start date
+                      </span>
+                    )}
                   </div>
+
                   {/* Card body */}
-                  <div className="bg-white px-4 py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs text-slate-400">Advisory</p>
-                      <p className="text-sm font-medium text-slate-700">{sub.reference_number || 'Not yet active'}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {sub.reference_number && (
-                        <button
-                          onClick={e => { e.stopPropagation(); showCropQR(sub) }}
-                          className="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg font-medium hover:bg-slate-200"
-                          title="Share crop record QR">
-                          🔗 Share
-                        </button>
-                      )}
-                      <span className="text-slate-300 text-xl">›</span>
-                    </div>
-                  </div>
+                  {info?.tagline && (
+                    <p className="text-stone-500 text-sm px-4 py-2">{info.tagline}</p>
+                  )}
+                  <p className="text-stone-400 text-xs px-4 pb-3 pt-1">
+                    {subs.length} crop{subs.length > 1 ? 's' : ''} subscribed
+                  </p>
                 </button>
               )
-            })
-        }
-
-        {/* Quick actions */}
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <button
-            onClick={() => router.push('/orders')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm">
-            <span className="text-2xl">📦</span>
-            <p className="text-sm font-medium text-slate-800 mt-2">My Orders</p>
-            <p className="text-xs text-slate-400">Track your input orders</p>
-          </button>
-          <button
-            onClick={() => router.push('/orders/purchased')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm">
-            <span className="text-2xl">✅</span>
-            <p className="text-sm font-medium text-slate-800 mt-2">Purchased Items</p>
-            <p className="text-xs text-slate-400">Verify with QR scan</p>
-          </button>
-        </div>
+            })}
+          </div>
+        )}
       </div>
 
-      <BottomNav color="#1A5C2A" />
+      <BottomNav color="#1A5C2A"/>
 
-      {/* Crop QR bottom sheet */}
-      {qrSub && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setQrSub(null)}>
-          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 pb-10 text-center"
-            onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <p className="font-bold text-slate-800">Share Crop Record</p>
-              <button onClick={() => setQrSub(null)} className="text-slate-400 text-xl">✕</button>
-            </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Anyone can scan this QR code to view your crop record. No personal contact details are shared.
-            </p>
-            {qrUrl && (
-              <img
-                src={qrUrl}
-                alt="Crop QR Code"
-                className="w-48 h-48 mx-auto border border-slate-100 rounded-xl"
-              />
-            )}
-            <p className="text-sm font-mono font-semibold text-slate-700 mt-3">{qrSub.reference_number}</p>
-            <p className="text-xs text-slate-400 mt-1">Subscription Reference</p>
-          </div>
-        </div>
-      )}
+      <RoleSwitcherDrawer
+        open={showRoleDrawer}
+        onClose={() => setShowRoleDrawer(false)}
+        onSwitch={() => setShowRoleDrawer(false)}
+        activeRole="FARMER"
+      />
     </div>
   )
 }

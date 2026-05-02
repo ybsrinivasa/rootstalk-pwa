@@ -6,15 +6,23 @@ import api from '@/lib/api'
 
 type Lang = { language_code: string; language_name_native: string }
 
-export default function PWAHeader({ activeRole = 'FARMER', title = 'rootsTALK' }: {
+export default function PWAHeader({
+  activeRole = 'FARMER',
+  title = 'rootsTALK',
+  onRoleSwitch,
+  customColour,
+}: {
   activeRole?: string
   title?: string
+  onRoleSwitch?: () => void
+  customColour?: string
 }) {
+  const user = getUser()
   const [showLang, setShowLang] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [languages, setLanguages] = useState<Lang[]>([])
   const [currentLang, setCurrentLang] = useState(getLanguage())
-  const colour = ROLE_COLOURS[activeRole] || '#1A5C2A'
+  const colour = customColour || ROLE_COLOURS[activeRole] || '#1A5C2A'
   const roleLabel = activeRole !== 'FARMER' ? `Acting as ${activeRole.replace('_', ' ')}` : ''
 
   useEffect(() => {
@@ -54,6 +62,12 @@ export default function PWAHeader({ activeRole = 'FARMER', title = 'rootsTALK' }
               <line x1="24" y1="24" x2="40" y2="12" stroke="white" strokeWidth="1.5" opacity="0.35"/>
             </svg>
           </button>
+          {onRoleSwitch && (
+            <button onClick={onRoleSwitch}
+              className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-xs font-bold">
+              {user?.name?.[0]?.toUpperCase() || '?'}
+            </button>
+          )}
         </div>
       </header>
 
