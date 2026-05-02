@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -12,72 +12,219 @@ declare global {
   }
 }
 
-interface Package {
-  id: string; name: string; crop_cosh_id: string
-  package_type: string; duration_days: number; description: string | null
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type Stage = 'location' | 'crop' | 'company' | 'guided' | 'confirm' | 'payment' | 'delegate' | 'done'
+
+interface CompanyInfo {
+  id: string
+  display_name: string
+  tagline: string | null
+  logo_url: string | null
+  primary_colour: string
 }
-interface Subscription {
-  id: string; status: string; reference_number: string | null
+
+interface GuidedStep {
+  done: boolean
+  package?: { id: string; name: string; description: string | null }
+  parameter?: { id: string; name: string }
+  variables?: { id: string; name: string }[]
+  remaining_count?: number
+  error?: string
 }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatCropName(coshId: string): string {
+  return coshId.replace(/^crop_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function ProgressBar({ stage }: { stage: Stage }) {
+  const steps: Stage[] = ['location', 'crop', 'company', 'guided', 'confirm', 'payment', 'done']
+  const idx = steps.indexOf(stage)
+  return (
+    <div className="flex gap-1 mb-6">
+      {steps.map((s, i) => (
+        <div
+          key={s}
+          className="flex-1 h-1 rounded-full"
+          style={{ background: i <= idx ? '#1A5C2A' : '#e7e5e4' }}
+        />
+      ))}
+    </div>
+  )
+}
+
+function CompanyLogo({ company }: { company: CompanyInfo }) {
+  const colour = company.primary_colour || '#1A5C2A'
+  const initials = (company.display_name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+  return (
+    <div className="flex items-center gap-3 px-4 py-4" style={{ background: colour }}>
+      {company.logo_url ? (
+        <img src={company.logo_url} alt={company.display_name}
+          className="w-10 h-10 rounded-full object-contain bg-white p-1 shrink-0" />
+      ) : (
+        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0"
+          style={{ color: colour }}>
+          <span className="text-xs font-bold">{initials}</span>
+        </div>
+      )}
+      <p className="text-white font-semibold text-base flex-1">{company.display_name}</p>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 
 export default function SubscribePage() {
   const router = useRouter()
-  const params = useSearchParams()
-  const clientId = params.get('client_id')
-  const preselectedPkg = params.get('package_id')
-
   const user = getUser()
-  const [packages, setPackages] = useState<Package[]>([])
-  const [selectedPkg, setSelectedPkg] = useState<string>(preselectedPkg || '')
-  const [loading, setLoading] = useState(true)
-  const [subscribing, setSubscribing] = useState(false)
-  const [subscription, setSubscription] = useState<Subscription | null>(null)
-  const [step, setStep] = useState<'select' | 'pay' | 'delegate' | 'done'>('select')
-  const [error, setError] = useState('')
-  const [delegateTo, setDelegateTo] = useState('')
-  const [delegating, setDelegating] = useState(false)
-  const [delegateSuccess, setDelegateSuccess] = useState(false)
 
+  const [stage, setStage] = useState<Stage>('location')
+
+  // Location
+  const [district, setDistrict] = useState('')
+  const [stateName, setStateName] = useState('')
+  const [districtName, setDistrictName] = useState('')
+
+  // Discovery
+  const [crops, setCrops] = useState<{ crop_cosh_id: string }[]>([])
+  const [companies, setCompanies] = useState<CompanyInfo[]>([])
+  const [cropId, setCropId] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [company, setCompany] = useState<CompanyInfo | null>(null)
+
+  // Guided algorithm
+  const [answers, setAnswers] = useState('')
+  const [selectedVars, setSelectedVars] = useState<{ paramName: string; varName: string }[]>([])
+  const [packageId, setPackageId] = useState('')
+  const [guidedStep, setGuidedStep] = useState<GuidedStep | null>(null)
+  const [guidedQuestionIndex, setGuidedQuestionIndex] = useState(0)
+
+  // Subscription
+  const [subscription, setSubscription] = useState<{ id: string } | null>(null)
+
+  // Delegate payment
+  const [delegatePhone, setDelegatePhone] = useState('')
+  const [delegateRole, setDelegateRole] = useState<'DEALER' | 'FACILITATOR'>('DEALER')
+
+  // UI state
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    if (clientId) {
-      api.get<Package[]>(`/farmer/packages?client_id=${clientId}`)
-        .then(r => setPackages(r.data))
-        .catch(() => setPackages([]))
-        .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
-    }
-  }, [clientId, router])
+    // Pre-fill location from user profile
+    api.get<{ state_cosh_id: string | null; district_cosh_id: string | null }>('/auth/me/location')
+      .then(({ data }) => {
+        if (data.state_cosh_id) setStateName(data.state_cosh_id)
+        if (data.district_cosh_id) {
+          setDistrict(data.district_cosh_id)
+          setDistrictName(data.district_cosh_id)
+        }
+      })
+      .catch(() => { /* location not set — user fills manually */ })
+  }, [router])
 
-  async function createSubscription() {
-    if (!selectedPkg || !clientId) return
-    setSubscribing(true); setError('')
+  // ── Stage: Location ────────────────────────────────────────────────────────
+  async function proceedFromLocation() {
+    if (!district.trim()) { setError('Please enter your district.'); return }
+    setBusy(true); setError('')
     try {
-      const { data } = await api.post<Subscription & { message: string }>('/farmer/subscriptions', {
-        package_id: selectedPkg,
+      const { data } = await api.get<{ crop_cosh_id: string }[]>('/farmer/discover/crops', {
+        params: { district_cosh_id: district.trim() },
+      })
+      setCrops(data)
+      setStage('crop')
+    } catch { setError('Could not load crops for this area.') }
+    finally { setBusy(false) }
+  }
+
+  // ── Stage: Crop → Company ──────────────────────────────────────────────────
+  async function selectCrop(cid: string) {
+    setCropId(cid)
+    setBusy(true); setError('')
+    try {
+      const { data } = await api.get<CompanyInfo[]>('/farmer/discover/companies', {
+        params: { crop_cosh_id: cid, district_cosh_id: district },
+      })
+      setCompanies(data)
+      setStage('company')
+    } catch { setError('Could not load companies.') }
+    finally { setBusy(false) }
+  }
+
+  // ── Stage: Company → Guided ────────────────────────────────────────────────
+  async function selectCompany(c: CompanyInfo) {
+    setCompany(c)
+    setClientId(c.id)
+    setAnswers('')
+    setSelectedVars([])
+    setGuidedQuestionIndex(0)
+    setBusy(true); setError('')
+    try {
+      const { data } = await api.get<GuidedStep>('/farmer/packages/guided-step', {
+        params: { crop_cosh_id: cropId, district_cosh_id: district, client_id: c.id, answers: '' },
+      })
+      setGuidedStep(data)
+      if (data.done && data.package) {
+        setPackageId(data.package.id)
+        setStage('confirm')
+      } else if (data.error) {
+        setError(data.error)
+      } else {
+        setStage('guided')
+      }
+    } catch { setError('Could not start the advisory finder.') }
+    finally { setBusy(false) }
+  }
+
+  // ── Stage: Guided selection ────────────────────────────────────────────────
+  async function selectVariable(paramId: string, varId: string, paramName: string, varName: string) {
+    const newAnswers = answers ? `${answers},${paramId}:${varId}` : `${paramId}:${varId}`
+    setAnswers(newAnswers)
+    setSelectedVars(prev => [...prev, { paramName, varName }])
+    setGuidedQuestionIndex(prev => prev + 1)
+    setBusy(true); setError('')
+    try {
+      const { data } = await api.get<GuidedStep>('/farmer/packages/guided-step', {
+        params: { crop_cosh_id: cropId, district_cosh_id: district, client_id: clientId, answers: newAnswers },
+      })
+      setGuidedStep(data)
+      if (data.done && data.package) {
+        setPackageId(data.package.id)
+        setStage('confirm')
+      } else if (data.error) {
+        setError(data.error)
+      }
+    } catch { setError('Could not load next question.') }
+    finally { setBusy(false) }
+  }
+
+  // ── Stage: Confirm → Payment ───────────────────────────────────────────────
+  async function proceedToPayment() {
+    setBusy(true); setError('')
+    try {
+      const { data } = await api.post<{ id: string; status: string }>('/farmer/subscriptions', {
+        package_id: packageId,
         client_id: clientId,
         subscription_type: 'SELF',
       })
       setSubscription(data)
-      if (data.status === 'ACTIVE') {
-        setStep('done')
-      } else {
-        // WAITLISTED — needs payment
-        setStep('pay')
-      }
+      setStage('payment')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Failed to create subscription.')
-    } finally { setSubscribing(false) }
+      setError(msg || 'Could not create subscription.')
+    } finally { setBusy(false) }
   }
 
+  // ── Razorpay payment ───────────────────────────────────────────────────────
   const openRazorpay = useCallback(async () => {
     if (!subscription) return
     setError('')
     try {
       const { data: order } = await api.post(`/farmer/subscriptions/${subscription.id}/payment/create-order`)
-
       const options = {
         key: order.key_id,
         amount: order.amount,
@@ -85,10 +232,7 @@ export default function SubscribePage() {
         name: 'RootsTalk',
         description: 'Crop Advisory Subscription',
         order_id: order.razorpay_order_id,
-        prefill: {
-          name: user?.name || '',
-          contact: user?.phone || '',
-        },
+        prefill: { name: user?.name || '', contact: user?.phone || '' },
         theme: { color: '#1A5C2A' },
         handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
@@ -97,10 +241,8 @@ export default function SubscribePage() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_signature: response.razorpay_signature,
             })
-            setStep('done')
-          } catch {
-            setError('Payment verification failed. Contact support.')
-          }
+            setStage('done')
+          } catch { setError('Payment verification failed. Contact support.') }
         },
       }
       new window.Razorpay(options).open()
@@ -110,161 +252,427 @@ export default function SubscribePage() {
     }
   }, [subscription, user])
 
-  async function delegatePayment() {
-    if (!subscription || !delegateTo) return
-    setDelegating(true); setError('')
+  // ── Delegate payment ───────────────────────────────────────────────────────
+  async function sendDelegateRequest() {
+    if (!subscription || !delegatePhone.trim()) return
+    setBusy(true); setError('')
     try {
       await api.post(`/farmer/subscriptions/${subscription.id}/delegate-payment`, {
-        requested_from_user_id: delegateTo,
+        delegate_phone: `+91${delegatePhone.trim()}`,
+        role: delegateRole,
       })
-      setDelegateSuccess(true)
+      setStage('done')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Failed to send delegation request.')
-    } finally { setDelegating(false) }
+      setError(msg || 'Could not send payment request. Check the phone number and try again.')
+    } finally { setBusy(false) }
   }
+
+  // ── Back navigation ────────────────────────────────────────────────────────
+  function goBack() {
+    setError('')
+    if (stage === 'crop') setStage('location')
+    else if (stage === 'company') setStage('crop')
+    else if (stage === 'guided') {
+      // reset guided state and go back to company selection
+      setAnswers('')
+      setSelectedVars([])
+      setGuidedStep(null)
+      setGuidedQuestionIndex(0)
+      setStage('company')
+    }
+    else if (stage === 'confirm') {
+      setAnswers('')
+      setSelectedVars([])
+      setGuidedStep(null)
+      setGuidedQuestionIndex(0)
+      setStage('guided')
+      // Restart guided from beginning
+      selectCompany(company!)
+    }
+    else if (stage === 'payment') setStage('confirm')
+    else if (stage === 'delegate') setStage('payment')
+  }
+
+  // ── Heading by stage ───────────────────────────────────────────────────────
+  const titles: Record<Stage, string> = {
+    location: 'Find advisories',
+    crop: 'Select crop',
+    company: 'Choose company',
+    guided: 'Find your advisory',
+    confirm: 'Your advisory',
+    payment: 'Almost there',
+    delegate: 'Send request',
+    done: 'Subscribed!',
+  }
+
+  const cropDisplay = cropId ? formatCropName(cropId) : ''
 
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="min-h-screen bg-slate-50">
-        <PWAHeader title="Subscribe" activeRole="FARMER" />
-        <div className="pt-16 pb-20 px-4">
+      <div className="min-h-screen bg-stone-50">
 
-          {/* Step: Select Package */}
-          {step === 'select' && (
-            <div className="mt-4 space-y-4">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">Choose Advisory Package</h2>
-                <p className="text-slate-400 text-sm mt-0.5">Select the Package of Practices for your crop</p>
-              </div>
+        {/* Done stage: full-screen green */}
+        {stage === 'done' ? (
+          <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
+            style={{ background: 'linear-gradient(160deg, #065f46, #1A5C2A)' }}>
+            <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6">
+              <span className="text-3xl text-green-700">✓</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white">You&apos;re subscribed!</h1>
+            <p className="text-white/70 mt-2 max-w-[280px]">
+              Your {cropDisplay} advisory from {company?.display_name} is now active.
+            </p>
+            <p className="text-white/50 text-sm mt-3">
+              Set your sowing date to unlock the advisory.
+            </p>
+            <button
+              onClick={() => router.replace('/home')}
+              className="mt-10 py-4 px-10 rounded-2xl font-semibold bg-white"
+              style={{ color: '#1A5C2A' }}>
+              Go to your advisory →
+            </button>
+          </div>
+        ) : (
+          <>
+            <PWAHeader title={titles[stage]} activeRole="FARMER" />
+            <div className="pt-16 pb-24 px-4">
 
-              {loading ? (
-                <div className="h-20 bg-white rounded-2xl animate-pulse" />
-              ) : packages.length === 0 ? (
-                <div className="bg-white rounded-2xl p-6 text-center border border-slate-100">
-                  <p className="text-slate-400 text-sm">No packages available for this company yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {packages.map(pkg => (
-                    <button key={pkg.id} onClick={() => setSelectedPkg(pkg.id)}
-                      className={`w-full text-left rounded-2xl p-4 border-2 transition-all ${selectedPkg === pkg.id ? 'border-green-600 bg-green-50' : 'border-slate-100 bg-white'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${selectedPkg === pkg.id ? 'border-green-600' : 'border-slate-300'}`}>
-                          {selectedPkg === pkg.id && <div className="w-2.5 h-2.5 rounded-full bg-green-600" />}
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-800">{pkg.name}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{pkg.package_type.toLowerCase()} · {pkg.duration_days} days · {pkg.crop_cosh_id}</p>
-                          {pkg.description && <p className="text-xs text-slate-500 mt-1">{pkg.description}</p>}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              {/* Back button */}
+              {stage !== 'location' && (
+                <button onClick={goBack}
+                  className="mt-4 mb-2 flex items-center gap-1 text-stone-500 text-sm">
+                  ← Back
+                </button>
               )}
 
-              {error && <p className="text-sm text-red-600">{error}</p>}
+              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 mt-2 p-5">
+                <ProgressBar stage={stage} />
 
-              <button onClick={createSubscription} disabled={!selectedPkg || subscribing}
-                className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #065f46, #1A5C2A)' }}>
-                {subscribing ? 'Setting up…' : 'Subscribe →'}
-              </button>
-            </div>
-          )}
+                {/* ── STAGE 1: Location ── */}
+                {stage === 'location' && (
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-900">Where is your farm?</h2>
+                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                      We&apos;ll find advisories available in your area
+                    </p>
 
-          {/* Step: Pay Rs. 199 */}
-          {step === 'pay' && subscription && (
-            <div className="mt-4 space-y-4">
-              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-                <div className="text-center mb-5">
-                  <span className="text-4xl">🌱</span>
-                  <p className="font-bold text-slate-900 mt-3">Almost there!</p>
-                  <p className="text-slate-500 text-sm mt-1">Complete payment to activate your advisory</p>
-                </div>
-                <div className="bg-green-50 rounded-xl p-4 mb-4 text-center">
-                  <p className="text-3xl font-bold text-green-800">₹199</p>
-                  <p className="text-green-600 text-sm mt-0.5">One-time annual subscription</p>
-                </div>
-                <ul className="text-sm text-slate-600 space-y-2 mb-5">
-                  {['Daily crop advisory tailored to your location', 'Input recommendations — what to apply and when', 'Direct ordering from your dealer', 'Crop health diagnosis support'].map(f => (
-                    <li key={f} className="flex items-center gap-2">
-                      <span className="text-green-600 shrink-0">✓</span>{f}
-                    </li>
-                  ))}
-                </ul>
-                {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
-                <button onClick={openRazorpay}
-                  className="w-full py-4 rounded-2xl text-white font-bold text-base"
-                  style={{ background: 'linear-gradient(135deg, #065f46, #1A5C2A)' }}>
-                  Pay ₹199 with RazorPay
-                </button>
-              </div>
+                    {/* Pre-filled chip */}
+                    {districtName && (
+                      <button
+                        onClick={() => { setDistrict(districtName); setError('') }}
+                        className="mb-4 flex items-center gap-2 px-3 py-2 rounded-xl border border-green-200 bg-green-50 text-sm text-green-800 w-full text-left">
+                        <span className="text-green-600">📍</span>
+                        <span>Use my location: <strong>{districtName.replace(/_/g, ' ')}</strong>
+                          {stateName ? `, ${stateName.replace(/_/g, ' ')}` : ''}</span>
+                      </button>
+                    )}
 
-              <div className="bg-white rounded-2xl p-4 border border-slate-100">
-                <p className="font-medium text-slate-700 text-sm mb-3">Can't pay now?</p>
-                <button onClick={() => setStep('delegate')}
-                  className="w-full py-3 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50">
-                  Ask my dealer or facilitator to pay →
-                </button>
-              </div>
-            </div>
-          )}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-stone-500 font-medium mb-1 block">State</label>
+                        <input
+                          value={stateName}
+                          onChange={e => setStateName(e.target.value)}
+                          placeholder="e.g. odisha"
+                          className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-stone-500 font-medium mb-1 block">District</label>
+                        <input
+                          value={district}
+                          onChange={e => setDistrict(e.target.value)}
+                          placeholder="e.g. cuttack"
+                          className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                      </div>
+                    </div>
 
-          {/* Step: Delegate payment */}
-          {step === 'delegate' && subscription && (
-            <div className="mt-4 space-y-4">
-              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
-                <h2 className="font-bold text-slate-900 mb-1">Ask someone to pay</h2>
-                <p className="text-slate-400 text-sm mb-4">
-                  Enter the phone number of your dealer or facilitator. They will receive a payment request and can pay Rs. 199 on your behalf.
-                </p>
-                {delegateSuccess ? (
-                  <div className="text-center py-4">
-                    <span className="text-3xl">✅</span>
-                    <p className="font-medium text-slate-800 mt-3">Payment request sent</p>
-                    <p className="text-slate-400 text-sm mt-1">Your dealer/facilitator will be notified and can pay via their app.</p>
-                  </div>
-                ) : (
-                  <>
-                    <input value={delegateTo} onChange={e => setDelegateTo(e.target.value)}
-                      placeholder="Dealer/Facilitator User ID or phone"
-                      className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 mb-3 font-mono" />
-                    {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
-                    <button onClick={delegatePayment} disabled={!delegateTo || delegating}
-                      className="w-full py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
+                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+
+                    <button
+                      onClick={proceedFromLocation}
+                      disabled={busy || !district.trim()}
+                      className="mt-5 w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                       style={{ background: '#1A5C2A' }}>
-                      {delegating ? 'Sending…' : 'Send Payment Request'}
+                      {busy ? 'Loading…' : 'Find advisories →'}
                     </button>
-                    <button onClick={() => setStep('pay')}
-                      className="w-full mt-2 py-3 rounded-xl text-slate-500 text-sm">
-                      ← Back to pay myself
+                  </div>
+                )}
+
+                {/* ── STAGE 2: Crop Selection ── */}
+                {stage === 'crop' && (
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-900">Select your crop</h2>
+                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                      Advisories available in your area
+                    </p>
+
+                    {crops.length === 0 ? (
+                      <div className="text-center py-10">
+                        <p className="text-stone-400 text-sm">
+                          No advisories are available in your area yet. Check back soon.
+                        </p>
+                        <button onClick={() => setStage('location')}
+                          className="mt-4 text-green-700 text-sm font-medium">
+                          ← Change location
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {crops.map(c => (
+                          <button
+                            key={c.crop_cosh_id}
+                            onClick={() => selectCrop(c.crop_cosh_id)}
+                            className="w-full text-left px-4 py-4 rounded-2xl border-2 border-stone-100 hover:border-green-200 hover:bg-green-50 transition-all active:scale-[0.98]">
+                            <p className="font-medium text-stone-800">{formatCropName(c.crop_cosh_id)}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                    {busy && <div className="h-12 bg-stone-50 rounded-2xl animate-pulse mt-2" />}
+                  </div>
+                )}
+
+                {/* ── STAGE 3: Company Selection ── */}
+                {stage === 'company' && (
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-900">Choose a company</h2>
+                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                      Companies offering {cropDisplay} advisories in your area
+                    </p>
+
+                    {busy ? (
+                      <div className="space-y-3">
+                        {[1, 2].map(i => <div key={i} className="h-20 bg-stone-50 rounded-2xl animate-pulse" />)}
+                      </div>
+                    ) : companies.length === 0 ? (
+                      <div className="text-center py-10">
+                        <p className="text-stone-400 text-sm">
+                          No company is offering an advisory for this crop in your area yet.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {companies.map(c => (
+                          <div key={c.id}
+                            className="rounded-2xl overflow-hidden border border-stone-100 shadow-sm">
+                            <CompanyLogo company={c} />
+                            {c.tagline && (
+                              <p className="text-stone-500 text-sm px-4 py-2">{c.tagline}</p>
+                            )}
+                            <div className="px-4 pb-4 pt-1">
+                              <button
+                                onClick={() => selectCompany(c)}
+                                className="w-full py-3 rounded-xl text-white text-sm font-semibold"
+                                style={{ background: c.primary_colour || '#1A5C2A' }}>
+                                Explore advisory →
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                  </div>
+                )}
+
+                {/* ── STAGE 4: Guided PoP Questions ── */}
+                {stage === 'guided' && (
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-900">
+                      {guidedQuestionIndex === 0 ? 'Tell us about your farm' : 'One more thing'}
+                    </h2>
+                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                      We&apos;ll find the right advisory for you
+                    </p>
+
+                    {busy ? (
+                      <div className="space-y-3">
+                        <div className="h-6 w-2/3 bg-stone-50 rounded animate-pulse" />
+                        <div className="grid grid-cols-2 gap-3">
+                          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-stone-50 rounded-2xl animate-pulse" />)}
+                        </div>
+                      </div>
+                    ) : guidedStep && !guidedStep.done && guidedStep.parameter ? (
+                      <div>
+                        {guidedStep.remaining_count != null && (
+                          <p className="text-xs text-stone-400 mb-2">
+                            Narrowing from {guidedStep.remaining_count} options
+                          </p>
+                        )}
+                        <p className="text-stone-800 font-semibold text-lg mb-4">
+                          {guidedStep.parameter.name}
+                        </p>
+                        <div className="grid grid-cols-2 gap-3">
+                          {(guidedStep.variables || []).map(v => (
+                            <button
+                              key={v.id}
+                              onClick={() => selectVariable(guidedStep.parameter!.id, v.id, guidedStep.parameter!.name, v.name)}
+                              className="py-4 px-3 rounded-2xl border-2 border-stone-100 text-center text-sm font-medium text-stone-700 hover:border-green-400 hover:bg-green-50 transition-all active:scale-[0.97]">
+                              {v.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : guidedStep?.error ? (
+                      <div className="text-center py-8">
+                        <p className="text-red-500 text-sm">{guidedStep.error}</p>
+                        <button onClick={() => setStage('company')}
+                          className="mt-4 text-green-700 text-sm font-medium">
+                          ← Choose a different company
+                        </button>
+                      </div>
+                    ) : null}
+
+                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                  </div>
+                )}
+
+                {/* ── STAGE 5: Confirmation ── */}
+                {stage === 'confirm' && company && (
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-900">Your advisory</h2>
+                    <p className="text-stone-400 text-sm mt-0.5 mb-5">Based on your answers</p>
+
+                    <div className="rounded-2xl overflow-hidden border border-stone-100 mb-5">
+                      <CompanyLogo company={company} />
+                      <div className="p-4">
+                        <p className="font-semibold text-stone-800 text-base mb-3">
+                          {cropDisplay} advisory
+                        </p>
+                        {selectedVars.map((sv, i) => (
+                          <p key={i} className="text-sm text-stone-600 mb-1">
+                            • {sv.paramName}: <span className="font-medium">{sv.varName}</span>
+                          </p>
+                        ))}
+                        <div className="mt-4 pt-4 border-t border-stone-100 flex items-center justify-between">
+                          <span className="text-stone-500 text-sm">Subscription price</span>
+                          <span className="text-stone-900 font-bold text-lg">Rs. 199</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+
+                    <button
+                      onClick={proceedToPayment}
+                      disabled={busy}
+                      className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                      style={{ background: '#1A5C2A' }}>
+                      {busy ? 'Setting up…' : 'Looks right — proceed to payment →'}
                     </button>
-                  </>
+                    <button
+                      onClick={goBack}
+                      className="w-full mt-2 py-3 rounded-2xl text-stone-500 text-sm">
+                      Go back and change answers
+                    </button>
+                  </div>
+                )}
+
+                {/* ── STAGE 6: Payment ── */}
+                {stage === 'payment' && subscription && (
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-900">Almost there!</h2>
+                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                      Choose how to pay for your advisory
+                    </p>
+
+                    <div className="space-y-3">
+                      {/* Pay yourself */}
+                      <div className="rounded-2xl border-2 border-stone-100 p-4">
+                        <p className="font-semibold text-stone-800">Pay Rs. 199 now</p>
+                        <p className="text-stone-400 text-sm mt-0.5 mb-3">
+                          Instant activation after payment
+                        </p>
+                        <button
+                          onClick={openRazorpay}
+                          className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
+                          style={{ background: '#1A5C2A' }}>
+                          Pay with UPI →
+                        </button>
+                      </div>
+
+                      {/* Ask a dealer */}
+                      <div className="rounded-2xl border-2 border-stone-100 p-4">
+                        <p className="font-semibold text-stone-800">Ask a dealer to pay</p>
+                        <p className="text-stone-400 text-sm mt-0.5 mb-3">
+                          They become your Promoter and receive your order alerts
+                        </p>
+                        <button
+                          onClick={() => { setDelegateRole('DEALER'); setStage('delegate') }}
+                          className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
+                          style={{ background: '#1A5C2A' }}>
+                          Select dealer →
+                        </button>
+                      </div>
+
+                      {/* Ask a facilitator */}
+                      <div className="rounded-2xl border-2 border-stone-100 p-4">
+                        <p className="font-semibold text-stone-800">Ask a facilitator to pay</p>
+                        <p className="text-stone-400 text-sm mt-0.5 mb-3">
+                          They coordinate delivery and become your Promoter
+                        </p>
+                        <button
+                          onClick={() => { setDelegateRole('FACILITATOR'); setStage('delegate') }}
+                          className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
+                          style={{ background: '#1A5C2A' }}>
+                          Select facilitator →
+                        </button>
+                      </div>
+                    </div>
+
+                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                  </div>
+                )}
+
+                {/* ── STAGE 7: Delegate payment ── */}
+                {stage === 'delegate' && subscription && (
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-900">Send payment request</h2>
+                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                      Enter the {delegateRole === 'DEALER' ? 'dealer' : 'facilitator'}&apos;s phone number
+                    </p>
+
+                    <div className="flex items-center border border-stone-200 rounded-xl overflow-hidden mb-3">
+                      <span className="px-4 py-3 bg-stone-50 text-stone-500 text-sm font-mono border-r border-stone-200">
+                        +91
+                      </span>
+                      <input
+                        value={delegatePhone}
+                        onChange={e => setDelegatePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="10-digit mobile number"
+                        inputMode="numeric"
+                        className="flex-1 px-4 py-3 text-sm focus:outline-none font-mono"
+                      />
+                    </div>
+
+                    {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+
+                    <button
+                      onClick={sendDelegateRequest}
+                      disabled={busy || delegatePhone.length < 10}
+                      className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                      style={{ background: '#1A5C2A' }}>
+                      {busy ? 'Sending…' : `Send to ${delegateRole === 'DEALER' ? 'dealer' : 'facilitator'} →`}
+                    </button>
+
+                    <button
+                      onClick={() => setStage('payment')}
+                      className="w-full mt-2 py-3 rounded-2xl text-stone-500 text-sm">
+                      Pay myself instead
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
-          )}
-
-          {/* Step: Done */}
-          {step === 'done' && (
-            <div className="mt-12 text-center px-4">
-              <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5"
-                style={{ background: '#dcfce7' }}>
-                <span className="text-4xl">🌾</span>
-              </div>
-              <h2 className="text-2xl font-bold text-slate-900">You're subscribed!</h2>
-              <p className="text-slate-500 mt-2">Your advisory is now active. Set your sowing date to start receiving daily recommendations.</p>
-              <button onClick={() => router.replace('/home')}
-                className="mt-8 w-full py-4 rounded-2xl text-white font-semibold"
-                style={{ background: 'linear-gradient(135deg, #065f46, #1A5C2A)' }}>
-                Go to Home →
-              </button>
-            </div>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </>
   )
