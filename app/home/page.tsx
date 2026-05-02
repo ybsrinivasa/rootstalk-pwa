@@ -92,7 +92,7 @@ export default function HomePage() {
               const hasStartDate = !!sub.crop_start_date
               return (
                 <button key={sub.id}
-                  onClick={() => router.push(`/advisory/${sub.id}`)}
+                  onClick={() => router.push(`/crop-detail/${sub.id}`)}
                   className="w-full mb-3 rounded-2xl overflow-hidden border border-slate-100 shadow-sm active:scale-98 transition-transform text-left">
                   {/* Branded header */}
                   <div className="px-4 py-3 flex items-center justify-between"

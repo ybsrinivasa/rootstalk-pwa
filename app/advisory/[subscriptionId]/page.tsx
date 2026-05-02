@@ -93,22 +93,18 @@ export default function AdvisoryPage() {
     } finally { setAnsweringQuestion(null) }
   }
 
-  async function orderPractice(practiceId: string) {
+  function orderPractice(practiceId: string, orderType = 'PESTICIDE') {
+    router.push(`/order/new/${subscriptionId}?practice_ids=${practiceId}&order_type=${orderType}`)
+  }
+
+  function buyAll(l1Filter: string, orderType: string) {
     if (!advisory) return
-    setOrderingPractice(practiceId)
-    try {
-      const today = new Date().toISOString()
-      await api.post('/farmer/orders', {
-        subscription_id: subscriptionId,
-        client_id: advisory.client_id,
-        date_from: today,
-        date_to: today,
-        practice_ids: [practiceId],
-      })
-      setOrderSuccess(practiceId)
-      setTimeout(() => setOrderSuccess(''), 3000)
-    } catch { /* show inline */ }
-    finally { setOrderingPractice(null) }
+    const ids = advisory.timelines
+      .flatMap(tl => tl.practices || [])
+      .filter(p => p.l0_type === 'INPUT' && (p.l1_type || '').toLowerCase().includes(l1Filter))
+      .map(p => p.id)
+    if (ids.length === 0) return
+    router.push(`/order/new/${subscriptionId}?practice_ids=${ids.join(',')}&order_type=${orderType}`)
   }
 
   if (loading) return (
@@ -157,6 +153,30 @@ export default function AdvisoryPage() {
                 <p className="text-xs font-mono text-slate-600">{advisory.reference_number || '—'}</p>
               </div>
             </div>
+
+            {/* Buy all bulk buttons */}
+            {advisory.timelines.length > 0 && (() => {
+              const allPractices = advisory.timelines.flatMap(tl => tl.practices || [])
+              const hasPest = allPractices.some(p => p.l0_type === 'INPUT' && (p.l1_type || '').toLowerCase().includes('pest'))
+              const hasFert = allPractices.some(p => p.l0_type === 'INPUT' && (p.l1_type || '').toLowerCase().includes('fert'))
+              if (!hasPest && !hasFert) return null
+              return (
+                <div className="flex gap-2">
+                  {hasPest && (
+                    <button onClick={() => buyAll('pest', 'PESTICIDE')}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                      Buy all Pesticides
+                    </button>
+                  )}
+                  {hasFert && (
+                    <button onClick={() => buyAll('fert', 'FERTILISER')}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                      Buy all Fertilisers
+                    </button>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* No active timelines today */}
             {advisory.timelines.length === 0 && (
