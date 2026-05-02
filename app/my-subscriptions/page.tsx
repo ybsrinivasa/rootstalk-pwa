@@ -45,7 +45,7 @@ export default function MySubscriptionsPage() {
 
       const ids = [...new Set(subs.map(s => s.client_id))]
       const brandResults = await Promise.allSettled(
-        ids.map(id => api.get<Branding>(`/portal/${id}/branding`).then(r => ({ id, data: r.data })))
+        ids.map(id => api.get<Branding>(`/client/${id}/info`).then(r => ({ id, data: r.data })))
       )
       const m: Record<string, Branding> = {}
       brandResults.forEach(r => { if (r.status === 'fulfilled') m[r.value.id] = r.value.data })

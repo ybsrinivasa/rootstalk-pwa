@@ -24,7 +24,7 @@ export default function HistoryPage() {
       setSubscriptions(r.data)
       const ids = [...new Set(r.data.map(s => s.client_id))]
       const results = await Promise.allSettled(ids.map(id =>
-        api.get<Branding>(`/portal/${id}/branding`).then(res => ({ id, data: res.data }))
+        api.get<Branding>(`/client/${id}/info`).then(res => ({ id, data: res.data }))
       ))
       const m: Record<string, Branding> = {}
       results.forEach(res => { if (res.status === 'fulfilled') m[res.value.id] = res.value.data })
