@@ -1,9 +1,13 @@
 'use client'
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, useRef, FormEvent } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+
+interface StandardResponse {
+  id: string; title: string; response_text: string
+}
 
 interface QueryDetail {
   id: string; title: string; description: string | null; severity: string
@@ -46,6 +50,38 @@ export default function PunditQueryDetailPage() {
   const [rejecting, setRejecting] = useState(false)
   const [rejectRemarks, setRejectRemarks] = useState('')
   const [rejectError, setRejectError] = useState('')
+
+  // Standard responses
+  const [showStdPicker, setShowStdPicker] = useState(false)
+  const [stdSearch, setStdSearch] = useState('')
+  const [stdResults, setStdResults] = useState<StandardResponse[]>([])
+  const [stdLoading, setStdLoading] = useState(false)
+  const stdSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function openStdPicker() {
+    setShowStdPicker(true)
+    setStdSearch('')
+    setStdResults([])
+  }
+
+  function onStdSearchChange(value: string) {
+    setStdSearch(value)
+    if (stdSearchTimeout.current) clearTimeout(stdSearchTimeout.current)
+    stdSearchTimeout.current = setTimeout(async () => {
+      setStdLoading(true)
+      try {
+        const { data } = await api.get<StandardResponse[]>(`/pundit/standard-responses?q=${encodeURIComponent(value)}`)
+        setStdResults(data)
+      } finally { setStdLoading(false) }
+    }, 300)
+  }
+
+  function insertStdResponse(text: string) {
+    setRespondForm(f => ({ ...f, text: f.text ? f.text + '\n\n' + text : text }))
+    setShowStdPicker(false)
+    setStdSearch('')
+    setStdResults([])
+  }
 
   const load = async () => {
     try {
@@ -125,7 +161,7 @@ export default function PunditQueryDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <PWAHeader title="Query" activeRole="FARMER" />
+      <PWAHeader title="Query" activeRole="FARM_PUNDIT" />
       <div className="pt-16 pb-28 px-4 space-y-4">
         {/* Header card */}
         <div className="bg-white rounded-2xl p-4 border border-slate-100 mt-4">
@@ -252,7 +288,13 @@ export default function PunditQueryDetailPage() {
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Your Advice</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-slate-700">Your Advice</label>
+                  <button type="button" onClick={openStdPicker}
+                    className="text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+                    Browse standard responses
+                  </button>
+                </div>
                 <textarea value={respondForm.text}
                   onChange={e => setRespondForm(f => ({ ...f, text: e.target.value }))}
                   rows={5} placeholder="Write your detailed recommendation here…"
@@ -366,6 +408,47 @@ export default function PunditQueryDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Standard Responses Picker */}
+      {showStdPicker && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40">
+          <div className="bg-white rounded-t-3xl w-full max-h-[80vh] flex flex-col">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-bold text-slate-900">Standard Responses</h2>
+              <button onClick={() => { setShowStdPicker(false); setStdSearch(''); setStdResults([]) }}
+                className="w-7 h-7 flex items-center justify-center text-slate-400 text-xl">×</button>
+            </div>
+            <div className="px-5 pt-4 pb-2">
+              <input
+                value={stdSearch}
+                onChange={e => onStdSearchChange(e.target.value)}
+                placeholder="Search responses…"
+                autoFocus
+                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#3C3489]"
+              />
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 pb-8">
+              {stdLoading ? (
+                <div className="h-12 bg-slate-50 rounded-xl animate-pulse mt-3" />
+              ) : stdResults.length === 0 && stdSearch.length > 0 ? (
+                <p className="text-slate-400 text-sm text-center py-8">No results for &ldquo;{stdSearch}&rdquo;</p>
+              ) : stdResults.length === 0 ? (
+                <p className="text-slate-400 text-sm text-center py-8">Type to search saved responses</p>
+              ) : (
+                <div className="space-y-2 mt-3">
+                  {stdResults.map(r => (
+                    <button key={r.id} onClick={() => insertStdResponse(r.response_text)}
+                      className="w-full bg-white border border-slate-200 rounded-xl p-4 text-left hover:border-[#3C3489] transition-colors active:scale-[0.99]">
+                      <p className="text-sm font-medium text-slate-800 mb-1">{r.title}</p>
+                      <p className="text-xs text-slate-500 line-clamp-2">{r.response_text}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -11,11 +11,13 @@ export default function PWAHeader({
   title = 'rootsTALK',
   onRoleSwitch,
   customColour,
+  urgencyBadges,
 }: {
   activeRole?: string
   title?: string
   onRoleSwitch?: () => void
   customColour?: string
+  urgencyBadges?: { new: number; pending: number; returned: number }
 }) {
   const user = getUser()
   const [showLang, setShowLang] = useState(false)
@@ -40,9 +42,18 @@ export default function PWAHeader({
     <>
       <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 safe-area-top"
         style={{ background: colour }}>
-        <div>
-          <p className="text-white font-semibold text-base leading-tight">{title}</p>
-          {roleLabel && <p className="text-white text-xs opacity-70">{roleLabel}</p>}
+        <div className="flex items-center">
+          <div>
+            <p className="text-white font-semibold text-base leading-tight">{title}</p>
+            {roleLabel && <p className="text-white text-xs opacity-70">{roleLabel}</p>}
+          </div>
+          {urgencyBadges && (
+            <div className="flex items-center gap-2 ml-3">
+              <span className="text-white text-sm font-bold">{urgencyBadges.new}</span>
+              <span className="text-amber-300 text-sm font-bold">{urgencyBadges.pending}</span>
+              <span className="text-red-400 text-sm font-bold">{urgencyBadges.returned}</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setShowLang(!showLang)}
