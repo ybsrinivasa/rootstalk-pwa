@@ -347,9 +347,14 @@ export default function RootPage() {
         <p className="text-stone-400 text-xs text-center mt-3 tracking-wide">
           For farmers · dealers · facilitators · experts
         </p>
-        <p className="text-stone-300 text-[10px] text-center mt-5 font-light">
-          Neytiri Eywafarm Agritech Pvt Ltd
-        </p>
+        <div className="flex items-center justify-center gap-3 mt-5">
+          <p className="text-stone-300 text-[10px] font-light">Neytiri Eywafarm Agritech Pvt Ltd</p>
+          <span className="text-stone-200 text-[10px]">·</span>
+          <button onClick={() => router.push('/privacy-policy')}
+            className="text-stone-400 text-[10px] underline">
+            Privacy Policy
+          </button>
+        </div>
       </div>
     </div>
   )

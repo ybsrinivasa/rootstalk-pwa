@@ -1,17 +1,19 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken, getUser, getActiveRoles, logout, ROLE_COLOURS, ROLE_LABELS } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
-interface Subscription { id: string; status: string; package_id: string }
+interface Subscription { id: string; status: string; package_id: string; client_id?: string; client_name?: string }
 
 export default function ProfilePage() {
   const router = useRouter()
   const user = getUser()
   const roles = getActiveRoles(user)
+  const pwaRoles = user?.pwa_roles || []
+
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [alertPref, setAlertPref] = useState<Record<string, { send_to_self: boolean; promoter_user_id: string }>>({})
   const [savingAlert, setSavingAlert] = useState<string | null>(null)
@@ -35,6 +37,16 @@ export default function ProfilePage() {
   const [languages, setLanguages] = useState<{ language_code: string; language_name_native: string }[]>([])
   const [currentLang, setCurrentLang] = useState(user?.language_code || 'en')
 
+  // About sheet
+  const [showAboutSheet, setShowAboutSheet] = useState(false)
+
+  // Delete account flow
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'otp'>('idle')
+  const [deleteOtp, setDeleteOtp] = useState('')
+  const [deleteDevOtp, setDeleteDevOtp] = useState('')
+  const [deleteBusy, setDeleteBusy] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     api.get<Subscription[]>('/farmer/my-subscriptions')
@@ -49,7 +61,6 @@ export default function ProfilePage() {
     try {
       await api.put('/auth/me/profile', { name: nameValue.trim() })
       setEditingName(false)
-      // Update cached user
       const u = getUser()
       if (u) {
         u.name = nameValue.trim()
@@ -111,138 +122,152 @@ export default function ProfilePage() {
     } finally { setSavingAlert(null) }
   }
 
+  async function requestDeleteOtp() {
+    setDeleteBusy(true)
+    setDeleteError('')
+    try {
+      const res = await api.post('/auth/me/request-delete-otp', {})
+      if (res.data?.dev_otp) setDeleteDevOtp(res.data.dev_otp)
+      setDeleteStep('otp')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setDeleteError(msg || 'Could not send OTP. Please try again.')
+    } finally {
+      setDeleteBusy(false)
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deleteOtp.trim()) return
+    setDeleteBusy(true)
+    setDeleteError('')
+    try {
+      await api.post('/auth/me/confirm-delete', { otp_code: deleteOtp.trim() })
+      logout()
+      router.replace('/')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setDeleteError(msg || 'Invalid or expired OTP.')
+      setDeleteBusy(false)
+    }
+  }
+
+  const isFarmer = roles.includes('FARMER') || subscriptions.length > 0
+  const isDealer = pwaRoles.includes('DEALER') || roles.includes('DEALER')
+  const isFacilitator = pwaRoles.includes('FACILITATOR') || roles.includes('FACILITATOR')
+  const isFarmPundit = pwaRoles.includes('FARM_PUNDIT') || roles.includes('FARM_PUNDIT')
+
   return (
     <div className="min-h-screen bg-slate-50">
       <PWAHeader title="Profile" activeRole="FARMER" />
       <div className="pt-16 pb-20 px-4">
 
-        {/* User card */}
+        {/* ── Hero user card ── */}
         <div className="bg-white rounded-2xl p-5 mt-4 border border-slate-100 shadow-sm">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold"
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0"
               style={{ background: 'linear-gradient(135deg, #065f46, #059669)' }}>
               {(user?.name || user?.phone || 'U')[0].toUpperCase()}
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {editingName ? (
                 <div className="flex items-center gap-2">
                   <input
                     value={nameValue}
                     onChange={e => setNameValue(e.target.value)}
                     autoFocus
-                    className="flex-1 border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+                    className="flex-1 min-w-0 border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
                   />
                   <button onClick={saveName} disabled={savingName}
-                    className="text-xs text-white bg-[#1A5C2A] rounded-lg px-3 py-1.5 font-medium disabled:opacity-50">
+                    className="text-xs text-white bg-[#1A5C2A] rounded-lg px-3 py-1.5 font-medium disabled:opacity-50 shrink-0">
                     {savingName ? '…' : 'Save'}
                   </button>
                   <button onClick={() => { setEditingName(false); setNameValue(user?.name || '') }}
-                    className="text-xs text-slate-400 rounded-lg px-2 py-1.5">
+                    className="text-xs text-slate-400 rounded-lg px-2 py-1.5 shrink-0">
                     Cancel
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-slate-900">{user?.name || 'No name set'}</p>
+                  <p className="font-semibold text-slate-900 truncate">{user?.name || 'No name set'}</p>
                   <button onClick={() => { setEditingName(true); setNameValue(user?.name || '') }}
-                    className="text-xs text-slate-400 underline">
+                    className="text-xs text-slate-400 underline shrink-0">
                     Edit
                   </button>
                 </div>
               )}
               <p className="text-slate-400 text-sm mt-0.5">{user?.phone}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Location</p>
-            {!editingLocation && (
-              <button onClick={() => setEditingLocation(true)}
-                className="text-xs text-slate-400 underline">
-                Edit
-              </button>
-            )}
-          </div>
-          {editingLocation ? (
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">State code</label>
-                <input value={stateValue} onChange={e => setStateValue(e.target.value)}
-                  placeholder="e.g. KA"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">District code</label>
-                <input value={districtValue} onChange={e => setDistrictValue(e.target.value)}
-                  placeholder="e.g. BLR"
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={saveLocation} disabled={savingLocation}
-                  className="flex-1 py-2 text-white text-xs font-medium rounded-xl disabled:opacity-50"
-                  style={{ background: '#1A5C2A' }}>
-                  {savingLocation ? 'Saving…' : 'Save'}
-                </button>
-                <button onClick={() => setEditingLocation(false)}
-                  className="px-4 py-2 text-xs text-slate-400 border border-slate-200 rounded-xl">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm text-slate-600 space-y-1">
-              <p>State: <span className="font-medium">{user && (user as any).state_cosh_id || '—'}</span></p>
-              <p>District: <span className="font-medium">{user && (user as any).district_cosh_id || '—'}</span></p>
-            </div>
-          )}
-        </div>
-
-        {/* GPS */}
-        <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">GPS Location</p>
-          {gpsLat !== null && gpsLng !== null ? (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 font-mono">{gpsLat.toFixed(6)}, {gpsLng.toFixed(6)}</p>
-                <p className="text-xs text-[#1A5C2A] mt-0.5">Captured</p>
-              </div>
-              <button onClick={captureGps} disabled={gpsLoading}
-                className="text-xs text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">
-                {gpsLoading ? 'Getting…' : 'Recapture'}
-              </button>
-            </div>
-          ) : (
-            <button onClick={captureGps} disabled={gpsLoading}
-              className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-sm text-slate-500 font-medium flex items-center justify-center gap-2">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
-              </svg>
-              {gpsLoading ? 'Getting location…' : 'Capture GPS Location'}
-            </button>
-          )}
-        </div>
-
-        {/* Language */}
-        <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Language</p>
-              <p className="text-sm text-slate-700 font-medium">
-                {languages.find(l => l.language_code === currentLang)?.language_name_native || currentLang.toUpperCase()}
+              <p className="text-slate-400 text-xs mt-0.5">
+                {[(user as { state_cosh_id?: string } | null)?.state_cosh_id, (user as { district_cosh_id?: string } | null)?.district_cosh_id].filter(Boolean).join(', ') || 'Location not set'}
               </p>
             </div>
-            <button onClick={() => setShowLangSheet(true)}
-              className="text-xs text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">
-              Change
-            </button>
+          </div>
+
+          {/* Edit profile section */}
+          <div className="border-t border-slate-50 pt-3 space-y-3">
+            {/* Location */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Location</p>
+                {!editingLocation && (
+                  <button onClick={() => setEditingLocation(true)}
+                    className="text-xs text-slate-400 underline">
+                    Edit
+                  </button>
+                )}
+              </div>
+              {editingLocation ? (
+                <div className="space-y-2">
+                  <input value={stateValue} onChange={e => setStateValue(e.target.value)}
+                    placeholder="State code e.g. KA"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
+                  <input value={districtValue} onChange={e => setDistrictValue(e.target.value)}
+                    placeholder="District code e.g. BLR"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
+                  <div className="flex gap-2">
+                    <button onClick={saveLocation} disabled={savingLocation}
+                      className="flex-1 py-2 text-white text-xs font-medium rounded-xl disabled:opacity-50"
+                      style={{ background: '#1A5C2A' }}>
+                      {savingLocation ? 'Saving…' : 'Save'}
+                    </button>
+                    <button onClick={() => setEditingLocation(false)}
+                      className="px-4 py-2 text-xs text-slate-400 border border-slate-200 rounded-xl">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            {/* GPS */}
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">GPS Location</p>
+              {gpsLat !== null && gpsLng !== null ? (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-500 font-mono">{gpsLat.toFixed(6)}, {gpsLng.toFixed(6)}</p>
+                    <p className="text-xs text-[#1A5C2A] mt-0.5">Captured</p>
+                  </div>
+                  <button onClick={captureGps} disabled={gpsLoading}
+                    className="text-xs text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">
+                    {gpsLoading ? 'Getting…' : 'Recapture'}
+                  </button>
+                </div>
+              ) : (
+                <button onClick={captureGps} disabled={gpsLoading}
+                  className="w-full py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-xs text-slate-500 font-medium flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+                  </svg>
+                  {gpsLoading ? 'Getting location…' : 'Capture GPS Location'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* My Roles — tap to switch context */}
+        {/* ── MY ROLES ── */}
         <div className="mt-5">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">My Roles — tap to open</p>
           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
@@ -272,54 +297,219 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Alert Preferences (Farmer only) */}
-        {subscriptions.length > 0 && (
+        {/* ── CROPS & COMPANIES ── */}
+        {(isFarmer || isDealer || isFacilitator || isFarmPundit) && (
           <div className="mt-5">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">Alert Preferences</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">Crops &amp; Companies</p>
             <div className="space-y-3">
-              {subscriptions.map(sub => (
-                <div key={sub.id} className="bg-white rounded-2xl p-4 border border-slate-100">
-                  <p className="text-xs text-slate-500 font-mono mb-3">{sub.id.slice(0, 12)}…</p>
-                  <label className="flex items-center gap-3 cursor-pointer mb-3">
-                    <input type="checkbox"
-                      checked={alertPref[sub.id]?.send_to_self !== false}
-                      onChange={e => setAlertPref(p => ({
-                        ...p,
-                        [sub.id]: { ...(p[sub.id] || {}), send_to_self: e.target.checked, promoter_user_id: p[sub.id]?.promoter_user_id || '' }
-                      }))}
-                      className="w-4 h-4 rounded" />
-                    <span className="text-sm text-slate-700">Send alerts to my phone</span>
-                  </label>
-                  <div className="mb-3">
-                    <label className="block text-xs text-slate-500 mb-1">Also alert my promoter (user ID, optional)</label>
-                    <input
-                      value={alertPref[sub.id]?.promoter_user_id || ''}
-                      onChange={e => setAlertPref(p => ({
-                        ...p,
-                        [sub.id]: { ...(p[sub.id] || { send_to_self: true }), promoter_user_id: e.target.value }
-                      }))}
-                      placeholder="Dealer or facilitator user ID"
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none" />
-                  </div>
-                  <button onClick={() => saveAlertPref(sub.id)} disabled={savingAlert === sub.id}
-                    className="w-full py-2.5 rounded-xl text-white text-xs font-semibold disabled:opacity-50"
-                    style={{ background: '#1A5C2A' }}>
-                    {alertSuccess === sub.id ? '✓ Saved' : savingAlert === sub.id ? 'Saving…' : 'Save Preferences'}
-                  </button>
+
+              {/* Farmer subscriptions */}
+              {isFarmer && (
+                <div>
+                  {subscriptions.length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-xs text-slate-500 px-1 mb-2">Your Advisory Subscriptions</p>
+                      {subscriptions.map(sub => (
+                        <div key={sub.id} className="bg-white rounded-2xl p-4 border border-stone-200 flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-slate-500 font-mono">{sub.id.slice(0, 12)}…</p>
+                            {sub.client_name && <p className="text-sm font-medium text-slate-700 mt-0.5">{sub.client_name}</p>}
+                          </div>
+                          <span className="text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full">
+                            {sub.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-2xl p-4 border border-stone-200">
+                      <p className="text-sm text-slate-400">No advisory subscriptions yet. Tap Subscribe on the home screen.</p>
+                    </div>
+                  )}
                 </div>
-              ))}
+              )}
+
+              {/* Dealer */}
+              {isDealer && (
+                <button onClick={() => router.push('/dealer/dealerships')}
+                  className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#08504120' }}>
+                      <div className="w-3 h-3 rounded-full" style={{ background: '#085041' }} />
+                    </div>
+                    <span className="text-sm font-medium text-slate-800">Manage my dealerships</span>
+                  </div>
+                  <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              )}
+
+              {/* Facilitator */}
+              {isFacilitator && (
+                <button onClick={() => router.push('/facilitator/promoted-farmers')}
+                  className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#7D4E0020' }}>
+                      <div className="w-3 h-3 rounded-full" style={{ background: '#7D4E00' }} />
+                    </div>
+                    <span className="text-sm font-medium text-slate-800">View my companies</span>
+                  </div>
+                  <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              )}
+
+              {/* FarmPundit */}
+              {isFarmPundit && (
+                <button onClick={() => router.push('/pundit/home')}
+                  className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#3C348920' }}>
+                      <div className="w-3 h-3 rounded-full" style={{ background: '#3C3489' }} />
+                    </div>
+                    <span className="text-sm font-medium text-slate-800">View my expert companies</span>
+                  </div>
+                  <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         )}
 
-        {/* My Subscriptions link */}
-        <button onClick={() => router.push('/my-subscriptions')}
-          className="w-full mt-5 py-3.5 bg-white border border-slate-100 text-slate-700 rounded-2xl text-sm font-medium flex items-center justify-between px-4 shadow-sm">
-          <span>My Subscriptions</span>
-          <span className="text-slate-300">›</span>
-        </button>
+        {/* ── PREFERENCES ── */}
+        <div className="mt-5">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">Preferences</p>
+          <div className="space-y-3">
 
-        {/* Sign out */}
+            {/* Language */}
+            <div className="bg-white rounded-2xl border border-slate-100 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Language</p>
+                  <p className="text-sm text-slate-700 font-medium">
+                    {languages.find(l => l.language_code === currentLang)?.language_name_native || currentLang.toUpperCase()}
+                  </p>
+                </div>
+                <button onClick={() => setShowLangSheet(true)}
+                  className="text-xs text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">
+                  Change
+                </button>
+              </div>
+            </div>
+
+            {/* Alert Preferences (Farmer only, when subscriptions exist) */}
+            {subscriptions.length > 0 && (
+              <div className="bg-white rounded-2xl border border-slate-100 p-4">
+                <p className="text-xs text-slate-400 uppercase tracking-wide mb-3">Alert Preferences</p>
+                <div className="space-y-3">
+                  {subscriptions.map(sub => (
+                    <div key={sub.id} className="border-t border-slate-50 first:border-0 pt-3 first:pt-0">
+                      <p className="text-xs text-slate-500 font-mono mb-3">{sub.id.slice(0, 12)}…</p>
+                      <label className="flex items-center gap-3 cursor-pointer mb-3">
+                        <input type="checkbox"
+                          checked={alertPref[sub.id]?.send_to_self !== false}
+                          onChange={e => setAlertPref(p => ({
+                            ...p,
+                            [sub.id]: { ...(p[sub.id] || {}), send_to_self: e.target.checked, promoter_user_id: p[sub.id]?.promoter_user_id || '' }
+                          }))}
+                          className="w-4 h-4 rounded" />
+                        <span className="text-sm text-slate-700">Send alerts to my phone</span>
+                      </label>
+                      <div className="mb-3">
+                        <label className="block text-xs text-slate-500 mb-1">Also alert my promoter (user ID, optional)</label>
+                        <input
+                          value={alertPref[sub.id]?.promoter_user_id || ''}
+                          onChange={e => setAlertPref(p => ({
+                            ...p,
+                            [sub.id]: { ...(p[sub.id] || { send_to_self: true }), promoter_user_id: e.target.value }
+                          }))}
+                          placeholder="Dealer or facilitator user ID"
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono focus:outline-none" />
+                      </div>
+                      <button onClick={() => saveAlertPref(sub.id)} disabled={savingAlert === sub.id}
+                        className="w-full py-2.5 rounded-xl text-white text-xs font-semibold disabled:opacity-50"
+                        style={{ background: '#1A5C2A' }}>
+                        {alertSuccess === sub.id ? '✓ Saved' : savingAlert === sub.id ? 'Saving…' : 'Save Preferences'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* My Subscriptions link */}
+            <button onClick={() => router.push('/my-subscriptions')}
+              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
+              <span className="text-sm text-slate-700 font-medium">My Subscriptions</span>
+              <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* ── ABOUT ── */}
+        <div className="mt-5">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">About</p>
+          <div className="space-y-2">
+            <button onClick={() => setShowAboutSheet(true)}
+              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-[#1A5C2A]" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="2.5" fill="#1A5C2A"/>
+                  <circle cx="4"  cy="6"  r="1.75" fill="#1A5C2A" opacity="0.7"/>
+                  <circle cx="20" cy="18" r="1.75" fill="#1A5C2A" opacity="0.7"/>
+                  <circle cx="4"  cy="18" r="1.75" fill="#1A5C2A" opacity="0.5"/>
+                  <circle cx="20" cy="6"  r="1.75" fill="#1A5C2A" opacity="0.5"/>
+                  <line x1="12" y1="12" x2="4"  y2="6"  stroke="#1A5C2A" strokeWidth="1" opacity="0.5"/>
+                  <line x1="12" y1="12" x2="20" y2="18" stroke="#1A5C2A" strokeWidth="1" opacity="0.5"/>
+                  <line x1="12" y1="12" x2="4"  y2="18" stroke="#1A5C2A" strokeWidth="1" opacity="0.35"/>
+                  <line x1="12" y1="12" x2="20" y2="6"  stroke="#1A5C2A" strokeWidth="1" opacity="0.35"/>
+                </svg>
+                <span className="text-sm font-medium text-slate-800">About rootsTALK</span>
+              </div>
+              <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+
+            <button onClick={() => router.push('/privacy-policy')}
+              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
+              <div className="flex items-center gap-3">
+                <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/>
+                </svg>
+                <span className="text-sm font-medium text-slate-800">Privacy Policy</span>
+              </div>
+              <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* ── ACCOUNT ── */}
+        <div className="mt-5">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">Account</p>
+          <button onClick={() => { setDeleteStep('confirm'); setDeleteError('') }}
+            className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-red-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+              </svg>
+              <span className="text-sm font-medium text-red-600">Delete Account</span>
+            </div>
+            <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* ── Sign out ── */}
         <button onClick={logout}
           className="w-full mt-6 py-3.5 border border-red-100 text-red-500 rounded-2xl text-sm font-medium">
           Sign out
@@ -328,7 +518,7 @@ export default function ProfilePage() {
 
       <BottomNav color="#1A5C2A" />
 
-      {/* Language sheet */}
+      {/* ── Language sheet ── */}
       {showLangSheet && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowLangSheet(false)}>
           <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto pb-6" onClick={e => e.stopPropagation()}>
@@ -345,6 +535,115 @@ export default function ProfilePage() {
                 {currentLang === l.language_code && <span className="text-[#1A5C2A]">✓</span>}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── About sheet ── */}
+      {showAboutSheet && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowAboutSheet(false)}>
+          <div className="bg-white rounded-t-3xl w-full pb-10 px-5 pt-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <div/>
+              <button onClick={() => setShowAboutSheet(false)} className="text-slate-400 text-xl">×</button>
+            </div>
+            <div className="flex flex-col items-center text-center gap-3 pb-4">
+              {/* Node mark */}
+              <div className="w-14 h-14 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(26,92,42,0.10)', border: '1px solid rgba(26,92,42,0.15)' }}>
+                <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="24" r="5"   fill="#1A5C2A"/>
+                  <circle cx="8"  cy="12" r="3.5" fill="#1A5C2A" opacity="0.7"/>
+                  <circle cx="40" cy="36" r="3.5" fill="#1A5C2A" opacity="0.7"/>
+                  <circle cx="8"  cy="36" r="3.5" fill="#1A5C2A" opacity="0.5"/>
+                  <circle cx="40" cy="12" r="3.5" fill="#1A5C2A" opacity="0.5"/>
+                  <line x1="24" y1="24" x2="8"  y2="12" stroke="#1A5C2A" strokeWidth="1.5" opacity="0.6"/>
+                  <line x1="24" y1="24" x2="40" y2="36" stroke="#1A5C2A" strokeWidth="1.5" opacity="0.6"/>
+                  <line x1="24" y1="24" x2="8"  y2="36" stroke="#1A5C2A" strokeWidth="1"   opacity="0.35"/>
+                  <line x1="24" y1="24" x2="40" y2="12" stroke="#1A5C2A" strokeWidth="1"   opacity="0.35"/>
+                </svg>
+              </div>
+              <p className="font-bold text-slate-900 text-lg">rootsTALK.in</p>
+              <p className="text-slate-500 text-sm">Your agricultural advisory network</p>
+              <p className="text-slate-400 text-xs">by Neytiri Eywafarm Agritech</p>
+              <p className="text-slate-300 text-xs mt-1">Version 2.0</p>
+              <button
+                onClick={() => window.open('https://eywa.farm', '_blank')}
+                className="mt-3 px-6 py-2.5 rounded-xl text-white text-sm font-medium"
+                style={{ background: '#1A5C2A' }}>
+                Visit eywa.farm →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Account: Confirm sheet ── */}
+      {deleteStep === 'confirm' && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setDeleteStep('idle')}>
+          <div className="bg-white rounded-t-3xl w-full pb-10 px-5 pt-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-semibold text-slate-900 text-base">Delete your account?</h3>
+              <button onClick={() => setDeleteStep('idle')} className="text-slate-400 text-xl">×</button>
+            </div>
+            <div className="space-y-2 mb-6">
+              {[
+                'Your active advisories will be cancelled',
+                'Your data will be anonymised within 30 days',
+                'This cannot be undone',
+              ].map(item => (
+                <div key={item} className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  <p className="text-sm text-slate-600">{item}</p>
+                </div>
+              ))}
+            </div>
+            {deleteError && <p className="text-red-500 text-sm mb-3">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteStep('idle')}
+                className="flex-1 py-3 border border-slate-200 rounded-2xl text-sm text-slate-600 font-medium">
+                Cancel
+              </button>
+              <button onClick={requestDeleteOtp} disabled={deleteBusy}
+                className="flex-1 py-3 rounded-2xl text-sm text-white font-medium disabled:opacity-50"
+                style={{ background: '#dc2626' }}>
+                {deleteBusy ? 'Sending…' : 'Send verification code'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Account: OTP entry sheet ── */}
+      {deleteStep === 'otp' && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setDeleteStep('idle')}>
+          <div className="bg-white rounded-t-3xl w-full pb-10 px-5 pt-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-semibold text-slate-900 text-base">Confirm deletion</h3>
+              <button onClick={() => setDeleteStep('idle')} className="text-slate-400 text-xl">×</button>
+            </div>
+            <p className="text-sm text-slate-500 mb-4">Enter the 6-digit code sent to your phone to confirm account deletion.</p>
+            {deleteDevOtp && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-4">
+                <p className="text-amber-700 text-xs font-medium">Dev code: <strong>{deleteDevOtp}</strong></p>
+              </div>
+            )}
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={deleteOtp}
+              onChange={e => setDeleteOtp(e.target.value.replace(/\D/g, ''))}
+              placeholder="· · · · · ·"
+              autoFocus
+              className="w-full border border-slate-200 rounded-2xl px-4 py-5 text-center text-3xl font-mono tracking-[0.7em] text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-200 focus:border-red-400 mb-4"
+            />
+            {deleteError && <p className="text-red-500 text-sm mb-3">{deleteError}</p>}
+            <button onClick={confirmDelete} disabled={deleteBusy || deleteOtp.length < 6}
+              className="w-full py-3.5 rounded-2xl text-white text-sm font-medium disabled:opacity-40"
+              style={{ background: '#dc2626' }}>
+              {deleteBusy ? 'Deleting…' : 'Confirm deletion →'}
+            </button>
           </div>
         </div>
       )}
