@@ -16,6 +16,12 @@ api.interceptors.response.use(
   (r) => r,
   (error) => {
     if (error.response?.status === 401 && typeof window !== "undefined") {
+      const detail = error.response?.data?.detail || "";
+      const isSessionEnded = detail.includes("another device");
+      sessionStorage.setItem(
+        "rt_pwa_session_ended",
+        isSessionEnded ? "another_device" : "expired"
+      );
       localStorage.removeItem("rt_pwa_token");
       localStorage.removeItem("rt_pwa_user");
       window.location.href = "/";

@@ -47,7 +47,6 @@ export default function HomePage() {
   const [assignmentClientInfos, setAssignmentClientInfos] = useState<Record<string, ClientInfo>>({})
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
-  const [respondingId, setRespondingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
@@ -87,23 +86,6 @@ export default function HomePage() {
       setClientInfos(map)
       setAssignmentClientInfos(map)
     } finally { setLoading(false) }
-  }
-
-  async function respondToAssignment(subscriptionId: string, approved: boolean) {
-    setRespondingId(subscriptionId)
-    try {
-      await api.put(`/farmer/assignments/${subscriptionId}/respond`, { approved })
-      setPendingAssignments(prev => prev.filter(a => a.subscription_id !== subscriptionId))
-      if (approved) {
-        // Reload subscriptions to show the newly approved one
-        const { data } = await api.get<Subscription[]>('/farmer/my-subscriptions')
-        setSubscriptions(data)
-      }
-    } catch {
-      // silently ignore
-    } finally {
-      setRespondingId(null)
-    }
   }
 
   // Group subscriptions by client_id
@@ -151,7 +133,6 @@ export default function HomePage() {
                   const initials = (clientInfo?.display_name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
                   const promoterLabel = assignment.promoter_type === 'DEALER' ? 'Dealer' : 'Facilitator'
                   const promoterName = assignment.promoter.name || 'Someone'
-                  const isResponding = respondingId === assignment.subscription_id
 
                   return (
                     <div key={assignment.subscription_id}
@@ -174,21 +155,12 @@ export default function HomePage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => respondToAssignment(assignment.subscription_id, true)}
-                          disabled={isResponding}
-                          className="flex-1 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-                          style={{ background: '#1A5C2A' }}>
-                          {isResponding ? 'Processing…' : 'Approve →'}
-                        </button>
-                        <button
-                          onClick={() => respondToAssignment(assignment.subscription_id, false)}
-                          disabled={isResponding}
-                          className="px-5 py-2.5 rounded-xl border border-stone-300 text-stone-600 text-sm font-medium disabled:opacity-50">
-                          Decline
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => router.push(`/assignment/${assignment.subscription_id}`)}
+                        className="w-full py-2.5 rounded-xl text-white font-medium text-sm"
+                        style={{ background: '#1A5C2A' }}>
+                        Review request →
+                      </button>
                     </div>
                   )
                 })}

@@ -144,6 +144,7 @@ export default function RootPage() {
   const [error,        setError]       = useState('')
   const [busy,         setBusy]        = useState(false)
   const [resend,       setResend]      = useState(0)
+  const [sessionEnded, setSessionEnded] = useState<'another_device' | 'expired' | null>(null)
 
   // location + gps states
   const [stateId,      setStateId]     = useState('')
@@ -155,45 +156,22 @@ export default function RootPage() {
   const [gpsStatus,    setGpsStatus]   = useState<'idle' | 'getting' | 'done' | 'denied'>('idle')
   const [stateSearch,  setStateSearch] = useState('')
 
-  async function roleHome(user = getUser()) {
+  function roleHome(user = getUser()) {
     const roles = getActiveRoles(user)
-
-    // Check each role in priority order — route to first with pending actions
-    if (roles.includes('DEALER')) {
-      try {
-        const { data } = await api.get<{ status: string }[]>('/dealer/orders')
-        if (data.some(o => ['NEW', 'PROCESSING'].includes(o.status))) {
-          router.replace('/dealer/home')
-          return
-        }
-      } catch { /* network error — skip this role */ }
-    }
-
-    if (roles.includes('FACILITATOR')) {
-      try {
-        const { data } = await api.get<{ status: string }[]>('/facilitator/orders')
-        if (data.some(o => o.status === 'NEW')) {
-          router.replace('/facilitator/home')
-          return
-        }
-      } catch { /* skip */ }
-    }
-
-    if (roles.includes('FARM_PUNDIT')) {
-      try {
-        const { data } = await api.get<{ status: string }[]>('/pundit/queries')
-        if (data.some(q => q.status === 'NEW')) {
-          router.replace('/pundit/home')
-          return
-        }
-      } catch { /* skip */ }
-    }
-
-    // No pending actions anywhere (or no non-farmer roles) — land on farmer home
-    router.replace('/home')
+    if (roles.includes('DEALER')) router.replace('/dealer/home')
+    else if (roles.includes('FACILITATOR')) router.replace('/facilitator/home')
+    else if (roles.includes('FARM_PUNDIT')) router.replace('/pundit/home')
+    else router.replace('/home')
   }
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const flag = sessionStorage.getItem('rt_pwa_session_ended')
+      if (flag) {
+        setSessionEnded(flag as 'another_device' | 'expired')
+        sessionStorage.removeItem('rt_pwa_session_ended')
+      }
+    }
     if (getToken()) { roleHome(); return }
     api.get<(Lang & { status?: string })[]>('/platform/languages')
       .then(r => {
@@ -226,7 +204,7 @@ export default function RootPage() {
       await verifyOtp('+91' + phone, otp.trim())
       const user = getUser()
       if (user && !user.name) setStage('profile')
-      else await roleHome(user ?? undefined)
+      else roleHome(user ?? undefined)
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
       if (status === 401) setError("That code didn't match. Please try again.")
@@ -342,6 +320,16 @@ export default function RootPage() {
 
         {languages.length === 1 && <div className="mb-4"/>}
 
+        {sessionEnded && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
+            <p className="text-amber-800 text-sm font-medium">
+              {sessionEnded === 'another_device'
+                ? 'You signed in on another device. Please sign in again.'
+                : 'Your session expired. Please sign in again.'}
+            </p>
+          </div>
+        )}
+
         <Btn onClick={() => setStage('phone')}>Get started →</Btn>
 
         <p className="text-stone-400 text-xs text-center mt-3 tracking-wide">
@@ -442,11 +430,11 @@ export default function RootPage() {
           </div>
 
           {/* CTA buttons */}
-          <Btn onClick={async () => { await roleHome() }}>
+          <Btn onClick={() => roleHome()}>
             {`Let's get started →`}
           </Btn>
           <button
-            onClick={async () => { await roleHome() }}
+            onClick={() => roleHome()}
             className="w-full text-center text-stone-400 text-sm py-3 mt-2">
             {`I'm also a dealer / facilitator / expert`}
           </button>

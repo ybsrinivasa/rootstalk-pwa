@@ -255,10 +255,15 @@ export default function SubscribePage() {
   // ── Delegate payment ───────────────────────────────────────────────────────
   async function sendDelegateRequest() {
     if (!subscription || !delegatePhone.trim()) return
+    const fullPhone = `+91${delegatePhone.trim()}`
+    if (user?.phone === fullPhone) {
+      setError('You cannot ask yourself to pay. Please choose someone else.')
+      return
+    }
     setBusy(true); setError('')
     try {
       await api.post(`/farmer/subscriptions/${subscription.id}/delegate-payment`, {
-        delegate_phone: `+91${delegatePhone.trim()}`,
+        delegate_phone: fullPhone,
         role: delegateRole,
       })
       setStage('done')

@@ -34,6 +34,7 @@ export default function MySubscriptionsPage() {
   const [discover, setDiscover] = useState<DiscoverPackage[]>([])
   const [loading, setLoading] = useState(true)
   const [unsubscribing, setUnsubscribing] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState<string | null>(null)
 
   const load = async () => {
     try {
@@ -70,6 +71,18 @@ export default function MySubscriptionsPage() {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
       alert(msg || 'Cannot unsubscribe from this advisory.')
     } finally { setUnsubscribing(null) }
+  }
+
+  async function cancelDelegation(sub: Subscription) {
+    if (!confirm('Cancel pending payment request? You can then choose someone else or pay yourself.')) return
+    setCancelling(sub.id)
+    try {
+      await api.delete(`/farmer/subscriptions/${sub.id}/delegate-payment`)
+      load()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      alert(msg || 'Could not cancel the request.')
+    } finally { setCancelling(null) }
   }
 
   const active = subscriptions.filter(s => s.status === 'ACTIVE')
@@ -134,15 +147,29 @@ export default function MySubscriptionsPage() {
                 <div className="space-y-2">
                   {others.map(sub => {
                     const b = brandings[sub.client_id]
+                    const isWaitlisted = sub.status === 'WAITLISTED'
                     return (
-                      <div key={sub.id} className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-700">{b?.display_name || 'Company'}</p>
-                          {sub.reference_number && <p className="text-xs font-mono text-slate-400">{sub.reference_number}</p>}
+                      <div key={sub.id} className="bg-white rounded-2xl border border-slate-100 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-700">{b?.display_name || 'Company'}</p>
+                            {sub.reference_number && <p className="text-xs font-mono text-slate-400">{sub.reference_number}</p>}
+                            {isWaitlisted && (
+                              <p className="text-xs text-amber-700 mt-1">Pending payment delegation</p>
+                            )}
+                          </div>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-slate-500'}`}>
+                            {sub.status}
+                          </span>
                         </div>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-slate-500'}`}>
-                          {sub.status}
-                        </span>
+                        {isWaitlisted && (
+                          <button
+                            onClick={() => cancelDelegation(sub)}
+                            disabled={cancelling === sub.id}
+                            className="mt-2 text-xs text-amber-700 underline disabled:opacity-40">
+                            {cancelling === sub.id ? 'Cancelling…' : 'Cancel pending request'}
+                          </button>
+                        )}
                       </div>
                     )
                   })}
