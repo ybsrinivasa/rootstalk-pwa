@@ -155,12 +155,42 @@ export default function RootPage() {
   const [gpsStatus,    setGpsStatus]   = useState<'idle' | 'getting' | 'done' | 'denied'>('idle')
   const [stateSearch,  setStateSearch] = useState('')
 
-  function roleHome(user = getUser()) {
+  async function roleHome(user = getUser()) {
     const roles = getActiveRoles(user)
-    if      (roles.includes('DEALER'))      router.replace('/dealer/home')
-    else if (roles.includes('FACILITATOR')) router.replace('/facilitator/home')
-    else if (roles.includes('FARM_PUNDIT')) router.replace('/pundit/home')
-    else                                     router.replace('/home')
+
+    // Check each role in priority order — route to first with pending actions
+    if (roles.includes('DEALER')) {
+      try {
+        const { data } = await api.get<{ status: string }[]>('/dealer/orders')
+        if (data.some(o => ['NEW', 'PROCESSING'].includes(o.status))) {
+          router.replace('/dealer/home')
+          return
+        }
+      } catch { /* network error — skip this role */ }
+    }
+
+    if (roles.includes('FACILITATOR')) {
+      try {
+        const { data } = await api.get<{ status: string }[]>('/facilitator/orders')
+        if (data.some(o => o.status === 'NEW')) {
+          router.replace('/facilitator/home')
+          return
+        }
+      } catch { /* skip */ }
+    }
+
+    if (roles.includes('FARM_PUNDIT')) {
+      try {
+        const { data } = await api.get<{ status: string }[]>('/pundit/queries')
+        if (data.some(q => q.status === 'NEW')) {
+          router.replace('/pundit/home')
+          return
+        }
+      } catch { /* skip */ }
+    }
+
+    // No pending actions anywhere (or no non-farmer roles) — land on farmer home
+    router.replace('/home')
   }
 
   useEffect(() => {
@@ -196,7 +226,7 @@ export default function RootPage() {
       await verifyOtp('+91' + phone, otp.trim())
       const user = getUser()
       if (user && !user.name) setStage('profile')
-      else roleHome(user ?? undefined)
+      else await roleHome(user ?? undefined)
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
       if (status === 401) setError("That code didn't match. Please try again.")
@@ -407,11 +437,11 @@ export default function RootPage() {
           </div>
 
           {/* CTA buttons */}
-          <Btn onClick={() => roleHome()}>
+          <Btn onClick={async () => { await roleHome() }}>
             {`Let's get started →`}
           </Btn>
           <button
-            onClick={() => roleHome()}
+            onClick={async () => { await roleHome() }}
             className="w-full text-center text-stone-400 text-sm py-3 mt-2">
             {`I'm also a dealer / facilitator / expert`}
           </button>

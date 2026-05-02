@@ -14,7 +14,9 @@ interface Subscription {
 interface Branding { display_name: string; primary_colour: string; logo_url: string | null }
 interface DiscoverPackage {
   package_id: string; package_name: string; crop_cosh_id: string
-  client_id: string; company_name: string | null; company_logo: string | null; primary_colour: string | null
+  client_id: string; client_name: string | null; client_colour: string | null
+  // legacy field aliases (backend may return either form)
+  company_name?: string | null; primary_colour?: string | null
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -148,28 +150,36 @@ export default function MySubscriptionsPage() {
               </section>
             )}
 
-            {/* Active Advisories in District — discovery */}
+            {/* Active Advisories in District — discovery (A3a) */}
             {discover.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active in Your District</p>
-                  <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-medium">Discover</span>
-                </div>
+                <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-1">Advisories in your area</p>
                 <p className="text-xs text-slate-400 mb-3">Other companies offering advisories in your district</p>
                 <div className="space-y-2">
-                  {discover.map(pkg => (
-                    <div key={pkg.package_id} className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800">{pkg.company_name || 'Company'}</p>
-                        <p className="text-xs text-slate-400">{pkg.package_name} · {pkg.crop_cosh_id}</p>
+                  {discover.map(pkg => {
+                    const companyName = pkg.client_name || pkg.company_name || 'Company'
+                    const accentColour = pkg.client_colour || pkg.primary_colour || '#1A5C2A'
+                    const cropLabel = pkg.crop_cosh_id
+                      .replace(/^crop_/, '')
+                      .replace(/_/g, ' ')
+                      .replace(/\b\w/g, c => c.toUpperCase())
+                    return (
+                      <div key={pkg.package_id} className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: accentColour }} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-800 truncate" style={{ color: accentColour }}>{companyName}</p>
+                            <p className="text-xs text-slate-400">{cropLabel}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => router.push('/subscribe')}
+                          className="text-xs px-3 py-1.5 rounded-lg text-white font-medium ml-3 flex-shrink-0"
+                          style={{ background: accentColour }}>
+                          Explore →
+                        </button>
                       </div>
-                      <button onClick={() => router.push('/subscribe')}
-                        className="text-xs px-3 py-1.5 rounded-lg text-white font-medium"
-                        style={{ background: pkg.primary_colour || '#1A5C2A' }}>
-                        Subscribe
-                      </button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </section>
             )}
