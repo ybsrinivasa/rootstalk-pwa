@@ -11,6 +11,8 @@ type Subscription = {
   status: string; reference_number: string | null; crop_start_date: string | null
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'
+
 type ClientBranding = {
   display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
 }
@@ -21,6 +23,8 @@ export default function HomePage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [brandings, setBrandings] = useState<Record<string, ClientBranding>>({})
   const [loading, setLoading] = useState(true)
+  const [qrSub, setQrSub] = useState<Subscription | null>(null)
+  const [qrUrl, setQrUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -40,6 +44,12 @@ export default function HomePage() {
       results.forEach(r => { if (r.status === 'fulfilled') map[r.value.id] = r.value.data })
       setBrandings(map)
     } finally { setLoading(false) }
+  }
+
+  async function showCropQR(sub: Subscription) {
+    setQrSub(sub)
+    const token = getToken()
+    setQrUrl(`${API_URL}/farmer/subscriptions/${sub.id}/crop-qr`)
   }
 
   const activeCount = subscriptions.filter(s => s.status === 'ACTIVE').length
@@ -102,7 +112,17 @@ export default function HomePage() {
                       <p className="text-xs text-slate-400">Advisory</p>
                       <p className="text-sm font-medium text-slate-700">{sub.reference_number || 'Not yet active'}</p>
                     </div>
-                    <span className="text-slate-300 text-xl">›</span>
+                    <div className="flex items-center gap-2">
+                      {sub.reference_number && (
+                        <button
+                          onClick={e => { e.stopPropagation(); showCropQR(sub) }}
+                          className="text-xs bg-slate-100 text-slate-500 px-2.5 py-1 rounded-lg font-medium hover:bg-slate-200"
+                          title="Share crop record QR">
+                          🔗 Share
+                        </button>
+                      )}
+                      <span className="text-slate-300 text-xl">›</span>
+                    </div>
                   </div>
                 </button>
               )
@@ -119,16 +139,41 @@ export default function HomePage() {
             <p className="text-xs text-slate-400">Track your input orders</p>
           </button>
           <button
-            onClick={() => router.push('/profile')}
+            onClick={() => router.push('/orders/purchased')}
             className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm">
-            <span className="text-2xl">👤</span>
-            <p className="text-sm font-medium text-slate-800 mt-2">Profile</p>
-            <p className="text-xs text-slate-400">Settings and roles</p>
+            <span className="text-2xl">✅</span>
+            <p className="text-sm font-medium text-slate-800 mt-2">Purchased Items</p>
+            <p className="text-xs text-slate-400">Verify with QR scan</p>
           </button>
         </div>
       </div>
 
       <BottomNav color="#1A5C2A" />
+
+      {/* Crop QR bottom sheet */}
+      {qrSub && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setQrSub(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-6 pb-10 text-center"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-bold text-slate-800">Share Crop Record</p>
+              <button onClick={() => setQrSub(null)} className="text-slate-400 text-xl">✕</button>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Anyone can scan this QR code to view your crop record. No personal contact details are shared.
+            </p>
+            {qrUrl && (
+              <img
+                src={qrUrl}
+                alt="Crop QR Code"
+                className="w-48 h-48 mx-auto border border-slate-100 rounded-xl"
+              />
+            )}
+            <p className="text-sm font-mono font-semibold text-slate-700 mt-3">{qrSub.reference_number}</p>
+            <p className="text-xs text-slate-400 mt-1">Subscription Reference</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
