@@ -257,6 +257,16 @@ export default function DiagnosisPage() {
                 <p className="text-slate-400 text-xs mt-2">
                   {currentQuestion.plant_part_cosh_id.replace(/_/g, ' ')} — {currentQuestion.symptom_cosh_id.replace(/_/g, ' ')}
                 </p>
+                {/* Google Images link — pre-formed search [Crop] [Symptom] */}
+                <a
+                  href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
+                    [cropCoshId?.replace(/_/g, ' '), currentQuestion.symptom_cosh_id.replace(/_/g, ' ')].filter(Boolean).join(' ')
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 underline underline-offset-2">
+                  🔍 See images of this symptom
+                </a>
               </div>
 
               {/* YES / NO */}
@@ -343,11 +353,22 @@ export default function DiagnosisPage() {
             ) : (
               <div className="space-y-2">
                 {problems.map(p => (
-                  <button key={p.cosh_id} onClick={() => selectKnownProblem(p.cosh_id)}
-                    className="w-full bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left active:scale-98 transition-transform">
-                    <p className="font-medium text-slate-800">{p.name}</p>
-                    <p className="text-xs text-slate-400 font-mono mt-0.5">{p.cosh_id}</p>
-                  </button>
+                  <div key={p.cosh_id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <button onClick={() => selectKnownProblem(p.cosh_id)}
+                      className="w-full p-4 text-left active:scale-98 transition-transform">
+                      <p className="font-medium text-slate-800">{p.name}</p>
+                      <p className="text-xs text-slate-400 font-mono mt-0.5">{p.cosh_id}</p>
+                    </button>
+                    <a
+                      href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
+                        [cropCoshId?.replace(/_/g, ' '), p.name].filter(Boolean).join(' ')
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block px-4 pb-3 text-xs text-blue-600 underline underline-offset-2">
+                      🔍 See images
+                    </a>
+                  </div>
                 ))}
               </div>
             )}
@@ -371,6 +392,16 @@ export default function DiagnosisPage() {
                       {diagnosis.name}
                     </p>
                     <p className="text-slate-400 text-xs mt-1 font-mono">{diagnosis.cosh_id}</p>
+                    {/* Google Images link — pre-formed search [Crop] [Problem name] */}
+                    <a
+                      href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
+                        [cropCoshId?.replace(/_/g, ' '), diagnosis.name].filter(Boolean).join(' ')
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 underline underline-offset-2">
+                      🔍 See images of {diagnosis.name}
+                    </a>
                   </>
                 ) : (
                   <p className="text-slate-600 mt-3">Problem recorded</p>
