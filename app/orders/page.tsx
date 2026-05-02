@@ -66,23 +66,29 @@ export default function OrdersPage() {
                 </div>
               )
               : (tab === 'active' ? active : completed).map(order => (
-                <div key={order.id} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                <button key={order.id}
+                  onClick={() => router.push(`/orders/${order.id}`)}
+                  className="w-full bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left active:scale-98 transition-transform">
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[order.status] || 'bg-slate-100 text-slate-500'}`}>
                       {order.status.replace(/_/g, ' ')}
                     </span>
                     <span className="text-xs text-slate-400">{new Date(order.created_at).toLocaleDateString()}</span>
                   </div>
-                  <p className="text-sm text-slate-600">
-                    {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-slate-600">
+                      {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
+                    </p>
+                    <span className="text-slate-300 text-xl">›</span>
+                  </div>
                   {order.status === 'SENT_FOR_APPROVAL' && (
                     <div className="mt-2 bg-amber-50 rounded-lg px-3 py-2">
-                      <p className="text-xs text-amber-700 font-medium">⚡ Action needed — Your order is ready for approval</p>
+                      <p className="text-xs text-amber-700 font-medium">⚡ Tap to review and approve</p>
                     </div>
                   )}
-                </div>
+                </button>
               ))
+
           }
         </div>
       </div>
