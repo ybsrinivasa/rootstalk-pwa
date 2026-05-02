@@ -215,7 +215,7 @@ export default function RootPage() {
       </div>
 
       {/* Frosted glass card */}
-      <div className="relative z-10 w-full sm:max-w-sm sm:mx-auto sm:mb-10
+      <div className="relative z-10 w-full sm:max-w-sm sm:mx-auto
                       rounded-t-[2rem] sm:rounded-[2rem] px-6 pt-6"
         style={{
           background:           'rgba(247, 245, 240, 0.92)',
@@ -288,7 +288,7 @@ export default function RootPage() {
       </div>
 
       {/* White card */}
-      <div className="flex-1 flex flex-col w-full sm:max-w-sm sm:mx-auto rounded-t-[2rem] px-5 pt-7 relative z-10"
+      <div className="flex-1 sm:flex-none flex flex-col w-full sm:max-w-sm sm:mx-auto rounded-t-[2rem] px-5 pt-7 pb-10 relative z-10"
         style={{
           background:    '#FAFAF8',
           boxShadow:     '0 -4px 32px rgba(0,0,0,0.10)',
