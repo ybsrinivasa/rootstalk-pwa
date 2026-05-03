@@ -1,20 +1,41 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
 interface OrderItem {
-  id: string; practice_id: string; status: string; relation_id: string | null; relation_type: string | null
+  id: string; practice_id: string; status: string
+  relation_id: string | null; relation_type: string | null; relation_role?: string | null
   brand_cosh_id: string | null; brand_name: string | null
   given_volume: number | null; estimated_volume: number | null
   volume_unit: string | null; price: number | null
+}
+interface RelationOption {
+  option_index: number
+  is_compound: boolean
+  has_locked_brand: boolean
+  visible: boolean
+  option_status: 'NEW' | 'AVAILABLE' | 'NOT_AVAILABLE'
+  items: OrderItem[]
+}
+interface RelationPart {
+  part_index: number
+  options: RelationOption[]
+  part_status: 'PENDING' | 'RESOLVED' | 'FAILED'
+}
+interface RelationGroup {
+  relation_id: string
+  relation_type: string | null
+  parts: RelationPart[]
 }
 interface Order {
   id: string; status: string; farmer_user_id: string; client_id: string
   date_from: string; date_to: string; created_at: string
   items: OrderItem[]
+  relations?: RelationGroup[]
+  standalone_items?: OrderItem[]
 }
 interface BrandGroup { label: string; brands: { cosh_id: string; name: string; manufacturer: string | null }[] }
 interface BrandOptions {
@@ -30,6 +51,11 @@ interface PackingList {
   order_id: string; farmer_name: string | null; farmer_phone: string | null
   items: PackingItem[]; total_amount: number
 }
+interface DuplicateCheck {
+  would_duplicate: boolean
+  duplicate_input_name: string | null
+  suggested_alternatives: number[]
+}
 
 const STATUS_COLOUR: Record<string, string> = {
   PENDING: 'bg-slate-100 text-slate-600',
@@ -42,6 +68,12 @@ const STATUS_COLOUR: Record<string, string> = {
   NOT_NEEDED: 'bg-slate-100 text-slate-400',
   SKIPPED: 'bg-slate-100 text-slate-400',
   REMOVED: 'bg-slate-100 text-slate-400',
+}
+
+const PART_STATUS_COLOUR: Record<string, string> = {
+  PENDING: 'bg-slate-100 text-slate-600 border-slate-200',
+  RESOLVED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  FAILED: 'bg-red-100 text-red-600 border-red-200',
 }
 
 export default function DealerOrderDetailPage() {
@@ -59,17 +91,39 @@ export default function DealerOrderDetailPage() {
   const [itemEdit, setItemEdit] = useState({ brand_cosh_id: '', brand_name: '', given_volume: '', volume_unit: 'kg', price: '' })
   const [estimating, setEstimating] = useState(false)
   const [estimate, setEstimate] = useState<{ volume: number; unit: string } | null>(null)
+  // Per-relation: which Part is currently expanded (defaults to first PENDING)
+  const [expandedPartByRelation, setExpandedPartByRelation] = useState<Record<string, number>>({})
+  // Duplicate-check modal
+  const [dupModal, setDupModal] = useState<
+    | null
+    | { relationId: string; partIndex: number; optionIndex: number; check: DuplicateCheck }
+  >(null)
+  const [committingOption, setCommittingOption] = useState<string | null>(null)
 
   const load = async () => {
     try {
       const { data } = await api.get<Order>(`/dealer/orders/${orderId}`)
       setOrder(data)
+      // Auto-expand the first PENDING Part for each relation
+      if (data.relations) {
+        setExpandedPartByRelation(prev => {
+          const next = { ...prev }
+          for (const rel of data.relations || []) {
+            if (next[rel.relation_id] !== undefined) continue
+            const firstPending = rel.parts.find(p => p.part_status === 'PENDING')
+            if (firstPending) next[rel.relation_id] = firstPending.part_index
+            else if (rel.parts[0]) next[rel.relation_id] = rel.parts[0].part_index
+          }
+          return next
+        })
+      }
     } finally { setLoading(false) }
   }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
   async function acceptOrder() {
@@ -83,9 +137,14 @@ export default function DealerOrderDetailPage() {
   async function openItemForm(item: OrderItem) {
     setEditingItem(item.id)
     setEstimate(null)
-    setItemEdit({ brand_cosh_id: '', brand_name: '', given_volume: '', volume_unit: 'kg', price: '' })
+    setItemEdit({
+      brand_cosh_id: item.brand_cosh_id || '',
+      brand_name: item.brand_name || '',
+      given_volume: item.given_volume != null ? String(item.given_volume) : '',
+      volume_unit: item.volume_unit || 'kg',
+      price: item.price != null ? String(item.price) : '',
+    })
 
-    // Fetch brand options (BL-07)
     try {
       const { data } = await api.get<BrandOptions>(`/dealer/orders/${orderId}/items/${item.id}/brand-options`)
       setBrandOptions(data)
@@ -133,6 +192,43 @@ export default function DealerOrderDetailPage() {
     load()
   }
 
+  // ── Relation actions ────────────────────────────────────────────────────────
+
+  async function tryPickOption(relationId: string, partIndex: number, optionIndex: number) {
+    const key = `${relationId}-${partIndex}-${optionIndex}`
+    setCommittingOption(key)
+    try {
+      const { data } = await api.post<DuplicateCheck>(
+        `/dealer/orders/${orderId}/relations/${relationId}/parts/${partIndex}/check-duplicate`,
+        { option_index: optionIndex },
+      )
+      if (data.would_duplicate) {
+        setDupModal({ relationId, partIndex, optionIndex, check: data })
+        return
+      }
+      await commitSelectOption(relationId, partIndex, optionIndex)
+    } finally {
+      setCommittingOption(null)
+    }
+  }
+
+  async function commitSelectOption(relationId: string, partIndex: number, optionIndex: number) {
+    await api.post(
+      `/dealer/orders/${orderId}/relations/${relationId}/parts/${partIndex}/select-option`,
+      { option_index: optionIndex },
+    )
+    setDupModal(null)
+    load()
+  }
+
+  async function markOptionNotAvailable(relationId: string, partIndex: number, optionIndex: number) {
+    await api.post(
+      `/dealer/orders/${orderId}/relations/${relationId}/parts/${partIndex}/mark-option-not-available`,
+      { option_index: optionIndex },
+    )
+    load()
+  }
+
   async function submitForApproval() {
     if (!order) return
     setSubmitting(true)
@@ -153,6 +249,17 @@ export default function DealerOrderDetailPage() {
     setShowBrandSheet(false)
   }
 
+  // Standalone items: items without a relation_id (or without relation_role)
+  const standaloneItems = useMemo<OrderItem[]>(() => {
+    if (!order) return []
+    if (order.standalone_items && order.standalone_items.length >= 0 && order.relations) {
+      return order.standalone_items
+    }
+    return order.items.filter(i => !(i.relation_id && i.relation_role))
+  }, [order])
+
+  const relations = order?.relations || []
+
   if (loading || !order) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-[#085041] border-t-transparent rounded-full animate-spin" />
@@ -167,6 +274,280 @@ export default function DealerOrderDetailPage() {
     activeItems.filter(i => i.status === 'AVAILABLE').every(i => i.given_volume)
 
   const showPL = ['SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED', 'COMPLETED'].includes(order.status)
+
+  // ── Renderers ───────────────────────────────────────────────────────────────
+
+  function renderItemRow(item: OrderItem, opts: { compactMeta?: boolean } = {}) {
+    return (
+      <div key={item.id} className="bg-white rounded-xl border border-slate-100 p-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex gap-1.5 flex-wrap">
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-slate-600'}`}>
+                {item.status.replace(/_/g, ' ')}
+              </span>
+            </div>
+            {!opts.compactMeta && (
+              <p className="text-[10px] text-slate-400 font-mono mt-1 truncate">{item.practice_id}</p>
+            )}
+            {item.brand_name && <p className="text-sm font-semibold text-slate-800 mt-1">{item.brand_name}</p>}
+            {item.given_volume != null && (
+              <p className="text-xs text-slate-500 mt-0.5">
+                {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
+          <button onClick={() => openItemForm(item)}
+            className="mt-2 w-full bg-[#085041] text-white text-xs font-semibold py-2 rounded-lg">
+            Pick brand & volume
+          </button>
+        )}
+        {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && item.brand_name && editingItem !== item.id && (
+          <button onClick={() => openItemForm(item)}
+            className="mt-2 w-full border border-slate-200 text-slate-700 text-xs font-medium py-2 rounded-lg">
+            Edit details
+          </button>
+        )}
+
+        {editingItem === item.id && renderInlineForm(item)}
+      </div>
+    )
+  }
+
+  function renderInlineForm(item: OrderItem) {
+    return (
+      <div className="mt-3 space-y-2.5 bg-slate-50 rounded-xl p-3">
+        {brandOptions?.type === 'LOCKED' ? (
+          <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
+            <p className="text-xs text-blue-500 font-medium mb-0.5">Locked brand (pre-specified)</p>
+            <p className="text-sm font-bold text-blue-900">{brandOptions.locked_brand_name}</p>
+          </div>
+        ) : (
+          <div>
+            <button onClick={() => setShowBrandSheet(true)}
+              className="w-full flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2.5 bg-white text-sm text-left">
+              <span className={itemEdit.brand_name ? 'text-slate-800 font-medium' : 'text-slate-400'}>
+                {itemEdit.brand_name || 'Select brand…'}
+              </span>
+              <span className="text-slate-400 text-xs">▼</span>
+            </button>
+            {!itemEdit.brand_name && (
+              <input value={itemEdit.brand_name}
+                onChange={e => setItemEdit(f => ({ ...f, brand_name: e.target.value, brand_cosh_id: '' }))}
+                placeholder="Or type brand name manually"
+                className="w-full mt-1.5 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+            )}
+          </div>
+        )}
+
+        <button onClick={() => getEstimate(item.id)} disabled={estimating}
+          className="w-full text-xs font-medium text-[#085041] bg-[#085041]/5 border border-[#085041]/20 rounded-lg py-2 disabled:opacity-50">
+          {estimating ? 'Calculating…' : estimate ? `Est. ${estimate.volume} ${estimate.unit}` : '⚡ Auto-calculate estimated volume'}
+        </button>
+
+        <div className="grid grid-cols-3 gap-2">
+          <input type="number" value={itemEdit.given_volume}
+            onChange={e => setItemEdit(f => ({ ...f, given_volume: e.target.value }))}
+            placeholder="Qty *"
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+          <select value={itemEdit.volume_unit}
+            onChange={e => setItemEdit(f => ({ ...f, volume_unit: e.target.value }))}
+            className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white focus:outline-none">
+            <option value="kg">kg</option>
+            <option value="L">L</option>
+            <option value="g">g</option>
+            <option value="mL">mL</option>
+            <option value="bag">bag</option>
+            <option value="number">no.</option>
+          </select>
+          <input type="number" value={itemEdit.price}
+            onChange={e => setItemEdit(f => ({ ...f, price: e.target.value }))}
+            placeholder="₹ Price"
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => markAvailable(item.id)}
+            disabled={!itemEdit.given_volume}
+            className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
+            Save details
+          </button>
+          <button onClick={() => { setEditingItem(null); setEstimate(null); setBrandOptions(null) }}
+            className="px-4 border border-slate-200 text-slate-600 text-xs font-medium py-2.5 rounded-xl">
+            Cancel
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  function renderRelation(rel: RelationGroup) {
+    const expandedPart = expandedPartByRelation[rel.relation_id]
+    const totalParts = rel.parts.length
+    const resolvedParts = rel.parts.filter(p => p.part_status === 'RESOLVED').length
+    const failedParts = rel.parts.filter(p => p.part_status === 'FAILED').length
+
+    return (
+      <div key={rel.relation_id}
+        className="bg-emerald-50/40 border-l-4 border-[#085041] rounded-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-emerald-100/60">
+          <p className="text-xs font-semibold text-[#085041] uppercase tracking-wider">
+            Multi-step recommendation
+          </p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Process each Part. {resolvedParts} of {totalParts} resolved
+            {failedParts > 0 ? `, ${failedParts} returned to farmer` : ''}.
+          </p>
+          {/* Step indicator */}
+          <div className="flex gap-1.5 mt-2">
+            {rel.parts.map(p => {
+              const colour =
+                p.part_status === 'RESOLVED' ? 'bg-emerald-500' :
+                p.part_status === 'FAILED' ? 'bg-red-400' :
+                p.part_index === expandedPart ? 'bg-[#085041]' : 'bg-slate-300'
+              return <div key={p.part_index} className={`h-1.5 flex-1 rounded-full ${colour}`} />
+            })}
+          </div>
+        </div>
+
+        <div className="p-3 space-y-3">
+          {rel.parts.map(part => {
+            const isExpanded = part.part_index === expandedPart
+            return (
+              <div key={part.part_index} className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+                <button
+                  onClick={() => setExpandedPartByRelation(prev => ({
+                    ...prev,
+                    [rel.relation_id]: isExpanded ? -1 : part.part_index,
+                  }))}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-slate-800">Part {part.part_index}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${PART_STATUS_COLOUR[part.part_status]}`}>
+                      {part.part_status}
+                    </span>
+                  </div>
+                  <span className="text-slate-400 text-xs">{isExpanded ? '▾' : '▸'}</span>
+                </button>
+
+                {isExpanded && (
+                  <div className="px-3 pb-3 space-y-2.5">
+                    {part.part_status === 'FAILED' && (
+                      <div className="bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-xs text-red-700">
+                        All Options unavailable. Items in this Part have been returned to the farmer.
+                      </div>
+                    )}
+                    {part.options.filter(o => o.visible).map(opt => renderOption(rel.relation_id, part, opt))}
+                    {part.options.some(o => !o.visible) && (
+                      <p className="text-[11px] text-slate-400 italic px-1">
+                        Some alternative Options will appear if no Locked-brand Option works.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
+  function renderOption(relationId: string, part: RelationPart, opt: RelationOption) {
+    const optKey = `${relationId}-${part.part_index}-${opt.option_index}`
+    const isCommitting = committingOption === optKey
+    const optionPickable = part.part_status === 'PENDING' && opt.option_status === 'NEW'
+    const tone =
+      opt.option_status === 'AVAILABLE' ? 'border-emerald-300 bg-emerald-50/40' :
+      opt.option_status === 'NOT_AVAILABLE' ? 'border-red-200 bg-red-50/30 opacity-70' :
+      'border-slate-200 bg-white'
+    return (
+      <div key={opt.option_index} className={`rounded-xl border ${tone} overflow-hidden`}>
+        <div className="px-3 py-2.5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-700">
+              Option {opt.option_index}
+              {opt.is_compound ? ' (compound)' : ''}
+            </span>
+            {opt.has_locked_brand && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
+                Locked brand
+              </span>
+            )}
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[opt.option_status] || 'bg-slate-100 text-slate-600'}`}>
+              {opt.option_status.replace(/_/g, ' ')}
+            </span>
+          </div>
+        </div>
+
+        <div className="px-3 pb-3 space-y-2">
+          {opt.items.map(it => renderItemRow(it, { compactMeta: true }))}
+
+          {optionPickable && (
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => tryPickOption(relationId, part.part_index, opt.option_index)}
+                disabled={isCommitting}
+                className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-lg disabled:opacity-50">
+                {isCommitting ? 'Checking…' : 'Mark Option Available'}
+              </button>
+              <button
+                onClick={() => markOptionNotAvailable(relationId, part.part_index, opt.option_index)}
+                className="flex-1 bg-red-100 text-red-600 text-xs font-semibold py-2.5 rounded-lg">
+                Mark Not Available
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  function renderStandaloneItem(item: OrderItem) {
+    return (
+      <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="flex gap-1.5 flex-wrap">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-slate-600'}`}>
+                  {item.status.replace(/_/g, ' ')}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 font-mono mt-1.5 truncate">{item.practice_id}</p>
+              {item.brand_name && <p className="text-sm font-semibold text-slate-800 mt-1">{item.brand_name}</p>}
+              {item.given_volume != null && (
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {order!.status === 'PROCESSING' && item.status === 'PENDING' && editingItem !== item.id && (
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => openItemForm(item)}
+                className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
+                ✓ Available
+              </button>
+              <button onClick={() => markPostpone(item.id)}
+                className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2.5 rounded-xl">
+                ⏰ Later
+              </button>
+              <button onClick={() => markUnavailable(item.id)}
+                className="flex-1 bg-red-100 text-red-600 text-xs font-semibold py-2.5 rounded-xl">
+                ✗ N/A
+              </button>
+            </div>
+          )}
+
+          {editingItem === item.id && renderInlineForm(item)}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -197,122 +578,25 @@ export default function DealerOrderDetailPage() {
           </button>
         )}
 
-        {/* Items */}
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-700 px-1">Items ({order.items.length})</p>
-          {order.items.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex gap-1.5 flex-wrap">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-slate-600'}`}>
-                        {item.status.replace(/_/g, ' ')}
-                      </span>
-                      {item.relation_type === 'OR' && (
-                        <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">
-                          OR group
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-400 font-mono mt-1.5 truncate">{item.practice_id}</p>
-                    {item.brand_name && <p className="text-sm font-semibold text-slate-800 mt-1">{item.brand_name}</p>}
-                    {item.given_volume != null && (
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
-                      </p>
-                    )}
-                  </div>
-                </div>
+        {/* Relations (Build C) */}
+        {relations.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-slate-700 px-1">
+              Multi-step recommendations ({relations.length})
+            </p>
+            {relations.map(renderRelation)}
+          </div>
+        )}
 
-                {/* Action buttons for PROCESSING orders */}
-                {order.status === 'PROCESSING' && item.status === 'PENDING' && editingItem !== item.id && (
-                  <div className="flex gap-2 mt-3">
-                    <button onClick={() => openItemForm(item)}
-                      className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                      ✓ Available
-                    </button>
-                    <button onClick={() => markPostpone(item.id)}
-                      className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2.5 rounded-xl">
-                      ⏰ Later
-                    </button>
-                    <button onClick={() => markUnavailable(item.id)}
-                      className="flex-1 bg-red-100 text-red-600 text-xs font-semibold py-2.5 rounded-xl">
-                      ✗ N/A
-                    </button>
-                  </div>
-                )}
-
-                {/* Inline form */}
-                {editingItem === item.id && (
-                  <div className="mt-3 space-y-2.5 bg-slate-50 rounded-xl p-3">
-                    {/* Brand selection */}
-                    {brandOptions?.type === 'LOCKED' ? (
-                      <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
-                        <p className="text-xs text-blue-500 font-medium mb-0.5">Locked brand (pre-specified)</p>
-                        <p className="text-sm font-bold text-blue-900">{brandOptions.locked_brand_name}</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <button onClick={() => setShowBrandSheet(true)}
-                          className="w-full flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2.5 bg-white text-sm text-left">
-                          <span className={itemEdit.brand_name ? 'text-slate-800 font-medium' : 'text-slate-400'}>
-                            {itemEdit.brand_name || 'Select brand…'}
-                          </span>
-                          <span className="text-slate-400 text-xs">▼</span>
-                        </button>
-                        {!itemEdit.brand_name && (
-                          <input value={itemEdit.brand_name}
-                            onChange={e => setItemEdit(f => ({ ...f, brand_name: e.target.value, brand_cosh_id: '' }))}
-                            placeholder="Or type brand name manually"
-                            className="w-full mt-1.5 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
-                        )}
-                      </div>
-                    )}
-
-                    {/* Volume estimate */}
-                    <button onClick={() => getEstimate(item.id)} disabled={estimating}
-                      className="w-full text-xs font-medium text-[#085041] bg-[#085041]/5 border border-[#085041]/20 rounded-lg py-2 disabled:opacity-50">
-                      {estimating ? 'Calculating…' : estimate ? `Est. ${estimate.volume} ${estimate.unit}` : '⚡ Auto-calculate estimated volume'}
-                    </button>
-
-                    <div className="grid grid-cols-3 gap-2">
-                      <input type="number" value={itemEdit.given_volume}
-                        onChange={e => setItemEdit(f => ({ ...f, given_volume: e.target.value }))}
-                        placeholder="Qty *"
-                        className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
-                      <select value={itemEdit.volume_unit}
-                        onChange={e => setItemEdit(f => ({ ...f, volume_unit: e.target.value }))}
-                        className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white focus:outline-none">
-                        <option value="kg">kg</option>
-                        <option value="L">L</option>
-                        <option value="g">g</option>
-                        <option value="mL">mL</option>
-                        <option value="bag">bag</option>
-                        <option value="number">no.</option>
-                      </select>
-                      <input type="number" value={itemEdit.price}
-                        onChange={e => setItemEdit(f => ({ ...f, price: e.target.value }))}
-                        placeholder="₹ Price"
-                        className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => markAvailable(item.id)}
-                        disabled={!itemEdit.given_volume}
-                        className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
-                        Confirm Available
-                      </button>
-                      <button onClick={() => { setEditingItem(null); setEstimate(null); setBrandOptions(null) }}
-                        className="px-4 border border-slate-200 text-slate-600 text-xs font-medium py-2.5 rounded-xl">
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Standalone items */}
+        {standaloneItems.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-slate-700 px-1">
+              Standalone items ({standaloneItems.length})
+            </p>
+            {standaloneItems.map(renderStandaloneItem)}
+          </div>
+        )}
 
         {canSubmit && (
           <button onClick={submitForApproval} disabled={submitting}
@@ -388,6 +672,46 @@ export default function DealerOrderDetailPage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Duplicate-check warning modal */}
+      {dupModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDupModal(null)}>
+          <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
+            <p className="text-sm font-bold text-slate-800">Possible duplicate purchase</p>
+            <p className="text-xs text-slate-600 mt-2">
+              Selecting this Option would result in purchasing
+              {' '}
+              <span className="font-semibold text-slate-800">{dupModal.check.duplicate_input_name}</span>
+              {' '}
+              twice in this order.
+            </p>
+            {dupModal.check.suggested_alternatives.length > 0 ? (
+              <p className="text-xs text-slate-600 mt-2">
+                Suggested alternative Option(s):
+                {' '}
+                <span className="font-semibold text-[#085041]">
+                  {dupModal.check.suggested_alternatives.join(', ')}
+                </span>
+              </p>
+            ) : (
+              <p className="text-xs text-slate-500 mt-2 italic">
+                No alternative Option in this Part avoids the duplicate.
+              </p>
+            )}
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setDupModal(null)}
+                className="flex-1 border border-slate-200 text-slate-700 text-sm font-medium py-2.5 rounded-xl">
+                Cancel
+              </button>
+              <button
+                onClick={() => commitSelectOption(dupModal.relationId, dupModal.partIndex, dupModal.optionIndex)}
+                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl">
+                Continue anyway
+              </button>
+            </div>
           </div>
         </div>
       )}
