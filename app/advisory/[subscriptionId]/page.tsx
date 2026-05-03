@@ -18,12 +18,16 @@ interface Practice {
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
 }
+interface BlankPathQuestion {
+  question_id: string; question_text: string; farmer_answer: string
+}
 interface TimelineItem {
   id: string; name: string; source: string   // CCA | CHA
   from_date: string; to_date: string; day_number: number
   practices: Practice[]
   pending_conditional_question?: PendingConditionalQuestion
   has_pending_question?: boolean
+  blank_path_questions?: BlankPathQuestion[]
 }
 interface AdvisoryDay {
   subscription_id: string; client_id: string; package_id: string; package_name: string
@@ -368,11 +372,22 @@ export default function AdvisoryPage() {
                         />
                       )
                     })}
-                    {tl.practices.length === 0 && (
+                    {tl.practices.length === 0 && !tl.blank_path_questions?.length && (
                       <div className="bg-slate-50 rounded-xl px-4 py-3 text-center">
                         <p className="text-xs text-slate-400">We will check this with you again tomorrow.</p>
                       </div>
                     )}
+                    {/* Per spec §6.4: question-specific warm message after blank-path answer */}
+                    {tl.blank_path_questions?.map(bp => (
+                      <div key={bp.question_id} className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-2">
+                        <p className="text-xs text-amber-700 font-medium">
+                          You answered <span className="font-bold">{bp.farmer_answer}</span> to: &ldquo;{bp.question_text}&rdquo;
+                        </p>
+                        <p className="text-xs text-amber-600 mt-1">
+                          We will ask you this question again tomorrow.
+                        </p>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
