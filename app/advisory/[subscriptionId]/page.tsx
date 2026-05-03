@@ -11,6 +11,9 @@ interface Practice {
   id: string; l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
   l1_type: string | null; l2_type: string | null; display_order: number
   is_special_input: boolean; elements: Element[]
+  relation_id?: string | null
+  relation_role?: string | null    // PART_n__OPT_m__POS_p
+  relation_type?: 'AND' | 'OR' | 'IF' | null
 }
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
@@ -34,6 +37,79 @@ const L0_BG: Record<string, string> = {
 }
 const L0_LABEL: Record<string, string> = {
   INPUT: 'Apply Input', NON_INPUT: 'Crop Activity', INSTRUCTION: 'Advisory', MEDIA: 'Reference',
+}
+
+// ── Relation grouping helpers ───────────────────────────────────────────────
+function decodeRole(role: string): { part: number; option: number; position: number } | null {
+  const m = /^PART_(\d+)__OPT_(\d+)__POS_(\d+)$/.exec(role)
+  if (!m) return null
+  return { part: +m[1], option: +m[2], position: +m[3] }
+}
+
+interface OptionGroup { option: number; practices: Practice[] }
+interface PartGroup { part: number; options: OptionGroup[] }
+
+function buildPartsTree(practices: Practice[]): PartGroup[] {
+  const partsMap: Record<number, Record<number, { pos: number; p: Practice }[]>> = {}
+  for (const p of practices) {
+    const c = decodeRole(p.relation_role || '')
+    if (!c) continue
+    partsMap[c.part] = partsMap[c.part] || {}
+    partsMap[c.part][c.option] = partsMap[c.part][c.option] || []
+    partsMap[c.part][c.option].push({ pos: c.position, p })
+  }
+  return Object.keys(partsMap)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .map(partNum => ({
+      part: partNum,
+      options: Object.keys(partsMap[partNum])
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map(optNum => ({
+          option: optNum,
+          practices: partsMap[partNum][optNum]
+            .sort((a, b) => a.pos - b.pos)
+            .map(x => x.p),
+        })),
+    }))
+}
+
+interface PracticeRow {
+  kind: 'standalone' | 'relation'
+  // For 'standalone': single practice
+  practice?: Practice
+  // For 'relation': the grouping
+  relation_id?: string
+  relation_type?: 'AND' | 'OR' | 'IF'
+  parts?: PartGroup[]
+  // Stable display order: smallest display_order across all practices in group
+  sortKey: number
+}
+
+function groupTimelinePractices(practices: Practice[]): PracticeRow[] {
+  const standalones: Practice[] = []
+  const byRelation: Record<string, Practice[]> = {}
+  for (const p of practices) {
+    if (p.relation_id) {
+      byRelation[p.relation_id] = byRelation[p.relation_id] || []
+      byRelation[p.relation_id].push(p)
+    } else {
+      standalones.push(p)
+    }
+  }
+  const rows: PracticeRow[] = []
+  for (const p of standalones) {
+    rows.push({ kind: 'standalone', practice: p, sortKey: p.display_order })
+  }
+  for (const [relId, rPracs] of Object.entries(byRelation)) {
+    const parts = buildPartsTree(rPracs)
+    const minOrder = Math.min(...rPracs.map(x => x.display_order))
+    const relType = (rPracs.find(x => x.relation_type)?.relation_type || 'OR') as 'AND' | 'OR' | 'IF'
+    rows.push({ kind: 'relation', relation_id: relId, relation_type: relType, parts, sortKey: minOrder })
+  }
+  rows.sort((a, b) => a.sortKey - b.sortKey)
+  return rows
 }
 
 export default function AdvisoryPage() {
@@ -264,15 +340,34 @@ export default function AdvisoryPage() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {tl.practices.map(p => (
-                      <PracticeCard
-                        key={p.id}
-                        practice={p}
-                        onOrder={() => orderPractice(p.id)}
-                        isOrdering={orderingPractice === p.id}
-                        ordered={orderSuccess === p.id}
-                      />
-                    ))}
+                    {groupTimelinePractices(tl.practices).map(row => {
+                      if (row.kind === 'standalone' && row.practice) {
+                        const p = row.practice
+                        return (
+                          <PracticeCard
+                            key={p.id}
+                            practice={p}
+                            onOrder={() => orderPractice(p.id)}
+                            isOrdering={orderingPractice === p.id}
+                            ordered={orderSuccess === p.id}
+                          />
+                        )
+                      }
+                      // Relation row
+                      return (
+                        <RelationGroup
+                          key={row.relation_id}
+                          relationType={row.relation_type || 'OR'}
+                          parts={row.parts || []}
+                          orderingPractice={orderingPractice}
+                          orderSuccess={orderSuccess}
+                          onOrder={(ids) => {
+                            const url = `/order/new/${subscriptionId}?practice_ids=${ids.join(',')}&order_type=PESTICIDE`
+                            router.push(url)
+                          }}
+                        />
+                      )
+                    })}
                     {tl.practices.length === 0 && (
                       <div className="bg-slate-50 rounded-xl px-4 py-3 text-center">
                         <p className="text-xs text-slate-400">We will check this with you again tomorrow.</p>
@@ -364,6 +459,153 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           {expanded ? '▲ Hide details' : `▼ ${practice.elements.length} detail${practice.elements.length > 1 ? 's' : ''}`}
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Practice Relations: AND/OR group renderer ───────────────────────────────
+function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, onOrder }: {
+  relationType: 'AND' | 'OR' | 'IF'
+  parts: PartGroup[]
+  orderingPractice: string | null
+  orderSuccess: string
+  onOrder: (practiceIds: string[]) => void
+}) {
+  if (parts.length === 0) return null
+
+  // Single Part with single Option AND-group: paired card with "Order both together"
+  const isPureAndGroup =
+    relationType === 'AND' &&
+    parts.length === 1 &&
+    parts[0].options.length === 1 &&
+    parts[0].options[0].practices.length > 1
+
+  if (isPureAndGroup) {
+    const opt = parts[0].options[0]
+    const ids = opt.practices.map(p => p.id)
+    const isOrderingAny = ids.some(id => orderingPractice === id)
+    const isAnyOrdered = ids.some(id => orderSuccess === id)
+    return (
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 bg-emerald-50">
+          <div className="w-1 h-5 rounded-full bg-emerald-600" />
+          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+            Apply both together — AND group
+          </p>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {opt.practices.map(p => (
+            <InnerPracticeRow key={p.id} practice={p} />
+          ))}
+        </div>
+        <div className="px-4 py-3 border-t border-slate-100 flex justify-end">
+          <button
+            onClick={() => onOrder(ids)}
+            disabled={isOrderingAny || isAnyOrdered}
+            className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
+            style={{ background: isAnyOrdered ? '#16a34a' : '#1A5C2A' }}
+          >
+            {isAnyOrdered ? '✓ Ordered' : isOrderingAny ? '…' : 'Order both together'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Otherwise: render each Part; show OR separators between Options of choice Parts
+  return (
+    <div className="space-y-2">
+      {parts.map((part, partIdx) => (
+        <div key={part.part}>
+          {parts.length > 1 && (
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                Part {part.part}
+              </span>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+          )}
+          {part.options.map((opt, optIdx) => {
+            const ids = opt.practices.map(p => p.id)
+            const isOrderingAny = ids.some(id => orderingPractice === id)
+            const isAnyOrdered = ids.some(id => orderSuccess === id)
+            const isCompound = opt.practices.length > 1
+            const isChoice = part.options.length > 1
+            const buttonLabel = isCompound
+              ? (isAnyOrdered ? '✓ Ordered' : isOrderingAny ? '…' : 'Order this option')
+              : (isAnyOrdered ? '✓ Ordered' : isOrderingAny ? '…' : 'Order')
+
+            return (
+              <div key={opt.option}>
+                {isChoice && optIdx > 0 && (
+                  <div className="flex items-center my-2">
+                    <div className="h-px flex-1 bg-slate-300" />
+                    <span className="px-3 text-xs font-bold text-slate-500 bg-slate-50 rounded">OR</span>
+                    <div className="h-px flex-1 bg-slate-300" />
+                  </div>
+                )}
+                {isCompound ? (
+                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 bg-emerald-50">
+                      <div className="w-1 h-5 rounded-full bg-emerald-600" />
+                      <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                        Apply together
+                      </p>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {opt.practices.map(p => (
+                        <InnerPracticeRow key={p.id} practice={p} />
+                      ))}
+                    </div>
+                    <div className="px-4 py-3 border-t border-slate-100 flex justify-end">
+                      <button
+                        onClick={() => onOrder(ids)}
+                        disabled={isOrderingAny || isAnyOrdered}
+                        className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
+                        style={{ background: isAnyOrdered ? '#16a34a' : '#1A5C2A' }}
+                      >
+                        {buttonLabel}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Single practice in this Option — render a normal practice card with
+                  // its own Order button that sends just this practice id.
+                  <PracticeCard
+                    practice={opt.practices[0]}
+                    onOrder={() => onOrder(ids)}
+                    isOrdering={isOrderingAny}
+                    ordered={isAnyOrdered}
+                  />
+                )}
+              </div>
+            )
+          })}
+          {partIdx < parts.length - 1 && parts.length > 1 && (
+            <div className="my-3 h-px bg-slate-300" />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// Compact in-group practice row (used inside a paired AND-group card)
+function InnerPracticeRow({ practice }: { practice: Practice }) {
+  const colour = L0_BG[practice.l0_type] || '#1A5C2A'
+  const label = L0_LABEL[practice.l0_type] || practice.l0_type
+  return (
+    <div className="px-4 py-3">
+      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+          style={{ background: colour }}>{label}</span>
+        {practice.is_special_input && (
+          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
+        )}
+      </div>
+      <p className="text-sm font-medium text-slate-800">
+        {[practice.l1_type, practice.l2_type].filter(Boolean).join(' — ') || 'General Advisory'}
+      </p>
     </div>
   )
 }

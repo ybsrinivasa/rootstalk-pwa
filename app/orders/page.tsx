@@ -10,6 +10,7 @@ type Order = {
   id: string; status: string; date_from: string
   date_to: string; dealer_user_id: string | null; created_at: string
   item_count?: number
+  is_max_count?: boolean
 }
 type PurchasedItem = {
   id: string; brand_name: string | null; l1_type: string | null; l2_type: string | null
@@ -154,7 +155,7 @@ export default function OrdersPage() {
                     </p>
                     {order.item_count !== undefined && order.item_count > 0 && (
                       <span className="text-xs text-stone-500 shrink-0">
-                        {order.item_count} input{order.item_count !== 1 ? 's' : ''}
+                        {order.is_max_count ? 'Max ' : ''}{order.item_count} item{order.item_count !== 1 ? 's' : ''}
                       </span>
                     )}
                   </div>
