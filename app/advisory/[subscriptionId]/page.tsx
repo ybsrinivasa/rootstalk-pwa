@@ -14,6 +14,8 @@ interface Practice {
   relation_id?: string | null
   relation_role?: string | null    // PART_n__OPT_m__POS_p
   relation_type?: 'AND' | 'OR' | 'IF' | null
+  frequency_days?: number | null
+  is_frequency_due_today?: boolean
 }
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
@@ -438,6 +440,14 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
             {practice.is_special_input && (
               <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
             )}
+            {practice.frequency_days != null && practice.frequency_days > 0 && (
+              <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                </svg>
+                {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
+              </span>
+            )}
           </div>
           <p className="text-sm font-medium text-slate-800 mt-1">
             {[practice.l1_type, practice.l2_type].filter(Boolean).join(' — ') || 'General Advisory'}
@@ -616,6 +626,11 @@ function InnerPracticeRow({ practice }: { practice: Practice }) {
           style={{ background: colour }}>{label}</span>
         {practice.is_special_input && (
           <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
+        )}
+        {practice.frequency_days != null && practice.frequency_days > 0 && (
+          <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+            {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
+          </span>
         )}
       </div>
       <p className="text-sm font-medium text-slate-800">

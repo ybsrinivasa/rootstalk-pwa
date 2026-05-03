@@ -22,6 +22,7 @@ type PurchasedItem = {
   timeline_to_value?: number | null
   application_date_from?: string | null
   application_date_to?: string | null
+  frequency_days?: number | null
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -116,6 +117,11 @@ export default function OrdersPage() {
                           </p>
                         )}
                         <p className="text-xs text-stone-500 mt-1">{applyText}</p>
+                        {item.frequency_days != null && item.frequency_days > 0 && (
+                          <p className="text-xs text-amber-700 mt-1">
+                            ↻ {item.frequency_days === 1 ? 'Every day' : `Every ${item.frequency_days} days`} until window ends
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         {item.scan_verified && (
