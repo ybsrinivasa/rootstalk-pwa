@@ -14,6 +14,12 @@ type PurchasedItem = {
   id: string; brand_name: string | null; l1_type: string | null; l2_type: string | null
   given_volume: number | null; volume_unit: string | null; price: number | null
   scan_verified: boolean; order_id: string; created_at: string
+  timeline_name?: string | null
+  timeline_from_type?: 'DAS' | 'DBS' | 'CALENDAR' | null
+  timeline_from_value?: number | null
+  timeline_to_value?: number | null
+  application_date_from?: string | null
+  application_date_to?: string | null
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -36,7 +42,7 @@ export default function OrdersPage() {
     if (!getToken()) { router.replace('/register'); return }
     Promise.allSettled([
       api.get<Order[]>('/farmer/orders'),
-      api.get<PurchasedItem[]>('/farmer/orders/purchased-items').catch(() => ({ data: [] as PurchasedItem[] })),
+      api.get<PurchasedItem[]>('/farmer/purchased-items').catch(() => ({ data: [] as PurchasedItem[] })),
     ]).then(([ordersRes, purchasedRes]) => {
       if (ordersRes.status === 'fulfilled') setOrders(ordersRes.value.data)
       if (purchasedRes.status === 'fulfilled') setPurchased((purchasedRes.value as { data: PurchasedItem[] }).data)
@@ -80,26 +86,48 @@ export default function OrdersPage() {
                 <p className="text-stone-400 text-sm mt-3">No purchased inputs yet</p>
               </div>
             ) : (
-              purchased.map(item => (
-                <div key={item.id} className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold text-stone-800 text-sm">{item.brand_name || item.l2_type || item.l1_type || 'Item'}</p>
-                      {item.l1_type && <p className="text-xs text-stone-400 mt-0.5">{item.l1_type}{item.l2_type ? ` · ${item.l2_type}` : ''}</p>}
-                      {item.given_volume && (
-                        <p className="text-xs text-stone-500 mt-1">
-                          {item.given_volume} {item.volume_unit}
-                          {item.price ? ` · ₹${item.price}` : ''}
-                        </p>
-                      )}
+              purchased.map(item => {
+                const dFrom = item.application_date_from ? new Date(item.application_date_from) : null
+                const dTo = item.application_date_to ? new Date(item.application_date_to) : null
+                const today = new Date(); today.setHours(0, 0, 0, 0)
+                let badge: { label: string; cls: string } | null = null
+                if (dFrom && dTo) {
+                  if (dFrom > today) badge = { label: 'Apply later', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
+                  else if (dTo < today) badge = { label: 'Window passed', cls: 'bg-stone-100 text-stone-500 border-stone-200' }
+                  else badge = { label: 'Apply now', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                }
+                const fmt = (d: Date) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+                const isPreSowing = item.timeline_from_type === 'DBS'
+                const applyText = (dFrom && dTo)
+                  ? `Apply: ${isPreSowing ? '(Pre-sowing) ' : ''}${fmt(dFrom)} – ${fmt(dTo)}`
+                  : 'Apply: Set crop start date to see'
+                return (
+                  <div key={item.id} className="bg-white rounded-2xl p-4 border border-stone-200 shadow-sm">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-stone-800 text-sm">{item.brand_name || item.l2_type || item.l1_type || 'Item'}</p>
+                        {item.l1_type && <p className="text-xs text-stone-400 mt-0.5">{item.l1_type}{item.l2_type ? ` · ${item.l2_type}` : ''}</p>}
+                        {item.given_volume && (
+                          <p className="text-xs text-stone-500 mt-1">
+                            {item.given_volume} {item.volume_unit}
+                            {item.price ? ` · ₹${item.price}` : ''}
+                          </p>
+                        )}
+                        <p className="text-xs text-stone-500 mt-1">{applyText}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {item.scan_verified && (
+                          <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>
+                        )}
+                        {badge && (
+                          <span className={`text-[10px] border px-2 py-0.5 rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
+                        )}
+                      </div>
                     </div>
-                    {item.scan_verified && (
-                      <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>
-                    )}
+                    <p className="text-xs text-stone-300 mt-2">{new Date(item.created_at).toLocaleDateString('en-IN')}</p>
                   </div>
-                  <p className="text-xs text-stone-300 mt-2">{new Date(item.created_at).toLocaleDateString('en-IN')}</p>
-                </div>
-              ))
+                )
+              })
             )
           ) : (
             (tab === 'active' ? active : history).length === 0 ? (

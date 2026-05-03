@@ -11,7 +11,12 @@ interface Person {
 }
 interface Subscription {
   id: string; crop_start_date: string | null; client_id: string; package_id: string
+  farm_area_acres: number | null
+  area_unit: string | null
+  farm_area_confirmed_at: string | null
 }
+
+const AREA_UNITS = ['acres', 'hectares', 'bigha']
 
 export default function OrderingScreenPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -33,6 +38,13 @@ export default function OrderingScreenPage() {
   const [customPhone, setCustomPhone] = useState('')
   const [sub, setSub] = useState<Subscription | null>(null)
 
+  // Hard-confirm acreage step (only when farm_area_confirmed_at is null)
+  const [confirmStep, setConfirmStep] = useState<{ person: Person; isDealer: boolean } | null>(null)
+  const [confirmAreaInput, setConfirmAreaInput] = useState('')
+  const [confirmAreaUnit, setConfirmAreaUnit] = useState('acres')
+  const [editingArea, setEditingArea] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
@@ -51,12 +63,26 @@ export default function OrderingScreenPage() {
     } finally { setLoading(false) }
   }
 
-  async function sendOrder(person: Person, isDealer: boolean) {
+  function startSendOrder(person: Person, isDealer: boolean) {
     if (practiceIds.length === 0) {
       router.replace(`/orders`)
       return
     }
+    // If acreage not yet hard-locked, force a confirmation step.
+    if (sub && !sub.farm_area_confirmed_at) {
+      setConfirmAreaInput(sub.farm_area_acres != null ? String(sub.farm_area_acres) : '')
+      setConfirmAreaUnit(sub.area_unit || 'acres')
+      setEditingArea(sub.farm_area_acres == null)
+      setErrorMsg(null)
+      setConfirmStep({ person, isDealer })
+      return
+    }
+    void executeSendOrder(person, isDealer)
+  }
+
+  async function executeSendOrder(person: Person, isDealer: boolean, acreage?: { acres: number; unit: string }) {
     setPlacing(person.user_id)
+    setErrorMsg(null)
     try {
       const payload: Record<string, unknown> = {
         subscription_id: subscriptionId,
@@ -67,10 +93,33 @@ export default function OrderingScreenPage() {
       }
       if (isDealer) payload.dealer_user_id = person.user_id
       else payload.facilitator_user_id = person.user_id
+      if (acreage) {
+        payload.farm_area_acres = acreage.acres
+        payload.area_unit = acreage.unit
+      }
 
       await api.post('/farmer/orders', payload)
+      setConfirmStep(null)
       router.replace('/orders')
-    } catch { setPlacing(null) }
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
+      setErrorMsg(err.response?.data?.detail || 'Could not send order')
+      setPlacing(null)
+    }
+  }
+
+  async function confirmAndSend() {
+    if (!confirmStep) return
+    // Acreage is required because confirmStep only opens when not yet locked
+    const valStr = confirmAreaInput.trim()
+    if (!valStr || isNaN(parseFloat(valStr)) || parseFloat(valStr) <= 0) {
+      setErrorMsg('Enter a valid farm area')
+      return
+    }
+    await executeSendOrder(confirmStep.person, confirmStep.isDealer, {
+      acres: parseFloat(valStr),
+      unit: confirmAreaUnit,
+    })
   }
 
   const badgeColour = {
@@ -105,7 +154,7 @@ export default function OrderingScreenPage() {
                 📞 Call
               </a>
             )}
-            <button onClick={() => sendOrder(person, isDealer)}
+            <button onClick={() => startSendOrder(person, isDealer)}
               disabled={placing === person.user_id}
               className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
               style={{ background: '#1A5C2A' }}>
@@ -179,6 +228,68 @@ export default function OrderingScreenPage() {
           </div>
         )}
       </div>
+
+      {/* Hard-confirm acreage step (shown only when farm_area_confirmed_at is null) */}
+      {confirmStep && sub && (
+        <div className="fixed inset-0 z-40 bg-black/50 flex items-end" onClick={() => placing == null && setConfirmStep(null)}>
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-slate-900 text-base">Confirm your farm area</p>
+
+            {sub.farm_area_acres != null && !editingArea ? (
+              <p className="text-sm text-slate-700 mt-3">
+                <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
+                <button
+                  onClick={() => setEditingArea(true)}
+                  className="ml-1 text-xs underline text-green-700"
+                >Change</button>
+              </p>
+            ) : (
+              <div className="flex gap-2 mt-3">
+                <input
+                  type="number" inputMode="decimal" step="0.01" min="0"
+                  value={confirmAreaInput}
+                  onChange={e => setConfirmAreaInput(e.target.value)}
+                  placeholder="0.00"
+                  className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-slate-400"
+                />
+                <select
+                  value={confirmAreaUnit}
+                  onChange={e => setConfirmAreaUnit(e.target.value)}
+                  className="border border-slate-200 rounded-xl px-2 py-2 text-sm bg-white"
+                >
+                  {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+              </div>
+            )}
+
+            <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl px-3 py-3">
+              <p className="text-orange-800 text-xs leading-relaxed">
+                <span className="font-bold">This is your final confirmation.</span>{' '}
+                Volumes for ALL your future orders will be calculated on this.{' '}
+                <span className="font-bold">It cannot be changed afterwards.</span>
+              </p>
+            </div>
+
+            {errorMsg && (
+              <p className="text-xs text-red-600 mt-3">{errorMsg}</p>
+            )}
+
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => { setConfirmStep(null); setErrorMsg(null) }}
+                disabled={placing != null}
+                className="py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-semibold disabled:opacity-40"
+              >Cancel</button>
+              <button
+                onClick={confirmAndSend}
+                disabled={placing != null}
+                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: '#1A5C2A' }}
+              >{placing != null ? 'Sending…' : 'Confirm and send order'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

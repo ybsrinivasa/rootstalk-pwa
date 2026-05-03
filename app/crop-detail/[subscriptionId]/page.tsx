@@ -59,11 +59,14 @@ export default function CropDetailPage() {
   const [areaInput, setAreaInput] = useState('')
   const [areaUnit, setAreaUnit] = useState('acres')
   const [savingArea, setSavingArea] = useState(false)
-  const [confirmingArea, setConfirmingArea] = useState(false)
 
   // Bottom sheets
   const [orderSheet, setOrderSheet] = useState<{ open: boolean; category: 'PESTICIDE' | 'FERTILISER' | null }>({ open: false, category: null })
   const [orderBusy, setOrderBusy] = useState(false)
+  const [orderSheetArea, setOrderSheetArea] = useState('')
+  const [orderSheetUnit, setOrderSheetUnit] = useState('acres')
+  const [orderSheetEditingArea, setOrderSheetEditingArea] = useState(false)
+  const [orderSuccess, setOrderSuccess] = useState<{ order_id: string; item_count: number } | null>(null)
 
   const [alertSheet, setAlertSheet] = useState(false)
   const [alertSendSelf, setAlertSendSelf] = useState(true)
@@ -149,38 +152,55 @@ export default function CropDetailPage() {
       })
       setSub(s => s ? { ...s, farm_area_acres: parseFloat(areaInput), area_unit: areaUnit } : s)
       showToast('Farm area saved')
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
+      showToast(err.response?.data?.detail || 'Could not save')
     } finally { setSavingArea(false) }
   }
 
-  async function confirmArea() {
-    if (!areaInput || isNaN(parseFloat(areaInput))) return
-    setConfirmingArea(true)
-    try {
-      const res = await api.post<{ farm_area_acres: number; area_unit: string; confirmed_at: string }>(
-        `/farmer/subscriptions/${subscriptionId}/farm-area/confirm`,
-        { farm_area_acres: parseFloat(areaInput), area_unit: areaUnit },
-      )
-      setSub(s => s ? {
-        ...s,
-        farm_area_acres: res.data.farm_area_acres,
-        area_unit: res.data.area_unit,
-        farm_area_confirmed_at: res.data.confirmed_at,
-      } : s)
-      showToast('Farm area confirmed')
-    } finally { setConfirmingArea(false) }
+  function openOrderSheet(category: 'PESTICIDE' | 'FERTILISER') {
+    setOrderSheet({ open: true, category })
+    setOrderSuccess(null)
+    setOrderSheetArea(sub?.farm_area_acres != null ? String(sub.farm_area_acres) : '')
+    setOrderSheetUnit(sub?.area_unit || 'acres')
+    setOrderSheetEditingArea(!sub?.farm_area_acres)
+  }
+
+  function closeOrderSheet() {
+    if (orderBusy) return
+    setOrderSheet({ open: false, category: null })
+    setOrderSuccess(null)
+    setOrderSheetEditingArea(false)
   }
 
   async function placeBuyAllOrder() {
-    if (!orderSheet.category) return
+    if (!orderSheet.category || !sub) return
+    // If acreage is not yet set OR farmer is editing, it must be valid
+    const needsAreaInBody = !sub.farm_area_acres || orderSheetEditingArea
+    if (needsAreaInBody) {
+      if (!orderSheetArea || isNaN(parseFloat(orderSheetArea)) || parseFloat(orderSheetArea) <= 0) {
+        showToast('Enter a valid farm area')
+        return
+      }
+    }
     setOrderBusy(true)
     try {
+      const body: Record<string, unknown> = { category: orderSheet.category }
+      if (needsAreaInBody) {
+        body.farm_area_acres = parseFloat(orderSheetArea)
+        body.area_unit = orderSheetUnit
+      }
       const res = await api.post<{ order_id: string; item_count: number }>(
         `/farmer/subscriptions/${subscriptionId}/orders/buy-all-dbs`,
-        { category: orderSheet.category },
+        body,
       )
-      setOrderSheet({ open: false, category: null })
-      showToast(`Order created (${res.data.item_count} items)`)
-      router.push(`/orders/${res.data.order_id}`)
+      // Reflect soft-confirm in local sub
+      setSub(s => s ? {
+        ...s,
+        farm_area_acres: needsAreaInBody ? parseFloat(orderSheetArea) : s.farm_area_acres,
+        area_unit: needsAreaInBody ? orderSheetUnit : s.area_unit,
+      } : s)
+      setOrderSuccess({ order_id: res.data.order_id, item_count: res.data.item_count })
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
       showToast(err.response?.data?.detail || 'Could not create order')
@@ -252,10 +272,10 @@ export default function CropDetailPage() {
     tl.practices.filter(p => (p.l1_type || '').toLowerCase().includes('fert'))
   )
 
-  // Acreage state
-  const areaConfirmed = !!sub.farm_area_confirmed_at
-  const beforeStart = !startDateObj || todayMid < startDateObj
-  const reconfirmNeeded = !areaConfirmed && hasStartDate && todayMid >= (startDateObj as Date)
+  // Acreage state — three-state policy
+  const areaHardLocked = !!sub.farm_area_confirmed_at
+  const areaSoftSet = !areaHardLocked && sub.farm_area_acres != null
+  const areaTentative = !areaHardLocked && sub.farm_area_acres == null
 
   const farmerRecipient = alertRecipients.find(r => r.recipient_type === 'FARMER')
   const promoterRecipient = alertRecipients.find(r => r.recipient_type === 'PROMOTER')
@@ -279,12 +299,12 @@ export default function CropDetailPage() {
 
       <div className="pb-28 px-4 pt-5 max-w-lg mx-auto">
 
-        {/* Acreage card */}
+        {/* Acreage card — 3 states: Tentative / Soft confirmed / Hard locked */}
         <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-2 px-1">Farm Area</p>
-        {!areaConfirmed && beforeStart ? (
+
+        {areaTentative && (
           <div className="bg-white border border-stone-200 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-stone-800 mb-1">Farm area</p>
-            <p className="text-xs text-stone-500 mb-3">You can update this until you place your first order or the start date arrives.</p>
+            <p className="text-sm font-semibold text-stone-800 mb-3">Farm area</p>
             <div className="flex gap-2">
               <input
                 type="number" inputMode="decimal" step="0.01" min="0"
@@ -309,22 +329,52 @@ export default function CropDetailPage() {
                 {savingArea ? '…' : 'Save'}
               </button>
             </div>
+            <p className="text-stone-400 text-xs mt-2">Tentative for now. Will be confirmed when you place your first order.</p>
           </div>
-        ) : (
-          <div className="bg-white border border-stone-200 rounded-2xl px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-stone-400">Farm area</p>
-                <p className="font-semibold text-stone-800">
-                  {sub.farm_area_acres ?? '—'} {sub.area_unit || ''}
-                </p>
-              </div>
-              {areaConfirmed && (
-                <p className="text-xs text-stone-400">
-                  Confirmed {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </p>
-              )}
+        )}
+
+        {areaSoftSet && (
+          <div className="bg-white border border-stone-200 rounded-2xl p-4">
+            <p className="text-sm font-semibold text-stone-800 mb-3">Farm area · Tentative</p>
+            <div className="flex gap-2">
+              <input
+                type="number" inputMode="decimal" step="0.01" min="0"
+                value={areaInput}
+                onChange={e => setAreaInput(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+              />
+              <select
+                value={areaUnit}
+                onChange={e => setAreaUnit(e.target.value)}
+                className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+              >
+                {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+              <button
+                onClick={saveArea}
+                disabled={savingArea || !areaInput}
+                className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}
+              >
+                {savingArea ? '…' : 'Save'}
+              </button>
             </div>
+            <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
+              Currently set as your tentative area. You can revise it once more when you place your first DAS order at planting time.
+            </p>
+          </div>
+        )}
+
+        {areaHardLocked && (
+          <div className="bg-white border border-stone-200 rounded-2xl px-4 py-3">
+            <p className="text-sm font-semibold text-stone-800">Farm area · Confirmed</p>
+            <p className="font-semibold text-stone-800 mt-1">
+              {sub.farm_area_acres ?? '—'} {sub.area_unit || ''}
+            </p>
+            <p className="text-stone-400 text-xs mt-1">
+              Locked on {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}. Volumes for all your inputs are calculated on this.
+            </p>
           </div>
         )}
 
@@ -373,38 +423,6 @@ export default function CropDetailPage() {
               style={{ background: colour }}>
               {savingDate ? '…' : 'Update'}
             </button>
-          </div>
-        )}
-
-        {/* Acreage Reconfirm Banner */}
-        {reconfirmNeeded && (
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <p className="font-bold text-amber-800 text-sm">Please confirm your farm area</p>
-            <p className="text-amber-600 text-xs mt-1">Your crop start date has arrived. Lock in the farm area to begin.</p>
-            <div className="mt-3 flex gap-2">
-              <input
-                type="number" inputMode="decimal" step="0.01" min="0"
-                value={areaInput}
-                onChange={e => setAreaInput(e.target.value)}
-                placeholder="0.00"
-                className="flex-1 border border-amber-300 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none"
-              />
-              <select
-                value={areaUnit}
-                onChange={e => setAreaUnit(e.target.value)}
-                className="border border-amber-300 rounded-xl px-2 py-2 text-sm bg-white"
-              >
-                {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
-              <button
-                onClick={confirmArea}
-                disabled={confirmingArea || !areaInput}
-                className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                style={{ background: colour }}
-              >
-                {confirmingArea ? '…' : 'Confirm'}
-              </button>
-            </div>
           </div>
         )}
 
@@ -476,7 +494,7 @@ export default function CropDetailPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setOrderSheet({ open: true, category: 'PESTICIDE' })}
+                  onClick={() => openOrderSheet('PESTICIDE')}
                   className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                   style={{ background: colour }}
                 >
@@ -495,7 +513,7 @@ export default function CropDetailPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setOrderSheet({ open: true, category: 'FERTILISER' })}
+                  onClick={() => openOrderSheet('FERTILISER')}
                   className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                   style={{ background: colour }}
                 >
@@ -598,27 +616,129 @@ export default function CropDetailPage() {
 
       {/* Order bottom sheet */}
       {orderSheet.open && (
-        <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !orderBusy && setOrderSheet({ open: false, category: null })}>
+        <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={closeOrderSheet}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-stone-800 text-base">
-              Order all DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
-            </p>
-            <p className="text-xs text-stone-500 mt-1">
-              We'll create a single order covering every Days-Before-Sowing {orderSheet.category === 'PESTICIDE' ? 'pesticide' : 'fertiliser'} item for the next 14 days. You can pick a dealer on the order screen.
-            </p>
-            <div className="grid grid-cols-2 gap-3 mt-5">
-              <button
-                onClick={() => setOrderSheet({ open: false, category: null })}
-                disabled={orderBusy}
-                className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
-              >Cancel</button>
-              <button
-                onClick={placeBuyAllOrder}
-                disabled={orderBusy}
-                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                style={{ background: colour }}
-              >{orderBusy ? '…' : 'Create order'}</button>
-            </div>
+            {orderSuccess ? (
+              <>
+                <p className="font-bold text-stone-800 text-base">Order created</p>
+                <p className="text-sm text-stone-600 mt-2">
+                  {orderSuccess.item_count} item{orderSuccess.item_count !== 1 ? 's' : ''} added to a single order. You can pick a dealer on the order screen.
+                </p>
+                <div className="grid grid-cols-2 gap-3 mt-5">
+                  <button
+                    onClick={closeOrderSheet}
+                    className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold"
+                  >Close</button>
+                  <button
+                    onClick={() => router.push(`/orders/${orderSuccess.order_id}`)}
+                    className="py-3 rounded-xl text-white text-sm font-semibold"
+                    style={{ background: colour }}
+                  >Take me to order</button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* State A: tentative (no acreage set) — entry first */}
+                {!sub.farm_area_acres && !sub.farm_area_confirmed_at && (
+                  <>
+                    <p className="font-bold text-stone-800 text-base">Confirm your tentative area</p>
+                    <p className="text-xs text-stone-500 mt-1">
+                      Volumes for these inputs are calculated on this. You can revise it once more at planting.
+                    </p>
+                    <div className="flex gap-2 mt-4">
+                      <input
+                        type="number" inputMode="decimal" step="0.01" min="0"
+                        value={orderSheetArea}
+                        onChange={e => setOrderSheetArea(e.target.value)}
+                        placeholder="0.00"
+                        className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+                      />
+                      <select
+                        value={orderSheetUnit}
+                        onChange={e => setOrderSheetUnit(e.target.value)}
+                        className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+                      >
+                        {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {/* State B: soft set (tentative value exists, not yet locked) */}
+                {sub.farm_area_acres != null && !sub.farm_area_confirmed_at && (
+                  <>
+                    <p className="font-bold text-stone-800 text-base">
+                      Order DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
+                    </p>
+                    {orderSheetEditingArea ? (
+                      <>
+                        <p className="text-xs text-stone-500 mt-2">Update tentative area:</p>
+                        <div className="flex gap-2 mt-2">
+                          <input
+                            type="number" inputMode="decimal" step="0.01" min="0"
+                            value={orderSheetArea}
+                            onChange={e => setOrderSheetArea(e.target.value)}
+                            placeholder="0.00"
+                            className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+                          />
+                          <select
+                            value={orderSheetUnit}
+                            onChange={e => setOrderSheetUnit(e.target.value)}
+                            className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+                          >
+                            {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-sm text-stone-700 mt-3">
+                        Current tentative area: <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
+                        <button
+                          onClick={() => setOrderSheetEditingArea(true)}
+                          className="ml-1 text-xs underline"
+                          style={{ color: colour }}
+                        >Change</button>
+                      </p>
+                    )}
+                    <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
+                      We'll use this for volume. You can revise once more at planting.
+                    </p>
+                  </>
+                )}
+
+                {/* State C: hard locked */}
+                {sub.farm_area_confirmed_at && (
+                  <>
+                    <p className="font-bold text-stone-800 text-base">
+                      Order DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
+                    </p>
+                    <p className="text-sm text-stone-700 mt-3">
+                      Area: <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
+                      <span className="text-xs text-stone-400">(locked)</span>
+                    </p>
+                    <p className="text-stone-400 text-xs mt-2">
+                      Locked at planting. Volumes are calculated on this.
+                    </p>
+                  </>
+                )}
+
+                <div className="grid grid-cols-2 gap-3 mt-5">
+                  <button
+                    onClick={closeOrderSheet}
+                    disabled={orderBusy}
+                    className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
+                  >Cancel</button>
+                  <button
+                    onClick={placeBuyAllOrder}
+                    disabled={orderBusy}
+                    className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                    style={{ background: colour }}
+                  >
+                    {orderBusy ? '…' : (sub.farm_area_confirmed_at ? 'Place order' : 'Confirm and order')}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
