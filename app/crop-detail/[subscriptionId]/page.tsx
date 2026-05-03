@@ -7,6 +7,10 @@ import api from '@/lib/api'
 interface SubscriptionDetail {
   id: string; status: string; crop_start_date: string | null
   reference_number: string | null; client_id: string; package_id: string
+  subscription_type?: string
+  farm_area_acres: number | null
+  area_unit: string | null
+  farm_area_confirmed_at: string | null
 }
 interface Branding {
   display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
@@ -16,7 +20,22 @@ interface PreStartInput {
   days_before_sowing_from: number; days_before_sowing_to: number
   practices: { id: string; l0_type: string; l1_type: string | null; l2_type: string | null }[]
 }
-interface MissedCount { count: number }
+interface AlertRecipientRow {
+  recipient_user_id: string
+  recipient_type: string
+  status?: string
+  phone?: string | null
+  name?: string | null
+}
+interface ExpertSetting {
+  mode: 'SPECIFIC' | 'PROMOTER_PUNDIT' | 'REGULAR_TEAM'
+  preferred_pundit: { pundit_id: string; name: string | null; phone: string | null } | null
+  promoter_pundit: { pundit_id: string; name: string | null; phone: string | null } | null
+  company_experts: { pundit_id: string; name: string | null; phone: string | null; role: string }[]
+}
+interface SeedAvail { has_varieties: boolean; count: number }
+
+const AREA_UNITS = ['acres', 'hectares', 'bigha']
 
 export default function CropDetailPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -25,13 +44,46 @@ export default function CropDetailPage() {
   const [branding, setBranding] = useState<Branding | null>(null)
   const [preStart, setPreStart] = useState<PreStartInput[]>([])
   const [missedCount, setMissedCount] = useState(0)
+  const [alertRecipients, setAlertRecipients] = useState<AlertRecipientRow[]>([])
+  const [expertSetting, setExpertSetting] = useState<ExpertSetting | null>(null)
+  const [seedAvail, setSeedAvail] = useState<SeedAvail>({ has_varieties: false, count: 0 })
+  const [me, setMe] = useState<{ name: string | null; phone: string | null } | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // Start date state
   const [startDate, setStartDate] = useState('')
   const [savingDate, setSavingDate] = useState(false)
   const [showStartDate, setShowStartDate] = useState(false)
 
+  // Acreage state
+  const [areaInput, setAreaInput] = useState('')
+  const [areaUnit, setAreaUnit] = useState('acres')
+  const [savingArea, setSavingArea] = useState(false)
+  const [confirmingArea, setConfirmingArea] = useState(false)
+
+  // Bottom sheets
+  const [orderSheet, setOrderSheet] = useState<{ open: boolean; category: 'PESTICIDE' | 'FERTILISER' | null }>({ open: false, category: null })
+  const [orderBusy, setOrderBusy] = useState(false)
+
+  const [alertSheet, setAlertSheet] = useState(false)
+  const [alertSendSelf, setAlertSendSelf] = useState(true)
+  const [alertSendPromoter, setAlertSendPromoter] = useState(true)
+  const [savingAlerts, setSavingAlerts] = useState(false)
+
+  const [expertSheet, setExpertSheet] = useState(false)
+  const [savingExpert, setSavingExpert] = useState(false)
+
+  const [toast, setToast] = useState<string | null>(null)
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
+    const userJson = typeof window !== 'undefined' ? localStorage.getItem('rt_pwa_user') : null
+    if (userJson) {
+      try {
+        const u = JSON.parse(userJson)
+        setMe({ name: u.name || null, phone: u.phone || null })
+      } catch {}
+    }
     load()
   }, [subscriptionId])
 
@@ -42,11 +94,16 @@ export default function CropDetailPage() {
       if (!found) { router.replace('/home'); return }
       setSub(found)
       setStartDate(found.crop_start_date?.split('T')[0] || '')
+      setAreaInput(found.farm_area_acres != null ? String(found.farm_area_acres) : '')
+      setAreaUnit(found.area_unit || 'acres')
 
-      const [brandRes, preStartRes, missedRes] = await Promise.allSettled([
+      const [brandRes, preStartRes, missedRes, alertsRes, expertRes, seedRes] = await Promise.allSettled([
         api.get<Branding>(`/portal/${found.client_id}/branding`),
         api.get<PreStartInput[]>(`/farmer/subscriptions/${subscriptionId}/pre-start-inputs`),
         api.get<{ count: number } | { timeline_id: string }[]>(`/farmer/subscriptions/${subscriptionId}/missed-items`),
+        api.get<AlertRecipientRow[]>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`),
+        api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`),
+        api.get<SeedAvail>(`/farmer/subscriptions/${subscriptionId}/seed-availability`),
       ])
 
       if (brandRes.status === 'fulfilled') setBranding(brandRes.value.data)
@@ -55,7 +112,19 @@ export default function CropDetailPage() {
         const d = missedRes.value.data
         setMissedCount(Array.isArray(d) ? d.length : (d as { count: number }).count)
       }
+      if (alertsRes.status === 'fulfilled') {
+        setAlertRecipients(alertsRes.value.data)
+        setAlertSendSelf(alertsRes.value.data.some(r => r.recipient_type === 'FARMER'))
+        setAlertSendPromoter(alertsRes.value.data.some(r => r.recipient_type === 'PROMOTER'))
+      }
+      if (expertRes.status === 'fulfilled') setExpertSetting(expertRes.value.data)
+      if (seedRes.status === 'fulfilled') setSeedAvail(seedRes.value.data)
     } finally { setLoading(false) }
+  }
+
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2400)
   }
 
   async function saveStartDate() {
@@ -70,6 +139,96 @@ export default function CropDetailPage() {
     } finally { setSavingDate(false) }
   }
 
+  async function saveArea() {
+    if (!areaInput || isNaN(parseFloat(areaInput))) return
+    setSavingArea(true)
+    try {
+      await api.put(`/farmer/subscriptions/${subscriptionId}/farm-area`, {
+        farm_area_acres: parseFloat(areaInput),
+        area_unit: areaUnit,
+      })
+      setSub(s => s ? { ...s, farm_area_acres: parseFloat(areaInput), area_unit: areaUnit } : s)
+      showToast('Farm area saved')
+    } finally { setSavingArea(false) }
+  }
+
+  async function confirmArea() {
+    if (!areaInput || isNaN(parseFloat(areaInput))) return
+    setConfirmingArea(true)
+    try {
+      const res = await api.post<{ farm_area_acres: number; area_unit: string; confirmed_at: string }>(
+        `/farmer/subscriptions/${subscriptionId}/farm-area/confirm`,
+        { farm_area_acres: parseFloat(areaInput), area_unit: areaUnit },
+      )
+      setSub(s => s ? {
+        ...s,
+        farm_area_acres: res.data.farm_area_acres,
+        area_unit: res.data.area_unit,
+        farm_area_confirmed_at: res.data.confirmed_at,
+      } : s)
+      showToast('Farm area confirmed')
+    } finally { setConfirmingArea(false) }
+  }
+
+  async function placeBuyAllOrder() {
+    if (!orderSheet.category) return
+    setOrderBusy(true)
+    try {
+      const res = await api.post<{ order_id: string; item_count: number }>(
+        `/farmer/subscriptions/${subscriptionId}/orders/buy-all-dbs`,
+        { category: orderSheet.category },
+      )
+      setOrderSheet({ open: false, category: null })
+      showToast(`Order created (${res.data.item_count} items)`)
+      router.push(`/orders/${res.data.order_id}`)
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
+      showToast(err.response?.data?.detail || 'Could not create order')
+    } finally { setOrderBusy(false) }
+  }
+
+  async function saveAlertPrefs() {
+    setSavingAlerts(true)
+    try {
+      let promoterUserId: string | null = null
+      if (alertSendPromoter) {
+        // Look up an existing PROMOTER recipient to reuse the user_id
+        const existingPromoter = alertRecipients.find(r => r.recipient_type === 'PROMOTER')
+        if (existingPromoter) promoterUserId = existingPromoter.recipient_user_id
+      }
+      await api.post(`/farmer/subscriptions/${subscriptionId}/alert-preferences`, {
+        send_to_self: alertSendSelf,
+        promoter_user_id: promoterUserId,
+      })
+      // Reload alert recipients
+      const alertsRes = await api.get<AlertRecipientRow[]>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`)
+      setAlertRecipients(alertsRes.data)
+      setAlertSheet(false)
+      showToast('Alert preferences saved')
+    } finally { setSavingAlerts(false) }
+  }
+
+  async function setExpert(punditId: string) {
+    setSavingExpert(true)
+    try {
+      await api.post(`/farmer/subscriptions/${subscriptionId}/pundit-preference`, { pundit_id: punditId })
+      const res = await api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`)
+      setExpertSetting(res.data)
+      setExpertSheet(false)
+      showToast('Expert preference saved')
+    } finally { setSavingExpert(false) }
+  }
+
+  async function revertExpert() {
+    setSavingExpert(true)
+    try {
+      await api.delete(`/farmer/subscriptions/${subscriptionId}/pundit-preference`)
+      const res = await api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`)
+      setExpertSetting(res.data)
+      showToast('Reverted to default')
+    } finally { setSavingExpert(false) }
+  }
+
   if (loading || !sub) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-green-700 border-t-transparent rounded-full animate-spin" />
@@ -79,15 +238,31 @@ export default function CropDetailPage() {
   const colour = branding?.primary_colour || '#1A5C2A'
   const hasStartDate = !!sub.crop_start_date
 
-  const pestPracticeIds = preStart.flatMap(tl =>
-    tl.practices.filter(p => p.l1_type?.toLowerCase().includes('pest') || p.l2_type?.toLowerCase().includes('pest')).map(p => p.id)
+  // Pre-start visibility: only when today < start date or no start date set yet
+  const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0)
+  const startDateObj = sub.crop_start_date ? new Date(sub.crop_start_date) : null
+  if (startDateObj) startDateObj.setHours(0, 0, 0, 0)
+  const showPreStart = !startDateObj || todayMid < startDateObj
+
+  // Pre-start practice categorisation
+  const pestPractices = preStart.flatMap(tl =>
+    tl.practices.filter(p => (p.l1_type || '').toLowerCase().includes('pest'))
   )
-  const fertPracticeIds = preStart.flatMap(tl =>
-    tl.practices.filter(p => p.l1_type?.toLowerCase().includes('fert') || p.l2_type?.toLowerCase().includes('fert')).map(p => p.id)
+  const fertPractices = preStart.flatMap(tl =>
+    tl.practices.filter(p => (p.l1_type || '').toLowerCase().includes('fert'))
   )
 
+  // Acreage state
+  const areaConfirmed = !!sub.farm_area_confirmed_at
+  const beforeStart = !startDateObj || todayMid < startDateObj
+  const reconfirmNeeded = !areaConfirmed && hasStartDate && todayMid >= (startDateObj as Date)
+
+  const farmerRecipient = alertRecipients.find(r => r.recipient_type === 'FARMER')
+  const promoterRecipient = alertRecipients.find(r => r.recipient_type === 'PROMOTER')
+  const isAssigned = sub.subscription_type === 'ASSIGNED'
+
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-stone-50">
       {/* Branded header */}
       <div className="sticky top-0 z-30 px-4 pt-safe" style={{ background: colour }}>
         <div className="flex items-center gap-3 py-3">
@@ -102,8 +277,59 @@ export default function CropDetailPage() {
         </div>
       </div>
 
-      <div className="pb-28 px-4 pt-5 max-w-lg mx-auto space-y-5">
+      <div className="pb-28 px-4 pt-5 max-w-lg mx-auto">
+
+        {/* Acreage card */}
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-2 px-1">Farm Area</p>
+        {!areaConfirmed && beforeStart ? (
+          <div className="bg-white border border-stone-200 rounded-2xl p-4">
+            <p className="text-sm font-semibold text-stone-800 mb-1">Farm area</p>
+            <p className="text-xs text-stone-500 mb-3">You can update this until you place your first order or the start date arrives.</p>
+            <div className="flex gap-2">
+              <input
+                type="number" inputMode="decimal" step="0.01" min="0"
+                value={areaInput}
+                onChange={e => setAreaInput(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+              />
+              <select
+                value={areaUnit}
+                onChange={e => setAreaUnit(e.target.value)}
+                className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+              >
+                {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+              <button
+                onClick={saveArea}
+                disabled={savingArea || !areaInput}
+                className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}
+              >
+                {savingArea ? '…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white border border-stone-200 rounded-2xl px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-stone-400">Farm area</p>
+                <p className="font-semibold text-stone-800">
+                  {sub.farm_area_acres ?? '—'} {sub.area_unit || ''}
+                </p>
+              </div>
+              {areaConfirmed && (
+                <p className="text-xs text-stone-400">
+                  Confirmed {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Start date */}
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Start Date</p>
         {!hasStartDate ? (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
             <p className="font-bold text-amber-800">Set your crop start date</p>
@@ -128,20 +354,20 @@ export default function CropDetailPage() {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-stone-200 px-4 py-3 flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400">Crop start date</p>
-              <p className="font-semibold text-slate-800">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+              <p className="text-xs text-stone-400">Crop start date</p>
+              <p className="font-semibold text-stone-800">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
             </div>
             <button onClick={() => setShowStartDate(!showStartDate)}
-              className="text-xs text-slate-400 underline">change</button>
+              className="text-xs text-stone-400 underline">change</button>
           </div>
         )}
         {showStartDate && hasStartDate && (
-          <div className="bg-white rounded-2xl border border-slate-100 p-4 flex gap-2">
+          <div className="mt-3 bg-white rounded-2xl border border-stone-200 p-4 flex gap-2">
             <input type="date" value={startDate}
               onChange={e => setStartDate(e.target.value)}
-              className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
+              className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
             <button onClick={saveStartDate} disabled={savingDate || !startDate}
               className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
               style={{ background: colour }}>
@@ -150,39 +376,68 @@ export default function CropDetailPage() {
           </div>
         )}
 
+        {/* Acreage Reconfirm Banner */}
+        {reconfirmNeeded && (
+          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p className="font-bold text-amber-800 text-sm">Please confirm your farm area</p>
+            <p className="text-amber-600 text-xs mt-1">Your crop start date has arrived. Lock in the farm area to begin.</p>
+            <div className="mt-3 flex gap-2">
+              <input
+                type="number" inputMode="decimal" step="0.01" min="0"
+                value={areaInput}
+                onChange={e => setAreaInput(e.target.value)}
+                placeholder="0.00"
+                className="flex-1 border border-amber-300 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none"
+              />
+              <select
+                value={areaUnit}
+                onChange={e => setAreaUnit(e.target.value)}
+                className="border border-amber-300 rounded-xl px-2 py-2 text-sm bg-white"
+              >
+                {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+              <button
+                onClick={confirmArea}
+                disabled={confirmingArea || !areaInput}
+                className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}
+              >
+                {confirmingArea ? '…' : 'Confirm'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Three action tiles */}
-        <div className="grid grid-cols-3 gap-3">
-          {/* Advisory */}
+        <div className="grid grid-cols-3 gap-3 mt-6">
           <button
             onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowStartDate(true)}
-            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-slate-100 active:scale-95' : 'bg-slate-50 border-slate-200 opacity-60'}`}>
+            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-stone-200 active:scale-95' : 'bg-stone-100 border-stone-200 opacity-60'}`}>
             <span className="text-3xl block mb-2">🌿</span>
-            <p className="text-xs font-bold text-slate-800">Advisory</p>
+            <p className="text-xs font-bold text-stone-800">Advisory</p>
             {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">Set date first</p>}
           </button>
 
-          {/* Diagnose */}
           <button
             onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}/diagnose`) : setShowStartDate(true)}
-            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-slate-100 active:scale-95' : 'bg-slate-50 border-slate-200 opacity-60'}`}>
+            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-stone-200 active:scale-95' : 'bg-stone-100 border-stone-200 opacity-60'}`}>
             <span className="text-3xl block mb-2">🔬</span>
-            <p className="text-xs font-bold text-slate-800">Diagnose</p>
+            <p className="text-xs font-bold text-stone-800">Diagnose</p>
             {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">Set date first</p>}
           </button>
 
-          {/* Ask Expert — always available */}
           <button
             onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
-            className="bg-white rounded-2xl p-4 text-center border border-slate-100 shadow-sm active:scale-95">
+            className="bg-white rounded-2xl p-4 text-center border border-stone-200 shadow-sm active:scale-95">
             <span className="text-3xl block mb-2">🎓</span>
-            <p className="text-xs font-bold text-slate-800">Ask Expert</p>
+            <p className="text-xs font-bold text-stone-800">Ask Expert</p>
           </button>
         </div>
 
         {/* Missed items link */}
         {missedCount > 0 && (
           <button onClick={() => router.push(`/missed-items/${subscriptionId}`)}
-            className="w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
+            className="mt-4 w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
             <p className="text-sm text-amber-700 font-medium">
               {missedCount} missed item{missedCount > 1 ? 's' : ''} — application window passed
             </p>
@@ -190,55 +445,281 @@ export default function CropDetailPage() {
           </button>
         )}
 
-        {/* Pre-Start Inputs */}
-        {preStart.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-50">
-              <p className="font-bold text-slate-800 text-sm">Prepare for Your Crop</p>
-              <p className="text-xs text-slate-400 mt-0.5">Input requirements before sowing begins</p>
-            </div>
-            <div className="divide-y divide-slate-50">
-              {preStart.map(tl => (
-                <div key={tl.timeline_id} className="px-4 py-4">
-                  <p className="text-xs font-semibold text-slate-500 mb-2">{tl.timeline_name} · {tl.days_before_sowing_from}–{tl.days_before_sowing_to} days before sowing</p>
-                  <div className="space-y-2">
-                    {tl.practices.map(p => (
-                      <div key={p.id} className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-slate-700">{p.l2_type || p.l1_type || p.l0_type}</p>
-                          <p className="text-xs text-slate-400">{p.l0_type}</p>
-                        </div>
-                        <button
-                          onClick={() => router.push(`/order/new/${subscriptionId}?practice_ids=${p.id}&order_type=${
-                            (p.l1_type || '').toLowerCase().includes('pest') ? 'PESTICIDE' :
-                            (p.l1_type || '').toLowerCase().includes('fert') ? 'FERTILISER' : 'PESTICIDE'
-                          }`)}
-                          className="text-xs px-3 py-1.5 rounded-xl text-white font-semibold"
-                          style={{ background: colour }}>
-                          Order
-                        </button>
-                      </div>
-                    ))}
+        {/* Pre-Start section */}
+        {showPreStart && (seedAvail.has_varieties || pestPractices.length > 0 || fertPractices.length > 0) && (
+          <>
+            <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Prepare for Sowing</p>
+
+            {seedAvail.has_varieties && (
+              <button
+                onClick={() => router.push(`/subscribe/seed-varieties/${subscriptionId}`)}
+                className="w-full bg-white rounded-2xl border border-stone-200 px-4 py-4 flex items-center justify-between active:scale-98 transition-transform mb-3"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">🌾</span>
+                  <div className="text-left">
+                    <p className="font-semibold text-stone-800 text-sm">Seeds &amp; Seedlings</p>
+                    <p className="text-xs text-stone-400">Browse and order recommended varieties</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                <span className="text-stone-300 text-xl">›</span>
+              </button>
+            )}
+
+            {pestPractices.length > 0 && (
+              <div className="bg-white rounded-2xl border border-stone-200 p-4 mb-3">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl">🧪</span>
+                  <div>
+                    <p className="font-semibold text-stone-800 text-sm">Pre-Start Pesticides</p>
+                    <p className="text-xs text-stone-400">{pestPractices.length} item{pestPractices.length > 1 ? 's' : ''} recommended before sowing</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOrderSheet({ open: true, category: 'PESTICIDE' })}
+                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: colour }}
+                >
+                  Order all pesticides →
+                </button>
+              </div>
+            )}
+
+            {fertPractices.length > 0 && (
+              <div className="bg-white rounded-2xl border border-stone-200 p-4 mb-3">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl">🌱</span>
+                  <div>
+                    <p className="font-semibold text-stone-800 text-sm">Pre-Start Fertilisers</p>
+                    <p className="text-xs text-stone-400">{fertPractices.length} item{fertPractices.length > 1 ? 's' : ''} recommended before sowing</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOrderSheet({ open: true, category: 'FERTILISER' })}
+                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: colour }}
+                >
+                  Order all fertilisers →
+                </button>
+              </div>
+            )}
+          </>
         )}
 
-        {/* Seeds section */}
-        <button onClick={() => router.push(`/subscribe/seed-varieties/${subscriptionId}`)}
-          className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm px-4 py-4 flex items-center justify-between active:scale-98 transition-transform">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🌾</span>
-            <div className="text-left">
-              <p className="font-semibold text-slate-800 text-sm">Seeds / Seedlings</p>
-              <p className="text-xs text-slate-400">Browse and order recommended varieties</p>
+        {/* Alerts */}
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Alerts</p>
+        <div className="bg-white border border-stone-200 rounded-2xl p-4">
+          <p className="text-sm font-semibold text-stone-800 mb-2">Who receives alerts for this advisory?</p>
+          <div className="space-y-1.5 mb-3">
+            {farmerRecipient ? (
+              <p className="text-sm text-stone-700">
+                You {me?.phone ? <span className="text-stone-400">({me.phone})</span> : null}
+              </p>
+            ) : (
+              <p className="text-sm text-stone-400 italic">Alerts to you are turned off</p>
+            )}
+            {promoterRecipient && (
+              <p className="text-sm text-stone-700">
+                Also: {promoterRecipient.name || 'Your Promoter'} {promoterRecipient.phone ? <span className="text-stone-400">({promoterRecipient.phone})</span> : null}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => setAlertSheet(true)}
+            className="w-full py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+          >
+            Change alert recipients
+          </button>
+        </div>
+
+        {/* Ask Expert preference */}
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Ask Expert</p>
+        <div className="bg-white border border-stone-200 rounded-2xl p-4">
+          {!expertSetting ? (
+            <p className="text-sm text-stone-400 italic">Loading…</p>
+          ) : expertSetting.mode === 'SPECIFIC' && expertSetting.preferred_pundit ? (
+            <>
+              <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-sm font-semibold text-stone-800">
+                {expertSetting.preferred_pundit.name || 'Selected Expert'}
+                {expertSetting.preferred_pundit.phone && (
+                  <span className="text-stone-400 font-normal ml-2">({expertSetting.preferred_pundit.phone})</span>
+                )}
+              </p>
+              <p className="text-xs text-stone-500 mt-1">Your queries go directly to this expert.</p>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <button
+                  onClick={() => setExpertSheet(true)}
+                  className="py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+                >Change</button>
+                <button
+                  onClick={revertExpert}
+                  disabled={savingExpert}
+                  className="py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium disabled:opacity-40"
+                >Revert to default</button>
+              </div>
+            </>
+          ) : expertSetting.mode === 'PROMOTER_PUNDIT' && expertSetting.promoter_pundit ? (
+            <>
+              <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-sm font-semibold text-stone-800">
+                {expertSetting.promoter_pundit.name || 'Promoter-Expert'}
+                {expertSetting.promoter_pundit.phone && (
+                  <span className="text-stone-400 font-normal ml-2">({expertSetting.promoter_pundit.phone})</span>
+                )}
+              </p>
+              <p className="text-xs text-stone-500 mt-1">
+                Your Promoter is also an Expert. Queries go to them by default.
+              </p>
+              <button
+                onClick={() => setExpertSheet(true)}
+                className="mt-3 w-full py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+              >Choose a different expert</button>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-sm font-semibold text-stone-800">Regular team routing</p>
+              <p className="text-xs text-stone-500 mt-1">
+                {expertSetting.company_experts.length > 0
+                  ? "Queries go to your company's regular Expert team."
+                  : "Your company has no specific experts available yet. Queries will go to the regular team."}
+              </p>
+              {expertSetting.company_experts.length > 0 && (
+                <button
+                  onClick={() => setExpertSheet(true)}
+                  className="mt-3 w-full py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+                >Choose a specific expert</button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Order bottom sheet */}
+      {orderSheet.open && (
+        <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !orderBusy && setOrderSheet({ open: false, category: null })}>
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-stone-800 text-base">
+              Order all DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
+            </p>
+            <p className="text-xs text-stone-500 mt-1">
+              We'll create a single order covering every Days-Before-Sowing {orderSheet.category === 'PESTICIDE' ? 'pesticide' : 'fertiliser'} item for the next 14 days. You can pick a dealer on the order screen.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => setOrderSheet({ open: false, category: null })}
+                disabled={orderBusy}
+                className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
+              >Cancel</button>
+              <button
+                onClick={placeBuyAllOrder}
+                disabled={orderBusy}
+                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}
+              >{orderBusy ? '…' : 'Create order'}</button>
             </div>
           </div>
-          <span className="text-slate-300 text-xl">›</span>
-        </button>
-      </div>
+        </div>
+      )}
+
+      {/* Alerts bottom sheet */}
+      {alertSheet && (
+        <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingAlerts && setAlertSheet(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-stone-800 text-base">Alert recipients</p>
+            <div className="mt-4 space-y-3">
+              <label className="flex items-center justify-between bg-stone-50 rounded-xl px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-stone-800">Send alerts to me</p>
+                  {me?.phone && <p className="text-xs text-stone-400">{me.phone}</p>}
+                </div>
+                <input
+                  type="checkbox"
+                  checked={alertSendSelf}
+                  onChange={e => setAlertSendSelf(e.target.checked)}
+                  className="w-5 h-5"
+                />
+              </label>
+
+              {isAssigned && promoterRecipient && (
+                <label className="flex items-center justify-between bg-stone-50 rounded-xl px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-stone-800">Also send to my Promoter</p>
+                    <p className="text-xs text-stone-400">
+                      {promoterRecipient.name || 'Promoter'}{promoterRecipient.phone ? ` · ${promoterRecipient.phone}` : ''}
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={alertSendPromoter}
+                    onChange={e => setAlertSendPromoter(e.target.checked)}
+                    className="w-5 h-5"
+                  />
+                </label>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => setAlertSheet(false)}
+                disabled={savingAlerts}
+                className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
+              >Cancel</button>
+              <button
+                onClick={saveAlertPrefs}
+                disabled={savingAlerts}
+                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}
+              >{savingAlerts ? '…' : 'Save'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expert picker bottom sheet */}
+      {expertSheet && expertSetting && (
+        <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingExpert && setExpertSheet(false)}>
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-stone-800 text-base">Choose your expert</p>
+            <p className="text-xs text-stone-500 mt-1">Your queries will be routed to this expert directly.</p>
+            <div className="mt-4 space-y-2">
+              {expertSetting.company_experts.length === 0 ? (
+                <p className="text-sm text-stone-400 italic py-4 text-center">No specific experts available.</p>
+              ) : (
+                expertSetting.company_experts.map(exp => {
+                  const isCurrent = expertSetting.preferred_pundit?.pundit_id === exp.pundit_id
+                  return (
+                    <button
+                      key={exp.pundit_id}
+                      onClick={() => setExpert(exp.pundit_id)}
+                      disabled={savingExpert}
+                      className={`w-full text-left rounded-xl px-4 py-3 border ${isCurrent ? 'border-stone-400 bg-stone-50' : 'border-stone-200'} disabled:opacity-40`}
+                    >
+                      <p className="text-sm font-semibold text-stone-800">{exp.name || 'Expert'}</p>
+                      <p className="text-xs text-stone-400">
+                        {exp.role}{exp.phone ? ` · ${exp.phone}` : ''}
+                      </p>
+                      {isCurrent && <p className="text-xs mt-1" style={{ color: colour }}>Current selection</p>}
+                    </button>
+                  )
+                })
+              )}
+            </div>
+            <button
+              onClick={() => setExpertSheet(false)}
+              disabled={savingExpert}
+              className="mt-4 w-full py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
+            >Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-stone-800 text-white text-sm px-4 py-2.5 rounded-full shadow-lg z-50">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
