@@ -9,6 +9,7 @@ import api from '@/lib/api'
 type Order = {
   id: string; status: string; date_from: string
   date_to: string; dealer_user_id: string | null; created_at: string
+  item_count?: number
 }
 type PurchasedItem = {
   id: string; brand_name: string | null; l1_type: string | null; l2_type: string | null
@@ -147,9 +148,16 @@ export default function OrdersPage() {
                     </span>
                     <span className="text-xs text-stone-400">{new Date(order.created_at).toLocaleDateString('en-IN')}</span>
                   </div>
-                  <p className="text-sm text-stone-600">
-                    {new Date(order.date_from).toLocaleDateString('en-IN')} — {new Date(order.date_to).toLocaleDateString('en-IN')}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm text-stone-600">
+                      {new Date(order.date_from).toLocaleDateString('en-IN')} — {new Date(order.date_to).toLocaleDateString('en-IN')}
+                    </p>
+                    {order.item_count !== undefined && order.item_count > 0 && (
+                      <span className="text-xs text-stone-500 shrink-0">
+                        {order.item_count} input{order.item_count !== 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
                   {order.status === 'SENT_FOR_APPROVAL' && (
                     <div className="mt-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
                       <p className="text-xs text-amber-700 font-medium">Action needed — tap to review and approve</p>

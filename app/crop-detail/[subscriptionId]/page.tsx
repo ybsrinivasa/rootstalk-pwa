@@ -76,6 +76,8 @@ export default function CropDetailPage() {
   const [expertSheet, setExpertSheet] = useState(false)
   const [savingExpert, setSavingExpert] = useState(false)
 
+  const [showNeedDateSheet, setShowNeedDateSheet] = useState<'advisory' | 'diagnose' | null>(null)
+
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
@@ -131,7 +133,10 @@ export default function CropDetailPage() {
   }
 
   async function saveStartDate() {
-    if (!startDate) return
+    if (!startDate || !startDate.trim()) {
+      showToast('Please choose a date. The start date cannot be removed once set.')
+      return
+    }
     setSavingDate(true)
     try {
       await api.put(`/farmer/subscriptions/${subscriptionId}/start-date`, {
@@ -139,6 +144,9 @@ export default function CropDetailPage() {
       })
       setSub(s => s ? { ...s, crop_start_date: new Date(startDate).toISOString() } : s)
       setShowStartDate(false)
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
+      showToast(err.response?.data?.detail || 'Could not save start date')
     } finally { setSavingDate(false) }
   }
 
@@ -429,7 +437,7 @@ export default function CropDetailPage() {
         {/* Three action tiles */}
         <div className="grid grid-cols-3 gap-3 mt-6">
           <button
-            onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowStartDate(true)}
+            onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowNeedDateSheet('advisory')}
             className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-stone-200 active:scale-95' : 'bg-stone-100 border-stone-200 opacity-60'}`}>
             <span className="text-3xl block mb-2">🌿</span>
             <p className="text-xs font-bold text-stone-800">Advisory</p>
@@ -437,7 +445,7 @@ export default function CropDetailPage() {
           </button>
 
           <button
-            onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}/diagnose`) : setShowStartDate(true)}
+            onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}/diagnose`) : setShowNeedDateSheet('diagnose')}
             className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-stone-200 active:scale-95' : 'bg-stone-100 border-stone-200 opacity-60'}`}>
             <span className="text-3xl block mb-2">🔬</span>
             <p className="text-xs font-bold text-stone-800">Diagnose</p>
@@ -830,6 +838,39 @@ export default function CropDetailPage() {
               disabled={savingExpert}
               className="mt-4 w-full py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
             >Close</button>
+          </div>
+        </div>
+      )}
+
+      {/* Need start date — friendly bottom sheet */}
+      {showNeedDateSheet && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowNeedDateSheet(null)}>
+          <div className="bg-white rounded-t-2xl w-full pb-8 px-6 pt-6 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-stone-200 rounded-full mx-auto -mt-3 mb-5" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-2xl mb-4 mx-auto" style={{ background: colour + '20' }}>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24" style={{ color: colour }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
+              </svg>
+            </div>
+            <h3 className="text-stone-900 font-semibold text-lg text-center">
+              {showNeedDateSheet === 'advisory' ? 'Set your crop start date' : 'Set your start date'}
+            </h3>
+            <p className="text-stone-500 text-sm text-center mt-2 leading-relaxed">
+              {showNeedDateSheet === 'advisory'
+                ? 'Once you set when you sowed or transplanted, we will show you today\'s recommended practices.'
+                : 'We need to know when you sowed to help you diagnose any crop issues.'}
+            </p>
+            <button
+              onClick={() => { setShowNeedDateSheet(null); setShowStartDate(true) }}
+              className="w-full mt-6 py-3.5 rounded-xl text-white font-semibold text-sm"
+              style={{ background: colour }}>
+              Set start date now
+            </button>
+            <button
+              onClick={() => setShowNeedDateSheet(null)}
+              className="w-full mt-2 py-2 text-stone-400 text-sm">
+              Maybe later
+            </button>
           </div>
         </div>
       )}

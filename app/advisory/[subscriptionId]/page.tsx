@@ -47,11 +47,23 @@ export default function AdvisoryPage() {
   const [orderingPractice, setOrderingPractice] = useState<string | null>(null)
   const [orderSuccess, setOrderSuccess] = useState('')
   const [answeringQuestion, setAnsweringQuestion] = useState<string | null>(null) // question_id being answered
+  const [nextDate, setNextDate] = useState<{ next_date: string | null; timeline_name?: string; days_until?: number; reason?: string } | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
   }, [router, subscriptionId])
+
+  useEffect(() => {
+    const hasStart = !!subscription?.crop_start_date
+    if (advisory && advisory.timelines.length === 0 && hasStart) {
+      api.get<{ next_date: string | null; timeline_name?: string; days_until?: number; reason?: string }>(
+        `/farmer/subscriptions/${subscriptionId}/advisory/next-date`,
+      )
+        .then(r => setNextDate(r.data))
+        .catch(() => {})
+    }
+  }, [advisory, subscription, subscriptionId])
 
   async function load() {
     try {
@@ -71,13 +83,19 @@ export default function AdvisoryPage() {
   }
 
   async function saveStartDate() {
-    if (!startDate) return
+    if (!startDate || !startDate.trim()) {
+      alert('Please choose a date. The start date cannot be removed once set.')
+      return
+    }
     setSavingDate(true)
     try {
       await api.put(`/farmer/subscriptions/${subscriptionId}/start-date`, {
         crop_start_date: new Date(startDate).toISOString()
       })
       await load()
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
+      alert(err.response?.data?.detail || 'Could not save start date')
     } finally { setSavingDate(false) }
   }
 
@@ -180,12 +198,28 @@ export default function AdvisoryPage() {
 
             {/* No active timelines today */}
             {advisory.timelines.length === 0 && (
-              <div className="bg-white rounded-2xl p-6 text-center border border-slate-100">
-                <span className="text-3xl">☀️</span>
-                <p className="text-slate-700 font-medium mt-3">No tasks today</p>
-                <p className="text-slate-400 text-sm mt-1">
-                  No practices are scheduled for Day {advisory.day_offset}. Check back tomorrow.
-                </p>
+              <div className="bg-white rounded-2xl p-6 text-center border border-slate-100 shadow-sm">
+                <svg className="w-12 h-12 mx-auto text-slate-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
+                </svg>
+                <p className="text-slate-800 font-semibold mt-3">No advice for today</p>
+                {nextDate?.next_date ? (
+                  <>
+                    <p className="text-slate-500 text-sm mt-2">Your next advisory window opens on</p>
+                    <p className="text-slate-800 font-semibold text-base mt-1">
+                      {new Date(nextDate.next_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                    {nextDate.days_until !== undefined && (
+                      <p className="text-slate-400 text-xs mt-1">
+                        in {nextDate.days_until} day{nextDate.days_until !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </>
+                ) : nextDate?.reason === 'no_more_practices' ? (
+                  <p className="text-slate-500 text-sm mt-2">You have completed all advisory practices for this season.</p>
+                ) : (
+                  <p className="text-slate-400 text-sm mt-2">Check back tomorrow.</p>
+                )}
               </div>
             )}
 
