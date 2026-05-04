@@ -199,6 +199,16 @@ export default function FacilitatorPromoterAssignPage() {
     } finally { setLoading(false) }
   }
 
+  // Start over: reset answers and restart guided questions on the same
+  // crop+company. Different intent from "← Back" (which moves stage).
+  async function startOver() {
+    if (!selectedCrop) return
+    setError('')
+    setResolvedPackageId('')
+    setResolvedPackageName('')
+    await selectCrop(selectedCrop)
+  }
+
   async function sendRequest() {
     setLoading(true)
     setError('')
@@ -385,6 +395,14 @@ export default function FacilitatorPromoterAssignPage() {
                 </div>
               )}
               {error && <p className="text-red-600 text-xs mt-2">{error}</p>}
+              {answerHistory.length > 0 && (
+                <button
+                  onClick={startOver}
+                  disabled={loading}
+                  className="mt-5 w-full py-3 rounded-2xl text-slate-500 text-sm disabled:opacity-50">
+                  ↺ Start over
+                </button>
+              )}
             </div>
           )}
 
@@ -434,8 +452,11 @@ export default function FacilitatorPromoterAssignPage() {
                 style={{ background: COLOUR }}>
                 {loading ? 'Sending…' : 'Send advisory request →'}
               </button>
-              <button onClick={() => setStage('guided')} className="mt-3 w-full text-center text-sm text-slate-400">
-                ← Back
+              <button
+                onClick={startOver}
+                disabled={loading}
+                className="mt-3 w-full text-center text-sm text-slate-400 disabled:opacity-50">
+                ↺ Start over
               </button>
             </div>
           )}
