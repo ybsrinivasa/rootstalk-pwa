@@ -82,6 +82,9 @@ export default function FacilitatorPromoterAssignPage() {
   const [answerHistory, setAnswerHistory] = useState<{ param: string; varName: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  // Pool guard — refreshed whenever the selected company changes.
+  const [poolBalance, setPoolBalance] = useState<number | null>(null)
+  const [poolChecking, setPoolChecking] = useState(false)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -117,6 +120,21 @@ export default function FacilitatorPromoterAssignPage() {
     api.get<ClientInfo>(`/client/${selectedClientId}/info`)
       .then(r => setClientInfo(r.data))
       .catch(() => {})
+  }, [selectedClientId])
+
+  // Whenever the promoter picks a company, ask whether that company has
+  // pool balance to spend. Block the Continue button if not — saves the
+  // promoter from walking the entire BL-01 flow only to be 422'd at
+  // initiate-assignment.
+  useEffect(() => {
+    if (!selectedClientId) { setPoolBalance(null); return }
+    setPoolChecking(true)
+    api.get<{ available_units: number; can_assign: boolean }>(
+      `/client/${selectedClientId}/subscription-pool/can-assign`,
+    )
+      .then(r => setPoolBalance(r.data.available_units))
+      .catch(() => setPoolBalance(null))
+      .finally(() => setPoolChecking(false))
   }, [selectedClientId])
 
   async function verifyPhone() {
@@ -310,13 +328,24 @@ export default function FacilitatorPromoterAssignPage() {
                 className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20 mb-4"
               />
 
+              {/* Pool-balance guard — block when company has 0 units. */}
+              {selectedClientId && !poolChecking && poolBalance === 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 mb-3">
+                  <span className="font-semibold">This company has no available subscriptions in their pool. </span>
+                  Ask them to top up before assigning advisories to farmers. Otherwise the farmer would be left waiting indefinitely.
+                </div>
+              )}
+
               {error && <p className="text-red-600 text-xs mt-1 mb-2">{error}</p>}
               <button
                 onClick={continueTocrops}
-                disabled={loading || !selectedClientId || !farmerDistrict}
+                disabled={loading || !selectedClientId || !farmerDistrict || poolBalance === 0 || poolChecking}
                 className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
                 style={{ background: COLOUR }}>
-                {loading ? 'Loading crops…' : 'Continue →'}
+                {loading ? 'Loading crops…'
+                  : poolChecking ? 'Checking pool…'
+                  : poolBalance === 0 ? 'Pool empty — cannot assign'
+                  : 'Continue →'}
               </button>
               <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-slate-400">
                 ← Back
