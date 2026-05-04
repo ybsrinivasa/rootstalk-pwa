@@ -286,11 +286,23 @@ export default function DealerPromoterAssignPage() {
                 className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20 mb-4"
               />
 
-              {/* Pool-balance guard — block when company has 0 units. */}
+              {/* Allocation-balance guard — block when this promoter
+                  has 0 units allocated for the selected company. */}
               {selectedClientId && !poolChecking && poolBalance === 0 && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 mb-3">
-                  <span className="font-semibold">This company has no available subscriptions in their pool. </span>
-                  Ask them to top up before assigning advisories to farmers. Otherwise the farmer would be left waiting indefinitely.
+                  <span className="font-semibold">You have no subscriptions allocated to you for this company. </span>
+                  Ask the company admin to allocate units to you before you can assign advisories to farmers.
+                </div>
+              )}
+
+              {/* Available-balance chip — only shows when there are units. */}
+              {selectedClientId && !poolChecking && poolBalance != null && poolBalance > 0 && (
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs text-emerald-800 mb-3">
+                  <span aria-hidden>•</span>
+                  <span>
+                    <span className="font-semibold">{poolBalance.toLocaleString('en-IN')}</span>{' '}
+                    subscription{poolBalance === 1 ? '' : 's'} available
+                  </span>
                 </div>
               )}
 
@@ -301,8 +313,8 @@ export default function DealerPromoterAssignPage() {
                 className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
                 style={{ background: COLOUR }}>
                 {loading ? 'Loading crops…'
-                  : poolChecking ? 'Checking pool…'
-                  : poolBalance === 0 ? 'Pool empty — cannot assign'
+                  : poolChecking ? 'Checking allocation…'
+                  : poolBalance === 0 ? 'No allocation — cannot assign'
                   : 'Continue →'}
               </button>
               <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-slate-400">
