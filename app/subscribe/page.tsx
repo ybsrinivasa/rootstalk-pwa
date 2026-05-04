@@ -273,6 +273,14 @@ export default function SubscribePage() {
     } finally { setBusy(false) }
   }
 
+  // ── Start over: reset answers and restart guided questions on the same
+  //     company. Different intent from goBack() (which exits the stage).
+  async function startOver() {
+    if (!company) return
+    setError('')
+    await selectCompany(company)
+  }
+
   // ── Back navigation ────────────────────────────────────────────────────────
   function goBack() {
     setError('')
@@ -524,6 +532,14 @@ export default function SubscribePage() {
                             </button>
                           ))}
                         </div>
+                        {selectedVars.length > 0 && (
+                          <button
+                            onClick={startOver}
+                            disabled={busy}
+                            className="mt-5 w-full py-3 rounded-2xl text-stone-500 text-sm disabled:opacity-50">
+                            ↺ Start over
+                          </button>
+                        )}
                       </div>
                     ) : guidedStep?.error ? (
                       <div className="text-center py-8">
@@ -573,9 +589,10 @@ export default function SubscribePage() {
                       {busy ? 'Setting up…' : 'Looks right — proceed to payment →'}
                     </button>
                     <button
-                      onClick={goBack}
-                      className="w-full mt-2 py-3 rounded-2xl text-stone-500 text-sm">
-                      Go back and change answers
+                      onClick={startOver}
+                      disabled={busy}
+                      className="w-full mt-2 py-3 rounded-2xl text-stone-500 text-sm disabled:opacity-50">
+                      ↺ Start over
                     </button>
                   </div>
                 )}
