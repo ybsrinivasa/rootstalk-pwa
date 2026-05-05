@@ -52,6 +52,11 @@ export default function DiagnosisPage() {
   // Question history for back navigation feel
   const [questionHistory, setQuestionHistory] = useState<Question[]>([])
 
+  // ⓘ symptom-explanation sheet
+  const [explainOpen, setExplainOpen] = useState(false)
+  const [explainText, setExplainText] = useState<string | null>(null)
+  const [explainLoading, setExplainLoading] = useState(false)
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     // Load subscription to get crop_cosh_id
@@ -114,6 +119,7 @@ export default function DiagnosisPage() {
       })
       setQuestionHistory(h => [...h, prev])
       setRemainingCount(data.remaining_count)
+      setExplainText(null)  // each question gets a fresh explanation
       if (data.status === 'DIAGNOSED') {
         setDiagnosis(data.problem_info || null)
         setStage('diagnosed')
@@ -168,6 +174,30 @@ export default function DiagnosisPage() {
     if (!sessionId) return
     await api.post(`/diagnosis/${sessionId}/abort`, { reason: 'DONT_KNOW' })
     router.push(`/ask-expert/${subscriptionId}`)
+  }
+
+  async function openExplain() {
+    if (!currentQuestion || !cropCoshId) return
+    setExplainOpen(true)
+    if (explainText) return  // Already loaded for this question
+    setExplainLoading(true)
+    try {
+      const { data } = await api.post<{ explanation: string; language_code: string }>(
+        '/diagnosis/explain-symptom',
+        {
+          crop_cosh_id: cropCoshId,
+          plant_part_cosh_id: currentQuestion.plant_part_cosh_id,
+          symptom_cosh_id: currentQuestion.symptom_cosh_id,
+          sub_part_cosh_id: currentQuestion.sub_part_cosh_id,
+          sub_symptom_cosh_id: currentQuestion.sub_symptom_cosh_id,
+        }
+      )
+      setExplainText(data.explanation)
+    } catch {
+      setExplainText('Look carefully at the plant part shown. Tap Yes if you see the symptom, No if you do not.')
+    } finally {
+      setExplainLoading(false)
+    }
   }
 
   async function knowProblem() {
@@ -251,16 +281,29 @@ export default function DiagnosisPage() {
             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
               <div className="text-center mb-6">
                 <span className="text-5xl">{getPartEmoji(currentQuestion.plant_part_cosh_id)}</span>
-                <p className="text-xl font-bold text-slate-900 mt-4 leading-tight">
-                  {currentQuestion.display_text}
-                </p>
+                <div className="flex items-center justify-center gap-2 mt-4">
+                  <p className="text-xl font-bold text-slate-900 leading-tight">
+                    {currentQuestion.display_text}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openExplain}
+                    aria-label="Explain this question"
+                    className="shrink-0 w-7 h-7 rounded-full border border-slate-300 text-slate-500 text-xs font-semibold active:scale-95 transition-transform">
+                    ⓘ
+                  </button>
+                </div>
                 <p className="text-slate-400 text-xs mt-2">
                   {currentQuestion.plant_part_cosh_id.replace(/_/g, ' ')} — {currentQuestion.symptom_cosh_id.replace(/_/g, ' ')}
                 </p>
-                {/* Google Images link — pre-formed search [Crop] [Symptom] */}
+                {/* Google Images link — pre-formed search [Crop] [Part] [Symptom] */}
                 <a
                   href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-                    [cropCoshId?.replace(/_/g, ' '), currentQuestion.symptom_cosh_id.replace(/_/g, ' ')].filter(Boolean).join(' ')
+                    [
+                      cropCoshId?.replace(/_/g, ' '),
+                      currentQuestion.plant_part_cosh_id.replace(/_/g, ' '),
+                      currentQuestion.symptom_cosh_id.replace(/_/g, ' '),
+                    ].filter(Boolean).join(' ')
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -338,6 +381,37 @@ export default function DiagnosisPage() {
             </div>
 
             <p className="text-center text-xs text-slate-300">{questionHistory.length + 1} questions answered</p>
+          </div>
+        )}
+
+        {/* ⓘ Symptom explanation sheet */}
+        {explainOpen && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setExplainOpen(false)}
+            className="fixed inset-0 z-50 bg-black/40 flex items-end justify-center">
+            <div
+              onClick={e => e.stopPropagation()}
+              className="bg-white w-full max-w-md rounded-t-3xl p-5 shadow-xl">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base">🤖</span>
+                <p className="text-sm font-semibold text-slate-700">How to check this symptom</p>
+              </div>
+              {explainLoading ? (
+                <div className="py-4 flex justify-center">
+                  <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: COLOUR }} />
+                </div>
+              ) : (
+                <p className="text-sm text-slate-700 leading-relaxed">{explainText}</p>
+              )}
+              <button
+                onClick={() => setExplainOpen(false)}
+                className="mt-4 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
+                style={{ background: COLOUR }}>
+                Got it
+              </button>
+            </div>
           </div>
         )}
 
