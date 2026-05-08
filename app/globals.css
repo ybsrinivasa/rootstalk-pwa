@@ -12,12 +12,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Light theme only. The Next.js scaffold's prefers-color-scheme: dark
+   block was removed 2026-05-08: inputs across the app set background
+   colors but rarely an explicit text color, so on dark-mode OSes the
+   foreground flipped to near-white and form text became invisible
+   against white input backgrounds. RootsTalk is a light-theme product;
+   if dark mode is ever wanted it must be designed deliberately. */
 
 body {
   background: var(--background);
