@@ -45,6 +45,20 @@ export function getUser(): PWAUser | null {
   catch { return null; }
 }
 
+/** Re-fetch /auth/me and overwrite the cached user. Used after a
+ * client-side action changes the user's state (e.g. claiming a
+ * Dealer or Facilitator role) so the role-driven nav and gates
+ * pick it up without a full reload. */
+export async function refreshUser(): Promise<PWAUser | null> {
+  try {
+    const { data } = await api.get<PWAUser>("/auth/me");
+    localStorage.setItem("rt_pwa_user", JSON.stringify(data));
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export function getActiveRoles(user: PWAUser | null): string[] {
   if (!user) return [];
   const neytiriRoles = user.roles.filter(r => r.status === "ACTIVE").map(r => r.role_type);

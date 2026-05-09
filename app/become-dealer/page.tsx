@@ -1,13 +1,25 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser, getActiveRoles } from '@/lib/auth'
+import { getToken, getUser, getActiveRoles, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import api from '@/lib/api'
+
+// V1.1 Items 1+2 (2026-05-09): self-registration into the Dealer
+// ecosystem. Per the five-ecosystem architecture, anyone can declare
+// themselves a Dealer. The role flips on via POST /auth/me/claim-role,
+// then the user is sent to /dealer/profile to fill in shop details.
+// Companies recognise the Dealer separately on their Field Manager
+// page; that's the second step (FM enters phone, fetches profile,
+// onboards).
 
 export default function BecomeDealerPage() {
   const router = useRouter()
   const user = getUser()
   const isDealer = getActiveRoles(user).includes('DEALER')
+
+  const [claiming, setClaiming] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
@@ -17,6 +29,23 @@ export default function BecomeDealerPage() {
   }, [])
 
   if (isDealer) return null
+
+  async function become() {
+    setClaiming(true); setError('')
+    try {
+      await api.post('/auth/me/claim-role', { role: 'DEALER' })
+      // Refresh the cached User so getActiveRoles() returns DEALER
+      // immediately and the layout's role-driven nav refreshes.
+      await refreshUser()
+      router.replace('/dealer/profile')
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message || 'Could not register you as a Dealer. Please try again.'
+      setError(msg)
+    } finally { setClaiming(false) }
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#085041' }}>
@@ -33,17 +62,6 @@ export default function BecomeDealerPage() {
         <p className="text-stone-500 text-sm mt-2 leading-relaxed">
           As a dealer, you receive purchase orders from farmers and supply recommended agricultural inputs.
         </p>
-
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-6">
-          <p className="text-amber-800 font-semibold text-sm mb-1">How to get started</p>
-          <p className="text-amber-700 text-sm leading-relaxed">
-            To be registered as a dealer on RootsTalk, a Field Manager from a company must add your phone number
-            {user?.phone ? ` (${user.phone})` : ''} to their portal.
-          </p>
-          <p className="text-amber-700 text-sm mt-2 leading-relaxed">
-            Once they do, the Dealer role will appear in your account automatically.
-          </p>
-        </div>
 
         <div className="mt-6 space-y-3">
           <p className="text-stone-400 text-xs font-semibold uppercase tracking-widest">What dealers can do</p>
@@ -66,9 +84,29 @@ export default function BecomeDealerPage() {
           ))}
         </div>
 
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-6">
+          <p className="text-amber-800 font-semibold text-sm mb-1">After you register</p>
+          <p className="text-amber-700 text-sm leading-relaxed">
+            You&apos;ll set up your shop details (location, licences, what you sell). To start receiving orders, a
+            company will need to recognise you on their Field Manager page using your registered phone number
+            {user?.phone ? <> ({user.phone})</> : null}.
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 mt-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <button onClick={become} disabled={claiming}
+          className="mt-6 w-full py-4 rounded-2xl text-white font-semibold text-base disabled:opacity-50"
+          style={{ background: '#085041' }}>
+          {claiming ? 'Registering…' : 'Register as a Dealer'}
+        </button>
         <button onClick={() => router.back()}
-          className="mt-8 w-full py-4 rounded-2xl text-stone-500 border border-stone-200 font-medium text-base">
-          Back
+          className="mt-3 w-full py-3 rounded-2xl text-stone-500 border border-stone-200 font-medium text-sm">
+          Cancel
         </button>
       </div>
     </div>

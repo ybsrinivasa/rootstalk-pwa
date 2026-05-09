@@ -1,13 +1,25 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser, getActiveRoles } from '@/lib/auth'
+import { getToken, getUser, getActiveRoles, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import api from '@/lib/api'
+
+// V1.1 Items 1+2 (2026-05-09): self-registration into the Facilitator
+// ecosystem. Per the user's framing 2026-05-08, "facilitators are
+// plain rural youths, they don't need a special profile" — this
+// page is a 1-button confirm that flips the FACILITATOR role on
+// via POST /auth/me/claim-role and lands the user on
+// /facilitator/profile. Companies recognise the Facilitator
+// separately on their Field Manager page.
 
 export default function BecomeFacilitatorPage() {
   const router = useRouter()
   const user = getUser()
   const isFacilitator = getActiveRoles(user).includes('FACILITATOR')
+
+  const [claiming, setClaiming] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
@@ -17,6 +29,21 @@ export default function BecomeFacilitatorPage() {
   }, [])
 
   if (isFacilitator) return null
+
+  async function become() {
+    setClaiming(true); setError('')
+    try {
+      await api.post('/auth/me/claim-role', { role: 'FACILITATOR' })
+      await refreshUser()
+      router.replace('/facilitator/profile')
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message || 'Could not register you as a Facilitator. Please try again.'
+      setError(msg)
+    } finally { setClaiming(false) }
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#7D4E00' }}>
@@ -33,17 +60,6 @@ export default function BecomeFacilitatorPage() {
         <p className="text-stone-500 text-sm mt-2 leading-relaxed">
           As a facilitator, you help farmers by forwarding their orders to dealers and ensuring last-mile delivery. You also assist farmers in subscribing to company advisories.
         </p>
-
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-6">
-          <p className="text-amber-800 font-semibold text-sm mb-1">How to get started</p>
-          <p className="text-amber-700 text-sm leading-relaxed">
-            To be registered as a facilitator on RootsTalk, a Field Manager from a company must add your phone number
-            {user?.phone ? ` (${user.phone})` : ''} to their portal.
-          </p>
-          <p className="text-amber-700 text-sm mt-2 leading-relaxed">
-            Once they do, the Facilitator role will appear in your account automatically.
-          </p>
-        </div>
 
         <div className="mt-6 space-y-3">
           <p className="text-stone-400 text-xs font-semibold uppercase tracking-widest">What facilitators can do</p>
@@ -65,9 +81,28 @@ export default function BecomeFacilitatorPage() {
           ))}
         </div>
 
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-6">
+          <p className="text-amber-800 font-semibold text-sm mb-1">After you register</p>
+          <p className="text-amber-700 text-sm leading-relaxed">
+            To start handling orders for a company, a Field Manager from that company must recognise you using
+            your registered phone number{user?.phone ? <> ({user.phone})</> : null} on their portal.
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 mt-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <button onClick={become} disabled={claiming}
+          className="mt-6 w-full py-4 rounded-2xl text-white font-semibold text-base disabled:opacity-50"
+          style={{ background: '#7D4E00' }}>
+          {claiming ? 'Registering…' : 'Register as a Facilitator'}
+        </button>
         <button onClick={() => router.back()}
-          className="mt-8 w-full py-4 rounded-2xl text-stone-500 border border-stone-200 font-medium text-base">
-          Back
+          className="mt-3 w-full py-3 rounded-2xl text-stone-500 border border-stone-200 font-medium text-sm">
+          Cancel
         </button>
       </div>
     </div>
