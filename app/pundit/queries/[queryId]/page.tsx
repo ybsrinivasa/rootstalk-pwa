@@ -6,17 +6,29 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
 interface StandardResponse {
-  id: string; title: string; response_text: string
+  id: string
+  client_id: string
+  crop_cosh_id: string | null
+  question_text: string
+  created_at: string
 }
 
 interface QueryDetail {
   id: string; title: string; description: string | null; severity: string
+  client_id: string
   crop_cosh_id: string | null; crop_age: string | null
   status: string; created_at: string; expires_at: string; days_remaining: number
   is_holding: boolean
   media: { media_type: string; url: string }[]
   remarks: { action: string; pundit_id: string | null; remark: string | null; created_at: string }[]
-  response: { problem_cosh_id: string | null; text: string | null; media: unknown[]; created_at: string } | null
+  response: {
+    problem_cosh_id: string | null
+    standard_response_id: string | null
+    standard_response_question: string | null
+    text: string | null
+    media: unknown[]
+    created_at: string
+  } | null
 }
 
 const COLOUR = '#3C3489'
@@ -30,7 +42,16 @@ export default function PunditQueryDetailPage() {
   // Respond modal
   const [showRespond, setShowRespond] = useState(false)
   const [responding, setResponding] = useState(false)
-  const [respondForm, setRespondForm] = useState({ text: '', problem_cosh_id: '' })
+  // The response carries up to one structured trigger (problem_cosh_id
+  // OR standard_response_id) plus optional free-form text/media. The
+  // backend's respond_to_query branches on these in order — see UCAT
+  // memory for the three-pipe model.
+  const [respondForm, setRespondForm] = useState({
+    text: '',
+    problem_cosh_id: '',
+    standard_response_id: '',
+    standard_response_question: '',  // display-only, for the picked-pill
+  })
   const [respondError, setRespondError] = useState('')
 
   // Forward modal
@@ -61,26 +82,57 @@ export default function PunditQueryDetailPage() {
   function openStdPicker() {
     setShowStdPicker(true)
     setStdSearch('')
-    setStdResults([])
+    // Load the full library immediately so the Pundit can browse
+    // even before typing — search narrows progressively.
+    onStdSearchChange('')
   }
 
   function onStdSearchChange(value: string) {
     setStdSearch(value)
     if (stdSearchTimeout.current) clearTimeout(stdSearchTimeout.current)
     stdSearchTimeout.current = setTimeout(async () => {
+      if (!query?.client_id) return
       setStdLoading(true)
       try {
-        const { data } = await api.get<StandardResponse[]>(`/pundit/standard-responses?q=${encodeURIComponent(value)}`)
+        // Search the company's curated library — endpoint is
+        // client-scoped per spec §14.9. The Pundit may hold queries
+        // from multiple companies; each company has its own library.
+        const params = new URLSearchParams({ client_id: query.client_id })
+        if (value) params.append('search', value)
+        const { data } = await api.get<StandardResponse[]>(
+          `/pundit/standard-responses?${params}`,
+        )
         setStdResults(data)
       } finally { setStdLoading(false) }
     }, 300)
   }
 
-  function insertStdResponse(text: string) {
-    setRespondForm(f => ({ ...f, text: f.text ? f.text + '\n\n' + text : text }))
+  function pickStdResponse(sr: StandardResponse) {
+    // Picking a standard answer sets the structured trigger. The
+    // Pundit doesn't have to read the answer body — the SE has
+    // already curated the Timeline, and on submit the QA pipe
+    // delivers it into the farmer's advisory automatically. Per
+    // spec §14.9: "FarmPundit cannot modify the standard answer —
+    // sends as-is".
+    setRespondForm(f => ({
+      ...f,
+      standard_response_id: sr.id,
+      standard_response_question: sr.question_text,
+      // Picking a standard answer is mutually exclusive with
+      // identifying a CHA problem — both would race on submit.
+      problem_cosh_id: '',
+    }))
     setShowStdPicker(false)
     setStdSearch('')
     setStdResults([])
+  }
+
+  function clearStdPick() {
+    setRespondForm(f => ({
+      ...f,
+      standard_response_id: '',
+      standard_response_question: '',
+    }))
   }
 
   const load = async () => {
@@ -97,13 +149,22 @@ export default function PunditQueryDetailPage() {
 
   async function handleRespond(e: FormEvent) {
     e.preventDefault()
-    if (!respondForm.text && !respondForm.problem_cosh_id) {
-      setRespondError('Please provide at least a text response or select the crop health problem.')
+    const hasStructured = !!respondForm.problem_cosh_id || !!respondForm.standard_response_id
+    if (!respondForm.text && !hasStructured) {
+      setRespondError(
+        'Pick a Crop Health problem, a standard answer, or write a free-form text response. The structured options merge into the farmer\'s advisory; free-form text is a fallback only.',
+      )
       return
     }
     setResponding(true); setRespondError('')
     try {
-      await api.put(`/pundit/queries/${queryId}/respond`, respondForm)
+      // Send only the keys the backend cares about. The display-
+      // only `standard_response_question` doesn't leave the client.
+      const payload: Record<string, string> = {}
+      if (respondForm.text) payload.text = respondForm.text
+      if (respondForm.problem_cosh_id) payload.problem_cosh_id = respondForm.problem_cosh_id
+      if (respondForm.standard_response_id) payload.standard_response_id = respondForm.standard_response_id
+      await api.put(`/pundit/queries/${queryId}/respond`, payload)
       setShowRespond(false)
       load()
     } catch (err: unknown) {
@@ -232,7 +293,18 @@ export default function PunditQueryDetailPage() {
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3">
                 <p className="text-xs text-blue-700">
                   🔬 Crop health problem identified: <strong>{query.response.problem_cosh_id}</strong>
-                  <br />CHA recommendations have been added to the farmer's advisory.
+                  <br />CHA recommendations have been added to the farmer&apos;s advisory.
+                </p>
+              </div>
+            )}
+            {query.response.standard_response_id && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 mb-3">
+                <p className="text-xs text-indigo-700">
+                  🌾 Standard answer picked
+                  {query.response.standard_response_question && (
+                    <>: <strong>{query.response.standard_response_question}</strong></>
+                  )}
+                  <br />The curated Q&amp;A advisory has merged into the farmer&apos;s plan.
                 </p>
               </div>
             )}
@@ -277,29 +349,82 @@ export default function PunditQueryDetailPage() {
               <p className="text-slate-400 text-xs mt-0.5">7-day window closes on response. Farmer is notified immediately.</p>
             </div>
             <form onSubmit={handleRespond} className="p-5 space-y-4 pb-8">
+              {/* Three structured response paths per the UCAT model.
+                  Pundit picks one of (Crop Health problem) or (Standard
+                  answer) for purchase-bearing advisory; free-form text
+                  is the fallback shown to the farmer on a separate
+                  page (no purchases, no tracking). */}
+
+              {/* Path 1: Identify a Crop Health problem (CHA pipe) */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Crop Health Problem (if applicable)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Crop Health Problem
+                  {respondForm.standard_response_id && (
+                    <span className="ml-2 text-xs text-slate-400 font-normal">(disabled — standard answer picked)</span>
+                  )}
+                </label>
                 <input value={respondForm.problem_cosh_id}
                   onChange={e => setRespondForm(f => ({ ...f, problem_cosh_id: e.target.value }))}
+                  disabled={!!respondForm.standard_response_id}
                   placeholder="e.g. sp_blast_rice or pg_aphids (Cosh ID)"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono" />
+                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono disabled:bg-slate-50 disabled:text-slate-400" />
                 <p className="text-xs text-slate-400 mt-1">
-                  If you enter a problem ID, the system will automatically deliver CHA recommendations to the farmer.
+                  Enter the Cosh problem ID to deliver CHA recommendations to the farmer.
                 </p>
               </div>
+
+              {/* Path 2: Pick a Standard Q&A answer (Q&A pipe) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-slate-700">Your Advice</label>
-                  <button type="button" onClick={openStdPicker}
-                    className="text-xs font-medium px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
-                    Browse standard responses
-                  </button>
+                  <label className="block text-sm font-medium text-slate-700">Standard Answer</label>
+                  {!respondForm.standard_response_id && !respondForm.problem_cosh_id && (
+                    <button type="button" onClick={openStdPicker}
+                      className="text-xs font-medium px-2.5 py-1 rounded-lg text-white"
+                      style={{ background: COLOUR }}>
+                      Pick from library
+                    </button>
+                  )}
                 </div>
+                {respondForm.standard_response_id ? (
+                  <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
+                    <span className="text-indigo-700 text-sm">🌾</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Q&amp;A picked</p>
+                      <p className="text-sm text-slate-800 leading-snug">{respondForm.standard_response_question}</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        On send, the curated advisory merges into the farmer&apos;s plan automatically.
+                      </p>
+                    </div>
+                    <button type="button" onClick={clearStdPick}
+                      className="text-slate-400 hover:text-slate-600 text-lg leading-none px-1">×</button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    {respondForm.problem_cosh_id
+                      ? 'Disabled — Crop Health problem entered above.'
+                      : 'Search the company\'s curated Q&A library and pick the closest matching question.'}
+                  </p>
+                )}
+              </div>
+
+              {/* Path 3: Free-form text — fallback or supplementary */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  {respondForm.problem_cosh_id || respondForm.standard_response_id
+                    ? 'Additional guidance (optional)'
+                    : 'Free-form response'}
+                </label>
                 <textarea value={respondForm.text}
                   onChange={e => setRespondForm(f => ({ ...f, text: e.target.value }))}
-                  rows={5} placeholder="Write your detailed recommendation here…"
+                  rows={5}
+                  placeholder={
+                    respondForm.problem_cosh_id || respondForm.standard_response_id
+                      ? 'Optional notes the farmer sees on the Query Response page.'
+                      : 'Use this only if no problem or standard answer applies. Free-form text reaches the farmer but does not merge into the advisory or drive purchases.'
+                  }
                   className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
+
               {respondError && <p className="text-sm text-red-600">{respondError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowRespond(false); setRespondError('') }}
@@ -436,14 +561,27 @@ export default function PunditQueryDetailPage() {
               ) : stdResults.length === 0 && stdSearch.length > 0 ? (
                 <p className="text-slate-400 text-sm text-center py-8">No results for &ldquo;{stdSearch}&rdquo;</p>
               ) : stdResults.length === 0 ? (
-                <p className="text-slate-400 text-sm text-center py-8">Type to search saved responses</p>
+                <p className="text-slate-400 text-sm text-center py-8">
+                  Type to search the curated Q&amp;A library, or browse all entries.
+                </p>
               ) : (
                 <div className="space-y-2 mt-3">
+                  <p className="text-xs text-slate-400">{stdResults.length} result{stdResults.length === 1 ? '' : 's'}</p>
                   {stdResults.map(r => (
-                    <button key={r.id} onClick={() => insertStdResponse(r.response_text)}
+                    <button key={r.id} onClick={() => pickStdResponse(r)}
                       className="w-full bg-white border border-slate-200 rounded-xl p-4 text-left hover:border-[#3C3489] transition-colors active:scale-[0.99]">
-                      <p className="text-sm font-medium text-slate-800 mb-1">{r.title}</p>
-                      <p className="text-xs text-slate-500 line-clamp-2">{r.response_text}</p>
+                      <p className="text-sm font-medium text-slate-800 mb-1">{r.question_text}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {r.crop_cosh_id ? (
+                          <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-mono">
+                            {r.crop_cosh_id}
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                            Crop-agnostic
+                          </span>
+                        )}
+                      </div>
                     </button>
                   ))}
                 </div>
