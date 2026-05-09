@@ -314,6 +314,13 @@ export default function AdvisoryPage() {
                     {tl.source === 'CHA' && (
                       <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">🔬 CHA</span>
                     )}
+                    {tl.source === 'QA' && (
+                      // Pundit-origin marker. Same advisory shape as
+                      // CHA — Timeline → Practice → Element with
+                      // purchase + tracking — but originated from a
+                      // FarmPundit picking a curated standard answer.
+                      <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">🌾 Pundit</span>
+                    )}
                     <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{tl.name}</p>
                   </div>
                   <div className="h-px flex-1 bg-slate-200" />
