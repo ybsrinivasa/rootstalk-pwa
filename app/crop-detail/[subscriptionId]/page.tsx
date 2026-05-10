@@ -78,6 +78,12 @@ export default function CropDetailPage() {
 
   const [showNeedDateSheet, setShowNeedDateSheet] = useState<'advisory' | 'diagnose' | null>(null)
 
+  const [diagnosisEligibility, setDiagnosisEligibility] = useState<{
+    eligible: boolean
+    reason_code?: string
+    message?: string
+  } | null>(null)
+
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
@@ -101,6 +107,19 @@ export default function CropDetailPage() {
       setStartDate(found.crop_start_date?.split('T')[0] || '')
       setAreaInput(found.farm_area_acres != null ? String(found.farm_area_acres) : '')
       setAreaUnit(found.area_unit || 'acres')
+
+      // Diagnose-button gate: ClientCrop ∩ CropHealthCrop. Server
+      // returns the reason when ineligible so the button greys with
+      // an explanation. Failure is non-fatal — fallback assumes
+      // eligible so the button still works in degraded mode.
+      try {
+        const elig = await api.get<{ eligible: boolean; reason_code?: string; message?: string }>(
+          `/diagnosis/eligibility/${subscriptionId}`,
+        )
+        setDiagnosisEligibility(elig.data)
+      } catch {
+        setDiagnosisEligibility({ eligible: true })
+      }
 
       const [brandRes, preStartRes, missedRes, alertsRes, expertRes, seedRes] = await Promise.allSettled([
         api.get<Branding>(`/portal/${found.client_id}/branding`),
@@ -445,11 +464,25 @@ export default function CropDetailPage() {
           </button>
 
           <button
-            onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}/diagnose`) : setShowNeedDateSheet('diagnose')}
-            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-stone-200 active:scale-95' : 'bg-stone-100 border-stone-200 opacity-60'}`}>
+            onClick={() => {
+              if (!hasStartDate) { setShowNeedDateSheet('diagnose'); return }
+              if (diagnosisEligibility && !diagnosisEligibility.eligible) {
+                setToast(diagnosisEligibility.message || 'Diagnosis is not available for this crop right now.')
+                return
+              }
+              router.push(`/advisory/${subscriptionId}/diagnose`)
+            }}
+            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${
+              hasStartDate && (!diagnosisEligibility || diagnosisEligibility.eligible)
+                ? 'bg-white border-stone-200 active:scale-95'
+                : 'bg-stone-100 border-stone-200 opacity-60'
+            }`}>
             <span className="text-3xl block mb-2">🔬</span>
             <p className="text-xs font-bold text-stone-800">Diagnose</p>
             {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">Set date first</p>}
+            {hasStartDate && diagnosisEligibility && !diagnosisEligibility.eligible && (
+              <p className="text-xs text-stone-500 mt-0.5">Not available</p>
+            )}
           </button>
 
           <button
