@@ -253,15 +253,25 @@ export default function RootPage() {
   }
 
   async function saveName(e: FormEvent) {
-    e.preventDefault(); setBusy(true)
-    try { await api.put('/me/profile', { name }) } catch { /* best-effort */ }
-    finally { setBusy(false) }
-    setStage('location')
+    e.preventDefault(); setError(''); setBusy(true)
+    try {
+      // Correct route is /auth/me/profile (the auth router lives
+      // under prefix="/auth"). Pre-fix the call hit /me/profile,
+      // returned 404, was swallowed by an empty catch, and the
+      // user proceeded with a phantom-saved name.
+      await api.put('/auth/me/profile', { name })
+      setStage('location')
+    } catch {
+      setError("Couldn't save your name. Please try again.")
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function saveLocation() {
+    setError('')
     try {
-      await api.put('/me/profile', {
+      await api.put('/auth/me/profile', {
         // Real Cosh UUIDs now — match the PackageLocation rows the
         // strict-footprint cascade enforces on the backend.
         state_cosh_id: stateId,
@@ -272,12 +282,14 @@ export default function RootPage() {
         // farmer's own reference; PackageLocation never reads it.
         sub_district_cosh_id: subDistrict.trim() || undefined,
       })
-    } catch { /* best-effort */ }
-    setStage('gps')
+      setStage('gps')
+    } catch {
+      setError("Couldn't save your location. Please try again.")
+    }
   }
 
   async function captureGps() {
-    setGpsStatus('getting')
+    setGpsStatus('getting'); setError('')
     if (!navigator.geolocation) { setGpsStatus('denied'); return }
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
@@ -285,10 +297,30 @@ export default function RootPage() {
         setGpsLng(pos.coords.longitude)
         setGpsStatus('done')
         try {
-          await api.put('/me/profile', { gps_lat: pos.coords.latitude, gps_lng: pos.coords.longitude })
-        } catch { /* best-effort */ }
+          await api.put('/auth/me/profile', {
+            gps_lat: pos.coords.latitude,
+            gps_lng: pos.coords.longitude,
+          })
+        } catch {
+          // GPS captured locally; save failed. Surface so the user
+          // can re-attempt from the profile page later.
+          setError("Captured your location but couldn't save it. You can try again from your profile.")
+        }
       },
-      () => setGpsStatus('denied'),
+      (err) => {
+        // GeolocationPositionError.code:
+        //   1 = PERMISSION_DENIED (user blocked it / browser blocked)
+        //   2 = POSITION_UNAVAILABLE (no GPS / IP geo failed)
+        //   3 = TIMEOUT (couldn't find a fix in time)
+        setGpsStatus('denied')
+        if (err.code === 1) {
+          setError("You blocked location access. To retry, enable location for this site in your browser settings, then tap Try again.")
+        } else if (err.code === 3) {
+          setError("Took too long to find you. Tap Try again.")
+        } else {
+          setError("Your location isn't available right now. Tap Try again or skip for later.")
+        }
+      },
       { timeout: 10000 }
     )
   }
@@ -545,8 +577,16 @@ export default function RootPage() {
 
           {gpsStatus === 'denied' && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4">
-              <p className="text-amber-700 font-semibold text-sm">Location access was denied</p>
-              <p className="text-amber-600/70 text-xs mt-1">You can set this from your profile later.</p>
+              <p className="text-amber-700 font-semibold text-sm">
+                {error ? 'Couldn’t get your location' : 'Location access was denied'}
+              </p>
+              <p className="text-amber-600/80 text-xs mt-1 leading-relaxed">
+                {error || 'You can set this from your profile later.'}
+              </p>
+              <button onClick={captureGps}
+                className="mt-3 text-sm font-medium text-amber-800 underline">
+                Try again
+              </button>
             </div>
           )}
         </div>
@@ -718,6 +758,7 @@ export default function RootPage() {
           </div>
 
           <div className="pt-4">
+            {error && <p className="text-red-500 text-sm px-1 pb-2">{error}</p>}
             <Btn disabled={!stateId || !districtId} onClick={saveLocation}>
               Continue →
             </Btn>
@@ -810,6 +851,7 @@ export default function RootPage() {
           <form onSubmit={saveName} className="flex flex-col gap-4">
             <Input value={name} onChange={e => setName(e.target.value)}
               autoFocus placeholder="e.g. Rajan"/>
+            {error && <p className="text-red-500 text-sm px-1">{error}</p>}
             <Btn type="submit" disabled={busy || !name.trim()}>
               {busy ? 'Saving…' : 'Take me in →'}
             </Btn>
