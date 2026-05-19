@@ -5,10 +5,22 @@ import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp } from '@/lib/
 import { setLanguage, getLanguage } from '@/lib/language'
 import api from '@/lib/api'
 import InstallPrompt from '@/components/InstallPrompt'
-import { STATES } from '@/lib/india'
 
 type Stage = 'loading' | 'landing' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
 type Lang  = { language_code: string; language_name_native: string; status?: string }
+
+// Cosh-driven location universe (mirrors the CA portal's
+// `/cosh/locations/india` response shape). The PWA needs to write
+// REAL cosh_ids to the user's profile so the strict-footprint
+// cascade can match farmers to packages — typed text and synthetic
+// "state_andhra_pradesh"-style ids will never match a
+// PackageLocation row. Sub-district has no Cosh ids at this
+// granularity (packages target down to district only); we keep it
+// as an optional free-text village field for the farmer's own
+// reference.
+type CoshDistrict = { cosh_id: string; name: string | null }
+type CoshState    = { cosh_id: string; name: string | null; districts: CoshDistrict[] }
+type CoshLocations = { states: CoshState[] }
 
 const G   = '#1A5C2A'
 const BG  = 'linear-gradient(160deg, #2d8040 0%, #1A5C2A 42%, #0e3c18 100%)'
@@ -149,12 +161,21 @@ export default function RootPage() {
   // location + gps states
   const [stateId,      setStateId]     = useState('')
   const [stateName,    setStateName]   = useState('')
-  const [district,     setDistrict]    = useState('')
+  const [districtId,   setDistrictId]  = useState('')
+  const [districtName, setDistrictName] = useState('')
   const [subDistrict,  setSubDistrict] = useState('')
   const [gpsLat,       setGpsLat]      = useState<number | null>(null)
   const [gpsLng,       setGpsLng]      = useState<number | null>(null)
   const [gpsStatus,    setGpsStatus]   = useState<'idle' | 'getting' | 'done' | 'denied'>('idle')
   const [stateSearch,  setStateSearch] = useState('')
+  const [districtSearch, setDistrictSearch] = useState('')
+
+  // Cosh location universe — loaded once on landing, reused across
+  // the state + district pickers. `null` = still loading;
+  // `{states: []}` = endpoint replied empty (Cosh hasn't synced
+  // india_locations yet — picker shows a clear message).
+  const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
+  const [locationsError, setLocationsError] = useState(false)
 
   function roleHome(user = getUser()) {
     const roles = getActiveRoles(user)
@@ -182,6 +203,20 @@ export default function RootPage() {
     setStage('landing')
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Preload the Cosh location universe the moment we have a token
+  // (right after OTP verify) so by the time the farmer reaches the
+  // location stage the picker is ready. `/cosh/locations/india`
+  // requires auth — that's why this can't run on landing.
+  async function loadCoshLocations() {
+    if (coshLocations || locationsError) return
+    try {
+      const { data } = await api.get<CoshLocations>('/cosh/locations/india')
+      setCoshLocations(data)
+    } catch {
+      setLocationsError(true)
+    }
+  }
+
   useEffect(() => {
     if (resend <= 0) return
     const t = setTimeout(() => setResend(r => r - 1), 1000)
@@ -203,6 +238,10 @@ export default function RootPage() {
     try {
       await verifyOtp('+91' + phone, otp.trim())
       const user = getUser()
+      // Kick off the Cosh locations preload — needs the token we
+      // just stored. Awaiting isn't necessary; the user will spend
+      // a few seconds on the name screen before reaching location.
+      void loadCoshLocations()
       if (user && !user.name) setStage('profile')
       else roleHome(user ?? undefined)
     } catch (err: unknown) {
@@ -223,9 +262,15 @@ export default function RootPage() {
   async function saveLocation() {
     try {
       await api.put('/me/profile', {
+        // Real Cosh UUIDs now — match the PackageLocation rows the
+        // strict-footprint cascade enforces on the backend.
         state_cosh_id: stateId,
-        district_cosh_id: district.toLowerCase().replace(/\s+/g, '_'),
-        sub_district_cosh_id: subDistrict ? subDistrict.toLowerCase().replace(/\s+/g, '_') : undefined,
+        district_cosh_id: districtId,
+        // Sub-district has no Cosh ids at this level (the india_
+        // locations Connect is deduped to state+district). Keep
+        // the typed-text village/sub-district as free text for the
+        // farmer's own reference; PackageLocation never reads it.
+        sub_district_cosh_id: subDistrict.trim() || undefined,
       })
     } catch { /* best-effort */ }
     setStage('gps')
@@ -519,9 +564,14 @@ export default function RootPage() {
 
   // ── Location stage ─────────────────────────────────────────────────────────
   if (stage === 'location') {
-    const filtered = STATES.filter(s =>
-      !stateSearch || s.name.toLowerCase().includes(stateSearch.toLowerCase())
-    )
+    const coshStates = coshLocations?.states ?? []
+    const filteredStates = coshStates
+      .filter(s => s.name)
+      .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+    const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
+    const filteredDistricts = (selectedState?.districts ?? [])
+      .filter(d => d.name)
+      .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
     return (
       <div className="flex flex-col overflow-hidden" style={{ background: BG, height: '100svh' }}>
         <div className="w-full max-w-sm mx-auto px-5 relative z-10">
@@ -544,57 +594,119 @@ export default function RootPage() {
           <ProgressDots filled={1}/>
 
           <div className="flex flex-col gap-4 overflow-y-auto flex-1">
-            {/* State selector */}
-            <div>
-              <p className="text-xs text-stone-500 font-medium mb-1.5">State</p>
-              {stateId ? (
-                <div className="flex items-center gap-2">
-                  <span className="bg-[#1A5C2A]/10 text-[#1A5C2A] text-sm font-medium px-3 py-1.5 rounded-full">
-                    {stateName}
-                  </span>
-                  <button onClick={() => { setStateId(''); setStateName(''); setStateSearch('') }}
-                    className="text-stone-400 text-xs underline">
-                    Change
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <Input
-                    placeholder="Search state…"
-                    value={stateSearch}
-                    onChange={e => setStateSearch(e.target.value)}
-                  />
-                  {stateSearch && (
-                    <div className="mt-2 border border-stone-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
-                      {filtered.length === 0
-                        ? <p className="text-stone-400 text-sm px-4 py-3">No states found</p>
-                        : filtered.map(s => (
-                          <button key={s.id}
-                            onClick={() => { setStateId(s.id); setStateName(s.name); setStateSearch('') }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-b border-stone-50 last:border-0">
-                            {s.name}
-                          </button>
-                        ))
-                      }
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-
-            {/* District — shown only after state selected */}
-            {stateId && (
-              <div>
-                <p className="text-xs text-stone-500 font-medium mb-1.5">District</p>
-                <Input
-                  placeholder="e.g. Mysuru"
-                  value={district}
-                  onChange={e => setDistrict(e.target.value)}
-                />
+            {locationsError && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <p className="text-amber-800 text-sm font-medium">
+                  Couldn&apos;t load the location list. Skip this for now and
+                  add it from your profile when you&apos;re back online.
+                </p>
               </div>
             )}
 
-            {/* Sub-district — always optional */}
+            {!locationsError && !coshLocations && (
+              <div className="flex items-center gap-3 text-stone-500 text-sm">
+                <div className="w-4 h-4 border-2 border-stone-200 border-t-[#1A5C2A] rounded-full animate-spin"/>
+                Loading states and districts…
+              </div>
+            )}
+
+            {/* State selector */}
+            {coshLocations && (
+              <div>
+                <p className="text-xs text-stone-500 font-medium mb-1.5">State</p>
+                {stateId ? (
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#1A5C2A]/10 text-[#1A5C2A] text-sm font-medium px-3 py-1.5 rounded-full">
+                      {stateName}
+                    </span>
+                    <button onClick={() => {
+                        setStateId(''); setStateName(''); setStateSearch('')
+                        setDistrictId(''); setDistrictName(''); setDistrictSearch('')
+                      }}
+                      className="text-stone-400 text-xs underline">
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Search state…"
+                      value={stateSearch}
+                      onChange={e => setStateSearch(e.target.value)}
+                    />
+                    {stateSearch && (
+                      <div className="mt-2 border border-stone-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                        {filteredStates.length === 0
+                          ? <p className="text-stone-400 text-sm px-4 py-3">No states found</p>
+                          : filteredStates.map(s => (
+                            <button key={s.cosh_id}
+                              onClick={() => {
+                                setStateId(s.cosh_id); setStateName(s.name || '')
+                                setStateSearch('')
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-b border-stone-50 last:border-0">
+                              {s.name}
+                            </button>
+                          ))
+                        }
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* District selector — same typeahead pattern, bounded to
+                the chosen state's districts so the farmer can't pick
+                a (state, district) pair Cosh doesn't have. */}
+            {coshLocations && stateId && (
+              <div>
+                <p className="text-xs text-stone-500 font-medium mb-1.5">District</p>
+                {districtId ? (
+                  <div className="flex items-center gap-2">
+                    <span className="bg-[#1A5C2A]/10 text-[#1A5C2A] text-sm font-medium px-3 py-1.5 rounded-full">
+                      {districtName}
+                    </span>
+                    <button onClick={() => {
+                        setDistrictId(''); setDistrictName(''); setDistrictSearch('')
+                      }}
+                      className="text-stone-400 text-xs underline">
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Input
+                      placeholder="Search district…"
+                      value={districtSearch}
+                      onChange={e => setDistrictSearch(e.target.value)}
+                    />
+                    {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
+                      <div className="mt-2 border border-stone-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                        {filteredDistricts.length === 0
+                          ? <p className="text-stone-400 text-sm px-4 py-3">No districts found</p>
+                          : filteredDistricts.map(d => (
+                            <button key={d.cosh_id}
+                              onClick={() => {
+                                setDistrictId(d.cosh_id); setDistrictName(d.name || '')
+                                setDistrictSearch('')
+                              }}
+                              className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-b border-stone-50 last:border-0">
+                              {d.name}
+                            </button>
+                          ))
+                        }
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Sub-district / village — free text. Cosh has no IDs
+                at this level (packages target down to district only)
+                so we store the typed value as-is for the farmer's
+                own reference. */}
             <div>
               <p className="text-xs text-stone-500 font-medium mb-1.5">Sub-district / Village <span className="text-stone-300">(optional)</span></p>
               <Input
@@ -606,7 +718,7 @@ export default function RootPage() {
           </div>
 
           <div className="pt-4">
-            <Btn disabled={!stateId || !district.trim()} onClick={saveLocation}>
+            <Btn disabled={!stateId || !districtId} onClick={saveLocation}>
               Continue →
             </Btn>
             <button onClick={() => setStage('gps')}
