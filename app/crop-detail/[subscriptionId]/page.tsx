@@ -7,6 +7,7 @@ import { cropDisplayName } from '@/lib/crop-name'
 
 interface SubscriptionDetail {
   id: string; status: string; crop_start_date: string | null
+  crop_start_date_first_set_at: string | null
   reference_number: string | null; client_id: string; package_id: string
   subscription_type?: string
   farm_area_acres: number | null
@@ -24,12 +25,10 @@ interface PreStartInput {
   days_before_sowing_from: number; days_before_sowing_to: number
   practices: { id: string; l0_type: string; l1_type: string | null; l2_type: string | null }[]
 }
-interface AlertRecipientRow {
-  recipient_user_id: string
-  recipient_type: string
-  status?: string
-  phone?: string | null
-  name?: string | null
+interface AlertPrefs {
+  extra_phone: string | null
+  extra_name: string | null
+  source: 'override' | 'auto_promoter' | 'none'
 }
 interface ExpertSetting {
   mode: 'SPECIFIC' | 'PROMOTER_PUNDIT' | 'REGULAR_TEAM'
@@ -52,7 +51,7 @@ export default function CropDetailPage() {
   const [branding, setBranding] = useState<Branding | null>(null)
   const [preStart, setPreStart] = useState<PreStartInput[]>([])
   const [missedCount, setMissedCount] = useState(0)
-  const [alertRecipients, setAlertRecipients] = useState<AlertRecipientRow[]>([])
+  const [alertPrefs, setAlertPrefs] = useState<AlertPrefs | null>(null)
   const [expertSetting, setExpertSetting] = useState<ExpertSetting | null>(null)
   const [seedAvail, setSeedAvail] = useState<SeedAvail>({ has_varieties: false, count: 0 })
   const [me, setMe] = useState<{ name: string | null; phone: string | null } | null>(null)
@@ -75,8 +74,8 @@ export default function CropDetailPage() {
   const [orderSuccess, setOrderSuccess] = useState<{ order_id: string; item_count: number } | null>(null)
 
   const [alertSheet, setAlertSheet] = useState(false)
-  const [alertSendSelf, setAlertSendSelf] = useState(true)
-  const [alertSendPromoter, setAlertSendPromoter] = useState(true)
+  const [alertPhoneInput, setAlertPhoneInput] = useState('')
+  const [alertNameInput, setAlertNameInput] = useState('')
   const [savingAlerts, setSavingAlerts] = useState(false)
 
   const [expertSheet, setExpertSheet] = useState(false)
@@ -130,7 +129,7 @@ export default function CropDetailPage() {
         api.get<Branding>(`/portal/${found.client_id}/branding`),
         api.get<PreStartInput[]>(`/farmer/subscriptions/${subscriptionId}/pre-start-inputs`),
         api.get<{ count: number } | { timeline_id: string }[]>(`/farmer/subscriptions/${subscriptionId}/missed-items`),
-        api.get<AlertRecipientRow[]>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`),
+        api.get<AlertPrefs>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`),
         api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`),
         api.get<SeedAvail>(`/farmer/subscriptions/${subscriptionId}/seed-availability`),
       ])
@@ -142,9 +141,7 @@ export default function CropDetailPage() {
         setMissedCount(Array.isArray(d) ? d.length : (d as { count: number }).count)
       }
       if (alertsRes.status === 'fulfilled') {
-        setAlertRecipients(alertsRes.value.data)
-        setAlertSendSelf(alertsRes.value.data.some(r => r.recipient_type === 'FARMER'))
-        setAlertSendPromoter(alertsRes.value.data.some(r => r.recipient_type === 'PROMOTER'))
+        setAlertPrefs(alertsRes.value.data)
       }
       if (expertRes.status === 'fulfilled') setExpertSetting(expertRes.value.data)
       if (seedRes.status === 'fulfilled') setSeedAvail(seedRes.value.data)
@@ -241,22 +238,21 @@ export default function CropDetailPage() {
   async function saveAlertPrefs() {
     setSavingAlerts(true)
     try {
-      let promoterUserId: string | null = null
-      if (alertSendPromoter) {
-        // Look up an existing PROMOTER recipient to reuse the user_id
-        const existingPromoter = alertRecipients.find(r => r.recipient_type === 'PROMOTER')
-        if (existingPromoter) promoterUserId = existingPromoter.recipient_user_id
-      }
       await api.post(`/farmer/subscriptions/${subscriptionId}/alert-preferences`, {
-        send_to_self: alertSendSelf,
-        promoter_user_id: promoterUserId,
+        extra_phone: alertPhoneInput.trim() || null,
+        extra_name: alertNameInput.trim() || null,
       })
-      // Reload alert recipients
-      const alertsRes = await api.get<AlertRecipientRow[]>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`)
-      setAlertRecipients(alertsRes.data)
+      const alertsRes = await api.get<AlertPrefs>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`)
+      setAlertPrefs(alertsRes.data)
       setAlertSheet(false)
       showToast('Alert preferences saved')
     } finally { setSavingAlerts(false) }
+  }
+
+  function openAlertSheet() {
+    setAlertPhoneInput(alertPrefs?.extra_phone || '')
+    setAlertNameInput(alertPrefs?.extra_name || '')
+    setAlertSheet(true)
   }
 
   async function setExpert(punditId: string) {
@@ -308,8 +304,6 @@ export default function CropDetailPage() {
   const areaSoftSet = !areaHardLocked && sub.farm_area_acres != null
   const areaTentative = !areaHardLocked && sub.farm_area_acres == null
 
-  const farmerRecipient = alertRecipients.find(r => r.recipient_type === 'FARMER')
-  const promoterRecipient = alertRecipients.find(r => r.recipient_type === 'PROMOTER')
   const isAssigned = sub.subscription_type === 'ASSIGNED'
 
   return (
@@ -440,28 +434,58 @@ export default function CropDetailPage() {
               </button>
             )}
           </div>
-        ) : (
-          <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs text-[#7A8C7E]">Crop start date</p>
-              <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-            </div>
-            <button onClick={() => setShowStartDate(!showStartDate)}
-              className="text-xs text-[#7A8C7E] underline">change</button>
-          </div>
-        )}
-        {showStartDate && hasStartDate && (
-          <div className="mt-3 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex gap-2">
-            <input type="date" value={startDate}
-              onChange={e => setStartDate(e.target.value)}
-              className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none" />
-            <button onClick={saveStartDate} disabled={savingDate || !startDate}
-              className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-              style={{ background: colour }}>
-              {savingDate ? '…' : 'Update'}
-            </button>
-          </div>
-        )}
+        ) : (() => {
+          // 15-day edit window from first_set_at. Server enforces the
+          // same rule (409 if expired). Legacy rows with no
+          // first_set_at are grandfathered as still editable.
+          const firstSet = sub.crop_start_date_first_set_at ? new Date(sub.crop_start_date_first_set_at) : null
+          let daysLeft: number | null = null
+          let lockedAt: Date | null = null
+          if (firstSet) {
+            const firstSetMid = new Date(firstSet); firstSetMid.setHours(0, 0, 0, 0)
+            const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0)
+            const elapsed = Math.floor((todayMid.getTime() - firstSetMid.getTime()) / 86400000)
+            daysLeft = 15 - elapsed
+            lockedAt = new Date(firstSetMid.getTime() + 16 * 86400000)
+          }
+          const editable = daysLeft === null || daysLeft >= 0
+          return (
+            <>
+              <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-[#7A8C7E]">Crop start date</p>
+                  <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  {editable && daysLeft !== null && (
+                    <p className="text-[#7A8C7E] text-xs mt-1">
+                      You can change this for {daysLeft === 0 ? 'one more day' : `${daysLeft} more day${daysLeft === 1 ? '' : 's'}`}.
+                    </p>
+                  )}
+                  {!editable && lockedAt && (
+                    <p className="text-[#7A8C7E] text-xs mt-1">
+                      Locked on {lockedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.
+                    </p>
+                  )}
+                </div>
+                {editable && (
+                  <button onClick={() => setShowStartDate(!showStartDate)}
+                    className="text-xs text-[#7A8C7E] underline shrink-0">change</button>
+                )}
+              </div>
+              {editable && showStartDate && (
+                <div className="mt-3 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex gap-2">
+                  <input type="date" value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                    className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none" />
+                  <button onClick={saveStartDate} disabled={savingDate || !startDate}
+                    className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                    style={{ background: colour }}>
+                    {savingDate ? '…' : 'Update'}
+                  </button>
+                </div>
+              )}
+            </>
+          )
+        })()}
 
         {/* Three action tiles */}
         <div className="grid grid-cols-3 gap-3 mt-6">
@@ -575,29 +599,32 @@ export default function CropDetailPage() {
           </>
         )}
 
-        {/* Alerts */}
+        {/* Alerts — farmer is always notified via push; this card
+            captures one optional extra recipient (dealer / facilitator
+            / anyone). ASSIGNED subs prefill from the promoter; SELF
+            subs start blank. Either way the farmer can edit. */}
         <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Alerts</p>
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
-          <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Who receives alerts for this advisory?</p>
-          <div className="space-y-1.5 mb-3">
-            {farmerRecipient ? (
-              <p className="text-sm text-[#6B3F1F]">
-                You {me?.phone ? <span className="text-[#7A8C7E]">({me.phone})</span> : null}
-              </p>
-            ) : (
-              <p className="text-sm text-[#7A8C7E] italic">Alerts to you are turned off</p>
-            )}
-            {promoterRecipient && (
-              <p className="text-sm text-[#6B3F1F]">
-                Also: {promoterRecipient.name || 'Your Promoter'} {promoterRecipient.phone ? <span className="text-[#7A8C7E]">({promoterRecipient.phone})</span> : null}
-              </p>
-            )}
-          </div>
+          <p className="text-sm text-[#6B3F1F]">
+            <span className="font-semibold">You</span> will always receive alerts in this app.
+          </p>
+          {alertPrefs && alertPrefs.extra_phone && (
+            <p className="text-sm text-[#6B3F1F] mt-2">
+              Also sent to: <span className="font-semibold">{alertPrefs.extra_name || 'Extra contact'}</span>
+              <span className="text-[#7A8C7E]"> ({alertPrefs.extra_phone})</span>
+              {alertPrefs.source === 'auto_promoter' && (
+                <span className="text-[#7A8C7E] text-xs ml-1">— from your promoter</span>
+              )}
+            </p>
+          )}
+          {alertPrefs && !alertPrefs.extra_phone && (
+            <p className="text-sm text-[#7A8C7E] mt-2 italic">No extra recipient set.</p>
+          )}
           <button
-            onClick={() => setAlertSheet(true)}
-            className="w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
+            onClick={openAlertSheet}
+            className="w-full mt-3 py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
           >
-            Change alert recipients
+            {alertPrefs?.extra_phone ? 'Change extra recipient' : 'Add a dealer or facilitator'}
           </button>
         </div>
 
@@ -786,40 +813,42 @@ export default function CropDetailPage() {
         </div>
       )}
 
-      {/* Alerts bottom sheet */}
+      {/* Alerts bottom sheet — single extra-recipient editor.
+          Farmer always gets alerts; this captures one phone. Empty
+          phone == clear. ASSIGNED case shows a hint that the promoter
+          will auto-prefill on next reload if cleared. */}
       {alertSheet && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingAlerts && setAlertSheet(false)}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F] text-base">Alert recipients</p>
+            <p className="font-bold text-[#6B3F1F] text-base">Extra alert recipient</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">
+              Enter a dealer or facilitator who should also receive alerts about this crop. You can edit this any time.
+            </p>
             <div className="mt-4 space-y-3">
-              <label className="flex items-center justify-between bg-[#F5F0E8] rounded-xl px-4 py-3">
-                <div>
-                  <p className="text-sm font-medium text-[#6B3F1F]">Send alerts to me</p>
-                  {me?.phone && <p className="text-xs text-[#7A8C7E]">{me.phone}</p>}
-                </div>
+              <div>
+                <p className="text-xs text-[#7A8C7E] mb-1">Phone number</p>
                 <input
-                  type="checkbox"
-                  checked={alertSendSelf}
-                  onChange={e => setAlertSendSelf(e.target.checked)}
-                  className="w-5 h-5"
+                  type="tel" inputMode="tel"
+                  value={alertPhoneInput}
+                  onChange={e => setAlertPhoneInput(e.target.value)}
+                  placeholder="+91 XXXXX XXXXX"
+                  className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                 />
-              </label>
-
-              {isAssigned && promoterRecipient && (
-                <label className="flex items-center justify-between bg-[#F5F0E8] rounded-xl px-4 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-[#6B3F1F]">Also send to my Promoter</p>
-                    <p className="text-xs text-[#7A8C7E]">
-                      {promoterRecipient.name || 'Promoter'}{promoterRecipient.phone ? ` · ${promoterRecipient.phone}` : ''}
-                    </p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={alertSendPromoter}
-                    onChange={e => setAlertSendPromoter(e.target.checked)}
-                    className="w-5 h-5"
-                  />
-                </label>
+              </div>
+              <div>
+                <p className="text-xs text-[#7A8C7E] mb-1">Name (optional)</p>
+                <input
+                  type="text"
+                  value={alertNameInput}
+                  onChange={e => setAlertNameInput(e.target.value)}
+                  placeholder="Dealer / facilitator name"
+                  className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                />
+              </div>
+              {isAssigned && (
+                <p className="text-xs text-[#7A8C7E]">
+                  Tip: leave blank to fall back to your promoter's number automatically.
+                </p>
               )}
             </div>
             <div className="grid grid-cols-2 gap-3 mt-5">
