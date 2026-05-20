@@ -13,6 +13,19 @@ type Subscription = {
   id: string; client_id: string; package_id: string
   status: string; reference_number: string | null; crop_start_date: string | null
   subscription_type?: string
+  // 2026-05-20 — backend decorates each sub with the SE-authored
+  // package label, the resolved crop name, and (for WAITLISTED
+  // rows) who owes the payment. Drives the Home pending-payment
+  // card copy + CTA shape.
+  package_name?: string | null
+  crop_cosh_id?: string | null
+  crop_name?: string | null
+  pending_payment_from?: {
+    user_id: string
+    name: string | null
+    role: 'DEALER' | 'FACILITATOR' | 'OTHER'
+    expires_at: string | null
+  } | null
 }
 
 type ClientInfo = {
@@ -57,11 +70,24 @@ export default function HomePage() {
     setCancellingSub(sub.id)
     try {
       await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`)
-      // Refetch so the cancelled row disappears.
       await load()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
       alert(msg || 'Could not cancel. Please try again.')
+    } finally { setCancellingSub(null) }
+  }
+
+  async function cancelDelegationRequest(sub: Subscription) {
+    if (!confirm('Cancel this payment request? Your subscription stays — you can pay yourself or ask someone else.')) return
+    setCancellingSub(sub.id)
+    try {
+      // Removes the SubscriptionPaymentRequest row; the WAITLISTED
+      // subscription itself stays, switching back to self-pending.
+      await api.delete(`/farmer/subscriptions/${sub.id}/delegate-payment`)
+      await load()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      alert(msg || 'Could not cancel the request.')
     } finally { setCancellingSub(null) }
   }
 
@@ -151,14 +177,26 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            {/* Pending payment banners — subscriptions the farmer
-                created but didn't complete payment on. Each gets
-                its own card with a Complete payment CTA back into
-                the Subscribe flow's payment stage. */}
+            {/* Pending payment cards — three variants depending on
+                pending_payment_from:
+                  null            → self-pending (farmer pays)
+                  DEALER          → waiting for that dealer
+                  FACILITATOR     → waiting for that facilitator
+                Each variant has appropriate copy + CTA shape so the
+                farmer knows exactly what's next and who's blocking. */}
             {waitlisted.length > 0 && (
               <div className="mb-4 space-y-3">
                 {waitlisted.map(sub => {
                   const info = clientInfos[sub.client_id]
+                  const delegate = sub.pending_payment_from
+                  const isSelfPending = !delegate
+                  const cropLabel = sub.crop_name || (sub.crop_cosh_id ? '' : '')
+                  const cardLabel = [info?.display_name, cropLabel].filter(Boolean).join(' · ')
+                  const roleLabel = delegate?.role === 'DEALER' ? 'dealer'
+                    : delegate?.role === 'FACILITATOR' ? 'facilitator'
+                    : 'helper'
+                  const delegateName = delegate?.name || 'them'
+
                   return (
                     <div key={sub.id}
                       className="rounded-2xl p-4 border"
@@ -169,30 +207,59 @@ export default function HomePage() {
                           <p className="font-semibold text-[15px]" style={{ color: C.textPrimary }}>
                             Payment pending
                           </p>
-                          <p className="text-[13px] mt-0.5" style={{ color: C.textPrimary, opacity: 0.85 }}>
-                            Your{info?.display_name ? ` ${info.display_name}` : ''} subscription is reserved.
-                            Complete payment to activate the advisory.
+                          <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: C.textPrimary, opacity: 0.85 }}>
+                            Your <span className="font-semibold">{cardLabel || 'advisory'}</span> subscription is reserved.{' '}
+                            {isSelfPending
+                              ? 'Complete payment to activate the advisory.'
+                              : <>Waiting for <span className="font-semibold">{delegateName}</span> ({roleLabel}) to pay.</>
+                            }
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => router.push('/subscribe')}
-                        className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
-                        style={{ background: C.accent, minHeight: 48 }}>
-                        Complete payment →
-                      </button>
-                      {/* Cancel link — small, muted, sits below
-                          the primary CTA. Only shown for SELF
-                          subs (the only ones the unsubscribe
-                          endpoint will accept). */}
-                      {(sub.subscription_type === 'SELF' || !sub.subscription_type) && (
-                        <button
-                          onClick={() => cancelPendingPayment(sub)}
-                          disabled={cancellingSub === sub.id}
-                          className="w-full mt-2 py-2 text-xs"
-                          style={{ color: C.textSecond }}>
-                          {cancellingSub === sub.id ? 'Cancelling…' : 'Cancel this subscription'}
-                        </button>
+
+                      {isSelfPending ? (
+                        <>
+                          <button
+                            onClick={() => router.push(`/subscribe?resume=${sub.id}`)}
+                            className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
+                            style={{ background: C.accent, minHeight: 48 }}>
+                            Complete payment →
+                          </button>
+                          {(sub.subscription_type === 'SELF' || !sub.subscription_type) && (
+                            <button
+                              onClick={() => cancelPendingPayment(sub)}
+                              disabled={cancellingSub === sub.id}
+                              className="w-full mt-2 py-2 text-xs"
+                              style={{ color: C.textSecond }}>
+                              {cancellingSub === sub.id ? 'Cancelling…' : 'Cancel this subscription'}
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => router.push(`/subscribe?resume=${sub.id}`)}
+                            className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
+                            style={{ background: C.accent, minHeight: 48 }}>
+                            Pay myself instead →
+                          </button>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <button
+                              onClick={() => cancelDelegationRequest(sub)}
+                              disabled={cancellingSub === sub.id}
+                              className="py-2 text-xs"
+                              style={{ color: C.textSecond }}>
+                              {cancellingSub === sub.id ? 'Working…' : 'Cancel request'}
+                            </button>
+                            <button
+                              onClick={() => cancelPendingPayment(sub)}
+                              disabled={cancellingSub === sub.id}
+                              className="py-2 text-xs"
+                              style={{ color: C.textSecond }}>
+                              Cancel subscription
+                            </button>
+                          </div>
+                        </>
                       )}
                     </div>
                   )

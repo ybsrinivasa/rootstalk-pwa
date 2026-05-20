@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -81,8 +81,21 @@ function CompanyLogo({ company }: { company: CompanyInfo }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+// Next 16 requires components using useSearchParams to be wrapped
+// in <Suspense> so the prerender can complete around them. The
+// wrapper below is the page's default export; the real
+// implementation moves to SubscribeFlow and runs client-only.
 export default function SubscribePage() {
+  return (
+    <Suspense fallback={null}>
+      <SubscribeFlow />
+    </Suspense>
+  )
+}
+
+function SubscribeFlow() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const user = getUser()
 
   const [stage, setStage] = useState<Stage>('location')
@@ -162,6 +175,54 @@ export default function SubscribePage() {
     const d = s?.districts.find(x => x.cosh_id === district)
     setDistrictName(d?.name || '')
   }, [coshLocations, stateId, district])
+
+  // ?resume=<sub_id> — Home's Complete-payment CTA routes here so
+  // the farmer jumps straight to the payment stage of the
+  // existing WAITLISTED sub instead of restarting the flow (which
+  // would create a duplicate WAITLISTED row). Loads the sub +
+  // company info, populates the state the payment stage needs,
+  // and skips ahead.
+  useEffect(() => {
+    const resumeId = searchParams?.get('resume')
+    if (!resumeId || !getToken()) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        type SubRow = {
+          id: string; client_id: string; package_id: string
+          status: string; crop_name?: string | null
+          package_name?: string | null
+        }
+        const { data: subs } = await api.get<SubRow[]>('/farmer/my-subscriptions')
+        const sub = subs.find(s => s.id === resumeId)
+        if (!sub || cancelled) return
+        if (sub.status !== 'WAITLISTED') {
+          // Already paid (ACTIVE) or cancelled — bounce home.
+          router.replace('/home')
+          return
+        }
+        // Load the company for the payment-screen header + Razorpay
+        // prefill context.
+        try {
+          const { data: info } = await api.get<CompanyInfo>(
+            `/client/${sub.client_id}/info`,
+          )
+          if (cancelled) return
+          setCompany(info)
+        } catch { /* payment stage still works without company info */ }
+        if (cancelled) return
+        setSubscription({ id: sub.id })
+        setClientId(sub.client_id)
+        setPackageId(sub.package_id)
+        setPackageName(sub.package_name || '')
+        setCropName(sub.crop_name || '')
+        setStage('payment')
+      } catch {
+        // Resume failed — fall back to the normal flow start.
+      }
+    })()
+    return () => { cancelled = true }
+  }, [searchParams, router])
 
   // ── Stage: Location ────────────────────────────────────────────────────────
   async function proceedFromLocation() {
@@ -351,7 +412,13 @@ export default function SubscribePage() {
       setPackageDescription(null)
       setStage('company')
     }
-    else if (stage === 'payment') setStage('confirm')
+    else if (stage === 'payment') {
+      // If the user arrived via ?resume=<id> (no crop pick), the
+      // confirm stage has no data to render — bounce back to Home
+      // instead of into a broken confirm screen.
+      if (!cropId) router.replace('/home')
+      else setStage('confirm')
+    }
     else if (stage === 'delegate') setStage('payment')
   }
 
