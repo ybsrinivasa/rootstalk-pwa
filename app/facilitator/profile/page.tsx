@@ -11,12 +11,6 @@ interface PromotedFarmer {
   client_name?: string | null; client_colour?: string | null
 }
 
-interface DistrictAdvisory {
-  package_id: string; package_name: string; crop_cosh_id: string
-  client_id: string; client_name: string | null; client_colour: string | null
-  company_name?: string | null; primary_colour?: string | null
-}
-
 interface CompanySummary {
   client_id: string
   client_name: string
@@ -36,20 +30,14 @@ export default function FacilitatorProfilePage() {
 
   // My Companies
   const [companies, setCompanies] = useState<CompanySummary[]>([])
-  // District advisories
-  const [districtAdvisories, setDistrictAdvisories] = useState<DistrictAdvisory[]>([])
   const [loadingData, setLoadingData] = useState(true)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
 
-    Promise.allSettled([
-      api.get<PromotedFarmer[]>('/facilitator/promoted-farmers'),
-      api.get<DistrictAdvisory[]>('/farmer/active-advisories-in-district'),
-    ]).then(([farmersRes, districtRes]) => {
-      // Build companies map from promoted farmers
-      if (farmersRes.status === 'fulfilled') {
-        const farmers = farmersRes.value.data
+    api.get<PromotedFarmer[]>('/facilitator/promoted-farmers')
+      .then(res => {
+        const farmers = res.data
         const map: Record<string, CompanySummary> = {}
         farmers.forEach(f => {
           if (!f.client_id) return
@@ -64,12 +52,9 @@ export default function FacilitatorProfilePage() {
           map[f.client_id].farmer_count += 1
         })
         setCompanies(Object.values(map))
-      }
-
-      if (districtRes.status === 'fulfilled') {
-        setDistrictAdvisories(districtRes.value.data)
-      }
-    }).finally(() => setLoadingData(false))
+      })
+      .catch(() => {})
+      .finally(() => setLoadingData(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function save() {
@@ -125,33 +110,6 @@ export default function FacilitatorProfilePage() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Active Advisories in District — A3b */}
-        {!loadingData && districtAdvisories.length > 0 && (
-          <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5">
-            <h2 className="font-semibold text-[#6B3F1F] mb-1">Active Advisories in Your District</h2>
-            <p className="text-xs text-[#7A8C7E] mb-3">Other companies serving farmers in your area</p>
-            <div className="space-y-3">
-              {districtAdvisories.map(adv => {
-                const companyName = adv.client_name || adv.company_name || 'Company'
-                const accentColour = adv.client_colour || adv.primary_colour || COLOUR
-                const cropLabel = adv.crop_cosh_id
-                  .replace(/^crop_/, '')
-                  .replace(/_/g, ' ')
-                  .replace(/\b\w/g, c => c.toUpperCase())
-                return (
-                  <div key={adv.package_id} className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: accentColour }} />
-                    <div>
-                      <p className="text-sm font-semibold" style={{ color: accentColour }}>{companyName}</p>
-                      <p className="text-xs text-[#7A8C7E]">{cropLabel}</p>
-                    </div>
-                  </div>
-                )
-              })}
             </div>
           </div>
         )}
