@@ -116,6 +116,12 @@ export default function SubscribePage() {
   const [answers, setAnswers] = useState('')
   const [selectedVars, setSelectedVars] = useState<{ paramName: string; varName: string }[]>([])
   const [packageId, setPackageId] = useState('')
+  // Package name + description captured at confirm-stage entry
+  // so the Confirm card can show the SE's authored label and
+  // optional description, not just the crop name. Both come from
+  // guided-step's `package` payload.
+  const [packageName, setPackageName] = useState('')
+  const [packageDescription, setPackageDescription] = useState<string | null>(null)
   const [guidedStep, setGuidedStep] = useState<GuidedStep | null>(null)
   const [guidedQuestionIndex, setGuidedQuestionIndex] = useState(0)
 
@@ -202,6 +208,8 @@ export default function SubscribePage() {
       setGuidedStep(data)
       if (data.done && data.package) {
         setPackageId(data.package.id)
+        setPackageName(data.package.name)
+        setPackageDescription(data.package.description)
         setStage('confirm')
       } else if (data.error) {
         setError(data.error)
@@ -226,6 +234,8 @@ export default function SubscribePage() {
       setGuidedStep(data)
       if (data.done && data.package) {
         setPackageId(data.package.id)
+        setPackageName(data.package.name)
+        setPackageDescription(data.package.description)
         setStage('confirm')
       } else if (data.error) {
         setError(data.error)
@@ -327,13 +337,19 @@ export default function SubscribePage() {
       setStage('company')
     }
     else if (stage === 'confirm') {
+      // Pre-fix this routed to 'guided' and re-called selectCompany,
+      // which immediately re-resolved to 'confirm' in the single-
+      // package case — felt like the Back button did nothing.
+      // Cleanest exit: drop to the company picker so the user can
+      // pick a different company or reset the crop.
       setAnswers('')
       setSelectedVars([])
       setGuidedStep(null)
       setGuidedQuestionIndex(0)
-      setStage('guided')
-      // Restart guided from beginning
-      selectCompany(company!)
+      setPackageId('')
+      setPackageName('')
+      setPackageDescription(null)
+      setStage('company')
     }
     else if (stage === 'payment') setStage('confirm')
     else if (stage === 'delegate') setStage('payment')
@@ -692,19 +708,42 @@ export default function SubscribePage() {
                 {stage === 'confirm' && company && (
                   <div>
                     <h2 className="text-lg font-bold text-[#6B3F1F]">Your advisory</h2>
-                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">Based on your answers</p>
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
+                      {selectedVars.length > 0
+                        ? 'Based on your answers'
+                        : 'The only advisory matching your area'}
+                    </p>
 
                     <div className="rounded-2xl overflow-hidden border border-[#DDD0B8] mb-5">
                       <CompanyLogo company={company} />
                       <div className="p-4">
-                        <p className="font-semibold text-[#6B3F1F] text-base mb-3">
-                          {cropDisplay} advisory
+                        {/* Package label — SE-authored. Crop label
+                            stays as a subtle sub-line so the user
+                            still sees the crop context. */}
+                        <p className="font-semibold text-[#6B3F1F] text-base">
+                          {packageName || `${cropDisplay} advisory`}
                         </p>
-                        {selectedVars.map((sv, i) => (
-                          <p key={i} className="text-sm text-[#6B3F1F] mb-1">
-                            • {sv.paramName}: <span className="font-medium">{sv.varName}</span>
+                        {packageName && (
+                          <p className="text-xs text-[#7A8C7E] mt-0.5 mb-2">{cropDisplay}</p>
+                        )}
+                        {packageDescription && (
+                          <p className="text-sm text-[#6B3F1F] mt-2 mb-3 leading-relaxed"
+                            style={{ whiteSpace: 'pre-wrap' }}>
+                            {packageDescription}
                           </p>
-                        ))}
+                        )}
+                        {selectedVars.length > 0 && (
+                          <div className="mt-3 pt-3 border-t border-[#DDD0B8] space-y-1">
+                            <p className="text-[11px] uppercase tracking-wide text-[#7A8C7E] font-semibold mb-1">
+                              Your selections
+                            </p>
+                            {selectedVars.map((sv, i) => (
+                              <p key={i} className="text-sm text-[#6B3F1F]">
+                                • {sv.paramName}: <span className="font-medium">{sv.varName}</span>
+                              </p>
+                            ))}
+                          </div>
+                        )}
                         <div className="mt-4 pt-4 border-t border-[#DDD0B8] flex items-center justify-between">
                           <span className="text-[#7A8C7E] text-sm">Subscription price</span>
                           <span className="text-[#6B3F1F] font-bold text-lg">Rs. 199</span>
