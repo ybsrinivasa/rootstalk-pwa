@@ -11,6 +11,7 @@ import { C } from '@/lib/tokens'
 type Subscription = {
   id: string; client_id: string; package_id: string
   status: string; reference_number: string | null; crop_start_date: string | null
+  subscription_type?: string
 }
 
 type ClientInfo = {
@@ -48,6 +49,20 @@ export default function HomePage() {
   const [assignmentClientInfos, setAssignmentClientInfos] = useState<Record<string, ClientInfo>>({})
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
+  const [cancellingSub, setCancellingSub] = useState<string | null>(null)
+
+  async function cancelPendingPayment(sub: Subscription) {
+    if (!confirm('Cancel this pending-payment subscription? You can subscribe again later.')) return
+    setCancellingSub(sub.id)
+    try {
+      await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`)
+      // Refetch so the cancelled row disappears.
+      await load()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      alert(msg || 'Could not cancel. Please try again.')
+    } finally { setCancellingSub(null) }
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
@@ -165,6 +180,19 @@ export default function HomePage() {
                         style={{ background: C.accent, minHeight: 48 }}>
                         Complete payment →
                       </button>
+                      {/* Cancel link — small, muted, sits below
+                          the primary CTA. Only shown for SELF
+                          subs (the only ones the unsubscribe
+                          endpoint will accept). */}
+                      {(sub.subscription_type === 'SELF' || !sub.subscription_type) && (
+                        <button
+                          onClick={() => cancelPendingPayment(sub)}
+                          disabled={cancellingSub === sub.id}
+                          className="w-full mt-2 py-2 text-xs"
+                          style={{ color: C.textSecond }}>
+                          {cancellingSub === sub.id ? 'Cancelling…' : 'Cancel this subscription'}
+                        </button>
+                      )}
                     </div>
                   )
                 })}
