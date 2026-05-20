@@ -35,7 +35,11 @@ interface ExpertSetting {
 }
 interface SeedAvail { has_varieties: boolean; count: number }
 
-const AREA_UNITS = ['acres', 'hectares', 'bigha']
+// All advisory formulas (dosing, water volume, fertiliser) are
+// calibrated for acres. Acreage is captured and stored in acres
+// only — no unit dropdown. If a farmer thinks in hectares or
+// bigha they convert before typing. V2 may introduce server-side
+// conversion at the boundary.
 
 export default function CropDetailPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -57,14 +61,12 @@ export default function CropDetailPage() {
 
   // Acreage state
   const [areaInput, setAreaInput] = useState('')
-  const [areaUnit, setAreaUnit] = useState('acres')
   const [savingArea, setSavingArea] = useState(false)
 
   // Bottom sheets
   const [orderSheet, setOrderSheet] = useState<{ open: boolean; category: 'PESTICIDE' | 'FERTILISER' | null }>({ open: false, category: null })
   const [orderBusy, setOrderBusy] = useState(false)
   const [orderSheetArea, setOrderSheetArea] = useState('')
-  const [orderSheetUnit, setOrderSheetUnit] = useState('acres')
   const [orderSheetEditingArea, setOrderSheetEditingArea] = useState(false)
   const [orderSuccess, setOrderSuccess] = useState<{ order_id: string; item_count: number } | null>(null)
 
@@ -106,7 +108,6 @@ export default function CropDetailPage() {
       setSub(found)
       setStartDate(found.crop_start_date?.split('T')[0] || '')
       setAreaInput(found.farm_area_acres != null ? String(found.farm_area_acres) : '')
-      setAreaUnit(found.area_unit || 'acres')
 
       // Diagnose-button gate: ClientCrop ∩ CropHealthCrop. Server
       // returns the reason when ineligible so the button greys with
@@ -175,9 +176,9 @@ export default function CropDetailPage() {
     try {
       await api.put(`/farmer/subscriptions/${subscriptionId}/farm-area`, {
         farm_area_acres: parseFloat(areaInput),
-        area_unit: areaUnit,
+        area_unit: 'acres',
       })
-      setSub(s => s ? { ...s, farm_area_acres: parseFloat(areaInput), area_unit: areaUnit } : s)
+      setSub(s => s ? { ...s, farm_area_acres: parseFloat(areaInput), area_unit: 'acres' } : s)
       showToast('Farm area saved')
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
@@ -189,7 +190,6 @@ export default function CropDetailPage() {
     setOrderSheet({ open: true, category })
     setOrderSuccess(null)
     setOrderSheetArea(sub?.farm_area_acres != null ? String(sub.farm_area_acres) : '')
-    setOrderSheetUnit(sub?.area_unit || 'acres')
     setOrderSheetEditingArea(!sub?.farm_area_acres)
   }
 
@@ -215,7 +215,7 @@ export default function CropDetailPage() {
       const body: Record<string, unknown> = { category: orderSheet.category }
       if (needsAreaInBody) {
         body.farm_area_acres = parseFloat(orderSheetArea)
-        body.area_unit = orderSheetUnit
+        body.area_unit = 'acres'
       }
       const res = await api.post<{ order_id: string; item_count: number }>(
         `/farmer/subscriptions/${subscriptionId}/orders/buy-all-dbs`,
@@ -225,7 +225,7 @@ export default function CropDetailPage() {
       setSub(s => s ? {
         ...s,
         farm_area_acres: needsAreaInBody ? parseFloat(orderSheetArea) : s.farm_area_acres,
-        area_unit: needsAreaInBody ? orderSheetUnit : s.area_unit,
+        area_unit: needsAreaInBody ? 'acres' : s.area_unit,
       } : s)
       setOrderSuccess({ order_id: res.data.order_id, item_count: res.data.item_count })
     } catch (e: unknown) {
@@ -346,13 +346,9 @@ export default function CropDetailPage() {
                 placeholder="0.00"
                 className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
-              <select
-                value={areaUnit}
-                onChange={e => setAreaUnit(e.target.value)}
-                className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
-              >
-                {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
+              <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                acres
+              </span>
               <button
                 onClick={saveArea}
                 disabled={savingArea || !areaInput}
@@ -377,13 +373,9 @@ export default function CropDetailPage() {
                 placeholder="0.00"
                 className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
-              <select
-                value={areaUnit}
-                onChange={e => setAreaUnit(e.target.value)}
-                className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
-              >
-                {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
+              <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                acres
+              </span>
               <button
                 onClick={saveArea}
                 disabled={savingArea || !areaInput}
@@ -403,7 +395,7 @@ export default function CropDetailPage() {
           <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
             <p className="text-sm font-semibold text-[#6B3F1F]">Farm area · Confirmed</p>
             <p className="font-semibold text-[#6B3F1F] mt-1">
-              {sub.farm_area_acres ?? '—'} {sub.area_unit || ''}
+              {sub.farm_area_acres ?? '—'} acres
             </p>
             <p className="text-[#7A8C7E] text-xs mt-1">
               Locked on {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}. Volumes for all your inputs are calculated on this.
@@ -700,13 +692,9 @@ export default function CropDetailPage() {
                         placeholder="0.00"
                         className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                       />
-                      <select
-                        value={orderSheetUnit}
-                        onChange={e => setOrderSheetUnit(e.target.value)}
-                        className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
-                      >
-                        {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                      </select>
+                      <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                        acres
+                      </span>
                     </div>
                   </>
                 )}
@@ -728,18 +716,14 @@ export default function CropDetailPage() {
                             placeholder="0.00"
                             className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                           />
-                          <select
-                            value={orderSheetUnit}
-                            onChange={e => setOrderSheetUnit(e.target.value)}
-                            className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
-                          >
-                            {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                          </select>
+                          <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                            acres
+                          </span>
                         </div>
                       </>
                     ) : (
                       <p className="text-sm text-[#6B3F1F] mt-3">
-                        Current tentative area: <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
+                        Current tentative area: <span className="font-semibold">{sub.farm_area_acres} acres</span>{' '}
                         <button
                           onClick={() => setOrderSheetEditingArea(true)}
                           className="ml-1 text-xs underline"
@@ -760,7 +744,7 @@ export default function CropDetailPage() {
                       Order DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
                     </p>
                     <p className="text-sm text-[#6B3F1F] mt-3">
-                      Area: <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
+                      Area: <span className="font-semibold">{sub.farm_area_acres} acres</span>{' '}
                       <span className="text-xs text-[#7A8C7E]">(locked)</span>
                     </p>
                     <p className="text-[#7A8C7E] text-xs mt-2">

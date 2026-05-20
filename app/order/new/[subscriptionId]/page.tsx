@@ -16,7 +16,8 @@ interface Subscription {
   farm_area_confirmed_at: string | null
 }
 
-const AREA_UNITS = ['acres', 'hectares', 'bigha']
+// All formulas calibrated for acres — see crop-detail/page.tsx
+// for the rationale. No unit picker; farmer types acres only.
 
 export default function OrderingScreenPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -41,7 +42,6 @@ export default function OrderingScreenPage() {
   // Hard-confirm acreage step (only when farm_area_confirmed_at is null)
   const [confirmStep, setConfirmStep] = useState<{ person: Person; isDealer: boolean } | null>(null)
   const [confirmAreaInput, setConfirmAreaInput] = useState('')
-  const [confirmAreaUnit, setConfirmAreaUnit] = useState('acres')
   const [editingArea, setEditingArea] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -71,7 +71,6 @@ export default function OrderingScreenPage() {
     // If acreage not yet hard-locked, force a confirmation step.
     if (sub && !sub.farm_area_confirmed_at) {
       setConfirmAreaInput(sub.farm_area_acres != null ? String(sub.farm_area_acres) : '')
-      setConfirmAreaUnit(sub.area_unit || 'acres')
       setEditingArea(sub.farm_area_acres == null)
       setErrorMsg(null)
       setConfirmStep({ person, isDealer })
@@ -118,7 +117,7 @@ export default function OrderingScreenPage() {
     }
     await executeSendOrder(confirmStep.person, confirmStep.isDealer, {
       acres: parseFloat(valStr),
-      unit: confirmAreaUnit,
+      unit: 'acres',
     })
   }
 
@@ -237,7 +236,7 @@ export default function OrderingScreenPage() {
 
             {sub.farm_area_acres != null && !editingArea ? (
               <p className="text-sm text-[#6B3F1F] mt-3">
-                <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
+                <span className="font-semibold">{sub.farm_area_acres} acres</span>{' '}
                 <button
                   onClick={() => setEditingArea(true)}
                   className="ml-1 text-xs underline text-green-700"
@@ -250,15 +249,11 @@ export default function OrderingScreenPage() {
                   value={confirmAreaInput}
                   onChange={e => setConfirmAreaInput(e.target.value)}
                   placeholder="0.00"
-                  className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                  className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                 />
-                <select
-                  value={confirmAreaUnit}
-                  onChange={e => setConfirmAreaUnit(e.target.value)}
-                  className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
-                >
-                  {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
+                <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                  acres
+                </span>
               </div>
             )}
 
