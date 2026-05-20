@@ -309,17 +309,23 @@ export default function CropDetailPage() {
   const isAssigned = sub.subscription_type === 'ASSIGNED'
 
   return (
-    <div className="min-h-screen bg-[#F5F0E8]">
+    // overflow-x-hidden guards the whole page against horizontal
+    // scroll. Some descendant (long font-mono reference number,
+    // <input type=number> default min-width, or an alert
+    // recipient line with no break opportunity) was nudging the
+    // viewport wider than the device, leaving the user with a
+    // visibly shifted layout.
+    <div className="min-h-screen overflow-x-hidden bg-[#F5F0E8]">
       {/* Branded header */}
       <div className="sticky top-0 z-30 px-4 pt-safe" style={{ background: colour }}>
-        <div className="flex items-center gap-3 py-3">
-          <button onClick={() => router.push('/home')} className="text-white opacity-70 text-xl">←</button>
-          <div className="flex-1">
-            <p className="text-white font-bold text-sm">{branding?.display_name || 'Loading…'}</p>
-            {branding?.tagline && <p className="text-white text-xs opacity-70">{branding.tagline}</p>}
+        <div className="flex items-center gap-3 py-3 min-w-0">
+          <button onClick={() => router.push('/home')} className="text-white opacity-70 text-xl shrink-0">←</button>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-sm truncate">{branding?.display_name || 'Loading…'}</p>
+            {branding?.tagline && <p className="text-white text-xs opacity-70 truncate">{branding.tagline}</p>}
           </div>
           {sub.reference_number && (
-            <p className="text-white text-xs opacity-60 font-mono">{sub.reference_number}</p>
+            <p className="text-white text-xs opacity-60 font-mono shrink-0">{sub.reference_number}</p>
           )}
         </div>
       </div>
@@ -338,7 +344,7 @@ export default function CropDetailPage() {
                 value={areaInput}
                 onChange={e => setAreaInput(e.target.value)}
                 placeholder="0.00"
-                className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
               <select
                 value={areaUnit}
@@ -369,7 +375,7 @@ export default function CropDetailPage() {
                 value={areaInput}
                 onChange={e => setAreaInput(e.target.value)}
                 placeholder="0.00"
-                className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
               <select
                 value={areaUnit}
@@ -444,7 +450,7 @@ export default function CropDetailPage() {
           <div className="mt-3 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex gap-2">
             <input type="date" value={startDate}
               onChange={e => setStartDate(e.target.value)}
-              className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none" />
+              className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none" />
             <button onClick={saveStartDate} disabled={savingDate || !startDate}
               className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
               style={{ background: colour }}>
@@ -692,7 +698,7 @@ export default function CropDetailPage() {
                         value={orderSheetArea}
                         onChange={e => setOrderSheetArea(e.target.value)}
                         placeholder="0.00"
-                        className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                        className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                       />
                       <select
                         value={orderSheetUnit}
@@ -720,7 +726,7 @@ export default function CropDetailPage() {
                             value={orderSheetArea}
                             onChange={e => setOrderSheetArea(e.target.value)}
                             placeholder="0.00"
-                            className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                            className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                           />
                           <select
                             value={orderSheetUnit}
