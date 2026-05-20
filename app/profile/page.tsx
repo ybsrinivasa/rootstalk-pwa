@@ -267,13 +267,9 @@ export default function ProfilePage() {
     }
   }
 
-  const isFarmer = roles.includes('FARMER') || subscriptions.length > 0
   const isDealer = pwaRoles.includes('DEALER') || roles.includes('DEALER')
   const isFacilitator = pwaRoles.includes('FACILITATOR') || roles.includes('FACILITATOR')
   const isFarmPundit = pwaRoles.includes('FARM_PUNDIT') || roles.includes('FARM_PUNDIT')
-
-  // Pundit-only users (have FARM_PUNDIT role but no FARMER subscriptions) shouldn't see crops & companies
-  const isPunditOnly = isFarmPundit && subscriptions.length === 0 && !isDealer && !isFacilitator
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -536,88 +532,50 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ── CROPS & COMPANIES ── (hidden for pundit-only users) */}
-        {!isPunditOnly && (isFarmer || isDealer || isFacilitator || isFarmPundit) && (
-          <div className="mt-5">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3 px-1">Crops &amp; Companies</p>
-            <div className="space-y-3">
-
-              {/* Farmer subscriptions */}
-              {isFarmer && (
-                <div>
-                  {subscriptions.length > 0 ? (
-                    <div className="space-y-2">
-                      <p className="text-xs text-slate-500 px-1 mb-2">Your Advisory Subscriptions</p>
-                      {subscriptions.map(sub => (
-                        <div key={sub.id} className="bg-white rounded-2xl p-4 border border-stone-200 flex items-center justify-between">
-                          <div>
-                            <p className="text-xs text-slate-500 font-mono">{sub.id.slice(0, 12)}…</p>
-                            {sub.client_name && <p className="text-sm font-medium text-slate-700 mt-0.5">{sub.client_name}</p>}
-                          </div>
-                          <span className="text-[10px] font-semibold bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded-full">
-                            {sub.status}
-                          </span>
-                        </div>
-                      ))}
+        {/* ── ROLES — discovery + set-up CTAs ──
+            Per LoYaRo's profile pattern (the "Become a helper →"
+            card): the profile surfaces ROLE SETUP, not role
+            management. Already-set-up roles live in the right
+            drawer's Switch list and don't appear here. List shrinks
+            as the farmer claims more roles, hides entirely when
+            all three are set up. */}
+        {(() => {
+          const setupCtas: { key: string; label: string; href: string; tagline: string }[] = []
+          if (!isDealer) setupCtas.push({
+            key: 'DEALER', label: 'Open my Shop',
+            href: '/become-dealer',
+            tagline: 'Sell inputs to nearby farmers through RootsTalk.',
+          })
+          if (!isFacilitator) setupCtas.push({
+            key: 'FACILITATOR', label: 'Help as Facilitator',
+            href: '/become-facilitator',
+            tagline: 'Earn by promoting subscriptions in your village.',
+          })
+          if (!isFarmPundit) setupCtas.push({
+            key: 'FARM_PUNDIT', label: 'Become an Expert',
+            href: '/pundit/register',
+            tagline: 'Answer farmer questions in your area of expertise.',
+          })
+          if (!setupCtas.length) return null
+          return (
+            <div className="mt-5">
+              <p className="text-xs font-semibold uppercase tracking-wide mb-3 px-1"
+                style={{ color: '#7A8C7E' }}>Take on a new role</p>
+              <div className="space-y-3">
+                {setupCtas.map(c => (
+                  <button key={c.key} onClick={() => router.push(c.href)}
+                    className="w-full text-left rounded-2xl p-4 border bg-white flex items-center justify-between gap-3 active:scale-[0.99] transition-transform"
+                    style={{ borderColor: '#DDD0B8' }}>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[15px]" style={{ color: '#6B3F1F' }}>{c.label} →</p>
+                      <p className="text-[13px] mt-0.5" style={{ color: '#7A8C7E' }}>{c.tagline}</p>
                     </div>
-                  ) : (
-                    <div className="bg-white rounded-2xl p-4 border border-stone-200">
-                      <p className="text-sm text-slate-400">No advisory subscriptions yet. Tap Subscribe on the home screen.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Dealer */}
-              {isDealer && (
-                <button onClick={() => router.push('/dealer/dealerships')}
-                  className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#08504120' }}>
-                      <div className="w-3 h-3 rounded-full" style={{ background: '#085041' }} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-800">Manage my dealerships</span>
-                  </div>
-                  <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-                  </svg>
-                </button>
-              )}
-
-              {/* Facilitator */}
-              {isFacilitator && (
-                <button onClick={() => router.push('/facilitator/promoted-farmers')}
-                  className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#7D4E0020' }}>
-                      <div className="w-3 h-3 rounded-full" style={{ background: '#7D4E00' }} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-800">View my companies</span>
-                  </div>
-                  <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-                  </svg>
-                </button>
-              )}
-
-              {/* FarmPundit */}
-              {isFarmPundit && (
-                <button onClick={() => router.push('/pundit/home')}
-                  className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: '#3C348920' }}>
-                      <div className="w-3 h-3 rounded-full" style={{ background: '#3C3489' }} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-800">View my expert companies</span>
-                  </div>
-                  <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-                  </svg>
-                </button>
-              )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* ── PREFERENCES ── */}
         <div className="mt-5">
@@ -680,14 +638,9 @@ export default function ProfilePage() {
               </div>
             )}
 
-            {/* My Subscriptions link */}
-            <button onClick={() => router.push('/my-subscriptions')}
-              className="w-full flex items-center justify-between px-4 py-3.5 bg-white border border-stone-200 rounded-2xl">
-              <span className="text-sm text-slate-700 font-medium">My Subscriptions</span>
-              <svg className="w-4 h-4 text-stone-300" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
-              </svg>
-            </button>
+            {/* My Subscriptions link moved to the right drawer 2026-05-20
+                so the profile stays focused on personal data + role
+                setup. */}
           </div>
         </div>
 

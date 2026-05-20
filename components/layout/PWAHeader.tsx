@@ -6,9 +6,20 @@ import api from '@/lib/api'
 
 type Lang = { language_code: string; language_name_native: string }
 
+// Role label shown beneath the rootsTALK.in wordmark. Mirrors the
+// labels used in the right drawer for consistency.
+const ROLE_LABEL: Record<string, string> = {
+  FARMER: 'Farmer',
+  DEALER: 'My Shop',
+  FACILITATOR: 'Facilitator',
+  FARM_PUNDIT: 'Expert',
+}
+
 export default function PWAHeader({
   activeRole = 'FARMER',
-  title = 'rootsTALK',
+  title,  // kept for backward compat; no longer rendered. The wordmark
+          // + role label replaced it 2026-05-20 per LoYaRo header
+          // pattern (see LoYaRo_RootsTalk_UI_Design_System.docx).
   onRoleSwitch,
   customColour,
   urgencyBadges,
@@ -19,13 +30,14 @@ export default function PWAHeader({
   customColour?: string
   urgencyBadges?: { new: number; pending: number; returned: number }
 }) {
+  void title  // unused since 2026-05-20; suppresses lint
   const user = getUser()
   const [showLang, setShowLang] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [languages, setLanguages] = useState<Lang[]>([])
   const [currentLang, setCurrentLang] = useState(getLanguage())
   const colour = customColour || ROLE_COLOURS[activeRole] || '#1A5C2A'
-  const roleLabel = activeRole !== 'FARMER' ? `Acting as ${activeRole.replace('_', ' ')}` : ''
+  const roleLabel = ROLE_LABEL[activeRole] || 'Farmer'
 
   useEffect(() => {
     api.get('/platform/languages').then(r => setLanguages(r.data)).catch(() => {})
@@ -44,8 +56,15 @@ export default function PWAHeader({
         style={{ background: colour }}>
         <div className="flex items-center">
           <div>
-            <p className="text-white font-semibold text-base leading-tight">{title}</p>
-            {roleLabel && <p className="text-white text-xs opacity-70">{roleLabel}</p>}
+            {/* rootsTALK.in wordmark — same split-weight treatment as
+                the landing hero and the right drawer. White variants
+                since the header sits on the role-coloured chrome. */}
+            <p className="leading-none">
+              <span className="text-white/80 font-light text-[19px]">roots</span>
+              <span className="text-white font-black text-[19px]">TALK</span>
+              <span className="text-white/55 font-light text-[16px]">.in</span>
+            </p>
+            <p className="text-white/70 text-[11px] mt-0.5 leading-none">{roleLabel}</p>
           </div>
           {urgencyBadges && (
             <div className="flex items-center gap-2 ml-3">
