@@ -1,18 +1,34 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser, getActiveRoles, logout } from '@/lib/auth'
+import { getToken, getUser, getActiveRoles, logout, refreshUser, type PWAUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
 interface Subscription { id: string; status: string; package_id: string; client_id?: string; client_name?: string }
 
+// Cosh-driven location universe — same shape as the onboarding
+// picker. Used here only to resolve the cached state_cosh_id +
+// district_cosh_id into friendly names like "Karnataka · Tumakuru".
+type CoshLocations = {
+  states: { cosh_id: string; name: string | null;
+            districts: { cosh_id: string; name: string | null }[] }[]
+}
+
 export default function ProfilePage() {
   const router = useRouter()
-  const user = getUser()
+  // User comes from localStorage initially (no flash of empty state)
+  // and is refreshed on mount. After every save we re-fetch /auth/me
+  // so the page reflects what's in the DB, not what was cached at
+  // OTP-verify time.
+  const [user, setUser] = useState<PWAUser | null>(getUser())
   const roles = getActiveRoles(user)
   const pwaRoles = user?.pwa_roles || []
+
+  // Resolved state + district names from the Cosh universe so we
+  // can render "Karnataka · Tumakuru" instead of raw UUIDs.
+  const [locationLabel, setLocationLabel] = useState<string>('')
 
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [alertPref, setAlertPref] = useState<Record<string, { send_to_self: boolean; promoter_user_id: string }>>({})
@@ -46,11 +62,46 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
+    // Refresh /auth/me on mount — the localStorage cache is set at
+    // OTP-verify time and goes stale after every profile save in
+    // the onboarding flow. Without this, a farmer who just
+    // onboarded sees "No name set" and "Location not set" even
+    // though the DB has everything.
+    refreshUser().then(fresh => {
+      if (fresh) {
+        setUser(fresh)
+        setNameValue(fresh.name || '')
+        setCurrentLang(fresh.language_code || 'en')
+      }
+    })
     api.get<Subscription[]>('/farmer/my-subscriptions')
       .then(r => setSubscriptions(r.data.filter(s => s.status === 'ACTIVE')))
       .catch(() => {})
     api.get('/platform/languages').then(r => setLanguages(r.data)).catch(() => {})
-  }, [])
+    // Load the Cosh location universe so we can resolve the
+    // farmer's stored cosh_ids to display names. One small payload,
+    // cached by the browser anyway.
+    api.get<CoshLocations>('/cosh/locations/india')
+      .then(r => setCoshLocations(r.data))
+      .catch(() => { /* leave locationLabel empty — page still renders */ })
+  }, [router])
+
+  const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
+  // Recompute the location label whenever user or universe changes.
+  useEffect(() => {
+    if (!user || !coshLocations) return
+    const sid = user.state_cosh_id || null
+    const did = user.district_cosh_id || null
+    if (!sid && !did) { setLocationLabel(''); return }
+    const state = coshLocations.states.find(s => s.cosh_id === sid)
+    const district = state?.districts.find(d => d.cosh_id === did)
+    const parts = [
+      district?.name,
+      state?.name,
+      user.sub_district_cosh_id || null,
+    ].filter(Boolean) as string[]
+    setLocationLabel(parts.join(' · '))
+  }, [user, coshLocations])
 
   async function saveName() {
     if (!nameValue.trim()) return
@@ -58,11 +109,11 @@ export default function ProfilePage() {
     try {
       await api.put('/auth/me/profile', { name: nameValue.trim() })
       setEditingName(false)
-      const u = getUser()
-      if (u) {
-        u.name = nameValue.trim()
-        localStorage.setItem('rt_pwa_user', JSON.stringify(u))
-      }
+      // refreshUser writes the canonical /auth/me back to
+      // localStorage and returns the fresh PWAUser. Drop the old
+      // hand-merge pattern that only patched .name.
+      const fresh = await refreshUser()
+      if (fresh) setUser(fresh)
     } finally { setSavingName(false) }
   }
 
@@ -74,6 +125,8 @@ export default function ProfilePage() {
       if (districtValue) payload.district_cosh_id = districtValue
       await api.put('/auth/me/profile', payload)
       setEditingLocation(false)
+      const fresh = await refreshUser()
+      if (fresh) setUser(fresh)
     } finally { setSavingLocation(false) }
   }
 
@@ -89,6 +142,8 @@ export default function ProfilePage() {
         setGpsLoading(false)
         try {
           await api.put('/auth/me/profile', { gps_lat: lat, gps_lng: lng })
+          const fresh = await refreshUser()
+          if (fresh) setUser(fresh)
         } catch { /* will save next profile save */ }
       },
       () => setGpsLoading(false),
@@ -198,7 +253,7 @@ export default function ProfilePage() {
               )}
               <p className="text-slate-400 text-sm mt-0.5">{user?.phone}</p>
               <p className="text-slate-400 text-xs mt-0.5">
-                {[(user as { state_cosh_id?: string } | null)?.state_cosh_id, (user as { district_cosh_id?: string } | null)?.district_cosh_id].filter(Boolean).join(', ') || 'Location not set'}
+                {locationLabel || 'Location not set'}
               </p>
             </div>
           </div>

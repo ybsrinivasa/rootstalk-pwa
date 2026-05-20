@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp } from '@/lib/auth'
+import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser } from '@/lib/auth'
 import { setLanguage, getLanguage } from '@/lib/language'
 import api from '@/lib/api'
 import InstallPrompt from '@/components/InstallPrompt'
@@ -260,6 +260,10 @@ export default function RootPage() {
       // returned 404, was swallowed by an empty catch, and the
       // user proceeded with a phantom-saved name.
       await api.put('/auth/me/profile', { name })
+      // Refresh the cached /auth/me so downstream screens (Welcome,
+      // Profile, Home) read the fresh name instead of the empty
+      // value captured at OTP-verify time.
+      await refreshUser()
       setStage('location')
     } catch {
       setError("Couldn't save your name. Please try again.")
@@ -282,6 +286,7 @@ export default function RootPage() {
         // farmer's own reference; PackageLocation never reads it.
         sub_district_cosh_id: subDistrict.trim() || undefined,
       })
+      await refreshUser()
       setStage('gps')
     } catch {
       setError("Couldn't save your location. Please try again.")
@@ -301,6 +306,7 @@ export default function RootPage() {
             gps_lat: pos.coords.latitude,
             gps_lng: pos.coords.longitude,
           })
+          await refreshUser()
         } catch {
           // GPS captured locally; save failed. Surface so the user
           // can re-attempt from the profile page later.

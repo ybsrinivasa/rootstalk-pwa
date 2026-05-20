@@ -8,6 +8,14 @@ export interface PWAUser {
   roles: { role_type: string; status: string }[];
   portal_role?: string | null;
   pwa_roles?: string[];
+  // 2026-05-20 — surfaced on /auth/me so Profile + farmer-context
+  // screens can read location/GPS without a second hop. All
+  // optional; fresh accounts won't have them populated yet.
+  state_cosh_id?: string | null;
+  district_cosh_id?: string | null;
+  sub_district_cosh_id?: string | null;
+  gps_lat?: number | null;
+  gps_lng?: number | null;
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {
