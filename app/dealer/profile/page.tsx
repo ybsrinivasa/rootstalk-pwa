@@ -5,10 +5,17 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
+// What the dealer can sell. Each row carries a regulatory note for
+// the dealer's benefit, but RootsTalk does not collect proof of
+// licence — that's the responsibility of the company (client) the
+// dealer is supplying to. Seeds vs Seedlings is a real regulatory
+// split: seed dealers in India need a Seeds Control Order licence;
+// nursery / seedling traders do not.
 const SELL_CATEGORIES = [
-  { id: 'SEEDS', label: 'Seeds / Seedlings', licence: false, note: 'No licence required' },
-  { id: 'PESTICIDES', label: 'Pesticides', licence: true, note: 'Pesticide licence required' },
-  { id: 'FERTILISERS', label: 'Fertilisers', licence: true, note: 'Fertiliser licence required' },
+  { id: 'SEEDS', label: 'Seeds', note: 'Seed dealer licence required by law' },
+  { id: 'SEEDLINGS', label: 'Seedlings', note: 'No licence required' },
+  { id: 'PESTICIDES', label: 'Pesticides', note: 'Pesticide licence required by law' },
+  { id: 'FERTILISERS', label: 'Fertilisers', note: 'Fertiliser licence required by law' },
 ]
 
 type FormState = {
@@ -17,36 +24,35 @@ type FormState = {
   sell_categories: string[]
   shop_gps_lat: number | null
   shop_gps_lng: number | null
-  shop_certificate_url: string
+  shop_registration_url: string
   shop_photo_url: string
-  pesticide_licence_url: string
-  fertiliser_licence_url: string
+}
+
+function isImageUrl(url: string): boolean {
+  return /\.(jpe?g|png|gif|webp|avif|bmp)(\?|$)/i.test(url)
 }
 
 export default function DealerProfilePage() {
   const router = useRouter()
-  const [profile, setProfile] = useState<any>(null)
+  const [, setProfile] = useState<unknown>(null)
   const [form, setForm] = useState<FormState>({
     shop_name: '',
     shop_address: '',
     sell_categories: [],
     shop_gps_lat: null,
     shop_gps_lng: null,
-    shop_certificate_url: '',
+    shop_registration_url: '',
     shop_photo_url: '',
-    pesticide_licence_url: '',
-    fertiliser_licence_url: '',
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [gpsLoading, setGpsLoading] = useState(false)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
 
-  // File input refs
+  // Separate file inputs per surface — camera-capture vs library.
   const certRef = useRef<HTMLInputElement>(null)
-  const photoRef = useRef<HTMLInputElement>(null)
-  const pesticideLicRef = useRef<HTMLInputElement>(null)
-  const fertiliserLicRef = useRef<HTMLInputElement>(null)
+  const photoCameraRef = useRef<HTMLInputElement>(null)
+  const photoLibraryRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -58,13 +64,11 @@ export default function DealerProfilePage() {
         sell_categories: r.data.sell_categories || [],
         shop_gps_lat: r.data.shop_gps_lat ?? null,
         shop_gps_lng: r.data.shop_gps_lng ?? null,
-        shop_certificate_url: r.data.shop_certificate_url || '',
+        shop_registration_url: r.data.shop_registration_url || '',
         shop_photo_url: r.data.shop_photo_url || '',
-        pesticide_licence_url: r.data.pesticide_licence_url || '',
-        fertiliser_licence_url: r.data.fertiliser_licence_url || '',
       })
     }).catch(() => {})
-  }, [])
+  }, [router])
 
   function toggleCategory(id: string) {
     setForm(f => ({
@@ -93,7 +97,7 @@ export default function DealerProfilePage() {
   }
 
   async function uploadFile(file: File, folder: string, field: keyof FormState) {
-    setUploadingField(field)
+    setUploadingField(field as string)
     try {
       const fd = new FormData()
       fd.append('file', file)
@@ -103,7 +107,7 @@ export default function DealerProfilePage() {
       })
       setForm(f => ({ ...f, [field]: data.url || data.file_url || '' }))
     } catch {
-      // silently fail; user can retry
+      // silent — user can retry; the field stays empty
     } finally {
       setUploadingField(null)
     }
@@ -120,8 +124,9 @@ export default function DealerProfilePage() {
     } finally { setSaving(false) }
   }
 
-  const needsPesticideLic = form.sell_categories.includes('PESTICIDES')
-  const needsFertiliserLic = form.sell_categories.includes('FERTILISERS')
+  const mapHref = form.shop_gps_lat != null && form.shop_gps_lng != null
+    ? `https://www.google.com/maps?q=${form.shop_gps_lat},${form.shop_gps_lng}`
+    : null
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -147,23 +152,31 @@ export default function DealerProfilePage() {
           </div>
         </div>
 
-        {/* Shop Location (GPS) */}
+        {/* Shop Location (GPS) — adds a View on Map link once captured */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <h2 className="font-semibold text-[#6B3F1F]">Shop Location</h2>
           <p className="text-xs text-[#7A8C7E]">Capture the GPS coordinates of your shop for order routing.</p>
           {form.shop_gps_lat !== null && form.shop_gps_lng !== null ? (
-            <div className="bg-[#F5F0E8] rounded-xl px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-[#7A8C7E] font-mono">
-                  {form.shop_gps_lat.toFixed(6)}, {form.shop_gps_lng.toFixed(6)}
-                </p>
-                <p className="text-xs text-[#085041] mt-0.5">Location captured</p>
+            <>
+              <div className="bg-[#F5F0E8] rounded-xl px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-[#7A8C7E] font-mono">
+                    {form.shop_gps_lat.toFixed(6)}, {form.shop_gps_lng.toFixed(6)}
+                  </p>
+                  <p className="text-xs text-[#085041] mt-0.5">Location captured</p>
+                </div>
+                <button onClick={captureShopGps} disabled={gpsLoading}
+                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
+                  {gpsLoading ? 'Getting…' : 'Recapture'}
+                </button>
               </div>
-              <button onClick={captureShopGps} disabled={gpsLoading}
-                className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                {gpsLoading ? 'Getting…' : 'Recapture'}
-              </button>
-            </div>
+              {mapHref && (
+                <a href={mapHref} target="_blank" rel="noopener noreferrer"
+                  className="block w-full text-center py-2.5 rounded-xl border border-[#DDD0B8] text-sm font-medium text-[#085041]">
+                  📍 View on Map
+                </a>
+              )}
+            </>
           ) : (
             <button onClick={captureShopGps} disabled={gpsLoading}
               className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium flex items-center justify-center gap-2">
@@ -206,117 +219,94 @@ export default function DealerProfilePage() {
           })}
         </div>
 
-        {/* Licences (conditional) */}
-        {(needsPesticideLic || needsFertiliserLic) && (
-          <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4">
-            <h2 className="font-semibold text-[#6B3F1F]">Licences</h2>
-            <p className="text-xs text-[#7A8C7E]">Upload copies of your relevant licences.</p>
-
-            {needsPesticideLic && (
-              <div>
-                <label className="block text-xs text-[#7A8C7E] mb-2">Pesticide Licence</label>
-                <input ref={pesticideLicRef} type="file" accept="image/*,.pdf" className="hidden"
-                  onChange={e => {
-                    const f = e.target.files?.[0]
-                    if (f) uploadFile(f, 'dealer-licences', 'pesticide_licence_url')
-                  }} />
-                {form.pesticide_licence_url ? (
-                  <div className="flex items-center gap-3">
-                    <img src={form.pesticide_licence_url} alt="Pesticide licence"
-                      className="w-16 h-16 rounded-xl object-cover border border-[#DDD0B8]" />
-                    <button onClick={() => pesticideLicRef.current?.click()}
-                      className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                      {uploadingField === 'pesticide_licence_url' ? 'Uploading…' : 'Change'}
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => pesticideLicRef.current?.click()} disabled={uploadingField === 'pesticide_licence_url'}
-                    className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                    {uploadingField === 'pesticide_licence_url' ? 'Uploading…' : 'Upload Pesticide Licence'}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {needsFertiliserLic && (
-              <div>
-                <label className="block text-xs text-[#7A8C7E] mb-2">Fertiliser Licence</label>
-                <input ref={fertiliserLicRef} type="file" accept="image/*,.pdf" className="hidden"
-                  onChange={e => {
-                    const f = e.target.files?.[0]
-                    if (f) uploadFile(f, 'dealer-licences', 'fertiliser_licence_url')
-                  }} />
-                {form.fertiliser_licence_url ? (
-                  <div className="flex items-center gap-3">
-                    <img src={form.fertiliser_licence_url} alt="Fertiliser licence"
-                      className="w-16 h-16 rounded-xl object-cover border border-[#DDD0B8]" />
-                    <button onClick={() => fertiliserLicRef.current?.click()}
-                      className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                      {uploadingField === 'fertiliser_licence_url' ? 'Uploading…' : 'Change'}
-                    </button>
-                  </div>
-                ) : (
-                  <button onClick={() => fertiliserLicRef.current?.click()} disabled={uploadingField === 'fertiliser_licence_url'}
-                    className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                    {uploadingField === 'fertiliser_licence_url' ? 'Uploading…' : 'Upload Fertiliser Licence'}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Shop Documents */}
-        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4">
+        {/* Shop Documents — Registration Certificate + Shop Photo.
+            Licence uploads removed 2026-05-20: verification of dealer
+            licences is the company (client)'s responsibility, not
+            RootsTalk's. The dealer keeps their original licences with
+            them. */}
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-5">
           <h2 className="font-semibold text-[#6B3F1F]">Shop Documents</h2>
 
-          {/* Registration Certificate */}
+          {/* Registration Certificate — accepts PDF or image */}
           <div>
             <label className="block text-xs text-[#7A8C7E] mb-2">Shop Registration Certificate</label>
             <input ref={certRef} type="file" accept="image/*,.pdf" className="hidden"
               onChange={e => {
                 const f = e.target.files?.[0]
-                if (f) uploadFile(f, 'dealer-docs', 'shop_certificate_url')
+                if (f) uploadFile(f, 'dealer-docs', 'shop_registration_url')
               }} />
-            {form.shop_certificate_url ? (
-              <div className="flex items-center gap-3">
-                <img src={form.shop_certificate_url} alt="Certificate"
-                  className="w-16 h-16 rounded-xl object-cover border border-[#DDD0B8]" />
+            {form.shop_registration_url ? (
+              <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
+                {isImageUrl(form.shop_registration_url) ? (
+                  <img src={form.shop_registration_url} alt="Registration certificate"
+                    className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
+                ) : (
+                  <div className="w-14 h-14 rounded-lg border border-[#DDD0B8] bg-white flex items-center justify-center shrink-0">
+                    <span className="text-2xl">📄</span>
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
+                  <a href={form.shop_registration_url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-[#7A8C7E] underline truncate block">View document</a>
+                </div>
                 <button onClick={() => certRef.current?.click()}
-                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                  {uploadingField === 'shop_certificate_url' ? 'Uploading…' : 'Change'}
+                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5 shrink-0">
+                  {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Change'}
                 </button>
               </div>
             ) : (
-              <button onClick={() => certRef.current?.click()} disabled={uploadingField === 'shop_certificate_url'}
+              <button onClick={() => certRef.current?.click()} disabled={uploadingField === 'shop_registration_url'}
                 className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                {uploadingField === 'shop_certificate_url' ? 'Uploading…' : 'Upload Certificate'}
+                {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Upload Certificate (PDF or photo)'}
               </button>
             )}
           </div>
 
-          {/* Shop Photograph */}
+          {/* Shop Photograph — explicit camera + library options.
+              accept="image/*" alone shows a chooser on mobile, but
+              the chooser is hidden behind a tap and not discoverable
+              on desktop. Two explicit buttons make both paths visible. */}
           <div>
             <label className="block text-xs text-[#7A8C7E] mb-2">Shop Photograph</label>
-            <input ref={photoRef} type="file" accept="image/*" className="hidden"
+            <input ref={photoCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+              onChange={e => {
+                const f = e.target.files?.[0]
+                if (f) uploadFile(f, 'dealer-photos', 'shop_photo_url')
+              }} />
+            <input ref={photoLibraryRef} type="file" accept="image/*" className="hidden"
               onChange={e => {
                 const f = e.target.files?.[0]
                 if (f) uploadFile(f, 'dealer-photos', 'shop_photo_url')
               }} />
             {form.shop_photo_url ? (
-              <div className="flex items-center gap-3">
-                <img src={form.shop_photo_url} alt="Shop photo"
-                  className="w-16 h-16 rounded-xl object-cover border border-[#DDD0B8]" />
-                <button onClick={() => photoRef.current?.click()}
-                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                  {uploadingField === 'shop_photo_url' ? 'Uploading…' : 'Change'}
-                </button>
+              <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
+                <img src={form.shop_photo_url} alt="Shop"
+                  className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <button onClick={() => photoCameraRef.current?.click()}
+                    className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-2 py-1.5">📷</button>
+                  <button onClick={() => photoLibraryRef.current?.click()}
+                    className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-2 py-1.5">📁</button>
+                </div>
               </div>
             ) : (
-              <button onClick={() => photoRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
-                className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                {uploadingField === 'shop_photo_url' ? 'Uploading…' : 'Upload Shop Photo'}
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => photoCameraRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
+                  className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
+                  📷 Take Photo
+                </button>
+                <button onClick={() => photoLibraryRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
+                  className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
+                  📁 Upload Picture
+                </button>
+              </div>
+            )}
+            {uploadingField === 'shop_photo_url' && (
+              <p className="text-xs text-[#7A8C7E] mt-2">Uploading…</p>
             )}
           </div>
         </div>
