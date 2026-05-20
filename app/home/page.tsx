@@ -261,7 +261,12 @@ export default function HomePage() {
                 </button>
               </div>
             ) : (
-              /* Company tiles */
+              /* Company tiles + persistent "Subscribe to another"
+                 CTA below. Pre-fix the Subscribe button only
+                 rendered in the empty-state branch, so once a
+                 farmer had ANY pending or active sub there was no
+                 affordance to subscribe to a second crop / second
+                 company. */
               <div className="space-y-3">
                 {uniqueClientIds.map(clientId => {
                   const subs = grouped[clientId]
@@ -311,6 +316,21 @@ export default function HomePage() {
                     </button>
                   )
                 })}
+
+                {/* Subscribe-to-another CTA. Sits below the tile
+                    list so it's always reachable even when the
+                    farmer already has pending or active subs. */}
+                <button
+                  onClick={() => router.push('/subscribe')}
+                  className="w-full mt-2 py-3.5 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2"
+                  style={{
+                    background: 'transparent',
+                    border: `2px dashed ${C.primary}66`,
+                    color: C.primary,
+                    minHeight: 48,
+                  }}>
+                  + Subscribe to another advisory
+                </button>
               </div>
             )}
           </>
