@@ -45,6 +45,21 @@ const L0_LABEL: Record<string, string> = {
   INPUT: 'Apply Input', NON_INPUT: 'Crop Activity', INSTRUCTION: 'Advisory', MEDIA: 'Reference',
 }
 
+// Farmer-facing helpers — never expose raw enum slugs or
+// timeline names; surface the actual date window instead.
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+}
+function timelineDateLabel(from: string | null, to: string | null): string {
+  if (!from && !to) return 'Today'
+  if (from && to && from !== to) return `${fmtDate(from)} – ${fmtDate(to)}`
+  return fmtDate((to || from)!)
+}
+function humanizeType(s: string | null): string {
+  if (!s) return ''
+  return s.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+
 // ── Relation grouping helpers ───────────────────────────────────────────────
 function decodeRole(role: string): { part: number; option: number; position: number } | null {
   const m = /^PART_(\d+)__OPT_(\d+)__POS_(\d+)$/.exec(role)
@@ -305,8 +320,14 @@ export default function AdvisoryPage() {
               </div>
             )}
 
-            {/* Timeline sections */}
-            {advisory.timelines.map(tl => (
+            {/* Date-grouped sections — sort by latest to_date first
+                so the most recent window sits on top. Timeline name
+                / "(COPY)" suffix is internal jargon — farmer sees
+                the actual date window instead. */}
+            {[...advisory.timelines]
+              .sort((a, b) => new Date(b.to_date || b.from_date || 0).getTime()
+                            - new Date(a.to_date || a.from_date || 0).getTime())
+              .map(tl => (
               <div key={tl.id}>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-px flex-1 bg-slate-200" />
@@ -315,13 +336,11 @@ export default function AdvisoryPage() {
                       <span className="text-xs font-bold text-[#D4682E] bg-red-50 px-1.5 py-0.5 rounded">🔬 CHA</span>
                     )}
                     {tl.source === 'QA' && (
-                      // Pundit-origin marker. Same advisory shape as
-                      // CHA — Timeline → Practice → Element with
-                      // purchase + tracking — but originated from a
-                      // FarmPundit picking a curated standard answer.
                       <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">🌾 Pundit</span>
                     )}
-                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">{tl.name}</p>
+                    <p className="text-xs font-semibold text-[#6B3F1F] tracking-wide">
+                      {timelineDateLabel(tl.from_date, tl.to_date)}
+                    </p>
                   </div>
                   <div className="h-px flex-1 bg-slate-200" />
                 </div>
@@ -431,14 +450,20 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   isOrdering: boolean
   ordered: boolean
 }) {
-  const [expanded, setExpanded] = useState(false)
+  // Practice elements (COMMON_NAME, MANUFACTURER, FORMULATION etc.)
+  // carry raw cosh_ref UUIDs and AI_CONCENTRATION-style enum keys.
+  // They're useless to the farmer pre-purchase and confusing
+  // ("BRAND_NAME (d79c…)"). After the farmer orders, the dealer
+  // picks the actual product; details belong on the order detail
+  // page, not the advisory. V2: add per-practice purchased flag
+  // from the backend and surface a resolved brand/dose summary
+  // here once purchased.
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const label = L0_LABEL[practice.l0_type] || practice.l0_type
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-      {/* Card header */}
-      <div className="flex items-center gap-3 px-4 py-3.5" onClick={() => setExpanded(e => !e)}>
+      <div className="flex items-center gap-3 px-4 py-3.5">
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -457,7 +482,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
             )}
           </div>
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
-            {[practice.l1_type, practice.l2_type].filter(Boolean).join(' — ') || 'General Advisory'}
+            {[humanizeType(practice.l1_type), humanizeType(practice.l2_type)].filter(Boolean).join(' — ') || 'General Advisory'}
           </p>
         </div>
         {practice.l0_type === 'INPUT' && (
@@ -470,27 +495,6 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           </button>
         )}
       </div>
-
-      {/* Expandable elements */}
-      {expanded && practice.elements.length > 0 && (
-        <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
-          {practice.elements.map((el, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm">
-              <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
-              <div>
-                <span className="text-[#6B3F1F] font-medium">{el.element_type}</span>
-                {el.cosh_ref && <span className="text-[#7A8C7E] text-xs ml-1">({el.cosh_ref})</span>}
-                {el.value && <span className="text-[#6B3F1F] ml-1">{el.value}{el.unit_cosh_id ? ` ${el.unit_cosh_id}` : ''}</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {practice.elements.length > 0 && (
-        <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
-          {expanded ? '▲ Hide details' : `▼ ${practice.elements.length} detail${practice.elements.length > 1 ? 's' : ''}`}
-        </div>
-      )}
     </div>
   )
 }
@@ -641,7 +645,7 @@ function InnerPracticeRow({ practice }: { practice: Practice }) {
         )}
       </div>
       <p className="text-sm font-medium text-[#6B3F1F]">
-        {[practice.l1_type, practice.l2_type].filter(Boolean).join(' — ') || 'General Advisory'}
+        {[humanizeType(practice.l1_type), humanizeType(practice.l2_type)].filter(Boolean).join(' — ') || 'General Advisory'}
       </p>
     </div>
   )
