@@ -56,7 +56,17 @@ export default function BrandedSpacePage() {
       ])
       if (infoRes.status === 'fulfilled') setBranding(infoRes.value.data)
       if (subsRes.status === 'fulfilled') {
-        setSubscriptions(subsRes.value.data.filter(s => s.client_id === clientId))
+        // Only ACTIVE subs are real "crops the farmer is being
+        // advised on". CANCELLED / WAITLISTED / LAPSED rows
+        // pollute the list and confuse the farmer (e.g. a
+        // cancelled-then-resubscribed pair both showing as
+        // "Chilli Package 3"). Pending-payment WAITLISTED rows
+        // already surface in their own Home card above this tile.
+        setSubscriptions(
+          subsRes.value.data
+            .filter(s => s.client_id === clientId)
+            .filter(s => s.status === 'ACTIVE'),
+        )
       }
     } finally { setLoading(false) }
   }
