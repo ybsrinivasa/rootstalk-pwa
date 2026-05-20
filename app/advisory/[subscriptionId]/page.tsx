@@ -59,6 +59,13 @@ function humanizeType(s: string | null): string {
   if (!s) return ''
   return s.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
+// Cosh refs and unit IDs sometimes arrive as bare UUIDs (backend
+// hasn't joined them to a friendly name yet). Strip them in the
+// UI — showing "(d79cfced-8de1-…)" to a farmer is worse than
+// showing nothing.
+function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+}
 
 // ── Relation grouping helpers ───────────────────────────────────────────────
 function decodeRole(role: string): { part: number; option: number; position: number } | null {
@@ -450,20 +457,23 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   isOrdering: boolean
   ordered: boolean
 }) {
-  // Practice elements (COMMON_NAME, MANUFACTURER, FORMULATION etc.)
-  // carry raw cosh_ref UUIDs and AI_CONCENTRATION-style enum keys.
-  // They're useless to the farmer pre-purchase and confusing
-  // ("BRAND_NAME (d79c…)"). After the farmer orders, the dealer
-  // picks the actual product; details belong on the order detail
-  // page, not the advisory. V2: add per-practice purchased flag
-  // from the backend and surface a resolved brand/dose summary
-  // here once purchased.
+  const [expanded, setExpanded] = useState(false)
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const label = L0_LABEL[practice.l0_type] || practice.l0_type
+  // INPUT details (brand, dose, formulation) are hidden until the
+  // farmer purchases — the dealer picks the actual product, and
+  // resolved details surface on the order page after fulfilment.
+  // NON_INPUT / INSTRUCTION / MEDIA are nothing to buy, so their
+  // details are always shown (still UUID-safe via isUuid()).
+  // V2 hook: per-practice purchased flag will flip showInputDetails.
+  const detailsVisible = practice.l0_type !== 'INPUT' && practice.elements.length > 0
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3.5">
+      <div
+        className={`flex items-center gap-3 px-4 py-3.5${detailsVisible ? ' cursor-pointer' : ''}`}
+        onClick={detailsVisible ? () => setExpanded(e => !e) : undefined}
+      >
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -495,6 +505,30 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           </button>
         )}
       </div>
+
+      {detailsVisible && expanded && (
+        <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
+          {practice.elements.map((el, i) => {
+            const showRef = el.cosh_ref && !isUuid(el.cosh_ref)
+            const unitLabel = el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : ''
+            return (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
+                <div>
+                  <span className="text-[#6B3F1F] font-medium">{humanizeType(el.element_type)}</span>
+                  {showRef && <span className="text-[#7A8C7E] text-xs ml-1">({el.cosh_ref})</span>}
+                  {el.value && <span className="text-[#6B3F1F] ml-1">{el.value}{unitLabel ? ` ${unitLabel}` : ''}</span>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {detailsVisible && (
+        <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
+          {expanded ? '▲ Hide details' : `▼ ${practice.elements.length} detail${practice.elements.length > 1 ? 's' : ''}`}
+        </div>
+      )}
     </div>
   )
 }
