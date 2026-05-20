@@ -16,6 +16,7 @@ export interface PWAUser {
   sub_district_cosh_id?: string | null;
   gps_lat?: number | null;
   gps_lng?: number | null;
+  photo_url?: string | null;
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {

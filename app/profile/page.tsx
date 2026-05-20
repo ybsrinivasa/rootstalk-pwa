@@ -236,6 +236,37 @@ export default function ProfilePage() {
     }
   }
 
+  // Profile photo upload (Batch 2, 2026-05-20). Uses the authed
+  // /media/upload endpoint (S3-backed) which returns {url, key};
+  // we persist the URL on user.photo_url via /auth/me/profile.
+  // The actual <input type=file> is hidden behind a <label> that
+  // wraps the avatar — single-tap upload, no ref dance needed.
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [photoError, setPhotoError] = useState('')
+
+  async function handlePhotoFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhotoError('')
+    setUploadingPhoto(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await api.post<{ url: string }>(
+        '/media/upload?folder=profile-photos', form,
+      )
+      await api.put('/auth/me/profile', { photo_url: data.url })
+      const fresh = await refreshUser()
+      if (fresh) setUser(fresh)
+    } catch {
+      setPhotoError("Couldn't upload that photo. Try a different one.")
+    } finally {
+      setUploadingPhoto(false)
+      // reset so the same file can be re-selected
+      if (e.target) e.target.value = ''
+    }
+  }
+
   const isFarmer = roles.includes('FARMER') || subscriptions.length > 0
   const isDealer = pwaRoles.includes('DEALER') || roles.includes('DEALER')
   const isFacilitator = pwaRoles.includes('FACILITATOR') || roles.includes('FACILITATOR')
@@ -252,10 +283,34 @@ export default function ProfilePage() {
         {/* ── Hero user card ── */}
         <div className="bg-white rounded-2xl p-5 mt-4 border border-slate-100 shadow-sm">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold shrink-0"
-              style={{ background: 'linear-gradient(135deg, #065f46, #059669)' }}>
-              {(user?.name || user?.phone || 'U')[0].toUpperCase()}
-            </div>
+            {/* Avatar — tap to upload/replace photo. Optional;
+                falls back to first-initial chip when no photo set. */}
+            <label className="relative shrink-0 cursor-pointer">
+              {user?.photo_url ? (
+                <img src={user.photo_url} alt={user.name || 'Profile'}
+                  className="w-14 h-14 rounded-full object-cover border border-slate-200" />
+              ) : (
+                <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold"
+                  style={{ background: 'linear-gradient(135deg, #065f46, #059669)' }}>
+                  {(user?.name || user?.phone || 'U')[0].toUpperCase()}
+                </div>
+              )}
+              {/* Camera badge overlay */}
+              <span className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full bg-white border border-slate-200 flex items-center justify-center">
+                {uploadingPhoto ? (
+                  <span className="w-2.5 h-2.5 border border-slate-300 border-t-[#1A5C2A] rounded-full animate-spin"/>
+                ) : (
+                  <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.9l.82-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                )}
+              </span>
+              <input type="file" accept="image/*" capture="environment"
+                onChange={handlePhotoFile}
+                disabled={uploadingPhoto}
+                className="sr-only" />
+            </label>
             <div className="flex-1 min-w-0">
               {editingName ? (
                 <div className="flex items-center gap-2">
@@ -289,6 +344,10 @@ export default function ProfilePage() {
               </p>
             </div>
           </div>
+
+          {photoError && (
+            <p className="text-red-500 text-xs mb-2">{photoError}</p>
+          )}
 
           {/* Edit profile section */}
           <div className="border-t border-slate-50 pt-3 space-y-3">
