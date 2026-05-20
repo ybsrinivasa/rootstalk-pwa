@@ -35,11 +35,17 @@ export default function ExitGuard() {
 
   function closeApp() {
     setOpen(false)
-    // window.close() works for installed PWAs and some browser
-    // contexts; about:blank is the universal fallback that drops
-    // the user out of the rootsTALK.in URL space.
+    // window.close() works for popup-style windows in some
+    // browsers but reliably fails on Android Chrome's installed
+    // PWA — so we always navigate out of scope as the fallback.
+    // Pre-fix the fallback was about:blank, which surprised the
+    // user with a stark white page. Navigating to eywa.farm
+    // (the company site) instead has the same effect — Android
+    // shows the PWA-CCT chrome with an X to close the PWA — but
+    // lands the user on a meaningful page if they choose to read
+    // rather than dismiss.
     try { window.close() } catch { /* ignore */ }
-    window.location.href = 'about:blank'
+    window.location.href = 'https://eywa.farm'
   }
 
   if (!open) return null
