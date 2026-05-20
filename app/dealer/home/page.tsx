@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import ExitGuard from '@/components/ExitGuard'
 import api from '@/lib/api'
 
 const COLOUR = '#085041'
@@ -121,6 +122,7 @@ export default function DealerHomePage() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
+      <ExitGuard />
     </div>
   )
 }

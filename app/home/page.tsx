@@ -5,6 +5,7 @@ import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
+import ExitGuard from '@/components/ExitGuard'
 import api from '@/lib/api'
 import { C } from '@/lib/tokens'
 
@@ -324,6 +325,11 @@ export default function HomePage() {
         onSwitch={() => setShowRoleDrawer(false)}
         activeRole="FARMER"
       />
+
+      {/* Device back from the root Home triggers the close-app
+          confirm; detail screens are unaffected (their back is
+          intercepted by Next router for one-step navigation). */}
+      <ExitGuard />
     </div>
   )
 }

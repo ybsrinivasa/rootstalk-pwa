@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken, getUser } from '@/lib/auth'
 import BottomNav from '@/components/layout/BottomNav'
+import ExitGuard from '@/components/ExitGuard'
 import api from '@/lib/api'
 
 const COLOUR = '#7D4E00'
@@ -106,6 +107,7 @@ export default function FacilitatorHomePage() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
+      <ExitGuard />
     </div>
   )
 }

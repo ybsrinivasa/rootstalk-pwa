@@ -92,6 +92,15 @@ export default function MySubscriptionsPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="My Subscriptions" activeRole="FARMER" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+        {/* Back to home — /my-subscriptions is reached from the
+            right drawer, so there's no obvious one-step back; an
+            explicit Home link gives the farmer a clear exit. */}
+        <button
+          onClick={() => router.replace('/home')}
+          className="mt-4 mb-2 flex items-center gap-1 text-sm"
+          style={{ color: '#7A8C7E' }}>
+          ← Back to home
+        </button>
         {loading ? (
           <div className="mt-4 space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}</div>
         ) : (

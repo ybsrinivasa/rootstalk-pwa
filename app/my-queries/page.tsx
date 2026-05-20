@@ -55,6 +55,12 @@ export default function FarmerQueriesPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="My Expert Queries" activeRole="FARMER" />
       <div className="pt-16 pb-20 px-4">
+        <button
+          onClick={() => router.replace('/home')}
+          className="mt-4 mb-2 flex items-center gap-1 text-sm"
+          style={{ color: '#7A8C7E' }}>
+          ← Back to home
+        </button>
         {loading ? (
           <div className="mt-4 h-20 bg-white rounded-2xl animate-pulse" />
         ) : queries.length === 0 ? (
