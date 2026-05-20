@@ -4,10 +4,19 @@ import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 type Subscription = {
-  id: string; client_id: string; package_id: string; crop_cosh_id?: string
+  id: string; client_id: string; package_id: string
   status: string; reference_number: string | null; crop_start_date: string | null
+  // 2026-05-20 — backend now decorates rows with these on
+  // /farmer/my-subscriptions. crop_name lets us show the real
+  // crop label instead of a 36-char package_id UUID;
+  // package_name carries the SE-authored variant ("Chilli
+  // Package 1") when there are multiple PoPs on the same crop.
+  crop_cosh_id?: string | null
+  crop_name?: string | null
+  package_name?: string | null
 }
 
 type ClientInfo = {
@@ -17,7 +26,9 @@ type ClientInfo = {
   website: string | null; social_links: Record<string, string>
 }
 
-function formatCropName(coshId: string): string {
+// Legacy de-slugger kept for any caller that hasn't migrated to
+// the shared cropDisplayName yet. Not used after 2026-05-20.
+function _legacyFormatCropName(coshId: string): string {
   return coshId
     .replace(/^crop_/, '')
     .split('_')
@@ -134,16 +145,26 @@ export default function BrandedSpacePage() {
         ) : (
           subscriptions.map(sub => {
             const hasStartDate = !!sub.crop_start_date
-            const cropName = sub.crop_cosh_id ? formatCropName(sub.crop_cosh_id) : sub.package_id
+            const cropLabel = cropDisplayName(sub.crop_cosh_id, sub.crop_name)
+            // Two PoPs of the same crop coexist (Multi-PoP, e.g.
+            // "Chilli Package 1" vs "Chilli Package 2"); show the
+            // SE-authored package name as a subtitle so the farmer
+            // can tell them apart. Skip when name == crop (single
+            // PoP, redundant).
+            const showPackageSub =
+              !!sub.package_name && sub.package_name.toLowerCase() !== cropLabel.toLowerCase()
             return (
               <button key={sub.id}
                 onClick={() => router.push(`/crop-detail/${sub.id}`)}
                 className="w-full bg-white border border-[#DDD0B8] rounded-2xl mx-4 mb-3 px-4 py-4 flex items-center justify-between active:scale-[0.98] transition-transform text-left"
                 style={{ width: 'calc(100% - 2rem)' }}>
-                <div>
-                  <p className="text-[#6B3F1F] font-medium text-sm">{cropName}</p>
+                <div className="min-w-0">
+                  <p className="text-[#6B3F1F] font-semibold text-[15px]">{cropLabel}</p>
+                  {showPackageSub && (
+                    <p className="text-[#7A8C7E] text-xs mt-0.5 truncate">{sub.package_name}</p>
+                  )}
                   {sub.reference_number && (
-                    <p className="text-[#7A8C7E] text-xs mt-0.5 font-mono">{sub.reference_number}</p>
+                    <p className="text-[#7A8C7E] text-[11px] mt-0.5 font-mono">{sub.reference_number}</p>
                   )}
                 </div>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
