@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import PhoneVerify from '@/components/PhoneVerify'
 import api from '@/lib/api'
 
 interface Person {
@@ -224,6 +225,7 @@ export default function OrderingScreenPage() {
                 Send
               </button>
             </div>
+            <PhoneVerify phone={customPhone} />
           </div>
         )}
       </div>

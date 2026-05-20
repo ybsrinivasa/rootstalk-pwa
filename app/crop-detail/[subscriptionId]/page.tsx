@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
+import PhoneVerify from '@/components/PhoneVerify'
 
 interface SubscriptionDetail {
   id: string; status: string; crop_start_date: string | null
@@ -833,6 +834,17 @@ export default function CropDetailPage() {
                   onChange={e => setAlertPhoneInput(e.target.value)}
                   placeholder="+91 XXXXX XXXXX"
                   className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                />
+                {/* Verify chip — auto-fills the name field with the
+                    looked-up name so the farmer can see who they're
+                    about to add before tapping Save. */}
+                <PhoneVerify
+                  phone={alertPhoneInput}
+                  onResolve={r => {
+                    if (r?.found && r.name && !alertNameInput.trim()) {
+                      setAlertNameInput(r.name)
+                    }
+                  }}
                 />
               </div>
               <div>
