@@ -380,8 +380,16 @@ export default function SubscribePage() {
             <PWAHeader title={titles[stage]} activeRole="FARMER" />
             <div className="pt-16 pb-24 px-4">
 
-              {/* Back button */}
-              {stage !== 'location' && (
+              {/* Back row — every stage has an exit. The location
+                  stage is the flow's entry point, so back goes all
+                  the way out to /home; subsequent stages cycle
+                  back one step via goBack(). */}
+              {stage === 'location' ? (
+                <button onClick={() => router.replace('/home')}
+                  className="mt-4 mb-2 flex items-center gap-1 text-[#7A8C7E] text-sm">
+                  ← Back to home
+                </button>
+              ) : (
                 <button onClick={goBack}
                   className="mt-4 mb-2 flex items-center gap-1 text-[#7A8C7E] text-sm">
                   ← Back
