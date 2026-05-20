@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 interface SubscriptionDetail {
   id: string; status: string; crop_start_date: string | null
@@ -11,6 +12,9 @@ interface SubscriptionDetail {
   farm_area_acres: number | null
   area_unit: string | null
   farm_area_confirmed_at: string | null
+  crop_cosh_id?: string | null
+  crop_name?: string | null
+  package_name?: string | null
 }
 interface Branding {
   display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
@@ -316,13 +320,21 @@ export default function CropDetailPage() {
     // viewport wider than the device, leaving the user with a
     // visibly shifted layout.
     <div className="min-h-screen overflow-x-hidden bg-[#F5F0E8]">
-      {/* Branded header */}
+      {/* Branded header — the page IS about this one crop, so the
+          crop / package name is the most useful title. Brand
+          identity already lives in the band colour. We don't wait
+          on the branding fetch — the title comes from sub which
+          has loaded by render time. */}
       <div className="sticky top-0 z-30 px-4 pt-safe" style={{ background: colour }}>
         <div className="flex items-center gap-3 py-3 min-w-0">
           <button onClick={() => router.push('/home')} className="text-white opacity-70 text-xl shrink-0">←</button>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-sm truncate">{branding?.display_name || 'Loading…'}</p>
-            {branding?.tagline && <p className="text-white text-xs opacity-70 truncate">{branding.tagline}</p>}
+            <p className="text-white font-bold text-sm truncate">
+              {cropDisplayName(sub.crop_cosh_id, sub.crop_name)}
+            </p>
+            {sub.package_name && sub.package_name.toLowerCase() !== cropDisplayName(sub.crop_cosh_id, sub.crop_name).toLowerCase() && (
+              <p className="text-white text-xs opacity-70 truncate">{sub.package_name}</p>
+            )}
           </div>
           {sub.reference_number && (
             <p className="text-white text-xs opacity-60 font-mono shrink-0">{sub.reference_number}</p>
