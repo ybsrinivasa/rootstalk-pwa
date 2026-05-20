@@ -16,6 +16,7 @@ interface Practice {
   relation_type?: 'AND' | 'OR' | 'IF' | null
   frequency_days?: number | null
   is_frequency_due_today?: boolean
+  is_purchased?: boolean
 }
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
@@ -463,10 +464,14 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   // INPUT details (brand, dose, formulation) are hidden until the
   // farmer purchases — the dealer picks the actual product, and
   // resolved details surface on the order page after fulfilment.
-  // NON_INPUT / INSTRUCTION / MEDIA are nothing to buy, so their
-  // details are always shown (still UUID-safe via isUuid()).
-  // V2 hook: per-practice purchased flag will flip showInputDetails.
-  const detailsVisible = practice.l0_type !== 'INPUT' && practice.elements.length > 0
+  // Backend marks practice.is_purchased=true once any OrderItem
+  // for it is APPROVED (same threshold BL-03 uses). NON_INPUT /
+  // INSTRUCTION / MEDIA are not purchased — their details are the
+  // advisory, always shown. UUID-safe via isUuid() in render.
+  const isPurchasable = practice.l0_type === 'INPUT'
+  const detailsVisible =
+    practice.elements.length > 0 &&
+    (!isPurchasable || practice.is_purchased === true)
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
@@ -497,11 +502,11 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
         </div>
         {practice.l0_type === 'INPUT' && (
           <button
-            onClick={e => { e.stopPropagation(); onOrder() }}
-            disabled={isOrdering || ordered}
+            onClick={e => { e.stopPropagation(); if (!practice.is_purchased) onOrder() }}
+            disabled={isOrdering || ordered || practice.is_purchased === true}
             className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
-            style={{ background: ordered ? '#16a34a' : '#3A7D44' }}>
-            {ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
+            style={{ background: (ordered || practice.is_purchased) ? '#16a34a' : '#3A7D44' }}>
+            {practice.is_purchased ? '✓ Purchased' : ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
           </button>
         )}
       </div>
