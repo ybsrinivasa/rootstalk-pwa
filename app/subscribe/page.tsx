@@ -355,6 +355,25 @@ function SubscribeFlow() {
     }
   }, [subscription, user])
 
+  // ── Staging-only bypass — skip Razorpay entirely ────────────────────────────
+  // Razorpay TEST mode rejects real UPI handles so demos can't flip
+  // a sub to ACTIVE through the real checkout. Backend endpoint is
+  // hard-gated to non-production; the button below is hidden on the
+  // production PWA hostname so end users never see it.
+  const isStaging = typeof window !== 'undefined'
+    && /(?:^|\.)rstalk-pwa\.eywa\.farm$/i.test(window.location.hostname)
+  const bypassPayment = useCallback(async () => {
+    if (!subscription) return
+    setError('')
+    try {
+      await api.post(`/farmer/subscriptions/${subscription.id}/payment/staging-bypass`)
+      setStage('done')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      setError(msg || 'Could not activate (staging bypass).')
+    }
+  }, [subscription])
+
   // ── Delegate payment ───────────────────────────────────────────────────────
   async function sendDelegateRequest() {
     if (!subscription || !delegatePhone.trim()) return
@@ -857,6 +876,13 @@ function SubscribeFlow() {
                           style={{ background: '#3A7D44' }}>
                           Pay with UPI →
                         </button>
+                        {isStaging && (
+                          <button
+                            onClick={bypassPayment}
+                            className="w-full mt-2 py-2.5 rounded-xl text-xs font-semibold border border-dashed border-amber-400 text-amber-700 bg-amber-50">
+                            ⚙ Staging: skip Razorpay, activate now
+                          </button>
+                        )}
                       </div>
 
                       {/* Ask a dealer */}
