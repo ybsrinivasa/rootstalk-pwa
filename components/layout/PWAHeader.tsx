@@ -104,9 +104,10 @@ export default function PWAHeader({
         </div>
       </header>
 
-      {/* Language sheet */}
+      {/* Language sheet — z above BottomNav (z-50) so the bottom
+          rows aren't eaten by the persistent tab bar. */}
       {showLang && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end">
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-end">
           <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto"
             style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
@@ -124,12 +125,12 @@ export default function PWAHeader({
         </div>
       )}
 
-      {/* About rootsTALK sheet — full safe-area-aware padding so
-          the close-out content isn't hidden by the iOS home
-          indicator. Pre-fix the `safe-area-bottom` class didn't
-          resolve to any real CSS. */}
+      {/* About rootsTALK sheet — z above BottomNav (z-50) so the
+          "Visit eywa.farm" CTA at the bottom isn't covered by the
+          persistent tab bar. Safe-area padding inside also clears
+          the iOS home indicator. */}
       {showAbout && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowAbout(false)}>
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-end" onClick={() => setShowAbout(false)}>
           <div className="bg-white rounded-t-2xl w-full"
             style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
             onClick={e => e.stopPropagation()}>
