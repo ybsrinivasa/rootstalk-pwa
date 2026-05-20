@@ -39,8 +39,16 @@ interface AdvisoryDay {
 }
 interface Subscription { id: string; package_id: string; client_id: string; status: string; crop_start_date: string | null; reference_number: string | null }
 
+// Muted, equal-brightness tones tuned to the warm earth palette
+// (Crop Green / Soil Brown / Field Cream). The four hue families
+// are kept so each L0 type stays instantly distinguishable, but
+// the saturation is dialled back so they no longer fight the
+// surrounding cards or the green Order button.
 const L0_BG: Record<string, string> = {
-  INPUT: '#1d4ed8', NON_INPUT: '#7c3aed', INSTRUCTION: '#b45309', MEDIA: '#be185d',
+  INPUT: '#5B7BA8',       // muted slate blue
+  NON_INPUT: '#8B6FA8',   // muted lavender
+  INSTRUCTION: '#B58A4A', // warm muted gold
+  MEDIA: '#A85F76',       // dusty rose
 }
 const L0_LABEL: Record<string, string> = {
   INPUT: 'Apply Input', NON_INPUT: 'Crop Activity', INSTRUCTION: 'Advisory', MEDIA: 'Reference',
