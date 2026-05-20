@@ -41,8 +41,16 @@ export default function ProfilePage() {
   const [savingName, setSavingName] = useState(false)
 
   const [editingLocation, setEditingLocation] = useState(false)
-  const [stateValue, setStateValue] = useState('')
-  const [districtValue, setDistrictValue] = useState('')
+  // Picker state. stateId / districtId hold cosh_ids (what we PUT
+  // back to /auth/me/profile); the *Name companions drive the
+  // already-picked chip. subDistrictValue is free text.
+  const [stateId, setStateId] = useState('')
+  const [stateName, setStateName] = useState('')
+  const [districtId, setDistrictId] = useState('')
+  const [districtName, setDistrictName] = useState('')
+  const [subDistrictValue, setSubDistrictValue] = useState('')
+  const [stateSearch, setStateSearch] = useState('')
+  const [districtSearch, setDistrictSearch] = useState('')
   const [savingLocation, setSavingLocation] = useState(false)
 
   const [gpsLoading, setGpsLoading] = useState(false)
@@ -117,13 +125,37 @@ export default function ProfilePage() {
     } finally { setSavingName(false) }
   }
 
+  function openEditLocation() {
+    // Pre-populate with the user's current values so the form is
+    // edit-from-existing, not enter-from-scratch. State + district
+    // names come from the loaded Cosh universe; sub-district is
+    // free text stored as-is.
+    const sid = user?.state_cosh_id || ''
+    const did = user?.district_cosh_id || ''
+    const state = coshLocations?.states.find(s => s.cosh_id === sid)
+    const district = state?.districts.find(d => d.cosh_id === did)
+    setStateId(sid)
+    setStateName(state?.name || '')
+    setDistrictId(did)
+    setDistrictName(district?.name || '')
+    setSubDistrictValue(user?.sub_district_cosh_id || '')
+    setStateSearch('')
+    setDistrictSearch('')
+    setEditingLocation(true)
+  }
+
   async function saveLocation() {
+    if (!stateId || !districtId) return
     setSavingLocation(true)
     try {
-      const payload: Record<string, string> = {}
-      if (stateValue) payload.state_cosh_id = stateValue
-      if (districtValue) payload.district_cosh_id = districtValue
-      await api.put('/auth/me/profile', payload)
+      await api.put('/auth/me/profile', {
+        state_cosh_id: stateId,
+        district_cosh_id: districtId,
+        // Send empty string (not null) when the user clears
+        // sub-district — the backend's PUT skips null fields, so
+        // null would silently preserve the previous value.
+        sub_district_cosh_id: subDistrictValue.trim(),
+      })
       setEditingLocation(false)
       const fresh = await refreshUser()
       if (fresh) setUser(fresh)
@@ -260,39 +292,141 @@ export default function ProfilePage() {
 
           {/* Edit profile section */}
           <div className="border-t border-slate-50 pt-3 space-y-3">
-            {/* Location */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Location</p>
-                {!editingLocation && (
-                  <button onClick={() => setEditingLocation(true)}
-                    className="text-xs text-slate-400 underline">
-                    Edit
-                  </button>
-                )}
-              </div>
-              {editingLocation ? (
-                <div className="space-y-2">
-                  <input value={stateValue} onChange={e => setStateValue(e.target.value)}
-                    placeholder="State code e.g. KA"
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
-                  <input value={districtValue} onChange={e => setDistrictValue(e.target.value)}
-                    placeholder="District code e.g. BLR"
-                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
-                  <div className="flex gap-2">
-                    <button onClick={saveLocation} disabled={savingLocation}
-                      className="flex-1 py-2 text-white text-xs font-medium rounded-xl disabled:opacity-50"
-                      style={{ background: '#1A5C2A' }}>
-                      {savingLocation ? 'Saving…' : 'Save'}
-                    </button>
-                    <button onClick={() => setEditingLocation(false)}
-                      className="px-4 py-2 text-xs text-slate-400 border border-slate-200 rounded-xl">
-                      Cancel
-                    </button>
+            {/* Location — pre-populated typeahead pickers driven by
+                the Cosh universe. State + district are mandatory
+                (PUT is disabled until both have cosh_ids selected);
+                sub-district is optional free text. */}
+            {(() => {
+              const coshStates = coshLocations?.states ?? []
+              const filteredStates = coshStates
+                .filter(s => s.name)
+                .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+              const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
+              const filteredDistricts = (selectedState?.districts ?? [])
+                .filter(d => d.name)
+                .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
+              return (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Location</p>
+                    {!editingLocation && (
+                      <button onClick={openEditLocation}
+                        className="text-xs text-slate-400 underline">
+                        Edit
+                      </button>
+                    )}
                   </div>
+                  {editingLocation && (
+                    <div className="space-y-3">
+                      {/* State */}
+                      <div>
+                        <p className="text-[11px] text-slate-400 mb-1">State</p>
+                        {stateId ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#1A5C2A]/10 text-[#1A5C2A] text-xs font-medium px-2.5 py-1 rounded-full">
+                              {stateName || '(unnamed)'}
+                            </span>
+                            <button onClick={() => {
+                                setStateId(''); setStateName(''); setStateSearch('')
+                                setDistrictId(''); setDistrictName(''); setDistrictSearch('')
+                              }}
+                              className="text-[11px] text-slate-400 underline">
+                              Change
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
+                              placeholder="Search state…"
+                              className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-100" />
+                            {stateSearch && (
+                              <div className="mt-1 border border-slate-200 rounded-xl overflow-hidden max-h-36 overflow-y-auto bg-white">
+                                {filteredStates.length === 0
+                                  ? <p className="text-slate-400 text-xs px-3 py-2">No states found</p>
+                                  : filteredStates.map(s => (
+                                    <button key={s.cosh_id}
+                                      onClick={() => {
+                                        setStateId(s.cosh_id); setStateName(s.name || '')
+                                        setStateSearch('')
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50 last:border-0">
+                                      {s.name}
+                                    </button>
+                                  ))
+                                }
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+
+                      {/* District — only meaningful after state is picked */}
+                      {stateId && (
+                        <div>
+                          <p className="text-[11px] text-slate-400 mb-1">District</p>
+                          {districtId ? (
+                            <div className="flex items-center gap-2">
+                              <span className="bg-[#1A5C2A]/10 text-[#1A5C2A] text-xs font-medium px-2.5 py-1 rounded-full">
+                                {districtName || '(unnamed)'}
+                              </span>
+                              <button onClick={() => {
+                                  setDistrictId(''); setDistrictName(''); setDistrictSearch('')
+                                }}
+                                className="text-[11px] text-slate-400 underline">
+                                Change
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
+                                placeholder="Search district…"
+                                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-100" />
+                              {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
+                                <div className="mt-1 border border-slate-200 rounded-xl overflow-hidden max-h-36 overflow-y-auto bg-white">
+                                  {filteredDistricts.length === 0
+                                    ? <p className="text-slate-400 text-xs px-3 py-2">No districts found</p>
+                                    : filteredDistricts.map(d => (
+                                      <button key={d.cosh_id}
+                                        onClick={() => {
+                                          setDistrictId(d.cosh_id); setDistrictName(d.name || '')
+                                          setDistrictSearch('')
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 border-b border-slate-50 last:border-0">
+                                        {d.name}
+                                      </button>
+                                    ))
+                                  }
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Sub-district / village — free text */}
+                      <div>
+                        <p className="text-[11px] text-slate-400 mb-1">Sub-district / Village <span className="text-slate-300">(optional)</span></p>
+                        <input value={subDistrictValue} onChange={e => setSubDistrictValue(e.target.value)}
+                          placeholder="e.g. Gubbi taluk"
+                          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-100" />
+                      </div>
+
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={saveLocation} disabled={savingLocation || !stateId || !districtId}
+                          className="flex-1 py-2 text-white text-xs font-medium rounded-xl disabled:opacity-50"
+                          style={{ background: '#1A5C2A' }}>
+                          {savingLocation ? 'Saving…' : 'Save'}
+                        </button>
+                        <button onClick={() => setEditingLocation(false)}
+                          className="px-4 py-2 text-xs text-slate-400 border border-slate-200 rounded-xl">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : null}
-            </div>
+              )
+            })()}
 
             {/* GPS — prefer the just-captured session value for
                 instant feedback after a recapture; fall back to the
@@ -498,14 +632,13 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* ── Delete Account (separated from other sections at the bottom) ── */}
-        <div className="mt-12 pt-6 border-t border-stone-100">
+        {/* ── Delete Account — muted, last-resort link, not a
+            prominent CTA. The confirm sheet still uses red for
+            the actual destructive action. ── */}
+        <div className="mt-16 pt-6 border-t border-stone-100">
           <button onClick={() => { setDeleteStep('confirm'); setDeleteError('') }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-red-600 text-sm font-medium hover:bg-red-50 rounded-2xl">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
-            </svg>
-            Delete my Account
+            className="w-full text-center text-xs text-slate-400 hover:text-slate-500 py-2">
+            Delete my account
           </button>
         </div>
       </div>

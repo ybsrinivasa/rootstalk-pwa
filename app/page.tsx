@@ -597,13 +597,12 @@ export default function RootPage() {
           )}
         </div>
 
-        {(gpsStatus === 'done' || gpsStatus === 'denied') && (
+        {/* GPS is mandatory — user can only Continue once a fix
+            is captured. Denied path keeps the Try again button
+            inside the error card above; there is no skip. */}
+        {gpsStatus === 'done' && (
           <Btn onClick={() => setStage('welcome')}>Continue →</Btn>
         )}
-        <button onClick={() => setStage('welcome')}
-          className="text-stone-400 text-sm text-center py-3 mt-2">
-          Skip for now
-        </button>
       </div>
     </div>
   )
@@ -768,10 +767,6 @@ export default function RootPage() {
             <Btn disabled={!stateId || !districtId} onClick={saveLocation}>
               Continue →
             </Btn>
-            <button onClick={() => setStage('gps')}
-              className="w-full text-stone-400 text-sm text-center py-3 mt-1">
-              Skip for now
-            </button>
           </div>
         </div>
       </div>
@@ -861,10 +856,6 @@ export default function RootPage() {
             <Btn type="submit" disabled={busy || !name.trim()}>
               {busy ? 'Saving…' : 'Take me in →'}
             </Btn>
-            <button type="button" onClick={() => setStage('location')}
-              className="text-stone-400 text-sm text-center py-2">
-              Skip for now
-            </button>
           </form>
         )}
 
