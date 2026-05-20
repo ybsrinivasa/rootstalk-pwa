@@ -89,9 +89,19 @@ export default function HomePage() {
     } finally { setLoading(false) }
   }
 
-  // Group subscriptions by client_id
+  // Group ACTIVE subscriptions by client_id. WAITLISTED rows
+  // (subscription created but payment not completed) get their own
+  // section above the live tiles so the farmer has a clear path
+  // to finish payment — pre-fix they rendered identically to live
+  // advisories and confused users into thinking they were active.
   const grouped: Record<string, Subscription[]> = {}
+  const waitlisted: Subscription[] = []
   for (const sub of subscriptions) {
+    if (sub.status === 'WAITLISTED') {
+      waitlisted.push(sub)
+      continue
+    }
+    if (sub.status !== 'ACTIVE') continue
     if (!grouped[sub.client_id]) grouped[sub.client_id] = []
     grouped[sub.client_id].push(sub)
   }
@@ -125,6 +135,42 @@ export default function HomePage() {
           </div>
         ) : (
           <>
+            {/* Pending payment banners — subscriptions the farmer
+                created but didn't complete payment on. Each gets
+                its own card with a Complete payment CTA back into
+                the Subscribe flow's payment stage. */}
+            {waitlisted.length > 0 && (
+              <div className="mb-4 space-y-3">
+                {waitlisted.map(sub => {
+                  const info = clientInfos[sub.client_id]
+                  return (
+                    <div key={sub.id}
+                      className="rounded-2xl p-4 border"
+                      style={{ background: C.accent + '1A', borderColor: C.accent + '44' }}>
+                      <div className="flex items-start gap-3 mb-3">
+                        <span className="text-lg leading-none mt-0.5">⏳</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-[15px]" style={{ color: C.textPrimary }}>
+                            Payment pending
+                          </p>
+                          <p className="text-[13px] mt-0.5" style={{ color: C.textPrimary, opacity: 0.85 }}>
+                            Your{info?.display_name ? ` ${info.display_name}` : ''} subscription is reserved.
+                            Complete payment to activate the advisory.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => router.push('/subscribe')}
+                        className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
+                        style={{ background: C.accent, minHeight: 48 }}>
+                        Complete payment →
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
             {/* Pending assignment banners — shown above company tiles */}
             {pendingAssignments.length > 0 && (
               <div className="mb-4 space-y-3">
@@ -170,7 +216,7 @@ export default function HomePage() {
               </div>
             )}
 
-            {uniqueClientIds.length === 0 && pendingAssignments.length === 0 ? (
+            {uniqueClientIds.length === 0 && pendingAssignments.length === 0 && waitlisted.length === 0 ? (
               /* Empty state */
               <div className="flex flex-col items-center justify-center py-16">
                 <SeedlingIllustration/>
