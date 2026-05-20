@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 interface StandardResponse {
   id: string
@@ -249,7 +250,7 @@ export default function PunditQueryDetailPage() {
           {query.crop_cosh_id && (
             <div className="flex gap-3 mb-2">
               <span className="text-xs text-[#7A8C7E] w-20 shrink-0">Crop</span>
-              <span className="text-sm text-[#6B3F1F] font-mono">{query.crop_cosh_id}</span>
+              <span className="text-sm text-[#6B3F1F]">{cropDisplayName(query.crop_cosh_id)}</span>
             </div>
           )}
           {query.crop_age && (
@@ -573,8 +574,8 @@ export default function PunditQueryDetailPage() {
                       <p className="text-sm font-medium text-[#6B3F1F] mb-1">{r.question_text}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {r.crop_cosh_id ? (
-                          <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-mono">
-                            {r.crop_cosh_id}
+                          <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                            {cropDisplayName(r.crop_cosh_id)}
                           </span>
                         ) : (
                           <span className="text-xs bg-slate-100 text-[#7A8C7E] px-2 py-0.5 rounded-full">

@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 interface Variety {
   id: string; name: string; crop_cosh_id: string; variety_type: string
@@ -76,7 +77,7 @@ export default function SeedVarietiesPage() {
           <div className="px-4 py-5 space-y-4">
             <div>
               <h2 className="text-xl font-bold text-[#6B3F1F]">{selected.name}</h2>
-              <p className="text-sm text-[#7A8C7E] mt-0.5">{selected.variety_type} · {selected.crop_cosh_id}</p>
+              <p className="text-sm text-[#7A8C7E] mt-0.5">{selected.variety_type} · {cropDisplayName(selected.crop_cosh_id)}</p>
             </div>
 
             {selected.description_points.length > 0 && (

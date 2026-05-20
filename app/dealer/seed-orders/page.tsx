@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 interface SeedOrder {
   id: string; status: string; variety_name: string | null; crop_cosh_id: string | null
@@ -95,7 +96,7 @@ export default function DealerSeedOrdersPage() {
                           Seed/Seedling
                         </span>
                         <p className="font-bold text-[#6B3F1F]">{order.variety_name || 'Unknown variety'}</p>
-                        <p className="text-xs text-[#7A8C7E]">{order.crop_cosh_id}</p>
+                        <p className="text-xs text-[#7A8C7E]">{cropDisplayName(order.crop_cosh_id)}</p>
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[order.status] || ''}`}>
                         {order.status.replace(/_/g, ' ')}

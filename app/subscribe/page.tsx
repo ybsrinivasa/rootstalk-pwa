@@ -5,6 +5,7 @@ import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 // Cosh-driven location universe — same shape as onboarding /
 // Profile. Used here so the farmer picks a real state/district
@@ -40,11 +41,8 @@ interface GuidedStep {
   error?: string
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function formatCropName(coshId: string): string {
-  return coshId.replace(/^crop_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
-}
+// Crop label resolver lives in lib/crop-name. Pass the resolved
+// name from the backend (preferred) plus the cosh_id as a fallback.
 
 function ProgressBar({ stage }: { stage: Stage }) {
   const steps: Stage[] = ['location', 'crop', 'company', 'guided', 'confirm', 'payment', 'done']
@@ -104,9 +102,13 @@ export default function SubscribePage() {
   const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
 
   // Discovery
-  const [crops, setCrops] = useState<{ crop_cosh_id: string }[]>([])
+  const [crops, setCrops] = useState<{ crop_cosh_id: string; name?: string | null }[]>([])
   const [companies, setCompanies] = useState<CompanyInfo[]>([])
   const [cropId, setCropId] = useState('')
+  // Resolved crop display name — captured at crop-pick time so
+  // every downstream stage (company, confirm, done) renders the
+  // friendly label instead of the cosh_id.
+  const [cropName, setCropName] = useState('')
   const [clientId, setClientId] = useState('')
   const [company, setCompany] = useState<CompanyInfo | null>(null)
 
@@ -160,7 +162,7 @@ export default function SubscribePage() {
     if (!district) { setError('Please pick your district.'); return }
     setBusy(true); setError('')
     try {
-      const { data } = await api.get<{ crop_cosh_id: string }[]>('/farmer/discover/crops', {
+      const { data } = await api.get<{ crop_cosh_id: string; name?: string | null }[]>('/farmer/discover/crops', {
         params: { district_cosh_id: district },
       })
       setCrops(data)
@@ -172,6 +174,8 @@ export default function SubscribePage() {
   // ── Stage: Crop → Company ──────────────────────────────────────────────────
   async function selectCrop(cid: string) {
     setCropId(cid)
+    const matched = crops.find(c => c.crop_cosh_id === cid)
+    setCropName(cropDisplayName(cid, matched?.name))
     setBusy(true); setError('')
     try {
       const { data } = await api.get<CompanyInfo[]>('/farmer/discover/companies', {
@@ -347,7 +351,9 @@ export default function SubscribePage() {
     done: 'Subscribed!',
   }
 
-  const cropDisplay = cropId ? formatCropName(cropId) : ''
+  // Prefer the resolved name captured at selection time; fall
+  // back to the shared resolver (which UUID-safes and de-slugs).
+  const cropDisplay = cropId ? cropDisplayName(cropId, cropName) : ''
 
   return (
     <>
@@ -567,7 +573,7 @@ export default function SubscribePage() {
                             key={c.crop_cosh_id}
                             onClick={() => selectCrop(c.crop_cosh_id)}
                             className="w-full text-left px-4 py-4 rounded-2xl border-2 border-[#DDD0B8] hover:border-green-200 hover:bg-green-50 transition-all active:scale-[0.98]">
-                            <p className="font-medium text-[#6B3F1F]">{formatCropName(c.crop_cosh_id)}</p>
+                            <p className="font-medium text-[#6B3F1F]">{cropDisplayName(c.crop_cosh_id, c.name)}</p>
                           </button>
                         ))}
                       </div>

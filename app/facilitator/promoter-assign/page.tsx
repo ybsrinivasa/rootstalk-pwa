@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 const COLOUR = '#7D4E00'
 
@@ -35,6 +36,7 @@ interface ClientInfo {
 
 interface CropOption {
   crop_cosh_id: string
+  name?: string | null
 }
 
 interface GuidedStep {
@@ -46,8 +48,8 @@ interface GuidedStep {
   error?: string
 }
 
-function formatCropName(coshId: string): string {
-  return coshId.replace(/^crop_/, '').split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+function formatCropName(coshId: string, name?: string | null): string {
+  return cropDisplayName(coshId, name)
 }
 
 function ProgressBar({ stage }: { stage: Stage }) {
@@ -382,7 +384,7 @@ export default function FacilitatorPromoterAssignPage() {
                       onClick={() => selectCrop(c.crop_cosh_id)}
                       disabled={loading}
                       className="w-full text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white text-sm font-medium text-[#6B3F1F] hover:border-[#7D4E00] hover:text-[#7D4E00] transition-colors disabled:opacity-40">
-                      {formatCropName(c.crop_cosh_id)}
+                      {formatCropName(c.crop_cosh_id, c.name)}
                     </button>
                   ))}
                 </div>
