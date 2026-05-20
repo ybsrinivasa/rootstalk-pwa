@@ -294,31 +294,52 @@ export default function ProfilePage() {
               ) : null}
             </div>
 
-            {/* GPS */}
-            <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">GPS Location</p>
-              {gpsLat !== null && gpsLng !== null ? (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-slate-500 font-mono">{gpsLat.toFixed(6)}, {gpsLng.toFixed(6)}</p>
-                    <p className="text-xs text-[#1A5C2A] mt-0.5">Captured</p>
-                  </div>
-                  <button onClick={captureGps} disabled={gpsLoading}
-                    className="text-xs text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5">
-                    {gpsLoading ? 'Getting…' : 'Recapture'}
-                  </button>
+            {/* GPS — prefer the just-captured session value for
+                instant feedback after a recapture; fall back to the
+                cached user (refreshed on mount + after every save)
+                so a saved value persists across reloads. Without
+                this dual-source check, the panel always rendered
+                "Capture" after refresh because the local state
+                reset to null. */}
+            {(() => {
+              const displayLat = gpsLat ?? user?.gps_lat ?? null
+              const displayLng = gpsLng ?? user?.gps_lng ?? null
+              const hasGps = displayLat !== null && displayLng !== null
+              return (
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">GPS Location</p>
+                  {hasGps ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-slate-500 font-mono">{displayLat!.toFixed(6)}, {displayLng!.toFixed(6)}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs text-[#1A5C2A]">Captured</span>
+                          <a
+                            href={`https://www.google.com/maps?q=${displayLat},${displayLng}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="text-xs text-[#1A5C2A] underline">
+                            View on Map ↗
+                          </a>
+                        </div>
+                      </div>
+                      <button onClick={captureGps} disabled={gpsLoading}
+                        className="text-xs text-slate-500 border border-slate-200 rounded-lg px-3 py-1.5 shrink-0">
+                        {gpsLoading ? 'Getting…' : 'Recapture'}
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={captureGps} disabled={gpsLoading}
+                      className="w-full py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-xs text-slate-500 font-medium flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
+                      </svg>
+                      {gpsLoading ? 'Getting location…' : 'Capture GPS Location'}
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <button onClick={captureGps} disabled={gpsLoading}
-                  className="w-full py-2.5 rounded-xl border-2 border-dashed border-slate-200 text-xs text-slate-500 font-medium flex items-center justify-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
-                  </svg>
-                  {gpsLoading ? 'Getting location…' : 'Capture GPS Location'}
-                </button>
-              )}
-            </div>
+              )
+            })()}
           </div>
         </div>
 
