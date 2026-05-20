@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { getUser, getActiveRoles, logout } from '@/lib/auth'
+import AppMark from '@/components/AppMark'
 
 interface Props {
   open: boolean
@@ -275,19 +276,9 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               <div className="w-10 h-1 rounded-full" style={{ background: C.divider }} />
             </div>
             <div className="flex flex-col items-center text-center gap-2 pb-4">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-2"
                 style={{ background: C.primary + '1A', border: `1px solid ${C.primary}33` }}>
-                <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
-                  <circle cx="24" cy="24" r="5"   fill={C.primary}/>
-                  <circle cx="8"  cy="12" r="3.5" fill={C.primary} opacity="0.7"/>
-                  <circle cx="40" cy="36" r="3.5" fill={C.primary} opacity="0.7"/>
-                  <circle cx="8"  cy="36" r="3.5" fill={C.primary} opacity="0.5"/>
-                  <circle cx="40" cy="12" r="3.5" fill={C.primary} opacity="0.5"/>
-                  <line x1="24" y1="24" x2="8"  y2="12" stroke={C.primary} strokeWidth="1.5" opacity="0.6"/>
-                  <line x1="24" y1="24" x2="40" y2="36" stroke={C.primary} strokeWidth="1.5" opacity="0.6"/>
-                  <line x1="24" y1="24" x2="8"  y2="36" stroke={C.primary} strokeWidth="1"   opacity="0.35"/>
-                  <line x1="24" y1="24" x2="40" y2="12" stroke={C.primary} strokeWidth="1"   opacity="0.35"/>
-                </svg>
+                <AppMark size={34} tone="duo"/>
               </div>
               <p className="font-bold text-lg" style={{ color: C.textPrimary }}>rootsTALK.in</p>
               <p className="text-sm" style={{ color: C.textSecond }}>Your agricultural advisory network</p>

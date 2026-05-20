@@ -5,6 +5,7 @@ import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser }
 import { setLanguage, getLanguage } from '@/lib/language'
 import api from '@/lib/api'
 import InstallPrompt from '@/components/InstallPrompt'
+import AppMark from '@/components/AppMark'
 
 type Stage = 'loading' | 'landing' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
 type Lang  = { language_code: string; language_name_native: string; status?: string }
@@ -30,22 +31,11 @@ type CoshLocations = { states: CoshState[] }
 const G   = '#3A7D44'
 const BG  = 'linear-gradient(160deg, #5A9F64 0%, #3A7D44 42%, #214E27 100%)'
 
-// ── Shared mark ──────────────────────────────────────────────────────────────
-function NodeMark({ size = 48, colour = 'white' }: { size?: number; colour?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="5"   fill={colour}/>
-      <circle cx="8"  cy="12" r="3.5" fill={colour} opacity="0.7"/>
-      <circle cx="40" cy="36" r="3.5" fill={colour} opacity="0.7"/>
-      <circle cx="8"  cy="36" r="3.5" fill={colour} opacity="0.5"/>
-      <circle cx="40" cy="12" r="3.5" fill={colour} opacity="0.5"/>
-      <line x1="24" y1="24" x2="8"  y2="12" stroke={colour} strokeWidth="1.5" opacity="0.6"/>
-      <line x1="24" y1="24" x2="40" y2="36" stroke={colour} strokeWidth="1.5" opacity="0.6"/>
-      <line x1="24" y1="24" x2="8"  y2="36" stroke={colour} strokeWidth="1"   opacity="0.35"/>
-      <line x1="24" y1="24" x2="40" y2="12" stroke={colour} strokeWidth="1"   opacity="0.35"/>
-    </svg>
-  )
-}
+// Shared mark — see components/AppMark.tsx. Kept as a thin
+// alias here so the landing layout doesn't need to change shape.
+const NodeMark = ({ size = 48, colour = 'white' }: { size?: number; colour?: string }) => (
+  <AppMark size={size} tone="mono" colour={colour}/>
+)
 
 // ── Decorative dew drops ──────────────────────────────────────────────────────
 function DewDrops() {

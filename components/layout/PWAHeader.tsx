@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react'
 import { getUser, ROLE_COLOURS } from '@/lib/auth'
 import { getLanguage, setLanguage } from '@/lib/language'
 import api from '@/lib/api'
+import AppMark from '@/components/AppMark'
 
-type Lang = { language_code: string; language_name_native: string }
+type Lang = { language_code: string; language_name_native: string; status?: string }
 
 // Role label shown beneath the rootsTALK.in wordmark. Mirrors the
 // labels used in the right drawer for consistency.
@@ -17,9 +18,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default function PWAHeader({
   activeRole = 'FARMER',
-  title,  // kept for backward compat; no longer rendered. The wordmark
-          // + role label replaced it 2026-05-20 per LoYaRo header
-          // pattern (see LoYaRo_RootsTalk_UI_Design_System.docx).
+  title,  // kept for backward compat; no longer rendered.
   onRoleSwitch,
   customColour,
   urgencyBadges,
@@ -30,7 +29,7 @@ export default function PWAHeader({
   customColour?: string
   urgencyBadges?: { new: number; pending: number; returned: number }
 }) {
-  void title  // unused since 2026-05-20; suppresses lint
+  void title  // unused since 2026-05-20
   const user = getUser()
   const [showLang, setShowLang] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
@@ -39,8 +38,16 @@ export default function PWAHeader({
   const colour = customColour || ROLE_COLOURS[activeRole] || '#3A7D44'
   const roleLabel = ROLE_LABEL[activeRole] || 'Farmer'
 
+  // Language pill shows only the languages the SA has marked
+  // ACTIVE in the platform settings, plus English as a permanent
+  // baseline. Pre-fix it surfaced every row from /platform/languages
+  // regardless of status, including drafts and disabled rows.
   useEffect(() => {
-    api.get('/platform/languages').then(r => setLanguages(r.data)).catch(() => {})
+    api.get<Lang[]>('/platform/languages')
+      .then(r => setLanguages(
+        r.data.filter(l => !l.status || l.status === 'ACTIVE' || l.language_code === 'en'),
+      ))
+      .catch(() => setLanguages([{ language_code: 'en', language_name_native: 'English' }]))
   }, [])
 
   function switchLang(code: string) {
@@ -52,13 +59,21 @@ export default function PWAHeader({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 safe-area-top"
-        style={{ background: colour }}>
-        <div className="flex items-center">
-          <div>
-            {/* rootsTALK.in wordmark — same split-weight treatment as
-                the landing hero and the right drawer. White variants
-                since the header sits on the role-coloured chrome. */}
+      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3"
+        style={{
+          background: colour,
+          paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
+        }}>
+        {/* Left cluster — AppMark + rootsTALK.in wordmark + role.
+            The whole cluster is a single tap target that opens the
+            About bottom sheet (the standalone right-side icon
+            button is gone). Min-height 44 for tap. */}
+        <button
+          onClick={() => setShowAbout(true)}
+          aria-label="About rootsTALK"
+          className="flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-lg hover:bg-white/10 transition-colors">
+          <AppMark size={30} tone="mono"/>
+          <div className="text-left">
             <p className="leading-none">
               <span className="text-white/80 font-light text-[19px]">roots</span>
               <span className="text-white font-black text-[19px]">TALK</span>
@@ -66,31 +81,19 @@ export default function PWAHeader({
             </p>
             <p className="text-white/70 text-[11px] mt-0.5 leading-none">{roleLabel}</p>
           </div>
+        </button>
+
+        <div className="flex items-center gap-2">
           {urgencyBadges && (
-            <div className="flex items-center gap-2 ml-3">
+            <div className="flex items-center gap-2 mr-1">
               <span className="text-white text-sm font-bold">{urgencyBadges.new}</span>
               <span className="text-amber-300 text-sm font-bold">{urgencyBadges.pending}</span>
               <span className="text-[#D4682E] text-sm font-bold">{urgencyBadges.returned}</span>
             </div>
           )}
-        </div>
-        <div className="flex items-center gap-3">
           <button onClick={() => setShowLang(!showLang)}
             className="text-white text-xs border border-white/30 rounded-full px-2.5 py-1 font-medium">
             {currentLang.toUpperCase()}
-          </button>
-          <button onClick={() => setShowAbout(true)} className="w-7 h-7 flex items-center justify-center opacity-60 hover:opacity-100">
-            <svg width="20" height="20" viewBox="0 0 48 48" fill="none">
-              <circle cx="24" cy="24" r="5" fill="white"/>
-              <circle cx="8" cy="12" r="3.5" fill="white" opacity="0.7"/>
-              <circle cx="40" cy="36" r="3.5" fill="white" opacity="0.7"/>
-              <circle cx="8" cy="36" r="3.5" fill="white" opacity="0.5"/>
-              <circle cx="40" cy="12" r="3.5" fill="white" opacity="0.5"/>
-              <line x1="24" y1="24" x2="8" y2="12" stroke="white" strokeWidth="2" opacity="0.6"/>
-              <line x1="24" y1="24" x2="40" y2="36" stroke="white" strokeWidth="2" opacity="0.6"/>
-              <line x1="24" y1="24" x2="8" y2="36" stroke="white" strokeWidth="1.5" opacity="0.35"/>
-              <line x1="24" y1="24" x2="40" y2="12" stroke="white" strokeWidth="1.5" opacity="0.35"/>
-            </svg>
           </button>
           {onRoleSwitch && (
             <button onClick={onRoleSwitch}
@@ -104,7 +107,8 @@ export default function PWAHeader({
       {/* Language sheet */}
       {showLang && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end">
-          <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto pb-6">
+          <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto"
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
               <p className="font-medium text-[#6B3F1F] text-sm">Select language</p>
               <button onClick={() => setShowLang(false)} className="text-[#7A8C7E] text-xl">×</button>
@@ -120,28 +124,33 @@ export default function PWAHeader({
         </div>
       )}
 
-      {/* About rootsTALK sheet */}
+      {/* About rootsTALK sheet — full safe-area-aware padding so
+          the close-out content isn't hidden by the iOS home
+          indicator. Pre-fix the `safe-area-bottom` class didn't
+          resolve to any real CSS. */}
       {showAbout && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowAbout(false)}>
-          <div className="bg-white rounded-t-2xl w-full pb-8 safe-area-bottom" onClick={e => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-stone-200 rounded-full mx-auto mt-3 mb-5" />
+          <div className="bg-white rounded-t-2xl w-full"
+            style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-[#DDD0B8] rounded-full mx-auto mt-3 mb-5" />
             <div className="px-6 flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: '#3A7D44' }}>
-                <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
-                  <circle cx="24" cy="24" r="5" fill="white"/>
-                  <circle cx="8" cy="12" r="3.5" fill="white" opacity="0.7"/>
-                  <circle cx="40" cy="36" r="3.5" fill="white" opacity="0.7"/>
-                  <line x1="24" y1="24" x2="8" y2="12" stroke="white" strokeWidth="2" opacity="0.6"/>
-                  <line x1="24" y1="24" x2="40" y2="36" stroke="white" strokeWidth="2" opacity="0.6"/>
-                </svg>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: '#3A7D44' }}>
+                <AppMark size={32} tone="mono"/>
               </div>
               <div>
-                <p className="font-bold text-[#6B3F1F] text-base">rootsTALK<span className="text-[#7A8C7E]">.in</span></p>
+                <p className="font-bold text-[#6B3F1F] text-base">
+                  rootsTALK<span className="text-[#7A8C7E]">.in</span>
+                </p>
                 <p className="text-[#7A8C7E] text-xs mt-0.5">by Neytiri Eywafarm Agritech</p>
               </div>
             </div>
             <div className="px-6 space-y-1 mb-6">
-              <p className="text-[#7A8C7E] text-sm">Your agricultural advisory network — connecting farmers, experts, and companies across India.</p>
+              <p className="text-[#7A8C7E] text-sm leading-relaxed">
+                Your agricultural advisory network — connecting farmers, experts,
+                and companies across India.
+              </p>
             </div>
             <div className="px-6">
               <a href="https://eywa.farm" target="_blank" rel="noopener noreferrer"
