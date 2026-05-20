@@ -22,8 +22,13 @@ type CoshDistrict = { cosh_id: string; name: string | null }
 type CoshState    = { cosh_id: string; name: string | null; districts: CoshDistrict[] }
 type CoshLocations = { states: CoshState[] }
 
-const G   = '#1A5C2A'
-const BG  = 'linear-gradient(160deg, #2d8040 0%, #1A5C2A 42%, #0e3c18 100%)'
+// Brand tokens for the landing surface. G mirrors C.primary (Crop
+// Green). The hero gradient sits in the same green family: lifted
+// top stop for that "first light on a field" feeling, the brand
+// stop in the middle, and a deeper crop-into-soil tone at the
+// bottom (kept warmer than the previous near-black green).
+const G   = '#3A7D44'
+const BG  = 'linear-gradient(160deg, #5A9F64 0%, #3A7D44 42%, #214E27 100%)'
 
 // ── Shared mark ──────────────────────────────────────────────────────────────
 function NodeMark({ size = 48, colour = 'white' }: { size?: number; colour?: string }) {
@@ -120,8 +125,8 @@ function Btn({ children, disabled, type = 'button', onClick }:
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input {...props}
-      className={`w-full border border-stone-200 rounded-xl px-4 py-3.5 text-stone-800 text-base bg-white
-        focus:outline-none focus:ring-2 focus:ring-[#1A5C2A]/30 focus:border-[#1A5C2A] transition-all ${props.className || ''}`}
+      className={`w-full border border-[#DDD0B8] rounded-xl px-4 py-3.5 text-[#6B3F1F] text-base bg-white
+        focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44] transition-all ${props.className || ''}`}
     />
   )
 }
@@ -135,7 +140,7 @@ function ProgressDots({ filled }: { filled: number }) {
           className="h-2 rounded-full transition-all"
           style={{
             width: i === filled ? 24 : 8,
-            background: i === filled ? G : '#e7e5e4',
+            background: i === filled ? G : '#DDD0B8',
           }}
         />
       ))}
@@ -370,7 +375,7 @@ export default function RootPage() {
       <div className="relative z-10 w-full sm:max-w-sm sm:mx-auto
                       rounded-t-[2rem] sm:rounded-[2rem] px-6 pt-6"
         style={{
-          background:           'rgba(247, 245, 240, 0.92)',
+          background:           'rgba(245, 240, 232, 0.94)',
           backdropFilter:       'blur(32px)',
           WebkitBackdropFilter: 'blur(32px)',
           border:               '1px solid rgba(255,255,255,0.55)',
@@ -381,7 +386,7 @@ export default function RootPage() {
 
         {languages.length > 1 && (
           <div className="mb-5">
-            <p className="text-[11px] text-stone-400 uppercase tracking-widest font-medium mb-3">
+            <p className="text-[11px] text-[#7A8C7E] uppercase tracking-widest font-medium mb-3">
               Choose your language
             </p>
             <div className="overflow-x-auto -mx-1 px-1">
@@ -415,14 +420,14 @@ export default function RootPage() {
 
         <Btn onClick={() => setStage('phone')}>Get started →</Btn>
 
-        <p className="text-stone-400 text-xs text-center mt-3 tracking-wide">
+        <p className="text-[#7A8C7E] text-xs text-center mt-3 tracking-wide">
           For farmers · dealers · facilitators · experts
         </p>
         <div className="flex items-center justify-center gap-3 mt-5">
-          <p className="text-stone-300 text-[10px] font-light">Neytiri Eywafarm Agritech Pvt Ltd</p>
-          <span className="text-stone-200 text-[10px]">·</span>
+          <p className="text-[#DDD0B8] text-[10px] font-light">Neytiri Eywafarm Agritech Pvt Ltd</p>
+          <span className="text-[#DDD0B8] text-[10px]">·</span>
           <button onClick={() => router.push('/privacy-policy')}
-            className="text-stone-400 text-[10px] underline">
+            className="text-[#7A8C7E] text-[10px] underline">
             Privacy Policy
           </button>
         </div>
@@ -455,7 +460,7 @@ export default function RootPage() {
         {/* Parchment card */}
         <div className="relative z-10 w-full sm:max-w-sm sm:mx-auto rounded-t-[2rem] px-5 pt-6"
           style={{
-            background:           'rgba(247, 245, 240, 0.95)',
+            background:           'rgba(245, 240, 232, 0.95)',
             backdropFilter:       'blur(32px)',
             WebkitBackdropFilter: 'blur(32px)',
             border:               '1px solid rgba(255,255,255,0.55)',
@@ -467,48 +472,48 @@ export default function RootPage() {
           {/* Feature grid */}
           <div className="grid grid-cols-2 gap-3 mb-6">
             {/* Advisories */}
-            <div className="bg-white rounded-2xl border border-stone-100 p-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
               <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <rect x="4" y="3" width="14" height="18" rx="2" fill="#1A5C2A" opacity="0.15"/>
-                <rect x="4" y="3" width="14" height="18" rx="2" stroke="#1A5C2A" strokeWidth="1.5"/>
-                <path d="M8 8h6M8 11.5h6M8 15h4" stroke="#1A5C2A" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="21" cy="19" r="5" fill="#1A5C2A"/>
+                <rect x="4" y="3" width="14" height="18" rx="2" fill="#3A7D44" opacity="0.15"/>
+                <rect x="4" y="3" width="14" height="18" rx="2" stroke="#3A7D44" strokeWidth="1.5"/>
+                <path d="M8 8h6M8 11.5h6M8 15h4" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="21" cy="19" r="5" fill="#3A7D44"/>
                 <path d="M21 16.5v2.5l1.5 1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>
-              <p className="font-semibold text-stone-800 text-sm">Advisories</p>
-              <p className="text-stone-400 text-xs mt-0.5 leading-snug">Expert-guided crop management, season by season</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">Advisories</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Expert-guided crop management, season by season</p>
             </div>
 
             {/* Purchase */}
-            <div className="bg-white rounded-2xl border border-stone-100 p-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
               <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <path d="M5 4h2l2.5 11h10l2.5-8H9" stroke="#1A5C2A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="12" cy="23" r="1.5" fill="#1A5C2A"/>
-                <circle cx="19" cy="23" r="1.5" fill="#1A5C2A"/>
+                <path d="M5 4h2l2.5 11h10l2.5-8H9" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="12" cy="23" r="1.5" fill="#3A7D44"/>
+                <circle cx="19" cy="23" r="1.5" fill="#3A7D44"/>
               </svg>
-              <p className="font-semibold text-stone-800 text-sm">Purchase</p>
-              <p className="text-stone-400 text-xs mt-0.5 leading-snug">Order recommended inputs through trusted dealers</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">Purchase</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Order recommended inputs through trusted dealers</p>
             </div>
 
             {/* Diagnose */}
-            <div className="bg-white rounded-2xl border border-stone-100 p-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
               <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <circle cx="13" cy="13" r="7" stroke="#1A5C2A" strokeWidth="1.5"/>
-                <path d="M18.5 18.5L23 23" stroke="#1A5C2A" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M10 13h6M13 10v6" stroke="#1A5C2A" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="13" cy="13" r="7" stroke="#3A7D44" strokeWidth="1.5"/>
+                <path d="M18.5 18.5L23 23" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M10 13h6M13 10v6" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
-              <p className="font-semibold text-stone-800 text-sm">Diagnose</p>
-              <p className="text-stone-400 text-xs mt-0.5 leading-snug">Identify crop problems with guided diagnosis</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">Diagnose</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Identify crop problems with guided diagnosis</p>
             </div>
 
             {/* Ask Expert */}
-            <div className="bg-white rounded-2xl border border-stone-100 p-4 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
               <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <path d="M5 6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H9l-4 4V6z" stroke="#1A5C2A" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M10 10h8M10 13.5h5" stroke="#1A5C2A" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M5 6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H9l-4 4V6z" stroke="#3A7D44" strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M10 10h8M10 13.5h5" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
-              <p className="font-semibold text-stone-800 text-sm">Ask Expert</p>
-              <p className="text-stone-400 text-xs mt-0.5 leading-snug">Get answers from certified agronomists</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">Ask Expert</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Get answers from certified agronomists</p>
             </div>
           </div>
 
@@ -518,7 +523,7 @@ export default function RootPage() {
           </Btn>
           <button
             onClick={() => roleHome()}
-            className="w-full text-center text-stone-400 text-sm py-3 mt-2">
+            className="w-full text-center text-[#7A8C7E] text-sm py-3 mt-2">
             {`I'm also a dealer / facilitator / expert`}
           </button>
         </div>
@@ -552,7 +557,7 @@ export default function RootPage() {
         <div className="flex-1 flex flex-col items-center justify-center gap-5">
           {gpsStatus === 'idle' && (
             <button onClick={captureGps}
-              className="flex flex-col items-center gap-3 py-8 px-10 rounded-3xl border-2 border-dashed border-stone-200 active:scale-95 transition-transform w-full max-w-[240px]">
+              className="flex flex-col items-center gap-3 py-8 px-10 rounded-3xl border-2 border-dashed border-[#DDD0B8] active:scale-95 transition-transform w-full max-w-[240px]">
               <svg className="w-12 h-12" viewBox="0 0 48 48" fill="none">
                 <circle cx="24" cy="24" r="10" stroke={G} strokeWidth="2"/>
                 <circle cx="24" cy="24" r="3" fill={G}/>
@@ -561,14 +566,14 @@ export default function RootPage() {
                 <line x1="4" y1="24" x2="12" y2="24" stroke={G} strokeWidth="2" strokeLinecap="round"/>
                 <line x1="36" y1="24" x2="44" y2="24" stroke={G} strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <span className="text-stone-700 font-medium text-base">Get my location</span>
+              <span className="text-[#6B3F1F] font-medium text-base">Get my location</span>
             </button>
           )}
 
           {gpsStatus === 'getting' && (
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-2 border-stone-200 border-t-[#1A5C2A] rounded-full animate-spin"/>
-              <p className="text-stone-500 text-sm">Finding you…</p>
+              <div className="w-10 h-10 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin"/>
+              <p className="text-[#7A8C7E] text-sm">Finding you…</p>
             </div>
           )}
 
@@ -649,8 +654,8 @@ export default function RootPage() {
             )}
 
             {!locationsError && !coshLocations && (
-              <div className="flex items-center gap-3 text-stone-500 text-sm">
-                <div className="w-4 h-4 border-2 border-stone-200 border-t-[#1A5C2A] rounded-full animate-spin"/>
+              <div className="flex items-center gap-3 text-[#7A8C7E] text-sm">
+                <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin"/>
                 Loading states and districts…
               </div>
             )}
@@ -658,17 +663,17 @@ export default function RootPage() {
             {/* State selector */}
             {coshLocations && (
               <div>
-                <p className="text-xs text-stone-500 font-medium mb-1.5">State</p>
+                <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">State</p>
                 {stateId ? (
                   <div className="flex items-center gap-2">
-                    <span className="bg-[#1A5C2A]/10 text-[#1A5C2A] text-sm font-medium px-3 py-1.5 rounded-full">
+                    <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
                       {stateName}
                     </span>
                     <button onClick={() => {
                         setStateId(''); setStateName(''); setStateSearch('')
                         setDistrictId(''); setDistrictName(''); setDistrictSearch('')
                       }}
-                      className="text-stone-400 text-xs underline">
+                      className="text-[#7A8C7E] text-xs underline">
                       Change
                     </button>
                   </div>
@@ -680,16 +685,16 @@ export default function RootPage() {
                       onChange={e => setStateSearch(e.target.value)}
                     />
                     {stateSearch && (
-                      <div className="mt-2 border border-stone-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                      <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                         {filteredStates.length === 0
-                          ? <p className="text-stone-400 text-sm px-4 py-3">No states found</p>
+                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No states found</p>
                           : filteredStates.map(s => (
                             <button key={s.cosh_id}
                               onClick={() => {
                                 setStateId(s.cosh_id); setStateName(s.name || '')
                                 setStateSearch('')
                               }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-b border-stone-50 last:border-0">
+                              className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
                               {s.name}
                             </button>
                           ))
@@ -706,16 +711,16 @@ export default function RootPage() {
                 a (state, district) pair Cosh doesn't have. */}
             {coshLocations && stateId && (
               <div>
-                <p className="text-xs text-stone-500 font-medium mb-1.5">District</p>
+                <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">District</p>
                 {districtId ? (
                   <div className="flex items-center gap-2">
-                    <span className="bg-[#1A5C2A]/10 text-[#1A5C2A] text-sm font-medium px-3 py-1.5 rounded-full">
+                    <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
                       {districtName}
                     </span>
                     <button onClick={() => {
                         setDistrictId(''); setDistrictName(''); setDistrictSearch('')
                       }}
-                      className="text-stone-400 text-xs underline">
+                      className="text-[#7A8C7E] text-xs underline">
                       Change
                     </button>
                   </div>
@@ -727,16 +732,16 @@ export default function RootPage() {
                       onChange={e => setDistrictSearch(e.target.value)}
                     />
                     {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
-                      <div className="mt-2 border border-stone-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                      <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                         {filteredDistricts.length === 0
-                          ? <p className="text-stone-400 text-sm px-4 py-3">No districts found</p>
+                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No districts found</p>
                           : filteredDistricts.map(d => (
                             <button key={d.cosh_id}
                               onClick={() => {
                                 setDistrictId(d.cosh_id); setDistrictName(d.name || '')
                                 setDistrictSearch('')
                               }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50 border-b border-stone-50 last:border-0">
+                              className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
                               {d.name}
                             </button>
                           ))
@@ -753,7 +758,7 @@ export default function RootPage() {
                 so we store the typed value as-is for the farmer's
                 own reference. */}
             <div>
-              <p className="text-xs text-stone-500 font-medium mb-1.5">Sub-district / Village <span className="text-stone-300">(optional)</span></p>
+              <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">Sub-district / Village <span className="text-[#DDD0B8]">(optional)</span></p>
               <Input
                 placeholder="Village or sub-district — optional"
                 value={subDistrict}
@@ -808,8 +813,8 @@ export default function RootPage() {
         {stage === 'phone' && (
           <form onSubmit={sendOtp} className="flex flex-col gap-4">
             <div className="flex gap-2">
-              <div className="flex items-center px-3.5 rounded-xl border border-stone-200 bg-stone-50
-                              text-stone-500 text-sm font-medium select-none shrink-0">
+              <div className="flex items-center px-3.5 rounded-xl border border-[#DDD0B8] bg-[#F5F0E8]
+                              text-[#7A8C7E] text-sm font-medium select-none shrink-0">
                 +91
               </div>
               <Input type="tel" inputMode="numeric" value={phone} maxLength={10} autoFocus required
@@ -821,7 +826,7 @@ export default function RootPage() {
             <Btn type="submit" disabled={busy || phone.length < 10}>
               {busy ? 'Sending…' : 'Send code →'}
             </Btn>
-            <p className="text-stone-400 text-xs text-center">Standard SMS charges may apply</p>
+            <p className="text-[#7A8C7E] text-xs text-center">Standard SMS charges may apply</p>
           </form>
         )}
 
@@ -831,9 +836,9 @@ export default function RootPage() {
             <input type="text" inputMode="numeric" maxLength={6}
               value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
               autoFocus required placeholder="· · · · · ·"
-              className="border border-stone-200 rounded-2xl px-4 py-5 text-center bg-white
-                         text-3xl font-mono tracking-[0.7em] text-stone-800 w-full
-                         focus:outline-none focus:ring-2 focus:ring-[#1A5C2A]/30 focus:border-[#1A5C2A] transition-all"/>
+              className="border border-[#DDD0B8] rounded-2xl px-4 py-5 text-center bg-white
+                         text-3xl font-mono tracking-[0.7em] text-[#6B3F1F] w-full
+                         focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44] transition-all"/>
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
             <Btn type="submit" disabled={busy || otp.length < 6}>
               {busy ? 'Checking…' : 'Verify →'}
