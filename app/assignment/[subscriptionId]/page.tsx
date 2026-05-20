@@ -56,11 +56,11 @@ export default function AssignmentReviewPage() {
 
   if (loading || !detail) return (
     <div className="min-h-screen bg-[#F7F5F0] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#1A5C2A] border-t-transparent rounded-full animate-spin"/>
+      <div className="w-8 h-8 border-2 border-[#3A7D44] border-t-transparent rounded-full animate-spin"/>
     </div>
   )
 
-  const colour = detail.company?.primary_colour || '#1A5C2A'
+  const colour = detail.company?.primary_colour || '#3A7D44'
   const cropName = formatCropName(detail.crop_cosh_id)
 
   return (
@@ -79,29 +79,29 @@ export default function AssignmentReviewPage() {
 
       <div className="px-5 py-6 max-w-lg mx-auto pb-32">
         {/* Promoter card */}
-        <div className="bg-white border border-stone-200 rounded-2xl p-4 mb-4">
-          <p className="text-stone-400 text-xs uppercase tracking-widest mb-1">From your {detail.promoter_type.toLowerCase()}</p>
-          <p className="font-semibold text-stone-800">{detail.promoter?.name || 'Promoter'}</p>
-          {detail.promoter?.phone && <p className="text-stone-400 text-sm font-mono">{detail.promoter.phone}</p>}
+        <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
+          <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-1">From your {detail.promoter_type.toLowerCase()}</p>
+          <p className="font-semibold text-[#6B3F1F]">{detail.promoter?.name || 'Promoter'}</p>
+          {detail.promoter?.phone && <p className="text-[#7A8C7E] text-sm font-mono">{detail.promoter.phone}</p>}
         </div>
 
         {/* Crop */}
-        <div className="bg-white border border-stone-200 rounded-2xl p-4 mb-4">
-          <p className="text-stone-400 text-xs uppercase tracking-widest mb-1">Crop</p>
-          <p className="font-semibold text-stone-800 text-lg">{cropName}</p>
-          {detail.duration_days && <p className="text-stone-400 text-sm mt-1">{detail.duration_days} days</p>}
+        <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
+          <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-1">Crop</p>
+          <p className="font-semibold text-[#6B3F1F] text-lg">{cropName}</p>
+          {detail.duration_days && <p className="text-[#7A8C7E] text-sm mt-1">{detail.duration_days} days</p>}
         </div>
 
         {/* Plain-language summary */}
         {detail.parameter_variables.length > 0 && (
-          <div className="bg-white border border-stone-200 rounded-2xl p-4 mb-4">
-            <p className="text-stone-400 text-xs uppercase tracking-widest mb-3">For your situation</p>
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
+            <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-3">For your situation</p>
             <div className="space-y-2">
               {detail.parameter_variables.map((pv, i) => (
                 <div key={i} className="flex items-baseline gap-2">
                   <span className="w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0" style={{ background: colour }}/>
-                  <p className="text-stone-700 text-sm">
-                    <span className="text-stone-400">{pv.parameter}:</span>{' '}
+                  <p className="text-[#6B3F1F] text-sm">
+                    <span className="text-[#7A8C7E]">{pv.parameter}:</span>{' '}
                     <span className="font-medium">{pv.variable}</span>
                   </p>
                 </div>
@@ -112,9 +112,9 @@ export default function AssignmentReviewPage() {
 
         {/* Description */}
         {detail.package_description && (
-          <div className="bg-white border border-stone-200 rounded-2xl p-4 mb-4">
-            <p className="text-stone-400 text-xs uppercase tracking-widest mb-2">About this advisory</p>
-            <p className="text-stone-700 text-sm leading-relaxed">{detail.package_description}</p>
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
+            <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-2">About this advisory</p>
+            <p className="text-[#6B3F1F] text-sm leading-relaxed">{detail.package_description}</p>
           </div>
         )}
 
@@ -130,10 +130,10 @@ export default function AssignmentReviewPage() {
       </div>
 
       {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 px-5 py-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#DDD0B8] px-5 py-4">
         <div className="max-w-lg mx-auto flex gap-3">
           <button onClick={() => respond(false)} disabled={busy}
-            className="flex-1 py-3.5 rounded-xl font-medium text-stone-700 border border-stone-200 disabled:opacity-50">
+            className="flex-1 py-3.5 rounded-xl font-medium text-[#6B3F1F] border border-[#DDD0B8] disabled:opacity-50">
             Decline
           </button>
           <button onClick={() => respond(true)} disabled={busy}

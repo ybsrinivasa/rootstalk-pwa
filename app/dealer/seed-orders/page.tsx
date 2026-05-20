@@ -17,7 +17,7 @@ const STATUS_COLOUR: Record<string, string> = {
   ACCEPTED: 'bg-sky-100 text-sky-700',
   SENT_FOR_APPROVAL: 'bg-amber-100 text-amber-700',
   PURCHASED: 'bg-emerald-100 text-emerald-700',
-  CANCELLED: 'bg-slate-100 text-slate-500',
+  CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
   REJECTED: 'bg-rose-100 text-rose-600',
 }
 
@@ -66,13 +66,13 @@ export default function DealerSeedOrdersPage() {
   const done = orders.filter(o => ['PURCHASED', 'CANCELLED', 'REJECTED'].includes(o.status))
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Seed Orders" activeRole="DEALER" />
       <div className="pt-16 pb-24">
-        <div className="flex bg-white border-b border-slate-100">
+        <div className="flex bg-white border-b border-[#DDD0B8]">
           {(['pending', 'done'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400'}`}>
+              className={`flex-1 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-[#7A8C7E]'}`}>
               {t === 'pending' ? `Active (${pending.length})` : 'Completed'}
             </button>
           ))}
@@ -83,30 +83,30 @@ export default function DealerSeedOrdersPage() {
             (tab === 'pending' ? pending : done).length === 0 ? (
               <div className="text-center py-16">
                 <span className="text-4xl">🌱</span>
-                <p className="text-slate-400 text-sm mt-3">No seed orders</p>
+                <p className="text-[#7A8C7E] text-sm mt-3">No seed orders</p>
               </div>
             ) : (
               (tab === 'pending' ? pending : done).map(order => (
-                <div key={order.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div key={order.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
                         <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-semibold px-2 py-0.5 rounded-full mb-1">
                           Seed/Seedling
                         </span>
-                        <p className="font-bold text-slate-800">{order.variety_name || 'Unknown variety'}</p>
-                        <p className="text-xs text-slate-400">{order.crop_cosh_id}</p>
+                        <p className="font-bold text-[#6B3F1F]">{order.variety_name || 'Unknown variety'}</p>
+                        <p className="text-xs text-[#7A8C7E]">{order.crop_cosh_id}</p>
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[order.status] || ''}`}>
                         {order.status.replace(/_/g, ' ')}
                       </span>
                     </div>
 
-                    <div className="bg-slate-50 rounded-xl p-3 text-xs text-slate-600 space-y-1">
-                      {order.farmer_name && <p><span className="text-slate-400">Farmer: </span>{order.farmer_name}</p>}
-                      {order.farm_area_acres && <p><span className="text-slate-400">Farm area: </span>{order.farm_area_acres} acres</p>}
+                    <div className="bg-[#F5F0E8] rounded-xl p-3 text-xs text-[#6B3F1F] space-y-1">
+                      {order.farmer_name && <p><span className="text-[#7A8C7E]">Farmer: </span>{order.farmer_name}</p>}
+                      {order.farm_area_acres && <p><span className="text-[#7A8C7E]">Farm area: </span>{order.farm_area_acres} acres</p>}
                       {order.unit && order.quantity && (
-                        <p><span className="text-slate-400">Qty: </span>{order.quantity} {order.unit}
+                        <p><span className="text-[#7A8C7E]">Qty: </span>{order.quantity} {order.unit}
                           {order.total_price ? ` · ₹${order.total_price}` : ''}
                         </p>
                       )}
@@ -135,16 +135,16 @@ export default function DealerSeedOrdersPage() {
 
                     {/* Processing form */}
                     {processing === order.id && (
-                      <div className="mt-3 bg-slate-50 rounded-xl p-4 space-y-3">
-                        <p className="text-xs font-semibold text-slate-700">Enter quantity and price</p>
+                      <div className="mt-3 bg-[#F5F0E8] rounded-xl p-4 space-y-3">
+                        <p className="text-xs font-semibold text-[#6B3F1F]">Enter quantity and price</p>
                         <div>
-                          <label className="block text-xs text-slate-400 mb-1">Unit *</label>
+                          <label className="block text-xs text-[#7A8C7E] mb-1">Unit *</label>
                           <div className="flex gap-2">
                             {UNITS.map(u => (
                               <button key={u}
                                 onClick={() => setForm(f => ({ ...f, unit: u }))}
                                 className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
-                                  form.unit === u ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200'
+                                  form.unit === u ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                                 }`}>
                                 {u}
                               </button>
@@ -153,18 +153,18 @@ export default function DealerSeedOrdersPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Quantity *</label>
+                            <label className="block text-xs text-[#7A8C7E] mb-1">Quantity *</label>
                             <input type="number" value={form.quantity}
                               onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))}
                               placeholder={`Amount in ${form.unit}`}
-                              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+                              className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
                           </div>
                           <div>
-                            <label className="block text-xs text-slate-400 mb-1">Total Price (₹)</label>
+                            <label className="block text-xs text-[#7A8C7E] mb-1">Total Price (₹)</label>
                             <input type="number" value={form.total_price}
                               onChange={e => setForm(f => ({ ...f, total_price: e.target.value }))}
                               placeholder="Optional"
-                              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+                              className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
                           </div>
                         </div>
                         <div className="flex gap-2">
@@ -173,7 +173,7 @@ export default function DealerSeedOrdersPage() {
                             {submitting ? 'Sending…' : 'Send for Approval'}
                           </button>
                           <button onClick={() => setProcessing(null)}
-                            className="px-4 border border-slate-200 text-slate-600 text-xs font-medium py-2.5 rounded-xl">
+                            className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
                             Cancel
                           </button>
                         </div>

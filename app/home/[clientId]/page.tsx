@@ -50,17 +50,17 @@ export default function BrandedSpacePage() {
     } finally { setLoading(false) }
   }
 
-  const colour = branding?.primary_colour || '#1A5C2A'
+  const colour = branding?.primary_colour || '#3A7D44'
   const initials = (branding?.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-stone-50">
-      <div className="w-8 h-8 border-2 border-stone-200 border-t-[#1A5C2A] rounded-full animate-spin"/>
+    <div className="min-h-screen flex items-center justify-center bg-[#F5F0E8]">
+      <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin"/>
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       {/* Branded top header (not using PWAHeader — custom branded) */}
       <div className="sticky top-0 z-40" style={{ background: colour }}>
         <div className="flex items-center px-4 pt-12 pb-4">
@@ -96,7 +96,7 @@ export default function BrandedSpacePage() {
           <div className="px-4 py-3 flex gap-2 overflow-x-auto">
             {branding?.support_phone && (
               <a href={`tel:${branding.support_phone}`}
-                className="flex items-center gap-1.5 shrink-0 bg-stone-50 border border-stone-200 rounded-full px-3 py-1.5 text-sm text-stone-700">
+                className="flex items-center gap-1.5 shrink-0 bg-[#F5F0E8] border border-[#DDD0B8] rounded-full px-3 py-1.5 text-sm text-[#6B3F1F]">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
@@ -105,7 +105,7 @@ export default function BrandedSpacePage() {
             )}
             {branding?.office_phone && branding.office_phone !== branding.support_phone && (
               <a href={`tel:${branding.office_phone}`}
-                className="flex items-center gap-1.5 shrink-0 bg-stone-50 border border-stone-200 rounded-full px-3 py-1.5 text-sm text-stone-700">
+                className="flex items-center gap-1.5 shrink-0 bg-[#F5F0E8] border border-[#DDD0B8] rounded-full px-3 py-1.5 text-sm text-[#6B3F1F]">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                 </svg>
@@ -114,7 +114,7 @@ export default function BrandedSpacePage() {
             )}
             {branding?.website && (
               <a href={branding.website} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 shrink-0 bg-stone-50 border border-stone-200 rounded-full px-3 py-1.5 text-sm text-stone-700">
+                className="flex items-center gap-1.5 shrink-0 bg-[#F5F0E8] border border-[#DDD0B8] rounded-full px-3 py-1.5 text-sm text-[#6B3F1F]">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" strokeLinecap="round"/>
                 </svg>
@@ -125,11 +125,11 @@ export default function BrandedSpacePage() {
         )}
 
         {/* Your Crops section */}
-        <p className="text-stone-800 font-semibold text-base px-4 pt-5 pb-3">Your Crops</p>
+        <p className="text-[#6B3F1F] font-semibold text-base px-4 pt-5 pb-3">Your Crops</p>
 
         {subscriptions.length === 0 ? (
-          <div className="mx-4 bg-white border border-stone-200 rounded-2xl px-4 py-6 text-center">
-            <p className="text-stone-400 text-sm">No crops found for this company.</p>
+          <div className="mx-4 bg-white border border-[#DDD0B8] rounded-2xl px-4 py-6 text-center">
+            <p className="text-[#7A8C7E] text-sm">No crops found for this company.</p>
           </div>
         ) : (
           subscriptions.map(sub => {
@@ -138,12 +138,12 @@ export default function BrandedSpacePage() {
             return (
               <button key={sub.id}
                 onClick={() => router.push(`/crop-detail/${sub.id}`)}
-                className="w-full bg-white border border-stone-200 rounded-2xl mx-4 mb-3 px-4 py-4 flex items-center justify-between active:scale-[0.98] transition-transform text-left"
+                className="w-full bg-white border border-[#DDD0B8] rounded-2xl mx-4 mb-3 px-4 py-4 flex items-center justify-between active:scale-[0.98] transition-transform text-left"
                 style={{ width: 'calc(100% - 2rem)' }}>
                 <div>
-                  <p className="text-stone-800 font-medium text-sm">{cropName}</p>
+                  <p className="text-[#6B3F1F] font-medium text-sm">{cropName}</p>
                   {sub.reference_number && (
-                    <p className="text-stone-400 text-xs mt-0.5 font-mono">{sub.reference_number}</p>
+                    <p className="text-[#7A8C7E] text-xs mt-0.5 font-mono">{sub.reference_number}</p>
                   )}
                 </div>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${

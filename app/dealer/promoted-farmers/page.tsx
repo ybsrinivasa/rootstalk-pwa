@@ -27,7 +27,7 @@ export default function DealerPromotedFarmersPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="My Promoted Farmers" activeRole="DEALER" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4 mb-3 flex justify-end">
@@ -44,28 +44,28 @@ export default function DealerPromotedFarmersPage() {
         ) : farmers.length === 0 ? (
           <div className="mt-8 text-center py-16">
             <span className="text-4xl">👨‍🌾</span>
-            <p className="text-slate-500 font-medium mt-3">No promoted farmers yet</p>
-            <p className="text-xs text-slate-400 mt-1">Farmers you sponsor will appear here</p>
+            <p className="text-[#7A8C7E] font-medium mt-3">No promoted farmers yet</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">Farmers you sponsor will appear here</p>
           </div>
         ) : (
           <div className="mt-4 space-y-3">
             {farmers.map(f => (
               <button key={f.subscription_id}
                 onClick={() => router.push(`/dealer/promoted-farmers/${f.subscription_id}`)}
-                className="w-full bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left active:scale-98 transition-transform">
+                className="w-full bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left active:scale-98 transition-transform">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-slate-900">{f.farmer_name || 'Unknown farmer'}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{f.farmer_phone}</p>
+                    <p className="font-semibold text-[#6B3F1F]">{f.farmer_name || 'Unknown farmer'}</p>
+                    <p className="text-xs text-[#7A8C7E] mt-0.5">{f.farmer_phone}</p>
                     {f.reference_number && (
-                      <p className="text-xs font-mono text-slate-500 mt-0.5">{f.reference_number}</p>
+                      <p className="text-xs font-mono text-[#7A8C7E] mt-0.5">{f.reference_number}</p>
                     )}
                   </div>
                   <div className="text-right">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      f.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'
+                      f.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-[#7A8C7E]'
                     }`}>{f.status}</span>
-                    <p className="text-slate-300 text-xl mt-1">›</p>
+                    <p className="text-[#DDD0B8] text-xl mt-1">›</p>
                   </div>
                 </div>
               </button>

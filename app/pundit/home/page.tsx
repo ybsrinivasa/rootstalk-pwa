@@ -23,7 +23,7 @@ const SEVERITY_COLOUR: Record<string, string> = {
   CRITICAL: 'bg-red-100 text-red-700',
   HIGH: 'bg-orange-100 text-orange-700',
   MODERATE: 'bg-amber-100 text-amber-700',
-  LOW: 'bg-slate-100 text-slate-500',
+  LOW: 'bg-slate-100 text-[#7A8C7E]',
 }
 
 function MailIcon() {
@@ -37,7 +37,7 @@ function MailIcon() {
 
 function CheckCircleIcon() {
   return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="text-slate-300">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="text-[#DDD0B8]">
       <circle cx="12" cy="12" r="10"/>
       <polyline points="9,12 11,14 15,10"/>
     </svg>
@@ -100,7 +100,7 @@ export default function PunditHomePage() {
   const activeQueries = queries.filter(q => ['NEW', 'FORWARDED', 'RETURNED'].includes(q.status))
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader
         title="FarmPundit"
         activeRole="FARM_PUNDIT"
@@ -110,34 +110,34 @@ export default function PunditHomePage() {
       <div className="pt-16 pb-20 px-4">
         {/* Greeting */}
         <div className="mt-4 mb-5">
-          <p className="text-xl font-bold text-slate-900">
+          <p className="text-xl font-bold text-[#6B3F1F]">
             {user?.name ? `Welcome, ${user.name.split(' ')[0]}` : 'FarmPundit Dashboard'}
           </p>
-          <p className="text-slate-500 text-sm mt-0.5">{companies.length} compan{companies.length === 1 ? 'y' : 'ies'}</p>
+          <p className="text-[#7A8C7E] text-sm mt-0.5">{companies.length} compan{companies.length === 1 ? 'y' : 'ies'}</p>
         </div>
 
         {/* Stats — New / Pending / Returned */}
         <div className="grid grid-cols-3 gap-3 mb-5">
-          <div className="bg-white rounded-2xl p-4 border border-slate-100 text-center">
-            <p className="text-2xl font-bold text-slate-800">{loading ? '…' : newCount}</p>
-            <p className="text-xs text-slate-400 mt-0.5">New</p>
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
+            <p className="text-2xl font-bold text-[#6B3F1F]">{loading ? '…' : newCount}</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">New</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 border border-slate-100 text-center">
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
             <p className="text-2xl font-bold text-amber-500">{loading ? '…' : pendingCount}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Pending</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">Pending</p>
           </div>
-          <div className="bg-white rounded-2xl p-4 border border-slate-100 text-center">
-            <p className="text-2xl font-bold text-red-600">{loading ? '…' : returnedCount}</p>
-            <p className="text-xs text-slate-400 mt-0.5">Returned</p>
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
+            <p className="text-2xl font-bold text-[#D4682E]">{loading ? '…' : returnedCount}</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">Returned</p>
           </div>
         </div>
 
         {/* Phone privacy toggle */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-100 mb-4">
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mb-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
-              <p className="text-sm font-medium text-slate-700">Phone number hidden from company searches</p>
-              <p className="text-xs text-slate-400 mt-0.5">{phoneHidden ? 'Hidden — companies cannot find you by phone' : 'Visible — companies can find you by phone'}</p>
+              <p className="text-sm font-medium text-[#6B3F1F]">Phone number hidden from company searches</p>
+              <p className="text-xs text-[#7A8C7E] mt-0.5">{phoneHidden ? 'Hidden — companies cannot find you by phone' : 'Visible — companies can find you by phone'}</p>
             </div>
             <button
               onClick={togglePrivacy}
@@ -150,12 +150,12 @@ export default function PunditHomePage() {
 
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-3 mb-4">
-          <Link href="/pundit/profile" className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+          <Link href="/pundit/profile" className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
             <svg className="w-6 h-6 text-[#3C3489]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/>
             </svg>
-            <p className="text-sm font-semibold text-slate-800 mt-2">Expert Credentials</p>
-            <p className="text-xs text-slate-400">View my profile</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Expert Credentials</p>
+            <p className="text-xs text-[#7A8C7E]">View my profile</p>
           </Link>
         </div>
 
@@ -181,12 +181,12 @@ export default function PunditHomePage() {
 
         {/* My Companies */}
         <div className="mb-5">
-          <h2 className="font-semibold text-slate-800 mb-3">My Companies</h2>
+          <h2 className="font-semibold text-[#6B3F1F] mb-3">My Companies</h2>
           {loading ? (
             <div className="h-16 bg-white rounded-2xl animate-pulse" />
           ) : companies.length === 0 ? (
-            <div className="bg-white rounded-2xl p-5 border border-slate-100 text-center">
-              <p className="text-slate-400 text-sm">No companies yet — accept invitations to join companies</p>
+            <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] text-center">
+              <p className="text-[#7A8C7E] text-sm">No companies yet — accept invitations to join companies</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -195,10 +195,10 @@ export default function PunditHomePage() {
                 const colour = info?.primary_colour || COLOUR
                 const initials = (info?.display_name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
                 return (
-                  <div key={c.client_id} className="bg-white rounded-2xl p-3 border border-slate-100 flex items-center gap-3">
+                  <div key={c.client_id} className="bg-white rounded-2xl p-3 border border-[#DDD0B8] flex items-center gap-3">
                     {info?.logo_url ? (
                       <img src={info.logo_url} alt={info.display_name}
-                        className="w-9 h-9 rounded-full object-contain bg-slate-50 p-1 shrink-0 border border-slate-100" />
+                        className="w-9 h-9 rounded-full object-contain bg-[#F5F0E8] p-1 shrink-0 border border-[#DDD0B8]" />
                     ) : (
                       <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
                         style={{ background: colour }}>
@@ -206,13 +206,13 @@ export default function PunditHomePage() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-800 truncate">{info?.display_name || c.client_id}</p>
+                      <p className="text-sm font-medium text-[#6B3F1F] truncate">{info?.display_name || c.client_id}</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {c.is_promoter_pundit && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">Promoter</span>
                       )}
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
                         {c.role === 'PRIMARY' ? 'Primary' : 'Panel'}
                       </span>
                     </div>
@@ -226,7 +226,7 @@ export default function PunditHomePage() {
         {/* Active Queries preview */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-slate-800">Active Queries</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">Active Queries</h2>
             <button onClick={() => router.push('/pundit/queries')}
               className="text-xs font-medium" style={{ color: COLOUR }}>View all →</button>
           </div>
@@ -234,27 +234,27 @@ export default function PunditHomePage() {
           {loading ? (
             <div className="h-20 bg-white rounded-2xl animate-pulse" />
           ) : activeQueries.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
+            <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
               <div className="flex justify-center mb-3">
                 <CheckCircleIcon />
               </div>
-              <p className="text-slate-500 text-sm">No active queries. You&apos;re all caught up!</p>
+              <p className="text-[#7A8C7E] text-sm">No active queries. You&apos;re all caught up!</p>
             </div>
           ) : (
             <div className="space-y-3">
               {activeQueries.slice(0, 5).map(q => (
                 <button key={q.id} onClick={() => router.push(`/pundit/queries/${q.id}`)}
-                  className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${q.status === 'RETURNED' || q.days_remaining <= 1 ? 'border-red-200' : 'border-slate-100'}`}>
+                  className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${q.status === 'RETURNED' || q.days_remaining <= 1 ? 'border-red-200' : 'border-[#DDD0B8]'}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-slate-800 text-sm line-clamp-1">{q.title}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">{q.status}</p>
+                      <p className="font-medium text-[#6B3F1F] text-sm line-clamp-1">{q.title}</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">{q.status}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-[#7A8C7E]'}`}>
                         {q.severity}
                       </span>
-                      <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-red-600' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-slate-400'}`}>
+                      <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
                         {q.days_remaining}d left
                       </span>
                     </div>

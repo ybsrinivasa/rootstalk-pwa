@@ -6,7 +6,7 @@ export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-[#F7F5F0]">
       {/* Header */}
-      <div className="px-5 py-5 flex items-center gap-3" style={{ background: '#1A5C2A' }}>
+      <div className="px-5 py-5 flex items-center gap-3" style={{ background: '#3A7D44' }}>
         <button onClick={() => router.back()} className="text-white/70 hover:text-white">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
 
       {/* Content */}
       <div className="px-5 py-6 max-w-2xl mx-auto space-y-6 pb-16">
-        <p className="text-stone-400 text-xs">Last updated: April 2026</p>
+        <p className="text-[#7A8C7E] text-xs">Last updated: April 2026</p>
 
         {[
           {
@@ -53,9 +53,9 @@ export default function PrivacyPolicyPage() {
             body: "For any privacy-related queries, contact us at: support@eywa.farm or visit eywa.farm. Neytiri Eywafarm Agritech Private Limited, India."
           },
         ].map(section => (
-          <div key={section.title} className="bg-white rounded-2xl p-5 border border-stone-200">
-            <h3 className="font-semibold text-stone-800 mb-2">{section.title}</h3>
-            <p className="text-stone-500 text-sm leading-relaxed">{section.body}</p>
+          <div key={section.title} className="bg-white rounded-2xl p-5 border border-[#DDD0B8]">
+            <h3 className="font-semibold text-[#6B3F1F] mb-2">{section.title}</h3>
+            <p className="text-[#7A8C7E] text-sm leading-relaxed">{section.body}</p>
           </div>
         ))}
       </div>

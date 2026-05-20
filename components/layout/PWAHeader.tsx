@@ -36,7 +36,7 @@ export default function PWAHeader({
   const [showAbout, setShowAbout] = useState(false)
   const [languages, setLanguages] = useState<Lang[]>([])
   const [currentLang, setCurrentLang] = useState(getLanguage())
-  const colour = customColour || ROLE_COLOURS[activeRole] || '#1A5C2A'
+  const colour = customColour || ROLE_COLOURS[activeRole] || '#3A7D44'
   const roleLabel = ROLE_LABEL[activeRole] || 'Farmer'
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function PWAHeader({
             <div className="flex items-center gap-2 ml-3">
               <span className="text-white text-sm font-bold">{urgencyBadges.new}</span>
               <span className="text-amber-300 text-sm font-bold">{urgencyBadges.pending}</span>
-              <span className="text-red-400 text-sm font-bold">{urgencyBadges.returned}</span>
+              <span className="text-[#D4682E] text-sm font-bold">{urgencyBadges.returned}</span>
             </div>
           )}
         </div>
@@ -105,14 +105,14 @@ export default function PWAHeader({
       {showLang && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end">
           <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto pb-6">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <p className="font-medium text-slate-800 text-sm">Select language</p>
-              <button onClick={() => setShowLang(false)} className="text-slate-400 text-xl">×</button>
+            <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
+              <p className="font-medium text-[#6B3F1F] text-sm">Select language</p>
+              <button onClick={() => setShowLang(false)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             {languages.map((l: Lang) => (
               <button key={l.language_code} onClick={() => switchLang(l.language_code)}
-                className={`w-full text-left px-4 py-3 border-b border-slate-50 flex items-center justify-between ${currentLang === l.language_code ? 'bg-green-50' : ''}`}>
-                <span className="text-slate-800">{l.language_name_native}</span>
+                className={`w-full text-left px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between ${currentLang === l.language_code ? 'bg-green-50' : ''}`}>
+                <span className="text-[#6B3F1F]">{l.language_name_native}</span>
                 {currentLang === l.language_code && <span style={{ color: colour }}>✓</span>}
               </button>
             ))}
@@ -126,7 +126,7 @@ export default function PWAHeader({
           <div className="bg-white rounded-t-2xl w-full pb-8 safe-area-bottom" onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-stone-200 rounded-full mx-auto mt-3 mb-5" />
             <div className="px-6 flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: '#1A5C2A' }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: '#3A7D44' }}>
                 <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
                   <circle cx="24" cy="24" r="5" fill="white"/>
                   <circle cx="8" cy="12" r="3.5" fill="white" opacity="0.7"/>
@@ -136,18 +136,18 @@ export default function PWAHeader({
                 </svg>
               </div>
               <div>
-                <p className="font-bold text-stone-900 text-base">rootsTALK<span className="text-stone-400">.in</span></p>
-                <p className="text-stone-500 text-xs mt-0.5">by Neytiri Eywafarm Agritech</p>
+                <p className="font-bold text-[#6B3F1F] text-base">rootsTALK<span className="text-[#7A8C7E]">.in</span></p>
+                <p className="text-[#7A8C7E] text-xs mt-0.5">by Neytiri Eywafarm Agritech</p>
               </div>
             </div>
             <div className="px-6 space-y-1 mb-6">
-              <p className="text-stone-500 text-sm">Your agricultural advisory network — connecting farmers, experts, and companies across India.</p>
+              <p className="text-[#7A8C7E] text-sm">Your agricultural advisory network — connecting farmers, experts, and companies across India.</p>
             </div>
             <div className="px-6">
               <a href="https://eywa.farm" target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between w-full bg-stone-50 rounded-xl px-4 py-3.5 border border-stone-200">
-                <span className="text-stone-800 font-medium text-sm">Visit eywa.farm</span>
-                <svg className="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                className="flex items-center justify-between w-full bg-[#F5F0E8] rounded-xl px-4 py-3.5 border border-[#DDD0B8]">
+                <span className="text-[#6B3F1F] font-medium text-sm">Visit eywa.farm</span>
+                <svg className="w-4 h-4 text-[#7A8C7E]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                 </svg>
               </a>

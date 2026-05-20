@@ -221,23 +221,23 @@ export default function PunditQueryDetailPage() {
   const isActive = ['NEW', 'FORWARDED', 'RETURNED'].includes(query.status)
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Query" activeRole="FARM_PUNDIT" />
       <div className="pt-16 pb-28 px-4 space-y-4">
         {/* Header card */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-100 mt-4">
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1">
-              <p className="font-semibold text-slate-800">{query.title}</p>
+              <p className="font-semibold text-[#6B3F1F]">{query.title}</p>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${query.status === 'RESPONDED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
                   {query.status}
                 </span>
-                <span className="text-xs text-slate-400">{query.severity}</span>
+                <span className="text-xs text-[#7A8C7E]">{query.severity}</span>
               </div>
             </div>
             {isActive && (
-              <div className={`text-xs font-semibold px-2 py-1 rounded-xl ${query.days_remaining <= 1 ? 'bg-red-100 text-red-700' : query.days_remaining <= 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+              <div className={`text-xs font-semibold px-2 py-1 rounded-xl ${query.days_remaining <= 1 ? 'bg-red-100 text-red-700' : query.days_remaining <= 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
                 {query.days_remaining}d left
               </div>
             )}
@@ -245,39 +245,39 @@ export default function PunditQueryDetailPage() {
         </div>
 
         {/* Details */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-100">
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
           {query.crop_cosh_id && (
             <div className="flex gap-3 mb-2">
-              <span className="text-xs text-slate-400 w-20 shrink-0">Crop</span>
-              <span className="text-sm text-slate-700 font-mono">{query.crop_cosh_id}</span>
+              <span className="text-xs text-[#7A8C7E] w-20 shrink-0">Crop</span>
+              <span className="text-sm text-[#6B3F1F] font-mono">{query.crop_cosh_id}</span>
             </div>
           )}
           {query.crop_age && (
             <div className="flex gap-3 mb-2">
-              <span className="text-xs text-slate-400 w-20 shrink-0">Crop Age</span>
-              <span className="text-sm text-slate-700">{query.crop_age}</span>
+              <span className="text-xs text-[#7A8C7E] w-20 shrink-0">Crop Age</span>
+              <span className="text-sm text-[#6B3F1F]">{query.crop_age}</span>
             </div>
           )}
           {query.description && (
-            <div className="mt-3 pt-3 border-t border-slate-100">
-              <p className="text-xs text-slate-400 mb-1">Description</p>
-              <p className="text-sm text-slate-700 leading-relaxed">{query.description}</p>
+            <div className="mt-3 pt-3 border-t border-[#DDD0B8]">
+              <p className="text-xs text-[#7A8C7E] mb-1">Description</p>
+              <p className="text-sm text-[#6B3F1F] leading-relaxed">{query.description}</p>
             </div>
           )}
         </div>
 
         {/* Remarks chain */}
         {query.remarks.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 border border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Query History</p>
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-3">Query History</p>
             <div className="space-y-3">
               {query.remarks.map((r, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="w-2 h-2 rounded-full bg-slate-300 mt-2 shrink-0" />
                   <div>
-                    <p className="text-xs font-medium text-slate-600 capitalize">{r.action.toLowerCase()}</p>
-                    {r.remark && <p className="text-xs text-slate-500 mt-0.5">{r.remark}</p>}
-                    <p className="text-xs text-slate-300 mt-0.5">{new Date(r.created_at).toLocaleDateString()}</p>
+                    <p className="text-xs font-medium text-[#6B3F1F] capitalize">{r.action.toLowerCase()}</p>
+                    {r.remark && <p className="text-xs text-[#7A8C7E] mt-0.5">{r.remark}</p>}
+                    <p className="text-xs text-[#DDD0B8] mt-0.5">{new Date(r.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
               ))}
@@ -308,14 +308,14 @@ export default function PunditQueryDetailPage() {
                 </p>
               </div>
             )}
-            {query.response.text && <p className="text-sm text-slate-700 leading-relaxed">{query.response.text}</p>}
+            {query.response.text && <p className="text-sm text-[#6B3F1F] leading-relaxed">{query.response.text}</p>}
           </div>
         )}
       </div>
 
       {/* Action bar (only when holding and query is active) */}
       {query.is_holding && isActive && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-3 space-y-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#DDD0B8] px-4 py-3 space-y-2">
           <button onClick={() => setShowRespond(true)}
             className="w-full py-3 rounded-2xl text-white font-semibold text-sm"
             style={{ background: `linear-gradient(135deg, #2d2570, ${COLOUR})` }}>
@@ -323,17 +323,17 @@ export default function PunditQueryDetailPage() {
           </button>
           <div className="flex gap-2">
             <button onClick={() => setShowForward(true)}
-              className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium">
+              className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
               → Forward
             </button>
             {query.status !== 'NEW' && (
               <button onClick={() => setShowReturn(true)}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium">
+                className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
                 ← Return
               </button>
             )}
             <button onClick={() => setShowReject(true)}
-              className="flex-1 py-2.5 rounded-xl border border-red-100 text-red-500 text-sm font-medium">
+              className="flex-1 py-2.5 rounded-xl border border-red-100 text-[#D4682E] text-sm font-medium">
               ✗ Reject
             </button>
           </div>
@@ -344,9 +344,9 @@ export default function PunditQueryDetailPage() {
       {showRespond && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-5 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900">Respond to Query</h2>
-              <p className="text-slate-400 text-xs mt-0.5">7-day window closes on response. Farmer is notified immediately.</p>
+            <div className="p-5 border-b border-[#DDD0B8]">
+              <h2 className="font-bold text-[#6B3F1F]">Respond to Query</h2>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">7-day window closes on response. Farmer is notified immediately.</p>
             </div>
             <form onSubmit={handleRespond} className="p-5 space-y-4 pb-8">
               {/* Three structured response paths per the UCAT model.
@@ -357,18 +357,18 @@ export default function PunditQueryDetailPage() {
 
               {/* Path 1: Identify a Crop Health problem (CHA pipe) */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
                   Crop Health Problem
                   {respondForm.standard_response_id && (
-                    <span className="ml-2 text-xs text-slate-400 font-normal">(disabled — standard answer picked)</span>
+                    <span className="ml-2 text-xs text-[#7A8C7E] font-normal">(disabled — standard answer picked)</span>
                   )}
                 </label>
                 <input value={respondForm.problem_cosh_id}
                   onChange={e => setRespondForm(f => ({ ...f, problem_cosh_id: e.target.value }))}
                   disabled={!!respondForm.standard_response_id}
                   placeholder="e.g. sp_blast_rice or pg_aphids (Cosh ID)"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono disabled:bg-slate-50 disabled:text-slate-400" />
-                <p className="text-xs text-slate-400 mt-1">
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono disabled:bg-[#F5F0E8] disabled:text-[#7A8C7E]" />
+                <p className="text-xs text-[#7A8C7E] mt-1">
                   Enter the Cosh problem ID to deliver CHA recommendations to the farmer.
                 </p>
               </div>
@@ -376,7 +376,7 @@ export default function PunditQueryDetailPage() {
               {/* Path 2: Pick a Standard Q&A answer (Q&A pipe) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-slate-700">Standard Answer</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F]">Standard Answer</label>
                   {!respondForm.standard_response_id && !respondForm.problem_cosh_id && (
                     <button type="button" onClick={openStdPicker}
                       className="text-xs font-medium px-2.5 py-1 rounded-lg text-white"
@@ -390,16 +390,16 @@ export default function PunditQueryDetailPage() {
                     <span className="text-indigo-700 text-sm">🌾</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Q&amp;A picked</p>
-                      <p className="text-sm text-slate-800 leading-snug">{respondForm.standard_response_question}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-sm text-[#6B3F1F] leading-snug">{respondForm.standard_response_question}</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">
                         On send, the curated advisory merges into the farmer&apos;s plan automatically.
                       </p>
                     </div>
                     <button type="button" onClick={clearStdPick}
-                      className="text-slate-400 hover:text-slate-600 text-lg leading-none px-1">×</button>
+                      className="text-[#7A8C7E] hover:text-[#6B3F1F] text-lg leading-none px-1">×</button>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[#7A8C7E]">
                     {respondForm.problem_cosh_id
                       ? 'Disabled — Crop Health problem entered above.'
                       : 'Search the company\'s curated Q&A library and pick the closest matching question.'}
@@ -409,7 +409,7 @@ export default function PunditQueryDetailPage() {
 
               {/* Path 3: Free-form text — fallback or supplementary */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
                   {respondForm.problem_cosh_id || respondForm.standard_response_id
                     ? 'Additional guidance (optional)'
                     : 'Free-form response'}
@@ -422,13 +422,13 @@ export default function PunditQueryDetailPage() {
                       ? 'Optional notes the farmer sees on the Query Response page.'
                       : 'Use this only if no problem or standard answer applies. Free-form text reaches the farmer but does not merge into the advisory or drive purchases.'
                   }
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
 
-              {respondError && <p className="text-sm text-red-600">{respondError}</p>}
+              {respondError && <p className="text-sm text-[#D4682E]">{respondError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowRespond(false); setRespondError('') }}
-                  className="flex-1 border border-slate-200 text-slate-700 font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
                 <button type="submit" disabled={responding}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: COLOUR }}>
@@ -444,29 +444,29 @@ export default function PunditQueryDetailPage() {
       {showForward && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full">
-            <div className="p-5 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900">Forward Query</h2>
-              <p className="text-slate-400 text-xs mt-0.5">7-day clock does not reset. Mandatory comments required.</p>
+            <div className="p-5 border-b border-[#DDD0B8]">
+              <h2 className="font-bold text-[#6B3F1F]">Forward Query</h2>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">7-day clock does not reset. Mandatory comments required.</p>
             </div>
             <form onSubmit={handleForward} className="p-5 space-y-4 pb-8">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Recipient's Pundit ID</label>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Recipient's Pundit ID</label>
                 <input value={forwardForm.to_pundit_id}
                   onChange={e => setForwardForm(f => ({ ...f, to_pundit_id: e.target.value }))}
                   required placeholder="FarmPundit profile ID"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono" />
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Remarks (mandatory)</label>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Remarks (mandatory)</label>
                 <textarea value={forwardForm.remarks}
                   onChange={e => setForwardForm(f => ({ ...f, remarks: e.target.value }))}
                   required rows={3} placeholder="Why are you forwarding? What context should the recipient know?"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
-              {forwardError && <p className="text-sm text-red-600">{forwardError}</p>}
+              {forwardError && <p className="text-sm text-[#D4682E]">{forwardError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowForward(false); setForwardError('') }}
-                  className="flex-1 border border-slate-200 text-slate-700 font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
                 <button type="submit" disabled={forwarding}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: COLOUR }}>
@@ -482,20 +482,20 @@ export default function PunditQueryDetailPage() {
       {showReturn && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full">
-            <div className="p-5 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900">Return Query</h2>
+            <div className="p-5 border-b border-[#DDD0B8]">
+              <h2 className="font-bold text-[#6B3F1F]">Return Query</h2>
             </div>
             <form onSubmit={handleReturn} className="p-5 space-y-4 pb-8">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Remarks (mandatory)</label>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Remarks (mandatory)</label>
                 <textarea value={returnRemarks} onChange={e => setReturnRemarks(e.target.value)}
                   required rows={3} placeholder="Why are you returning? What do you need?"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
-              {returnError && <p className="text-sm text-red-600">{returnError}</p>}
+              {returnError && <p className="text-sm text-[#D4682E]">{returnError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowReturn(false); setReturnError('') }}
-                  className="flex-1 border border-slate-200 text-slate-700 font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
                 <button type="submit" disabled={returning}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: '#b45309' }}>
@@ -511,21 +511,21 @@ export default function PunditQueryDetailPage() {
       {showReject && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full">
-            <div className="p-5 border-b border-slate-100">
-              <h2 className="font-bold text-slate-900">Reject Query</h2>
-              <p className="text-slate-400 text-xs mt-0.5">This is a terminal action. The query cannot be reopened.</p>
+            <div className="p-5 border-b border-[#DDD0B8]">
+              <h2 className="font-bold text-[#6B3F1F]">Reject Query</h2>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">This is a terminal action. The query cannot be reopened.</p>
             </div>
             <form onSubmit={handleReject} className="p-5 space-y-4 pb-8">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Reason (mandatory)</label>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Reason (mandatory)</label>
                 <textarea value={rejectRemarks} onChange={e => setRejectRemarks(e.target.value)}
                   required rows={3} placeholder="Why are you rejecting this query?"
-                  className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
-              {rejectError && <p className="text-sm text-red-600">{rejectError}</p>}
+              {rejectError && <p className="text-sm text-[#D4682E]">{rejectError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowReject(false); setRejectError('') }}
-                  className="flex-1 border border-slate-200 text-slate-700 font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
                 <button type="submit" disabled={rejecting}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: '#dc2626' }}>
@@ -541,10 +541,10 @@ export default function PunditQueryDetailPage() {
       {showStdPicker && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full max-h-[80vh] flex flex-col">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="font-bold text-slate-900">Standard Responses</h2>
+            <div className="p-5 border-b border-[#DDD0B8] flex items-center justify-between">
+              <h2 className="font-bold text-[#6B3F1F]">Standard Responses</h2>
               <button onClick={() => { setShowStdPicker(false); setStdSearch(''); setStdResults([]) }}
-                className="w-7 h-7 flex items-center justify-center text-slate-400 text-xl">×</button>
+                className="w-7 h-7 flex items-center justify-center text-[#7A8C7E] text-xl">×</button>
             </div>
             <div className="px-5 pt-4 pb-2">
               <input
@@ -552,32 +552,32 @@ export default function PunditQueryDetailPage() {
                 onChange={e => onStdSearchChange(e.target.value)}
                 placeholder="Search responses…"
                 autoFocus
-                className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#3C3489]"
+                className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#3C3489]"
               />
             </div>
             <div className="flex-1 overflow-y-auto px-5 pb-8">
               {stdLoading ? (
-                <div className="h-12 bg-slate-50 rounded-xl animate-pulse mt-3" />
+                <div className="h-12 bg-[#F5F0E8] rounded-xl animate-pulse mt-3" />
               ) : stdResults.length === 0 && stdSearch.length > 0 ? (
-                <p className="text-slate-400 text-sm text-center py-8">No results for &ldquo;{stdSearch}&rdquo;</p>
+                <p className="text-[#7A8C7E] text-sm text-center py-8">No results for &ldquo;{stdSearch}&rdquo;</p>
               ) : stdResults.length === 0 ? (
-                <p className="text-slate-400 text-sm text-center py-8">
+                <p className="text-[#7A8C7E] text-sm text-center py-8">
                   Type to search the curated Q&amp;A library, or browse all entries.
                 </p>
               ) : (
                 <div className="space-y-2 mt-3">
-                  <p className="text-xs text-slate-400">{stdResults.length} result{stdResults.length === 1 ? '' : 's'}</p>
+                  <p className="text-xs text-[#7A8C7E]">{stdResults.length} result{stdResults.length === 1 ? '' : 's'}</p>
                   {stdResults.map(r => (
                     <button key={r.id} onClick={() => pickStdResponse(r)}
-                      className="w-full bg-white border border-slate-200 rounded-xl p-4 text-left hover:border-[#3C3489] transition-colors active:scale-[0.99]">
-                      <p className="text-sm font-medium text-slate-800 mb-1">{r.question_text}</p>
+                      className="w-full bg-white border border-[#DDD0B8] rounded-xl p-4 text-left hover:border-[#3C3489] transition-colors active:scale-[0.99]">
+                      <p className="text-sm font-medium text-[#6B3F1F] mb-1">{r.question_text}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {r.crop_cosh_id ? (
                           <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-mono">
                             {r.crop_cosh_id}
                           </span>
                         ) : (
-                          <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-slate-100 text-[#7A8C7E] px-2 py-0.5 rounded-full">
                             Crop-agnostic
                           </span>
                         )}

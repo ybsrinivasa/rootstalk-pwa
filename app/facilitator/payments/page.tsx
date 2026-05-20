@@ -71,30 +71,30 @@ export default function FacilitatorPaymentsPage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#F5F0E8]">
         <PWAHeader title="Farmer Payments" activeRole="FACILITATOR" />
         <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
           <div className="mt-4 space-y-3">
-            {error && <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
+            {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
             {loading ? (
               <div className="h-24 bg-white rounded-2xl animate-pulse" />
             ) : pending.length === 0 && done.length === 0 ? (
               <div className="text-center py-16">
                 <span className="text-4xl">💳</span>
-                <p className="text-slate-400 text-sm mt-3">No payment requests yet</p>
+                <p className="text-[#7A8C7E] text-sm mt-3">No payment requests yet</p>
               </div>
             ) : (
               <>
                 {pending.length > 0 && (
                   <>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Pending ({pending.length})</p>
+                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Pending ({pending.length})</p>
                     {pending.map(req => (
-                      <div key={req.id} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                      <div key={req.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
                         <div className="flex items-center justify-between mb-3">
                           <div>
-                            <p className="font-semibold text-slate-800 text-lg">₹{Number(req.amount).toFixed(0)}</p>
-                            <p className="text-xs text-slate-400">Farmer subscription</p>
-                            <p className="text-xs text-slate-400">Expires: {new Date(req.expires_at).toLocaleDateString()}</p>
+                            <p className="font-semibold text-[#6B3F1F] text-lg">₹{Number(req.amount).toFixed(0)}</p>
+                            <p className="text-xs text-[#7A8C7E]">Farmer subscription</p>
+                            <p className="text-xs text-[#7A8C7E]">Expires: {new Date(req.expires_at).toLocaleDateString()}</p>
                           </div>
                           <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">PENDING</span>
                         </div>
@@ -105,7 +105,7 @@ export default function FacilitatorPaymentsPage() {
                             {paying === req.id ? 'Opening…' : `Pay ₹${Number(req.amount).toFixed(0)}`}
                           </button>
                           <button onClick={() => decline(req.id)}
-                            className="px-5 py-3 rounded-xl border border-slate-200 text-slate-500 text-sm">
+                            className="px-5 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
                             Decline
                           </button>
                         </div>
@@ -115,12 +115,12 @@ export default function FacilitatorPaymentsPage() {
                 )}
                 {done.length > 0 && (
                   <>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-4">Past Requests</p>
+                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mt-4">Past Requests</p>
                     {done.map(req => (
-                      <div key={req.id} className="bg-white rounded-2xl p-4 border border-slate-100">
+                      <div key={req.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
                         <div className="flex items-center justify-between">
-                          <p className="font-medium text-slate-700">₹{Number(req.amount).toFixed(0)}</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                          <p className="font-medium text-[#6B3F1F]">₹{Number(req.amount).toFixed(0)}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
                             {req.status}
                           </span>
                         </div>

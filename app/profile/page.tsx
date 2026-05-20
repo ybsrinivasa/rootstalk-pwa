@@ -694,14 +694,14 @@ export default function ProfilePage() {
               ].map(item => (
                 <div key={item} className="flex items-start gap-2">
                   <span className="text-[#D4682E] mt-0.5">•</span>
-                  <p className="text-sm text-slate-600">{item}</p>
+                  <p className="text-sm text-[#6B3F1F]">{item}</p>
                 </div>
               ))}
             </div>
             {deleteError && <p className="text-[#D4682E] text-sm mb-3">{deleteError}</p>}
             <div className="flex gap-3">
               <button onClick={() => setDeleteStep('idle')}
-                className="flex-1 py-3 border border-[#DDD0B8] rounded-2xl text-sm text-slate-600 font-medium">
+                className="flex-1 py-3 border border-[#DDD0B8] rounded-2xl text-sm text-[#6B3F1F] font-medium">
                 Cancel
               </button>
               <button onClick={requestDeleteOtp} disabled={deleteBusy}

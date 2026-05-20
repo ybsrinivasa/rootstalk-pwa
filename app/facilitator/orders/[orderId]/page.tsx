@@ -118,20 +118,20 @@ export default function FacilitatorOrderDetailPage() {
   const isCompleted = order.status === 'COMPLETED'
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Order Details" activeRole="FACILITATOR" />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         {/* Status card */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-100 mt-4">
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400">Status</p>
-              <p className="font-semibold text-slate-800">{order.status.replace(/_/g, ' ')}</p>
+              <p className="text-xs text-[#7A8C7E]">Status</p>
+              <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-400">{order.items.length} items</p>
-              <p className="text-xs text-slate-500">{new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}</p>
+              <p className="text-xs text-[#7A8C7E]">{order.items.length} items</p>
+              <p className="text-xs text-[#7A8C7E]">{new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}</p>
             </div>
           </div>
         </div>
@@ -238,7 +238,7 @@ export default function FacilitatorOrderDetailPage() {
                 Try another dealer
               </button>
               <button onClick={returnToFarmer} disabled={returning}
-                className="flex-1 py-2.5 rounded-xl border border-red-300 text-red-600 text-xs font-semibold disabled:opacity-50">
+                className="flex-1 py-2.5 rounded-xl border border-red-300 text-[#D4682E] text-xs font-semibold disabled:opacity-50">
                 {returning ? 'Returning…' : 'Return to farmer'}
               </button>
             </div>
@@ -258,9 +258,9 @@ export default function FacilitatorOrderDetailPage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowDealerSelect(false)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl pb-10 max-h-[80vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <p className="font-bold text-slate-800">Select a Dealer</p>
-              <button onClick={() => setShowDealerSelect(false)} className="text-slate-400 text-xl">✕</button>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#DDD0B8]">
+              <p className="font-bold text-[#6B3F1F]">Select a Dealer</p>
+              <button onClick={() => setShowDealerSelect(false)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             {loadingDealers ? (
               <div className="p-8 text-center">
@@ -269,7 +269,7 @@ export default function FacilitatorOrderDetailPage() {
             ) : nearbyDealers.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-4xl mb-3">🏪</p>
-                <p className="text-slate-500 font-medium">No nearby dealers found</p>
+                <p className="text-[#7A8C7E] font-medium">No nearby dealers found</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-50">
@@ -277,19 +277,19 @@ export default function FacilitatorOrderDetailPage() {
                   <div key={d.user_id} className="px-5 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <p className="font-semibold text-slate-800">{d.shop_name || d.name || 'Dealer'}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{d.distance_km} km away</p>
-                        {d.shop_address && <p className="text-xs text-slate-400">{d.shop_address}</p>}
+                        <p className="font-semibold text-[#6B3F1F]">{d.shop_name || d.name || 'Dealer'}</p>
+                        <p className="text-xs text-[#7A8C7E] mt-0.5">{d.distance_km} km away</p>
+                        {d.shop_address && <p className="text-xs text-[#7A8C7E]">{d.shop_address}</p>}
                         <div className="flex gap-1 mt-1 flex-wrap">
                           {d.sell_categories.map(c => (
-                            <span key={c} className="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">{c}</span>
+                            <span key={c} className="text-xs bg-slate-100 text-[#7A8C7E] px-1.5 py-0.5 rounded">{c}</span>
                           ))}
                         </div>
                       </div>
                       <div className="flex flex-col gap-2 shrink-0">
                         {d.phone && (
                           <a href={`tel:${d.phone}`}
-                            className="text-xs bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg text-center font-medium">
+                            className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
                             📞 Call
                           </a>
                         )}
@@ -314,22 +314,22 @@ export default function FacilitatorOrderDetailPage() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10 max-h-[80vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <p className="font-bold text-slate-800 text-base">Delivery List</p>
-              <button onClick={() => setShowPacking(false)} className="text-slate-400 text-xl">✕</button>
+              <p className="font-bold text-[#6B3F1F] text-base">Delivery List</p>
+              <button onClick={() => setShowPacking(false)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             <div className="space-y-2 mb-4">
               {packingList.items.map((item, i) => (
-                <div key={item.id} className="flex justify-between py-2.5 border-b border-slate-100">
+                <div key={item.id} className="flex justify-between py-2.5 border-b border-[#DDD0B8]">
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">{item.brand_name || `Item ${i + 1}`}</p>
-                    <p className="text-xs text-slate-500">{item.given_volume} {item.volume_unit}</p>
+                    <p className="text-sm font-semibold text-[#6B3F1F]">{item.brand_name || `Item ${i + 1}`}</p>
+                    <p className="text-xs text-[#7A8C7E]">{item.given_volume} {item.volume_unit}</p>
                   </div>
-                  {item.price && <p className="text-sm font-bold text-slate-700">₹{item.price}</p>}
+                  {item.price && <p className="text-sm font-bold text-[#6B3F1F]">₹{item.price}</p>}
                 </div>
               ))}
             </div>
             {packingList.total_amount > 0 && (
-              <div className="flex justify-between font-bold text-slate-800 pt-2">
+              <div className="flex justify-between font-bold text-[#6B3F1F] pt-2">
                 <span>Total</span><span>₹{packingList.total_amount.toFixed(2)}</span>
               </div>
             )}

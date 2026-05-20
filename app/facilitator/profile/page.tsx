@@ -97,31 +97,31 @@ export default function FacilitatorProfilePage() {
       <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
 
         {/* Read-only info */}
-        <div className="bg-white rounded-2xl border border-stone-100 p-5 space-y-4 mb-5">
-          <h2 className="font-semibold text-stone-800">Your Details</h2>
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4 mb-5">
+          <h2 className="font-semibold text-[#6B3F1F]">Your Details</h2>
 
           <div>
-            <p className="text-xs text-stone-400 mb-1">Name</p>
-            <p className="text-sm text-stone-800 font-medium">{user?.name || '—'}</p>
+            <p className="text-xs text-[#7A8C7E] mb-1">Name</p>
+            <p className="text-sm text-[#6B3F1F] font-medium">{user?.name || '—'}</p>
           </div>
 
           <div>
-            <p className="text-xs text-stone-400 mb-1">Phone</p>
-            <p className="text-sm text-stone-800 font-medium">{user?.phone || '—'}</p>
+            <p className="text-xs text-[#7A8C7E] mb-1">Phone</p>
+            <p className="text-sm text-[#6B3F1F] font-medium">{user?.phone || '—'}</p>
           </div>
         </div>
 
         {/* My Companies — A3b */}
         {!loadingData && companies.length > 0 && (
-          <div className="bg-white rounded-2xl border border-stone-100 p-5 mb-5">
-            <h2 className="font-semibold text-stone-800 mb-3">My Companies</h2>
+          <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5">
+            <h2 className="font-semibold text-[#6B3F1F] mb-3">My Companies</h2>
             <div className="space-y-3">
               {companies.map(c => (
                 <div key={c.client_id} className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: c.client_colour }} />
                   <div>
-                    <p className="text-sm font-semibold text-stone-800">{c.client_name}</p>
-                    <p className="text-xs text-stone-400">{c.farmer_count} promoted {c.farmer_count === 1 ? 'farmer' : 'farmers'}</p>
+                    <p className="text-sm font-semibold text-[#6B3F1F]">{c.client_name}</p>
+                    <p className="text-xs text-[#7A8C7E]">{c.farmer_count} promoted {c.farmer_count === 1 ? 'farmer' : 'farmers'}</p>
                   </div>
                 </div>
               ))}
@@ -131,9 +131,9 @@ export default function FacilitatorProfilePage() {
 
         {/* Active Advisories in District — A3b */}
         {!loadingData && districtAdvisories.length > 0 && (
-          <div className="bg-white rounded-2xl border border-stone-100 p-5 mb-5">
-            <h2 className="font-semibold text-stone-800 mb-1">Active Advisories in Your District</h2>
-            <p className="text-xs text-stone-400 mb-3">Other companies serving farmers in your area</p>
+          <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5">
+            <h2 className="font-semibold text-[#6B3F1F] mb-1">Active Advisories in Your District</h2>
+            <p className="text-xs text-[#7A8C7E] mb-3">Other companies serving farmers in your area</p>
             <div className="space-y-3">
               {districtAdvisories.map(adv => {
                 const companyName = adv.client_name || adv.company_name || 'Company'
@@ -147,7 +147,7 @@ export default function FacilitatorProfilePage() {
                     <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: accentColour }} />
                     <div>
                       <p className="text-sm font-semibold" style={{ color: accentColour }}>{companyName}</p>
-                      <p className="text-xs text-stone-400">{cropLabel}</p>
+                      <p className="text-xs text-[#7A8C7E]">{cropLabel}</p>
                     </div>
                   </div>
                 )
@@ -157,8 +157,8 @@ export default function FacilitatorProfilePage() {
         )}
 
         {/* Declaration */}
-        <div className="bg-white rounded-2xl border border-stone-100 p-5 mb-5">
-          <h2 className="font-semibold text-stone-800 mb-3">Declaration</h2>
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5">
+          <h2 className="font-semibold text-[#6B3F1F] mb-3">Declaration</h2>
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -166,11 +166,11 @@ export default function FacilitatorProfilePage() {
               onChange={e => { setDeclared(e.target.checked); setError('') }}
               className="w-5 h-5 rounded mt-0.5 accent-[#7D4E00] flex-shrink-0"
             />
-            <span className="text-sm text-stone-700 leading-relaxed">
+            <span className="text-sm text-[#6B3F1F] leading-relaxed">
               I am willing to promote the RootsTalk PWA and help farmers in procuring inputs.
             </span>
           </label>
-          {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
+          {error && <p className="text-[#D4682E] text-xs mt-2">{error}</p>}
         </div>
 
         <button
@@ -182,7 +182,7 @@ export default function FacilitatorProfilePage() {
         </button>
 
         <button onClick={() => router.back()}
-          className="mt-3 w-full py-3.5 rounded-2xl text-stone-500 border border-stone-200 font-medium text-sm">
+          className="mt-3 w-full py-3.5 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
           Back
         </button>
       </div>

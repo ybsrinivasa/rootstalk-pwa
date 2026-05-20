@@ -58,22 +58,22 @@ interface DuplicateCheck {
 }
 
 const STATUS_COLOUR: Record<string, string> = {
-  PENDING: 'bg-slate-100 text-slate-600',
+  PENDING: 'bg-slate-100 text-[#6B3F1F]',
   AVAILABLE: 'bg-green-100 text-green-700',
   POSTPONED: 'bg-amber-100 text-amber-700',
-  NOT_AVAILABLE: 'bg-red-100 text-red-600',
+  NOT_AVAILABLE: 'bg-red-100 text-[#D4682E]',
   SENT_FOR_APPROVAL: 'bg-blue-100 text-blue-700',
   APPROVED: 'bg-emerald-100 text-emerald-700',
   REJECTED: 'bg-rose-100 text-rose-600',
-  NOT_NEEDED: 'bg-slate-100 text-slate-400',
-  SKIPPED: 'bg-slate-100 text-slate-400',
-  REMOVED: 'bg-slate-100 text-slate-400',
+  NOT_NEEDED: 'bg-slate-100 text-[#7A8C7E]',
+  SKIPPED: 'bg-slate-100 text-[#7A8C7E]',
+  REMOVED: 'bg-slate-100 text-[#7A8C7E]',
 }
 
 const PART_STATUS_COLOUR: Record<string, string> = {
-  PENDING: 'bg-slate-100 text-slate-600 border-slate-200',
+  PENDING: 'bg-slate-100 text-[#6B3F1F] border-[#DDD0B8]',
   RESOLVED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-  FAILED: 'bg-red-100 text-red-600 border-red-200',
+  FAILED: 'bg-red-100 text-[#D4682E] border-red-200',
 }
 
 export default function DealerOrderDetailPage() {
@@ -279,20 +279,20 @@ export default function DealerOrderDetailPage() {
 
   function renderItemRow(item: OrderItem, opts: { compactMeta?: boolean } = {}) {
     return (
-      <div key={item.id} className="bg-white rounded-xl border border-slate-100 p-3">
+      <div key={item.id} className="bg-white rounded-xl border border-[#DDD0B8] p-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex gap-1.5 flex-wrap">
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-slate-600'}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-[#6B3F1F]'}`}>
                 {item.status.replace(/_/g, ' ')}
               </span>
             </div>
             {!opts.compactMeta && (
-              <p className="text-[10px] text-slate-400 font-mono mt-1 truncate">{item.practice_id}</p>
+              <p className="text-[10px] text-[#7A8C7E] font-mono mt-1 truncate">{item.practice_id}</p>
             )}
-            {item.brand_name && <p className="text-sm font-semibold text-slate-800 mt-1">{item.brand_name}</p>}
+            {item.brand_name && <p className="text-sm font-semibold text-[#6B3F1F] mt-1">{item.brand_name}</p>}
             {item.given_volume != null && (
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#7A8C7E] mt-0.5">
                 {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
               </p>
             )}
@@ -307,7 +307,7 @@ export default function DealerOrderDetailPage() {
         )}
         {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
-            className="mt-2 w-full border border-slate-200 text-slate-700 text-xs font-medium py-2 rounded-lg">
+            className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
             Edit details
           </button>
         )}
@@ -319,7 +319,7 @@ export default function DealerOrderDetailPage() {
 
   function renderInlineForm(item: OrderItem) {
     return (
-      <div className="mt-3 space-y-2.5 bg-slate-50 rounded-xl p-3">
+      <div className="mt-3 space-y-2.5 bg-[#F5F0E8] rounded-xl p-3">
         {brandOptions?.type === 'LOCKED' ? (
           <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
             <p className="text-xs text-blue-500 font-medium mb-0.5">Locked brand (pre-specified)</p>
@@ -328,17 +328,17 @@ export default function DealerOrderDetailPage() {
         ) : (
           <div>
             <button onClick={() => setShowBrandSheet(true)}
-              className="w-full flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2.5 bg-white text-sm text-left">
-              <span className={itemEdit.brand_name ? 'text-slate-800 font-medium' : 'text-slate-400'}>
+              className="w-full flex items-center justify-between border border-[#DDD0B8] rounded-lg px-3 py-2.5 bg-white text-sm text-left">
+              <span className={itemEdit.brand_name ? 'text-[#6B3F1F] font-medium' : 'text-[#7A8C7E]'}>
                 {itemEdit.brand_name || 'Select brand…'}
               </span>
-              <span className="text-slate-400 text-xs">▼</span>
+              <span className="text-[#7A8C7E] text-xs">▼</span>
             </button>
             {!itemEdit.brand_name && (
               <input value={itemEdit.brand_name}
                 onChange={e => setItemEdit(f => ({ ...f, brand_name: e.target.value, brand_cosh_id: '' }))}
                 placeholder="Or type brand name manually"
-                className="w-full mt-1.5 border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+                className="w-full mt-1.5 border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
             )}
           </div>
         )}
@@ -352,10 +352,10 @@ export default function DealerOrderDetailPage() {
           <input type="number" value={itemEdit.given_volume}
             onChange={e => setItemEdit(f => ({ ...f, given_volume: e.target.value }))}
             placeholder="Qty *"
-            className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+            className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
           <select value={itemEdit.volume_unit}
             onChange={e => setItemEdit(f => ({ ...f, volume_unit: e.target.value }))}
-            className="border border-slate-200 rounded-lg px-2 py-2 text-sm bg-white focus:outline-none">
+            className="border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm bg-white focus:outline-none">
             <option value="kg">kg</option>
             <option value="L">L</option>
             <option value="g">g</option>
@@ -366,7 +366,7 @@ export default function DealerOrderDetailPage() {
           <input type="number" value={itemEdit.price}
             onChange={e => setItemEdit(f => ({ ...f, price: e.target.value }))}
             placeholder="₹ Price"
-            className="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+            className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
         </div>
         <div className="flex gap-2">
           <button onClick={() => markAvailable(item.id)}
@@ -375,7 +375,7 @@ export default function DealerOrderDetailPage() {
             Save details
           </button>
           <button onClick={() => { setEditingItem(null); setEstimate(null); setBrandOptions(null) }}
-            className="px-4 border border-slate-200 text-slate-600 text-xs font-medium py-2.5 rounded-xl">
+            className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
             Cancel
           </button>
         </div>
@@ -396,7 +396,7 @@ export default function DealerOrderDetailPage() {
           <p className="text-xs font-semibold text-[#085041] uppercase tracking-wider">
             Multi-step recommendation
           </p>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#7A8C7E] mt-0.5">
             Process each Part. {resolvedParts} of {totalParts} resolved
             {failedParts > 0 ? `, ${failedParts} returned to farmer` : ''}.
           </p>
@@ -416,7 +416,7 @@ export default function DealerOrderDetailPage() {
           {rel.parts.map(part => {
             const isExpanded = part.part_index === expandedPart
             return (
-              <div key={part.part_index} className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+              <div key={part.part_index} className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
                 <button
                   onClick={() => setExpandedPartByRelation(prev => ({
                     ...prev,
@@ -424,12 +424,12 @@ export default function DealerOrderDetailPage() {
                   }))}
                   className="w-full flex items-center justify-between px-4 py-3 text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-slate-800">Part {part.part_index}</span>
+                    <span className="text-sm font-bold text-[#6B3F1F]">Part {part.part_index}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${PART_STATUS_COLOUR[part.part_status]}`}>
                       {part.part_status}
                     </span>
                   </div>
-                  <span className="text-slate-400 text-xs">{isExpanded ? '▾' : '▸'}</span>
+                  <span className="text-[#7A8C7E] text-xs">{isExpanded ? '▾' : '▸'}</span>
                 </button>
 
                 {isExpanded && (
@@ -441,7 +441,7 @@ export default function DealerOrderDetailPage() {
                     )}
                     {part.options.filter(o => o.visible).map(opt => renderOption(rel.relation_id, part, opt))}
                     {part.options.some(o => !o.visible) && (
-                      <p className="text-[11px] text-slate-400 italic px-1">
+                      <p className="text-[11px] text-[#7A8C7E] italic px-1">
                         Some alternative Options will appear if no Locked-brand Option works.
                       </p>
                     )}
@@ -462,12 +462,12 @@ export default function DealerOrderDetailPage() {
     const tone =
       opt.option_status === 'AVAILABLE' ? 'border-emerald-300 bg-emerald-50/40' :
       opt.option_status === 'NOT_AVAILABLE' ? 'border-red-200 bg-red-50/30 opacity-70' :
-      'border-slate-200 bg-white'
+      'border-[#DDD0B8] bg-white'
     return (
       <div key={opt.option_index} className={`rounded-xl border ${tone} overflow-hidden`}>
         <div className="px-3 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-700">
+            <span className="text-xs font-semibold text-[#6B3F1F]">
               Option {opt.option_index}
               {opt.is_compound ? ' (compound)' : ''}
             </span>
@@ -476,7 +476,7 @@ export default function DealerOrderDetailPage() {
                 Locked brand
               </span>
             )}
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[opt.option_status] || 'bg-slate-100 text-slate-600'}`}>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[opt.option_status] || 'bg-slate-100 text-[#6B3F1F]'}`}>
               {opt.option_status.replace(/_/g, ' ')}
             </span>
           </div>
@@ -495,7 +495,7 @@ export default function DealerOrderDetailPage() {
               </button>
               <button
                 onClick={() => markOptionNotAvailable(relationId, part.part_index, opt.option_index)}
-                className="flex-1 bg-red-100 text-red-600 text-xs font-semibold py-2.5 rounded-lg">
+                className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-lg">
                 Mark Not Available
               </button>
             </div>
@@ -507,19 +507,19 @@ export default function DealerOrderDetailPage() {
 
   function renderStandaloneItem(item: OrderItem) {
     return (
-      <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div key={item.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
         <div className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex gap-1.5 flex-wrap">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-slate-600'}`}>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-[#6B3F1F]'}`}>
                   {item.status.replace(/_/g, ' ')}
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-mono mt-1.5 truncate">{item.practice_id}</p>
-              {item.brand_name && <p className="text-sm font-semibold text-slate-800 mt-1">{item.brand_name}</p>}
+              <p className="text-xs text-[#7A8C7E] font-mono mt-1.5 truncate">{item.practice_id}</p>
+              {item.brand_name && <p className="text-sm font-semibold text-[#6B3F1F] mt-1">{item.brand_name}</p>}
               {item.given_volume != null && (
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-[#7A8C7E] mt-0.5">
                   {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
                 </p>
               )}
@@ -537,7 +537,7 @@ export default function DealerOrderDetailPage() {
                 ⏰ Later
               </button>
               <button onClick={() => markUnavailable(item.id)}
-                className="flex-1 bg-red-100 text-red-600 text-xs font-semibold py-2.5 rounded-xl">
+                className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
                 ✗ N/A
               </button>
             </div>
@@ -550,20 +550,20 @@ export default function DealerOrderDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Order Details" activeRole="DEALER" />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         {/* Header card */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-100 mt-4">
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400">Order status</p>
-              <p className="font-semibold text-slate-800">{order.status.replace(/_/g, ' ')}</p>
+              <p className="text-xs text-[#7A8C7E]">Order status</p>
+              <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-400">Date range</p>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#7A8C7E]">Date range</p>
+              <p className="text-xs text-[#6B3F1F]">
                 {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
               </p>
             </div>
@@ -581,7 +581,7 @@ export default function DealerOrderDetailPage() {
         {/* Relations (Build C) */}
         {relations.length > 0 && (
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-slate-700 px-1">
+            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
               Multi-step recommendations ({relations.length})
             </p>
             {relations.map(renderRelation)}
@@ -591,7 +591,7 @@ export default function DealerOrderDetailPage() {
         {/* Standalone items */}
         {standaloneItems.length > 0 && (
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-slate-700 px-1">
+            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
               Standalone items ({standaloneItems.length})
             </p>
             {standaloneItems.map(renderStandaloneItem)}
@@ -631,16 +631,16 @@ export default function DealerOrderDetailPage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowBrandSheet(false)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl pb-10 max-h-[80vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <p className="font-bold text-slate-800">Select Brand</p>
-              <button onClick={() => setShowBrandSheet(false)} className="text-slate-400 text-xl">✕</button>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#DDD0B8]">
+              <p className="font-bold text-[#6B3F1F]">Select Brand</p>
+              <button onClick={() => setShowBrandSheet(false)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             {brandOptions.groups.every(g => g.brands.length === 0) ? (
               <div className="px-5 py-8 text-center">
-                <p className="text-slate-500 text-sm font-medium">No brands in system yet</p>
-                <p className="text-slate-400 text-xs mt-1">Enter brand name manually below, or report a missing brand</p>
+                <p className="text-[#7A8C7E] text-sm font-medium">No brands in system yet</p>
+                <p className="text-[#7A8C7E] text-xs mt-1">Enter brand name manually below, or report a missing brand</p>
                 <button onClick={() => setShowBrandSheet(false)}
-                  className="mt-4 px-4 py-2 bg-slate-100 rounded-xl text-sm text-slate-600 font-medium">
+                  className="mt-4 px-4 py-2 bg-slate-100 rounded-xl text-sm text-[#6B3F1F] font-medium">
                   Enter manually
                 </button>
               </div>
@@ -648,17 +648,17 @@ export default function DealerOrderDetailPage() {
               <div className="divide-y divide-slate-50">
                 {brandOptions.groups.map((group, gi) => group.brands.length > 0 && (
                   <div key={gi}>
-                    <p className="px-5 pt-4 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <p className="px-5 pt-4 pb-2 text-xs font-bold text-[#7A8C7E] uppercase tracking-wider">
                       {group.label}
                     </p>
                     {group.brands.map(brand => (
                       <button key={brand.cosh_id}
                         onClick={() => selectBrand(brand.cosh_id, brand.name)}
-                        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 text-left">
+                        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#F5F0E8] text-left">
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">{brand.name}</p>
+                          <p className="text-sm font-semibold text-[#6B3F1F]">{brand.name}</p>
                           {brand.manufacturer && (
-                            <p className="text-xs text-slate-400">{brand.manufacturer}</p>
+                            <p className="text-xs text-[#7A8C7E]">{brand.manufacturer}</p>
                           )}
                         </div>
                         {gi === 0 && (
@@ -680,16 +680,16 @@ export default function DealerOrderDetailPage() {
       {dupModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDupModal(null)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-bold text-slate-800">Possible duplicate purchase</p>
-            <p className="text-xs text-slate-600 mt-2">
+            <p className="text-sm font-bold text-[#6B3F1F]">Possible duplicate purchase</p>
+            <p className="text-xs text-[#6B3F1F] mt-2">
               Selecting this Option would result in purchasing
               {' '}
-              <span className="font-semibold text-slate-800">{dupModal.check.duplicate_input_name}</span>
+              <span className="font-semibold text-[#6B3F1F]">{dupModal.check.duplicate_input_name}</span>
               {' '}
               twice in this order.
             </p>
             {dupModal.check.suggested_alternatives.length > 0 ? (
-              <p className="text-xs text-slate-600 mt-2">
+              <p className="text-xs text-[#6B3F1F] mt-2">
                 Suggested alternative Option(s):
                 {' '}
                 <span className="font-semibold text-[#085041]">
@@ -697,13 +697,13 @@ export default function DealerOrderDetailPage() {
                 </span>
               </p>
             ) : (
-              <p className="text-xs text-slate-500 mt-2 italic">
+              <p className="text-xs text-[#7A8C7E] mt-2 italic">
                 No alternative Option in this Part avoids the duplicate.
               </p>
             )}
             <div className="flex gap-2 mt-4">
               <button onClick={() => setDupModal(null)}
-                className="flex-1 border border-slate-200 text-slate-700 text-sm font-medium py-2.5 rounded-xl">
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
                 Cancel
               </button>
               <button
@@ -723,28 +723,28 @@ export default function DealerOrderDetailPage() {
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="font-bold text-slate-800 text-base">Packing List</p>
+                <p className="font-bold text-[#6B3F1F] text-base">Packing List</p>
                 {packingList.farmer_name && (
-                  <p className="text-xs text-slate-500">{packingList.farmer_name} · {packingList.farmer_phone}</p>
+                  <p className="text-xs text-[#7A8C7E]">{packingList.farmer_name} · {packingList.farmer_phone}</p>
                 )}
               </div>
-              <button onClick={() => setShowPacking(false)} className="text-slate-400 text-xl">✕</button>
+              <button onClick={() => setShowPacking(false)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             <div className="space-y-2">
               {packingList.items.map((item, i) => (
-                <div key={item.id} className="flex items-center justify-between py-3 border-b border-slate-100">
+                <div key={item.id} className="flex items-center justify-between py-3 border-b border-[#DDD0B8]">
                   <div>
-                    <p className="text-sm font-semibold text-slate-800">{item.brand_name || `Item ${i + 1}`}</p>
-                    <p className="text-xs text-slate-500">{item.given_volume} {item.volume_unit}</p>
+                    <p className="text-sm font-semibold text-[#6B3F1F]">{item.brand_name || `Item ${i + 1}`}</p>
+                    <p className="text-xs text-[#7A8C7E]">{item.given_volume} {item.volume_unit}</p>
                   </div>
-                  {item.price != null && <p className="text-sm font-bold text-slate-700">₹{item.price}</p>}
+                  {item.price != null && <p className="text-sm font-bold text-[#6B3F1F]">₹{item.price}</p>}
                 </div>
               ))}
             </div>
             {packingList.total_amount > 0 && (
-              <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between">
-                <p className="font-semibold text-slate-700">Total</p>
-                <p className="font-bold text-lg text-slate-800">₹{packingList.total_amount.toFixed(2)}</p>
+              <div className="mt-4 pt-3 border-t border-[#DDD0B8] flex items-center justify-between">
+                <p className="font-semibold text-[#6B3F1F]">Total</p>
+                <p className="font-bold text-lg text-[#6B3F1F]">₹{packingList.total_amount.toFixed(2)}</p>
               </div>
             )}
           </div>

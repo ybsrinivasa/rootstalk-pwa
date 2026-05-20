@@ -56,13 +56,13 @@ export default function BecomeFacilitatorPage() {
           </svg>
         </div>
 
-        <h2 className="text-stone-900 text-2xl font-semibold">Become a Facilitator</h2>
-        <p className="text-stone-500 text-sm mt-2 leading-relaxed">
+        <h2 className="text-[#6B3F1F] text-2xl font-semibold">Become a Facilitator</h2>
+        <p className="text-[#7A8C7E] text-sm mt-2 leading-relaxed">
           As a facilitator, you help farmers by forwarding their orders to dealers and ensuring last-mile delivery. You also assist farmers in subscribing to company advisories.
         </p>
 
         <div className="mt-6 space-y-3">
-          <p className="text-stone-400 text-xs font-semibold uppercase tracking-widest">What facilitators can do</p>
+          <p className="text-[#7A8C7E] text-xs font-semibold uppercase tracking-widest">What facilitators can do</p>
           {[
             'Accept and route farmer orders to dealers',
             'Coordinate last-mile delivery to farmers',
@@ -76,7 +76,7 @@ export default function BecomeFacilitatorPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                 </svg>
               </div>
-              <p className="text-stone-700 text-sm">{item}</p>
+              <p className="text-[#6B3F1F] text-sm">{item}</p>
             </div>
           ))}
         </div>
@@ -101,7 +101,7 @@ export default function BecomeFacilitatorPage() {
           {claiming ? 'Registering…' : 'Register as a Facilitator'}
         </button>
         <button onClick={() => router.back()}
-          className="mt-3 w-full py-3 rounded-2xl text-stone-500 border border-stone-200 font-medium text-sm">
+          className="mt-3 w-full py-3 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
           Cancel
         </button>
       </div>

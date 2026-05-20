@@ -31,10 +31,10 @@ interface PendingAssignment {
 function SeedlingIllustration() {
   return (
     <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-      <line x1="30" y1="52" x2="30" y2="20" stroke="#1A5C2A" strokeWidth="2.5" strokeLinecap="round"/>
-      <path d="M30 35 C30 25 18 18 12 22 C18 22 28 28 30 35Z" fill="#1A5C2A" opacity="0.8"/>
-      <path d="M30 28 C30 18 42 12 48 16 C42 16 32 22 30 28Z" fill="#1A5C2A"/>
-      <ellipse cx="30" cy="53" rx="8" ry="2" fill="#1A5C2A" opacity="0.2"/>
+      <line x1="30" y1="52" x2="30" y2="20" stroke="#3A7D44" strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M30 35 C30 25 18 18 12 22 C18 22 28 28 30 35Z" fill="#3A7D44" opacity="0.8"/>
+      <path d="M30 28 C30 18 42 12 48 16 C42 16 32 22 30 28Z" fill="#3A7D44"/>
+      <ellipse cx="30" cy="53" rx="8" ry="2" fill="#3A7D44" opacity="0.2"/>
     </svg>
   )
 }

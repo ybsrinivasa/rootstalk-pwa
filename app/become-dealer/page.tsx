@@ -58,13 +58,13 @@ export default function BecomeDealerPage() {
           </svg>
         </div>
 
-        <h2 className="text-stone-900 text-2xl font-semibold">Become a Dealer</h2>
-        <p className="text-stone-500 text-sm mt-2 leading-relaxed">
+        <h2 className="text-[#6B3F1F] text-2xl font-semibold">Become a Dealer</h2>
+        <p className="text-[#7A8C7E] text-sm mt-2 leading-relaxed">
           As a dealer, you receive purchase orders from farmers and supply recommended agricultural inputs.
         </p>
 
         <div className="mt-6 space-y-3">
-          <p className="text-stone-400 text-xs font-semibold uppercase tracking-widest">What dealers can do</p>
+          <p className="text-[#7A8C7E] text-xs font-semibold uppercase tracking-widest">What dealers can do</p>
           {[
             'Receive and process farmer orders',
             'Select brands and enter volumes',
@@ -79,7 +79,7 @@ export default function BecomeDealerPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                 </svg>
               </div>
-              <p className="text-stone-700 text-sm">{item}</p>
+              <p className="text-[#6B3F1F] text-sm">{item}</p>
             </div>
           ))}
         </div>
@@ -105,7 +105,7 @@ export default function BecomeDealerPage() {
           {claiming ? 'Registering…' : 'Register as a Dealer'}
         </button>
         <button onClick={() => router.back()}
-          className="mt-3 w-full py-3 rounded-2xl text-stone-500 border border-stone-200 font-medium text-sm">
+          className="mt-3 w-full py-3 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
           Cancel
         </button>
       </div>

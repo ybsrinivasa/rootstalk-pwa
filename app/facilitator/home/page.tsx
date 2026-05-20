@@ -34,7 +34,7 @@ export default function FacilitatorHomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       {/* Ochre header */}
       <div className="sticky top-0 z-30 px-4 py-3 flex items-center justify-between"
         style={{ background: COLOUR }}>
@@ -47,8 +47,8 @@ export default function FacilitatorHomePage() {
 
       <div className="pb-24 px-4 pt-4 space-y-4 max-w-lg mx-auto">
         <div>
-          <p className="text-xl font-bold text-slate-900">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-xl font-bold text-[#6B3F1F]">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
+          <p className="text-[#7A8C7E] text-sm mt-0.5">
             {pendingCount > 0 ? `${pendingCount} order${pendingCount > 1 ? 's' : ''} to process` : 'No pending orders'}
           </p>
         </div>
@@ -84,24 +84,24 @@ export default function FacilitatorHomePage() {
         {/* Quick actions */}
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => router.push('/facilitator/promoted-farmers')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">👨‍🌾</span>
-            <p className="text-sm font-semibold text-slate-800 mt-2">My Farmers</p>
-            <p className="text-xs text-slate-400">{loading ? '…' : `${promotedCount} promoted`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">My Farmers</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${promotedCount} promoted`}</p>
           </button>
           <button onClick={() => router.push('/facilitator/payments')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">💳</span>
-            <p className="text-sm font-semibold text-slate-800 mt-2">Payments</p>
-            <p className="text-xs text-slate-400">Farmer subscriptions</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Payments</p>
+            <p className="text-xs text-[#7A8C7E]">Farmer subscriptions</p>
           </button>
           <button onClick={() => router.push('/facilitator/profile')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <svg className="w-6 h-6 text-[#7D4E00]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>
             </svg>
-            <p className="text-sm font-semibold text-slate-800 mt-2">Service Profile</p>
-            <p className="text-xs text-slate-400">My declaration</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Service Profile</p>
+            <p className="text-xs text-[#7A8C7E]">My declaration</p>
           </button>
         </div>
       </div>

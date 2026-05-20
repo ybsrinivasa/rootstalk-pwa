@@ -26,7 +26,7 @@ interface ImageAnalysis {
   description: string; symptoms_observed: string[]
 }
 
-const COLOUR = '#1A5C2A'
+const COLOUR = '#3A7D44'
 
 export default function DiagnosisPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -228,7 +228,7 @@ export default function DiagnosisPage() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Diagnose Crop Problem" activeRole="FARMER" />
       <div className="pt-16 pb-20 px-4">
 
@@ -236,12 +236,12 @@ export default function DiagnosisPage() {
         {stage === 'select_part' && (
           <div className="mt-4 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Which part of the plant is affected?</h2>
-              <p className="text-slate-400 text-sm mt-0.5">Select the part where you see the problem</p>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">Which part of the plant is affected?</h2>
+              <p className="text-[#7A8C7E] text-sm mt-0.5">Select the part where you see the problem</p>
             </div>
             {parts.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 text-center border border-slate-100">
-                <p className="text-slate-500 text-sm">No diagnostic data available for this crop yet.</p>
+              <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
+                <p className="text-[#7A8C7E] text-sm">No diagnostic data available for this crop yet.</p>
                 <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
                   className="mt-4 text-white font-semibold px-5 py-2.5 rounded-xl text-sm"
                   style={{ background: COLOUR }}>
@@ -252,15 +252,15 @@ export default function DiagnosisPage() {
               <div className="grid grid-cols-2 gap-3">
                 {parts.map(part => (
                   <button key={part.cosh_id} onClick={() => startDiagnosis(part)}
-                    className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm text-left active:scale-95 transition-transform">
+                    className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform">
                     <span className="text-3xl">{getPartEmoji(part.cosh_id)}</span>
-                    <p className="font-medium text-slate-800 mt-2">{part.display_name}</p>
+                    <p className="font-medium text-[#6B3F1F] mt-2">{part.display_name}</p>
                   </button>
                 ))}
               </div>
             )}
             <button onClick={() => router.back()}
-              className="w-full py-3 border border-slate-200 text-slate-600 rounded-2xl text-sm">
+              className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
               Cancel
             </button>
           </div>
@@ -274,26 +274,26 @@ export default function DiagnosisPage() {
               <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ background: COLOUR, width: `${Math.max(10, 100 - remainingCount * 10)}%` }} />
               </div>
-              <span className="text-xs text-slate-400">{remainingCount} possible</span>
+              <span className="text-xs text-[#7A8C7E]">{remainingCount} possible</span>
             </div>
 
             {/* Question card */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+            <div className="bg-white rounded-3xl p-6 border border-[#DDD0B8] shadow-sm">
               <div className="text-center mb-6">
                 <span className="text-5xl">{getPartEmoji(currentQuestion.plant_part_cosh_id)}</span>
                 <div className="flex items-center justify-center gap-2 mt-4">
-                  <p className="text-xl font-bold text-slate-900 leading-tight">
+                  <p className="text-xl font-bold text-[#6B3F1F] leading-tight">
                     {currentQuestion.display_text}
                   </p>
                   <button
                     type="button"
                     onClick={openExplain}
                     aria-label="Explain this question"
-                    className="shrink-0 w-7 h-7 rounded-full border border-slate-300 text-slate-500 text-xs font-semibold active:scale-95 transition-transform">
+                    className="shrink-0 w-7 h-7 rounded-full border border-[#DDD0B8] text-[#7A8C7E] text-xs font-semibold active:scale-95 transition-transform">
                     ⓘ
                   </button>
                 </div>
-                <p className="text-slate-400 text-xs mt-2">
+                <p className="text-[#7A8C7E] text-xs mt-2">
                   {currentQuestion.plant_part_cosh_id.replace(/_/g, ' ')} — {currentQuestion.symptom_cosh_id.replace(/_/g, ' ')}
                 </p>
                 {/* Google Images link — pre-formed search [Crop] [Part] [Symptom] */}
@@ -327,8 +327,8 @@ export default function DiagnosisPage() {
             </div>
 
             {/* Camera: take photo for Claude analysis */}
-            <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
-              <p className="text-xs font-semibold text-slate-500 mb-2">📷 Or take a photo for AI identification</p>
+            <div className="bg-[#F5F0E8] rounded-2xl p-4 border border-[#DDD0B8]">
+              <p className="text-xs font-semibold text-[#7A8C7E] mb-2">📷 Or take a photo for AI identification</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -340,18 +340,18 @@ export default function DiagnosisPage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={analyzingImage}
-                className="w-full py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-medium disabled:opacity-50">
+                className="w-full py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50">
                 {analyzingImage ? '🔄 Analysing with Claude AI…' : '📸 Take Photo of Problem'}
               </button>
 
               {/* Claude analysis result */}
               {imageAnalysis && (
-                <div className={`mt-3 rounded-xl p-3 border ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-50 border-green-200' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                <div className={`mt-3 rounded-xl p-3 border ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-50 border-green-200' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 'bg-[#F5F0E8] border-[#DDD0B8]'}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-slate-800">{imageAnalysis.problem_name}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{imageAnalysis.description}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                      <p className="text-sm font-semibold text-[#6B3F1F]">{imageAnalysis.problem_name}</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">{imageAnalysis.description}</p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
                         {imageAnalysis.confidence} confidence
                       </span>
                     </div>
@@ -371,16 +371,16 @@ export default function DiagnosisPage() {
             {/* Escape options */}
             <div className="flex gap-2">
               <button onClick={dontKnow}
-                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 text-sm">
+                className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
                 🤷 I Don't Know
               </button>
               <button onClick={knowProblem}
-                className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-500 text-sm">
+                className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
                 🔍 I Know the Problem
               </button>
             </div>
 
-            <p className="text-center text-xs text-slate-300">{questionHistory.length + 1} questions answered</p>
+            <p className="text-center text-xs text-[#DDD0B8]">{questionHistory.length + 1} questions answered</p>
           </div>
         )}
 
@@ -396,14 +396,14 @@ export default function DiagnosisPage() {
               className="bg-white w-full max-w-md rounded-t-3xl p-5 shadow-xl">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">🤖</span>
-                <p className="text-sm font-semibold text-slate-700">How to check this symptom</p>
+                <p className="text-sm font-semibold text-[#6B3F1F]">How to check this symptom</p>
               </div>
               {explainLoading ? (
                 <div className="py-4 flex justify-center">
                   <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: COLOUR }} />
                 </div>
               ) : (
-                <p className="text-sm text-slate-700 leading-relaxed">{explainText}</p>
+                <p className="text-sm text-[#6B3F1F] leading-relaxed">{explainText}</p>
               )}
               <button
                 onClick={() => setExplainOpen(false)}
@@ -419,19 +419,19 @@ export default function DiagnosisPage() {
         {stage === 'know_problem' && (
           <div className="mt-4 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Select the Problem</h2>
-              <p className="text-slate-400 text-sm mt-0.5">Choose the problem you have identified</p>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">Select the Problem</h2>
+              <p className="text-[#7A8C7E] text-sm mt-0.5">Choose the problem you have identified</p>
             </div>
             {problems.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 text-sm">No problems found for this plant part</div>
+              <div className="text-center py-8 text-[#7A8C7E] text-sm">No problems found for this plant part</div>
             ) : (
               <div className="space-y-2">
                 {problems.map(p => (
-                  <div key={p.cosh_id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div key={p.cosh_id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
                     <button onClick={() => selectKnownProblem(p.cosh_id)}
                       className="w-full p-4 text-left active:scale-98 transition-transform">
-                      <p className="font-medium text-slate-800">{p.name}</p>
-                      <p className="text-xs text-slate-400 font-mono mt-0.5">{p.cosh_id}</p>
+                      <p className="font-medium text-[#6B3F1F]">{p.name}</p>
+                      <p className="text-xs text-[#7A8C7E] font-mono mt-0.5">{p.cosh_id}</p>
                     </button>
                     <a
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
@@ -447,7 +447,7 @@ export default function DiagnosisPage() {
               </div>
             )}
             <button onClick={() => setStage('questioning')}
-              className="w-full py-3 border border-slate-200 text-slate-600 rounded-2xl text-sm">
+              className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
               ← Back to Questions
             </button>
           </div>
@@ -456,16 +456,16 @@ export default function DiagnosisPage() {
         {/* Diagnosis result */}
         {stage === 'diagnosed' && (
           <div className="mt-4 space-y-4">
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+            <div className="bg-white rounded-3xl p-6 border border-[#DDD0B8] shadow-sm">
               <div className="text-center">
                 <span className="text-5xl">🔬</span>
-                <h2 className="text-xl font-bold text-slate-900 mt-4">Problem Identified</h2>
+                <h2 className="text-xl font-bold text-[#6B3F1F] mt-4">Problem Identified</h2>
                 {diagnosis ? (
                   <>
                     <p className="text-2xl font-bold mt-3" style={{ color: COLOUR }}>
                       {diagnosis.name}
                     </p>
-                    <p className="text-slate-400 text-xs mt-1 font-mono">{diagnosis.cosh_id}</p>
+                    <p className="text-[#7A8C7E] text-xs mt-1 font-mono">{diagnosis.cosh_id}</p>
                     {/* Google Images link — pre-formed search [Crop] [Problem name] */}
                     <a
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
@@ -478,7 +478,7 @@ export default function DiagnosisPage() {
                     </a>
                   </>
                 ) : (
-                  <p className="text-slate-600 mt-3">Problem recorded</p>
+                  <p className="text-[#6B3F1F] mt-3">Problem recorded</p>
                 )}
               </div>
 
@@ -508,7 +508,7 @@ export default function DiagnosisPage() {
                 View Treatment Recommendations →
               </button>
               <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
-                className="w-full py-3 rounded-2xl border border-slate-200 text-slate-600 text-sm">
+                className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
                 Also ask a FarmPundit expert
               </button>
             </div>

@@ -88,14 +88,14 @@ export default function PunditRegisterPage() {
   }
 
   const StepDot = ({ n }: { n: number }) => (
-    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= n ? 'text-white' : 'bg-slate-100 text-slate-400'}`}
+    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${step >= n ? 'text-white' : 'bg-slate-100 text-[#7A8C7E]'}`}
       style={step >= n ? { background: COLOUR } : {}}>
       {n}
     </div>
   )
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Register as FarmPundit" activeRole="FARMER" />
       <div className="pt-16 pb-20 px-4">
         {/* Steps */}
@@ -112,49 +112,49 @@ export default function PunditRegisterPage() {
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Professional Profile</h2>
-                <p className="text-slate-400 text-sm mt-0.5">Tell farmers about your qualifications</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">Professional Profile</h2>
+                <p className="text-[#7A8C7E] text-sm mt-0.5">Tell farmers about your qualifications</p>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-100 space-y-4">
+              <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Email</label>
                   <input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                     required placeholder="your@email.com"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2"
+                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2"
                     style={{ '--tw-ring-color': COLOUR } as React.CSSProperties} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Education</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Education</label>
                   <select value={form.education} onChange={e => setForm(f => ({ ...f, education: e.target.value }))}
-                    required className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none">
+                    required className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none">
                     <option value="">Select…</option>
                     {EDUCATION_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Years of Experience</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Years of Experience</label>
                   <select value={form.experience_band} onChange={e => setForm(f => ({ ...f, experience_band: e.target.value }))}
-                    required className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none">
+                    required className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none">
                     <option value="">Select…</option>
                     {EXPERIENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Support Approach</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Support Approach</label>
                   {SUPPORT_METHODS.map(m => (
                     <label key={m.value} className="flex items-center gap-3 p-2 cursor-pointer">
                       <input type="radio" name="support_method" value={m.value}
                         checked={form.support_method === m.value}
                         onChange={() => setForm(f => ({ ...f, support_method: m.value }))} />
-                      <span className="text-sm text-slate-700">{m.label}</span>
+                      <span className="text-sm text-[#6B3F1F]">{m.label}</span>
                     </label>
                   ))}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Organisation (optional)</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Organisation (optional)</label>
                   <input value={form.organisation_name} onChange={e => setForm(f => ({ ...f, organisation_name: e.target.value }))}
                     placeholder="University, Research Institute, NGO…"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
                 </div>
               </div>
               <button type="button" onClick={() => setStep(2)}
@@ -169,28 +169,28 @@ export default function PunditRegisterPage() {
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Expertise & Crops</h2>
-                <p className="text-slate-400 text-sm">What are you expert in?</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">Expertise & Crops</h2>
+                <p className="text-[#7A8C7E] text-sm">What are you expert in?</p>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-100 space-y-4">
+              <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-slate-700 mb-3">Expertise Domains</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">Expertise Domains</p>
                   <div className="space-y-2">
                     {EXPERTISE_DOMAINS.map(d => (
-                      <label key={d} className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 cursor-pointer">
+                      <label key={d} className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#F5F0E8] cursor-pointer">
                         <input type="checkbox" checked={form.expertise_domains.includes(d)}
                           onChange={() => toggle('expertise_domains', d)} className="w-4 h-4 rounded" />
-                        <span className="text-sm text-slate-700 capitalize">{d.replace(/_/g, ' ')}</span>
+                        <span className="text-sm text-[#6B3F1F] capitalize">{d.replace(/_/g, ' ')}</span>
                       </label>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-700 mb-3">Crop Groups of Interest</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">Crop Groups of Interest</p>
                   <div className="flex flex-wrap gap-2">
                     {CROP_GROUPS.map(cg => (
                       <button key={cg} type="button" onClick={() => toggle('crop_groups', cg)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${form.crop_groups.includes(cg) ? 'text-white border-transparent' : 'border-slate-200 text-slate-600'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${form.crop_groups.includes(cg) ? 'text-white border-transparent' : 'border-[#DDD0B8] text-[#6B3F1F]'}`}
                         style={form.crop_groups.includes(cg) ? { background: COLOUR } : {}}>
                         {cg.replace(/_/g, ' ')}
                       </button>
@@ -200,7 +200,7 @@ export default function PunditRegisterPage() {
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(1)}
-                  className="flex-1 border border-slate-200 text-slate-700 font-medium py-3.5 rounded-2xl text-sm">← Back</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">← Back</button>
                 <button type="button" onClick={() => setStep(3)}
                   className="flex-1 text-white font-semibold py-3.5 rounded-2xl"
                   style={{ background: COLOUR }}>Next →</button>
@@ -211,16 +211,16 @@ export default function PunditRegisterPage() {
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Languages & Area</h2>
-                <p className="text-slate-400 text-sm">Where and how do you communicate?</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">Languages & Area</h2>
+                <p className="text-[#7A8C7E] text-sm">Where and how do you communicate?</p>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-100 space-y-4">
+              <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-slate-700 mb-3">Languages (select all you can advise in)</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">Languages (select all you can advise in)</p>
                   <div className="flex flex-wrap gap-2">
                     {LANGUAGES.map(l => (
                       <button key={l.code} type="button" onClick={() => toggle('languages', l.code)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${form.languages.includes(l.code) ? 'text-white border-transparent' : 'border-slate-200 text-slate-600'}`}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${form.languages.includes(l.code) ? 'text-white border-transparent' : 'border-[#DDD0B8] text-[#6B3F1F]'}`}
                         style={form.languages.includes(l.code) ? { background: COLOUR } : {}}>
                         {l.name}
                       </button>
@@ -228,7 +228,7 @@ export default function PunditRegisterPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-700 mb-3">Support Area (State/District Cosh IDs)</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">Support Area (State/District Cosh IDs)</p>
                   {form.support_areas.map((area, idx) => (
                     <div key={idx} className="flex gap-2 mb-2">
                       <input value={area.state_cosh_id}
@@ -238,7 +238,7 @@ export default function PunditRegisterPage() {
                           return { ...f, support_areas: areas }
                         })}
                         placeholder="state_karnataka"
-                        className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none" />
+                        className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm font-mono focus:outline-none" />
                       <input value={area.district_cosh_id}
                         onChange={e => setForm(f => {
                           const areas = [...f.support_areas]
@@ -246,7 +246,7 @@ export default function PunditRegisterPage() {
                           return { ...f, support_areas: areas }
                         })}
                         placeholder="district_mysuru (optional)"
-                        className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none" />
+                        className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm font-mono focus:outline-none" />
                     </div>
                   ))}
                   <button type="button"
@@ -258,7 +258,7 @@ export default function PunditRegisterPage() {
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(2)}
-                  className="flex-1 border border-slate-200 text-slate-700 font-medium py-3.5 rounded-2xl text-sm">← Back</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">← Back</button>
                 <button type="button" onClick={() => setStep(4)}
                   className="flex-1 text-white font-semibold py-3.5 rounded-2xl"
                   style={{ background: COLOUR }}>Next →</button>
@@ -269,10 +269,10 @@ export default function PunditRegisterPage() {
           {step === 4 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Declaration</h2>
-                <p className="text-slate-400 text-sm">Almost done</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">Declaration</h2>
+                <p className="text-[#7A8C7E] text-sm">Almost done</p>
               </div>
-              <div className="bg-white rounded-2xl p-5 border border-slate-100 space-y-4 text-sm text-slate-600 leading-relaxed">
+              <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4 text-sm text-[#6B3F1F] leading-relaxed">
                 <p>By registering as a FarmPundit on RootsTalk, I declare that:</p>
                 <ul className="list-disc pl-5 space-y-1">
                   <li>All information provided is accurate and truthful</li>
@@ -285,13 +285,13 @@ export default function PunditRegisterPage() {
                   <input type="checkbox" checked={form.declaration_accepted}
                     onChange={e => setForm(f => ({ ...f, declaration_accepted: e.target.checked }))}
                     className="w-5 h-5 rounded mt-0.5" />
-                  <span className="font-medium text-slate-800">I accept and agree to the above declaration</span>
+                  <span className="font-medium text-[#6B3F1F]">I accept and agree to the above declaration</span>
                 </label>
               </div>
-              {error && <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
+              {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(3)}
-                  className="flex-1 border border-slate-200 text-slate-700 font-medium py-3.5 rounded-2xl text-sm">← Back</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">← Back</button>
                 <button type="submit" disabled={!form.declaration_accepted || submitting}
                   className="flex-1 text-white font-semibold py-3.5 rounded-2xl disabled:opacity-50"
                   style={{ background: COLOUR }}>

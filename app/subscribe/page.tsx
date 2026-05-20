@@ -48,7 +48,7 @@ function ProgressBar({ stage }: { stage: Stage }) {
         <div
           key={s}
           className="flex-1 h-1 rounded-full"
-          style={{ background: i <= idx ? '#1A5C2A' : '#e7e5e4' }}
+          style={{ background: i <= idx ? '#3A7D44' : '#e7e5e4' }}
         />
       ))}
     </div>
@@ -56,7 +56,7 @@ function ProgressBar({ stage }: { stage: Stage }) {
 }
 
 function CompanyLogo({ company }: { company: CompanyInfo }) {
-  const colour = company.primary_colour || '#1A5C2A'
+  const colour = company.primary_colour || '#3A7D44'
   const initials = (company.display_name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
   return (
     <div className="flex items-center gap-3 px-4 py-4" style={{ background: colour }}>
@@ -233,7 +233,7 @@ export default function SubscribePage() {
         description: 'Crop Advisory Subscription',
         order_id: order.razorpay_order_id,
         prefill: { name: user?.name || '', contact: user?.phone || '' },
-        theme: { color: '#1A5C2A' },
+        theme: { color: '#3A7D44' },
         handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
             await api.post(`/farmer/subscriptions/${subscription.id}/payment/verify`, {
@@ -324,12 +324,12 @@ export default function SubscribePage() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="min-h-screen bg-stone-50">
+      <div className="min-h-screen bg-[#F5F0E8]">
 
         {/* Done stage: full-screen green */}
         {stage === 'done' ? (
           <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
-            style={{ background: 'linear-gradient(160deg, #065f46, #1A5C2A)' }}>
+            style={{ background: 'linear-gradient(160deg, #065f46, #3A7D44)' }}>
             <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6">
               <span className="text-3xl text-green-700">✓</span>
             </div>
@@ -343,7 +343,7 @@ export default function SubscribePage() {
             <button
               onClick={() => router.replace('/home')}
               className="mt-10 py-4 px-10 rounded-2xl font-semibold bg-white"
-              style={{ color: '#1A5C2A' }}>
+              style={{ color: '#3A7D44' }}>
               Go to your advisory →
             </button>
           </div>
@@ -355,19 +355,19 @@ export default function SubscribePage() {
               {/* Back button */}
               {stage !== 'location' && (
                 <button onClick={goBack}
-                  className="mt-4 mb-2 flex items-center gap-1 text-stone-500 text-sm">
+                  className="mt-4 mb-2 flex items-center gap-1 text-[#7A8C7E] text-sm">
                   ← Back
                 </button>
               )}
 
-              <div className="bg-white rounded-2xl shadow-sm border border-stone-100 mt-2 p-5">
+              <div className="bg-white rounded-2xl shadow-sm border border-[#DDD0B8] mt-2 p-5">
                 <ProgressBar stage={stage} />
 
                 {/* ── STAGE 1: Location ── */}
                 {stage === 'location' && (
                   <div>
-                    <h2 className="text-lg font-bold text-stone-900">Where is your farm?</h2>
-                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">Where is your farm?</h2>
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
                       We&apos;ll find advisories available in your area
                     </p>
 
@@ -384,32 +384,32 @@ export default function SubscribePage() {
 
                     <div className="space-y-3">
                       <div>
-                        <label className="text-xs text-stone-500 font-medium mb-1 block">State</label>
+                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">State</label>
                         <input
                           value={stateName}
                           onChange={e => setStateName(e.target.value)}
                           placeholder="e.g. odisha"
-                          className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                          className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-stone-500 font-medium mb-1 block">District</label>
+                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">District</label>
                         <input
                           value={district}
                           onChange={e => setDistrict(e.target.value)}
                           placeholder="e.g. cuttack"
-                          className="w-full border border-stone-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                          className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                       </div>
                     </div>
 
-                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                    {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
 
                     <button
                       onClick={proceedFromLocation}
                       disabled={busy || !district.trim()}
                       className="mt-5 w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-                      style={{ background: '#1A5C2A' }}>
+                      style={{ background: '#3A7D44' }}>
                       {busy ? 'Loading…' : 'Find advisories →'}
                     </button>
                   </div>
@@ -418,14 +418,14 @@ export default function SubscribePage() {
                 {/* ── STAGE 2: Crop Selection ── */}
                 {stage === 'crop' && (
                   <div>
-                    <h2 className="text-lg font-bold text-stone-900">Select your crop</h2>
-                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">Select your crop</h2>
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
                       Advisories available in your area
                     </p>
 
                     {crops.length === 0 ? (
                       <div className="text-center py-10">
-                        <p className="text-stone-400 text-sm">
+                        <p className="text-[#7A8C7E] text-sm">
                           No advisories are available in your area yet. Check back soon.
                         </p>
                         <button onClick={() => setStage('location')}
@@ -439,33 +439,33 @@ export default function SubscribePage() {
                           <button
                             key={c.crop_cosh_id}
                             onClick={() => selectCrop(c.crop_cosh_id)}
-                            className="w-full text-left px-4 py-4 rounded-2xl border-2 border-stone-100 hover:border-green-200 hover:bg-green-50 transition-all active:scale-[0.98]">
-                            <p className="font-medium text-stone-800">{formatCropName(c.crop_cosh_id)}</p>
+                            className="w-full text-left px-4 py-4 rounded-2xl border-2 border-[#DDD0B8] hover:border-green-200 hover:bg-green-50 transition-all active:scale-[0.98]">
+                            <p className="font-medium text-[#6B3F1F]">{formatCropName(c.crop_cosh_id)}</p>
                           </button>
                         ))}
                       </div>
                     )}
 
-                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
-                    {busy && <div className="h-12 bg-stone-50 rounded-2xl animate-pulse mt-2" />}
+                    {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
+                    {busy && <div className="h-12 bg-[#F5F0E8] rounded-2xl animate-pulse mt-2" />}
                   </div>
                 )}
 
                 {/* ── STAGE 3: Company Selection ── */}
                 {stage === 'company' && (
                   <div>
-                    <h2 className="text-lg font-bold text-stone-900">Choose a company</h2>
-                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">Choose a company</h2>
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
                       Companies offering {cropDisplay} advisories in your area
                     </p>
 
                     {busy ? (
                       <div className="space-y-3">
-                        {[1, 2].map(i => <div key={i} className="h-20 bg-stone-50 rounded-2xl animate-pulse" />)}
+                        {[1, 2].map(i => <div key={i} className="h-20 bg-[#F5F0E8] rounded-2xl animate-pulse" />)}
                       </div>
                     ) : companies.length === 0 ? (
                       <div className="text-center py-10">
-                        <p className="text-stone-400 text-sm">
+                        <p className="text-[#7A8C7E] text-sm">
                           No company is offering an advisory for this crop in your area yet.
                         </p>
                       </div>
@@ -473,16 +473,16 @@ export default function SubscribePage() {
                       <div className="space-y-3">
                         {companies.map(c => (
                           <div key={c.id}
-                            className="rounded-2xl overflow-hidden border border-stone-100 shadow-sm">
+                            className="rounded-2xl overflow-hidden border border-[#DDD0B8] shadow-sm">
                             <CompanyLogo company={c} />
                             {c.tagline && (
-                              <p className="text-stone-500 text-sm px-4 py-2">{c.tagline}</p>
+                              <p className="text-[#7A8C7E] text-sm px-4 py-2">{c.tagline}</p>
                             )}
                             <div className="px-4 pb-4 pt-1">
                               <button
                                 onClick={() => selectCompany(c)}
                                 className="w-full py-3 rounded-xl text-white text-sm font-semibold"
-                                style={{ background: c.primary_colour || '#1A5C2A' }}>
+                                style={{ background: c.primary_colour || '#3A7D44' }}>
                                 Explore advisory →
                               </button>
                             </div>
@@ -491,35 +491,35 @@ export default function SubscribePage() {
                       </div>
                     )}
 
-                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                    {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
                   </div>
                 )}
 
                 {/* ── STAGE 4: Guided PoP Questions ── */}
                 {stage === 'guided' && (
                   <div>
-                    <h2 className="text-lg font-bold text-stone-900">
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">
                       {guidedQuestionIndex === 0 ? 'Tell us about your farm' : 'One more thing'}
                     </h2>
-                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
                       We&apos;ll find the right advisory for you
                     </p>
 
                     {busy ? (
                       <div className="space-y-3">
-                        <div className="h-6 w-2/3 bg-stone-50 rounded animate-pulse" />
+                        <div className="h-6 w-2/3 bg-[#F5F0E8] rounded animate-pulse" />
                         <div className="grid grid-cols-2 gap-3">
-                          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-stone-50 rounded-2xl animate-pulse" />)}
+                          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-[#F5F0E8] rounded-2xl animate-pulse" />)}
                         </div>
                       </div>
                     ) : guidedStep && !guidedStep.done && guidedStep.parameter ? (
                       <div>
                         {guidedStep.remaining_count != null && (
-                          <p className="text-xs text-stone-400 mb-2">
+                          <p className="text-xs text-[#7A8C7E] mb-2">
                             Narrowing from {guidedStep.remaining_count} options
                           </p>
                         )}
-                        <p className="text-stone-800 font-semibold text-lg mb-4">
+                        <p className="text-[#6B3F1F] font-semibold text-lg mb-4">
                           {guidedStep.parameter.name}
                         </p>
                         <div className="grid grid-cols-2 gap-3">
@@ -527,7 +527,7 @@ export default function SubscribePage() {
                             <button
                               key={v.id}
                               onClick={() => selectVariable(guidedStep.parameter!.id, v.id, guidedStep.parameter!.name, v.name)}
-                              className="py-4 px-3 rounded-2xl border-2 border-stone-100 text-center text-sm font-medium text-stone-700 hover:border-green-400 hover:bg-green-50 transition-all active:scale-[0.97]">
+                              className="py-4 px-3 rounded-2xl border-2 border-[#DDD0B8] text-center text-sm font-medium text-[#6B3F1F] hover:border-green-400 hover:bg-green-50 transition-all active:scale-[0.97]">
                               {v.name}
                             </button>
                           ))}
@@ -536,14 +536,14 @@ export default function SubscribePage() {
                           <button
                             onClick={startOver}
                             disabled={busy}
-                            className="mt-5 w-full py-3 rounded-2xl text-stone-500 text-sm disabled:opacity-50">
+                            className="mt-5 w-full py-3 rounded-2xl text-[#7A8C7E] text-sm disabled:opacity-50">
                             ↺ Start over
                           </button>
                         )}
                       </div>
                     ) : guidedStep?.error ? (
                       <div className="text-center py-8">
-                        <p className="text-red-500 text-sm">{guidedStep.error}</p>
+                        <p className="text-[#D4682E] text-sm">{guidedStep.error}</p>
                         <button onClick={() => setStage('company')}
                           className="mt-4 text-green-700 text-sm font-medium">
                           ← Choose a different company
@@ -551,47 +551,47 @@ export default function SubscribePage() {
                       </div>
                     ) : null}
 
-                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                    {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
                   </div>
                 )}
 
                 {/* ── STAGE 5: Confirmation ── */}
                 {stage === 'confirm' && company && (
                   <div>
-                    <h2 className="text-lg font-bold text-stone-900">Your advisory</h2>
-                    <p className="text-stone-400 text-sm mt-0.5 mb-5">Based on your answers</p>
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">Your advisory</h2>
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">Based on your answers</p>
 
-                    <div className="rounded-2xl overflow-hidden border border-stone-100 mb-5">
+                    <div className="rounded-2xl overflow-hidden border border-[#DDD0B8] mb-5">
                       <CompanyLogo company={company} />
                       <div className="p-4">
-                        <p className="font-semibold text-stone-800 text-base mb-3">
+                        <p className="font-semibold text-[#6B3F1F] text-base mb-3">
                           {cropDisplay} advisory
                         </p>
                         {selectedVars.map((sv, i) => (
-                          <p key={i} className="text-sm text-stone-600 mb-1">
+                          <p key={i} className="text-sm text-[#6B3F1F] mb-1">
                             • {sv.paramName}: <span className="font-medium">{sv.varName}</span>
                           </p>
                         ))}
-                        <div className="mt-4 pt-4 border-t border-stone-100 flex items-center justify-between">
-                          <span className="text-stone-500 text-sm">Subscription price</span>
-                          <span className="text-stone-900 font-bold text-lg">Rs. 199</span>
+                        <div className="mt-4 pt-4 border-t border-[#DDD0B8] flex items-center justify-between">
+                          <span className="text-[#7A8C7E] text-sm">Subscription price</span>
+                          <span className="text-[#6B3F1F] font-bold text-lg">Rs. 199</span>
                         </div>
                       </div>
                     </div>
 
-                    {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+                    {error && <p className="text-sm text-[#D4682E] mb-3">{error}</p>}
 
                     <button
                       onClick={proceedToPayment}
                       disabled={busy}
                       className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-                      style={{ background: '#1A5C2A' }}>
+                      style={{ background: '#3A7D44' }}>
                       {busy ? 'Setting up…' : 'Looks right — proceed to payment →'}
                     </button>
                     <button
                       onClick={startOver}
                       disabled={busy}
-                      className="w-full mt-2 py-3 rounded-2xl text-stone-500 text-sm disabled:opacity-50">
+                      className="w-full mt-2 py-3 rounded-2xl text-[#7A8C7E] text-sm disabled:opacity-50">
                       ↺ Start over
                     </button>
                   </div>
@@ -600,69 +600,69 @@ export default function SubscribePage() {
                 {/* ── STAGE 6: Payment ── */}
                 {stage === 'payment' && subscription && (
                   <div>
-                    <h2 className="text-lg font-bold text-stone-900">Almost there!</h2>
-                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">Almost there!</h2>
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
                       Choose how to pay for your advisory
                     </p>
 
                     <div className="space-y-3">
                       {/* Pay yourself */}
-                      <div className="rounded-2xl border-2 border-stone-100 p-4">
-                        <p className="font-semibold text-stone-800">Pay Rs. 199 now</p>
-                        <p className="text-stone-400 text-sm mt-0.5 mb-3">
+                      <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
+                        <p className="font-semibold text-[#6B3F1F]">Pay Rs. 199 now</p>
+                        <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
                           Instant activation after payment
                         </p>
                         <button
                           onClick={openRazorpay}
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
-                          style={{ background: '#1A5C2A' }}>
+                          style={{ background: '#3A7D44' }}>
                           Pay with UPI →
                         </button>
                       </div>
 
                       {/* Ask a dealer */}
-                      <div className="rounded-2xl border-2 border-stone-100 p-4">
-                        <p className="font-semibold text-stone-800">Ask a dealer to pay</p>
-                        <p className="text-stone-400 text-sm mt-0.5 mb-3">
+                      <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
+                        <p className="font-semibold text-[#6B3F1F]">Ask a dealer to pay</p>
+                        <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
                           They become your Promoter and receive your order alerts
                         </p>
                         <button
                           onClick={() => { setDelegateRole('DEALER'); setStage('delegate') }}
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
-                          style={{ background: '#1A5C2A' }}>
+                          style={{ background: '#3A7D44' }}>
                           Select dealer →
                         </button>
                       </div>
 
                       {/* Ask a facilitator */}
-                      <div className="rounded-2xl border-2 border-stone-100 p-4">
-                        <p className="font-semibold text-stone-800">Ask a facilitator to pay</p>
-                        <p className="text-stone-400 text-sm mt-0.5 mb-3">
+                      <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
+                        <p className="font-semibold text-[#6B3F1F]">Ask a facilitator to pay</p>
+                        <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
                           They coordinate delivery and become your Promoter
                         </p>
                         <button
                           onClick={() => { setDelegateRole('FACILITATOR'); setStage('delegate') }}
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
-                          style={{ background: '#1A5C2A' }}>
+                          style={{ background: '#3A7D44' }}>
                           Select facilitator →
                         </button>
                       </div>
                     </div>
 
-                    {error && <p className="text-sm text-red-600 mt-3">{error}</p>}
+                    {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
                   </div>
                 )}
 
                 {/* ── STAGE 7: Delegate payment ── */}
                 {stage === 'delegate' && subscription && (
                   <div>
-                    <h2 className="text-lg font-bold text-stone-900">Send payment request</h2>
-                    <p className="text-stone-400 text-sm mt-0.5 mb-5">
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">Send payment request</h2>
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
                       Enter the {delegateRole === 'DEALER' ? 'dealer' : 'facilitator'}&apos;s phone number
                     </p>
 
-                    <div className="flex items-center border border-stone-200 rounded-xl overflow-hidden mb-3">
-                      <span className="px-4 py-3 bg-stone-50 text-stone-500 text-sm font-mono border-r border-stone-200">
+                    <div className="flex items-center border border-[#DDD0B8] rounded-xl overflow-hidden mb-3">
+                      <span className="px-4 py-3 bg-[#F5F0E8] text-[#7A8C7E] text-sm font-mono border-r border-[#DDD0B8]">
                         +91
                       </span>
                       <input
@@ -674,19 +674,19 @@ export default function SubscribePage() {
                       />
                     </div>
 
-                    {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
+                    {error && <p className="text-sm text-[#D4682E] mb-3">{error}</p>}
 
                     <button
                       onClick={sendDelegateRequest}
                       disabled={busy || delegatePhone.length < 10}
                       className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-                      style={{ background: '#1A5C2A' }}>
+                      style={{ background: '#3A7D44' }}>
                       {busy ? 'Sending…' : `Send to ${delegateRole === 'DEALER' ? 'dealer' : 'facilitator'} →`}
                     </button>
 
                     <button
                       onClick={() => setStage('payment')}
-                      className="w-full mt-2 py-3 rounded-2xl text-stone-500 text-sm">
+                      className="w-full mt-2 py-3 rounded-2xl text-[#7A8C7E] text-sm">
                       Pay myself instead
                     </button>
                   </div>

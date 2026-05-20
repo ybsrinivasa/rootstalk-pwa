@@ -35,7 +35,7 @@ export default function DealerHomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <div className="sticky top-0 z-30 px-4 py-3 flex items-center justify-between"
         style={{ background: COLOUR }}>
         <div>
@@ -48,8 +48,8 @@ export default function DealerHomePage() {
       <div className="pb-24 px-4 pt-4 space-y-4 max-w-lg mx-auto">
         {/* Greeting */}
         <div>
-          <p className="text-xl font-bold text-slate-900">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
-          <p className="text-slate-500 text-sm mt-0.5">
+          <p className="text-xl font-bold text-[#6B3F1F]">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
+          <p className="text-[#7A8C7E] text-sm mt-0.5">
             {pendingCount > 0 ? `${pendingCount} order${pendingCount > 1 ? 's' : ''} waiting` : 'No pending orders'}
           </p>
         </div>
@@ -87,36 +87,36 @@ export default function DealerHomePage() {
         {/* Quick actions grid */}
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => router.push('/dealer/promoted-farmers')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">👨‍🌾</span>
-            <p className="text-sm font-semibold text-slate-800 mt-2">My Farmers</p>
-            <p className="text-xs text-slate-400">{loading ? '…' : `${promotedCount} promoted`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">My Farmers</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${promotedCount} promoted`}</p>
           </button>
           <button onClick={() => router.push('/dealer/dealerships')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🏭</span>
-            <p className="text-sm font-semibold text-slate-800 mt-2">My Dealerships</p>
-            <p className="text-xs text-slate-400">Manufacturer brands</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">My Dealerships</p>
+            <p className="text-xs text-[#7A8C7E]">Manufacturer brands</p>
           </button>
           <button onClick={() => router.push('/dealer/payments')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">💳</span>
-            <p className="text-sm font-semibold text-slate-800 mt-2">Payments</p>
-            <p className="text-xs text-slate-400">Farmer subscriptions</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Payments</p>
+            <p className="text-xs text-[#7A8C7E]">Farmer subscriptions</p>
           </button>
           <button onClick={() => router.push('/dealer/seed-orders')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🌱</span>
-            <p className="text-sm font-semibold text-slate-800 mt-2">Seed Orders</p>
-            <p className="text-xs text-slate-400">Seed and seedling</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Seed Orders</p>
+            <p className="text-xs text-[#7A8C7E]">Seed and seedling</p>
           </button>
           <button onClick={() => router.push('/dealer/profile')}
-            className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left">
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <svg className="w-6 h-6 text-[#085041]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"/>
             </svg>
-            <p className="text-sm font-semibold text-slate-800 mt-2">Shop Details</p>
-            <p className="text-xs text-slate-400">What you sell</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Shop Details</p>
+            <p className="text-xs text-[#7A8C7E]">What you sell</p>
           </button>
         </div>
       </div>

@@ -21,7 +21,7 @@ const STATUS_COLOUR: Record<string, string> = {
   SENT_FOR_APPROVAL: 'bg-amber-100 text-amber-700',
   PARTIALLY_APPROVED: 'bg-orange-100 text-orange-700',
   COMPLETED: 'bg-emerald-100 text-emerald-700',
-  CANCELLED: 'bg-slate-100 text-slate-500',
+  CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
 }
 
 export default function FacilitatorOrdersPage() {
@@ -62,14 +62,14 @@ export default function FacilitatorOrdersPage() {
   const done = orders.filter(o => ['COMPLETED', 'CANCELLED'].includes(o.status))
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Acting as Facilitator" activeRole="FACILITATOR" />
       <div className="pt-16 pb-20">
-        <div className="flex bg-white border-b border-slate-100">
+        <div className="flex bg-white border-b border-[#DDD0B8]">
           {(['pending', 'done'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t
-                ? 'border-[#7D4E00] text-[#7D4E00]' : 'border-transparent text-slate-400'}`}>
+                ? 'border-[#7D4E00] text-[#7D4E00]' : 'border-transparent text-[#7A8C7E]'}`}>
               {t === 'pending' ? `Active (${pending.length})` : 'Done'}
             </button>
           ))}
@@ -81,23 +81,23 @@ export default function FacilitatorOrdersPage() {
           ) : (tab === 'pending' ? pending : done).length === 0 ? (
             <div className="text-center py-20">
               <span className="text-4xl">🌾</span>
-              <p className="text-slate-400 text-sm mt-3">No orders here</p>
+              <p className="text-[#7A8C7E] text-sm mt-3">No orders here</p>
             </div>
           ) : (
             (tab === 'pending' ? pending : done).map(order => (
-              <div key={order.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div key={order.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
                 <button onClick={() => router.push(`/facilitator/orders/${order.id}`)}
                   className="w-full p-4 text-left">
                   <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[order.status] || 'bg-slate-100 text-slate-500'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[order.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
                       {order.status.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-xs text-slate-400">{new Date(order.created_at).toLocaleDateString()}</span>
+                    <span className="text-xs text-[#7A8C7E]">{new Date(order.created_at).toLocaleDateString()}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-800">{order.item_count} items</p>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-sm font-medium text-[#6B3F1F]">{order.item_count} items</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">
                         {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
                       </p>
                     </div>
@@ -119,7 +119,7 @@ export default function FacilitatorOrdersPage() {
                       {acting === order.id ? 'Processing…' : '✓ Accept & Forward'}
                     </button>
                     <button onClick={() => reject(order.id)} disabled={acting === order.id}
-                      className="flex-1 py-2.5 rounded-xl border border-slate-200 text-red-500 text-xs font-semibold disabled:opacity-50">
+                      className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#D4682E] text-xs font-semibold disabled:opacity-50">
                       ✗ Reject
                     </button>
                   </div>

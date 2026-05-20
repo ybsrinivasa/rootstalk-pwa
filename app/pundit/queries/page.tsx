@@ -17,7 +17,7 @@ const SEVERITY_COLOUR: Record<string, string> = {
   CRITICAL: 'bg-red-100 text-red-700',
   HIGH: 'bg-orange-100 text-orange-700',
   MODERATE: 'bg-amber-100 text-amber-700',
-  LOW: 'bg-slate-100 text-slate-500',
+  LOW: 'bg-slate-100 text-[#7A8C7E]',
 }
 
 type Tab = 'new' | 'pending' | 'returned' | 'history'
@@ -78,23 +78,23 @@ export default function PunditQueriesPage() {
       return 'border-red-200'
     }
     if (q.days_remaining <= 3) return 'border-amber-200'
-    return 'border-slate-100'
+    return 'border-[#DDD0B8]'
   }
 
   const list = getActiveList()
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="My Queries" activeRole="FARM_PUNDIT" />
       <div className="pt-16 pb-20">
         {/* Four-tab bar */}
-        <div className="flex bg-white border-b border-slate-100">
+        <div className="flex bg-white border-b border-[#DDD0B8]">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-1 py-3 text-xs font-medium border-b-2 transition-colors ${tab === t.key ? 'border-[#3C3489] text-[#3C3489]' : 'border-transparent text-slate-400'}`}>
+              className={`flex-1 py-3 text-xs font-medium border-b-2 transition-colors ${tab === t.key ? 'border-[#3C3489] text-[#3C3489]' : 'border-transparent text-[#7A8C7E]'}`}>
               {t.label}
               {t.count !== null && (
-                <span className={`ml-1 ${tab === t.key ? 'text-[#3C3489]' : 'text-slate-300'}`}>
+                <span className={`ml-1 ${tab === t.key ? 'text-[#3C3489]' : 'text-[#DDD0B8]'}`}>
                   ({t.count})
                 </span>
               )}
@@ -108,10 +108,10 @@ export default function PunditQueriesPage() {
           ) : list.length === 0 ? (
             <div className="text-center py-16">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}
-                strokeLinecap="round" strokeLinejoin="round" className="text-slate-300 mx-auto mb-3">
+                strokeLinecap="round" strokeLinejoin="round" className="text-[#DDD0B8] mx-auto mb-3">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
               </svg>
-              <p className="text-slate-400 text-sm">No {tab} queries</p>
+              <p className="text-[#7A8C7E] text-sm">No {tab} queries</p>
             </div>
           ) : (
             list.map(q => (
@@ -120,25 +120,25 @@ export default function PunditQueriesPage() {
                 className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${cardBorderClass(q)}`}>
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-800 text-sm line-clamp-1">{q.title}</p>
+                    <p className="font-medium text-[#6B3F1F] text-sm line-clamp-1">{q.title}</p>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-[#7A8C7E]'}`}>
                         {q.severity}
                       </span>
                       {tab === 'new' && q.days_remaining !== undefined && (
-                        <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-red-600' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-slate-400'}`}>
+                        <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
                           {q.days_remaining}d remaining
                         </span>
                       )}
                       {tab === 'pending' && q.recipient_name && (
-                        <span className="text-xs text-slate-400">Forwarded to {q.recipient_name}</span>
+                        <span className="text-xs text-[#7A8C7E]">Forwarded to {q.recipient_name}</span>
                       )}
                       {tab === 'history' && (
-                        <span className="text-xs text-slate-400">{q.status}</span>
+                        <span className="text-xs text-[#7A8C7E]">{q.status}</span>
                       )}
                     </div>
                   </div>
-                  {tab !== 'history' && <span className="text-slate-300 text-xl shrink-0">›</span>}
+                  {tab !== 'history' && <span className="text-[#DDD0B8] text-xl shrink-0">›</span>}
                 </div>
               </button>
             ))

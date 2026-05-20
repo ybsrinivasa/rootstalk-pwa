@@ -32,7 +32,7 @@ export default function MissedItemsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Missed Items" activeRole="FARMER" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {/* Warm amber banner */}
@@ -48,13 +48,13 @@ export default function MissedItemsPage() {
         ) : timelines.length === 0 ? (
           <div className="text-center py-16 mt-4">
             <span className="text-4xl">✓</span>
-            <p className="text-slate-500 font-medium mt-3">No missed items</p>
-            <p className="text-xs text-slate-400 mt-1">All application windows are still open</p>
+            <p className="text-[#7A8C7E] font-medium mt-3">No missed items</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">All application windows are still open</p>
           </div>
         ) : (
           <div className="mt-4 space-y-4">
             {timelines.map(tl => (
-              <div key={tl.timeline_id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+              <div key={tl.timeline_id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
                 <div className="px-4 py-3 bg-amber-50 border-b border-amber-100">
                   <p className="font-semibold text-amber-900 text-sm">{tl.timeline_name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
@@ -74,10 +74,10 @@ export default function MissedItemsPage() {
                   {tl.practices.map(p => (
                     <div key={p.id} className="px-4 py-3 flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-slate-500 line-through">{p.l2_type || p.l1_type || p.l0_type}</p>
-                        <p className="text-xs text-slate-400">Application window passed</p>
+                        <p className="text-sm text-[#7A8C7E] line-through">{p.l2_type || p.l1_type || p.l0_type}</p>
+                        <p className="text-xs text-[#7A8C7E]">Application window passed</p>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_BADGE[p.l0_type] || 'bg-slate-100 text-slate-500'}`}>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_BADGE[p.l0_type] || 'bg-slate-100 text-[#7A8C7E]'}`}>
                         {p.l0_type}
                       </span>
                     </div>

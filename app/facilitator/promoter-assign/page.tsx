@@ -245,7 +245,7 @@ export default function FacilitatorPromoterAssignPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Assign Advisory" activeRole="FACILITATOR" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
@@ -254,10 +254,10 @@ export default function FacilitatorPromoterAssignPage() {
           {/* ── STAGE: phone ── */}
           {stage === 'phone' && (
             <div>
-              <p className="text-xl font-bold text-slate-900 mb-1">Enter farmer&apos;s number</p>
-              <p className="text-sm text-slate-500 mb-5">The farmer must be registered in rootsTALK.in</p>
-              <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden bg-white">
-                <span className="px-4 py-3.5 text-sm text-slate-500 bg-slate-50 border-r border-slate-200 shrink-0">+91</span>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Enter farmer&apos;s number</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">The farmer must be registered in rootsTALK.in</p>
+              <div className="flex items-center border border-[#DDD0B8] rounded-xl overflow-hidden bg-white">
+                <span className="px-4 py-3.5 text-sm text-[#7A8C7E] bg-[#F5F0E8] border-r border-[#DDD0B8] shrink-0">+91</span>
                 <input
                   type="tel"
                   value={phone}
@@ -267,7 +267,7 @@ export default function FacilitatorPromoterAssignPage() {
                   className="flex-1 px-4 py-3.5 text-sm focus:outline-none"
                 />
               </div>
-              {error && <p className="text-red-600 text-xs mt-2">{error}</p>}
+              {error && <p className="text-[#D4682E] text-xs mt-2">{error}</p>}
               <button
                 onClick={verifyPhone}
                 disabled={loading || phone.length < 10}
@@ -281,18 +281,18 @@ export default function FacilitatorPromoterAssignPage() {
           {/* ── STAGE: confirm_farmer ── */}
           {stage === 'confirm_farmer' && farmer && (
             <div>
-              <p className="text-xl font-bold text-slate-900 mb-1">Farmer found</p>
-              <p className="text-sm text-slate-500 mb-5">Confirm details and select a company</p>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Farmer found</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">Confirm details and select a company</p>
 
-              <div className="bg-white rounded-2xl border border-slate-100 p-4 mb-5">
-                <p className="font-semibold text-slate-900">{farmer.name || 'Unnamed farmer'}</p>
-                <p className="text-sm text-slate-500 mt-0.5">+91{phone}</p>
+              <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-5">
+                <p className="font-semibold text-[#6B3F1F]">{farmer.name || 'Unnamed farmer'}</p>
+                <p className="text-sm text-[#7A8C7E] mt-0.5">+91{phone}</p>
                 {farmer.district_cosh_id && (
-                  <p className="text-xs text-slate-400 mt-0.5">District: {farmer.district_cosh_id}</p>
+                  <p className="text-xs text-[#7A8C7E] mt-0.5">District: {farmer.district_cosh_id}</p>
                 )}
               </div>
 
-              <p className="text-sm font-semibold text-slate-700 mb-2">Which company&apos;s advisory?</p>
+              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Which company&apos;s advisory?</p>
               {availableClients.length > 0 ? (
                 <div className="space-y-2 mb-4">
                   {availableClients.map(c => (
@@ -302,7 +302,7 @@ export default function FacilitatorPromoterAssignPage() {
                       className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
                         selectedClientId === c.id
                           ? 'border-[#7D4E00] bg-[#7D4E00]/5 text-[#7D4E00]'
-                          : 'border-slate-200 bg-white text-slate-700'
+                          : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
                       }`}>
                       {c.name}
                     </button>
@@ -314,18 +314,18 @@ export default function FacilitatorPromoterAssignPage() {
                     value={selectedClientId}
                     onChange={e => setSelectedClientId(e.target.value.trim())}
                     placeholder="Enter company (client) ID"
-                    className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
+                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
                   />
-                  <p className="text-xs text-slate-400 mt-1">You have no existing promoted farmers. Enter a client ID to continue.</p>
+                  <p className="text-xs text-[#7A8C7E] mt-1">You have no existing promoted farmers. Enter a client ID to continue.</p>
                 </div>
               )}
 
-              <p className="text-sm font-semibold text-slate-700 mb-2">Farmer&apos;s district</p>
+              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Farmer&apos;s district</p>
               <input
                 value={farmerDistrict}
                 onChange={e => setFarmerDistrict(e.target.value)}
                 placeholder="e.g. dist_mh_pune"
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20 mb-4"
+                className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20 mb-4"
               />
 
               {/* Allocation-balance guard — block when this promoter
@@ -348,7 +348,7 @@ export default function FacilitatorPromoterAssignPage() {
                 </div>
               )}
 
-              {error && <p className="text-red-600 text-xs mt-1 mb-2">{error}</p>}
+              {error && <p className="text-[#D4682E] text-xs mt-1 mb-2">{error}</p>}
               <button
                 onClick={continueTocrops}
                 disabled={loading || !selectedClientId || !farmerDistrict || poolBalance === 0 || poolChecking}
@@ -359,7 +359,7 @@ export default function FacilitatorPromoterAssignPage() {
                   : poolBalance === 0 ? 'No allocation — cannot assign'
                   : 'Continue →'}
               </button>
-              <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-slate-400">
+              <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
                 ← Back
               </button>
             </div>
@@ -368,12 +368,12 @@ export default function FacilitatorPromoterAssignPage() {
           {/* ── STAGE: crop ── */}
           {stage === 'crop' && (
             <div>
-              <p className="text-xl font-bold text-slate-900 mb-1">Select crop</p>
-              <p className="text-sm text-slate-500 mb-5">
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Select crop</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">
                 Crops available in {farmerDistrict.replace('dist_', '').replace(/_/g, ' ')}
               </p>
               {crops.length === 0 ? (
-                <p className="text-slate-500 text-sm py-6 text-center">No crops available in this district for the selected company.</p>
+                <p className="text-[#7A8C7E] text-sm py-6 text-center">No crops available in this district for the selected company.</p>
               ) : (
                 <div className="space-y-2">
                   {crops.map(c => (
@@ -381,7 +381,7 @@ export default function FacilitatorPromoterAssignPage() {
                       key={c.crop_cosh_id}
                       onClick={() => selectCrop(c.crop_cosh_id)}
                       disabled={loading}
-                      className="w-full text-left px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 hover:border-[#7D4E00] hover:text-[#7D4E00] transition-colors disabled:opacity-40">
+                      className="w-full text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white text-sm font-medium text-[#6B3F1F] hover:border-[#7D4E00] hover:text-[#7D4E00] transition-colors disabled:opacity-40">
                       {formatCropName(c.crop_cosh_id)}
                     </button>
                   ))}
@@ -389,10 +389,10 @@ export default function FacilitatorPromoterAssignPage() {
               )}
               {loading && (
                 <div className="flex justify-center py-6">
-                  <div className="w-6 h-6 border-2 border-slate-200 border-t-[#7D4E00] rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#7D4E00] rounded-full animate-spin" />
                 </div>
               )}
-              <button onClick={() => setStage('confirm_farmer')} className="mt-4 w-full text-center text-sm text-slate-400">
+              <button onClick={() => setStage('confirm_farmer')} className="mt-4 w-full text-center text-sm text-[#7A8C7E]">
                 ← Back
               </button>
             </div>
@@ -401,17 +401,17 @@ export default function FacilitatorPromoterAssignPage() {
           {/* ── STAGE: guided ── */}
           {stage === 'guided' && guidedStep && !guidedStep.done && (
             <div>
-              <p className="text-xl font-bold text-slate-900 mb-1">
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">
                 {guidedStep.parameter?.name || 'Select option'}
               </p>
-              <p className="text-sm text-slate-500 mb-2">
+              <p className="text-sm text-[#7A8C7E] mb-2">
                 {guidedStep.remaining_count} package{(guidedStep.remaining_count || 0) > 1 ? 's' : ''} remaining
               </p>
 
               {answerHistory.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {answerHistory.map((a, i) => (
-                    <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                    <span key={i} className="text-xs bg-slate-100 text-[#6B3F1F] px-2 py-1 rounded-full">
                       {a.param}: <span className="font-medium">{a.varName}</span>
                     </span>
                   ))}
@@ -424,7 +424,7 @@ export default function FacilitatorPromoterAssignPage() {
                     key={v.id}
                     onClick={() => submitAnswer(guidedStep.parameter!.id, v.id, v.name)}
                     disabled={loading}
-                    className="w-full text-left px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-800 hover:border-[#7D4E00] hover:text-[#7D4E00] transition-colors disabled:opacity-40">
+                    className="w-full text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white text-sm font-medium text-[#6B3F1F] hover:border-[#7D4E00] hover:text-[#7D4E00] transition-colors disabled:opacity-40">
                     {v.name}
                   </button>
                 ))}
@@ -432,15 +432,15 @@ export default function FacilitatorPromoterAssignPage() {
 
               {loading && (
                 <div className="flex justify-center py-4">
-                  <div className="w-6 h-6 border-2 border-slate-200 border-t-[#7D4E00] rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#7D4E00] rounded-full animate-spin" />
                 </div>
               )}
-              {error && <p className="text-red-600 text-xs mt-2">{error}</p>}
+              {error && <p className="text-[#D4682E] text-xs mt-2">{error}</p>}
               {answerHistory.length > 0 && (
                 <button
                   onClick={startOver}
                   disabled={loading}
-                  className="mt-5 w-full py-3 rounded-2xl text-slate-500 text-sm disabled:opacity-50">
+                  className="mt-5 w-full py-3 rounded-2xl text-[#7A8C7E] text-sm disabled:opacity-50">
                   ↺ Start over
                 </button>
               )}
@@ -450,33 +450,33 @@ export default function FacilitatorPromoterAssignPage() {
           {/* ── STAGE: confirm ── */}
           {stage === 'confirm' && (
             <div>
-              <p className="text-xl font-bold text-slate-900 mb-1">Confirm assignment</p>
-              <p className="text-sm text-slate-500 mb-5">Review before sending</p>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Confirm assignment</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">Review before sending</p>
 
-              <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-3 mb-5">
+              <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3 mb-5">
                 <div>
-                  <p className="text-xs text-slate-400 uppercase tracking-wide">Farmer</p>
-                  <p className="font-semibold text-slate-900">{farmer?.name || 'Farmer'}</p>
-                  <p className="text-sm text-slate-500">+91{phone}</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Farmer</p>
+                  <p className="font-semibold text-[#6B3F1F]">{farmer?.name || 'Farmer'}</p>
+                  <p className="text-sm text-[#7A8C7E]">+91{phone}</p>
                 </div>
-                <div className="border-t border-slate-50 pt-3">
-                  <p className="text-xs text-slate-400 uppercase tracking-wide">Company</p>
-                  <p className="font-semibold text-slate-900">{clientInfo?.display_name || selectedClientId}</p>
+                <div className="border-t border-[#DDD0B8] pt-3">
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Company</p>
+                  <p className="font-semibold text-[#6B3F1F]">{clientInfo?.display_name || selectedClientId}</p>
                 </div>
-                <div className="border-t border-slate-50 pt-3">
-                  <p className="text-xs text-slate-400 uppercase tracking-wide">Crop</p>
-                  <p className="font-semibold text-slate-900">{formatCropName(selectedCrop)}</p>
+                <div className="border-t border-[#DDD0B8] pt-3">
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Crop</p>
+                  <p className="font-semibold text-[#6B3F1F]">{formatCropName(selectedCrop)}</p>
                 </div>
-                <div className="border-t border-slate-50 pt-3">
-                  <p className="text-xs text-slate-400 uppercase tracking-wide">Advisory Package</p>
-                  <p className="font-semibold text-slate-900">{resolvedPackageName}</p>
+                <div className="border-t border-[#DDD0B8] pt-3">
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Advisory Package</p>
+                  <p className="font-semibold text-[#6B3F1F]">{resolvedPackageName}</p>
                 </div>
                 {answerHistory.length > 0 && (
-                  <div className="border-t border-slate-50 pt-3">
-                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Your selections</p>
+                  <div className="border-t border-[#DDD0B8] pt-3">
+                    <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Your selections</p>
                     <div className="flex flex-wrap gap-2">
                       {answerHistory.map((a, i) => (
-                        <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded-full">
+                        <span key={i} className="text-xs bg-slate-100 text-[#6B3F1F] px-2 py-1 rounded-full">
                           {a.param}: <span className="font-medium">{a.varName}</span>
                         </span>
                       ))}
@@ -485,7 +485,7 @@ export default function FacilitatorPromoterAssignPage() {
                 )}
               </div>
 
-              {error && <p className="text-red-600 text-xs mb-3">{error}</p>}
+              {error && <p className="text-[#D4682E] text-xs mb-3">{error}</p>}
               <button
                 onClick={sendRequest}
                 disabled={loading}
@@ -496,7 +496,7 @@ export default function FacilitatorPromoterAssignPage() {
               <button
                 onClick={startOver}
                 disabled={loading}
-                className="mt-3 w-full text-center text-sm text-slate-400 disabled:opacity-50">
+                className="mt-3 w-full text-center text-sm text-[#7A8C7E] disabled:opacity-50">
                 ↺ Start over
               </button>
             </div>

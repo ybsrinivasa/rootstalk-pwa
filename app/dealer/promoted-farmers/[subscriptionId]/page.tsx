@@ -26,7 +26,7 @@ export default function DealerFarmerAdvisoryPage() {
   }, [subscriptionId])
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       {/* Read-only teal header */}
       <div className="sticky top-0 z-30 px-4 py-3" style={{ background: COLOUR }}>
         <div className="flex items-center justify-between">
@@ -47,27 +47,27 @@ export default function DealerFarmerAdvisoryPage() {
         ) : !advisory || advisory.active_timelines.length === 0 ? (
           <div className="mt-12 text-center px-6">
             <span className="text-5xl">🌿</span>
-            <p className="font-semibold text-slate-800 mt-4">No action recommended for today</p>
-            <p className="text-slate-400 text-sm mt-2 leading-relaxed">
+            <p className="font-semibold text-[#6B3F1F] mt-4">No action recommended for today</p>
+            <p className="text-[#7A8C7E] text-sm mt-2 leading-relaxed">
               We will notify you when your next recommended action is available.
             </p>
           </div>
         ) : (
           <div className="space-y-3 mt-4">
             {advisory.active_timelines.map(tl => (
-              <div key={tl.timeline_id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-50">
-                  <p className="font-semibold text-slate-800 text-sm">{tl.timeline_name}</p>
-                  <p className="text-xs text-slate-400">{tl.source}</p>
+              <div key={tl.timeline_id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#DDD0B8]">
+                  <p className="font-semibold text-[#6B3F1F] text-sm">{tl.timeline_name}</p>
+                  <p className="text-xs text-[#7A8C7E]">{tl.source}</p>
                 </div>
                 <div className="divide-y divide-slate-50">
                   {tl.practices.map(p => (
                     <div key={p.id} className="px-4 py-3 flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-slate-700">{p.l2_type || p.l1_type || p.l0_type}</p>
-                        <p className="text-xs text-slate-400">{p.l0_type}</p>
+                        <p className="text-sm text-[#6B3F1F]">{p.l2_type || p.l1_type || p.l0_type}</p>
+                        <p className="text-xs text-[#7A8C7E]">{p.l0_type}</p>
                       </div>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-500">
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-slate-100 text-[#7A8C7E]">
                         {p.status}
                       </span>
                     </div>

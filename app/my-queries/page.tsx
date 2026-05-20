@@ -20,8 +20,8 @@ const STATUS_COLOUR: Record<string, string> = {
   FORWARDED: 'bg-purple-100 text-purple-700',
   RETURNED: 'bg-amber-100 text-amber-700',
   RESPONDED: 'bg-green-100 text-green-700',
-  REJECTED: 'bg-red-100 text-red-600',
-  EXPIRED: 'bg-slate-100 text-slate-500',
+  REJECTED: 'bg-red-100 text-[#D4682E]',
+  EXPIRED: 'bg-slate-100 text-[#7A8C7E]',
 }
 
 export default function FarmerQueriesPage() {
@@ -52,7 +52,7 @@ export default function FarmerQueriesPage() {
   const closed = queries.filter(q => ['REJECTED', 'EXPIRED'].includes(q.status))
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="My Expert Queries" activeRole="FARMER" />
       <div className="pt-16 pb-20 px-4">
         {loading ? (
@@ -60,30 +60,30 @@ export default function FarmerQueriesPage() {
         ) : queries.length === 0 ? (
           <div className="mt-4 text-center py-16">
             <span className="text-4xl">💬</span>
-            <p className="text-slate-700 font-medium mt-3">No expert queries yet</p>
-            <p className="text-slate-400 text-sm mt-1">Ask an expert from any active advisory</p>
+            <p className="text-[#6B3F1F] font-medium mt-3">No expert queries yet</p>
+            <p className="text-[#7A8C7E] text-sm mt-1">Ask an expert from any active advisory</p>
           </div>
         ) : (
           <div className="mt-4 space-y-4">
             {/* Pending */}
             {pending.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Awaiting Response ({pending.length})</p>
+                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">Awaiting Response ({pending.length})</p>
                 <div className="space-y-2">
                   {pending.map(q => (
-                    <div key={q.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div key={q.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
                       <button className="w-full px-4 py-3.5 text-left flex items-start gap-3"
                         onClick={() => toggleQuery(q.id)}>
                         <div className="flex-1">
-                          <p className="font-medium text-slate-800 text-sm">{q.title}</p>
+                          <p className="font-medium text-[#6B3F1F] text-sm">{q.title}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[q.status]}`}>
                               {q.status}
                             </span>
-                            <span className="text-xs text-slate-400">{new Date(q.created_at).toLocaleDateString()}</span>
+                            <span className="text-xs text-[#7A8C7E]">{new Date(q.created_at).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        <svg className={`w-4 h-4 text-slate-400 transition-transform mt-1 ${expandedQuery === q.id ? 'rotate-180' : ''}`}
+                        <svg className={`w-4 h-4 text-[#7A8C7E] transition-transform mt-1 ${expandedQuery === q.id ? 'rotate-180' : ''}`}
                           fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
@@ -97,17 +97,17 @@ export default function FarmerQueriesPage() {
             {/* Responded */}
             {responded.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Responded ({responded.length})</p>
+                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">Responded ({responded.length})</p>
                 <div className="space-y-2">
                   {responded.map(q => (
                     <div key={q.id} className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
                       <button className="w-full px-4 py-3.5 text-left flex items-start gap-3"
                         onClick={() => toggleQuery(q.id)}>
                         <div className="flex-1">
-                          <p className="font-medium text-slate-800 text-sm">{q.title}</p>
+                          <p className="font-medium text-[#6B3F1F] text-sm">{q.title}</p>
                           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">RESPONDED</span>
                         </div>
-                        <svg className={`w-4 h-4 text-slate-400 transition-transform mt-1 ${expandedQuery === q.id ? 'rotate-180' : ''}`}
+                        <svg className={`w-4 h-4 text-[#7A8C7E] transition-transform mt-1 ${expandedQuery === q.id ? 'rotate-180' : ''}`}
                           fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
@@ -126,11 +126,11 @@ export default function FarmerQueriesPage() {
                           )}
                           {queryDetail[q.id].response!.text && (
                             <div>
-                              <p className="text-xs font-medium text-slate-500 mb-1">Expert's Advice:</p>
-                              <p className="text-sm text-slate-700 leading-relaxed">{queryDetail[q.id].response!.text}</p>
+                              <p className="text-xs font-medium text-[#7A8C7E] mb-1">Expert's Advice:</p>
+                              <p className="text-sm text-[#6B3F1F] leading-relaxed">{queryDetail[q.id].response!.text}</p>
                             </div>
                           )}
-                          <p className="text-xs text-slate-300">
+                          <p className="text-xs text-[#DDD0B8]">
                             {new Date(queryDetail[q.id].response!.created_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -144,12 +144,12 @@ export default function FarmerQueriesPage() {
             {/* Closed */}
             {closed.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Closed</p>
+                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">Closed</p>
                 <div className="space-y-2">
                   {closed.map(q => (
-                    <div key={q.id} className="bg-white rounded-2xl border border-slate-100 opacity-70">
+                    <div key={q.id} className="bg-white rounded-2xl border border-[#DDD0B8] opacity-70">
                       <div className="px-4 py-3.5">
-                        <p className="font-medium text-slate-600 text-sm">{q.title}</p>
+                        <p className="font-medium text-[#6B3F1F] text-sm">{q.title}</p>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[q.status]}`}>
                           {q.status}
                         </span>
@@ -162,7 +162,7 @@ export default function FarmerQueriesPage() {
           </div>
         )}
       </div>
-      <BottomNav color="#1A5C2A" activeRole="FARMER" />
+      <BottomNav color="#3A7D44" activeRole="FARMER" />
     </div>
   )
 }

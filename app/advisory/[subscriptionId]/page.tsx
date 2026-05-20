@@ -216,7 +216,7 @@ export default function AdvisoryPage() {
   const hasStartDate = !!subscription?.crop_start_date
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={advisory?.package_name || 'Advisory'} activeRole="FARMER" />
       <div className="pt-16 pb-24">
 
@@ -228,10 +228,10 @@ export default function AdvisoryPage() {
               Advisory begins once you tell us when you sowed or transplanted.
             </p>
             <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-              className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 mb-3" />
+              className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm text-[#6B3F1F] bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 mb-3" />
             <button onClick={saveStartDate} disabled={!startDate || savingDate}
               className="w-full py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-              style={{ background: '#1A5C2A' }}>
+              style={{ background: '#3A7D44' }}>
               {savingDate ? 'Saving…' : 'Set start date and begin advisory'}
             </button>
           </div>
@@ -241,16 +241,16 @@ export default function AdvisoryPage() {
         {hasStartDate && advisory && (
           <div className="px-4 mt-4 space-y-4">
             {/* Day counter */}
-            <div className="bg-white rounded-2xl px-4 py-3 border border-slate-100 flex items-center justify-between">
+            <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-400">Today</p>
-                <p className="font-bold text-slate-800">
+                <p className="text-xs text-[#7A8C7E]">Today</p>
+                <p className="font-bold text-[#6B3F1F]">
                   Day {advisory.day_offset >= 0 ? `+${advisory.day_offset}` : advisory.day_offset}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-slate-400">Reference</p>
-                <p className="text-xs font-mono text-slate-600">{advisory.reference_number || '—'}</p>
+                <p className="text-xs text-[#7A8C7E]">Reference</p>
+                <p className="text-xs font-mono text-[#6B3F1F]">{advisory.reference_number || '—'}</p>
               </div>
             </div>
 
@@ -280,27 +280,27 @@ export default function AdvisoryPage() {
 
             {/* No active timelines today */}
             {advisory.timelines.length === 0 && (
-              <div className="bg-white rounded-2xl p-6 text-center border border-slate-100 shadow-sm">
-                <svg className="w-12 h-12 mx-auto text-slate-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <div className="bg-white rounded-2xl p-6 text-center border border-[#DDD0B8] shadow-sm">
+                <svg className="w-12 h-12 mx-auto text-[#DDD0B8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
                 </svg>
-                <p className="text-slate-800 font-semibold mt-3">No advice for today</p>
+                <p className="text-[#6B3F1F] font-semibold mt-3">No advice for today</p>
                 {nextDate?.next_date ? (
                   <>
-                    <p className="text-slate-500 text-sm mt-2">Your next advisory window opens on</p>
-                    <p className="text-slate-800 font-semibold text-base mt-1">
+                    <p className="text-[#7A8C7E] text-sm mt-2">Your next advisory window opens on</p>
+                    <p className="text-[#6B3F1F] font-semibold text-base mt-1">
                       {new Date(nextDate.next_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                     {nextDate.days_until !== undefined && (
-                      <p className="text-slate-400 text-xs mt-1">
+                      <p className="text-[#7A8C7E] text-xs mt-1">
                         in {nextDate.days_until} day{nextDate.days_until !== 1 ? 's' : ''}
                       </p>
                     )}
                   </>
                 ) : nextDate?.reason === 'no_more_practices' ? (
-                  <p className="text-slate-500 text-sm mt-2">You have completed all advisory practices for this season.</p>
+                  <p className="text-[#7A8C7E] text-sm mt-2">You have completed all advisory practices for this season.</p>
                 ) : (
-                  <p className="text-slate-400 text-sm mt-2">Check back tomorrow.</p>
+                  <p className="text-[#7A8C7E] text-sm mt-2">Check back tomorrow.</p>
                 )}
               </div>
             )}
@@ -312,7 +312,7 @@ export default function AdvisoryPage() {
                   <div className="h-px flex-1 bg-slate-200" />
                   <div className="flex items-center gap-1.5 px-2">
                     {tl.source === 'CHA' && (
-                      <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">🔬 CHA</span>
+                      <span className="text-xs font-bold text-[#D4682E] bg-red-50 px-1.5 py-0.5 rounded">🔬 CHA</span>
                     )}
                     {tl.source === 'QA' && (
                       // Pundit-origin marker. Same advisory shape as
@@ -321,7 +321,7 @@ export default function AdvisoryPage() {
                       // FarmPundit picking a curated standard answer.
                       <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">🌾 Pundit</span>
                     )}
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{tl.name}</p>
+                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">{tl.name}</p>
                   </div>
                   <div className="h-px flex-1 bg-slate-200" />
                 </div>
@@ -330,7 +330,7 @@ export default function AdvisoryPage() {
                 {tl.has_pending_question && tl.pending_conditional_question ? (
                   <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-3">
                     <p className="text-xs font-semibold text-amber-700 mb-2 uppercase tracking-wide">Quick check before today's advice</p>
-                    <p className="font-medium text-slate-800 text-sm leading-relaxed mb-4">
+                    <p className="font-medium text-[#6B3F1F] text-sm leading-relaxed mb-4">
                       {tl.pending_conditional_question.question_text}
                     </p>
                     <div className="flex gap-3">
@@ -382,8 +382,8 @@ export default function AdvisoryPage() {
                       )
                     })}
                     {tl.practices.length === 0 && !tl.blank_path_questions?.length && (
-                      <div className="bg-slate-50 rounded-xl px-4 py-3 text-center">
-                        <p className="text-xs text-slate-400">We will check this with you again tomorrow.</p>
+                      <div className="bg-[#F5F0E8] rounded-xl px-4 py-3 text-center">
+                        <p className="text-xs text-[#7A8C7E]">We will check this with you again tomorrow.</p>
                       </div>
                     )}
                     {/* Per spec §6.4: question-specific warm message after blank-path answer */}
@@ -405,22 +405,22 @@ export default function AdvisoryPage() {
             {/* Quick links */}
             <div className="grid grid-cols-2 gap-3 mt-2">
               <button onClick={() => router.push(`/advisory/${subscriptionId}/diagnose`)}
-                className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm active:scale-95 transition-transform">
+                className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-left shadow-sm active:scale-95 transition-transform">
                 <span className="text-2xl">🔍</span>
-                <p className="text-sm font-medium text-slate-800 mt-2">Diagnose Problem</p>
-                <p className="text-xs text-slate-400">Identify crop issues</p>
+                <p className="text-sm font-medium text-[#6B3F1F] mt-2">Diagnose Problem</p>
+                <p className="text-xs text-[#7A8C7E]">Identify crop issues</p>
               </button>
               <button onClick={() => router.push('/orders')}
-                className="bg-white rounded-2xl p-4 border border-slate-100 text-left shadow-sm active:scale-95 transition-transform">
+                className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-left shadow-sm active:scale-95 transition-transform">
                 <span className="text-2xl">📦</span>
-                <p className="text-sm font-medium text-slate-800 mt-2">My Orders</p>
-                <p className="text-xs text-slate-400">Track input orders</p>
+                <p className="text-sm font-medium text-[#6B3F1F] mt-2">My Orders</p>
+                <p className="text-xs text-[#7A8C7E]">Track input orders</p>
               </button>
             </div>
           </div>
         )}
       </div>
-      <BottomNav color="#1A5C2A" />
+      <BottomNav color="#3A7D44" />
     </div>
   )
 }
@@ -432,11 +432,11 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   ordered: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
-  const colour = L0_BG[practice.l0_type] || '#1A5C2A'
+  const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const label = L0_LABEL[practice.l0_type] || practice.l0_type
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
       {/* Card header */}
       <div className="flex items-center gap-3 px-4 py-3.5" onClick={() => setExpanded(e => !e)}>
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
@@ -456,7 +456,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
               </span>
             )}
           </div>
-          <p className="text-sm font-medium text-slate-800 mt-1">
+          <p className="text-sm font-medium text-[#6B3F1F] mt-1">
             {[practice.l1_type, practice.l2_type].filter(Boolean).join(' — ') || 'General Advisory'}
           </p>
         </div>
@@ -465,7 +465,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
             onClick={e => { e.stopPropagation(); onOrder() }}
             disabled={isOrdering || ordered}
             className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
-            style={{ background: ordered ? '#16a34a' : '#1A5C2A' }}>
+            style={{ background: ordered ? '#16a34a' : '#3A7D44' }}>
             {ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
           </button>
         )}
@@ -473,21 +473,21 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
 
       {/* Expandable elements */}
       {expanded && practice.elements.length > 0 && (
-        <div className="border-t border-slate-100 px-4 pb-3 pt-2 space-y-1.5">
+        <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
           {practice.elements.map((el, i) => (
             <div key={i} className="flex items-start gap-2 text-sm">
-              <span className="text-slate-400 text-xs mt-0.5">•</span>
+              <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
               <div>
-                <span className="text-slate-600 font-medium">{el.element_type}</span>
-                {el.cosh_ref && <span className="text-slate-400 text-xs ml-1">({el.cosh_ref})</span>}
-                {el.value && <span className="text-slate-600 ml-1">{el.value}{el.unit_cosh_id ? ` ${el.unit_cosh_id}` : ''}</span>}
+                <span className="text-[#6B3F1F] font-medium">{el.element_type}</span>
+                {el.cosh_ref && <span className="text-[#7A8C7E] text-xs ml-1">({el.cosh_ref})</span>}
+                {el.value && <span className="text-[#6B3F1F] ml-1">{el.value}{el.unit_cosh_id ? ` ${el.unit_cosh_id}` : ''}</span>}
               </div>
             </div>
           ))}
         </div>
       )}
       {practice.elements.length > 0 && (
-        <div className="px-4 pb-2 text-xs text-slate-400 cursor-pointer" onClick={() => setExpanded(e => !e)}>
+        <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
           {expanded ? '▲ Hide details' : `▼ ${practice.elements.length} detail${practice.elements.length > 1 ? 's' : ''}`}
         </div>
       )}
@@ -518,8 +518,8 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
     const isOrderingAny = ids.some(id => orderingPractice === id)
     const isAnyOrdered = ids.some(id => orderSuccess === id)
     return (
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 bg-emerald-50">
+      <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
           <div className="w-1 h-5 rounded-full bg-emerald-600" />
           <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
             Apply both together — AND group
@@ -530,12 +530,12 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
             <InnerPracticeRow key={p.id} practice={p} />
           ))}
         </div>
-        <div className="px-4 py-3 border-t border-slate-100 flex justify-end">
+        <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
           <button
             onClick={() => onOrder(ids)}
             disabled={isOrderingAny || isAnyOrdered}
             className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
-            style={{ background: isAnyOrdered ? '#16a34a' : '#1A5C2A' }}
+            style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
           >
             {isAnyOrdered ? '✓ Ordered' : isOrderingAny ? '…' : 'Order both together'}
           </button>
@@ -551,7 +551,7 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
         <div key={part.part}>
           {parts.length > 1 && (
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+              <span className="text-xs font-bold text-[#7A8C7E] bg-slate-100 px-2 py-0.5 rounded">
                 Part {part.part}
               </span>
               <div className="h-px flex-1 bg-slate-200" />
@@ -572,13 +572,13 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
                 {isChoice && optIdx > 0 && (
                   <div className="flex items-center my-2">
                     <div className="h-px flex-1 bg-slate-300" />
-                    <span className="px-3 text-xs font-bold text-slate-500 bg-slate-50 rounded">OR</span>
+                    <span className="px-3 text-xs font-bold text-[#7A8C7E] bg-[#F5F0E8] rounded">OR</span>
                     <div className="h-px flex-1 bg-slate-300" />
                   </div>
                 )}
                 {isCompound ? (
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-100 bg-emerald-50">
+                  <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
                       <div className="w-1 h-5 rounded-full bg-emerald-600" />
                       <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
                         Apply together
@@ -589,12 +589,12 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
                         <InnerPracticeRow key={p.id} practice={p} />
                       ))}
                     </div>
-                    <div className="px-4 py-3 border-t border-slate-100 flex justify-end">
+                    <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
                       <button
                         onClick={() => onOrder(ids)}
                         disabled={isOrderingAny || isAnyOrdered}
                         className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
-                        style={{ background: isAnyOrdered ? '#16a34a' : '#1A5C2A' }}
+                        style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
                       >
                         {buttonLabel}
                       </button>
@@ -624,7 +624,7 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
 
 // Compact in-group practice row (used inside a paired AND-group card)
 function InnerPracticeRow({ practice }: { practice: Practice }) {
-  const colour = L0_BG[practice.l0_type] || '#1A5C2A'
+  const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const label = L0_LABEL[practice.l0_type] || practice.l0_type
   return (
     <div className="px-4 py-3">
@@ -640,7 +640,7 @@ function InnerPracticeRow({ practice }: { practice: Practice }) {
           </span>
         )}
       </div>
-      <p className="text-sm font-medium text-slate-800">
+      <p className="text-sm font-medium text-[#6B3F1F]">
         {[practice.l1_type, practice.l2_type].filter(Boolean).join(' — ') || 'General Advisory'}
       </p>
     </div>

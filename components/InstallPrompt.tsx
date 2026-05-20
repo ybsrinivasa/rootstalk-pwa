@@ -88,14 +88,14 @@ export default function InstallPrompt() {
         {/* Identity row */}
         <div className="px-6 flex items-center gap-4 mb-5">
           <div className="w-14 h-14 rounded-2xl flex-shrink-0 flex items-center justify-center"
-            style={{ background: '#1A5C2A' }}>
+            style={{ background: '#3A7D44' }}>
             <NodeMark size={28} />
           </div>
           <div>
-            <p className="font-bold text-stone-900 text-lg leading-snug">
-              Add rootsTALK<span className="text-stone-400 font-normal">.in</span>
+            <p className="font-bold text-[#6B3F1F] text-lg leading-snug">
+              Add rootsTALK<span className="text-[#7A8C7E] font-normal">.in</span>
             </p>
-            <p className="text-stone-500 text-sm mt-0.5">
+            <p className="text-[#7A8C7E] text-sm mt-0.5">
               to your Home Screen for quick access
             </p>
           </div>
@@ -108,21 +108,21 @@ export default function InstallPrompt() {
             { icon: '📵', text: 'Works offline' },
             { icon: '🔔', text: 'Get alerts' },
           ].map(b => (
-            <div key={b.text} className="flex-1 bg-stone-50 rounded-xl p-3 text-center border border-stone-100">
+            <div key={b.text} className="flex-1 bg-[#F5F0E8] rounded-xl p-3 text-center border border-[#DDD0B8]">
               <p className="text-xl mb-1">{b.icon}</p>
-              <p className="text-stone-600 text-xs font-medium">{b.text}</p>
+              <p className="text-[#6B3F1F] text-xs font-medium">{b.text}</p>
             </div>
           ))}
         </div>
 
         {isIOS ? (
           /* iOS — manual instruction */
-          <div className="mx-6 bg-stone-50 rounded-xl p-4 border border-stone-200 mb-4">
+          <div className="mx-6 bg-[#F5F0E8] rounded-xl p-4 border border-[#DDD0B8] mb-4">
             <div className="flex items-start gap-3 mb-3">
-              <div className="w-6 h-6 rounded-full bg-[#1A5C2A] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
-              <p className="text-stone-700 text-sm leading-relaxed">
+              <div className="w-6 h-6 rounded-full bg-[#3A7D44] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+              <p className="text-[#6B3F1F] text-sm leading-relaxed">
                 Tap the{' '}
-                <span className="inline-flex items-center gap-1 bg-white border border-stone-300 rounded px-1.5 py-0.5 mx-0.5">
+                <span className="inline-flex items-center gap-1 bg-white border border-[#DDD0B8] rounded px-1.5 py-0.5 mx-0.5">
                   <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
                   </svg>
@@ -132,10 +132,10 @@ export default function InstallPrompt() {
               </p>
             </div>
             <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-[#1A5C2A] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
-              <p className="text-stone-700 text-sm leading-relaxed">
+              <div className="w-6 h-6 rounded-full bg-[#3A7D44] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+              <p className="text-[#6B3F1F] text-sm leading-relaxed">
                 Scroll down and tap{' '}
-                <span className="font-semibold text-stone-900">"Add to Home Screen"</span>
+                <span className="font-semibold text-[#6B3F1F]">"Add to Home Screen"</span>
               </p>
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function InstallPrompt() {
               onClick={install}
               disabled={installing}
               className="w-full py-4 rounded-xl text-white font-semibold text-base disabled:opacity-60 transition-opacity"
-              style={{ background: '#1A5C2A' }}
+              style={{ background: '#3A7D44' }}
             >
               {installing ? 'Installing…' : 'Add to Home Screen'}
             </button>
@@ -154,7 +154,7 @@ export default function InstallPrompt() {
         )}
 
         <button onClick={dismiss}
-          className="block w-full text-center text-stone-400 text-sm py-1">
+          className="block w-full text-center text-[#7A8C7E] text-sm py-1">
           Not now
         </button>
       </div>

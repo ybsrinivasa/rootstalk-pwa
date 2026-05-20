@@ -282,7 +282,7 @@ export default function CropDetailPage() {
     </div>
   )
 
-  const colour = branding?.primary_colour || '#1A5C2A'
+  const colour = branding?.primary_colour || '#3A7D44'
   const hasStartDate = !!sub.crop_start_date
 
   // Pre-start visibility: only when today < start date or no start date set yet
@@ -309,7 +309,7 @@ export default function CropDetailPage() {
   const isAssigned = sub.subscription_type === 'ASSIGNED'
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       {/* Branded header */}
       <div className="sticky top-0 z-30 px-4 pt-safe" style={{ background: colour }}>
         <div className="flex items-center gap-3 py-3">
@@ -327,23 +327,23 @@ export default function CropDetailPage() {
       <div className="pb-28 px-4 pt-5 max-w-lg mx-auto">
 
         {/* Acreage card — 3 states: Tentative / Soft confirmed / Hard locked */}
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-2 px-1">Farm Area</p>
+        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">Farm Area</p>
 
         {areaTentative && (
-          <div className="bg-white border border-stone-200 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-stone-800 mb-3">Farm area</p>
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
+            <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area</p>
             <div className="flex gap-2">
               <input
                 type="number" inputMode="decimal" step="0.01" min="0"
                 value={areaInput}
                 onChange={e => setAreaInput(e.target.value)}
                 placeholder="0.00"
-                className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+                className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
               <select
                 value={areaUnit}
                 onChange={e => setAreaUnit(e.target.value)}
-                className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+                className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
               >
                 {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -356,25 +356,25 @@ export default function CropDetailPage() {
                 {savingArea ? '…' : 'Save'}
               </button>
             </div>
-            <p className="text-stone-400 text-xs mt-2">Tentative for now. Will be confirmed when you place your first order.</p>
+            <p className="text-[#7A8C7E] text-xs mt-2">Tentative for now. Will be confirmed when you place your first order.</p>
           </div>
         )}
 
         {areaSoftSet && (
-          <div className="bg-white border border-stone-200 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-stone-800 mb-3">Farm area · Tentative</p>
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
+            <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area · Tentative</p>
             <div className="flex gap-2">
               <input
                 type="number" inputMode="decimal" step="0.01" min="0"
                 value={areaInput}
                 onChange={e => setAreaInput(e.target.value)}
                 placeholder="0.00"
-                className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+                className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
               <select
                 value={areaUnit}
                 onChange={e => setAreaUnit(e.target.value)}
-                className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+                className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
               >
                 {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -394,19 +394,19 @@ export default function CropDetailPage() {
         )}
 
         {areaHardLocked && (
-          <div className="bg-white border border-stone-200 rounded-2xl px-4 py-3">
-            <p className="text-sm font-semibold text-stone-800">Farm area · Confirmed</p>
-            <p className="font-semibold text-stone-800 mt-1">
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
+            <p className="text-sm font-semibold text-[#6B3F1F]">Farm area · Confirmed</p>
+            <p className="font-semibold text-[#6B3F1F] mt-1">
               {sub.farm_area_acres ?? '—'} {sub.area_unit || ''}
             </p>
-            <p className="text-stone-400 text-xs mt-1">
+            <p className="text-[#7A8C7E] text-xs mt-1">
               Locked on {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}. Volumes for all your inputs are calculated on this.
             </p>
           </div>
         )}
 
         {/* Start date */}
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Start Date</p>
+        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Start Date</p>
         {!hasStartDate ? (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
             <p className="font-bold text-amber-800">Set your crop start date</p>
@@ -431,20 +431,20 @@ export default function CropDetailPage() {
             )}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-stone-200 px-4 py-3 flex items-center justify-between">
+          <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
             <div>
-              <p className="text-xs text-stone-400">Crop start date</p>
-              <p className="font-semibold text-stone-800">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+              <p className="text-xs text-[#7A8C7E]">Crop start date</p>
+              <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
             </div>
             <button onClick={() => setShowStartDate(!showStartDate)}
-              className="text-xs text-stone-400 underline">change</button>
+              className="text-xs text-[#7A8C7E] underline">change</button>
           </div>
         )}
         {showStartDate && hasStartDate && (
-          <div className="mt-3 bg-white rounded-2xl border border-stone-200 p-4 flex gap-2">
+          <div className="mt-3 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex gap-2">
             <input type="date" value={startDate}
               onChange={e => setStartDate(e.target.value)}
-              className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none" />
+              className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none" />
             <button onClick={saveStartDate} disabled={savingDate || !startDate}
               className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
               style={{ background: colour }}>
@@ -457,9 +457,9 @@ export default function CropDetailPage() {
         <div className="grid grid-cols-3 gap-3 mt-6">
           <button
             onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowNeedDateSheet('advisory')}
-            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-stone-200 active:scale-95' : 'bg-stone-100 border-stone-200 opacity-60'}`}>
+            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-[#DDD0B8] active:scale-95' : 'bg-stone-100 border-[#DDD0B8] opacity-60'}`}>
             <span className="text-3xl block mb-2">🌿</span>
-            <p className="text-xs font-bold text-stone-800">Advisory</p>
+            <p className="text-xs font-bold text-[#6B3F1F]">Advisory</p>
             {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">Set date first</p>}
           </button>
 
@@ -474,22 +474,22 @@ export default function CropDetailPage() {
             }}
             className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${
               hasStartDate && (!diagnosisEligibility || diagnosisEligibility.eligible)
-                ? 'bg-white border-stone-200 active:scale-95'
-                : 'bg-stone-100 border-stone-200 opacity-60'
+                ? 'bg-white border-[#DDD0B8] active:scale-95'
+                : 'bg-stone-100 border-[#DDD0B8] opacity-60'
             }`}>
             <span className="text-3xl block mb-2">🔬</span>
-            <p className="text-xs font-bold text-stone-800">Diagnose</p>
+            <p className="text-xs font-bold text-[#6B3F1F]">Diagnose</p>
             {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">Set date first</p>}
             {hasStartDate && diagnosisEligibility && !diagnosisEligibility.eligible && (
-              <p className="text-xs text-stone-500 mt-0.5">Not available</p>
+              <p className="text-xs text-[#7A8C7E] mt-0.5">Not available</p>
             )}
           </button>
 
           <button
             onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
-            className="bg-white rounded-2xl p-4 text-center border border-stone-200 shadow-sm active:scale-95">
+            className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
             <span className="text-3xl block mb-2">🎓</span>
-            <p className="text-xs font-bold text-stone-800">Ask Expert</p>
+            <p className="text-xs font-bold text-[#6B3F1F]">Ask Expert</p>
           </button>
         </div>
 
@@ -507,31 +507,31 @@ export default function CropDetailPage() {
         {/* Pre-Start section */}
         {showPreStart && (seedAvail.has_varieties || pestPractices.length > 0 || fertPractices.length > 0) && (
           <>
-            <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Prepare for Sowing</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Prepare for Sowing</p>
 
             {seedAvail.has_varieties && (
               <button
                 onClick={() => router.push(`/subscribe/seed-varieties/${subscriptionId}`)}
-                className="w-full bg-white rounded-2xl border border-stone-200 px-4 py-4 flex items-center justify-between active:scale-98 transition-transform mb-3"
+                className="w-full bg-white rounded-2xl border border-[#DDD0B8] px-4 py-4 flex items-center justify-between active:scale-98 transition-transform mb-3"
               >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🌾</span>
                   <div className="text-left">
-                    <p className="font-semibold text-stone-800 text-sm">Seeds &amp; Seedlings</p>
-                    <p className="text-xs text-stone-400">Browse and order recommended varieties</p>
+                    <p className="font-semibold text-[#6B3F1F] text-sm">Seeds &amp; Seedlings</p>
+                    <p className="text-xs text-[#7A8C7E]">Browse and order recommended varieties</p>
                   </div>
                 </div>
-                <span className="text-stone-300 text-xl">›</span>
+                <span className="text-[#DDD0B8] text-xl">›</span>
               </button>
             )}
 
             {pestPractices.length > 0 && (
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 mb-3">
+              <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-3">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">🧪</span>
                   <div>
-                    <p className="font-semibold text-stone-800 text-sm">Pre-Start Pesticides</p>
-                    <p className="text-xs text-stone-400">{pestPractices.length} item{pestPractices.length > 1 ? 's' : ''} recommended before sowing</p>
+                    <p className="font-semibold text-[#6B3F1F] text-sm">Pre-Start Pesticides</p>
+                    <p className="text-xs text-[#7A8C7E]">{pestPractices.length} item{pestPractices.length > 1 ? 's' : ''} recommended before sowing</p>
                   </div>
                 </div>
                 <button
@@ -545,12 +545,12 @@ export default function CropDetailPage() {
             )}
 
             {fertPractices.length > 0 && (
-              <div className="bg-white rounded-2xl border border-stone-200 p-4 mb-3">
+              <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-3">
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">🌱</span>
                   <div>
-                    <p className="font-semibold text-stone-800 text-sm">Pre-Start Fertilisers</p>
-                    <p className="text-xs text-stone-400">{fertPractices.length} item{fertPractices.length > 1 ? 's' : ''} recommended before sowing</p>
+                    <p className="font-semibold text-[#6B3F1F] text-sm">Pre-Start Fertilisers</p>
+                    <p className="text-xs text-[#7A8C7E]">{fertPractices.length} item{fertPractices.length > 1 ? 's' : ''} recommended before sowing</p>
                   </div>
                 </div>
                 <button
@@ -566,80 +566,80 @@ export default function CropDetailPage() {
         )}
 
         {/* Alerts */}
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Alerts</p>
-        <div className="bg-white border border-stone-200 rounded-2xl p-4">
-          <p className="text-sm font-semibold text-stone-800 mb-2">Who receives alerts for this advisory?</p>
+        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Alerts</p>
+        <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
+          <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Who receives alerts for this advisory?</p>
           <div className="space-y-1.5 mb-3">
             {farmerRecipient ? (
-              <p className="text-sm text-stone-700">
-                You {me?.phone ? <span className="text-stone-400">({me.phone})</span> : null}
+              <p className="text-sm text-[#6B3F1F]">
+                You {me?.phone ? <span className="text-[#7A8C7E]">({me.phone})</span> : null}
               </p>
             ) : (
-              <p className="text-sm text-stone-400 italic">Alerts to you are turned off</p>
+              <p className="text-sm text-[#7A8C7E] italic">Alerts to you are turned off</p>
             )}
             {promoterRecipient && (
-              <p className="text-sm text-stone-700">
-                Also: {promoterRecipient.name || 'Your Promoter'} {promoterRecipient.phone ? <span className="text-stone-400">({promoterRecipient.phone})</span> : null}
+              <p className="text-sm text-[#6B3F1F]">
+                Also: {promoterRecipient.name || 'Your Promoter'} {promoterRecipient.phone ? <span className="text-[#7A8C7E]">({promoterRecipient.phone})</span> : null}
               </p>
             )}
           </div>
           <button
             onClick={() => setAlertSheet(true)}
-            className="w-full py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+            className="w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
           >
             Change alert recipients
           </button>
         </div>
 
         {/* Ask Expert preference */}
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-widest mb-3 mt-6 px-1">Ask Expert</p>
-        <div className="bg-white border border-stone-200 rounded-2xl p-4">
+        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Ask Expert</p>
+        <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
           {!expertSetting ? (
-            <p className="text-sm text-stone-400 italic">Loading…</p>
+            <p className="text-sm text-[#7A8C7E] italic">Loading…</p>
           ) : expertSetting.mode === 'SPECIFIC' && expertSetting.preferred_pundit ? (
             <>
-              <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">Currently</p>
-              <p className="text-sm font-semibold text-stone-800">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-sm font-semibold text-[#6B3F1F]">
                 {expertSetting.preferred_pundit.name || 'Selected Expert'}
                 {expertSetting.preferred_pundit.phone && (
-                  <span className="text-stone-400 font-normal ml-2">({expertSetting.preferred_pundit.phone})</span>
+                  <span className="text-[#7A8C7E] font-normal ml-2">({expertSetting.preferred_pundit.phone})</span>
                 )}
               </p>
-              <p className="text-xs text-stone-500 mt-1">Your queries go directly to this expert.</p>
+              <p className="text-xs text-[#7A8C7E] mt-1">Your queries go directly to this expert.</p>
               <div className="grid grid-cols-2 gap-2 mt-3">
                 <button
                   onClick={() => setExpertSheet(true)}
-                  className="py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+                  className="py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
                 >Change</button>
                 <button
                   onClick={revertExpert}
                   disabled={savingExpert}
-                  className="py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium disabled:opacity-40"
+                  className="py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-40"
                 >Revert to default</button>
               </div>
             </>
           ) : expertSetting.mode === 'PROMOTER_PUNDIT' && expertSetting.promoter_pundit ? (
             <>
-              <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">Currently</p>
-              <p className="text-sm font-semibold text-stone-800">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-sm font-semibold text-[#6B3F1F]">
                 {expertSetting.promoter_pundit.name || 'Promoter-Expert'}
                 {expertSetting.promoter_pundit.phone && (
-                  <span className="text-stone-400 font-normal ml-2">({expertSetting.promoter_pundit.phone})</span>
+                  <span className="text-[#7A8C7E] font-normal ml-2">({expertSetting.promoter_pundit.phone})</span>
                 )}
               </p>
-              <p className="text-xs text-stone-500 mt-1">
+              <p className="text-xs text-[#7A8C7E] mt-1">
                 Your Promoter is also an Expert. Queries go to them by default.
               </p>
               <button
                 onClick={() => setExpertSheet(true)}
-                className="mt-3 w-full py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+                className="mt-3 w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
               >Choose a different expert</button>
             </>
           ) : (
             <>
-              <p className="text-xs text-stone-400 uppercase tracking-wide mb-1">Currently</p>
-              <p className="text-sm font-semibold text-stone-800">Regular team routing</p>
-              <p className="text-xs text-stone-500 mt-1">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-sm font-semibold text-[#6B3F1F]">Regular team routing</p>
+              <p className="text-xs text-[#7A8C7E] mt-1">
                 {expertSetting.company_experts.length > 0
                   ? "Queries go to your company's regular Expert team."
                   : "Your company has no specific experts available yet. Queries will go to the regular team."}
@@ -647,7 +647,7 @@ export default function CropDetailPage() {
               {expertSetting.company_experts.length > 0 && (
                 <button
                   onClick={() => setExpertSheet(true)}
-                  className="mt-3 w-full py-2 rounded-xl border border-stone-200 text-stone-700 text-sm font-medium"
+                  className="mt-3 w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
                 >Choose a specific expert</button>
               )}
             </>
@@ -661,14 +661,14 @@ export default function CropDetailPage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
             {orderSuccess ? (
               <>
-                <p className="font-bold text-stone-800 text-base">Order created</p>
-                <p className="text-sm text-stone-600 mt-2">
+                <p className="font-bold text-[#6B3F1F] text-base">Order created</p>
+                <p className="text-sm text-[#6B3F1F] mt-2">
                   {orderSuccess.item_count} item{orderSuccess.item_count !== 1 ? 's' : ''} added to a single order. You can pick a dealer on the order screen.
                 </p>
                 <div className="grid grid-cols-2 gap-3 mt-5">
                   <button
                     onClick={closeOrderSheet}
-                    className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold"
+                    className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold"
                   >Close</button>
                   <button
                     onClick={() => router.push(`/orders/${orderSuccess.order_id}`)}
@@ -682,8 +682,8 @@ export default function CropDetailPage() {
                 {/* State A: tentative (no acreage set) — entry first */}
                 {!sub.farm_area_acres && !sub.farm_area_confirmed_at && (
                   <>
-                    <p className="font-bold text-stone-800 text-base">Confirm your tentative area</p>
-                    <p className="text-xs text-stone-500 mt-1">
+                    <p className="font-bold text-[#6B3F1F] text-base">Confirm your tentative area</p>
+                    <p className="text-xs text-[#7A8C7E] mt-1">
                       Volumes for these inputs are calculated on this. You can revise it once more at planting.
                     </p>
                     <div className="flex gap-2 mt-4">
@@ -692,12 +692,12 @@ export default function CropDetailPage() {
                         value={orderSheetArea}
                         onChange={e => setOrderSheetArea(e.target.value)}
                         placeholder="0.00"
-                        className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+                        className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                       />
                       <select
                         value={orderSheetUnit}
                         onChange={e => setOrderSheetUnit(e.target.value)}
-                        className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+                        className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
                       >
                         {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                       </select>
@@ -708,31 +708,31 @@ export default function CropDetailPage() {
                 {/* State B: soft set (tentative value exists, not yet locked) */}
                 {sub.farm_area_acres != null && !sub.farm_area_confirmed_at && (
                   <>
-                    <p className="font-bold text-stone-800 text-base">
+                    <p className="font-bold text-[#6B3F1F] text-base">
                       Order DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
                     </p>
                     {orderSheetEditingArea ? (
                       <>
-                        <p className="text-xs text-stone-500 mt-2">Update tentative area:</p>
+                        <p className="text-xs text-[#7A8C7E] mt-2">Update tentative area:</p>
                         <div className="flex gap-2 mt-2">
                           <input
                             type="number" inputMode="decimal" step="0.01" min="0"
                             value={orderSheetArea}
                             onChange={e => setOrderSheetArea(e.target.value)}
                             placeholder="0.00"
-                            className="flex-1 border border-stone-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-stone-400"
+                            className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                           />
                           <select
                             value={orderSheetUnit}
                             onChange={e => setOrderSheetUnit(e.target.value)}
-                            className="border border-stone-200 rounded-xl px-2 py-2 text-sm bg-white"
+                            className="border border-[#DDD0B8] rounded-xl px-2 py-2 text-sm bg-white"
                           >
                             {AREA_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
                           </select>
                         </div>
                       </>
                     ) : (
-                      <p className="text-sm text-stone-700 mt-3">
+                      <p className="text-sm text-[#6B3F1F] mt-3">
                         Current tentative area: <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
                         <button
                           onClick={() => setOrderSheetEditingArea(true)}
@@ -750,14 +750,14 @@ export default function CropDetailPage() {
                 {/* State C: hard locked */}
                 {sub.farm_area_confirmed_at && (
                   <>
-                    <p className="font-bold text-stone-800 text-base">
+                    <p className="font-bold text-[#6B3F1F] text-base">
                       Order DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
                     </p>
-                    <p className="text-sm text-stone-700 mt-3">
+                    <p className="text-sm text-[#6B3F1F] mt-3">
                       Area: <span className="font-semibold">{sub.farm_area_acres} {sub.area_unit}</span>{' '}
-                      <span className="text-xs text-stone-400">(locked)</span>
+                      <span className="text-xs text-[#7A8C7E]">(locked)</span>
                     </p>
-                    <p className="text-stone-400 text-xs mt-2">
+                    <p className="text-[#7A8C7E] text-xs mt-2">
                       Locked at planting. Volumes are calculated on this.
                     </p>
                   </>
@@ -767,7 +767,7 @@ export default function CropDetailPage() {
                   <button
                     onClick={closeOrderSheet}
                     disabled={orderBusy}
-                    className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
+                    className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
                   >Cancel</button>
                   <button
                     onClick={placeBuyAllOrder}
@@ -788,12 +788,12 @@ export default function CropDetailPage() {
       {alertSheet && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingAlerts && setAlertSheet(false)}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-stone-800 text-base">Alert recipients</p>
+            <p className="font-bold text-[#6B3F1F] text-base">Alert recipients</p>
             <div className="mt-4 space-y-3">
-              <label className="flex items-center justify-between bg-stone-50 rounded-xl px-4 py-3">
+              <label className="flex items-center justify-between bg-[#F5F0E8] rounded-xl px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium text-stone-800">Send alerts to me</p>
-                  {me?.phone && <p className="text-xs text-stone-400">{me.phone}</p>}
+                  <p className="text-sm font-medium text-[#6B3F1F]">Send alerts to me</p>
+                  {me?.phone && <p className="text-xs text-[#7A8C7E]">{me.phone}</p>}
                 </div>
                 <input
                   type="checkbox"
@@ -804,10 +804,10 @@ export default function CropDetailPage() {
               </label>
 
               {isAssigned && promoterRecipient && (
-                <label className="flex items-center justify-between bg-stone-50 rounded-xl px-4 py-3">
+                <label className="flex items-center justify-between bg-[#F5F0E8] rounded-xl px-4 py-3">
                   <div>
-                    <p className="text-sm font-medium text-stone-800">Also send to my Promoter</p>
-                    <p className="text-xs text-stone-400">
+                    <p className="text-sm font-medium text-[#6B3F1F]">Also send to my Promoter</p>
+                    <p className="text-xs text-[#7A8C7E]">
                       {promoterRecipient.name || 'Promoter'}{promoterRecipient.phone ? ` · ${promoterRecipient.phone}` : ''}
                     </p>
                   </div>
@@ -824,7 +824,7 @@ export default function CropDetailPage() {
               <button
                 onClick={() => setAlertSheet(false)}
                 disabled={savingAlerts}
-                className="py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
+                className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
               >Cancel</button>
               <button
                 onClick={saveAlertPrefs}
@@ -841,11 +841,11 @@ export default function CropDetailPage() {
       {expertSheet && expertSetting && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingExpert && setExpertSheet(false)}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-stone-800 text-base">Choose your expert</p>
-            <p className="text-xs text-stone-500 mt-1">Your queries will be routed to this expert directly.</p>
+            <p className="font-bold text-[#6B3F1F] text-base">Choose your expert</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">Your queries will be routed to this expert directly.</p>
             <div className="mt-4 space-y-2">
               {expertSetting.company_experts.length === 0 ? (
-                <p className="text-sm text-stone-400 italic py-4 text-center">No specific experts available.</p>
+                <p className="text-sm text-[#7A8C7E] italic py-4 text-center">No specific experts available.</p>
               ) : (
                 expertSetting.company_experts.map(exp => {
                   const isCurrent = expertSetting.preferred_pundit?.pundit_id === exp.pundit_id
@@ -854,10 +854,10 @@ export default function CropDetailPage() {
                       key={exp.pundit_id}
                       onClick={() => setExpert(exp.pundit_id)}
                       disabled={savingExpert}
-                      className={`w-full text-left rounded-xl px-4 py-3 border ${isCurrent ? 'border-stone-400 bg-stone-50' : 'border-stone-200'} disabled:opacity-40`}
+                      className={`w-full text-left rounded-xl px-4 py-3 border ${isCurrent ? 'border-[#6B3F1F] bg-[#F5F0E8]' : 'border-[#DDD0B8]'} disabled:opacity-40`}
                     >
-                      <p className="text-sm font-semibold text-stone-800">{exp.name || 'Expert'}</p>
-                      <p className="text-xs text-stone-400">
+                      <p className="text-sm font-semibold text-[#6B3F1F]">{exp.name || 'Expert'}</p>
+                      <p className="text-xs text-[#7A8C7E]">
                         {exp.role}{exp.phone ? ` · ${exp.phone}` : ''}
                       </p>
                       {isCurrent && <p className="text-xs mt-1" style={{ color: colour }}>Current selection</p>}
@@ -869,7 +869,7 @@ export default function CropDetailPage() {
             <button
               onClick={() => setExpertSheet(false)}
               disabled={savingExpert}
-              className="mt-4 w-full py-3 rounded-xl border border-stone-200 text-stone-700 text-sm font-semibold disabled:opacity-40"
+              className="mt-4 w-full py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
             >Close</button>
           </div>
         </div>
@@ -885,10 +885,10 @@ export default function CropDetailPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
               </svg>
             </div>
-            <h3 className="text-stone-900 font-semibold text-lg text-center">
+            <h3 className="text-[#6B3F1F] font-semibold text-lg text-center">
               {showNeedDateSheet === 'advisory' ? 'Set your crop start date' : 'Set your start date'}
             </h3>
-            <p className="text-stone-500 text-sm text-center mt-2 leading-relaxed">
+            <p className="text-[#7A8C7E] text-sm text-center mt-2 leading-relaxed">
               {showNeedDateSheet === 'advisory'
                 ? 'Once you set when you sowed or transplanted, we will show you today\'s recommended practices.'
                 : 'We need to know when you sowed to help you diagnose any crop issues.'}
@@ -901,7 +901,7 @@ export default function CropDetailPage() {
             </button>
             <button
               onClick={() => setShowNeedDateSheet(null)}
-              className="w-full mt-2 py-2 text-stone-400 text-sm">
+              className="w-full mt-2 py-2 text-[#7A8C7E] text-sm">
               Maybe later
             </button>
           </div>

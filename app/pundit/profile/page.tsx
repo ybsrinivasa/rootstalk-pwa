@@ -54,17 +54,17 @@ export default function PunditProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Expert Credentials" activeRole="FARM_PUNDIT" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
 
         {loading && (
-          <div className="mt-4 h-32 bg-white rounded-2xl border border-slate-100 animate-pulse" />
+          <div className="mt-4 h-32 bg-white rounded-2xl border border-[#DDD0B8] animate-pulse" />
         )}
 
         {!loading && !profile && (
-          <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5 text-center">
-            <p className="text-sm text-slate-500">No expert profile found.</p>
+          <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5 text-center">
+            <p className="text-sm text-[#7A8C7E]">No expert profile found.</p>
             <button onClick={() => router.push('/pundit/register')}
               className="mt-3 px-4 py-2 rounded-xl text-white text-sm font-medium"
               style={{ background: COLOUR }}>
@@ -76,42 +76,42 @@ export default function PunditProfilePage() {
         {!loading && profile && (
           <>
             {/* Identity */}
-            <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
                   style={{ background: COLOUR }}>
                   {(user?.name || '?')[0].toUpperCase()}
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-800">{user?.name || '—'}</p>
-                  <p className="text-xs text-slate-400">{user?.phone || '—'}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{user?.name || '—'}</p>
+                  <p className="text-xs text-[#7A8C7E]">{user?.phone || '—'}</p>
                 </div>
               </div>
               {profile.email && (
-                <div className="border-t border-slate-50 pt-3">
-                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">Email</p>
-                  <p className="text-sm text-slate-700">{profile.email}</p>
+                <div className="border-t border-[#DDD0B8] pt-3">
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">Email</p>
+                  <p className="text-sm text-[#6B3F1F]">{profile.email}</p>
                 </div>
               )}
             </div>
 
             {/* Education */}
-            <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-              <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Education</p>
-              <p className="text-sm text-slate-800">{profile.education || '—'}</p>
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Education</p>
+              <p className="text-sm text-[#6B3F1F]">{profile.education || '—'}</p>
               {profile.experience_band && (
                 <>
-                  <p className="text-xs text-slate-400 uppercase tracking-wide mt-3 mb-2">Experience</p>
-                  <p className="text-sm text-slate-800">{profile.experience_band}</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mt-3 mb-2">Experience</p>
+                  <p className="text-sm text-[#6B3F1F]">{profile.experience_band}</p>
                 </>
               )}
             </div>
 
             {/* Expertise Domains */}
-            <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-              <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Expertise Domains</p>
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Expertise Domains</p>
               {profile.expertise_domains.length === 0 ? (
-                <p className="text-sm text-slate-400">None listed</p>
+                <p className="text-sm text-[#7A8C7E]">None listed</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {profile.expertise_domains.map(d => (
@@ -125,14 +125,14 @@ export default function PunditProfilePage() {
             </div>
 
             {/* Languages */}
-            <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-              <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Languages</p>
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Languages</p>
               {profile.languages.length === 0 ? (
-                <p className="text-sm text-slate-400">None listed</p>
+                <p className="text-sm text-[#7A8C7E]">None listed</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {profile.languages.map(l => (
-                    <span key={l} className="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 font-medium">
+                    <span key={l} className="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-[#6B3F1F] font-medium">
                       {l.toUpperCase()}
                     </span>
                   ))}
@@ -141,14 +141,14 @@ export default function PunditProfilePage() {
             </div>
 
             {/* Support Areas */}
-            <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-              <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Support Areas</p>
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Support Areas</p>
               {profile.support_areas.length === 0 ? (
-                <p className="text-sm text-slate-400">None listed</p>
+                <p className="text-sm text-[#7A8C7E]">None listed</p>
               ) : (
                 <ul className="space-y-1">
                   {profile.support_areas.map((a, i) => (
-                    <li key={i} className="text-sm text-slate-700">
+                    <li key={i} className="text-sm text-[#6B3F1F]">
                       {a.state_cosh_id}{a.district_cosh_id ? ` · ${a.district_cosh_id}` : ''}
                     </li>
                   ))}
@@ -158,18 +158,18 @@ export default function PunditProfilePage() {
 
             {/* Support Method */}
             {profile.support_method && (
-              <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
-                <p className="text-xs text-slate-400 uppercase tracking-wide mb-2">Support Method</p>
-                <p className="text-sm text-slate-800">{profile.support_method}</p>
+              <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+                <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Support Method</p>
+                <p className="text-sm text-[#6B3F1F]">{profile.support_method}</p>
               </div>
             )}
 
             {/* Phone Privacy */}
-            <div className="mt-4 bg-white rounded-2xl border border-slate-100 p-5">
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-700">Phone privacy</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-sm font-medium text-[#6B3F1F]">Phone privacy</p>
+                  <p className="text-xs text-[#7A8C7E] mt-0.5">
                     {phoneHidden ? 'Hidden — companies cannot find you by phone' : 'Visible — companies can find you by phone'}
                   </p>
                 </div>
@@ -185,9 +185,9 @@ export default function PunditProfilePage() {
             {/* Edit credentials placeholder */}
             <div className="mt-6">
               <button disabled
-                className="w-full py-3.5 rounded-2xl border border-slate-200 text-sm font-medium text-slate-400 flex items-center justify-center gap-2">
+                className="w-full py-3.5 rounded-2xl border border-[#DDD0B8] text-sm font-medium text-[#7A8C7E] flex items-center justify-center gap-2">
                 Edit my credentials
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">Coming soon</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-[#7A8C7E] font-semibold">Coming soon</span>
               </button>
             </div>
           </>

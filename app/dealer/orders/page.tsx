@@ -19,7 +19,7 @@ const STATUS_COLOUR: Record<string, string> = {
   SENT_FOR_APPROVAL: 'bg-amber-100 text-amber-700',
   PARTIALLY_APPROVED: 'bg-orange-100 text-orange-700',
   COMPLETED: 'bg-emerald-100 text-emerald-700',
-  CANCELLED: 'bg-slate-100 text-slate-500',
+  CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
 }
 
 export default function DealerOrdersPage() {
@@ -39,7 +39,7 @@ export default function DealerOrdersPage() {
   const done = orders.filter(o => ['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status))
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Dealer — Orders" activeRole="DEALER" />
       <div className="pt-16 pb-20">
         {/* Shortcuts row */}
@@ -49,14 +49,14 @@ export default function DealerOrdersPage() {
             🏭 My Dealerships
           </button>
           <button onClick={() => router.push('/dealer/profile')}
-            className="flex-1 text-xs font-medium text-slate-600 bg-slate-100 rounded-xl py-2">
+            className="flex-1 text-xs font-medium text-[#6B3F1F] bg-slate-100 rounded-xl py-2">
             ⚙ Shop Profile
           </button>
         </div>
-        <div className="flex bg-white border-b border-slate-100 mt-3">
+        <div className="flex bg-white border-b border-[#DDD0B8] mt-3">
           {(['pending', 'done'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-[#085041] text-[#085041]' : 'border-transparent text-slate-400'}`}>
+              className={`flex-1 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-[#085041] text-[#085041]' : 'border-transparent text-[#7A8C7E]'}`}>
               {t === 'pending' ? `Pending (${pending.length})` : 'Completed'}
             </button>
           ))}
@@ -68,33 +68,33 @@ export default function DealerOrdersPage() {
           ) : (tab === 'pending' ? pending : done).length === 0 ? (
             <div className="text-center py-16">
               <span className="text-4xl">📋</span>
-              <p className="text-slate-400 text-sm mt-3">
+              <p className="text-[#7A8C7E] text-sm mt-3">
                 {tab === 'pending' ? 'No pending orders' : 'No completed orders'}
               </p>
             </div>
           ) : (
             (tab === 'pending' ? pending : done).map(order => (
               <button key={order.id} onClick={() => router.push(`/dealer/orders/${order.id}`)}
-                className="w-full bg-white rounded-2xl p-4 border border-slate-100 shadow-sm text-left active:scale-98 transition-transform">
+                className="w-full bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left active:scale-98 transition-transform">
                 <div className="flex items-center justify-between mb-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[order.status] || 'bg-slate-100 text-slate-500'}`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[order.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
                     {order.status.replace(/_/g, ' ')}
                   </span>
-                  <span className="text-xs text-slate-400">{new Date(order.created_at).toLocaleDateString()}</span>
+                  <span className="text-xs text-[#7A8C7E]">{new Date(order.created_at).toLocaleDateString()}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-800">
+                    <p className="text-sm font-medium text-[#6B3F1F]">
                       {order.item_count} item{order.item_count !== 1 ? 's' : ''}
                       {order.pending_count > 0 && (
                         <span className="ml-2 text-xs text-amber-600">({order.pending_count} to process)</span>
                       )}
                     </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="text-xs text-[#7A8C7E] mt-0.5">
                       {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
                     </p>
                   </div>
-                  <span className="text-slate-300 text-xl">›</span>
+                  <span className="text-[#DDD0B8] text-xl">›</span>
                 </div>
                 {order.status === 'SENT' && (
                   <div className="mt-2 bg-purple-50 rounded-lg px-3 py-1.5">

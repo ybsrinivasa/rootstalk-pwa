@@ -20,13 +20,13 @@ const STATUS_COLOUR: Record<string, string> = {
   PENDING: 'bg-amber-100 text-amber-700',
   AVAILABLE: 'bg-blue-100 text-blue-700',
   POSTPONED: 'bg-amber-100 text-amber-700',
-  NOT_AVAILABLE: 'bg-red-100 text-red-600',
+  NOT_AVAILABLE: 'bg-red-100 text-[#D4682E]',
   SENT_FOR_APPROVAL: 'bg-purple-100 text-purple-700',
   APPROVED: 'bg-emerald-100 text-emerald-700',
   REJECTED: 'bg-rose-100 text-rose-600',
-  NOT_NEEDED: 'bg-slate-100 text-slate-400',
-  SKIPPED: 'bg-slate-100 text-slate-400',
-  REMOVED: 'bg-slate-100 text-slate-400',
+  NOT_NEEDED: 'bg-slate-100 text-[#7A8C7E]',
+  SKIPPED: 'bg-slate-100 text-[#7A8C7E]',
+  REMOVED: 'bg-slate-100 text-[#7A8C7E]',
 }
 
 const STATUS_FARMER: Record<string, string> = {
@@ -104,20 +104,20 @@ export default function FarmerOrderDetailPage() {
   const canCancel = ['SENT', 'PROCESSING'].includes(order.status)
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Order Details" activeRole="FARMER" />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         {/* Status card */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-100 mt-4">
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-slate-400">Status</p>
-              <p className="font-semibold text-slate-800">{order.status.replace(/_/g, ' ')}</p>
+              <p className="text-xs text-[#7A8C7E]">Status</p>
+              <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-slate-400">Date</p>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#7A8C7E]">Date</p>
+              <p className="text-xs text-[#6B3F1F]">
                 {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
               </p>
             </div>
@@ -128,22 +128,22 @@ export default function FarmerOrderDetailPage() {
         {awaitingApproval.length > 0 && (
           <button onClick={approveAll}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
-            style={{ background: 'linear-gradient(135deg, #1A5C2A, #22773a)' }}>
+            style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
             ✓ Approve All ({awaitingApproval.length} item{awaitingApproval.length > 1 ? 's' : ''})
           </button>
         )}
 
         {/* Items */}
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-slate-700 px-1">Items ({order.items.length})</p>
+          <p className="text-sm font-semibold text-[#6B3F1F] px-1">Items ({order.items.length})</p>
           {order.items.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <div key={item.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100'}`}>
                     {STATUS_FARMER[item.status] || item.status.replace(/_/g, ' ')}
                   </span>
-                  <p className="text-xs text-slate-400 font-mono mt-1.5 truncate">{item.practice_id}</p>
+                  <p className="text-xs text-[#7A8C7E] font-mono mt-1.5 truncate">{item.practice_id}</p>
 
                   {/* Brand shown only after approval */}
                   {item.status === 'APPROVED' && item.brand_name && (
@@ -164,7 +164,7 @@ export default function FarmerOrderDetailPage() {
                         {item.given_volume} {item.volume_unit}
                         {item.price ? ` · ₹${item.price}` : ''}
                       </p>
-                      <p className="text-xs text-slate-400 mt-0.5">Brand shown after approval</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">Brand shown after approval</p>
                     </div>
                   )}
                 </div>
@@ -178,7 +178,7 @@ export default function FarmerOrderDetailPage() {
                     ✓ Approve
                   </button>
                   <button onClick={() => rejectItem(item.id)}
-                    className="flex-1 bg-red-100 text-red-600 text-xs font-semibold py-2.5 rounded-xl">
+                    className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
                     ✗ Reject
                   </button>
                 </div>
@@ -187,20 +187,20 @@ export default function FarmerOrderDetailPage() {
               {/* Actions for NOT_AVAILABLE items */}
               {item.status === 'NOT_AVAILABLE' && (
                 <div className="mt-3 space-y-2">
-                  <p className="text-xs text-red-500 font-medium">Dealer cannot fulfil this item</p>
+                  <p className="text-xs text-[#D4682E] font-medium">Dealer cannot fulfil this item</p>
                   {rerouting === item.id ? (
                     <div className="space-y-2">
                       <input value={newDealerPhone}
                         onChange={e => setNewDealerPhone(e.target.value)}
                         placeholder="Dealer phone number"
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none" />
+                        className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm focus:outline-none" />
                       <div className="flex gap-2">
                         <button
                           onClick={async () => {
                             setRerouting(null)
                             setNewDealerPhone('')
                           }}
-                          className="flex-1 bg-slate-100 text-slate-600 text-xs font-medium py-2 rounded-xl">
+                          className="flex-1 bg-slate-100 text-[#6B3F1F] text-xs font-medium py-2 rounded-xl">
                           Cancel
                         </button>
                       </div>
@@ -212,7 +212,7 @@ export default function FarmerOrderDetailPage() {
                         Try another dealer
                       </button>
                       <button onClick={() => skipItem(item.id)}
-                        className="flex-1 bg-slate-100 text-slate-600 text-xs font-semibold py-2 rounded-xl">
+                        className="flex-1 bg-slate-100 text-[#6B3F1F] text-xs font-semibold py-2 rounded-xl">
                         Skip for now
                       </button>
                     </div>
@@ -223,7 +223,7 @@ export default function FarmerOrderDetailPage() {
               {/* Remove item (before approval) */}
               {['PENDING', 'AVAILABLE', 'POSTPONED'].includes(item.status) && order.status === 'PROCESSING' && (
                 <button onClick={() => removeItem(item.id)}
-                  className="mt-2 text-xs text-red-400 underline">
+                  className="mt-2 text-xs text-[#D4682E] underline">
                   Remove item
                 </button>
               )}
@@ -234,7 +234,7 @@ export default function FarmerOrderDetailPage() {
         {/* Cancel order */}
         {canCancel && (
           <button onClick={cancelOrder}
-            className="w-full py-3 rounded-2xl border-2 border-red-200 text-red-500 font-semibold text-sm">
+            className="w-full py-3 rounded-2xl border-2 border-red-200 text-[#D4682E] font-semibold text-sm">
             Cancel Order
           </button>
         )}
