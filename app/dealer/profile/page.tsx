@@ -28,6 +28,13 @@ type FormState = {
   shop_photo_url: string
 }
 
+// Local-only — not persisted. Captured once per geolocation call
+// so we can show the dealer how precise the reading was and warn
+// them to step outside / retry if the device only managed a
+// wifi-based fix.
+const GPS_ACCURACY_GOOD_METRES = 30
+const GPS_ACCURACY_POOR_METRES = 100
+
 function isImageUrl(url: string): boolean {
   return /\.(jpe?g|png|gif|webp|avif|bmp)(\?|$)/i.test(url)
 }
@@ -47,6 +54,7 @@ export default function DealerProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [gpsLoading, setGpsLoading] = useState(false)
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
 
   // Separate file inputs per surface — camera-capture vs library.
@@ -89,6 +97,12 @@ export default function DealerProfilePage() {
           shop_gps_lat: pos.coords.latitude,
           shop_gps_lng: pos.coords.longitude,
         }))
+        // coords.accuracy is the 68% confidence radius in metres
+        // per W3C Geolocation. We surface it so the dealer can
+        // judge whether to retry from outdoors. The reading isn't
+        // persisted — accuracy is a per-capture quality signal,
+        // not a stored attribute of the shop.
+        setGpsAccuracy(typeof pos.coords.accuracy === 'number' ? pos.coords.accuracy : null)
         setGpsLoading(false)
       },
       () => setGpsLoading(false),
@@ -133,9 +147,67 @@ export default function DealerProfilePage() {
       <PWAHeader title="Shop Details" activeRole="DEALER" />
       <div className="pt-16 pb-24 px-4 space-y-5 max-w-lg mx-auto">
 
-        {/* Shop Details */}
-        <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4">
-          <h2 className="font-semibold text-[#6B3F1F]">Shop Details</h2>
+        {/* 1. Shop Photograph — moved to the top because the photo is
+            what farmers and facilitators use to recognise the shop on
+            the ground. They see it first in dealer lists; we ask the
+            dealer to capture it first too. Either the camera or the
+            gallery can be the source. */}
+        <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
+          <div>
+            <h2 className="font-semibold text-[#6B3F1F]">Shop Photograph</h2>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">
+              A photo of your signboard or storefront. Helps farmers and facilitators recognise your shop when they visit.
+            </p>
+          </div>
+          <input ref={photoCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f) uploadFile(f, 'dealer-photos', 'shop_photo_url')
+            }} />
+          <input ref={photoLibraryRef} type="file" accept="image/*" className="hidden"
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f) uploadFile(f, 'dealer-photos', 'shop_photo_url')
+            }} />
+          {form.shop_photo_url ? (
+            <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
+              <img src={form.shop_photo_url} alt="Shop"
+                className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
+              </div>
+              <div className="flex gap-1.5 shrink-0">
+                <button onClick={() => photoCameraRef.current?.click()}
+                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-2 py-1.5">📷</button>
+                <button onClick={() => photoLibraryRef.current?.click()}
+                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-2 py-1.5">📁</button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => photoCameraRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
+                className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
+                📷 Take Photo
+              </button>
+              <button onClick={() => photoLibraryRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
+                className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
+                📁 Upload Picture
+              </button>
+            </div>
+          )}
+          {uploadingField === 'shop_photo_url' && (
+            <p className="text-xs text-[#7A8C7E]">Uploading…</p>
+          )}
+        </div>
+
+        {/* 2. Shop Details — name + postal address. */}
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4">
+          <div>
+            <h2 className="font-semibold text-[#6B3F1F]">Shop Details</h2>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">
+              The name on your signboard and your postal address. Shown to farmers next to your photo.
+            </p>
+          </div>
           <div>
             <label className="block text-xs text-[#7A8C7E] mb-1">Shop Name *</label>
             <input value={form.shop_name}
@@ -152,10 +224,17 @@ export default function DealerProfilePage() {
           </div>
         </div>
 
-        {/* Shop Location (GPS) — adds a View on Map link once captured */}
+        {/* 3. Shop Location (GPS) — accuracy matters because farmers
+            and facilitators use this to navigate to the shop. Stand
+            at the entrance for the best fix; if accuracy is poor
+            (wifi-based indoor reading), prompt a retry from outside. */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
-          <h2 className="font-semibold text-[#6B3F1F]">Shop Location</h2>
-          <p className="text-xs text-[#7A8C7E]">Capture the GPS coordinates of your shop for order routing.</p>
+          <div>
+            <h2 className="font-semibold text-[#6B3F1F]">Shop Location</h2>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">
+              GPS coordinates guide farmers and facilitators to your shop. <span className="font-semibold">Stand at the shop entrance</span> when you capture, and step outside if the accuracy looks poor.
+            </p>
+          </div>
           {form.shop_gps_lat !== null && form.shop_gps_lng !== null ? (
             <>
               <div className="bg-[#F5F0E8] rounded-xl px-4 py-3 flex items-center justify-between">
@@ -170,6 +249,23 @@ export default function DealerProfilePage() {
                   {gpsLoading ? 'Getting…' : 'Recapture'}
                 </button>
               </div>
+              {gpsAccuracy != null && (() => {
+                const m = Math.round(gpsAccuracy)
+                const good = m <= GPS_ACCURACY_GOOD_METRES
+                const poor = m > GPS_ACCURACY_POOR_METRES
+                const tone = good
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : poor
+                    ? 'bg-amber-50 border-amber-200 text-amber-800'
+                    : 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                return (
+                  <div className={`text-xs border rounded-xl px-3 py-2 ${tone}`}>
+                    {good && <>📍 Accurate to about {m} m. Looks good.</>}
+                    {!good && !poor && <>📍 Accurate to about {m} m. OK, but step outside and recapture if your shop entrance is across the road.</>}
+                    {poor && <>⚠ Accuracy is poor (about {m} m). Please step outside and tap <span className="font-semibold">Recapture</span> — a rooftop view of the sky gives a far better fix.</>}
+                  </div>
+                )
+              })()}
               {mapHref && (
                 <a href={mapHref} target="_blank" rel="noopener noreferrer"
                   className="block w-full text-center py-2.5 rounded-xl border border-[#DDD0B8] text-sm font-medium text-[#085041]">
@@ -189,11 +285,13 @@ export default function DealerProfilePage() {
           )}
         </div>
 
-        {/* What Do You Sell */}
+        {/* 4. What Do You Sell? */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
             <h2 className="font-semibold text-[#6B3F1F]">What Do You Sell? *</h2>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">Select all that apply. Orders are routed based on your selection.</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">
+              Select all that apply. Farmers&apos; orders are routed to dealers who sell the relevant items.
+            </p>
           </div>
           {SELL_CATEGORIES.map(cat => {
             const selected = form.sell_categories.includes(cat.id)
@@ -219,96 +317,50 @@ export default function DealerProfilePage() {
           })}
         </div>
 
-        {/* Shop Documents — Registration Certificate + Shop Photo.
-            Licence uploads removed 2026-05-20: verification of dealer
-            licences is the company (client)'s responsibility, not
-            RootsTalk's. The dealer keeps their original licences with
-            them. */}
-        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-5">
-          <h2 className="font-semibold text-[#6B3F1F]">Shop Documents</h2>
-
-          {/* Registration Certificate — accepts PDF or image */}
+        {/* 5. Shop Registration Certificate — separate card.
+            Anti-fraud purpose: helps RootsTalk verify a shop is a
+            real registered business before companies onboard it.
+            We do not verify the document ourselves; it sits with
+            the dealer's record for the company (client) to review
+            during their own dealer-vetting process. */}
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <label className="block text-xs text-[#7A8C7E] mb-2">Shop Registration Certificate</label>
-            <input ref={certRef} type="file" accept="image/*,.pdf" className="hidden"
-              onChange={e => {
-                const f = e.target.files?.[0]
-                if (f) uploadFile(f, 'dealer-docs', 'shop_registration_url')
-              }} />
-            {form.shop_registration_url ? (
-              <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
-                {isImageUrl(form.shop_registration_url) ? (
-                  <img src={form.shop_registration_url} alt="Registration certificate"
-                    className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
-                ) : (
-                  <div className="w-14 h-14 rounded-lg border border-[#DDD0B8] bg-white flex items-center justify-center shrink-0">
-                    <span className="text-2xl">📄</span>
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
-                  <a href={form.shop_registration_url} target="_blank" rel="noopener noreferrer"
-                    className="text-xs text-[#7A8C7E] underline truncate block">View document</a>
-                </div>
-                <button onClick={() => certRef.current?.click()}
-                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5 shrink-0">
-                  {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Change'}
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => certRef.current?.click()} disabled={uploadingField === 'shop_registration_url'}
-                className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Upload Certificate (PDF or photo)'}
-              </button>
-            )}
+            <h2 className="font-semibold text-[#6B3F1F]">Shop Registration Certificate</h2>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">
+              Proof that your shop is a registered business. Helps keep fake shops out of the network. PDF or photo.
+            </p>
           </div>
-
-          {/* Shop Photograph — explicit camera + library options.
-              accept="image/*" alone shows a chooser on mobile, but
-              the chooser is hidden behind a tap and not discoverable
-              on desktop. Two explicit buttons make both paths visible. */}
-          <div>
-            <label className="block text-xs text-[#7A8C7E] mb-2">Shop Photograph</label>
-            <input ref={photoCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
-              onChange={e => {
-                const f = e.target.files?.[0]
-                if (f) uploadFile(f, 'dealer-photos', 'shop_photo_url')
-              }} />
-            <input ref={photoLibraryRef} type="file" accept="image/*" className="hidden"
-              onChange={e => {
-                const f = e.target.files?.[0]
-                if (f) uploadFile(f, 'dealer-photos', 'shop_photo_url')
-              }} />
-            {form.shop_photo_url ? (
-              <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
-                <img src={form.shop_photo_url} alt="Shop"
+          <input ref={certRef} type="file" accept="image/*,.pdf" className="hidden"
+            onChange={e => {
+              const f = e.target.files?.[0]
+              if (f) uploadFile(f, 'dealer-docs', 'shop_registration_url')
+            }} />
+          {form.shop_registration_url ? (
+            <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
+              {isImageUrl(form.shop_registration_url) ? (
+                <img src={form.shop_registration_url} alt="Registration certificate"
                   className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
+              ) : (
+                <div className="w-14 h-14 rounded-lg border border-[#DDD0B8] bg-white flex items-center justify-center shrink-0">
+                  <span className="text-2xl">📄</span>
                 </div>
-                <div className="flex gap-1.5 shrink-0">
-                  <button onClick={() => photoCameraRef.current?.click()}
-                    className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-2 py-1.5">📷</button>
-                  <button onClick={() => photoLibraryRef.current?.click()}
-                    className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-2 py-1.5">📁</button>
-                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
+                <a href={form.shop_registration_url} target="_blank" rel="noopener noreferrer"
+                  className="text-xs text-[#7A8C7E] underline truncate block">View document</a>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => photoCameraRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
-                  className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                  📷 Take Photo
-                </button>
-                <button onClick={() => photoLibraryRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
-                  className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                  📁 Upload Picture
-                </button>
-              </div>
-            )}
-            {uploadingField === 'shop_photo_url' && (
-              <p className="text-xs text-[#7A8C7E] mt-2">Uploading…</p>
-            )}
-          </div>
+              <button onClick={() => certRef.current?.click()}
+                className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5 shrink-0">
+                {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Change'}
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => certRef.current?.click()} disabled={uploadingField === 'shop_registration_url'}
+              className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
+              {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Upload Certificate (PDF or photo)'}
+            </button>
+          )}
         </div>
 
         <button onClick={save} disabled={saving || !form.shop_name.trim() || form.sell_categories.length === 0}
