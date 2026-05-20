@@ -6,6 +6,7 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
+import { C } from '@/lib/tokens'
 
 type Subscription = {
   id: string; client_id: string; package_id: string
@@ -97,9 +98,8 @@ export default function HomePage() {
   const uniqueClientIds = Object.keys(grouped)
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen" style={{ background: C.background }}>
       <PWAHeader
-        title="rootsTALK"
         activeRole="FARMER"
         onRoleSwitch={() => setShowRoleDrawer(true)}
       />
@@ -107,10 +107,10 @@ export default function HomePage() {
       <div className="pt-16 pb-20 px-4">
         {/* Greeting */}
         <div className="mt-4 mb-5">
-          <p className="text-xl font-bold text-stone-900">
+          <p className="text-xl font-bold" style={{ color: C.textPrimary }}>
             {user?.name ? `Welcome, ${user.name.split(' ')[0]}` : 'Welcome'}
           </p>
-          <p className="text-stone-400 text-sm mt-0.5">
+          <p className="text-sm mt-0.5" style={{ color: C.textSecond }}>
             {uniqueClientIds.length > 0
               ? `${uniqueClientIds.length} compan${uniqueClientIds.length > 1 ? 'ies' : 'y'} — ${subscriptions.length} crop${subscriptions.length > 1 ? 's' : ''}`
               : 'No active advisories yet'}
@@ -120,7 +120,8 @@ export default function HomePage() {
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-stone-200 border-t-[#1A5C2A] rounded-full animate-spin"/>
+            <div className="w-8 h-8 rounded-full animate-spin"
+              style={{ border: `2px solid ${C.divider}`, borderTopColor: C.primary }}/>
           </div>
         ) : (
           <>
@@ -129,36 +130,38 @@ export default function HomePage() {
               <div className="mb-4 space-y-3">
                 {pendingAssignments.map(assignment => {
                   const clientInfo = assignmentClientInfos[assignment.client_id]
-                  const colour = clientInfo?.primary_colour || '#1A5C2A'
+                  const colour = clientInfo?.primary_colour || C.primary
                   const initials = (clientInfo?.display_name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
                   const promoterLabel = assignment.promoter_type === 'DEALER' ? 'Dealer' : 'Facilitator'
                   const promoterName = assignment.promoter.name || 'Someone'
 
                   return (
                     <div key={assignment.subscription_id}
-                      className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-3">
+                      className="rounded-2xl p-4 mb-3"
+                      style={{ background: C.primarySoft, border: `1px solid ${C.primary}33` }}>
                       <div className="flex items-start gap-3 mb-3">
                         {clientInfo?.logo_url ? (
                           <img src={clientInfo.logo_url} alt={clientInfo.display_name}
-                            className="w-10 h-10 rounded-full object-contain bg-white p-1 shrink-0 border border-green-200"/>
+                            className="w-10 h-10 rounded-full object-contain p-1 shrink-0"
+                            style={{ background: C.cardBg, border: `1px solid ${C.primary}33` }}/>
                         ) : (
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 border border-green-200"
-                            style={{ background: colour }}>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                            style={{ background: colour, border: `1px solid ${C.primary}33` }}>
                             <span className="text-xs font-bold text-white">{initials}</span>
                           </div>
                         )}
                         <div className="flex-1">
-                          <p className="font-semibold text-stone-900 text-sm">Advisory assignment request</p>
-                          <p className="text-stone-600 text-xs mt-0.5 leading-relaxed">
-                            {promoterLabel} <span className="font-medium">{promoterName}</span> wants to subscribe you to{' '}
-                            <span className="font-medium">{clientInfo?.display_name || 'a company'}</span>&apos;s advisory for your crops.
+                          <p className="font-semibold text-[15px]" style={{ color: C.textPrimary }}>Advisory assignment request</p>
+                          <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: C.textPrimary, opacity: 0.85 }}>
+                            {promoterLabel} <span className="font-semibold">{promoterName}</span> wants to subscribe you to{' '}
+                            <span className="font-semibold">{clientInfo?.display_name || 'a company'}</span>&apos;s advisory for your crops.
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => router.push(`/assignment/${assignment.subscription_id}`)}
-                        className="w-full py-2.5 rounded-xl text-white font-medium text-sm"
-                        style={{ background: '#1A5C2A' }}>
+                        className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
+                        style={{ background: C.primary, minHeight: 48 }}>
                         Review request →
                       </button>
                     </div>
@@ -171,14 +174,14 @@ export default function HomePage() {
               /* Empty state */
               <div className="flex flex-col items-center justify-center py-16">
                 <SeedlingIllustration/>
-                <p className="text-stone-800 font-semibold text-lg mt-4">No advisories yet</p>
-                <p className="text-stone-400 text-sm text-center mt-2 max-w-[240px]">
+                <p className="font-semibold text-lg mt-4" style={{ color: C.textPrimary }}>No advisories yet</p>
+                <p className="text-sm text-center mt-2 max-w-[240px]" style={{ color: C.textSecond }}>
                   Subscribe to a company&apos;s advisory to get started
                 </p>
                 <button
                   onClick={() => router.push('/subscribe')}
-                  className="mt-6 py-3.5 px-8 rounded-2xl text-white font-medium"
-                  style={{ background: '#1A5C2A' }}>
+                  className="mt-6 py-3.5 px-8 rounded-2xl text-white font-bold"
+                  style={{ background: C.primary, minHeight: 48 }}>
                   Subscribe now →
                 </button>
               </div>
@@ -188,31 +191,36 @@ export default function HomePage() {
                 {uniqueClientIds.map(clientId => {
                   const subs = grouped[clientId]
                   const info = clientInfos[clientId]
-                  const colour = info?.primary_colour || '#1A5C2A'
+                  const colour = info?.primary_colour || C.primary
                   const needsStartDate = subs.some(s => !s.crop_start_date)
                   const initials = (info?.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 
                   return (
                     <button key={clientId}
                       onClick={() => router.push(`/home/${clientId}`)}
-                      className="w-full bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100 text-left active:scale-[0.98] transition-transform">
+                      className="w-full rounded-2xl overflow-hidden shadow-sm text-left active:scale-[0.98] transition-transform"
+                      style={{ background: C.cardBg, border: `1px solid ${C.divider}` }}>
 
-                      {/* Branded header */}
+                      {/* Branded header — keeps the client's brand
+                          colour. RootsTalk Crop Green only as the
+                          default fallback. */}
                       <div className="px-4 py-4 flex items-center gap-3" style={{ background: colour }}>
                         {info?.logo_url ? (
                           <img src={info.logo_url} alt={info.display_name}
-                            className="w-9 h-9 rounded-full object-contain bg-white p-1 shrink-0"/>
+                            className="w-9 h-9 rounded-full object-contain p-1 shrink-0"
+                            style={{ background: C.cardBg }}/>
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shrink-0"
-                            style={{ color: colour }}>
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                            style={{ background: C.cardBg, color: colour }}>
                             <span className="text-xs font-bold">{initials}</span>
                           </div>
                         )}
-                        <p className="text-white font-semibold text-base flex-1">
+                        <p className="text-white font-bold text-base flex-1">
                           {info?.display_name || 'Loading…'}
                         </p>
                         {needsStartDate && (
-                          <span className="px-2 py-0.5 rounded-full text-xs bg-amber-400/90 text-white font-medium ml-auto shrink-0">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-bold ml-auto shrink-0"
+                            style={{ background: C.accent, color: 'white' }}>
                             Set start date
                           </span>
                         )}
@@ -220,9 +228,9 @@ export default function HomePage() {
 
                       {/* Card body */}
                       {info?.tagline && (
-                        <p className="text-stone-500 text-sm px-4 py-2">{info.tagline}</p>
+                        <p className="text-[14px] px-4 py-2" style={{ color: C.textPrimary, opacity: 0.85 }}>{info.tagline}</p>
                       )}
-                      <p className="text-stone-400 text-xs px-4 pb-3 pt-1">
+                      <p className="text-xs px-4 pb-3 pt-1" style={{ color: C.textSecond }}>
                         {subs.length} crop{subs.length > 1 ? 's' : ''} subscribed
                       </p>
                     </button>
@@ -234,7 +242,7 @@ export default function HomePage() {
         )}
       </div>
 
-      <BottomNav color="#1A5C2A"/>
+      <BottomNav color={C.primary}/>
 
       <RoleSwitcherDrawer
         open={showRoleDrawer}
