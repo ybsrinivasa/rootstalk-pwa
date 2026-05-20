@@ -6,6 +6,13 @@ import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
+// Cosh-driven location universe — same shape as onboarding /
+// Profile. Used here so the farmer picks a real state/district
+// by name (we send the cosh_id to /farmer/discover/* APIs).
+type CoshDistrict = { cosh_id: string; name: string | null }
+type CoshState    = { cosh_id: string; name: string | null; districts: CoshDistrict[] }
+type CoshLocations = { states: CoshState[] }
+
 declare global {
   interface Window {
     Razorpay: new (options: Record<string, unknown>) => { open(): void }
@@ -82,10 +89,19 @@ export default function SubscribePage() {
 
   const [stage, setStage] = useState<Stage>('location')
 
-  // Location
-  const [district, setDistrict] = useState('')
-  const [stateName, setStateName] = useState('')
-  const [districtName, setDistrictName] = useState('')
+  // Location pickers — store real cosh_ids (sent to backend) and
+  // resolved names (rendered). `district` (cosh_id) drives the
+  // /farmer/discover/* API calls. Initial values come from the
+  // user's saved profile; the "Use my saved location" chip and
+  // the typeahead pickers both write into this same state.
+  const [district, setDistrict] = useState('')           // district cosh_id
+  const [districtName, setDistrictName] = useState('')   // resolved name
+  const [stateId, setStateId] = useState('')             // state cosh_id
+  const [stateName, setStateName] = useState('')         // resolved name
+  const [stateSearch, setStateSearch] = useState('')
+  const [districtSearch, setDistrictSearch] = useState('')
+  const [editingLocation, setEditingLocation] = useState(false)
+  const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
 
   // Discovery
   const [crops, setCrops] = useState<{ crop_cosh_id: string }[]>([])
@@ -112,28 +128,40 @@ export default function SubscribePage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  // ── Auth guard ─────────────────────────────────────────────────────────────
+  // ── Auth guard + location preload ─────────────────────────────
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    // Pre-fill location from user profile
+    // Pre-fill from the user's saved profile location (cosh_ids).
+    // Names get resolved once /cosh/locations/india lands below.
     api.get<{ state_cosh_id: string | null; district_cosh_id: string | null }>('/auth/me/location')
       .then(({ data }) => {
-        if (data.state_cosh_id) setStateName(data.state_cosh_id)
-        if (data.district_cosh_id) {
-          setDistrict(data.district_cosh_id)
-          setDistrictName(data.district_cosh_id)
-        }
+        if (data.state_cosh_id) setStateId(data.state_cosh_id)
+        if (data.district_cosh_id) setDistrict(data.district_cosh_id)
       })
-      .catch(() => { /* location not set — user fills manually */ })
+      .catch(() => { /* location not set — user picks via the typeahead */ })
+    // Cosh universe powers the typeahead pickers AND resolves the
+    // pre-filled cosh_ids to display names.
+    api.get<CoshLocations>('/cosh/locations/india')
+      .then(r => setCoshLocations(r.data))
+      .catch(() => { /* picker shows a clear error state */ })
   }, [router])
+
+  // Resolve names whenever the universe or the selected ids change.
+  useEffect(() => {
+    if (!coshLocations) return
+    const s = coshLocations.states.find(x => x.cosh_id === stateId)
+    setStateName(s?.name || '')
+    const d = s?.districts.find(x => x.cosh_id === district)
+    setDistrictName(d?.name || '')
+  }, [coshLocations, stateId, district])
 
   // ── Stage: Location ────────────────────────────────────────────────────────
   async function proceedFromLocation() {
-    if (!district.trim()) { setError('Please enter your district.'); return }
+    if (!district) { setError('Please pick your district.'); return }
     setBusy(true); setError('')
     try {
       const { data } = await api.get<{ crop_cosh_id: string }[]>('/farmer/discover/crops', {
-        params: { district_cosh_id: district.trim() },
+        params: { district_cosh_id: district },
       })
       setCrops(data)
       setStage('crop')
@@ -364,56 +392,147 @@ export default function SubscribePage() {
                 <ProgressBar stage={stage} />
 
                 {/* ── STAGE 1: Location ── */}
-                {stage === 'location' && (
-                  <div>
-                    <h2 className="text-lg font-bold text-[#6B3F1F]">Where is your farm?</h2>
-                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
-                      We&apos;ll find advisories available in your area
-                    </p>
+                {stage === 'location' && (() => {
+                  const coshStates = coshLocations?.states ?? []
+                  const filteredStates = coshStates
+                    .filter(s => s.name)
+                    .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+                  const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
+                  const filteredDistricts = (selectedState?.districts ?? [])
+                    .filter(d => d.name)
+                    .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
+                  const hasSavedLocation = !!(district && districtName)
 
-                    {/* Pre-filled chip */}
-                    {districtName && (
+                  return (
+                    <div>
+                      <h2 className="text-lg font-bold text-[#6B3F1F]">Where is your farm?</h2>
+                      <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
+                        We&apos;ll find advisories available in your area
+                      </p>
+
+                      {!coshLocations && (
+                        <div className="flex items-center gap-3 text-[#7A8C7E] text-sm mb-4">
+                          <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin"/>
+                          Loading states and districts…
+                        </div>
+                      )}
+
+                      {/* Saved-location chip (collapsed view). Tap
+                          Change to expand the typeahead pickers. */}
+                      {coshLocations && hasSavedLocation && !editingLocation && (
+                        <div className="mb-4 px-4 py-3 rounded-2xl border border-[#3A7D44]/30 bg-[#3A7D44]/10 flex items-start gap-3">
+                          <span className="text-lg leading-none mt-0.5">📍</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] uppercase tracking-wide font-semibold text-[#3A7D44]">Your location</p>
+                            <p className="text-[#6B3F1F] font-semibold text-[15px] mt-0.5">
+                              {districtName} <span className="text-[#7A8C7E] font-normal">· {stateName || '—'}</span>
+                            </p>
+                          </div>
+                          <button onClick={() => { setEditingLocation(true); setStateSearch(''); setDistrictSearch('') }}
+                            className="text-[12px] text-[#3A7D44] underline shrink-0">
+                            Change
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Typeahead pickers — shown when no saved
+                          location yet OR the user tapped Change. */}
+                      {coshLocations && (!hasSavedLocation || editingLocation) && (
+                        <div className="space-y-3 mb-2">
+                          {/* State */}
+                          <div>
+                            <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">State</label>
+                            {stateId ? (
+                              <div className="flex items-center gap-2">
+                                <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
+                                  {stateName || '(unnamed)'}
+                                </span>
+                                <button onClick={() => {
+                                    setStateId(''); setStateName(''); setStateSearch('')
+                                    setDistrict(''); setDistrictName(''); setDistrictSearch('')
+                                  }}
+                                  className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                              </div>
+                            ) : (
+                              <>
+                                <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
+                                  placeholder="Search state…"
+                                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44]"/>
+                                {stateSearch && (
+                                  <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                                    {filteredStates.length === 0
+                                      ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No states found</p>
+                                      : filteredStates.map(s => (
+                                        <button key={s.cosh_id}
+                                          onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
+                                          className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                          {s.name}
+                                        </button>
+                                      ))
+                                    }
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+
+                          {/* District — bounded to the chosen state */}
+                          {stateId && (
+                            <div>
+                              <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">District</label>
+                              {district ? (
+                                <div className="flex items-center gap-2">
+                                  <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
+                                    {districtName || '(unnamed)'}
+                                  </span>
+                                  <button onClick={() => { setDistrict(''); setDistrictName(''); setDistrictSearch('') }}
+                                    className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                                </div>
+                              ) : (
+                                <>
+                                  <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
+                                    placeholder="Search district…"
+                                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44]"/>
+                                  {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
+                                    <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                                      {filteredDistricts.length === 0
+                                        ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No districts found</p>
+                                        : filteredDistricts.map(d => (
+                                          <button key={d.cosh_id}
+                                            onClick={() => { setDistrict(d.cosh_id); setDistrictSearch('') }}
+                                            className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                            {d.name}
+                                          </button>
+                                        ))
+                                      }
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )}
+
+                          {editingLocation && hasSavedLocation && (
+                            <button onClick={() => setEditingLocation(false)}
+                              className="text-[12px] text-[#7A8C7E] underline mt-1">
+                              ↺ Use my saved location instead
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
+
                       <button
-                        onClick={() => { setDistrict(districtName); setError('') }}
-                        className="mb-4 flex items-center gap-2 px-3 py-2 rounded-xl border border-green-200 bg-green-50 text-sm text-green-800 w-full text-left">
-                        <span className="text-green-600">📍</span>
-                        <span>Use my location: <strong>{districtName.replace(/_/g, ' ')}</strong>
-                          {stateName ? `, ${stateName.replace(/_/g, ' ')}` : ''}</span>
+                        onClick={proceedFromLocation}
+                        disabled={busy || !district || !stateId}
+                        className="mt-5 w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                        style={{ background: '#3A7D44' }}>
+                        {busy ? 'Loading…' : 'Find advisories →'}
                       </button>
-                    )}
-
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">State</label>
-                        <input
-                          value={stateName}
-                          onChange={e => setStateName(e.target.value)}
-                          placeholder="e.g. odisha"
-                          className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">District</label>
-                        <input
-                          value={district}
-                          onChange={e => setDistrict(e.target.value)}
-                          placeholder="e.g. cuttack"
-                          className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                        />
-                      </div>
                     </div>
-
-                    {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
-
-                    <button
-                      onClick={proceedFromLocation}
-                      disabled={busy || !district.trim()}
-                      className="mt-5 w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-                      style={{ background: '#3A7D44' }}>
-                      {busy ? 'Loading…' : 'Find advisories →'}
-                    </button>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {/* ── STAGE 2: Crop Selection ── */}
                 {stage === 'crop' && (
