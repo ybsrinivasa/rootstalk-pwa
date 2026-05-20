@@ -148,6 +148,11 @@ export default function HomePage() {
     grouped[sub.client_id].push(sub)
   }
   const uniqueClientIds = Object.keys(grouped)
+  // Crop count for the greeting line must match the tile grid —
+  // both count ACTIVE only. `subscriptions.length` includes
+  // WAITLISTED / CANCELLED / LAPSED rows and produced a mismatch
+  // like "1 company — 2 crops" when only one ACTIVE tile rendered.
+  const activeCropCount = Object.values(grouped).reduce((n, arr) => n + arr.length, 0)
 
   return (
     <div className="min-h-screen" style={{ background: C.background }}>
@@ -164,7 +169,7 @@ export default function HomePage() {
           </p>
           <p className="text-sm mt-0.5" style={{ color: C.textSecond }}>
             {uniqueClientIds.length > 0
-              ? `${uniqueClientIds.length} compan${uniqueClientIds.length > 1 ? 'ies' : 'y'} — ${subscriptions.length} crop${subscriptions.length > 1 ? 's' : ''}`
+              ? `${uniqueClientIds.length} compan${uniqueClientIds.length > 1 ? 'ies' : 'y'} — ${activeCropCount} crop${activeCropCount > 1 ? 's' : ''}`
               : 'No active advisories yet'}
           </p>
         </div>
