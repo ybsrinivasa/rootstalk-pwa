@@ -194,7 +194,7 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.95-8.95a1.5 1.5 0 012.12 0L21.75 12M4.5 9.75v9.75a1.5 1.5 0 001.5 1.5h3.75v-6h4.5v6H18a1.5 1.5 0 001.5-1.5V9.75"/>
             }
             label="Crops & Companies"
-            onClick={() => go('/home')}
+            onClick={() => go('/crops-and-companies')}
           />
           <MenuRow
             icon={
