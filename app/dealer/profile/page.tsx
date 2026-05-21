@@ -205,7 +205,7 @@ export default function DealerProfilePage() {
             gallery can be the source. */}
         <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">Shop Photograph</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">Shop Photograph *</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
               A photo of your signboard or storefront. Helps farmers and facilitators recognise your shop when they visit.
             </p>
@@ -267,7 +267,7 @@ export default function DealerProfilePage() {
               className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20" />
           </div>
           <div>
-            <label className="block text-xs text-[#7A8C7E] mb-1">Shop Address</label>
+            <label className="block text-xs text-[#7A8C7E] mb-1">Shop Address *</label>
             <textarea value={form.shop_address}
               onChange={e => setForm(f => ({ ...f, shop_address: e.target.value }))}
               rows={2} placeholder="Full address"
@@ -281,7 +281,7 @@ export default function DealerProfilePage() {
             (wifi-based indoor reading), prompt a retry from outside. */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">Shop Location</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">Shop Location *</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
               GPS coordinates guide farmers and facilitators to your shop. <span className="font-semibold">Stand at the shop entrance</span> when you capture, and step outside if the accuracy looks poor.
             </p>
@@ -376,7 +376,7 @@ export default function DealerProfilePage() {
             during their own dealer-vetting process. */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">Shop Registration Certificate</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">Shop Registration Certificate *</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
               Proof that your shop is a registered business. Helps keep fake shops out of the network. PDF or photo.
             </p>
