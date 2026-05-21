@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken } from '@/lib/auth'
+import { getToken, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
@@ -143,6 +143,10 @@ export default function DealerProfilePage() {
     setSaving(true)
     try {
       await api.put('/dealer/profile', form)
+      // Refresh cached /auth/me so the right drawer's
+      // "Open my Shop / Set up →" flips to "Switch to my Shop"
+      // immediately, without waiting for the next page load.
+      await refreshUser()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } finally { setSaving(false) }

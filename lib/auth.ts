@@ -22,6 +22,10 @@ export interface PWAUser {
   // /facilitator/profile. Self-claiming the FACILITATOR role
   // alone doesn't unlock /facilitator/home.
   facilitator_declared_at?: string | null;
+  // 2026-05-21 — drives the /dealer/home gate AND the right
+  // drawer's "Set up →" vs "Switch to" label for the DEALER
+  // row. False until every required shop field is filled.
+  dealer_profile_complete?: boolean;
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {

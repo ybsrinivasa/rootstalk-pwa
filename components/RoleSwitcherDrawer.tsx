@@ -100,11 +100,29 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
     onClose()
   }
 
+  // "Set up" status — UserRole grant alone isn't enough; the
+  // role's setup page must also be completed.
+  // - DEALER: user.dealer_profile_complete (all 7 shop fields)
+  // - FACILITATOR: user.facilitator_declared_at != null
+  // - FARM_PUNDIT: just role presence for now (no separate gate)
+  function isRoleSetUp(role: string): boolean {
+    if (role === 'FARMER') return true
+    if (!userRoles.includes(role)) return false
+    if (role === 'DEALER') return user?.dealer_profile_complete === true
+    if (role === 'FACILITATOR') return !!user?.facilitator_declared_at
+    return true
+  }
+
   function handleRoleClick(role: string) {
-    const roleIsSetUp = role === 'FARMER' || userRoles.includes(role)
+    const roleIsSetUp = isRoleSetUp(role)
     if (!roleIsSetUp) {
-      if (role === 'DEALER') router.push('/become-dealer')
-      else if (role === 'FACILITATOR') router.push('/become-facilitator')
+      // Two not-set-up paths:
+      // (a) role never claimed → go to the "Become a …" intro page
+      // (b) role claimed but setup not finished → go straight to
+      //     the setup page; "Become" would try to re-claim.
+      const hasRole = userRoles.includes(role)
+      if (role === 'DEALER')           router.push(hasRole ? '/dealer/profile' : '/become-dealer')
+      else if (role === 'FACILITATOR') router.push(hasRole ? '/facilitator/profile' : '/become-facilitator')
       else if (role === 'FARM_PUNDIT') router.push('/pundit/register')
       onClose()
       return
@@ -195,7 +213,7 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
 
         {ROLE_ORDER.map(role => {
           const isActive = role === activeRole
-          const roleIsSetUp = role === 'FARMER' || userRoles.includes(role)
+          const roleIsSetUp = isRoleSetUp(role)
           let label: string
           if (isActive) label = ACTIVE_LABEL[role]
           else if (roleIsSetUp) label = SWITCH_LABEL[role]
