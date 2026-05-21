@@ -58,6 +58,7 @@ export default function DealerProfilePage() {
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   // Separate file inputs per surface — camera-capture vs library.
   const certRef = useRef<HTMLInputElement>(null)
@@ -114,6 +115,7 @@ export default function DealerProfilePage() {
 
   async function uploadFile(file: File, folder: string, field: keyof FormState) {
     setUploadingField(field as string)
+    setUploadError(null)
     try {
       const fd = new FormData()
       fd.append('file', file)
@@ -122,8 +124,15 @@ export default function DealerProfilePage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setForm(f => ({ ...f, [field]: data.url || data.file_url || '' }))
-    } catch {
-      // silent — user can retry; the field stays empty
+    } catch (err: unknown) {
+      // Surface the backend message (typically a 422 with a clear
+      // hint about content type or size). Silent-fail used to leave
+      // the user staring at an unchanged button with no idea why.
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message || 'Upload failed. Please try again.'
+      setUploadError(msg)
     } finally {
       setUploadingField(null)
     }
@@ -413,6 +422,13 @@ export default function DealerProfilePage() {
             </button>
           )}
         </div>
+
+        {uploadError && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+            <p className="font-semibold">Upload failed</p>
+            <p className="text-xs mt-1">{uploadError}</p>
+          </div>
+        )}
 
         <button onClick={save} disabled={saving || profileIncomplete}
           className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-40 transition-opacity"
