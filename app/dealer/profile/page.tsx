@@ -157,7 +157,12 @@ export default function DealerProfilePage() {
       // immediately, without waiting for the next page load.
       await refreshUser()
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      // Land the dealer on their dashboard — they can now access
+      // every dealer feature (dealerships, payment settings, etc.).
+      // Actual transactions (incoming orders, payment requests)
+      // still require a RootsTalk client to onboard this shop
+      // separately; the dashboard surfaces empty lists until then.
+      setTimeout(() => router.replace('/dealer/home'), 1200)
     } finally { setSaving(false) }
   }
 
