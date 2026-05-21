@@ -128,8 +128,16 @@ export default function DealerProfilePage() {
   }
 
   async function save() {
-    if (!form.shop_name.trim()) return
-    if (form.sell_categories.length === 0) return
+    // Defence in depth — the button is disabled, but a fast tap
+    // before the disabled prop applies shouldn't sneak through.
+    if (
+      !form.shop_name.trim() ||
+      !form.shop_address.trim() ||
+      form.sell_categories.length === 0 ||
+      form.shop_gps_lat == null || form.shop_gps_lng == null ||
+      !form.shop_registration_url.trim() ||
+      !form.shop_photo_url.trim()
+    ) return
     setSaving(true)
     try {
       await api.put('/dealer/profile', form)
@@ -142,10 +150,39 @@ export default function DealerProfilePage() {
     ? `https://www.google.com/maps?q=${form.shop_gps_lat},${form.shop_gps_lng}`
     : null
 
+  // Every shop field is mandatory (locked 2026-05-21). Licences
+  // are excluded — RootsTalk does not collect those (the company
+  // verifies). Missing-field list drives both the Save button
+  // disabled state and the redirect-from-home banner.
+  const missingFields: string[] = []
+  if (!form.shop_photo_url.trim()) missingFields.push('Shop Photograph')
+  if (!form.shop_name.trim()) missingFields.push('Shop Name')
+  if (!form.shop_address.trim()) missingFields.push('Shop Address')
+  if (form.shop_gps_lat == null || form.shop_gps_lng == null) missingFields.push('Shop Location (GPS)')
+  if (form.sell_categories.length === 0) missingFields.push('What You Sell')
+  if (!form.shop_registration_url.trim()) missingFields.push('Shop Registration Certificate')
+  const profileIncomplete = missingFields.length > 0
+
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Shop Details" activeRole="DEALER" />
       <div className="pt-16 pb-24 px-4 space-y-5 max-w-lg mx-auto">
+
+        {/* Missing-fields banner — visible whenever any required
+            field is still empty. Doubles as the redirect target
+            from /dealer/home; the home page won't let the user
+            in until profileIncomplete is false. */}
+        {profileIncomplete && (
+          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p className="font-semibold text-amber-800 text-sm">Finish setting up your shop</p>
+            <p className="text-xs text-amber-700 mt-1">
+              Complete every field below before you start receiving orders. A company will recognise your shop only once your profile is complete.
+            </p>
+            <ul className="mt-2 text-xs text-amber-700 list-disc list-inside">
+              {missingFields.map(f => <li key={f}>{f}</li>)}
+            </ul>
+          </div>
+        )}
 
         {/* 1. Shop Photograph — moved to the top because the photo is
             what farmers and facilitators use to recognise the shop on
@@ -363,10 +400,10 @@ export default function DealerProfilePage() {
           )}
         </div>
 
-        <button onClick={save} disabled={saving || !form.shop_name.trim() || form.sell_categories.length === 0}
+        <button onClick={save} disabled={saving || profileIncomplete}
           className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-40 transition-opacity"
           style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-          {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Save Profile'}
+          {saving ? 'Saving…' : saved ? '✓ Saved!' : profileIncomplete ? `Save (${missingFields.length} field${missingFields.length === 1 ? '' : 's'} pending)` : 'Save Profile'}
         </button>
       </div>
     </div>

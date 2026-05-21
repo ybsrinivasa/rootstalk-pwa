@@ -18,6 +18,11 @@ export default function FacilitatorHomePage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
+    // Gate: declaration not yet confirmed = bounce to profile page.
+    if (!user?.facilitator_declared_at) {
+      router.replace('/facilitator/profile')
+      return
+    }
     Promise.all([
       api.get('/facilitator/orders').then(r => {
         const active = (r.data as { status: string }[]).filter(o =>

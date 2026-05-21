@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser } from '@/lib/auth'
+import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
@@ -57,6 +57,12 @@ export default function FacilitatorProfilePage() {
       .finally(() => setLoadingData(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Pre-fill the checkbox when the user has already declared
+  // before (e.g. they reopened the page from the role-switcher).
+  useEffect(() => {
+    if (user?.facilitator_declared_at) setDeclared(true)
+  }, [user?.facilitator_declared_at])
+
   async function save() {
     if (!declared) {
       setError('Please accept the declaration to continue.')
@@ -65,12 +71,21 @@ export default function FacilitatorProfilePage() {
     setError('')
     setSaving(true)
     try {
-      // Save the declaration acknowledgement via profile update.
-      await api.put('/auth/me/profile', { name: user?.name || '' })
+      // Stamps users.facilitator_declared_at and unlocks
+      // /facilitator/home for this user. Idempotent — re-calling
+      // preserves the original timestamp.
+      await api.post('/auth/me/facilitator-declaration')
+      // Refresh cached /auth/me so the home-page gate sees the
+      // new declared timestamp without another round-trip.
+      await refreshUser()
       setSaved(true)
       setTimeout(() => router.replace('/facilitator/home'), 1200)
-    } catch {
-      setError('Could not save. Please try again.')
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message || 'Could not save. Please try again.'
+      setError(msg)
     } finally {
       setSaving(false)
     }
@@ -80,6 +95,15 @@ export default function FacilitatorProfilePage() {
     <div className="min-h-screen flex flex-col" style={{ background: COLOUR }}>
       <PWAHeader title="Service Profile" activeRole="FACILITATOR" customColour={COLOUR} />
       <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
+
+        {!user?.facilitator_declared_at && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
+            <p className="font-semibold text-amber-800 text-sm">Finish your facilitator registration</p>
+            <p className="text-xs text-amber-700 mt-1">
+              Confirm the declaration below to start helping farmers. A company will recognise you only once you&apos;ve registered here.
+            </p>
+          </div>
+        )}
 
         {/* Read-only info */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4 mb-5">

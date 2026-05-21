@@ -17,6 +17,11 @@ export interface PWAUser {
   gps_lat?: number | null;
   gps_lng?: number | null;
   photo_url?: string | null;
+  // 2026-05-21 — drives the /facilitator/home gate. Non-null
+  // means the user confirmed the declaration on
+  // /facilitator/profile. Self-claiming the FACILITATOR role
+  // alone doesn't unlock /facilitator/home.
+  facilitator_declared_at?: string | null;
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {

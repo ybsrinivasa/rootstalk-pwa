@@ -19,21 +19,30 @@ export default function DealerHomePage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    Promise.all([
-      api.get('/dealer/orders').then(r => {
-        const active = (r.data as { status: string }[]).filter(o =>
-          !['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status)
-        )
-        setPendingCount(active.length)
-      }).catch(() => {}),
-      api.get('/dealer/payment-requests').then(r => {
-        setPaymentCount((r.data as { status: string }[]).filter(p => p.status === 'PENDING').length)
-      }).catch(() => {}),
-      api.get('/dealer/promoted-farmers').then(r => {
-        setPromotedCount((r.data as unknown[]).length)
-      }).catch(() => {}),
-    ]).finally(() => setLoading(false))
-  }, [])
+    // Gate: incomplete shop profile = can't enter dealer home.
+    // Profile page shows a banner explaining why the redirect
+    // happened and which fields are pending.
+    api.get<{ is_profile_complete: boolean }>('/dealer/profile').then(r => {
+      if (!r.data.is_profile_complete) {
+        router.replace('/dealer/profile')
+        return
+      }
+      Promise.all([
+        api.get('/dealer/orders').then(r => {
+          const active = (r.data as { status: string }[]).filter(o =>
+            !['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status)
+          )
+          setPendingCount(active.length)
+        }).catch(() => {}),
+        api.get('/dealer/payment-requests').then(r => {
+          setPaymentCount((r.data as { status: string }[]).filter(p => p.status === 'PENDING').length)
+        }).catch(() => {}),
+        api.get('/dealer/promoted-farmers').then(r => {
+          setPromotedCount((r.data as unknown[]).length)
+        }).catch(() => {}),
+      ]).finally(() => setLoading(false))
+    }).catch(() => setLoading(false))
+  }, [router])
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
