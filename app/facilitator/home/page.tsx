@@ -1,7 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser } from '@/lib/auth'
+import { getToken, getUser, refreshUser } from '@/lib/auth'
+import PWAHeader from '@/components/layout/PWAHeader'
+import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import BottomNav from '@/components/layout/BottomNav'
 import ExitGuard from '@/components/ExitGuard'
 import api from '@/lib/api'
@@ -15,9 +17,14 @@ export default function FacilitatorHomePage() {
   const [paymentCount, setPaymentCount] = useState(0)
   const [promotedCount, setPromotedCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
+    // Refresh /auth/me so the drawer sees any newly-added fields
+    // (e.g. facilitator_declared_at on legacy sessions). Cheap;
+    // one fetch.
+    void refreshUser()
     // Gate: declaration not yet confirmed = bounce to profile page.
     if (!user?.facilitator_declared_at) {
       router.replace('/facilitator/profile')
@@ -41,17 +48,9 @@ export default function FacilitatorHomePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      {/* Ochre header */}
-      <div className="sticky top-0 z-30 px-4 py-3 flex items-center justify-between"
-        style={{ background: COLOUR }}>
-        <div>
-          <p className="text-white text-xs font-medium opacity-70">Acting as</p>
-          <p className="text-white font-bold">Facilitator</p>
-        </div>
-        <p className="text-white text-sm font-medium">{user?.name || ''}</p>
-      </div>
+      <PWAHeader activeRole="FACILITATOR" onRoleSwitch={() => setShowRoleDrawer(true)} />
 
-      <div className="pb-24 px-4 pt-4 space-y-4 max-w-lg mx-auto">
+      <div className="pt-20 pb-24 px-4 space-y-4 max-w-lg mx-auto">
         <div>
           <p className="text-xl font-bold text-[#6B3F1F]">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
           <p className="text-[#7A8C7E] text-sm mt-0.5">
@@ -113,6 +112,13 @@ export default function FacilitatorHomePage() {
       </div>
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
       <ExitGuard />
+
+      <RoleSwitcherDrawer
+        open={showRoleDrawer}
+        onClose={() => setShowRoleDrawer(false)}
+        onSwitch={() => setShowRoleDrawer(false)}
+        activeRole="FACILITATOR"
+      />
     </div>
   )
 }

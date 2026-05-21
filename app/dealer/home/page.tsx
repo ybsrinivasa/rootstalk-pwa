@@ -1,8 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser } from '@/lib/auth'
+import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import BottomNav from '@/components/layout/BottomNav'
 import ExitGuard from '@/components/ExitGuard'
 import api from '@/lib/api'
@@ -16,9 +17,14 @@ export default function DealerHomePage() {
   const [paymentCount, setPaymentCount] = useState(0)
   const [promotedCount, setPromotedCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
+    // Refresh /auth/me cache so the right drawer sees any newly
+    // added fields (e.g. dealer_profile_complete on legacy sessions
+    // that logged in before the field existed). Cheap; one fetch.
+    void refreshUser()
     // Gate: incomplete shop profile = can't enter dealer home.
     // Profile page shows a banner explaining why the redirect
     // happened and which fields are pending.
@@ -46,16 +52,9 @@ export default function DealerHomePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <div className="sticky top-0 z-30 px-4 py-3 flex items-center justify-between"
-        style={{ background: COLOUR }}>
-        <div>
-          <p className="text-white text-xs font-medium opacity-70">Acting as</p>
-          <p className="text-white font-bold">Dealer</p>
-        </div>
-        <p className="text-white text-sm font-medium">{user?.name || ''}</p>
-      </div>
+      <PWAHeader activeRole="DEALER" onRoleSwitch={() => setShowRoleDrawer(true)} />
 
-      <div className="pb-24 px-4 pt-4 space-y-4 max-w-lg mx-auto">
+      <div className="pt-20 pb-24 px-4 space-y-4 max-w-lg mx-auto">
         {/* Greeting */}
         <div>
           <p className="text-xl font-bold text-[#6B3F1F]">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
@@ -132,6 +131,13 @@ export default function DealerHomePage() {
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
       <ExitGuard />
+
+      <RoleSwitcherDrawer
+        open={showRoleDrawer}
+        onClose={() => setShowRoleDrawer(false)}
+        onSwitch={() => setShowRoleDrawer(false)}
+        activeRole="DEALER"
+      />
     </div>
   )
 }

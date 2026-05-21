@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getToken, getUser } from '@/lib/auth'
+import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
@@ -93,6 +93,12 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
+    // Pull fresh /auth/me so the role-switcher drawer sees fields
+    // added in recent backend deploys (dealer_profile_complete,
+    // facilitator_declared_at) — legacy sessions cached before
+    // those fields existed would otherwise show "Set up →" on
+    // already-completed roles.
+    void refreshUser()
     load()
   }, [router])
 
