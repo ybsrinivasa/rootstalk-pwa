@@ -161,6 +161,7 @@ export default function AdvisoryPage() {
   const [orderSuccess, setOrderSuccess] = useState('')
   const [answeringQuestion, setAnsweringQuestion] = useState<string | null>(null) // question_id being answered
   const [nextDate, setNextDate] = useState<{ next_date: string | null; timeline_name?: string; days_until?: number; reason?: string } | null>(null)
+  const [bundleSheet, setBundleSheet] = useState<{ category: 'PESTICIDE' | 'FERTILIZER' } | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -224,18 +225,21 @@ export default function AdvisoryPage() {
     } finally { setAnsweringQuestion(null) }
   }
 
-  function orderPractice(practiceId: string, orderType = 'PESTICIDE') {
-    router.push(`/order/new/${subscriptionId}?practice_ids=${practiceId}&order_type=${orderType}`)
+  // 2026-05-21 — replaced per-practice + "Buy all" buttons with a
+  // date-range bundle picker. Tapping Order on any pesticide card
+  // (or adjuvant — L1=SPECIAL_INPUT) opens the picker for the
+  // PESTICIDE basket; fertiliser cards open the FERTILIZER basket.
+  // Picker computes the bundle server-side via /order-preview, then
+  // routes to /order/new with the resolved practice_ids.
+  function basketCategoryFor(l1: string | null | undefined): 'PESTICIDE' | 'FERTILIZER' | null {
+    const u = (l1 || '').toUpperCase()
+    if (u === 'PESTICIDE' || u === 'SPECIAL_INPUT') return 'PESTICIDE'
+    if (u === 'FERTILIZER') return 'FERTILIZER'
+    return null
   }
-
-  function buyAll(l1Filter: string, orderType: string) {
-    if (!advisory) return
-    const ids = advisory.timelines
-      .flatMap(tl => tl.practices || [])
-      .filter(p => p.l0_type === 'INPUT' && (p.l1_type || '').toLowerCase().includes(l1Filter))
-      .map(p => p.id)
-    if (ids.length === 0) return
-    router.push(`/order/new/${subscriptionId}?practice_ids=${ids.join(',')}&order_type=${orderType}`)
+  function orderPractice(practice: Practice) {
+    const cat = basketCategoryFor(practice.l1_type)
+    if (cat) setBundleSheet({ category: cat })
   }
 
   if (loading) return (
@@ -285,29 +289,11 @@ export default function AdvisoryPage() {
               </div>
             </div>
 
-            {/* Buy all bulk buttons */}
-            {advisory.timelines.length > 0 && (() => {
-              const allPractices = advisory.timelines.flatMap(tl => tl.practices || [])
-              const hasPest = allPractices.some(p => p.l0_type === 'INPUT' && (p.l1_type || '').toLowerCase().includes('pest'))
-              const hasFert = allPractices.some(p => p.l0_type === 'INPUT' && (p.l1_type || '').toLowerCase().includes('fert'))
-              if (!hasPest && !hasFert) return null
-              return (
-                <div className="flex gap-2">
-                  {hasPest && (
-                    <button onClick={() => buyAll('pest', 'PESTICIDE')}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                      Buy all Pesticides
-                    </button>
-                  )}
-                  {hasFert && (
-                    <button onClick={() => buyAll('fert', 'FERTILISER')}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
-                      Buy all Fertilisers
-                    </button>
-                  )}
-                </div>
-              )
-            })()}
+            {/* "Buy all Pesticides / Fertilisers" buttons removed
+                2026-05-21 — replaced by the per-card Order tap that
+                opens a date-range bundling sheet. The farmer picks
+                a TO date once; the bundle picks every unordered
+                pesticide (or fertiliser) overlapping that window. */}
 
             {/* No active timelines today */}
             {advisory.timelines.length === 0 && (
@@ -395,7 +381,7 @@ export default function AdvisoryPage() {
                           <PracticeCard
                             key={p.id}
                             practice={p}
-                            onOrder={() => orderPractice(p.id)}
+                            onOrder={() => orderPractice(p)}
                             isOrdering={orderingPractice === p.id}
                             ordered={orderSuccess === p.id}
                           />
@@ -409,9 +395,13 @@ export default function AdvisoryPage() {
                           parts={row.parts || []}
                           orderingPractice={orderingPractice}
                           orderSuccess={orderSuccess}
-                          onOrder={(ids) => {
-                            const url = `/order/new/${subscriptionId}?practice_ids=${ids.join(',')}&order_type=PESTICIDE`
-                            router.push(url)
+                          onOrder={() => {
+                            // Relation-group "Order both together" — same
+                            // date-range bundling. We derive the category
+                            // from the first practice's L1; AND/OR groups
+                            // are always homogeneous by L1. ids ignored.
+                            const first = row.parts?.[0]?.options?.[0]?.practices?.[0]
+                            if (first) orderPractice(first)
                           }}
                         />
                       )
@@ -456,6 +446,156 @@ export default function AdvisoryPage() {
         )}
       </div>
       <BottomNav color="#3A7D44" />
+
+      {bundleSheet && (
+        <BundleOrderSheet
+          subscriptionId={subscriptionId}
+          category={bundleSheet.category}
+          // Default TO date = end of the latest visible timeline window.
+          // The picker clamps to package_end (from /order-preview).
+          defaultToDate={(() => {
+            if (!advisory) return null
+            const tos = advisory.timelines.map(t => t.to_date).filter(Boolean) as string[]
+            if (tos.length === 0) return null
+            return tos.reduce((max, d) => d > max ? d : max).split('T')[0]
+          })()}
+          onClose={() => setBundleSheet(null)}
+          onConfirm={(practiceIds, toDate) => {
+            setBundleSheet(null)
+            const todayIso = new Date().toISOString().split('T')[0]
+            router.push(
+              `/order/new/${subscriptionId}`
+              + `?practice_ids=${practiceIds.join(',')}`
+              + `&order_type=${bundleSheet.category}`
+              + `&date_from=${todayIso}`
+              + `&date_to=${toDate}`,
+            )
+          }}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Bundle order sheet ────────────────────────────────────────────────────
+//
+// Opens when the farmer taps Order on any pesticide / fertiliser /
+// adjuvant card. The farmer picks a TO date; this sheet calls
+// /order-preview to compute the bundle (every unordered practice in
+// the category whose timeline overlaps [today, to_date]) and shows
+// a live count. Confirm hands off to /order/new with the bundled
+// practice_ids — the dealer-picker continues from there.
+function BundleOrderSheet({
+  subscriptionId, category, defaultToDate, onClose, onConfirm,
+}: {
+  subscriptionId: string
+  category: 'PESTICIDE' | 'FERTILIZER'
+  defaultToDate: string | null
+  onClose: () => void
+  onConfirm: (practiceIds: string[], toDate: string) => void
+}) {
+  const todayIso = new Date().toISOString().split('T')[0]
+  const [toDate, setToDate] = useState<string>(defaultToDate || todayIso)
+  const [preview, setPreview] = useState<{
+    count: number
+    practices: { id: string }[]
+    package_end_date: string | null
+    excluded_already_ordered: number
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!toDate) return
+    setLoading(true); setError(null)
+    const ctrl = new AbortController()
+    api.get(
+      `/farmer/subscriptions/${subscriptionId}/order-preview`
+      + `?category=${category}&to_date=${toDate}`,
+      { signal: ctrl.signal },
+    )
+      .then(r => setPreview(r.data as typeof preview))
+      .catch((err: unknown) => {
+        if ((err as { code?: string })?.code === 'ERR_CANCELED') return
+        const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+        setError(typeof detail === 'string' ? detail : 'Could not load preview. Please try again.')
+      })
+      .finally(() => setLoading(false))
+    return () => ctrl.abort()
+  }, [toDate, category, subscriptionId])
+
+  const label = category === 'PESTICIDE' ? 'Pesticides + Adjuvants' : 'Fertilisers'
+  const canConfirm = !loading && !error && preview != null && preview.count > 0
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/40 flex items-end"
+      onClick={onClose}>
+      <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto"
+        onClick={e => e.stopPropagation()}>
+        <p className="font-bold text-[#6B3F1F] text-base">Choose date range</p>
+        <p className="text-xs text-[#7A8C7E] mt-1">
+          One {category === 'PESTICIDE' ? 'pesticide' : 'fertiliser'} order for everything you&apos;ll need between these dates. <span className="font-medium">{label}</span> are included.
+        </p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <div>
+            <p className="text-xs text-[#7A8C7E] mb-1">From</p>
+            <div className="border border-[#DDD0B8] rounded-xl px-3 py-2.5 text-sm text-[#6B3F1F] bg-[#F5F0E8]">
+              Today
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-[#7A8C7E] mb-1">To</p>
+            <input
+              type="date"
+              value={toDate}
+              min={todayIso}
+              max={preview?.package_end_date || undefined}
+              onChange={e => setToDate(e.target.value)}
+              className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2.5 text-sm text-[#6B3F1F] focus:outline-none focus:border-[#3A7D44]" />
+          </div>
+        </div>
+
+        <div className="mt-3 bg-[#F5F0E8] rounded-xl px-4 py-3">
+          {loading ? (
+            <p className="text-sm text-[#7A8C7E]">Calculating…</p>
+          ) : error ? (
+            <p className="text-sm text-[#D4682E]">{error}</p>
+          ) : preview ? (
+            <>
+              <p className="text-sm font-semibold text-[#6B3F1F]">
+                {preview.count} {preview.count === 1 ? 'item' : 'items'} will be in this order
+              </p>
+              {preview.count === 0 && (
+                <p className="text-xs text-[#7A8C7E] mt-1">
+                  {preview.excluded_already_ordered > 0
+                    ? "Everything in this window is already in another order. Pick a later TO date if you want to add more."
+                    : "No items match this date range yet. Extend the TO date."}
+                </p>
+              )}
+              {preview.excluded_already_ordered > 0 && preview.count > 0 && (
+                <p className="text-xs text-[#7A8C7E] mt-1">
+                  {preview.excluded_already_ordered} already in an existing order — not shown.
+                </p>
+              )}
+            </>
+          ) : null}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 mt-5">
+          <button onClick={onClose}
+            className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold">
+            Cancel
+          </button>
+          <button
+            onClick={() => preview && onConfirm(preview.practices.map(p => p.id), toDate)}
+            disabled={!canConfirm}
+            className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+            style={{ background: '#3A7D44' }}>
+            Continue →
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -552,6 +692,11 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
   parts: PartGroup[]
   orderingPractice: string | null
   orderSuccess: string
+  // 2026-05-21 — onOrder is now category-driven; the parent opens
+  // the date-range sheet using the first practice's L1 (groups are
+  // always homogeneous by L1). The unused practiceIds arg is kept
+  // in the signature for backward shape so the internal callers
+  // don't need rework — the parent just ignores it.
   onOrder: (practiceIds: string[]) => void
 }) {
   if (parts.length === 0) return null
