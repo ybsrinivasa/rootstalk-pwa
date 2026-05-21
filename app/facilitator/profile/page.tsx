@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
 
 interface PromotedFarmer {
@@ -27,6 +28,7 @@ export default function FacilitatorProfilePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+  const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
   // My Companies
   const [companies, setCompanies] = useState<CompanySummary[]>([])
@@ -93,7 +95,8 @@ export default function FacilitatorProfilePage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: COLOUR }}>
-      <PWAHeader title="Service Profile" activeRole="FACILITATOR" customColour={COLOUR} />
+      <PWAHeader title="Service Profile" activeRole="FACILITATOR" customColour={COLOUR}
+        onRoleSwitch={() => setShowRoleDrawer(true)} />
       <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
 
         {!user?.facilitator_declared_at && (
@@ -102,6 +105,10 @@ export default function FacilitatorProfilePage() {
             <p className="text-xs text-amber-700 mt-1">
               Confirm the declaration below to start helping farmers. A company will recognise you only once you&apos;ve registered here.
             </p>
+            <button onClick={() => router.replace('/home')}
+              className="mt-3 text-xs underline text-amber-800 font-medium">
+              ← Not now, back to Farmer Home
+            </button>
           </div>
         )}
 
@@ -163,11 +170,21 @@ export default function FacilitatorProfilePage() {
           {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Confirm & Continue'}
         </button>
 
-        <button onClick={() => router.back()}
+        {/* router.back() is unreliable after a relaunch (empty
+            history stack), so the Back button always goes to the
+            Farmer Home — a stable destination from any entry path. */}
+        <button onClick={() => router.replace('/home')}
           className="mt-3 w-full py-3.5 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
-          Back
+          Back to Farmer Home
         </button>
       </div>
+
+      <RoleSwitcherDrawer
+        open={showRoleDrawer}
+        onClose={() => setShowRoleDrawer(false)}
+        onSwitch={() => setShowRoleDrawer(false)}
+        activeRole="FACILITATOR"
+      />
     </div>
   )
 }

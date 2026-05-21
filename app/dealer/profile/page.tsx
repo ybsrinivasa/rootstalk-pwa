@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
 
 // What the dealer can sell. Each row carries a regulatory note for
@@ -56,6 +57,7 @@ export default function DealerProfilePage() {
   const [gpsLoading, setGpsLoading] = useState(false)
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
+  const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
   // Separate file inputs per surface — camera-capture vs library.
   const certRef = useRef<HTMLInputElement>(null)
@@ -165,13 +167,17 @@ export default function DealerProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Shop Details" activeRole="DEALER" />
+      <PWAHeader title="Shop Details" activeRole="DEALER"
+        onRoleSwitch={() => setShowRoleDrawer(true)} />
       <div className="pt-16 pb-24 px-4 space-y-5 max-w-lg mx-auto">
 
         {/* Missing-fields banner — visible whenever any required
             field is still empty. Doubles as the redirect target
             from /dealer/home; the home page won't let the user
-            in until profileIncomplete is false. */}
+            in until profileIncomplete is false. The "Not now"
+            link is the explicit escape hatch for users who tapped
+            "Open my Shop" out of curiosity — without it, the
+            redirect would trap them. */}
         {profileIncomplete && (
           <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
             <p className="font-semibold text-amber-800 text-sm">Finish setting up your shop</p>
@@ -181,6 +187,10 @@ export default function DealerProfilePage() {
             <ul className="mt-2 text-xs text-amber-700 list-disc list-inside">
               {missingFields.map(f => <li key={f}>{f}</li>)}
             </ul>
+            <button onClick={() => router.replace('/home')}
+              className="mt-3 text-xs underline text-amber-800 font-medium">
+              ← Not now, back to Farmer Home
+            </button>
           </div>
         )}
 
@@ -406,6 +416,13 @@ export default function DealerProfilePage() {
           {saving ? 'Saving…' : saved ? '✓ Saved!' : profileIncomplete ? `Save (${missingFields.length} field${missingFields.length === 1 ? '' : 's'} pending)` : 'Save Profile'}
         </button>
       </div>
+
+      <RoleSwitcherDrawer
+        open={showRoleDrawer}
+        onClose={() => setShowRoleDrawer(false)}
+        onSwitch={() => setShowRoleDrawer(false)}
+        activeRole="DEALER"
+      />
     </div>
   )
 }
