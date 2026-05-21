@@ -517,8 +517,18 @@ function BundleOrderSheet({
       .then(r => setPreview(r.data as typeof preview))
       .catch((err: unknown) => {
         if ((err as { code?: string })?.code === 'ERR_CANCELED') return
-        const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-        setError(typeof detail === 'string' ? detail : 'Could not load preview. Please try again.')
+        const e = err as {
+          response?: { status?: number; data?: { detail?: unknown } }
+          message?: string
+        }
+        const detail = e?.response?.data?.detail
+        const status = e?.response?.status
+        if (typeof detail === 'string') setError(detail)
+        else if (detail && typeof detail === 'object') {
+          const m = (detail as { message?: string }).message
+          setError(m || JSON.stringify(detail))
+        }
+        else setError(`Preview failed${status ? ` (HTTP ${status})` : ''}: ${e?.message || 'unknown error'}`)
       })
       .finally(() => setLoading(false))
     return () => ctrl.abort()
