@@ -19,6 +19,7 @@ interface ProblemInfo {
   cosh_id: string; name: string; type: string; parent_cosh_id?: string
   claude_description?: string    // 2-sentence farmer-friendly description from Claude
 }
+interface CommitResult { committed_to_advisory: boolean; already_committed?: boolean }
 interface DiagnosisStep {
   session_id?: string; status: string
   remaining_count: number; question: Question | null
@@ -46,6 +47,9 @@ export default function DiagnosisPage() {
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
   const [remainingCount, setRemainingCount] = useState(0)
   const [diagnosis, setDiagnosis] = useState<ProblemInfo | null>(null)
+  const [committedToAdvisory, setCommittedToAdvisory] = useState(false)
+  const [committing, setCommitting] = useState(false)
+  const [commitError, setCommitError] = useState('')
   const [cropCoshId, setCropCoshId] = useState<string | null>(null)
   const [cropName, setCropName] = useState<string | null>(null)
   const [answering, setAnswering] = useState(false)
@@ -242,6 +246,23 @@ export default function DiagnosisPage() {
     } finally {
       setExplainLoading(false)
     }
+  }
+
+  async function commitToAdvisory() {
+    if (!sessionId) return
+    setCommitting(true); setCommitError('')
+    try {
+      const { data } = await api.post<CommitResult>(
+        `/diagnosis/${sessionId}/commit-to-advisory`,
+      )
+      setCommittedToAdvisory(!!data.committed_to_advisory)
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message
+      setCommitError(msg || 'Could not add to advisory. Please try again.')
+    } finally { setCommitting(false) }
   }
 
   // Auto-fetch curated reference images each time the question
@@ -675,25 +696,44 @@ export default function DiagnosisPage() {
                 </div>
               )}
 
-              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
-                <p className="text-sm font-semibold text-blue-800">Treatment Added to Advisory</p>
-                <p className="text-xs text-blue-600 mt-1">
-                  Treatment recommendations for this problem have been added to your advisory timeline.
-                </p>
-              </div>
+              {committedToAdvisory && (
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
+                  <p className="text-sm font-semibold text-blue-800">Added to your advisory ✓</p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Treatment recommendations for this problem are now part of your advisory timeline.
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <button onClick={() => router.push(`/advisory/${subscriptionId}`)}
-                className="w-full py-4 rounded-2xl text-white font-semibold"
-                style={{ background: COLOUR }}>
-                View Treatment Recommendations →
-              </button>
-              <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
-                className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
-                Also ask a FarmPundit expert
-              </button>
-            </div>
+            {!committedToAdvisory ? (
+              <div className="space-y-2">
+                <button onClick={commitToAdvisory} disabled={committing}
+                  className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-60"
+                  style={{ background: COLOUR }}>
+                  {committing ? 'Adding…' : '➕ Add Treatment Recommendations to the Advisory'}
+                </button>
+                {commitError && (
+                  <p className="text-xs text-red-600 text-center">{commitError}</p>
+                )}
+                <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
+                  className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
+                  Also ask a FarmPundit expert
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <button onClick={() => router.push(`/advisory/${subscriptionId}`)}
+                  className="w-full py-4 rounded-2xl text-white font-semibold"
+                  style={{ background: COLOUR }}>
+                  Go to Advisory →
+                </button>
+                <button onClick={() => router.push(`/crop-detail/${subscriptionId}`)}
+                  className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
+                  Go to Crop Dashboard
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
