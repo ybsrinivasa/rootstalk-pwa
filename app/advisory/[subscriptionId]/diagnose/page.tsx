@@ -413,8 +413,12 @@ export default function DiagnosisPage() {
                   </button>
                 </div>
                 <p className="text-[#7A8C7E] text-xs mt-2">
-                  {[currentQuestion.plant_part_name, currentQuestion.symptom_name]
-                    .filter(Boolean).join(' — ')}
+                  {[
+                    currentQuestion.plant_part_name,
+                    currentQuestion.sub_part_name,
+                    currentQuestion.symptom_name,
+                    currentQuestion.sub_symptom_name,
+                  ].filter(Boolean).join(' — ')}
                 </p>
               </div>
 
@@ -477,7 +481,7 @@ export default function DiagnosisPage() {
                 </div>
               )}
 
-              {/* YES / NO */}
+              {/* YES / NO — the primary answers */}
               <div className="flex gap-3 mt-2">
                 <button onClick={() => answer('NO')} disabled={answering}
                   className="flex-1 py-4 rounded-2xl border-2 border-red-200 bg-red-50 text-red-700 font-bold text-lg disabled:opacity-50 active:scale-95 transition-transform">
@@ -489,11 +493,11 @@ export default function DiagnosisPage() {
                   ✓ Yes
                 </button>
               </div>
-            </div>
 
-            {/* Camera: take photo for Claude analysis */}
-            <div className="bg-[#F5F0E8] rounded-2xl p-4 border border-[#DDD0B8]">
-              <p className="text-xs font-semibold text-[#7A8C7E] mb-2">📷 Or take a photo for AI identification</p>
+              {/* I Don't Know is not a button — it's the gateway to two
+                  help paths. The conceptual third option, framed
+                  honestly: ask Claude with a photo, or ask a human
+                  expert. Hidden file input drives the camera path. */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -502,48 +506,61 @@ export default function DiagnosisPage() {
                 className="hidden"
                 onChange={handleImageCapture}
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={analyzingImage}
-                className="w-full py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50">
-                {analyzingImage ? '🔄 Analysing with Claude AI…' : '📸 Take Photo of Problem'}
-              </button>
-
-              {/* Claude analysis result */}
-              {imageAnalysis && (
-                <div className={`mt-3 rounded-xl p-3 border ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-50 border-green-200' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 'bg-[#F5F0E8] border-[#DDD0B8]'}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-[#6B3F1F]">{imageAnalysis.problem_name}</p>
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">{imageAnalysis.description}</p>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                        {imageAnalysis.confidence} confidence
-                      </span>
-                    </div>
-                  </div>
-                  {imageAnalysis.problem_cosh_id && imageAnalysis.confidence !== 'LOW' && (
-                    <button
-                      onClick={useImageDiagnosis}
-                      className="mt-2 w-full py-2 rounded-xl text-white text-xs font-semibold"
-                      style={{ background: COLOUR }}>
-                      ✓ Use this diagnosis
-                    </button>
-                  )}
+              <div className="mt-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="flex-1 h-px bg-[#DDD0B8]" />
+                  <p className="text-[11px] uppercase tracking-wider text-[#7A8C7E] font-semibold">
+                    Not sure?
+                  </p>
+                  <div className="flex-1 h-px bg-[#DDD0B8]" />
                 </div>
-              )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={analyzingImage}
+                    className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50 active:scale-95 transition-transform">
+                    {analyzingImage ? '🔄 Analysing…' : '📸 Ask AI'}
+                  </button>
+                  <button onClick={dontKnow}
+                    className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium active:scale-95 transition-transform">
+                    👨‍🌾 Ask Expert
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Escape options */}
-            <div className="flex gap-2">
-              <button onClick={dontKnow}
-                className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
-                🤷 I Don't Know
-              </button>
-              <button onClick={knowProblem}
-                className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
-                🔍 I Know the Problem
-              </button>
-            </div>
+            {/* Claude analysis result — appears under the card when
+                a photo has been analysed. Stays out of the way until
+                there is something to show. */}
+            {imageAnalysis && (
+              <div className={`rounded-2xl p-4 border ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-50 border-green-200' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 'bg-[#F5F0E8] border-[#DDD0B8]'}`}>
+                <p className="text-[11px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
+                  📸 AI Analysis
+                </p>
+                <p className="text-sm font-semibold text-[#6B3F1F]">{imageAnalysis.problem_name}</p>
+                <p className="text-xs text-[#7A8C7E] mt-0.5">{imageAnalysis.description}</p>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-2 inline-block ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
+                  {imageAnalysis.confidence} confidence
+                </span>
+                {imageAnalysis.problem_cosh_id && imageAnalysis.confidence !== 'LOW' && (
+                  <button
+                    onClick={useImageDiagnosis}
+                    className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
+                    style={{ background: COLOUR }}>
+                    ✓ Use this diagnosis
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* I Know the Problem — the third top-level escape: skip
+                the dichotomous questioning entirely and pick from the
+                full problem list for this part. Sits on its own row
+                so it reads as a complete choice. */}
+            <button onClick={knowProblem}
+              className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
+              🔍 I Know the Problem
+            </button>
 
             <p className="text-center text-xs text-[#DDD0B8]">{questionHistory.length + 1} questions answered</p>
           </div>
