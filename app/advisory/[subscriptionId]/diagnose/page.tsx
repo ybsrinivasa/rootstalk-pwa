@@ -6,6 +6,8 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
 interface PlantPart { cosh_id: string; name: string }
+interface CropStage { cosh_id: string; name: string }
+interface ReferenceImage { cosh_id: string; url: string; caption?: string | null; media_type?: string }
 interface Question {
   plant_part_cosh_id: string; symptom_cosh_id: string
   sub_part_cosh_id: string | null; sub_symptom_cosh_id: string | null
@@ -35,6 +37,8 @@ export default function DiagnosisPage() {
   const router = useRouter()
 
   const [stage, setStage] = useState<'select_stage' | 'select_part' | 'questioning' | 'diagnosed' | 'know_problem' | 'aborted'>('select_stage')
+  const [stages, setStages] = useState<CropStage[]>([])
+  const [selectedStage, setSelectedStage] = useState<CropStage | null>(null)
   const [parts, setParts] = useState<PlantPart[]>([])
   const [problems, setProblems] = useState<ProblemInfo[]>([])
   const [selectedPart, setSelectedPart] = useState<string | null>(null)
@@ -60,6 +64,16 @@ export default function DiagnosisPage() {
   const [explainText, setExplainText] = useState<string | null>(null)
   const [explainLoading, setExplainLoading] = useState(false)
 
+  // Reference images for the current question — auto-loaded on every
+  // new question. We render up to 2 inline as visual confirmation,
+  // and the rest behind a "See N more" gallery sheet. Honest empty
+  // state when Cosh hasn't curated images for this exact context.
+  const [refImages, setRefImages] = useState<ReferenceImage[]>([])
+  const [refImagesLoading, setRefImagesLoading] = useState(false)
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [zoomedImage, setZoomedImage] = useState<ReferenceImage | null>(null)
+  const [googleFallbackUrl, setGoogleFallbackUrl] = useState<string>('')
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     // Load subscription to get crop_cosh_id
@@ -69,12 +83,37 @@ export default function DiagnosisPage() {
         if (sub?.crop_cosh_id) {
           setCropCoshId(sub.crop_cosh_id)
           setCropName(sub.crop_name || null)
-          loadParts(sub.crop_cosh_id)
+          loadCropStages(sub.crop_cosh_id)
         } else {
           setLoading(false)
         }
       })
   }, [subscriptionId])
+
+  async function loadCropStages(crop_cosh_id: string) {
+    try {
+      const { data } = await api.get<CropStage[]>(
+        `/diagnosis/crop-stages?crop_cosh_id=${encodeURIComponent(crop_cosh_id)}`,
+      )
+      setStages(data)
+      // If Cosh has no stages for this crop, skip straight to parts —
+      // the BL-08 algorithm handles a stage-less filter fine.
+      if (data.length === 0) {
+        loadParts(crop_cosh_id)
+      } else {
+        setStage('select_stage')
+        setLoading(false)
+      }
+    } catch {
+      setLoading(false)
+    }
+  }
+
+  async function pickStage(st: CropStage) {
+    setSelectedStage(st)
+    setLoading(true)
+    if (cropCoshId) await loadParts(cropCoshId, st.cosh_id)
+  }
 
   async function loadParts(crop_cosh_id: string, stage_id?: string) {
     try {
@@ -93,6 +132,7 @@ export default function DiagnosisPage() {
       const { data } = await api.post<DiagnosisStep>('/diagnosis/start', {
         subscription_id: subscriptionId,
         crop_cosh_id: cropCoshId,
+        crop_stage_cosh_id: selectedStage?.cosh_id || null,
         plant_part_cosh_id: part.cosh_id,
       })
       setSessionId(data.session_id || null)
@@ -204,6 +244,39 @@ export default function DiagnosisPage() {
     }
   }
 
+  // Auto-fetch curated reference images each time the question
+  // changes. The endpoint already filters by the question's exact
+  // (crop, part, symptom, sub_part, sub_symptom) context and returns
+  // Cosh-curated S3 URLs + a Google fallback URL. Stale images from
+  // a previous question must be wiped before the new fetch lands so
+  // the farmer never compares against the wrong thing.
+  useEffect(() => {
+    if (!currentQuestion || !cropCoshId) return
+    let cancelled = false
+    setRefImages([])
+    setGalleryOpen(false)
+    setRefImagesLoading(true)
+    api.post<{
+      images: ReferenceImage[]; google_images_url: string;
+    }>('/diagnosis/reference-images', {
+      crop_cosh_id: cropCoshId,
+      plant_part_cosh_id: currentQuestion.plant_part_cosh_id,
+      symptom_cosh_id: currentQuestion.symptom_cosh_id,
+      sub_part_cosh_id: currentQuestion.sub_part_cosh_id,
+      sub_symptom_cosh_id: currentQuestion.sub_symptom_cosh_id,
+    })
+    .then(r => {
+      if (cancelled) return
+      setRefImages(r.data.images || [])
+      setGoogleFallbackUrl(r.data.google_images_url || '')
+    })
+    .catch(() => { if (!cancelled) setRefImages([]) })
+    .finally(() => { if (!cancelled) setRefImagesLoading(false) })
+    return () => { cancelled = true }
+  }, [currentQuestion?.plant_part_cosh_id, currentQuestion?.symptom_cosh_id,
+      currentQuestion?.sub_part_cosh_id, currentQuestion?.sub_symptom_cosh_id,
+      cropCoshId])
+
   async function knowProblem() {
     // Load problem list filtered to selected part
     try {
@@ -236,12 +309,47 @@ export default function DiagnosisPage() {
       <PWAHeader title="Diagnose Crop Problem" activeRole="FARMER" />
       <div className="pt-16 pb-20 px-4">
 
+        {/* Select crop stage */}
+        {stage === 'select_stage' && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">What stage is your crop in?</h2>
+              <p className="text-[#7A8C7E] text-sm mt-0.5">
+                Picking the right stage narrows the diagnosis to problems that are typical at this point in the season.
+              </p>
+            </div>
+            {stages.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
+                <p className="text-[#7A8C7E] text-sm">Loading stages…</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {stages.map(st => (
+                  <button key={st.cosh_id} onClick={() => pickStage(st)}
+                    className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform flex items-center gap-4">
+                    <span className="text-3xl">{getStageEmoji(st.name)}</span>
+                    <p className="font-medium text-[#6B3F1F] text-base">{st.name}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button onClick={() => router.back()}
+              className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
+              Cancel
+            </button>
+          </div>
+        )}
+
         {/* Select plant part */}
         {stage === 'select_part' && (
           <div className="mt-4 space-y-4">
             <div>
               <h2 className="text-lg font-bold text-[#6B3F1F]">Which part of the plant is affected?</h2>
-              <p className="text-[#7A8C7E] text-sm mt-0.5">Select the part where you see the problem</p>
+              <p className="text-[#7A8C7E] text-sm mt-0.5">
+                {selectedStage
+                  ? `Stage: ${selectedStage.name} — select the part where you see the problem`
+                  : 'Select the part where you see the problem'}
+              </p>
             </div>
             {parts.length === 0 ? (
               <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
@@ -257,15 +365,22 @@ export default function DiagnosisPage() {
                 {parts.map(part => (
                   <button key={part.cosh_id} onClick={() => startDiagnosis(part)}
                     className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform">
-                    <span className="text-3xl">{getPartEmoji(part.cosh_id)}</span>
+                    <span className="text-3xl">{getPartEmoji(part.name)}</span>
                     <p className="font-medium text-[#6B3F1F] mt-2">{part.name}</p>
                   </button>
                 ))}
               </div>
             )}
-            <button onClick={() => router.back()}
+            <button onClick={() => {
+                if (stages.length > 0) {
+                  setSelectedStage(null)
+                  setStage('select_stage')
+                } else {
+                  router.back()
+                }
+              }}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
-              Cancel
+              {stages.length > 0 ? '← Back to stage' : 'Cancel'}
             </button>
           </div>
         )}
@@ -284,7 +399,7 @@ export default function DiagnosisPage() {
             {/* Question card */}
             <div className="bg-white rounded-3xl p-6 border border-[#DDD0B8] shadow-sm">
               <div className="text-center mb-6">
-                <span className="text-5xl">{getPartEmoji(currentQuestion.plant_part_cosh_id)}</span>
+                <span className="text-5xl">{getPartEmoji(currentQuestion.plant_part_name)}</span>
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <p className="text-xl font-bold text-[#6B3F1F] leading-tight">
                     {currentQuestion.display_text}
@@ -301,21 +416,66 @@ export default function DiagnosisPage() {
                   {[currentQuestion.plant_part_name, currentQuestion.symptom_name]
                     .filter(Boolean).join(' — ')}
                 </p>
-                {/* Google Images link — pre-formed search [Crop] [Part] [Symptom] */}
-                <a
-                  href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-                    [
-                      cropName,
-                      currentQuestion.plant_part_name,
-                      currentQuestion.symptom_name,
-                    ].filter(Boolean).join(' ')
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 underline underline-offset-2">
-                  🔍 See images of this symptom
-                </a>
               </div>
+
+              {/* Reference images — curated by Cosh, scoped to the
+                  exact (crop, part, symptom) context of THIS question.
+                  Two thumbnails inline for at-a-glance comparison;
+                  rest behind "See N more" → gallery sheet. */}
+              {refImagesLoading ? (
+                <div className="mb-4 grid grid-cols-2 gap-2">
+                  <div className="aspect-square bg-slate-100 rounded-xl animate-pulse" />
+                  <div className="aspect-square bg-slate-100 rounded-xl animate-pulse" />
+                </div>
+              ) : refImages.length > 0 ? (
+                <div className="mb-4">
+                  <p className="text-[11px] uppercase tracking-wide font-semibold text-[#7A8C7E] mb-2">
+                    Compare with these examples
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {refImages.slice(0, 2).map(img => (
+                      <button key={img.cosh_id} type="button"
+                        onClick={() => setZoomedImage(img)}
+                        className="text-left active:scale-95 transition-transform">
+                        <div className="aspect-square overflow-hidden rounded-xl border border-[#DDD0B8] bg-slate-50">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img.url}
+                            alt={img.caption || 'Reference image'}
+                            loading="lazy"
+                            className="w-full h-full object-cover" />
+                        </div>
+                        {img.caption && (
+                          <p className="text-[10px] text-[#7A8C7E] mt-1 line-clamp-2">{img.caption}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    {refImages.length > 2 ? (
+                      <button type="button" onClick={() => setGalleryOpen(true)}
+                        className="text-xs font-medium text-blue-600 underline underline-offset-2">
+                        See {refImages.length - 2} more example{refImages.length - 2 === 1 ? '' : 's'}
+                      </button>
+                    ) : <span />}
+                    <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-[11px] text-[#7A8C7E] underline underline-offset-2">
+                      Search Google
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-4 text-center">
+                  <p className="text-xs text-[#7A8C7E]">
+                    No curated examples for this exact symptom yet.
+                  </p>
+                  <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 underline underline-offset-2">
+                    🔍 Search Google Images
+                  </a>
+                </div>
+              )}
 
               {/* YES / NO */}
               <div className="flex gap-3 mt-2">
@@ -520,16 +680,99 @@ export default function DiagnosisPage() {
           </div>
         )}
       </div>
+
+      {/* Gallery sheet — opens from "See N more examples". Lists every
+          curated image with caption; tap to zoom in for a clearer look. */}
+      {galleryOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50 flex items-end sm:items-center justify-center"
+          onClick={() => setGalleryOpen(false)}>
+          <div className="bg-[#F5F0E8] rounded-t-3xl sm:rounded-3xl w-full sm:max-w-md max-h-[85vh] overflow-hidden flex flex-col"
+            onClick={e => e.stopPropagation()}>
+            <div className="px-5 py-4 border-b border-[#DDD0B8] flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-[#6B3F1F]">Reference images</h3>
+                <p className="text-xs text-[#7A8C7E] mt-0.5">
+                  {[currentQuestion?.plant_part_name, currentQuestion?.symptom_name]
+                    .filter(Boolean).join(' — ')}
+                </p>
+              </div>
+              <button onClick={() => setGalleryOpen(false)}
+                className="text-[#7A8C7E] text-xl w-8 h-8 rounded-full hover:bg-[#DDD0B8]/40">
+                ×
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 space-y-3">
+              {refImages.map(img => (
+                <button key={img.cosh_id} type="button"
+                  onClick={() => setZoomedImage(img)}
+                  className="block w-full text-left active:scale-98 transition-transform">
+                  <div className="aspect-video overflow-hidden rounded-2xl border border-[#DDD0B8] bg-white">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url}
+                      alt={img.caption || 'Reference image'}
+                      loading="lazy"
+                      className="w-full h-full object-cover" />
+                  </div>
+                  {img.caption && (
+                    <p className="text-xs text-[#6B3F1F] mt-1.5">{img.caption}</p>
+                  )}
+                </button>
+              ))}
+            </div>
+            <div className="px-5 py-3 border-t border-[#DDD0B8] text-center">
+              <a href={googleFallbackUrl}
+                target="_blank" rel="noopener noreferrer"
+                className="text-xs text-blue-600 underline underline-offset-2">
+                Search Google for more →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-screen image zoom — tap a thumbnail or a gallery row. */}
+      {zoomedImage && (
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setZoomedImage(null)}>
+          <div className="relative max-w-full max-h-full flex flex-col items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={zoomedImage.url}
+              alt={zoomedImage.caption || 'Reference image'}
+              className="max-w-full max-h-[85vh] object-contain rounded-xl" />
+            {zoomedImage.caption && (
+              <p className="text-white text-sm text-center px-4">{zoomedImage.caption}</p>
+            )}
+            <button onClick={() => setZoomedImage(null)}
+              className="absolute top-2 right-2 w-9 h-9 rounded-full bg-black/60 text-white text-xl">
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function getPartEmoji(part: string): string {
+function getStageEmoji(stageName: string | null | undefined): string {
+  if (!stageName) return '🌱'
+  const lower = stageName.toLowerCase()
+  if (lower.includes('seedling')) return '🌱'
+  if (lower.includes('veget')) return '🌿'
+  if (lower.includes('reproduct') || lower.includes('flower')) return '🌸'
+  if (lower.includes('fruit')) return '🍅'
+  if (lower.includes('harvest') || lower.includes('mature')) return '🌾'
+  return '🌱'
+}
+
+
+function getPartEmoji(partName: string | null | undefined): string {
+  if (!partName) return '🌱'
   const emojis: Record<string, string> = {
     leaf: '🍃', stem: '🌿', root: '🪴', flower: '🌸', fruit: '🍅',
     nut: '🌰', tendril: '🌾', seed: '🌱', trunk: '🌳', branch: '🌲',
+    canopy: '🌳', 'whole plant': '🌿', shoot: '🌱', tuber: '🥔',
   }
-  const lower = part.toLowerCase()
+  const lower = partName.toLowerCase()
   for (const [key, emoji] of Object.entries(emojis)) {
     if (lower.includes(key)) return emoji
   }
