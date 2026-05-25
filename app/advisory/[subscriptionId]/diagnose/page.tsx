@@ -9,6 +9,8 @@ interface PlantPart { cosh_id: string; name: string }
 interface Question {
   plant_part_cosh_id: string; symptom_cosh_id: string
   sub_part_cosh_id: string | null; sub_symptom_cosh_id: string | null
+  plant_part_name: string | null; symptom_name: string | null
+  sub_part_name: string | null; sub_symptom_name: string | null
   question_type: string; display_text: string
 }
 interface ProblemInfo {
@@ -41,6 +43,7 @@ export default function DiagnosisPage() {
   const [remainingCount, setRemainingCount] = useState(0)
   const [diagnosis, setDiagnosis] = useState<ProblemInfo | null>(null)
   const [cropCoshId, setCropCoshId] = useState<string | null>(null)
+  const [cropName, setCropName] = useState<string | null>(null)
   const [answering, setAnswering] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -60,11 +63,12 @@ export default function DiagnosisPage() {
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     // Load subscription to get crop_cosh_id
-    api.get<{ id: string; crop_cosh_id?: string }[]>('/farmer/my-subscriptions')
+    api.get<{ id: string; crop_cosh_id?: string; crop_name?: string }[]>('/farmer/my-subscriptions')
       .then(r => {
         const sub = r.data.find(s => s.id === subscriptionId)
         if (sub?.crop_cosh_id) {
           setCropCoshId(sub.crop_cosh_id)
+          setCropName(sub.crop_name || null)
           loadParts(sub.crop_cosh_id)
         } else {
           setLoading(false)
@@ -294,15 +298,16 @@ export default function DiagnosisPage() {
                   </button>
                 </div>
                 <p className="text-[#7A8C7E] text-xs mt-2">
-                  {currentQuestion.plant_part_cosh_id.replace(/_/g, ' ')} — {currentQuestion.symptom_cosh_id.replace(/_/g, ' ')}
+                  {[currentQuestion.plant_part_name, currentQuestion.symptom_name]
+                    .filter(Boolean).join(' — ')}
                 </p>
                 {/* Google Images link — pre-formed search [Crop] [Part] [Symptom] */}
                 <a
                   href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
                     [
-                      cropCoshId?.replace(/_/g, ' '),
-                      currentQuestion.plant_part_cosh_id.replace(/_/g, ' '),
-                      currentQuestion.symptom_cosh_id.replace(/_/g, ' '),
+                      cropName,
+                      currentQuestion.plant_part_name,
+                      currentQuestion.symptom_name,
                     ].filter(Boolean).join(' ')
                   )}`}
                   target="_blank"
