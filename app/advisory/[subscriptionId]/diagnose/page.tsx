@@ -37,7 +37,7 @@ export default function DiagnosisPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
 
-  const [stage, setStage] = useState<'select_stage' | 'select_part' | 'questioning' | 'diagnosed' | 'know_problem' | 'aborted'>('select_stage')
+  const [stage, setStage] = useState<'select_stage' | 'select_method' | 'ai_capture' | 'ai_needs_expert' | 'select_part' | 'questioning' | 'diagnosed' | 'know_problem' | 'aborted'>('select_stage')
   const [stages, setStages] = useState<CropStage[]>([])
   const [selectedStage, setSelectedStage] = useState<CropStage | null>(null)
   const [parts, setParts] = useState<PlantPart[]>([])
@@ -50,6 +50,14 @@ export default function DiagnosisPage() {
   const [committedToAdvisory, setCommittedToAdvisory] = useState(false)
   const [committing, setCommitting] = useState(false)
   const [commitError, setCommitError] = useState('')
+
+  // Direct-AI path: farmer skips Part + Q&A; uploads photos; Claude
+  // picks from the crop+stage's known problem catalogue (or refers
+  // to FarmPundit when nothing matches).
+  const [aiImages, setAiImages] = useState<Array<{ base64: string; media_type: string; preview: string }>>([])
+  const [aiSubmitting, setAiSubmitting] = useState(false)
+  const [aiError, setAiError] = useState('')
+  const aiFileInputRef = useRef<HTMLInputElement>(null)
   const [cropCoshId, setCropCoshId] = useState<string | null>(null)
   const [cropName, setCropName] = useState<string | null>(null)
   const [answering, setAnswering] = useState(false)
@@ -115,8 +123,93 @@ export default function DiagnosisPage() {
 
   async function pickStage(st: CropStage) {
     setSelectedStage(st)
+    setStage('select_method')
+  }
+
+  async function chooseSelfDiagnose() {
+    if (!cropCoshId) return
     setLoading(true)
-    if (cropCoshId) await loadParts(cropCoshId, st.cosh_id)
+    await loadParts(cropCoshId, selectedStage?.cosh_id)
+  }
+
+  async function chooseAIDiagnose() {
+    setAiImages([])
+    setAiError('')
+    setStage('ai_capture')
+  }
+
+  async function handleAiPhotoCapture(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    // 5-image soft cap — Claude vision handles more but base64
+    // payload + farmer attention both fall off after that.
+    const room = Math.max(0, 5 - aiImages.length)
+    const toAdd = files.slice(0, room)
+    const additions: Array<{ base64: string; media_type: string; preview: string }> = []
+    for (const f of toAdd) {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.onerror = reject
+        reader.readAsDataURL(f)
+      })
+      additions.push({
+        base64,
+        media_type: f.type || 'image/jpeg',
+        preview: URL.createObjectURL(f),
+      })
+    }
+    setAiImages(prev => [...prev, ...additions])
+    // Reset the input so picking the same file again still fires onChange.
+    if (aiFileInputRef.current) aiFileInputRef.current.value = ''
+  }
+
+  function removeAiImage(idx: number) {
+    setAiImages(prev => {
+      const next = [...prev]
+      const [removed] = next.splice(idx, 1)
+      if (removed?.preview) URL.revokeObjectURL(removed.preview)
+      return next
+    })
+  }
+
+  async function submitAiDiagnosis() {
+    if (!cropCoshId || aiImages.length === 0) return
+    setAiSubmitting(true); setAiError('')
+    try {
+      const payload = {
+        subscription_id: subscriptionId,
+        crop_cosh_id: cropCoshId,
+        crop_stage_cosh_id: selectedStage?.cosh_id || null,
+        images: aiImages.map(i => ({ base64: i.base64, media_type: i.media_type })),
+      }
+      const { data } = await api.post<{
+        needs_expert: boolean
+        session_id?: string
+        analysis: ImageAnalysis
+        problem_info?: ProblemInfo
+        committed_to_advisory?: boolean
+      }>('/diagnosis/ai-direct-diagnose', payload)
+      if (data.needs_expert) {
+        setStage('ai_needs_expert')
+        setImageAnalysis(data.analysis)
+        return
+      }
+      // Confident match → reuse the diagnosed-screen path so the
+      // farmer sees the same Commit-to-Advisory CTA + Claude
+      // description + (eventually) reference images.
+      setSessionId(data.session_id || null)
+      setDiagnosis(data.problem_info || null)
+      setImageAnalysis(data.analysis)
+      setCommittedToAdvisory(!!data.committed_to_advisory)
+      setStage('diagnosed')
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message
+      setAiError(msg || 'AI diagnosis failed. Please try again or use the guided path.')
+    } finally { setAiSubmitting(false) }
   }
 
   async function loadParts(crop_cosh_id: string, stage_id?: string) {
@@ -364,6 +457,141 @@ export default function DiagnosisPage() {
           </div>
         )}
 
+        {/* Diagnose Yourself vs Ask AI */}
+        {stage === 'select_method' && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">How would you like to diagnose?</h2>
+              <p className="text-[#7A8C7E] text-sm mt-0.5">
+                {selectedStage ? `Crop stage: ${selectedStage.name}. ` : ''}
+                You can answer simple Yes / No questions yourself, or let
+                AI take a look at photos you upload.
+              </p>
+            </div>
+            <button onClick={chooseSelfDiagnose}
+              className="w-full bg-white rounded-2xl p-5 border-2 shadow-sm text-left active:scale-98 transition-transform"
+              style={{ borderColor: COLOUR }}>
+              <div className="flex items-start gap-3">
+                <span className="text-3xl">🧑‍🌾</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-[#6B3F1F]">Diagnose yourself</p>
+                    <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Recommended</span>
+                  </div>
+                  <p className="text-xs text-[#7A8C7E] mt-1">
+                    Answer a few Yes / No questions with help from reference photos.
+                    More accurate when the symptom is clear to you.
+                  </p>
+                </div>
+              </div>
+            </button>
+            <button onClick={chooseAIDiagnose}
+              className="w-full bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-98 transition-transform">
+              <div className="flex items-start gap-3">
+                <span className="text-3xl">🤖</span>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#6B3F1F]">Ask AI to diagnose</p>
+                  <p className="text-xs text-[#7A8C7E] mt-1">
+                    Upload one or more photos and let AI suggest the most likely problem.
+                    If AI is unsure, it will refer you to a FarmPundit expert.
+                  </p>
+                </div>
+              </div>
+            </button>
+            <button onClick={() => { setSelectedStage(null); setStage('select_stage') }}
+              className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
+              ← Back to stage
+            </button>
+          </div>
+        )}
+
+        {/* AI direct diagnosis — multi-photo capture */}
+        {stage === 'ai_capture' && (
+          <div className="mt-4 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">Take or upload photos</h2>
+              <p className="text-[#7A8C7E] text-sm mt-0.5">
+                {selectedStage ? `Crop stage: ${selectedStage.name}. ` : ''}
+                Add 1–5 clear photos showing the affected parts. Multiple angles help AI judge better.
+              </p>
+            </div>
+            <input
+              ref={aiFileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              multiple
+              className="hidden"
+              onChange={handleAiPhotoCapture}
+            />
+            {aiImages.length === 0 ? (
+              <button onClick={() => aiFileInputRef.current?.click()}
+                className="w-full bg-white rounded-2xl py-12 border-2 border-dashed border-[#DDD0B8] text-[#6B3F1F]">
+                <span className="text-4xl block">📸</span>
+                <p className="mt-2 text-sm font-medium">Take or pick a photo</p>
+                <p className="text-xs text-[#7A8C7E] mt-1">Tap to add</p>
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {aiImages.map((img, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-100 border border-[#DDD0B8]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img.preview} alt="Uploaded" className="w-full h-full object-cover" />
+                      <button onClick={() => removeAiImage(idx)}
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 text-white text-xs"
+                        aria-label="Remove photo">×</button>
+                    </div>
+                  ))}
+                </div>
+                {aiImages.length < 5 && (
+                  <button onClick={() => aiFileInputRef.current?.click()}
+                    className="w-full py-2.5 rounded-xl border border-dashed border-[#DDD0B8] text-[#6B3F1F] text-sm">
+                    📸 Add another ({aiImages.length}/5)
+                  </button>
+                )}
+                <button onClick={submitAiDiagnosis} disabled={aiSubmitting}
+                  className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-60"
+                  style={{ background: COLOUR }}>
+                  {aiSubmitting ? '🤖 AI is looking at your photos…' : '🤖 Diagnose with AI'}
+                </button>
+                {aiError && <p className="text-sm text-red-600 text-center">{aiError}</p>}
+              </div>
+            )}
+            <button onClick={() => { setAiImages([]); setStage('select_method') }}
+              disabled={aiSubmitting}
+              className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm disabled:opacity-50">
+              ← Back
+            </button>
+          </div>
+        )}
+
+        {/* AI couldn't match — route to FarmPundit */}
+        {stage === 'ai_needs_expert' && (
+          <div className="mt-4 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+              <p className="text-base font-semibold text-amber-900">AI is not sure about this one</p>
+              <p className="text-sm text-amber-800 mt-2">
+                {imageAnalysis?.description
+                  || "The photos didn't match a problem the AI is confident about for this crop and stage. A FarmPundit expert will give you a more reliable answer."}
+              </p>
+            </div>
+            <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
+              className="w-full py-4 rounded-2xl text-white font-semibold"
+              style={{ background: COLOUR }}>
+              👨‍🌾 Ask FarmPundit Expert →
+            </button>
+            <button onClick={() => { setImageAnalysis(null); setStage('ai_capture') }}
+              className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
+              📸 Try different photos
+            </button>
+            <button onClick={() => { setImageAnalysis(null); setStage('select_method') }}
+              className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
+              🧑‍🌾 Switch to guided diagnosis
+            </button>
+          </div>
+        )}
+
         {/* Select plant part */}
         {stage === 'select_part' && (
           <div className="mt-4 space-y-4">
@@ -397,14 +625,13 @@ export default function DiagnosisPage() {
             )}
             <button onClick={() => {
                 if (stages.length > 0) {
-                  setSelectedStage(null)
-                  setStage('select_stage')
+                  setStage('select_method')
                 } else {
                   router.back()
                 }
               }}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
-              {stages.length > 0 ? '← Back to stage' : 'Cancel'}
+              {stages.length > 0 ? '← Back' : 'Cancel'}
             </button>
           </div>
         )}
