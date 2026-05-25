@@ -122,7 +122,10 @@ export default function DiagnosisPage() {
   async function loadParts(crop_cosh_id: string, stage_id?: string) {
     try {
       const params = new URLSearchParams({ crop_cosh_id })
-      if (stage_id) params.append('crop_stage_cosh_id', stage_id)
+      // Backend reads `crop_stage` (not `crop_stage_cosh_id`); the
+      // older name was silently dropped, which is why FRUIT showed
+      // up under Seedling.
+      if (stage_id) params.append('crop_stage', stage_id)
       const { data } = await api.get<PlantPart[]>(`/diagnosis/plant-parts?${params}`)
       setParts(data)
     } finally { setLoading(false) }
