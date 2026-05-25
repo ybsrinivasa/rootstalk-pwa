@@ -5,7 +5,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
-interface PlantPart { cosh_id: string; display_name: string }
+interface PlantPart { cosh_id: string; name: string }
 interface Question {
   plant_part_cosh_id: string; symptom_cosh_id: string
   sub_part_cosh_id: string | null; sub_symptom_cosh_id: string | null
@@ -254,7 +254,7 @@ export default function DiagnosisPage() {
                   <button key={part.cosh_id} onClick={() => startDiagnosis(part)}
                     className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform">
                     <span className="text-3xl">{getPartEmoji(part.cosh_id)}</span>
-                    <p className="font-medium text-[#6B3F1F] mt-2">{part.display_name}</p>
+                    <p className="font-medium text-[#6B3F1F] mt-2">{part.name}</p>
                   </button>
                 ))}
               </div>
