@@ -323,12 +323,19 @@ export default function CropDetailPage() {
       <div className="sticky top-0 z-30 px-4 pt-safe" style={{ background: colour }}>
         <div className="flex items-center gap-3 py-3 min-w-0">
           <button onClick={() => router.push('/home')} className="text-white opacity-70 text-xl shrink-0">←</button>
-          <div className="flex-1 min-w-0">
+          {branding?.logo_url && (
+            <img src={branding.logo_url} alt={branding.display_name}
+              className="w-9 h-9 rounded-full object-contain p-0.5 shrink-0 bg-white/90" />
+          )}
+          <div className="flex-1 min-w-0 leading-tight">
+            {branding?.display_name && (
+              <p className="text-white text-[11px] opacity-80 truncate">{branding.display_name}</p>
+            )}
             <p className="text-white font-bold text-sm truncate">
               {cropDisplayName(sub.crop_cosh_id, sub.crop_name)}
             </p>
             {sub.package_name && sub.package_name.toLowerCase() !== cropDisplayName(sub.crop_cosh_id, sub.crop_name).toLowerCase() && (
-              <p className="text-white text-xs opacity-70 truncate">{sub.package_name}</p>
+              <p className="text-white text-[11px] opacity-70 truncate">{sub.package_name}</p>
             )}
           </div>
           {sub.reference_number && (

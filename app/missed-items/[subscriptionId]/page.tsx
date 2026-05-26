@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 interface MissedTimeline {
@@ -34,7 +35,10 @@ export default function MissedItemsPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Missed Items" activeRole="FARMER" back />
-      <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+      <div className="pt-16">
+        <ClientCropChip subscriptionId={subscriptionId} />
+      </div>
+      <div className="pb-24 px-4 max-w-lg mx-auto">
         {/* Warm amber banner */}
         <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
           <p className="text-sm text-amber-800 font-semibold">These practices have passed their application window</p>

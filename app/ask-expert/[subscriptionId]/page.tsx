@@ -3,6 +3,7 @@ import { useState, FormEvent } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 const SEVERITY_OPTIONS = [
@@ -71,7 +72,10 @@ export default function AskExpertPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Ask an Expert" activeRole="FARMER" back />
-      <div className="pt-16 pb-20 px-4">
+      <div className="pt-16">
+        <ClientCropChip subscriptionId={subscriptionId} />
+      </div>
+      <div className="pb-20 px-4">
         <div className="mt-4 mb-5">
           <p className="text-lg font-bold text-[#6B3F1F]">Describe your crop issue</p>
           <p className="text-[#7A8C7E] text-sm mt-0.5">A FarmPundit expert will respond within 7 days</p>

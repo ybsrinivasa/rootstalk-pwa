@@ -4,6 +4,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import PhoneVerify from '@/components/PhoneVerify'
+import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 interface Person {
@@ -169,7 +170,10 @@ export default function OrderingScreenPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER" back />
-      <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+      <div className="pt-16">
+        <ClientCropChip subscriptionId={subscriptionId} />
+      </div>
+      <div className="pb-24 px-4 max-w-lg mx-auto">
         {/* Order type badge + date range */}
         <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex items-center justify-between">
           <div>

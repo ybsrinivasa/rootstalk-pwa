@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 interface Element { element_type: string; cosh_ref: string | null; value: string | null; unit_cosh_id: string | null }
@@ -252,8 +253,9 @@ export default function AdvisoryPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={advisory?.package_name || 'Advisory'} activeRole="FARMER" />
+      <PWAHeader title={advisory?.package_name || 'Advisory'} activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-24">
+        <ClientCropChip subscriptionId={subscriptionId} />
 
         {/* Start date gate */}
         {!hasStartDate && (

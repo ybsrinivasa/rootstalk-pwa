@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 interface PlantPart { cosh_id: string; name: string }
@@ -424,7 +425,10 @@ export default function DiagnosisPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Diagnose Crop Problem" activeRole="FARMER" back={`/advisory/${subscriptionId}`} />
-      <div className="pt-16 pb-20 px-4">
+      <div className="pt-16">
+        <ClientCropChip subscriptionId={subscriptionId} />
+      </div>
+      <div className="pb-20 px-4">
 
         {/* Select crop stage */}
         {stage === 'select_stage' && (
