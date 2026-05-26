@@ -26,12 +26,18 @@ interface BlankPathQuestion {
   question_id: string; question_text: string; farmer_answer: string
 }
 interface TimelineItem {
-  id: string; name: string; source: string   // CCA | CHA
+  id: string; name: string; source: string   // CCA | CHA | QA
   from_date: string; to_date: string; day_number: number
   practices: Practice[]
   pending_conditional_question?: PendingConditionalQuestion
   has_pending_question?: boolean
   blank_path_questions?: BlankPathQuestion[]
+  // CHA/QA only: name of the problem the recommendation addresses
+  // (e.g. "Fruit Fly"), and the wall-clock timestamp of the diagnosis
+  // commit. Used to surface the problem on the card AND to float
+  // freshly-triggered timelines to the top of the list.
+  problem_name?: string
+  triggered_at?: string
 }
 interface AdvisoryDay {
   subscription_id: string; client_id: string; package_id: string; package_name: string
@@ -276,7 +282,7 @@ export default function AdvisoryPage() {
 
         {/* Active advisory */}
         {hasStartDate && advisory && (
-          <div className="px-4 mt-4 space-y-4">
+          <div className="px-4 mt-4 space-y-8">
             {/* Day counter */}
             <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] flex items-center justify-between">
               <div>
@@ -324,29 +330,55 @@ export default function AdvisoryPage() {
               </div>
             )}
 
-            {/* Date-grouped sections — sort by latest to_date first
-                so the most recent window sits on top. Timeline name
-                / "(COPY)" suffix is internal jargon — farmer sees
-                the actual date window instead. */}
+            {/* Date-grouped sections. Order:
+                  1. CHA / QA timelines first, newest triggered_at on top
+                     (a fresh diagnosis or pundit response is what the
+                     farmer just acted on — surface it immediately).
+                  2. Then CCA timelines, latest to_date first.
+                Timeline name / "(COPY)" suffix is internal jargon —
+                farmer sees the actual date window + problem name
+                instead. */}
             {[...advisory.timelines]
-              .sort((a, b) => new Date(b.to_date || b.from_date || 0).getTime()
-                            - new Date(a.to_date || a.from_date || 0).getTime())
+              .sort((a, b) => {
+                const aIsCha = a.source === 'CHA' || a.source === 'QA'
+                const bIsCha = b.source === 'CHA' || b.source === 'QA'
+                if (aIsCha !== bIsCha) return aIsCha ? -1 : 1
+                if (aIsCha && bIsCha) {
+                  // newest CHA on top, fall back to date if triggered_at missing
+                  const aT = new Date(a.triggered_at || a.from_date || 0).getTime()
+                  const bT = new Date(b.triggered_at || b.from_date || 0).getTime()
+                  return bT - aT
+                }
+                return new Date(b.to_date || b.from_date || 0).getTime()
+                     - new Date(a.to_date || a.from_date || 0).getTime()
+              })
               .map(tl => (
               <div key={tl.id}>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="h-px flex-1 bg-slate-200" />
-                  <div className="flex items-center gap-1.5 px-2">
-                    {tl.source === 'CHA' && (
-                      <span className="text-xs font-bold text-[#D4682E] bg-red-50 px-1.5 py-0.5 rounded">🔬 CHA</span>
-                    )}
-                    {tl.source === 'QA' && (
-                      <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">🌾 Pundit</span>
-                    )}
-                    <p className="text-xs font-semibold text-[#6B3F1F] tracking-wide">
-                      {timelineDateLabel(tl.from_date, tl.to_date)}
-                    </p>
+                <div className="mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <div className="flex items-center gap-1.5 px-2">
+                      {tl.source === 'CHA' && (
+                        <span className="text-xs font-bold text-[#D4682E] bg-red-50 px-1.5 py-0.5 rounded">🔬 CHA</span>
+                      )}
+                      {tl.source === 'QA' && (
+                        <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">🌾 Pundit</span>
+                      )}
+                      <p className="text-xs font-semibold text-[#6B3F1F] tracking-wide">
+                        {timelineDateLabel(tl.from_date, tl.to_date)}
+                      </p>
+                    </div>
+                    <div className="h-px flex-1 bg-slate-200" />
                   </div>
-                  <div className="h-px flex-1 bg-slate-200" />
+                  {/* Problem name sits under the badge / date so the
+                      farmer immediately knows which problem this set of
+                      practices addresses. CCA timelines don't carry a
+                      problem_name; the line is suppressed for them. */}
+                  {tl.problem_name && (
+                    <p className="text-center text-sm font-semibold text-[#6B3F1F] mt-1.5">
+                      {tl.problem_name}
+                    </p>
+                  )}
                 </div>
 
                 {/* BL-02: Show conditional question BEFORE practices */}
