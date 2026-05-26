@@ -83,6 +83,28 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
+// Author tools store a unit as its own Element row with
+// element_type ending in `_UNIT` (e.g. DOSAGE / DOSAGE_UNIT pair).
+// "Dosage Unit" should never appear as its own label to the
+// farmer — fold it back onto the preceding non-unit sibling so
+// the dosage card reads "Dosage: 5 ml" instead of "Dosage: 5"
+// + "Dosage Unit: ml".
+type ElementWithUnit = Element & { trailing_unit?: string }
+function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
+  const out: ElementWithUnit[] = []
+  for (const el of elements) {
+    const isUnitRow = (el.element_type || '').toUpperCase().endsWith('_UNIT')
+    if (isUnitRow && out.length > 0) {
+      const unitLabel = el.value || (el.cosh_ref && !isUuid(el.cosh_ref) ? el.cosh_ref : '') || ''
+      if (unitLabel) out[out.length - 1].trailing_unit = unitLabel
+      // either way, suppress the standalone *_UNIT row
+      continue
+    }
+    out.push({ ...el })
+  }
+  return out
+}
+
 // ── Relation grouping helpers ───────────────────────────────────────────────
 function decodeRole(role: string): { part: number; option: number; position: number } | null {
   const m = /^PART_(\d+)__OPT_(\d+)__POS_(\d+)$/.exec(role)
@@ -705,16 +727,23 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
 
       {detailsVisible && expanded && (
         <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
-          {practice.elements.map((el, i) => {
+          {mergeUnitElements(practice.elements).map((el, i) => {
             const showRef = el.cosh_ref && !isUuid(el.cosh_ref)
-            const unitLabel = el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : ''
+            const inlineUnit =
+              (el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : '')
+              || el.trailing_unit || ''
             return (
               <div key={i} className="flex items-start gap-2 text-sm">
                 <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
                 <div>
                   <span className="text-[#6B3F1F] font-medium">{humanizeType(el.element_type)}</span>
-                  {showRef && <span className="text-[#7A8C7E] text-xs ml-1">({el.cosh_ref})</span>}
-                  {el.value && <span className="text-[#6B3F1F] ml-1">{el.value}{unitLabel ? ` ${unitLabel}` : ''}</span>}
+                  {el.value
+                    ? <span className="text-[#6B3F1F] ml-1">: {el.value}{inlineUnit ? ` ${inlineUnit}` : ''}</span>
+                    : showRef
+                      ? <span className="text-[#6B3F1F] ml-1">: {el.cosh_ref}</span>
+                      : inlineUnit
+                        ? <span className="text-[#6B3F1F] ml-1">: {inlineUnit}</span>
+                        : null}
                 </div>
               </div>
             )
@@ -723,7 +752,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
       )}
       {detailsVisible && (
         <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
-          {expanded ? '▲ Hide details' : `▼ ${practice.elements.length} detail${practice.elements.length > 1 ? 's' : ''}`}
+          {expanded ? '▲ Hide details' : `▼ ${mergeUnitElements(practice.elements).length} detail${mergeUnitElements(practice.elements).length > 1 ? 's' : ''}`}
         </div>
       )}
     </div>
