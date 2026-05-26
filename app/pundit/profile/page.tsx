@@ -6,6 +6,8 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
+interface CoshNamedRef { cosh_id: string; name: string | null }
+
 interface SupportArea {
   state_cosh_id: string
   state_name: string | null
@@ -16,20 +18,59 @@ interface SupportArea {
 interface PunditProfile {
   id: string
   user_id: string
+  phone: string | null
   email: string | null
-  education: string | null
-  experience_band: string | null
-  support_method: string | null
-  cultivation_type: string | null
-  organisation_name: string | null
+  education: CoshNamedRef | null
+  experience: CoshNamedRef | null
+  is_employed_by_organization: boolean
+  organisation_type: CoshNamedRef | null
+  non_employed_kind: 'RETIRED' | 'EXPERIENCED_FARMER' | null
   phone_hidden: boolean
   declaration_accepted: boolean
-  expertise_domains: string[]
+  farming_methods: CoshNamedRef[]
+  cultivation_types: CoshNamedRef[]
+  expertise_domains: CoshNamedRef[]
+  crop_groups: CoshNamedRef[]
+  languages: CoshNamedRef[]
   support_areas: SupportArea[]
-  languages: string[]
 }
 
 const COLOUR = '#3C3489'
+
+const NON_EMPLOYED_LABEL: Record<string, string> = {
+  RETIRED: 'Retired from service',
+  EXPERIENCED_FARMER: 'Experienced farmer',
+}
+
+// Helper to render a CoshNamedRef — falls back to the raw cosh_id
+// if Cosh sync hasn't loaded the English translation yet.
+function nameOf(ref: CoshNamedRef | null): string {
+  if (!ref) return '—'
+  return ref.name || ref.cosh_id
+}
+
+function ChipList({ items, palette = 'colour' }: {
+  items: CoshNamedRef[]
+  palette?: 'colour' | 'slate'
+}) {
+  if (items.length === 0) {
+    return <p className="text-sm text-[#7A8C7E]">None listed</p>
+  }
+  const cls = palette === 'slate'
+    ? 'bg-slate-100 text-[#6B3F1F]'
+    : ''
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map(item => (
+        <span key={item.cosh_id}
+          className={`text-xs px-3 py-1.5 rounded-full font-medium ${cls}`}
+          style={palette === 'colour' ? { background: COLOUR + '15', color: COLOUR } : undefined}>
+          {nameOf(item)}
+        </span>
+      ))}
+    </div>
+  )
+}
 
 export default function PunditProfilePage() {
   const router = useRouter()
@@ -80,16 +121,21 @@ export default function PunditProfilePage() {
 
         {!loading && profile && (
           <>
-            {/* Identity */}
+            {/* Identity + Phone (read-only) + Phone privacy toggle */}
             <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold"
                   style={{ background: COLOUR }}>
                   {(user?.name || '?')[0].toUpperCase()}
                 </div>
-                <div>
-                  <p className="font-semibold text-[#6B3F1F]">{user?.name || '—'}</p>
-                  <p className="text-xs text-[#7A8C7E]">{user?.phone || '—'}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-[#6B3F1F] truncate">{user?.name || '—'}</p>
+                  <p className="text-xs text-[#7A8C7E]">
+                    {profile.phone || user?.phone || '—'}
+                    {phoneHidden && (
+                      <span className="ml-1 text-[10px] uppercase tracking-wide font-bold text-amber-700">· hidden</span>
+                    )}
+                  </p>
                 </div>
               </div>
               {profile.email && (
@@ -98,56 +144,86 @@ export default function PunditProfilePage() {
                   <p className="text-sm text-[#6B3F1F]">{profile.email}</p>
                 </div>
               )}
+              <div className="border-t border-[#DDD0B8] pt-3 mt-3 flex items-center justify-between gap-3">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-[#6B3F1F]">Phone privacy</p>
+                  <p className="text-xs text-[#7A8C7E] mt-0.5">
+                    {phoneHidden
+                      ? 'Hidden — companies cannot find you by phone'
+                      : 'Visible — companies can find you by phone'}
+                  </p>
+                </div>
+                <button
+                  onClick={togglePrivacy}
+                  disabled={privacyLoading}
+                  className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${phoneHidden ? 'bg-[#3C3489]' : 'bg-stone-200'}`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${phoneHidden ? 'translate-x-7' : 'translate-x-1'}`} />
+                </button>
+              </div>
             </div>
 
-            {/* Education */}
+            {/* Education + Experience */}
             <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
               <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Education</p>
-              <p className="text-sm text-[#6B3F1F]">{profile.education || '—'}</p>
-              {profile.experience_band && (
+              <p className="text-sm text-[#6B3F1F]">{nameOf(profile.education)}</p>
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mt-3 mb-2">Years of Experience</p>
+              <p className="text-sm text-[#6B3F1F]">{nameOf(profile.experience)}</p>
+            </div>
+
+            {/* Farming Methods */}
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Farming Methods</p>
+              <ChipList items={profile.farming_methods} />
+            </div>
+
+            {/* Cultivation Types */}
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Cultivation Types</p>
+              <ChipList items={profile.cultivation_types} />
+            </div>
+
+            {/* Organisation / Non-employed branch */}
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Working for an Organisation</p>
+              {profile.is_employed_by_organization ? (
                 <>
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mt-3 mb-2">Experience</p>
-                  <p className="text-sm text-[#6B3F1F]">{profile.experience_band}</p>
+                  <p className="text-sm text-[#6B3F1F]">Yes</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mt-3 mb-2">Organisation Type</p>
+                  <p className="text-sm text-[#6B3F1F]">{nameOf(profile.organisation_type)}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-[#6B3F1F]">No</p>
+                  {profile.non_employed_kind && (
+                    <p className="text-sm text-[#6B3F1F] mt-2">
+                      {NON_EMPLOYED_LABEL[profile.non_employed_kind] || profile.non_employed_kind}
+                    </p>
+                  )}
                 </>
               )}
             </div>
 
-            {/* Expertise Domains */}
+            {/* Domain Expertise */}
             <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
-              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Expertise Domains</p>
-              {profile.expertise_domains.length === 0 ? (
-                <p className="text-sm text-[#7A8C7E]">None listed</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {profile.expertise_domains.map(d => (
-                    <span key={d} className="text-xs px-3 py-1.5 rounded-full font-medium"
-                      style={{ background: COLOUR + '15', color: COLOUR }}>
-                      {d}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Domain Expertise</p>
+              <ChipList items={profile.expertise_domains} />
+            </div>
+
+            {/* Crop Groups */}
+            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Crop Groups</p>
+              <ChipList items={profile.crop_groups} />
             </div>
 
             {/* Languages */}
             <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
-              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Languages</p>
-              {profile.languages.length === 0 ? (
-                <p className="text-sm text-[#7A8C7E]">None listed</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {profile.languages.map(l => (
-                    <span key={l} className="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-[#6B3F1F] font-medium">
-                      {l.toUpperCase()}
-                    </span>
-                  ))}
-                </div>
-              )}
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Languages Conversant</p>
+              <ChipList items={profile.languages} palette="slate" />
             </div>
 
-            {/* Support Areas */}
+            {/* Preferred States */}
             <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
-              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Support Areas</p>
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Preferred States</p>
               {profile.support_areas.length === 0 ? (
                 <p className="text-sm text-[#7A8C7E]">None listed</p>
               ) : (
@@ -160,32 +236,6 @@ export default function PunditProfilePage() {
                   ))}
                 </ul>
               )}
-            </div>
-
-            {/* Support Method */}
-            {profile.support_method && (
-              <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
-                <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Support Method</p>
-                <p className="text-sm text-[#6B3F1F]">{profile.support_method}</p>
-              </div>
-            )}
-
-            {/* Phone Privacy */}
-            <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-[#6B3F1F]">Phone privacy</p>
-                  <p className="text-xs text-[#7A8C7E] mt-0.5">
-                    {phoneHidden ? 'Hidden — companies cannot find you by phone' : 'Visible — companies can find you by phone'}
-                  </p>
-                </div>
-                <button
-                  onClick={togglePrivacy}
-                  disabled={privacyLoading}
-                  className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${phoneHidden ? 'bg-[#3C3489]' : 'bg-stone-200'}`}>
-                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${phoneHidden ? 'translate-x-7' : 'translate-x-1'}`} />
-                </button>
-              </div>
             </div>
 
             {/* Edit credentials placeholder */}
