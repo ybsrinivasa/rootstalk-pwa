@@ -96,7 +96,7 @@ export default function PunditRegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Register as FarmPundit" activeRole="FARMER" />
+      <PWAHeader title="Register as FarmPundit" activeRole="FARMER" back />
       <div className="pt-16 pb-20 px-4">
         {/* Steps */}
         <div className="flex items-center gap-2 mt-4 mb-6 justify-center">

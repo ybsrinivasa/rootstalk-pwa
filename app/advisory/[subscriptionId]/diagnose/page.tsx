@@ -423,7 +423,7 @@ export default function DiagnosisPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Diagnose Crop Problem" activeRole="FARMER" />
+      <PWAHeader title="Diagnose Crop Problem" activeRole="FARMER" back={`/advisory/${subscriptionId}`} />
       <div className="pt-16 pb-20 px-4">
 
         {/* Select crop stage */}

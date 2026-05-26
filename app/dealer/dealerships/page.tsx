@@ -114,7 +114,7 @@ export default function MyDealershipsPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader activeRole="DEALER" />
+      <PWAHeader activeRole="DEALER" back="/dealer/home" />
       <div className="pt-20 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-2 mb-4">
           <h1 className="text-xl font-bold text-[#6B3F1F]">My Dealerships</h1>

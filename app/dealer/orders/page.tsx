@@ -40,7 +40,7 @@ export default function DealerOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Dealer — Orders" activeRole="DEALER" />
+      <PWAHeader title="Dealer — Orders" activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-20">
         {/* Shortcuts row */}
         <div className="flex gap-2 px-4 pt-3">

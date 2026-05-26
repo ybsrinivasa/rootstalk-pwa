@@ -53,7 +53,7 @@ export default function FarmerQueriesPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Expert Queries" activeRole="FARMER" />
+      <PWAHeader title="My Expert Queries" activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20 px-4">
         <button
           onClick={() => router.replace('/home')}

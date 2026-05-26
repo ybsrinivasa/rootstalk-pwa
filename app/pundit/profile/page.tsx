@@ -55,7 +55,7 @@ export default function PunditProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Expert Credentials" activeRole="FARM_PUNDIT" />
+      <PWAHeader title="Expert Credentials" activeRole="FARM_PUNDIT" back="/pundit/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
 
         {loading && (

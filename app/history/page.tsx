@@ -58,7 +58,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Crop History" activeRole="FARMER" />
+      <PWAHeader title="Crop History" activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
         {loading ? (
           <div className="mt-4 space-y-3">{[1, 2].map(i => <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" />)}</div>

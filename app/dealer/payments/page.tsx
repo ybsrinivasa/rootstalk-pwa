@@ -78,7 +78,7 @@ export default function DealerPaymentsPage() {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Farmer Payments" activeRole="DEALER" />
+        <PWAHeader title="Farmer Payments" activeRole="DEALER" back="/dealer/home" />
         <div className="pt-16 pb-20 px-4">
           <div className="mt-4 space-y-3">
             {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}

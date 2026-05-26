@@ -90,7 +90,7 @@ export default function MySubscriptionsPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Subscriptions" activeRole="FARMER" />
+      <PWAHeader title="My Subscriptions" activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {/* Back to home — /my-subscriptions is reached from the
             right drawer, so there's no obvious one-step back; an

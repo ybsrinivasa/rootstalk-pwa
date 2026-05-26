@@ -33,7 +33,7 @@ export default function MissedItemsPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Missed Items" activeRole="FARMER" />
+      <PWAHeader title="Missed Items" activeRole="FARMER" back />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {/* Warm amber banner */}
         <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">

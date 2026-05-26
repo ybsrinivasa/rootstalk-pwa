@@ -168,7 +168,7 @@ export default function OrderingScreenPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER" />
+      <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER" back />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {/* Order type badge + date range */}
         <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex items-center justify-between">

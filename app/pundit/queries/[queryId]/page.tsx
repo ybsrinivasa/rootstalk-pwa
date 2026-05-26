@@ -223,7 +223,7 @@ export default function PunditQueryDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Query" activeRole="FARM_PUNDIT" />
+      <PWAHeader title="Query" activeRole="FARM_PUNDIT" back="/pundit/queries" />
       <div className="pt-16 pb-28 px-4 space-y-4">
         {/* Header card */}
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">

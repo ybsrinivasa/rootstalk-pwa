@@ -248,7 +248,7 @@ export default function FacilitatorPromoterAssignPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Assign Advisory" activeRole="FACILITATOR" />
+      <PWAHeader title="Assign Advisory" activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
           <ProgressBar stage={stage} />

@@ -98,7 +98,7 @@ export default function CropsAndCompaniesPage() {
 
   return (
     <div className="min-h-screen" style={{ background: C.background }}>
-      <PWAHeader onRoleSwitch={() => setShowRoleDrawer(true)} />
+      <PWAHeader onRoleSwitch={() => setShowRoleDrawer(true)} back="/home" />
 
       <div className="pt-20 pb-10 px-4 max-w-3xl mx-auto">
         {/* Title + reset */}

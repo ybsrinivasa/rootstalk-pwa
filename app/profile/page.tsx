@@ -273,7 +273,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Profile" activeRole="FARMER" />
+      <PWAHeader title="My Profile" activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20 px-4">
 
         {/* ── Hero user card ── */}

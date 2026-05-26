@@ -186,7 +186,7 @@ export default function DealerProfilePage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Shop Details" activeRole="DEALER"
-        onRoleSwitch={() => setShowRoleDrawer(true)} />
+        onRoleSwitch={() => setShowRoleDrawer(true)} back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 space-y-5 max-w-lg mx-auto">
 
         {/* Missing-fields banner — visible whenever any required

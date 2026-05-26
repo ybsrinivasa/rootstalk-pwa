@@ -28,7 +28,7 @@ export default function DealerPromotedFarmersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Promoted Farmers" activeRole="DEALER" />
+      <PWAHeader title="My Promoted Farmers" activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4 mb-3 flex justify-end">
           <button onClick={() => router.push('/dealer/promoter-assign')}

@@ -63,7 +63,7 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F5F0]">
-      <PWAHeader title="Orders" activeRole="FARMER" />
+      <PWAHeader title="Orders" activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20">
         {/* Three tabs */}
         <div className="flex bg-white border-b border-[#DDD0B8] sticky top-16 z-30">

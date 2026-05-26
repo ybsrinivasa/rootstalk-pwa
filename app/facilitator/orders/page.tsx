@@ -63,7 +63,7 @@ export default function FacilitatorOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Acting as Facilitator" activeRole="FACILITATOR" />
+      <PWAHeader title="Acting as Facilitator" activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-20">
         <div className="flex bg-white border-b border-[#DDD0B8]">
           {(['pending', 'done'] as const).map(t => (

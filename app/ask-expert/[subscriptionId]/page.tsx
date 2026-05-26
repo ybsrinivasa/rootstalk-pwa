@@ -70,7 +70,7 @@ export default function AskExpertPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Ask an Expert" activeRole="FARMER" />
+      <PWAHeader title="Ask an Expert" activeRole="FARMER" back />
       <div className="pt-16 pb-20 px-4">
         <div className="mt-4 mb-5">
           <p className="text-lg font-bold text-[#6B3F1F]">Describe your crop issue</p>

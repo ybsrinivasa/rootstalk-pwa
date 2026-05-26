@@ -68,7 +68,7 @@ export default function DealerSeedOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Seed Orders" activeRole="DEALER" />
+      <PWAHeader title="Seed Orders" activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24">
         <div className="flex bg-white border-b border-[#DDD0B8]">
           {(['pending', 'done'] as const).map(t => (

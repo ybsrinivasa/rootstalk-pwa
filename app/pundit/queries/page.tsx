@@ -85,7 +85,7 @@ export default function PunditQueriesPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Queries" activeRole="FARM_PUNDIT" />
+      <PWAHeader title="My Queries" activeRole="FARM_PUNDIT" back="/pundit/home" />
       <div className="pt-16 pb-20">
         {/* Four-tab bar */}
         <div className="flex bg-white border-b border-[#DDD0B8]">

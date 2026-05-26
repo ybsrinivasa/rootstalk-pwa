@@ -47,7 +47,7 @@ export default function PunditInvitationsPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Company Invitations" activeRole="FARMER" />
+      <PWAHeader title="Company Invitations" activeRole="FARMER" back="/pundit/home" />
       <div className="pt-16 pb-20 px-4">
         <div className="mt-4 space-y-3">
           {loading ? (

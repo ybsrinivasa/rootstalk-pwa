@@ -1,9 +1,21 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { getUser, ROLE_COLOURS } from '@/lib/auth'
 import { getLanguage, setLanguage } from '@/lib/language'
 import api from '@/lib/api'
 import AppMark from '@/components/AppMark'
+
+/** Back-affordance config the page can request from PWAHeader.
+ *  Pass `true` for a router.back() chevron, a string for a direct
+ *  href, or an object for finer control. Omitting the prop (or
+ *  passing falsy) renders no back arrow — appropriate for root
+ *  screens like /home, /dealer/home, etc.
+ */
+export type BackProp =
+  | boolean
+  | string
+  | { href?: string; onClick?: () => void; label?: string }
 
 type Lang = { language_code: string; language_name_native: string; status?: string }
 
@@ -22,15 +34,18 @@ export default function PWAHeader({
   onRoleSwitch,
   customColour,
   urgencyBadges,
+  back,
 }: {
   activeRole?: string
   title?: string
   onRoleSwitch?: () => void
   customColour?: string
   urgencyBadges?: { new: number; pending: number; returned: number }
+  back?: BackProp
 }) {
   void title  // unused since 2026-05-20
   const user = getUser()
+  const router = useRouter()
   const [showLang, setShowLang] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [languages, setLanguages] = useState<Lang[]>([])
@@ -59,29 +74,56 @@ export default function PWAHeader({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3"
+      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 py-3 gap-2"
         style={{
           background: colour,
           paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
         }}>
-        {/* Left cluster — AppMark + rootsTALK.in wordmark + role.
-            The whole cluster is a single tap target that opens the
-            About bottom sheet (the standalone right-side icon
-            button is gone). Min-height 44 for tap. */}
-        <button
-          onClick={() => setShowAbout(true)}
-          aria-label="About rootsTALK"
-          className="flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-lg hover:bg-white/10 transition-colors">
-          <AppMark size={30} tone="mono"/>
-          <div className="text-left">
-            <p className="leading-none">
-              <span className="text-white/80 font-light text-[19px]">roots</span>
-              <span className="text-white font-black text-[19px]">TALK</span>
-              <span className="text-white/55 font-light text-[16px]">.in</span>
-            </p>
-            <p className="text-white/70 text-[11px] mt-0.5 leading-none">{roleLabel}</p>
-          </div>
-        </button>
+        <div className="flex items-center gap-1 min-w-0">
+          {/* Back chevron — only rendered when the page opts in via
+              the `back` prop. Tap target ≥ 40px for thumb comfort. */}
+          {back && (
+            <button
+              onClick={() => {
+                if (typeof back === 'object' && back && 'onClick' in back && back.onClick) {
+                  back.onClick()
+                  return
+                }
+                const href =
+                  typeof back === 'string' ? back :
+                  (typeof back === 'object' && back && 'href' in back && back.href) ? back.href :
+                  null
+                if (href) router.push(href)
+                else router.back()
+              }}
+              aria-label={
+                typeof back === 'object' && back && 'label' in back && back.label
+                  ? back.label
+                  : 'Back'
+              }
+              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors text-white text-xl">
+              ←
+            </button>
+          )}
+
+          {/* Left cluster — AppMark + rootsTALK.in wordmark + role.
+              The cluster is a single tap target that opens the
+              About bottom sheet. Min-height 44 for tap. */}
+          <button
+            onClick={() => setShowAbout(true)}
+            aria-label="About rootsTALK"
+            className="flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-lg hover:bg-white/10 transition-colors min-w-0">
+            <AppMark size={30} tone="mono"/>
+            <div className="text-left min-w-0">
+              <p className="leading-none truncate">
+                <span className="text-white/80 font-light text-[19px]">roots</span>
+                <span className="text-white font-black text-[19px]">TALK</span>
+                <span className="text-white/55 font-light text-[16px]">.in</span>
+              </p>
+              <p className="text-white/70 text-[11px] mt-0.5 leading-none truncate">{roleLabel}</p>
+            </div>
+          </button>
+        </div>
 
         <div className="flex items-center gap-2">
           {urgencyBadges && (

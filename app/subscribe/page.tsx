@@ -485,7 +485,7 @@ function SubscribeFlow() {
           </div>
         ) : (
           <>
-            <PWAHeader title={titles[stage]} activeRole="FARMER" />
+            <PWAHeader title={titles[stage]} activeRole="FARMER" back />
             <div className="pt-16 pb-24 px-4">
 
               {/* Back row — every stage has an exit. The location

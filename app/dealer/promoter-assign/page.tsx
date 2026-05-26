@@ -218,7 +218,7 @@ export default function DealerPromoterAssignPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Assign Advisory" activeRole="DEALER" />
+      <PWAHeader title="Assign Advisory" activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
           <ProgressBar stage={stage} />

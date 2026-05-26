@@ -72,7 +72,7 @@ export default function FacilitatorPaymentsPage() {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Farmer Payments" activeRole="FACILITATOR" />
+        <PWAHeader title="Farmer Payments" activeRole="FACILITATOR" back="/facilitator/home" />
         <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
           <div className="mt-4 space-y-3">
             {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
