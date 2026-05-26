@@ -1,9 +1,12 @@
 'use client'
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+
+interface CoshState { cosh_id: string; name: string | null }
+interface CoshLocationsResponse { states: CoshState[] }
 
 const COLOUR = '#3C3489'
 
@@ -45,6 +48,19 @@ export default function PunditRegisterPage() {
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [coshStates, setCoshStates] = useState<CoshState[]>([])
+
+  useEffect(() => {
+    // Cosh-driven dropdown for Support Area. The same endpoint also
+    // returns districts under each state; we ignore them — the FP
+    // operates at state granularity by user direction (2026-05-26).
+    api.get<CoshLocationsResponse>('/cosh/locations/india')
+      .then(r => setCoshStates(
+        (r.data.states || []).filter(s => s.name).sort((a, b) =>
+          (a.name || '').localeCompare(b.name || ''))
+      ))
+      .catch(() => { /* dropdown stays empty — user can still complete other steps */ })
+  }, [])
 
   const [form, setForm] = useState({
     email: '',
@@ -56,6 +72,8 @@ export default function PunditRegisterPage() {
     expertise_domains: [] as string[],
     crop_groups: [] as string[],
     languages: [] as string[],
+    // district_cosh_id stays in the shape (backend still accepts it on
+    // legacy rows) but we don't collect it during registration.
     support_areas: [{ state_cosh_id: '', district_cosh_id: '' }],
   })
 
@@ -78,7 +96,12 @@ export default function PunditRegisterPage() {
     try {
       await api.post('/pundit/profile', {
         ...form,
-        support_areas: form.support_areas.filter(a => a.state_cosh_id),
+        // Drop empty rows AND strip the empty-string district_cosh_id
+        // (we don't collect district at registration any more) so the
+        // backend doesn't insert "" into a column that wants NULL.
+        support_areas: form.support_areas
+          .filter(a => a.state_cosh_id)
+          .map(a => ({ state_cosh_id: a.state_cosh_id })),
       })
       router.replace('/pundit/home')
     } catch (err: unknown) {
@@ -228,31 +251,57 @@ export default function PunditRegisterPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">Support Area (State/District Cosh IDs)</p>
-                  {form.support_areas.map((area, idx) => (
-                    <div key={idx} className="flex gap-2 mb-2">
-                      <input value={area.state_cosh_id}
-                        onChange={e => setForm(f => {
-                          const areas = [...f.support_areas]
-                          areas[idx] = { ...areas[idx], state_cosh_id: e.target.value }
-                          return { ...f, support_areas: areas }
-                        })}
-                        placeholder="state_karnataka"
-                        className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm font-mono focus:outline-none" />
-                      <input value={area.district_cosh_id}
-                        onChange={e => setForm(f => {
-                          const areas = [...f.support_areas]
-                          areas[idx] = { ...areas[idx], district_cosh_id: e.target.value }
-                          return { ...f, support_areas: areas }
-                        })}
-                        placeholder="district_mysuru (optional)"
-                        className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm font-mono focus:outline-none" />
-                    </div>
-                  ))}
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">Support Area (States you can serve)</p>
+                  {form.support_areas.map((area, idx) => {
+                    // Exclude already-picked states from this row's
+                    // options (but always include the row's own
+                    // current pick so the displayed value stays valid).
+                    const otherPicks = new Set(
+                      form.support_areas
+                        .filter((_, i) => i !== idx)
+                        .map(a => a.state_cosh_id)
+                        .filter(Boolean),
+                    )
+                    const options = coshStates.filter(s =>
+                      s.cosh_id === area.state_cosh_id || !otherPicks.has(s.cosh_id))
+                    return (
+                      <div key={idx} className="flex gap-2 mb-2">
+                        <select value={area.state_cosh_id}
+                          onChange={e => setForm(f => {
+                            const areas = [...f.support_areas]
+                            areas[idx] = { ...areas[idx], state_cosh_id: e.target.value }
+                            return { ...f, support_areas: areas }
+                          })}
+                          className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none bg-white">
+                          <option value="">Select state…</option>
+                          {options.map(s => (
+                            <option key={s.cosh_id} value={s.cosh_id}>{s.name}</option>
+                          ))}
+                        </select>
+                        {form.support_areas.length > 1 && (
+                          <button type="button"
+                            onClick={() => setForm(f => ({
+                              ...f,
+                              support_areas: f.support_areas.filter((_, i) => i !== idx),
+                            }))}
+                            className="text-[#7A8C7E] text-xl px-2"
+                            aria-label="Remove this state">
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
                   <button type="button"
                     onClick={() => setForm(f => ({ ...f, support_areas: [...f.support_areas, { state_cosh_id: '', district_cosh_id: '' }] }))}
-                    className="text-xs font-medium" style={{ color: COLOUR }}>
-                    + Add another area
+                    disabled={
+                      // No empty row allowed; also stop adding once every
+                      // available state is already on the list.
+                      form.support_areas.some(a => !a.state_cosh_id) ||
+                      form.support_areas.length >= coshStates.length
+                    }
+                    className="text-xs font-medium disabled:opacity-40" style={{ color: COLOUR }}>
+                    + Add another state
                   </button>
                 </div>
               </div>

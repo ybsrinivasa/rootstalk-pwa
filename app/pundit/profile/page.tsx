@@ -6,7 +6,12 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
-interface SupportArea { state_cosh_id: string; district_cosh_id: string | null }
+interface SupportArea {
+  state_cosh_id: string
+  state_name: string | null
+  district_cosh_id: string | null
+  district_name: string | null
+}
 
 interface PunditProfile {
   id: string
@@ -149,7 +154,8 @@ export default function PunditProfilePage() {
                 <ul className="space-y-1">
                   {profile.support_areas.map((a, i) => (
                     <li key={i} className="text-sm text-[#6B3F1F]">
-                      {a.state_cosh_id}{a.district_cosh_id ? ` · ${a.district_cosh_id}` : ''}
+                      {a.state_name || a.state_cosh_id}
+                      {a.district_name ? ` · ${a.district_name}` : ''}
                     </li>
                   ))}
                 </ul>
