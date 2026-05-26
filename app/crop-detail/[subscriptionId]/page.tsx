@@ -127,7 +127,7 @@ export default function CropDetailPage() {
       }
 
       const [brandRes, preStartRes, missedRes, alertsRes, expertRes, seedRes] = await Promise.allSettled([
-        api.get<Branding>(`/portal/${found.client_id}/branding`),
+        api.get<Branding>(`/client/${found.client_id}/info`),
         api.get<PreStartInput[]>(`/farmer/subscriptions/${subscriptionId}/pre-start-inputs`),
         api.get<{ count: number } | { timeline_id: string }[]>(`/farmer/subscriptions/${subscriptionId}/missed-items`),
         api.get<AlertPrefs>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`),
