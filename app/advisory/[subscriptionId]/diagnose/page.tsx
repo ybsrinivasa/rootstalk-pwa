@@ -86,13 +86,20 @@ export default function DiagnosisPage() {
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [zoomedImage, setZoomedImage] = useState<ReferenceImage | null>(null)
   const [googleFallbackUrl, setGoogleFallbackUrl] = useState<string>('')
+  // Read from /my-subscriptions on mount — drives the Ask Expert
+  // gate on every IDK gateway / fallback button in this flow.
+  const [hasPrimaryExpert, setHasPrimaryExpert] = useState(true)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    // Load subscription to get crop_cosh_id
-    api.get<{ id: string; crop_cosh_id?: string; crop_name?: string }[]>('/farmer/my-subscriptions')
+    // Load subscription to get crop_cosh_id + Ask-Expert eligibility.
+    api.get<{
+      id: string; crop_cosh_id?: string; crop_name?: string
+      client_has_primary_expert?: boolean
+    }[]>('/farmer/my-subscriptions')
       .then(r => {
         const sub = r.data.find(s => s.id === subscriptionId)
+        setHasPrimaryExpert(sub?.client_has_primary_expert !== false)
         if (sub?.crop_cosh_id) {
           setCropCoshId(sub.crop_cosh_id)
           setCropName(sub.crop_name || null)
@@ -102,6 +109,16 @@ export default function DiagnosisPage() {
         }
       })
   }, [subscriptionId])
+
+  // Single guarded routing entry — every "Ask Expert" CTA on this
+  // page funnels through here so the gate is enforced in one place.
+  function goToAskExpert() {
+    if (!hasPrimaryExpert) {
+      alert("This company hasn't onboarded a Primary expert yet. Ask Expert will be available once they do.")
+      return
+    }
+    goToAskExpert()
+  }
 
   async function loadCropStages(crop_cosh_id: string) {
     try {
@@ -242,7 +259,7 @@ export default function DiagnosisPage() {
         setDiagnosis(data.problem_info || null)
         setStage('diagnosed')
       } else if (data.status === 'NO_DATA') {
-        router.push(`/ask-expert/${subscriptionId}`)
+        goToAskExpert()
       } else {
         setCurrentQuestion(data.question)
         setStage('questioning')
@@ -318,7 +335,7 @@ export default function DiagnosisPage() {
   async function dontKnow() {
     if (!sessionId) return
     await api.post(`/diagnosis/${sessionId}/abort`, { reason: 'DONT_KNOW' })
-    router.push(`/ask-expert/${subscriptionId}`)
+    goToAskExpert()
   }
 
   async function openExplain() {
@@ -403,7 +420,7 @@ export default function DiagnosisPage() {
       )
       setProblems(data)
       setStage('know_problem')
-    } catch { router.push(`/ask-expert/${subscriptionId}`) }
+    } catch { goToAskExpert() }
   }
 
   async function selectKnownProblem(problemId: string) {
@@ -580,7 +597,7 @@ export default function DiagnosisPage() {
                   || "The photos didn't match a problem the AI is confident about for this crop and stage. A FarmPundit expert will give you a more reliable answer."}
               </p>
             </div>
-            <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
+            <button onClick={() => goToAskExpert()}
               className="w-full py-4 rounded-2xl text-white font-semibold"
               style={{ background: COLOUR }}>
               👨‍🌾 Ask FarmPundit Expert →
@@ -610,7 +627,7 @@ export default function DiagnosisPage() {
             {parts.length === 0 ? (
               <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
                 <p className="text-[#7A8C7E] text-sm">No diagnostic data available for this crop yet.</p>
-                <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
+                <button onClick={() => goToAskExpert()}
                   className="mt-4 text-white font-semibold px-5 py-2.5 rounded-xl text-sm"
                   style={{ background: COLOUR }}>
                   Ask an Expert Instead →
@@ -777,8 +794,13 @@ export default function DiagnosisPage() {
                     {analyzingImage ? '🔄 Analysing…' : '📸 Ask AI'}
                   </button>
                   <button onClick={dontKnow}
-                    className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium active:scale-95 transition-transform">
+                    disabled={!hasPrimaryExpert}
+                    title={hasPrimaryExpert ? undefined : "No Primary expert at this company yet"}
+                    className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100">
                     👨‍🌾 Ask Expert
+                    {!hasPrimaryExpert && (
+                      <span className="block text-[10px] text-[#7A8C7E] mt-0.5">No expert yet</span>
+                    )}
                   </button>
                 </div>
               </div>
@@ -950,7 +972,7 @@ export default function DiagnosisPage() {
                 {commitError && (
                   <p className="text-xs text-red-600 text-center">{commitError}</p>
                 )}
-                <button onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
+                <button onClick={() => goToAskExpert()}
                   className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
                   Also ask a FarmPundit expert
                 </button>

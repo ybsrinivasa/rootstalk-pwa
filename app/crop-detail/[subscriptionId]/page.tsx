@@ -38,6 +38,9 @@ interface SubscriptionDetail {
   crop_cosh_id?: string | null
   crop_name?: string | null
   package_name?: string | null
+  // True iff the client has at least one ACTIVE PRIMARY pundit. Drives
+  // the Ask Expert button + Diagnose-IDK gateway "Ask Expert" path.
+  client_has_primary_expert: boolean
 }
 interface Branding {
   display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
@@ -691,10 +694,20 @@ export default function CropDetailPage() {
           </button>
 
           <button
-            onClick={() => router.push(`/ask-expert/${subscriptionId}`)}
-            className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
+            onClick={() => {
+              if (!sub.client_has_primary_expert) {
+                showToast('This company has not onboarded a Primary expert yet. Ask Expert will be available once they do.')
+                return
+              }
+              router.push(`/ask-expert/${subscriptionId}`)
+            }}
+            disabled={!sub.client_has_primary_expert}
+            className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95 disabled:opacity-50 disabled:active:scale-100">
             <span className="text-3xl block mb-2">🎓</span>
             <p className="text-xs font-bold text-[#6B3F1F]">Ask Expert</p>
+            {!sub.client_has_primary_expert && (
+              <p className="text-xs text-[#7A8C7E] mt-0.5">No expert yet</p>
+            )}
           </button>
         </div>
 
