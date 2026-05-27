@@ -18,6 +18,9 @@ interface ComputedCropAge {
   value: number
   unit: 'days' | 'years'
   source: 'START_DATE' | 'PLANTING_YEAR'
+  // True when the farmer's planting_year is below the dropdown
+  // floor (1970). Renderer prepends ">" so the Pundit sees "> 56 years".
+  is_minimum?: boolean
 }
 
 interface FarmerBlock {
@@ -299,7 +302,7 @@ export default function PunditQueryDetailPage() {
           {query.computed_crop_age && (
             <p className="text-sm text-[#6B3F1F] mt-1">
               <span className="text-xs text-[#7A8C7E]">Age · </span>
-              {query.computed_crop_age.value} {query.computed_crop_age.unit}
+              {query.computed_crop_age.is_minimum ? '> ' : ''}{query.computed_crop_age.value} {query.computed_crop_age.unit}
               <span className="text-xs text-[#7A8C7E] ml-1">
                 {query.computed_crop_age.source === 'PLANTING_YEAR'
                   ? 'from planting year'

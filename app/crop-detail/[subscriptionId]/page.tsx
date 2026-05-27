@@ -10,7 +10,13 @@ interface CropAge {
   value: number
   unit: 'days' | 'years'
   source: 'START_DATE' | 'PLANTING_YEAR'
+  // True when the farmer picked "Beyond 1970" — the displayed value
+  // is the floor (current_year - 1970); UI renders "> N years".
+  is_minimum?: boolean
 }
+
+const PLANTING_YEAR_FLOOR = 1970
+const PLANTING_YEAR_BEYOND_SENTINEL = 1969   // matches backend's PLANTING_YEAR_FLOOR - 1
 
 interface SubscriptionDetail {
   id: string; status: string; crop_start_date: string | null
@@ -413,12 +419,13 @@ export default function CropDetailPage() {
 
         {/* Crop Age — surfaced from the backend's computed crop_age.
             AREA_WISE: days since start date. PLANT_WISE: years since
-            planting year. Hidden when source data isn't set yet. */}
+            planting year. `is_minimum=true` means the farmer picked
+            "Beyond 1970"; render the value with a ">" prefix. */}
         {sub.crop_age && (
           <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 mb-4">
             <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest">Crop Age</p>
             <p className="font-semibold text-[#6B3F1F] mt-1">
-              {sub.crop_age.value} {sub.crop_age.unit}
+              {sub.crop_age.is_minimum ? '> ' : ''}{sub.crop_age.value} {sub.crop_age.unit}
               <span className="text-xs text-[#7A8C7E] font-normal ml-2">
                 {sub.crop_age.source === 'PLANTING_YEAR'
                   ? 'from planting year'
@@ -510,7 +517,12 @@ export default function CropDetailPage() {
               <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
                 <p className="text-sm font-semibold text-[#6B3F1F]">Confirmed</p>
                 <p className="font-semibold text-[#6B3F1F] mt-1">
-                  {sub.number_of_plants ?? '—'} plants · planted {sub.planting_year ?? '—'}
+                  {sub.number_of_plants ?? '—'} plants · planted{' '}
+                  {sub.planting_year == null
+                    ? '—'
+                    : sub.planting_year < PLANTING_YEAR_FLOOR
+                      ? `Beyond ${PLANTING_YEAR_FLOOR}`
+                      : sub.planting_year}
                 </p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
                   Locked on {new Date(sub.plant_count_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.
@@ -530,13 +542,25 @@ export default function CropDetailPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">Planting Year</label>
-                  <input
-                    type="number" inputMode="numeric" step="1" min="1900" max="2100"
+                  <select
                     value={yearInput}
                     onChange={e => setYearInput(e.target.value)}
-                    placeholder="e.g. 2015"
-                    className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-                  />
+                    className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3A7D44]"
+                  >
+                    <option value="">Select…</option>
+                    {/* current year down to the floor; older than the
+                        floor collapses to a single "Beyond" option
+                        which stores the sentinel year. */}
+                    {Array.from(
+                      { length: new Date().getFullYear() - PLANTING_YEAR_FLOOR + 1 },
+                      (_, i) => new Date().getFullYear() - i,
+                    ).map(y => (
+                      <option key={y} value={String(y)}>{y}</option>
+                    ))}
+                    <option value={String(PLANTING_YEAR_BEYOND_SENTINEL)}>
+                      Beyond {PLANTING_YEAR_FLOOR}
+                    </option>
+                  </select>
                 </div>
                 <button
                   onClick={savePlantContext}
