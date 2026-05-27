@@ -1,5 +1,5 @@
 'use client'
-import { useState, FormEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -13,40 +13,124 @@ const SEVERITY_OPTIONS = [
   { value: 'LOW', label: 'Low', desc: 'Minor issue or general question' },
 ]
 
+interface CoshOption { cosh_id: string; name: string }
+interface Quota {
+  used: number
+  free_limit: number
+  free_remaining: number
+  price_paise: number
+  next_query_is_paid: boolean
+}
+
+type MediaItem = { media_type: 'IMAGE' | 'AUDIO'; url: string }
+
+const MAX_PHOTOS = 4
+
 export default function AskExpertPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
+  const [uploading, setUploading] = useState<'photo' | 'audio' | null>(null)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
 
+  const [queryTypes, setQueryTypes] = useState<CoshOption[]>([])
+  const [quota, setQuota] = useState<Quota | null>(null)
+  const [clientName, setClientName] = useState<string>('')
+  const [clientId, setClientId] = useState<string>('')
+  const [cropCoshId, setCropCoshId] = useState<string | undefined>(undefined)
+
   const [form, setForm] = useState({
-    title: '',
+    query_type_cosh_id: '',
     description: '',
     crop_age: '',
     severity: 'MODERATE',
+    photos: [] as string[],   // image URLs, mandatory ≥1, max MAX_PHOTOS
+    audio: null as string | null,  // optional, single
   })
+
+  useEffect(() => {
+    if (!getToken()) { router.replace('/register'); return }
+    api.get<CoshOption[]>('/cosh/query-types')
+      .then(r => setQueryTypes(r.data))
+      .catch(() => { /* form still submits; dropdown is empty */ })
+    // Pull subscription → resolve client_id and quota together.
+    api.get<{ id: string; client_id: string; crop_cosh_id?: string; client_display_name?: string | null }[]>('/farmer/my-subscriptions')
+      .then(r => {
+        const sub = r.data.find(s => s.id === subscriptionId)
+        if (!sub) return
+        setClientId(sub.client_id)
+        setClientName(sub.client_display_name || 'this company')
+        setCropCoshId(sub.crop_cosh_id)
+        api.get<Quota>(`/farmer/queries/quota?client_id=${sub.client_id}`)
+          .then(qr => setQuota(qr.data))
+          .catch(() => {})
+      })
+  }, [subscriptionId])
+
+  async function uploadPhoto(file: File) {
+    if (form.photos.length >= MAX_PHOTOS) return
+    setUploading('photo'); setError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('folder', 'query-photos')
+      const { data } = await api.post<{ url: string }>('/media/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setForm(f => ({ ...f, photos: [...f.photos, data.url] }))
+    } catch (err: unknown) {
+      setError(extractMsg(err, 'Photo upload failed.'))
+    } finally { setUploading(null) }
+  }
+
+  async function uploadAudio(file: File) {
+    setUploading('audio'); setError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('folder', 'query-audio')
+      const { data } = await api.post<{ url: string }>('/media/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setForm(f => ({ ...f, audio: data.url }))
+    } catch (err: unknown) {
+      setError(extractMsg(err, 'Audio upload failed.'))
+    } finally { setUploading(null) }
+  }
+
+  function extractMsg(err: unknown, fallback: string): string {
+    const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+    if (typeof detail === 'string') return detail
+    const m = (detail as { message?: string } | undefined)?.message
+    return m || fallback
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    if (!getToken()) { router.replace('/register'); return }
+    if (form.photos.length < 1) {
+      setError('Please add at least one photograph.')
+      return
+    }
     setSubmitting(true); setError('')
     try {
-      // We need client_id — get it from the subscription
-      const { data: subs } = await api.get<{ id: string; client_id: string; crop_cosh_id?: string }[]>('/farmer/my-subscriptions')
-      const sub = subs.find(s => s.id === subscriptionId)
-      if (!sub) throw new Error('Subscription not found')
-
+      const media: MediaItem[] = [
+        ...form.photos.map(url => ({ media_type: 'IMAGE' as const, url })),
+        ...(form.audio ? [{ media_type: 'AUDIO' as const, url: form.audio }] : []),
+      ]
       await api.post('/farmer/queries', {
         subscription_id: subscriptionId,
-        client_id: sub.client_id,
-        crop_cosh_id: sub.crop_cosh_id,
-        ...form,
+        client_id: clientId,
+        crop_cosh_id: cropCoshId,
+        query_type_cosh_id: form.query_type_cosh_id,
+        crop_age: form.crop_age || undefined,
+        description: form.description || undefined,
+        severity: form.severity,
+        media,
       })
       setDone(true)
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Failed to submit query.')
+      setError(extractMsg(err, 'Failed to submit query.'))
     } finally { setSubmitting(false) }
   }
 
@@ -55,7 +139,8 @@ export default function AskExpertPage() {
       <span className="text-5xl mb-4">✅</span>
       <h1 className="text-xl font-bold text-[#6B3F1F]">Query submitted!</h1>
       <p className="text-[#7A8C7E] text-sm mt-2 max-w-xs">
-        A FarmPundit expert has been assigned. They have 7 days to respond. You'll be notified when they reply.
+        A FarmPundit expert has been assigned. They have <strong>2 days</strong> to respond.
+        You'll be notified when they reply.
       </p>
       <button onClick={() => router.push('/home')}
         className="mt-6 w-full max-w-xs py-3.5 rounded-2xl text-white font-semibold"
@@ -69,6 +154,13 @@ export default function AskExpertPage() {
     </div>
   )
 
+  const canSubmit =
+    !!form.query_type_cosh_id &&
+    form.photos.length >= 1 &&
+    !!form.severity &&
+    !submitting &&
+    !uploading
+
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Ask an Expert" activeRole="FARMER" back />
@@ -76,21 +168,50 @@ export default function AskExpertPage() {
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>
       <div className="pb-20 px-4">
-        <div className="mt-4 mb-5">
+        <div className="mt-4 mb-3">
           <p className="text-lg font-bold text-[#6B3F1F]">Describe your crop issue</p>
-          <p className="text-[#7A8C7E] text-sm mt-0.5">A FarmPundit expert will respond within 7 days</p>
+          <p className="text-[#7A8C7E] text-sm mt-0.5">A FarmPundit expert will respond within 2 days</p>
         </div>
+
+        {/* Free-quota banner. Two shapes: still-have-free and exhausted.
+            The exhausted version is the first place the farmer learns
+            the 7th+ query is paid — and that rootsTALK.in (not the
+            company) takes the payment. */}
+        {quota && (
+          quota.next_query_is_paid ? (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-4 text-sm">
+              <p className="font-semibold text-amber-800">
+                Your 6 free queries to {clientName} are used up.
+              </p>
+              <p className="text-amber-700 mt-1">
+                This query will cost <strong>₹{(quota.price_paise / 100).toFixed(0)}</strong>,
+                paid to <strong>rootsTALK.in</strong> for software infrastructure.
+                It is <em>not</em> paid to {clientName}.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2.5 mb-4 text-sm text-emerald-800">
+              You have <strong>{quota.free_remaining} of {quota.free_limit}</strong> free queries left for {clientName}.
+            </div>
+          )
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Issue Title <span className="text-[#D4682E]">*</span></label>
-              <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                required placeholder="e.g. Yellow spots on leaves, Stem borer, Poor germination…"
-                className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+              <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
+                Nature of Query <span className="text-[#D4682E]">*</span>
+              </label>
+              <select value={form.query_type_cosh_id}
+                onChange={e => setForm(f => ({ ...f, query_type_cosh_id: e.target.value }))}
+                required
+                className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
+                <option value="">Select…</option>
+                {queryTypes.map(o => <option key={o.cosh_id} value={o.cosh_id}>{o.name}</option>)}
+              </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Crop Age</label>
+              <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Crop Age (optional)</label>
               <input value={form.crop_age} onChange={e => setForm(f => ({ ...f, crop_age: e.target.value }))}
                 placeholder="e.g. 45 DAS, 3 weeks after transplanting"
                 className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
@@ -101,6 +222,64 @@ export default function AskExpertPage() {
                 rows={4} placeholder="When did it start? Which part of the plant? How much of the field is affected?"
                 className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
             </div>
+          </div>
+
+          {/* Photos — at least 1, up to 4. */}
+          <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8]">
+            <p className="text-sm font-medium text-[#6B3F1F] mb-2">
+              Photographs <span className="text-[#D4682E]">*</span>
+              <span className="text-xs text-[#7A8C7E] font-normal ml-1">
+                ({form.photos.length} / {MAX_PHOTOS}; at least 1 required)
+              </span>
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {form.photos.map((url, idx) => (
+                <div key={idx} className="relative">
+                  <img src={url} alt={`Photo ${idx + 1}`}
+                    className="w-full h-28 object-cover rounded-xl border border-[#DDD0B8]" />
+                  <button type="button"
+                    onClick={() => setForm(f => ({ ...f, photos: f.photos.filter((_, i) => i !== idx) }))}
+                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs leading-none flex items-center justify-center"
+                    aria-label="Remove photo">×</button>
+                </div>
+              ))}
+              {form.photos.length < MAX_PHOTOS && (
+                <label className="h-28 border-2 border-dashed border-[#DDD0B8] rounded-xl flex items-center justify-center cursor-pointer text-xs text-[#7A8C7E] hover:bg-[#F5F0E8]">
+                  {uploading === 'photo' ? 'Uploading…' : '+ Add photo'}
+                  <input type="file" accept="image/*" className="hidden"
+                    onChange={e => {
+                      const f = e.target.files?.[0]
+                      if (f) uploadPhoto(f)
+                      e.target.value = ''
+                    }} />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {/* Audio — at most 1, optional. */}
+          <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8]">
+            <p className="text-sm font-medium text-[#6B3F1F] mb-2">
+              Voice note (optional)
+            </p>
+            {form.audio ? (
+              <div className="flex items-center justify-between bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2">
+                <span className="text-xs text-[#6B3F1F] truncate">🎙 Audio attached</span>
+                <button type="button"
+                  onClick={() => setForm(f => ({ ...f, audio: null }))}
+                  className="text-xs text-[#D4682E] font-medium">Remove</button>
+              </div>
+            ) : (
+              <label className="block w-full py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-center text-xs text-[#7A8C7E] cursor-pointer hover:bg-[#F5F0E8]">
+                {uploading === 'audio' ? 'Uploading…' : '🎙 Add a voice note'}
+                <input type="file" accept="audio/*" className="hidden"
+                  onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (f) uploadAudio(f)
+                    e.target.value = ''
+                  }} />
+              </label>
+            )}
           </div>
 
           {/* Severity */}
@@ -123,13 +302,13 @@ export default function AskExpertPage() {
 
           {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
 
-          <button type="submit" disabled={!form.title || submitting}
+          <button type="submit" disabled={!canSubmit}
             className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #065f46, #3A7D44)' }}>
             {submitting ? 'Submitting…' : 'Submit to Expert →'}
           </button>
           <p className="text-center text-xs text-[#7A8C7E]">
-            Your query is shared with the company's FarmPundit experts. Response within 7 days.
+            Your query is shared with the company's FarmPundit experts. Response within 2 days.
           </p>
         </form>
       </div>
