@@ -21,6 +21,15 @@ interface CropProblem {
   name: string
 }
 
+// Forward-recipient card — a colleague Pundit at the same client.
+interface ForwardCandidate {
+  pundit_id: string
+  name: string | null
+  phone: string | null   // null when the colleague toggled phone_hidden
+  role: 'PRIMARY' | 'PANEL'
+  round_robin_sequence: number | null
+}
+
 interface ResponseMediaItem {
   media_type: 'IMAGE' | 'AUDIO' | 'HYPERLINK'
   url: string
@@ -151,6 +160,19 @@ export default function PunditQueryDetailPage() {
   const [forwarding, setForwarding] = useState(false)
   const [forwardForm, setForwardForm] = useState({ to_pundit_id: '', remarks: '' })
   const [forwardError, setForwardError] = useState('')
+  const [forwardCandidates, setForwardCandidates] = useState<ForwardCandidate[]>([])
+  const [forwardCandidatesLoading, setForwardCandidatesLoading] = useState(false)
+
+  function openForward() {
+    setShowForward(true)
+    setForwardError('')
+    setForwardForm({ to_pundit_id: '', remarks: '' })
+    setForwardCandidatesLoading(true)
+    api.get<ForwardCandidate[]>(`/pundit/queries/${queryId}/forward-candidates`)
+      .then(r => setForwardCandidates(r.data))
+      .catch(() => setForwardCandidates([]))
+      .finally(() => setForwardCandidatesLoading(false))
+  }
 
   // Return modal
   const [showReturn, setShowReturn] = useState(false)
@@ -545,7 +567,7 @@ export default function PunditQueryDetailPage() {
             ✓ Respond to Query
           </button>
           <div className="flex gap-2">
-            <button onClick={() => setShowForward(true)}
+            <button onClick={openForward}
               className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
               → Forward
             </button>
@@ -741,13 +763,49 @@ export default function PunditQueryDetailPage() {
               <h2 className="font-bold text-[#6B3F1F]">Forward Query</h2>
               <p className="text-[#7A8C7E] text-xs mt-0.5">2-day clock does not reset. Mandatory comments required.</p>
             </div>
-            <form onSubmit={handleForward} className="p-5 space-y-4 pb-8">
+            <form onSubmit={handleForward} className="p-5 space-y-4 pb-8 max-h-[75vh] overflow-y-auto">
               <div>
-                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Recipient's Pundit ID</label>
-                <input value={forwardForm.to_pundit_id}
-                  onChange={e => setForwardForm(f => ({ ...f, to_pundit_id: e.target.value }))}
-                  required placeholder="FarmPundit profile ID"
-                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono" />
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-2">
+                  Pick a colleague at this company
+                </label>
+                {forwardCandidatesLoading ? (
+                  <div className="h-16 bg-[#F5F0E8] rounded-xl animate-pulse" />
+                ) : forwardCandidates.length === 0 ? (
+                  <p className="text-xs text-[#7A8C7E] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-3">
+                    No other FarmPundits are onboarded at this company. You can&apos;t forward this query.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {forwardCandidates.map(c => {
+                      const picked = forwardForm.to_pundit_id === c.pundit_id
+                      return (
+                        <button key={c.pundit_id} type="button"
+                          onClick={() => setForwardForm(f => ({ ...f, to_pundit_id: c.pundit_id }))}
+                          className={`w-full text-left rounded-xl border px-3 py-2.5 transition-colors ${picked ? 'border-[#3C3489] bg-[#3C3489]/5' : 'border-[#DDD0B8] hover:bg-[#F5F0E8]'}`}>
+                          <div className="flex items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-[#6B3F1F]">{c.name || '—'}</p>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${c.role === 'PRIMARY' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-[#6B3F1F]'}`}>
+                                  {c.role === 'PRIMARY' ? 'Primary' : 'Panel'}
+                                </span>
+                                {c.phone && (
+                                  <span className="text-xs font-mono text-[#7A8C7E]">{c.phone}</span>
+                                )}
+                                {!c.phone && (
+                                  <span className="text-[10px] text-[#7A8C7E] italic">Phone hidden</span>
+                                )}
+                              </div>
+                            </div>
+                            {picked && (
+                              <span className="text-[#3C3489] text-base shrink-0">✓</span>
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Remarks (mandatory)</label>
@@ -760,7 +818,8 @@ export default function PunditQueryDetailPage() {
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowForward(false); setForwardError('') }}
                   className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
-                <button type="submit" disabled={forwarding}
+                <button type="submit"
+                  disabled={forwarding || !forwardForm.to_pundit_id || !forwardForm.remarks}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: COLOUR }}>
                   {forwarding ? 'Forwarding…' : 'Forward'}
