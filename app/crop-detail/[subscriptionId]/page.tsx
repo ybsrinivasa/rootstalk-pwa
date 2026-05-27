@@ -6,14 +6,29 @@ import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 import PhoneVerify from '@/components/PhoneVerify'
 
+interface CropAge {
+  value: number
+  unit: 'days' | 'years'
+  source: 'START_DATE' | 'PLANTING_YEAR'
+}
+
 interface SubscriptionDetail {
   id: string; status: string; crop_start_date: string | null
   crop_start_date_first_set_at: string | null
   reference_number: string | null; client_id: string; package_id: string
   subscription_type?: string
+  // Area-wise context — populated only when crop_measure is AREA_WISE
+  // (legacy plant-wise subs may still carry it; see lenient migration).
   farm_area_acres: number | null
   area_unit: string | null
   farm_area_confirmed_at: string | null
+  // Plant-wise context (2026-05-27)
+  number_of_plants: number | null
+  planting_year: number | null
+  plant_count_confirmed_at: string | null
+  // Live crop typing from Cosh. Untyped crops default to AREA_WISE.
+  crop_measure: 'AREA_WISE' | 'PLANT_WISE'
+  crop_age: CropAge | null
   crop_cosh_id?: string | null
   crop_name?: string | null
   package_name?: string | null
@@ -63,9 +78,16 @@ export default function CropDetailPage() {
   const [savingDate, setSavingDate] = useState(false)
   const [showStartDate, setShowStartDate] = useState(false)
 
-  // Acreage state
+  // Acreage state (area-wise crops)
   const [areaInput, setAreaInput] = useState('')
   const [savingArea, setSavingArea] = useState(false)
+
+  // Plant-count state (plant-wise crops). Separate save buttons so
+  // the farmer can update one field at a time — backend tolerates
+  // a partial body with either field present.
+  const [plantsInput, setPlantsInput] = useState('')
+  const [yearInput, setYearInput] = useState('')
+  const [savingPlants, setSavingPlants] = useState(false)
 
   // Bottom sheets
   const [orderSheet, setOrderSheet] = useState<{ open: boolean; category: 'PESTICIDE' | 'FERTILISER' | null }>({ open: false, category: null })
@@ -112,6 +134,8 @@ export default function CropDetailPage() {
       setSub(found)
       setStartDate(found.crop_start_date?.split('T')[0] || '')
       setAreaInput(found.farm_area_acres != null ? String(found.farm_area_acres) : '')
+      setPlantsInput(found.number_of_plants != null ? String(found.number_of_plants) : '')
+      setYearInput(found.planting_year != null ? String(found.planting_year) : '')
 
       // Diagnose-button gate: ClientCrop ∩ CropHealthCrop. Server
       // returns the reason when ineligible so the button greys with
@@ -184,8 +208,38 @@ export default function CropDetailPage() {
       showToast('Farm area saved')
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
-      showToast(err.response?.data?.detail || 'Could not save')
+      const d = err.response?.data?.detail
+      showToast(typeof d === 'string' ? d : (d as { message?: string } | undefined)?.message || 'Could not save')
     } finally { setSavingArea(false) }
+  }
+
+  async function savePlantContext() {
+    // Tolerate partial save — backend accepts either field. We
+    // refuse to send anything if BOTH are empty / invalid.
+    const body: { number_of_plants?: number; planting_year?: number } = {}
+    if (plantsInput) {
+      const n = parseInt(plantsInput, 10)
+      if (!Number.isNaN(n) && n > 0) body.number_of_plants = n
+    }
+    if (yearInput) {
+      const y = parseInt(yearInput, 10)
+      if (!Number.isNaN(y) && y >= 1900 && y <= 2100) body.planting_year = y
+    }
+    if (Object.keys(body).length === 0) return
+    setSavingPlants(true)
+    try {
+      await api.put(`/farmer/subscriptions/${subscriptionId}/plant-count`, body)
+      setSub(s => s ? {
+        ...s,
+        number_of_plants: body.number_of_plants ?? s.number_of_plants,
+        planting_year: body.planting_year ?? s.planting_year,
+      } : s)
+      showToast('Saved')
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string | { message?: string } } } }
+      const d = err.response?.data?.detail
+      showToast(typeof d === 'string' ? d : (d as { message?: string } | undefined)?.message || 'Could not save')
+    } finally { setSavingPlants(false) }
   }
 
   function openOrderSheet(category: 'PESTICIDE' | 'FERTILISER') {
@@ -300,10 +354,16 @@ export default function CropDetailPage() {
     tl.practices.filter(p => (p.l1_type || '').toLowerCase().includes('fert'))
   )
 
-  // Acreage state — three-state policy
+  // Acreage state — three-state policy (area-wise only)
   const areaHardLocked = !!sub.farm_area_confirmed_at
   const areaSoftSet = !areaHardLocked && sub.farm_area_acres != null
   const areaTentative = !areaHardLocked && sub.farm_area_acres == null
+
+  // Plant-wise crop typing decides the input set the farmer sees.
+  // Live read of Cosh's crop_area_plant_wise Connect; untyped crops
+  // default to AREA_WISE so existing data renders unchanged.
+  const isPlantWise = sub.crop_measure === 'PLANT_WISE'
+  const plantsHardLocked = !!sub.plant_count_confirmed_at
 
   const isAssigned = sub.subscription_type === 'ASSIGNED'
 
@@ -351,83 +411,157 @@ export default function CropDetailPage() {
 
       <div className="pb-28 px-4 pt-5 max-w-lg mx-auto">
 
-        {/* Acreage card — 3 states: Tentative / Soft confirmed / Hard locked */}
-        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">Farm Area</p>
-
-        {areaTentative && (
-          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
-            <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area</p>
-            <div className="flex gap-2">
-              <input
-                type="number" inputMode="decimal" step="0.01" min="0"
-                value={areaInput}
-                onChange={e => setAreaInput(e.target.value)}
-                placeholder="0.00"
-                className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-              />
-              <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                acres
-              </span>
-              <button
-                onClick={saveArea}
-                disabled={savingArea || !areaInput}
-                className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                style={{ background: colour }}
-              >
-                {savingArea ? '…' : 'Save'}
-              </button>
-            </div>
-            <p className="text-[#7A8C7E] text-xs mt-2">Tentative for now. Will be confirmed when you place your first order.</p>
-          </div>
-        )}
-
-        {areaSoftSet && (
-          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
-            <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area · Tentative</p>
-            <div className="flex gap-2">
-              <input
-                type="number" inputMode="decimal" step="0.01" min="0"
-                value={areaInput}
-                onChange={e => setAreaInput(e.target.value)}
-                placeholder="0.00"
-                className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-              />
-              <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                acres
-              </span>
-              <button
-                onClick={saveArea}
-                disabled={savingArea || !areaInput}
-                className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                style={{ background: colour }}
-              >
-                {savingArea ? '…' : 'Save'}
-              </button>
-            </div>
-            <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
-              Currently set as your tentative area. You can revise it once more when you place your first DAS order at planting time.
-            </p>
-          </div>
-        )}
-
-        {areaHardLocked && (
-          <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
-            <p className="text-sm font-semibold text-[#6B3F1F]">Farm area · Confirmed</p>
+        {/* Crop Age — surfaced from the backend's computed crop_age.
+            AREA_WISE: days since start date. PLANT_WISE: years since
+            planting year. Hidden when source data isn't set yet. */}
+        {sub.crop_age && (
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 mb-4">
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest">Crop Age</p>
             <p className="font-semibold text-[#6B3F1F] mt-1">
-              {sub.farm_area_acres ?? '—'} acres
-            </p>
-            <p className="text-[#7A8C7E] text-xs mt-1">
-              Locked on {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}. Volumes for all your inputs are calculated on this.
+              {sub.crop_age.value} {sub.crop_age.unit}
+              <span className="text-xs text-[#7A8C7E] font-normal ml-2">
+                {sub.crop_age.source === 'PLANTING_YEAR'
+                  ? 'from planting year'
+                  : 'from start date'}
+              </span>
             </p>
           </div>
+        )}
+
+        {/* Area-wise crops → Farm Area card. Plant-wise crops → Number
+            of Plants + Planting Year card pair. Crop typing comes from
+            Cosh; untyped defaults to area-wise. */}
+        {!isPlantWise ? (
+          <>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">Farm Area</p>
+
+            {areaTentative && (
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area</p>
+                <div className="flex gap-2">
+                  <input
+                    type="number" inputMode="decimal" step="0.01" min="0"
+                    value={areaInput}
+                    onChange={e => setAreaInput(e.target.value)}
+                    placeholder="0.00"
+                    className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                  />
+                  <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                    acres
+                  </span>
+                  <button
+                    onClick={saveArea}
+                    disabled={savingArea || !areaInput}
+                    className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                    style={{ background: colour }}
+                  >
+                    {savingArea ? '…' : 'Save'}
+                  </button>
+                </div>
+                <p className="text-[#7A8C7E] text-xs mt-2">Tentative for now. Will be confirmed when you place your first order.</p>
+              </div>
+            )}
+
+            {areaSoftSet && (
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area · Tentative</p>
+                <div className="flex gap-2">
+                  <input
+                    type="number" inputMode="decimal" step="0.01" min="0"
+                    value={areaInput}
+                    onChange={e => setAreaInput(e.target.value)}
+                    placeholder="0.00"
+                    className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                  />
+                  <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                    acres
+                  </span>
+                  <button
+                    onClick={saveArea}
+                    disabled={savingArea || !areaInput}
+                    className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                    style={{ background: colour }}
+                  >
+                    {savingArea ? '…' : 'Save'}
+                  </button>
+                </div>
+                <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
+                  Currently set as your tentative area. You can revise it once more when you place your first DAS order at planting time.
+                </p>
+              </div>
+            )}
+
+            {areaHardLocked && (
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
+                <p className="text-sm font-semibold text-[#6B3F1F]">Farm area · Confirmed</p>
+                <p className="font-semibold text-[#6B3F1F] mt-1">
+                  {sub.farm_area_acres ?? '—'} acres
+                </p>
+                <p className="text-[#7A8C7E] text-xs mt-1">
+                  Locked on {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}. Volumes for all your inputs are calculated on this.
+                </p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">Plant Count & Planting Year</p>
+            {plantsHardLocked ? (
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
+                <p className="text-sm font-semibold text-[#6B3F1F]">Confirmed</p>
+                <p className="font-semibold text-[#6B3F1F] mt-1">
+                  {sub.number_of_plants ?? '—'} plants · planted {sub.planting_year ?? '—'}
+                </p>
+                <p className="text-[#7A8C7E] text-xs mt-1">
+                  Locked on {new Date(sub.plant_count_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">Number of Plants</label>
+                  <input
+                    type="number" inputMode="numeric" step="1" min="1"
+                    value={plantsInput}
+                    onChange={e => setPlantsInput(e.target.value)}
+                    placeholder="e.g. 120"
+                    className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">Planting Year</label>
+                  <input
+                    type="number" inputMode="numeric" step="1" min="1900" max="2100"
+                    value={yearInput}
+                    onChange={e => setYearInput(e.target.value)}
+                    placeholder="e.g. 2015"
+                    className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                  />
+                </div>
+                <button
+                  onClick={savePlantContext}
+                  disabled={savingPlants || (!plantsInput && !yearInput)}
+                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                  style={{ background: colour }}
+                >
+                  {savingPlants ? 'Saving…' : 'Save'}
+                </button>
+                <p className="text-[#7A8C7E] text-xs">
+                  Both are needed for the advisory to compute volumes correctly. Plant count locks when you place your first order.
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Start date */}
         <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Start Date</p>
         {!hasStartDate ? (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-            <p className="font-bold text-amber-800">Set your crop start date</p>
-            <p className="text-amber-600 text-xs mt-1">Advisory and Diagnosis unlock once you set the sowing date.</p>
+            <p className="font-bold text-amber-800">Set your start date</p>
+            <p className="text-amber-600 text-xs mt-1">
+              Advisory and Diagnosis unlock once you set the {isPlantWise ? 'season start date' : 'sowing date'}.
+            </p>
             {showStartDate ? (
               <div className="mt-3 flex gap-2">
                 <input type="date" value={startDate}
@@ -466,7 +600,7 @@ export default function CropDetailPage() {
             <>
               <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#7A8C7E]">Crop start date</p>
+                  <p className="text-xs text-[#7A8C7E]">Start date</p>
                   <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   {editable && daysLeft !== null && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
@@ -941,7 +1075,7 @@ export default function CropDetailPage() {
               </svg>
             </div>
             <h3 className="text-[#6B3F1F] font-semibold text-lg text-center">
-              {showNeedDateSheet === 'advisory' ? 'Set your crop start date' : 'Set your start date'}
+              {showNeedDateSheet === 'advisory' ? 'Set your start date' : 'Set your start date'}
             </h3>
             <p className="text-[#7A8C7E] text-sm text-center mt-2 leading-relaxed">
               {showNeedDateSheet === 'advisory'
