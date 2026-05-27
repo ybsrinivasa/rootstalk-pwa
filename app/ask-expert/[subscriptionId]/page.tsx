@@ -1,10 +1,23 @@
 'use client'
 import { useState, useEffect, FormEvent } from 'react'
+import Script from 'next/script'
 import { useRouter, useParams } from 'next/navigation'
-import { getToken } from '@/lib/auth'
+import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
+
+declare global {
+  interface Window {
+    Razorpay: new (options: Record<string, unknown>) => { open(): void }
+  }
+}
+
+interface RazorpayResponse {
+  razorpay_payment_id: string
+  razorpay_order_id: string
+  razorpay_signature: string
+}
 
 const SEVERITY_OPTIONS = [
   { value: 'CRITICAL', label: 'Critical', desc: 'Severe damage visible, urgent action needed' },
@@ -29,6 +42,7 @@ const MAX_PHOTOS = 4
 export default function AskExpertPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
+  const user = getUser()
   const [submitting, setSubmitting] = useState(false)
   const [uploading, setUploading] = useState<'photo' | 'audio' | null>(null)
   const [error, setError] = useState('')
@@ -106,6 +120,70 @@ export default function AskExpertPage() {
     return m || fallback
   }
 
+  function buildPayload(razorpay?: RazorpayResponse) {
+    const media: MediaItem[] = [
+      ...form.photos.map(url => ({ media_type: 'IMAGE' as const, url })),
+      ...(form.audio ? [{ media_type: 'AUDIO' as const, url: form.audio }] : []),
+    ]
+    return {
+      subscription_id: subscriptionId,
+      client_id: clientId,
+      crop_cosh_id: cropCoshId,
+      query_type_cosh_id: form.query_type_cosh_id,
+      crop_age: form.crop_age || undefined,
+      description: form.description || undefined,
+      severity: form.severity,
+      media,
+      ...(razorpay ? {
+        razorpay_order_id: razorpay.razorpay_order_id,
+        razorpay_payment_id: razorpay.razorpay_payment_id,
+        razorpay_signature: razorpay.razorpay_signature,
+      } : {}),
+    }
+  }
+
+  async function submitWith(razorpay?: RazorpayResponse) {
+    try {
+      await api.post('/farmer/queries', buildPayload(razorpay))
+      setDone(true)
+    } catch (err: unknown) {
+      setError(extractMsg(err, 'Failed to submit query.'))
+    } finally { setSubmitting(false) }
+  }
+
+  async function openRazorpayForQuery() {
+    try {
+      const { data: order } = await api.post<{
+        razorpay_order_id: string; amount: number; currency: string; key_id: string
+      }>('/farmer/queries/init-payment', { client_id: clientId })
+      const options = {
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'rootsTALK.in',
+        description: `Expert Query (paid to rootsTALK.in, not ${clientName})`,
+        order_id: order.razorpay_order_id,
+        prefill: { name: user?.name || '', contact: user?.phone || '' },
+        theme: { color: '#3A7D44' },
+        handler: (resp: RazorpayResponse) => {
+          // Razorpay sheet has closed with a success — submit the
+          // query with the payment artefacts attached.
+          submitWith(resp)
+        },
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false)
+            setError('Payment cancelled. Try again to submit your query.')
+          },
+        },
+      }
+      new window.Razorpay(options).open()
+    } catch (err: unknown) {
+      setSubmitting(false)
+      setError(extractMsg(err, 'Could not start payment. Try again.'))
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (form.photos.length < 1) {
@@ -113,25 +191,12 @@ export default function AskExpertPage() {
       return
     }
     setSubmitting(true); setError('')
-    try {
-      const media: MediaItem[] = [
-        ...form.photos.map(url => ({ media_type: 'IMAGE' as const, url })),
-        ...(form.audio ? [{ media_type: 'AUDIO' as const, url: form.audio }] : []),
-      ]
-      await api.post('/farmer/queries', {
-        subscription_id: subscriptionId,
-        client_id: clientId,
-        crop_cosh_id: cropCoshId,
-        query_type_cosh_id: form.query_type_cosh_id,
-        crop_age: form.crop_age || undefined,
-        description: form.description || undefined,
-        severity: form.severity,
-        media,
-      })
-      setDone(true)
-    } catch (err: unknown) {
-      setError(extractMsg(err, 'Failed to submit query.'))
-    } finally { setSubmitting(false) }
+    if (quota?.next_query_is_paid) {
+      // Razorpay path — opens the sheet; the handler calls submitWith().
+      openRazorpayForQuery()
+    } else {
+      submitWith()
+    }
   }
 
   if (done) return (
@@ -163,6 +228,10 @@ export default function AskExpertPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
+      {/* Razorpay checkout — only needed when the quota is exhausted,
+          but `Script` with lazyOnload is cheap to include unconditionally
+          and matches the pattern used on /subscribe. */}
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <PWAHeader title="Ask an Expert" activeRole="FARMER" back />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
@@ -305,7 +374,11 @@ export default function AskExpertPage() {
           <button type="submit" disabled={!canSubmit}
             className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #065f46, #3A7D44)' }}>
-            {submitting ? 'Submitting…' : 'Submit to Expert →'}
+            {submitting
+              ? (quota?.next_query_is_paid ? 'Opening payment…' : 'Submitting…')
+              : (quota?.next_query_is_paid
+                  ? `Pay ₹${(quota.price_paise / 100).toFixed(0)} & Submit →`
+                  : 'Submit to Expert →')}
           </button>
           <p className="text-center text-xs text-[#7A8C7E]">
             Your query is shared with the company's FarmPundit experts. Response within 2 days.
