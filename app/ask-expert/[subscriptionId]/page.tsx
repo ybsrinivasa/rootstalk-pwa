@@ -199,6 +199,31 @@ export default function AskExpertPage() {
     }
   }
 
+  // Staging-only bypass — Razorpay TEST mode rejects real UPI handles
+  // so we can't actually pay through the sheet on the testing host.
+  // The button below is hidden everywhere except rstalk-pwa.eywa.farm;
+  // the backend re-checks settings.environment != "production" before
+  // honouring staging_bypass.
+  const isStaging = typeof window !== 'undefined'
+    && /(?:^|\.)rstalk-pwa\.eywa\.farm$/i.test(window.location.hostname)
+
+  async function bypassSubmit() {
+    if (form.photos.length < 1) {
+      setError('Please add at least one photograph.')
+      return
+    }
+    setSubmitting(true); setError('')
+    try {
+      await api.post('/farmer/queries', {
+        ...buildPayload(),
+        staging_bypass: true,
+      })
+      setDone(true)
+    } catch (err: unknown) {
+      setError(extractMsg(err, 'Bypass submit failed.'))
+    } finally { setSubmitting(false) }
+  }
+
   if (done) return (
     <div className="min-h-screen bg-[#F5F0E8] flex flex-col items-center justify-center px-4 text-center">
       <span className="text-5xl mb-4">✅</span>
@@ -380,6 +405,12 @@ export default function AskExpertPage() {
                   ? `Pay ₹${(quota.price_paise / 100).toFixed(0)} & Submit →`
                   : 'Submit to Expert →')}
           </button>
+          {isStaging && quota?.next_query_is_paid && (
+            <button type="button" onClick={bypassSubmit} disabled={!canSubmit}
+              className="w-full py-2.5 rounded-2xl text-xs font-semibold border border-dashed border-amber-400 text-amber-700 bg-amber-50 disabled:opacity-40">
+              ⚙ Staging: skip Razorpay, submit as paid
+            </button>
+          )}
           <p className="text-center text-xs text-[#7A8C7E]">
             Your query is shared with the company's FarmPundit experts. Response within 2 days.
           </p>
