@@ -237,7 +237,7 @@ export default function AskExpertPage() {
         style={{ background: '#3A7D44' }}>
         Back to Home
       </button>
-      <button onClick={() => router.push('/orders')}
+      <button onClick={() => router.push('/my-queries')}
         className="mt-2 w-full max-w-xs py-3.5 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] font-medium text-sm">
         View My Queries
       </button>

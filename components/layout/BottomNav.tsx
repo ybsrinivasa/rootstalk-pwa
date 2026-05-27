@@ -14,10 +14,14 @@ const QueriesIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentCo
 
 const TABS: Record<Role, { href: string; label: string; Icon: React.ComponentType }[]> = {
   FARMER: [
-    { href: '/home',    label: 'Home',    Icon: HomeIcon },
-    { href: '/orders',  label: 'Orders',  Icon: BoxIcon },
-    { href: '/history', label: 'History', Icon: HistoryIcon },
-    { href: '/profile', label: 'Profile', Icon: ProfileIcon },
+    { href: '/home',        label: 'Home',    Icon: HomeIcon },
+    { href: '/orders',      label: 'Orders',  Icon: BoxIcon },
+    // Farmer's view of submitted Ask-Expert queries + the Pundits'
+    // responses. Without this tab the only path to /my-queries was
+    // a wrongly-routed button on the post-submit success page.
+    { href: '/my-queries',  label: 'Queries', Icon: QueriesIcon },
+    { href: '/history',     label: 'History', Icon: HistoryIcon },
+    { href: '/profile',     label: 'Profile', Icon: ProfileIcon },
   ],
   DEALER: [
     { href: '/dealer/orders',   label: 'Orders',   Icon: BoxIcon },
