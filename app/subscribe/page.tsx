@@ -332,8 +332,12 @@ function SubscribeFlow() {
         key: order.key_id,
         amount: order.amount,
         currency: order.currency,
-        name: 'RootsTalk',
-        description: 'Crop Advisory Subscription',
+        // Attribution must be visible in the Razorpay sheet itself —
+        // the farmer is paying for the software infrastructure that
+        // rootsTALK.in provides, NOT paying the company. Company
+        // name appears in the description for the farmer's context.
+        name: 'rootsTALK.in',
+        description: `Advisory subscription · paid to rootsTALK.in${company?.display_name ? ` (not to ${company.display_name})` : ''}`,
         order_id: order.razorpay_order_id,
         prefill: { name: user?.name || '', contact: user?.phone || '' },
         theme: { color: '#3A7D44' },
@@ -859,9 +863,18 @@ function SubscribeFlow() {
                 {stage === 'payment' && subscription && (
                   <div>
                     <h2 className="text-lg font-bold text-[#6B3F1F]">Almost there!</h2>
-                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
+                    <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
                       Choose how to pay for your advisory
                     </p>
+
+                    {/* Payment attribution — the farmer is paying for
+                        software infrastructure provided by rootsTALK.in,
+                        not paying the company. Same disclaimer renders
+                        on the Razorpay sheet description. */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4 text-xs text-amber-800">
+                      ₹199 is paid to <strong>rootsTALK.in</strong> for the software
+                      infrastructure. It is <em>not</em> paid to {company?.display_name || 'the company'}.
+                    </div>
 
                     <div className="space-y-3">
                       {/* Pay yourself */}

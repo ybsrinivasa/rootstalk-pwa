@@ -43,8 +43,11 @@ export default function DealerPaymentsPage() {
         key: order.key_id,
         amount: order.amount,
         currency: order.currency,
-        name: 'RootsTalk',
-        description: 'Farmer Subscription Payment',
+        // Attribution: dealer is paying for the software infrastructure
+        // rootsTALK.in provides on behalf of the farmer — not paying
+        // the company that owns the advisory.
+        name: 'rootsTALK.in',
+        description: 'Advisory subscription on behalf of farmer · paid to rootsTALK.in',
         order_id: order.razorpay_order_id,
         prefill: { name: user?.name || '', contact: user?.phone || '' },
         theme: { color: '#085041' },
@@ -94,6 +97,11 @@ export default function DealerPaymentsPage() {
                 {pending.length > 0 && (
                   <>
                     <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Pending Payment ({pending.length})</p>
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
+                      You pay to <strong>rootsTALK.in</strong> for the software infrastructure
+                      that powers the farmer's advisory. It is <em>not</em> paid to the company
+                      whose advisory the farmer subscribed to.
+                    </div>
                     {pending.map(req => (
                       <div key={req.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
                         <div className="flex items-center justify-between mb-3">
