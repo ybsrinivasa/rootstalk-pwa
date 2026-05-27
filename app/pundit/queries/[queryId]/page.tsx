@@ -15,7 +15,10 @@ interface StandardResponse {
 }
 
 interface QueryDetail {
-  id: string; title: string; description: string | null; severity: string
+  id: string; title: string
+  query_type_cosh_id: string | null
+  query_type_name: string | null
+  description: string | null; severity: string
   client_id: string
   crop_cosh_id: string | null; crop_age: string | null
   status: string; created_at: string; expires_at: string; days_remaining: number
@@ -33,6 +36,13 @@ interface QueryDetail {
 }
 
 const COLOUR = '#3C3489'
+
+const SEVERITY_COLOUR: Record<string, string> = {
+  CRITICAL: 'bg-red-100 text-red-700 border-red-200',
+  HIGH:     'bg-orange-100 text-orange-700 border-orange-200',
+  MODERATE: 'bg-amber-100 text-amber-700 border-amber-200',
+  LOW:      'bg-slate-100 text-[#7A8C7E] border-slate-200',
+}
 
 export default function PunditQueryDetailPage() {
   const { queryId } = useParams<{ queryId: string }>()
@@ -72,6 +82,9 @@ export default function PunditQueryDetailPage() {
   const [rejecting, setRejecting] = useState(false)
   const [rejectRemarks, setRejectRemarks] = useState('')
   const [rejectError, setRejectError] = useState('')
+
+  // Full-screen photo viewer (tap a thumbnail to zoom)
+  const [zoomedPhoto, setZoomedPhoto] = useState<string | null>(null)
 
   // Standard responses
   const [showStdPicker, setShowStdPicker] = useState(false)
@@ -228,17 +241,26 @@ export default function PunditQueryDetailPage() {
         {/* Header card */}
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <p className="font-semibold text-[#6B3F1F]">{query.title}</p>
-              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-0.5">Nature of Query</p>
+              <p className="font-semibold text-[#6B3F1F] leading-snug">
+                {query.query_type_name || query.title}
+              </p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${query.status === 'RESPONDED' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
                   {query.status}
                 </span>
-                <span className="text-xs text-[#7A8C7E]">{query.severity}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium border ${SEVERITY_COLOUR[query.severity] || 'bg-slate-100 text-[#7A8C7E] border-slate-200'}`}>
+                  {query.severity}
+                </span>
               </div>
             </div>
+            {/* Days remaining — re-tuned for the 2-day window:
+                  0 days left  → red    (responds today or expires)
+                  1 day left   → amber  (one more day after today)
+                  ≥2 days left → slate  (fresh) */}
             {isActive && (
-              <div className={`text-xs font-semibold px-2 py-1 rounded-xl ${query.days_remaining <= 1 ? 'bg-red-100 text-red-700' : query.days_remaining <= 3 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
+              <div className={`text-xs font-semibold px-2 py-1 rounded-xl ${query.days_remaining <= 0 ? 'bg-red-100 text-red-700' : query.days_remaining <= 1 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
                 {query.days_remaining}d left
               </div>
             )}
@@ -266,6 +288,46 @@ export default function PunditQueryDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Photographs & voice note from the farmer. Photos render as
+            a 2-up grid; tap a thumbnail to view full-screen. Audio
+            uses the browser's native <audio> controls. */}
+        {query.media.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] space-y-3">
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Attachments</p>
+            {(() => {
+              const photos = query.media.filter(m => m.media_type === 'IMAGE')
+              const audios = query.media.filter(m => m.media_type === 'AUDIO')
+              const videos = query.media.filter(m => m.media_type === 'VIDEO')
+              return (
+                <>
+                  {photos.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {photos.map((p, i) => (
+                        <button key={i} type="button" onClick={() => setZoomedPhoto(p.url)}
+                          className="block">
+                          <img src={p.url} alt={`Photo ${i + 1}`}
+                            className="w-full h-32 object-cover rounded-xl border border-[#DDD0B8]" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {audios.length > 0 && audios.map((a, i) => (
+                    <div key={i} className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2">
+                      <p className="text-xs text-[#7A8C7E] mb-1">🎙 Voice note from farmer</p>
+                      <audio src={a.url} controls className="w-full" />
+                    </div>
+                  ))}
+                  {videos.length > 0 && videos.map((v, i) => (
+                    <div key={i} className="bg-black rounded-xl overflow-hidden">
+                      <video src={v.url} controls className="w-full" />
+                    </div>
+                  ))}
+                </>
+              )
+            })()}
+          </div>
+        )}
 
         {/* Remarks chain */}
         {query.remarks.length > 0 && (
@@ -347,7 +409,7 @@ export default function PunditQueryDetailPage() {
           <div className="bg-white rounded-t-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b border-[#DDD0B8]">
               <h2 className="font-bold text-[#6B3F1F]">Respond to Query</h2>
-              <p className="text-[#7A8C7E] text-xs mt-0.5">7-day window closes on response. Farmer is notified immediately.</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">2-day window closes on response. Farmer is notified immediately.</p>
             </div>
             <form onSubmit={handleRespond} className="p-5 space-y-4 pb-8">
               {/* Three structured response paths per the UCAT model.
@@ -447,7 +509,7 @@ export default function PunditQueryDetailPage() {
           <div className="bg-white rounded-t-3xl w-full">
             <div className="p-5 border-b border-[#DDD0B8]">
               <h2 className="font-bold text-[#6B3F1F]">Forward Query</h2>
-              <p className="text-[#7A8C7E] text-xs mt-0.5">7-day clock does not reset. Mandatory comments required.</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">2-day clock does not reset. Mandatory comments required.</p>
             </div>
             <form onSubmit={handleForward} className="p-5 space-y-4 pb-8">
               <div>
@@ -535,6 +597,19 @@ export default function PunditQueryDetailPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Full-screen photo viewer */}
+      {zoomedPhoto && (
+        <div className="fixed inset-0 z-[70] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setZoomedPhoto(null)}>
+          <button onClick={() => setZoomedPhoto(null)}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white text-2xl flex items-center justify-center"
+            aria-label="Close photo">×</button>
+          <img src={zoomedPhoto} alt="Photograph"
+            className="max-w-full max-h-full object-contain"
+            onClick={e => e.stopPropagation()} />
         </div>
       )}
 
