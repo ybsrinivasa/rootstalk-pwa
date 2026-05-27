@@ -14,13 +14,36 @@ interface StandardResponse {
   created_at: string
 }
 
+interface ComputedCropAge {
+  value: number
+  unit: 'days' | 'years'
+  source: 'START_DATE' | 'PLANTING_YEAR'
+}
+
+interface FarmerBlock {
+  name: string | null
+  phone: string | null
+  address: {
+    town: string | null
+    district: string | null
+    state: string | null
+  } | null
+}
+
 interface QueryDetail {
   id: string; title: string
   query_type_cosh_id: string | null
   query_type_name: string | null
   description: string | null; severity: string
   client_id: string
-  crop_cosh_id: string | null; crop_age: string | null
+  crop_cosh_id: string | null
+  crop_name: string | null
+  crop_measure: 'AREA_WISE' | 'PLANT_WISE'
+  // Free-text "45 DAS" from the farmer (legacy); display only if present.
+  crop_age: string | null
+  // Server-computed envelope — days from start_date OR years from planting_year.
+  computed_crop_age: ComputedCropAge | null
+  farmer: FarmerBlock | null
   status: string; created_at: string; expires_at: string; days_remaining: number
   is_holding: boolean
   media: { media_type: string; url: string }[]
@@ -238,8 +261,59 @@ export default function PunditQueryDetailPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Query" activeRole="FARM_PUNDIT" back="/pundit/queries" />
       <div className="pt-16 pb-28 px-4 space-y-4">
-        {/* Header card */}
-        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
+        {/* Farmer card — name + tap-to-call phone + address.
+            Pundit's first action is often a call; the phone is a
+            `tel:` link so a single tap dials. */}
+        {query.farmer && (
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">Farmer</p>
+            <p className="font-semibold text-[#6B3F1F]">{query.farmer.name || '—'}</p>
+            {query.farmer.phone && (
+              <a href={`tel:${query.farmer.phone}`}
+                className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                📞 {query.farmer.phone}
+              </a>
+            )}
+            {query.farmer.address && (
+              query.farmer.address.town
+              || query.farmer.address.district
+              || query.farmer.address.state
+            ) && (
+              <p className="text-xs text-[#7A8C7E] mt-2">
+                {[
+                  query.farmer.address.town,
+                  query.farmer.address.district,
+                  query.farmer.address.state,
+                ].filter(Boolean).join(' · ')}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Crop card — resolved name + computed age. */}
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
+          <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">Crop</p>
+          <p className="font-semibold text-[#6B3F1F]">
+            {cropDisplayName(query.crop_cosh_id, query.crop_name)}
+          </p>
+          {query.computed_crop_age && (
+            <p className="text-sm text-[#6B3F1F] mt-1">
+              <span className="text-xs text-[#7A8C7E]">Age · </span>
+              {query.computed_crop_age.value} {query.computed_crop_age.unit}
+              <span className="text-xs text-[#7A8C7E] ml-1">
+                {query.computed_crop_age.source === 'PLANTING_YEAR'
+                  ? 'from planting year'
+                  : 'from start date'}
+              </span>
+            </p>
+          )}
+          {query.crop_age && (
+            <p className="text-xs text-[#7A8C7E] mt-1">Farmer noted: {query.crop_age}</p>
+          )}
+        </div>
+
+        {/* Nature of Query + Severity card */}
+        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-0.5">Nature of Query</p>
@@ -267,27 +341,13 @@ export default function PunditQueryDetailPage() {
           </div>
         </div>
 
-        {/* Details */}
-        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
-          {query.crop_cosh_id && (
-            <div className="flex gap-3 mb-2">
-              <span className="text-xs text-[#7A8C7E] w-20 shrink-0">Crop</span>
-              <span className="text-sm text-[#6B3F1F]">{cropDisplayName(query.crop_cosh_id)}</span>
-            </div>
-          )}
-          {query.crop_age && (
-            <div className="flex gap-3 mb-2">
-              <span className="text-xs text-[#7A8C7E] w-20 shrink-0">Crop Age</span>
-              <span className="text-sm text-[#6B3F1F]">{query.crop_age}</span>
-            </div>
-          )}
-          {query.description && (
-            <div className="mt-3 pt-3 border-t border-[#DDD0B8]">
-              <p className="text-xs text-[#7A8C7E] mb-1">Description</p>
-              <p className="text-sm text-[#6B3F1F] leading-relaxed">{query.description}</p>
-            </div>
-          )}
-        </div>
+        {/* Description card — only when the farmer wrote one. */}
+        {query.description && (
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">Description</p>
+            <p className="text-sm text-[#6B3F1F] leading-relaxed">{query.description}</p>
+          </div>
+        )}
 
         {/* Photographs & voice note from the farmer. Photos render as
             a 2-up grid; tap a thumbnail to view full-screen. Audio
