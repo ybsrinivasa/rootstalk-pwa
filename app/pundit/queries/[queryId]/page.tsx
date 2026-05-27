@@ -711,11 +711,14 @@ export default function PunditQueryDetailPage() {
                   Voice note <span className="text-xs text-[#7A8C7E] font-normal">(optional)</span>
                 </p>
                 {respondForm.audio ? (
-                  <div className="flex items-center justify-between bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2">
-                    <span className="text-xs text-[#6B3F1F] truncate">🎙 Audio attached</span>
-                    <button type="button"
-                      onClick={() => setRespondForm(f => ({ ...f, audio: null }))}
-                      className="text-xs text-[#D4682E] font-medium">Remove</button>
+                  <div className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-[#6B3F1F]">🎙 Voice note attached — play to confirm</span>
+                      <button type="button"
+                        onClick={() => setRespondForm(f => ({ ...f, audio: null }))}
+                        className="text-xs text-[#D4682E] font-medium">Remove</button>
+                    </div>
+                    <audio src={respondForm.audio} controls className="w-full" />
                   </div>
                 ) : (
                   <label className="block w-full py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-center text-xs text-[#7A8C7E] cursor-pointer hover:bg-[#F5F0E8]">
