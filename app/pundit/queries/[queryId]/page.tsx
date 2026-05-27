@@ -14,6 +14,20 @@ interface StandardResponse {
   created_at: string
 }
 
+// Crop Health Problem option — from /diagnosis/problems for the
+// query's crop. The `name` is the resolved English translation.
+interface CropProblem {
+  cosh_id: string
+  name: string
+}
+
+interface ResponseMediaItem {
+  media_type: 'IMAGE' | 'AUDIO' | 'HYPERLINK'
+  url: string
+}
+
+const MAX_RESPONSE_PHOTOS = 4
+
 interface ComputedCropAge {
   value: number
   unit: 'days' | 'years'
@@ -53,10 +67,11 @@ interface QueryDetail {
   remarks: { action: string; pundit_id: string | null; remark: string | null; created_at: string }[]
   response: {
     problem_cosh_id: string | null
+    problem_name: string | null
     standard_response_id: string | null
     standard_response_question: string | null
     text: string | null
-    media: unknown[]
+    media: { media_type: string; url: string; caption: string | null }[]
     created_at: string
   } | null
 }
@@ -88,8 +103,48 @@ export default function PunditQueryDetailPage() {
     problem_cosh_id: '',
     standard_response_id: '',
     standard_response_question: '',  // display-only, for the picked-pill
+    photos: [] as string[],          // up to 4, all optional
+    audio: null as string | null,    // 0-1, optional
+    hyperlink: '',                   // 0-1, optional
   })
   const [respondError, setRespondError] = useState('')
+  const [cropProblems, setCropProblems] = useState<CropProblem[]>([])
+  const [uploadingResponse, setUploadingResponse] = useState<'photo' | 'audio' | null>(null)
+
+  function openRespond() {
+    setShowRespond(true)
+    // Load the Crop Health Problems dropdown the first time the modal
+    // opens. Reused on subsequent opens within the same session.
+    if (query?.crop_cosh_id && cropProblems.length === 0) {
+      api.get<CropProblem[]>(`/diagnosis/problems?crop_cosh_id=${query.crop_cosh_id}`)
+        .then(r => setCropProblems(r.data))
+        .catch(() => { /* dropdown stays empty — text fallback still works */ })
+    }
+  }
+
+  async function uploadResponseFile(file: File, folder: string, slot: 'photo' | 'audio') {
+    setUploadingResponse(slot)
+    setRespondError('')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('folder', folder)
+      const { data } = await api.post<{ url: string }>('/media/upload', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      if (slot === 'photo') {
+        setRespondForm(f => ({ ...f, photos: [...f.photos, data.url] }))
+      } else {
+        setRespondForm(f => ({ ...f, audio: data.url }))
+      }
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string } | undefined)?.message || 'Upload failed. Please try again.'
+      setRespondError(msg)
+    } finally { setUploadingResponse(null) }
+  }
 
   // Forward modal
   const [showForward, setShowForward] = useState(false)
@@ -200,16 +255,25 @@ export default function PunditQueryDetailPage() {
     try {
       // Send only the keys the backend cares about. The display-
       // only `standard_response_question` doesn't leave the client.
-      const payload: Record<string, string> = {}
+      const media: ResponseMediaItem[] = [
+        ...respondForm.photos.map(url => ({ media_type: 'IMAGE' as const, url })),
+        ...(respondForm.audio ? [{ media_type: 'AUDIO' as const, url: respondForm.audio }] : []),
+        ...(respondForm.hyperlink ? [{ media_type: 'HYPERLINK' as const, url: respondForm.hyperlink }] : []),
+      ]
+      const payload: Record<string, unknown> = {}
       if (respondForm.text) payload.text = respondForm.text
       if (respondForm.problem_cosh_id) payload.problem_cosh_id = respondForm.problem_cosh_id
       if (respondForm.standard_response_id) payload.standard_response_id = respondForm.standard_response_id
+      if (media.length > 0) payload.media = media
       await api.put(`/pundit/queries/${queryId}/respond`, payload)
       setShowRespond(false)
       load()
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setRespondError(msg || 'Failed to submit response.')
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string } | undefined)?.message || 'Failed to submit response.'
+      setRespondError(msg)
     } finally { setResponding(false) }
   }
 
@@ -413,18 +477,18 @@ export default function PunditQueryDetailPage() {
 
         {/* Response */}
         {query.response && (
-          <div className="bg-green-50 rounded-2xl p-4 border border-green-200">
-            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">Response</p>
+          <div className="bg-green-50 rounded-2xl p-4 border border-green-200 space-y-3">
+            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">Response</p>
             {query.response.problem_cosh_id && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
                 <p className="text-xs text-blue-700">
-                  🔬 Crop health problem identified: <strong>{query.response.problem_cosh_id}</strong>
+                  🔬 Crop health problem identified: <strong>{query.response.problem_name || query.response.problem_cosh_id}</strong>
                   <br />CHA recommendations have been added to the farmer&apos;s advisory.
                 </p>
               </div>
             )}
             {query.response.standard_response_id && (
-              <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 mb-3">
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
                 <p className="text-xs text-indigo-700">
                   🌾 Standard answer picked
                   {query.response.standard_response_question && (
@@ -435,6 +499,39 @@ export default function PunditQueryDetailPage() {
               </div>
             )}
             {query.response.text && <p className="text-sm text-[#6B3F1F] leading-relaxed">{query.response.text}</p>}
+            {/* Render the response attachments the Pundit sent. */}
+            {(() => {
+              const photos = (query.response?.media || []).filter(m => m.media_type === 'IMAGE')
+              const audios = (query.response?.media || []).filter(m => m.media_type === 'AUDIO')
+              const links  = (query.response?.media || []).filter(m => m.media_type === 'HYPERLINK')
+              if (photos.length + audios.length + links.length === 0) return null
+              return (
+                <div className="space-y-2 pt-1">
+                  {photos.length > 0 && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {photos.map((p, i) => (
+                        <button key={i} type="button" onClick={() => setZoomedPhoto(p.url)} className="block">
+                          <img src={p.url} alt={`Response photo ${i + 1}`}
+                            className="w-full h-28 object-cover rounded-xl border border-green-200" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {audios.map((a, i) => (
+                    <div key={i} className="bg-white border border-green-200 rounded-xl px-3 py-2">
+                      <p className="text-xs text-green-700 mb-1">🎙 Expert&apos;s voice note</p>
+                      <audio src={a.url} controls className="w-full" />
+                    </div>
+                  ))}
+                  {links.map((l, i) => (
+                    <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                      className="block bg-white border border-green-200 rounded-xl px-3 py-2 text-sm text-blue-700 hover:underline truncate">
+                      🔗 {l.url}
+                    </a>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         )}
       </div>
@@ -442,7 +539,7 @@ export default function PunditQueryDetailPage() {
       {/* Action bar (only when holding and query is active) */}
       {query.is_holding && isActive && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#DDD0B8] px-4 py-3 space-y-2">
-          <button onClick={() => setShowRespond(true)}
+          <button onClick={openRespond}
             className="w-full py-3 rounded-2xl text-white font-semibold text-sm"
             style={{ background: `linear-gradient(135deg, #2d2570, ${COLOUR})` }}>
             ✓ Respond to Query
@@ -489,13 +586,17 @@ export default function PunditQueryDetailPage() {
                     <span className="ml-2 text-xs text-[#7A8C7E] font-normal">(disabled — standard answer picked)</span>
                   )}
                 </label>
-                <input value={respondForm.problem_cosh_id}
+                <select value={respondForm.problem_cosh_id}
                   onChange={e => setRespondForm(f => ({ ...f, problem_cosh_id: e.target.value }))}
                   disabled={!!respondForm.standard_response_id}
-                  placeholder="e.g. sp_blast_rice or pg_aphids (Cosh ID)"
-                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none font-mono disabled:bg-[#F5F0E8] disabled:text-[#7A8C7E]" />
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none disabled:bg-[#F5F0E8] disabled:text-[#7A8C7E]">
+                  <option value="">Select a Crop Health problem…</option>
+                  {cropProblems.map(p => (
+                    <option key={p.cosh_id} value={p.cosh_id}>{p.name}</option>
+                  ))}
+                </select>
                 <p className="text-xs text-[#7A8C7E] mt-1">
-                  Enter the Cosh problem ID to deliver CHA recommendations to the farmer.
+                  Picking a problem here delivers CHA recommendations to the farmer's advisory.
                 </p>
               </div>
 
@@ -549,6 +650,72 @@ export default function PunditQueryDetailPage() {
                       : 'Use this only if no problem or standard answer applies. Free-form text reaches the farmer but does not merge into the advisory or drive purchases.'
                   }
                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
+              </div>
+
+              {/* Optional attachments — image (up to 4) + audio (1) +
+                  hyperlink (1). All non-mandatory; the farmer's
+                  response card renders whatever is present. */}
+              <div>
+                <p className="text-sm font-medium text-[#6B3F1F] mb-1.5">
+                  Photos <span className="text-xs text-[#7A8C7E] font-normal">(optional, up to {MAX_RESPONSE_PHOTOS})</span>
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {respondForm.photos.map((url, idx) => (
+                    <div key={idx} className="relative">
+                      <img src={url} alt={`Response photo ${idx + 1}`}
+                        className="w-full h-24 object-cover rounded-xl border border-[#DDD0B8]" />
+                      <button type="button"
+                        onClick={() => setRespondForm(f => ({ ...f, photos: f.photos.filter((_, i) => i !== idx) }))}
+                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs leading-none flex items-center justify-center"
+                        aria-label="Remove">×</button>
+                    </div>
+                  ))}
+                  {respondForm.photos.length < MAX_RESPONSE_PHOTOS && (
+                    <label className="h-24 border-2 border-dashed border-[#DDD0B8] rounded-xl flex items-center justify-center cursor-pointer text-xs text-[#7A8C7E] hover:bg-[#F5F0E8]">
+                      {uploadingResponse === 'photo' ? 'Uploading…' : '+ Add photo'}
+                      <input type="file" accept="image/*" className="hidden"
+                        onChange={e => {
+                          const f = e.target.files?.[0]
+                          if (f) uploadResponseFile(f, 'query-response-photos', 'photo')
+                          e.target.value = ''
+                        }} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-[#6B3F1F] mb-1.5">
+                  Voice note <span className="text-xs text-[#7A8C7E] font-normal">(optional)</span>
+                </p>
+                {respondForm.audio ? (
+                  <div className="flex items-center justify-between bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2">
+                    <span className="text-xs text-[#6B3F1F] truncate">🎙 Audio attached</span>
+                    <button type="button"
+                      onClick={() => setRespondForm(f => ({ ...f, audio: null }))}
+                      className="text-xs text-[#D4682E] font-medium">Remove</button>
+                  </div>
+                ) : (
+                  <label className="block w-full py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-center text-xs text-[#7A8C7E] cursor-pointer hover:bg-[#F5F0E8]">
+                    {uploadingResponse === 'audio' ? 'Uploading…' : '🎙 Add a voice note'}
+                    <input type="file" accept="audio/*" className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) uploadResponseFile(f, 'query-response-audio', 'audio')
+                        e.target.value = ''
+                      }} />
+                  </label>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
+                  Hyperlink <span className="text-xs text-[#7A8C7E] font-normal">(optional)</span>
+                </label>
+                <input type="url" value={respondForm.hyperlink}
+                  onChange={e => setRespondForm(f => ({ ...f, hyperlink: e.target.value }))}
+                  placeholder="https://example.com/reference"
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
               </div>
 
               {respondError && <p className="text-sm text-[#D4682E]">{respondError}</p>}

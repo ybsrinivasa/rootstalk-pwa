@@ -9,9 +9,18 @@ import api from '@/lib/api'
 interface QueryItem {
   id: string; title: string; status: string; severity: string; expires_at: string; created_at: string
 }
+interface ResponseMedia {
+  media_type: string; url: string; caption: string | null
+}
+
 interface QueryDetail {
   id: string; title: string; status: string; response: {
-    text: string | null; problem_cosh_id: string | null; has_cha_recommendation: boolean; created_at: string
+    text: string | null
+    problem_cosh_id: string | null
+    problem_name: string | null
+    has_cha_recommendation: boolean
+    media: ResponseMedia[]
+    created_at: string
   } | null
 }
 
@@ -118,29 +127,56 @@ export default function FarmerQueriesPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </button>
-                      {expandedQuery === q.id && queryDetail[q.id]?.response && (
-                        <div className="border-t border-green-100 px-4 pb-4 pt-3 space-y-3">
-                          {queryDetail[q.id].response!.has_cha_recommendation && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
-                              <p className="text-xs text-blue-700 font-medium">
-                                🔬 Crop Health Advisory Added
-                              </p>
-                              <p className="text-xs text-blue-600 mt-0.5">
-                                Treatment recommendations for {queryDetail[q.id].response!.problem_cosh_id} have been added to your advisory timeline.
-                              </p>
-                            </div>
-                          )}
-                          {queryDetail[q.id].response!.text && (
-                            <div>
-                              <p className="text-xs font-medium text-[#7A8C7E] mb-1">Expert's Advice:</p>
-                              <p className="text-sm text-[#6B3F1F] leading-relaxed">{queryDetail[q.id].response!.text}</p>
-                            </div>
-                          )}
-                          <p className="text-xs text-[#DDD0B8]">
-                            {new Date(queryDetail[q.id].response!.created_at).toLocaleDateString()}
-                          </p>
-                        </div>
-                      )}
+                      {expandedQuery === q.id && queryDetail[q.id]?.response && (() => {
+                        const resp = queryDetail[q.id].response!
+                        const media = resp.media || []
+                        const photos = media.filter(m => m.media_type === 'IMAGE')
+                        const audios = media.filter(m => m.media_type === 'AUDIO')
+                        const links  = media.filter(m => m.media_type === 'HYPERLINK')
+                        return (
+                          <div className="border-t border-green-100 px-4 pb-4 pt-3 space-y-3">
+                            {resp.has_cha_recommendation && (
+                              <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
+                                <p className="text-xs text-blue-700 font-medium">🔬 Crop Health Advisory Added</p>
+                                <p className="text-xs text-blue-600 mt-0.5">
+                                  Treatment recommendations for <strong>{resp.problem_name || resp.problem_cosh_id}</strong> have been added to your advisory timeline.
+                                </p>
+                              </div>
+                            )}
+                            {resp.text && (
+                              <div>
+                                <p className="text-xs font-medium text-[#7A8C7E] mb-1">Expert&apos;s Advice:</p>
+                                <p className="text-sm text-[#6B3F1F] leading-relaxed">{resp.text}</p>
+                              </div>
+                            )}
+                            {photos.length > 0 && (
+                              <div className="grid grid-cols-2 gap-2">
+                                {photos.map((p, i) => (
+                                  <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className="block">
+                                    <img src={p.url} alt={`Expert photo ${i + 1}`}
+                                      className="w-full h-28 object-cover rounded-xl border border-[#DDD0B8]" />
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+                            {audios.map((a, i) => (
+                              <div key={i} className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2">
+                                <p className="text-xs text-[#7A8C7E] mb-1">🎙 Expert&apos;s voice note</p>
+                                <audio src={a.url} controls className="w-full" />
+                              </div>
+                            ))}
+                            {links.map((l, i) => (
+                              <a key={i} href={l.url} target="_blank" rel="noopener noreferrer"
+                                className="block bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm text-blue-700 hover:underline truncate">
+                                🔗 {l.url}
+                              </a>
+                            ))}
+                            <p className="text-xs text-[#DDD0B8]">
+                              {new Date(resp.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )
+                      })()}
                     </div>
                   ))}
                 </div>
