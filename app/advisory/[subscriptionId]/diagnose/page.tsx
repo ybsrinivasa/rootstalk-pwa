@@ -117,7 +117,7 @@ export default function DiagnosisPage() {
       alert("This company hasn't onboarded a Primary expert yet. Ask Expert will be available once they do.")
       return
     }
-    goToAskExpert()
+    router.push(`/ask-expert/${subscriptionId}`)
   }
 
   async function loadCropStages(crop_cosh_id: string) {
@@ -624,7 +624,7 @@ export default function DiagnosisPage() {
             <button onClick={() => goToAskExpert()}
               className="w-full py-4 rounded-2xl text-white font-semibold"
               style={{ background: COLOUR }}>
-              👨‍🌾 Ask FarmPundit Expert →
+              👨‍🌾 Ask Expert →
             </button>
             <button onClick={() => { setImageAnalysis(null); setStage('ai_capture') }}
               className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
@@ -1017,7 +1017,7 @@ export default function DiagnosisPage() {
               title={hasPrimaryExpert ? undefined : "No Primary expert at this company yet"}
               className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-50"
               style={{ background: COLOUR }}>
-              👨‍🌾 Ask FarmPundit Expert →
+              👨‍🌾 Ask Expert →
             </button>
             <button onClick={() => {
                 setSelectedPart(null); setDiagnosis(null); setCurrentQuestion(null)
