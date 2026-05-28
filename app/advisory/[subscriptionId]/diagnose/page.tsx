@@ -38,7 +38,7 @@ export default function DiagnosisPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
 
-  const [stage, setStage] = useState<'select_stage' | 'select_method' | 'ai_capture' | 'ai_needs_expert' | 'select_part' | 'questioning' | 'diagnosed' | 'know_problem' | 'aborted'>('select_stage')
+  const [stage, setStage] = useState<'select_stage' | 'select_method' | 'ai_capture' | 'ai_needs_expert' | 'select_part' | 'questioning' | 'confirming' | 'diagnosed' | 'outside_list' | 'know_problem' | 'aborted'>('select_stage')
   const [stages, setStages] = useState<CropStage[]>([])
   const [selectedStage, setSelectedStage] = useState<CropStage | null>(null)
   const [parts, setParts] = useState<PlantPart[]>([])
@@ -243,6 +243,28 @@ export default function DiagnosisPage() {
     setStage('select_part')
   }
 
+  // Routes the response from /start or /answer into the correct PWA
+  // stage. CONFIRMATION shows the new "Is this the problem?" card;
+  // OUTSIDE_LIST shows the honest "not in our catalogue" screen.
+  // Single function so /start and /answer can't drift apart.
+  function applyStepStatus(data: DiagnosisStep) {
+    setRemainingCount(data.remaining_count)
+    if (data.status === 'CONFIRMATION') {
+      setDiagnosis(data.problem_info || null)
+      setStage('confirming')
+    } else if (data.status === 'DIAGNOSED') {
+      setDiagnosis(data.problem_info || null)
+      setStage('diagnosed')
+    } else if (data.status === 'OUTSIDE_LIST') {
+      setStage('outside_list')
+    } else if (data.status === 'NO_DATA') {
+      goToAskExpert()
+    } else {
+      setCurrentQuestion(data.question)
+      setStage('questioning')
+    }
+  }
+
   async function startDiagnosis(part: PlantPart) {
     setSelectedPart(part.cosh_id)
     setLoading(true)
@@ -254,16 +276,7 @@ export default function DiagnosisPage() {
         plant_part_cosh_id: part.cosh_id,
       })
       setSessionId(data.session_id || null)
-      setRemainingCount(data.remaining_count)
-      if (data.status === 'DIAGNOSED') {
-        setDiagnosis(data.problem_info || null)
-        setStage('diagnosed')
-      } else if (data.status === 'NO_DATA') {
-        goToAskExpert()
-      } else {
-        setCurrentQuestion(data.question)
-        setStage('questioning')
-      }
+      applyStepStatus(data)
     } finally { setLoading(false) }
   }
 
@@ -280,14 +293,25 @@ export default function DiagnosisPage() {
         answer: choice,
       })
       setQuestionHistory(h => [...h, prev])
-      setRemainingCount(data.remaining_count)
       setExplainText(null)  // each question gets a fresh explanation
-      if (data.status === 'DIAGNOSED') {
-        setDiagnosis(data.problem_info || null)
-        setStage('diagnosed')
-      } else {
-        setCurrentQuestion(data.question)
-      }
+      applyStepStatus(data)
+    } finally { setAnswering(false) }
+  }
+
+  // BL-08 §8 amendment: when the algorithm narrows to one candidate,
+  // the farmer is asked to confirm. YES locks in the diagnosis; NO
+  // routes to the honest "outside our list" screen.
+  async function confirmAnswer(choice: 'YES' | 'NO') {
+    if (!sessionId) return
+    setAnswering(true)
+    try {
+      const { data } = await api.post<DiagnosisStep>(`/diagnosis/${sessionId}/answer`, {
+        plant_part_cosh_id: selectedPart || '',
+        symptom_cosh_id: '',
+        answer: choice,
+        is_confirmation: true,
+      })
+      applyStepStatus(data)
     } finally { setAnswering(false) }
   }
 
@@ -908,6 +932,101 @@ export default function DiagnosisPage() {
             <button onClick={() => setStage('questioning')}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
               ← Back to Questions
+            </button>
+          </div>
+        )}
+
+        {/* Confirmation — BL-08 §8 amendment (2026-05-28). The algorithm
+            has narrowed the pool to a single candidate. Don't auto-commit;
+            ask the farmer to confirm. YES → diagnosed. NO → outside-list.
+            This catches earlier mis-taps gracefully and means the system
+            never pretends confidence it doesn't have. */}
+        {stage === 'confirming' && (
+          <div className="mt-4 space-y-4">
+            <div className="bg-white rounded-3xl p-6 border border-[#DDD0B8] shadow-sm">
+              <div className="text-center">
+                <span className="text-5xl">🤔</span>
+                <h2 className="text-xl font-bold text-[#6B3F1F] mt-4">Looks like the problem is…</h2>
+                {diagnosis ? (
+                  <p className="text-2xl font-bold mt-3" style={{ color: COLOUR }}>
+                    {diagnosis.name}
+                  </p>
+                ) : (
+                  <p className="text-[#6B3F1F] mt-3">a problem we can identify</p>
+                )}
+                <p className="text-[#7A8C7E] text-sm mt-3">
+                  Does this match what you&apos;re seeing on the crop?
+                </p>
+              </div>
+
+              {/* Claude description if available — helps the farmer decide */}
+              {diagnosis?.claude_description && (
+                <div className="mt-5 bg-green-50 border border-green-200 rounded-2xl px-4 py-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">🤖</span>
+                    <p className="text-xs font-semibold text-green-800">What this means for your crop</p>
+                  </div>
+                  <p className="text-sm text-green-900 leading-relaxed">{diagnosis.claude_description}</p>
+                </div>
+              )}
+
+              {/* Google Images for quick visual check */}
+              {diagnosis && (
+                <a
+                  href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
+                    [cropCoshId?.replace(/_/g, ' '), diagnosis.name].filter(Boolean).join(' ')
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center mt-4 text-sm text-blue-600 underline underline-offset-2">
+                  🔍 See images of {diagnosis.name}
+                </a>
+              )}
+
+              <div className="flex gap-3 mt-5">
+                <button onClick={() => confirmAnswer('NO')} disabled={answering}
+                  className="flex-1 py-4 rounded-2xl border-2 border-red-200 bg-red-50 text-red-700 font-bold text-lg disabled:opacity-50 active:scale-95 transition-transform">
+                  ✗ Not this
+                </button>
+                <button onClick={() => confirmAnswer('YES')} disabled={answering}
+                  className="flex-1 py-4 rounded-2xl border-2 text-white font-bold text-lg disabled:opacity-50 active:scale-95 transition-transform"
+                  style={{ borderColor: COLOUR, background: COLOUR }}>
+                  ✓ Yes, this matches
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Outside our list — farmer rejected the confirmation candidate,
+            OR the pool emptied entirely (rare; a NO that eliminated the
+            last 2+ candidates at once). Honest exit — the system can't
+            help further with the structured path; route to an expert. */}
+        {stage === 'outside_list' && (
+          <div className="mt-4 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
+              <span className="text-5xl">🤷</span>
+              <h2 className="text-xl font-bold text-amber-900 mt-4">Not in our list</h2>
+              <p className="text-sm text-amber-800 mt-3 leading-relaxed">
+                The problem you&apos;re facing doesn&apos;t seem to be in the RootsTalk catalogue
+                for this crop and stage. A FarmPundit expert can look at it directly.
+              </p>
+            </div>
+            <button onClick={() => goToAskExpert()}
+              disabled={!hasPrimaryExpert}
+              title={hasPrimaryExpert ? undefined : "No Primary expert at this company yet"}
+              className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-50"
+              style={{ background: COLOUR }}>
+              👨‍🌾 Ask FarmPundit Expert →
+            </button>
+            <button onClick={() => {
+                setSelectedPart(null); setDiagnosis(null); setCurrentQuestion(null)
+                setQuestionHistory([])
+                if (stages.length > 0) setStage('select_method')
+                else setStage('select_part')
+              }}
+              className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
+              ← Try a different part or stage
             </button>
           </div>
         )}
