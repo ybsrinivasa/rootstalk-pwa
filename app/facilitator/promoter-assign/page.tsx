@@ -10,6 +10,11 @@ const COLOUR = '#7D4E00'
 
 type Stage = 'gate' | 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'measure' | 'confirm' | 'done'
 
+// Cosh-driven location universe — same shape as /subscribe.
+type CoshDistrict = { cosh_id: string; name: string | null }
+type CoshState = { cosh_id: string; name: string | null; districts: CoshDistrict[] }
+type CoshLocations = { states: CoshState[] }
+
 interface KittyInfo {
   client_id: string
   client_short_name: string
@@ -66,7 +71,13 @@ export default function FacilitatorPromoterAssignPage() {
   const [kittyError, setKittyError] = useState<string | null>(null)
   const [phone, setPhone] = useState('')
   const [farmer, setFarmer] = useState<FarmerInfo | null>(null)
-  const [farmerDistrict, setFarmerDistrict] = useState('')
+  // Location typeahead state — mirrors /subscribe shape.
+  const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
+  const [stateId, setStateId] = useState('')
+  const [stateSearch, setStateSearch] = useState('')
+  const [district, setDistrict] = useState('')
+  const [districtSearch, setDistrictSearch] = useState('')
+  const [editingLocation, setEditingLocation] = useState(false)
   const [crops, setCrops] = useState<CropOption[]>([])
   const [selectedCrop, setSelectedCrop] = useState('')
   const [answers, setAnswers] = useState('')
@@ -108,6 +119,9 @@ export default function FacilitatorPromoterAssignPage() {
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     refreshKitty().then(() => setStage(s => s === 'gate' ? 'phone' : s))
+    api.get<CoshLocations>('/cosh/locations/india')
+      .then(r => setCoshLocations(r.data))
+      .catch(() => { /* network blip — typeahead just renders empty until retry */ })
   }, [refreshKitty, router])
 
   useEffect(() => {
@@ -125,7 +139,13 @@ export default function FacilitatorPromoterAssignPage() {
     try {
       const { data } = await api.get<FarmerInfo>(`/promoter/farmer-lookup?phone=%2B91${phone}`)
       setFarmer(data)
-      setFarmerDistrict(data.district_cosh_id || '')
+      // Pre-fill state + district from the farmer's saved profile.
+      // The F-P can tap Change to switch plots within the next stage.
+      setStateId(data.state_cosh_id || '')
+      setDistrict(data.district_cosh_id || '')
+      setEditingLocation(!data.district_cosh_id)
+      setStateSearch('')
+      setDistrictSearch('')
       setStage('confirm_farmer')
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
@@ -134,17 +154,17 @@ export default function FacilitatorPromoterAssignPage() {
   }
 
   async function continueToCrops() {
-    if (!farmerDistrict) { setError('Please enter farmer district'); return }
+    if (!district) { setError('Please pick the district where the farmland is'); return }
     setError('')
     setLoading(true)
     try {
       const { data } = await api.get<CropOption[]>(
-        `/promoter/crops?district_cosh_id=${encodeURIComponent(farmerDistrict)}`
+        `/promoter/crops?district_cosh_id=${encodeURIComponent(district)}`
       )
       setCrops(data)
       setStage('crop')
     } catch {
-      setError('Could not load crops. Check the district ID.')
+      setError('Could not load crops. Pick a different district or try again.')
     } finally { setLoading(false) }
   }
 
@@ -157,7 +177,7 @@ export default function FacilitatorPromoterAssignPage() {
       // /promoter/packages/guided-step — server derives client_id
       // from the F-P's locked binding, so no client_id query param.
       const { data } = await api.get<GuidedStep>(
-        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(cropId)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&answers=`
+        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(cropId)}&district_cosh_id=${encodeURIComponent(district)}&answers=`
       )
       setGuidedStep(data)
       if (data.done && data.package) {
@@ -179,7 +199,7 @@ export default function FacilitatorPromoterAssignPage() {
     setLoading(true)
     try {
       const { data } = await api.get<GuidedStep>(
-        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(selectedCrop)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&answers=${encodeURIComponent(newAnswers)}`
+        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(selectedCrop)}&district_cosh_id=${encodeURIComponent(district)}&answers=${encodeURIComponent(newAnswers)}`
       )
       setGuidedStep(data)
       if (data.done && data.package) {
@@ -358,47 +378,165 @@ export default function FacilitatorPromoterAssignPage() {
           )}
 
           {/* ── STAGE: confirm_farmer ── */}
-          {stage === 'confirm_farmer' && farmer && (
-            <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Farmer found</p>
-              <p className="text-sm text-[#7A8C7E] mb-5">Confirm details before picking the crop</p>
+          {stage === 'confirm_farmer' && farmer && (() => {
+            // Typeahead state — mirrors /subscribe so the F-P can override
+            // the farmer's saved district (e.g. for a plot in a different
+            // district than the farmer's home). The Package they end up
+            // resolving carries its own PackageLocation, so the
+            // Subscription's location is implicit in the Package.
+            const coshStates = coshLocations?.states ?? []
+            const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
+            const selectedDistrict = (selectedState?.districts ?? []).find(d => d.cosh_id === district) || null
+            const stateName = selectedState?.name || ''
+            const districtName = selectedDistrict?.name || ''
+            const filteredStates = coshStates
+              .filter(s => s.name)
+              .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+            const filteredDistricts = (selectedState?.districts ?? [])
+              .filter(d => d.name)
+              .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
+            const hasResolvedLocation = !!(district && districtName)
 
-              <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-5">
-                <p className="font-semibold text-[#6B3F1F]">{farmer.name || 'Unnamed farmer'}</p>
-                <p className="text-sm text-[#7A8C7E] mt-0.5">+91{phone}</p>
-                {farmer.district_cosh_id && (
-                  <p className="text-xs text-[#7A8C7E] mt-0.5">District: {farmer.district_cosh_id}</p>
+            return (
+              <div>
+                <p className="text-xl font-bold text-[#6B3F1F] mb-1">Farmer found</p>
+                <p className="text-sm text-[#7A8C7E] mb-5">Confirm where the farmland is before picking the crop</p>
+
+                <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-5">
+                  <p className="font-semibold text-[#6B3F1F]">{farmer.name || 'Unnamed farmer'}</p>
+                  <p className="text-sm text-[#7A8C7E] mt-0.5">+91{phone}</p>
+                </div>
+
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Farmland location</p>
+                {!coshLocations && (
+                  <div className="flex items-center gap-3 text-[#7A8C7E] text-sm mb-3">
+                    <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#7D4E00] rounded-full animate-spin"/>
+                    Loading states and districts…
+                  </div>
                 )}
+
+                {/* Resolved-location chip. Tap Change to switch plots. */}
+                {coshLocations && hasResolvedLocation && !editingLocation && (
+                  <div className="mb-4 px-4 py-3 rounded-2xl border border-[#7D4E00]/30 bg-[#7D4E00]/10 flex items-start gap-3">
+                    <span className="text-lg leading-none mt-0.5">📍</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] uppercase tracking-wide font-semibold text-[#7D4E00]">Farmland district</p>
+                      <p className="text-[#6B3F1F] font-semibold text-[15px] mt-0.5">
+                        {districtName} <span className="text-[#7A8C7E] font-normal">· {stateName || '—'}</span>
+                      </p>
+                    </div>
+                    <button onClick={() => { setEditingLocation(true); setStateSearch(''); setDistrictSearch('') }}
+                      className="text-[12px] text-[#7D4E00] underline shrink-0">
+                      Change
+                    </button>
+                  </div>
+                )}
+
+                {coshLocations && (!hasResolvedLocation || editingLocation) && (
+                  <div className="space-y-3 mb-4">
+                    {/* State */}
+                    <div>
+                      <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">State</label>
+                      {stateId ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#7D4E00]/10 text-[#7D4E00] text-sm font-medium px-3 py-1.5 rounded-full">
+                            {stateName || '(unnamed)'}
+                          </span>
+                          <button onClick={() => {
+                              setStateId(''); setStateSearch('')
+                              setDistrict(''); setDistrictSearch('')
+                            }}
+                            className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                        </div>
+                      ) : (
+                        <>
+                          <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
+                            placeholder="Search state…"
+                            className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"/>
+                          {stateSearch && (
+                            <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                              {filteredStates.length === 0
+                                ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No states found</p>
+                                : filteredStates.map(s => (
+                                  <button key={s.cosh_id}
+                                    onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
+                                    className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                    {s.name}
+                                  </button>
+                                ))
+                              }
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* District — bounded to the chosen state. */}
+                    {stateId && (
+                      <div>
+                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">District</label>
+                        {district ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#7D4E00]/10 text-[#7D4E00] text-sm font-medium px-3 py-1.5 rounded-full">
+                              {districtName || '(unnamed)'}
+                            </span>
+                            <button onClick={() => { setDistrict(''); setDistrictSearch('') }}
+                              className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                          </div>
+                        ) : (
+                          <>
+                            <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
+                              placeholder="Search district…"
+                              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"/>
+                            {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
+                              <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                                {filteredDistricts.length === 0
+                                  ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No districts found</p>
+                                  : filteredDistricts.map(d => (
+                                    <button key={d.cosh_id}
+                                      onClick={() => {
+                                        setDistrict(d.cosh_id); setDistrictSearch('')
+                                        setEditingLocation(false)
+                                      }}
+                                      className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                      {d.name}
+                                    </button>
+                                  ))
+                                }
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {error && <p className="text-[#D4682E] text-xs mt-1 mb-2">{error}</p>}
+                <button
+                  onClick={continueToCrops}
+                  disabled={loading || !district}
+                  className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
+                  style={{ background: COLOUR }}>
+                  {loading ? 'Loading crops…' : 'Continue →'}
+                </button>
+                <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
+                  ← Back
+                </button>
               </div>
-
-              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Farmer&apos;s district</p>
-              <input
-                value={farmerDistrict}
-                onChange={e => setFarmerDistrict(e.target.value)}
-                placeholder="e.g. dist_mh_pune"
-                className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20 mb-4"
-              />
-
-              {error && <p className="text-[#D4682E] text-xs mt-1 mb-2">{error}</p>}
-              <button
-                onClick={continueToCrops}
-                disabled={loading || !farmerDistrict}
-                className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
-                style={{ background: COLOUR }}>
-                {loading ? 'Loading crops…' : 'Continue →'}
-              </button>
-              <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
-                ← Back
-              </button>
-            </div>
-          )}
+            )
+          })()}
 
           {/* ── STAGE: crop ── */}
-          {stage === 'crop' && (
+          {stage === 'crop' && (() => {
+            const stateRow = coshLocations?.states.find(s => s.cosh_id === stateId)
+            const districtRow = stateRow?.districts.find(d => d.cosh_id === district)
+            const districtLabel = districtRow?.name || district
+            return (
             <div>
               <p className="text-xl font-bold text-[#6B3F1F] mb-1">Select crop</p>
               <p className="text-sm text-[#7A8C7E] mb-5">
-                Crops available for {kitty?.client_display_name} in {farmerDistrict.replace('dist_', '').replace(/_/g, ' ')}
+                Crops available for {kitty?.client_display_name} in {districtLabel}
               </p>
               {crops.length === 0 ? (
                 <p className="text-[#7A8C7E] text-sm py-6 text-center">
@@ -426,7 +564,8 @@ export default function FacilitatorPromoterAssignPage() {
                 ← Back
               </button>
             </div>
-          )}
+            )
+          })()}
 
           {/* ── STAGE: guided ── */}
           {stage === 'guided' && guidedStep && !guidedStep.done && (
