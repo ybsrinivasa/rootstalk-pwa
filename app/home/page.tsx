@@ -23,8 +23,11 @@ type Subscription = {
   pending_payment_from?: {
     user_id: string
     name: string | null
+    phone: string | null              // 2026-05-29: tap-to-call source
     role: 'DEALER' | 'FACILITATOR' | 'OTHER'
     expires_at: string | null
+    hours_remaining: number           // 2026-05-29: backend-computed countdown
+    payment_request_id: string        // 2026-05-29
   } | null
 }
 
@@ -72,7 +75,13 @@ export default function HomePage() {
       await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`)
       await load()
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      // 2026-05-29: backend now refuses unsubscribe when a payment
+      // request is currently PENDING. Surface the structured message
+      // so the farmer knows to cancel the payment request first.
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message
       alert(msg || 'Could not cancel. Please try again.')
     } finally { setCancellingSub(null) }
   }
@@ -225,6 +234,26 @@ export default function HomePage() {
                               : <>Waiting for <span className="font-semibold">{delegateName}</span> ({roleLabel}) to pay.</>
                             }
                           </p>
+                          {/* Delegate's phone + countdown — 2026-05-29 */}
+                          {!isSelfPending && (
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              {delegate?.phone ? (
+                                <a href={`tel:${delegate.phone}`}
+                                  className="inline-flex items-center gap-1 text-[12px] font-medium px-2.5 py-1 rounded-full"
+                                  style={{ background: '#fff', color: C.accent, border: `1px solid ${C.accent}66` }}>
+                                  📞 {delegate.phone}
+                                </a>
+                              ) : <span />}
+                              {typeof delegate?.hours_remaining === 'number' && (
+                                <span className="text-[11px] font-medium"
+                                  style={{ color: delegate.hours_remaining <= 6 ? '#B85C00' : C.textSecond }}>
+                                  {delegate.hours_remaining === 0
+                                    ? 'Expiring soon'
+                                    : `${delegate.hours_remaining}h remaining`}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -254,22 +283,23 @@ export default function HomePage() {
                             style={{ background: C.accent, minHeight: 48 }}>
                             Pay myself instead →
                           </button>
-                          <div className="grid grid-cols-2 gap-2 mt-2">
-                            <button
-                              onClick={() => cancelDelegationRequest(sub)}
-                              disabled={cancellingSub === sub.id}
-                              className="py-2 text-xs"
-                              style={{ color: C.textSecond }}>
-                              {cancellingSub === sub.id ? 'Working…' : 'Cancel request'}
-                            </button>
-                            <button
-                              onClick={() => cancelPendingPayment(sub)}
-                              disabled={cancellingSub === sub.id}
-                              className="py-2 text-xs"
-                              style={{ color: C.textSecond }}>
-                              Cancel subscription
-                            </button>
-                          </div>
+                          {/* 2026-05-29: cancel-and-route — while the
+                              payment is pending with someone else,
+                              the only teardown action is "Cancel
+                              request". The farmer can cancel the
+                              subscription itself only after the
+                              request is cleared (backend enforces
+                              the same guard with HTTP 409). */}
+                          <button
+                            onClick={() => cancelDelegationRequest(sub)}
+                            disabled={cancellingSub === sub.id}
+                            className="w-full mt-2 py-2 text-xs"
+                            style={{ color: C.textSecond }}>
+                            {cancellingSub === sub.id ? 'Working…' : 'Cancel request'}
+                          </button>
+                          <p className="mt-1 text-[11px] text-center" style={{ color: C.textSecond, opacity: 0.7 }}>
+                            To cancel the subscription itself, cancel this request first.
+                          </p>
                         </>
                       )}
                     </div>
