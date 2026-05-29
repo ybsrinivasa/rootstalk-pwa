@@ -21,13 +21,15 @@ type Subscription = {
   crop_cosh_id?: string | null
   crop_name?: string | null
   pending_payment_from?: {
-    user_id: string
+    payment_request_id: string
+    method: 'DELEGATE' | 'SHARE_LINK'   // V1.1 share-link 2026-05-29
+    user_id: string | null              // null when method='SHARE_LINK'
     name: string | null
-    phone: string | null              // 2026-05-29: tap-to-call source
+    phone: string | null
     role: 'DEALER' | 'FACILITATOR' | 'OTHER'
+    short_url: string | null            // method='SHARE_LINK' only
     expires_at: string | null
-    hours_remaining: number           // 2026-05-29: backend-computed countdown
-    payment_request_id: string        // 2026-05-29
+    hours_remaining: number
   } | null
 }
 
@@ -210,6 +212,7 @@ export default function HomePage() {
                   const info = clientInfos[sub.client_id]
                   const delegate = sub.pending_payment_from
                   const isSelfPending = !delegate
+                  const isShareLink = delegate?.method === 'SHARE_LINK'
                   const cropLabel = sub.crop_name || (sub.crop_cosh_id ? '' : '')
                   const cardLabel = [info?.display_name, cropLabel].filter(Boolean).join(' · ')
                   const roleLabel = delegate?.role === 'DEALER' ? 'dealer'
@@ -231,18 +234,25 @@ export default function HomePage() {
                             Your <span className="font-semibold">{cardLabel || 'advisory'}</span> subscription is reserved.{' '}
                             {isSelfPending
                               ? 'Complete payment to activate the advisory.'
-                              : <>Waiting for <span className="font-semibold">{delegateName}</span> ({roleLabel}) to pay.</>
+                              : isShareLink
+                                ? 'Your payment link is active — anyone with it can pay via UPI.'
+                                : <>Waiting for <span className="font-semibold">{delegateName}</span> ({roleLabel}) to pay.</>
                             }
                           </p>
-                          {/* Delegate's phone + countdown — 2026-05-29 */}
                           {!isSelfPending && (
                             <div className="mt-2 flex items-center justify-between gap-2">
-                              {delegate?.phone ? (
+                              {/* DELEGATE: phone chip; SHARE_LINK: 🔗 chip. */}
+                              {!isShareLink && delegate?.phone ? (
                                 <a href={`tel:${delegate.phone}`}
                                   className="inline-flex items-center gap-1 text-[12px] font-medium px-2.5 py-1 rounded-full"
                                   style={{ background: '#fff', color: C.accent, border: `1px solid ${C.accent}66` }}>
                                   📞 {delegate.phone}
                                 </a>
+                              ) : isShareLink ? (
+                                <span className="inline-flex items-center gap-1 text-[12px] font-medium px-2.5 py-1 rounded-full"
+                                  style={{ background: '#fff', color: C.accent, border: `1px solid ${C.accent}66` }}>
+                                  🔗 Payment link
+                                </span>
                               ) : <span />}
                               {typeof delegate?.hours_remaining === 'number' && (
                                 <span className="text-[11px] font-medium"
@@ -274,6 +284,29 @@ export default function HomePage() {
                               {cancellingSub === sub.id ? 'Cancelling…' : 'Cancel this subscription'}
                             </button>
                           )}
+                        </>
+                      ) : isShareLink ? (
+                        <>
+                          {/* SHARE_LINK variant — primary CTA goes
+                              straight to the share screen so the
+                              farmer can re-show the QR to whoever's
+                              paying. */}
+                          <button
+                            onClick={() => router.push(`/share-link/${delegate!.payment_request_id}`)}
+                            className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
+                            style={{ background: C.accent, minHeight: 48 }}>
+                            Show QR &amp; share →
+                          </button>
+                          <button
+                            onClick={() => cancelDelegationRequest(sub)}
+                            disabled={cancellingSub === sub.id}
+                            className="w-full mt-2 py-2 text-xs"
+                            style={{ color: C.textSecond }}>
+                            {cancellingSub === sub.id ? 'Working…' : 'Cancel link'}
+                          </button>
+                          <p className="mt-1 text-[11px] text-center" style={{ color: C.textSecond, opacity: 0.7 }}>
+                            To cancel the subscription itself, cancel this link first.
+                          </p>
                         </>
                       ) : (
                         <>

@@ -378,6 +378,25 @@ function SubscribeFlow() {
     }
   }, [subscription])
 
+  // ── V1.1 share-payment-link (2026-05-29) ──────────────────────────────────
+  // Anyone with the link/QR can pay via any UPI app; webhook reconciles.
+  async function generateShareLink() {
+    if (!subscription) return
+    setBusy(true); setError('')
+    try {
+      const { data } = await api.post<{ payment_request_id: string }>(
+        `/farmer/subscriptions/${subscription.id}/payment-link`,
+      )
+      router.push(`/share-link/${data.payment_request_id}`)
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message
+      setError(msg || 'Could not generate the payment link. Please try again.')
+    } finally { setBusy(false) }
+  }
+
   // ── Delegate payment ───────────────────────────────────────────────────────
   async function sendDelegateRequest() {
     if (!subscription || !delegatePhone.trim()) return
@@ -923,6 +942,31 @@ function SubscribeFlow() {
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
                           style={{ background: '#3A7D44' }}>
                           Select facilitator →
+                        </button>
+                      </div>
+
+                      {/* Share a payment link / QR — V1.1 (2026-05-29).
+                          Anyone (relative in a city, friend) can pay via
+                          any UPI app. They don't need to be on RootsTalk. */}
+                      <div className="rounded-2xl border-2 p-4"
+                        style={{ borderColor: '#3A7D44', background: '#F0F9F2' }}>
+                        <div className="flex items-start gap-2">
+                          <span className="text-xl leading-none mt-0.5">🔗</span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-[#6B3F1F]">
+                              Share a payment link / QR
+                            </p>
+                            <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
+                              Send a link to anyone — your son in the city, a relative, a friend. They pay via any UPI app.
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={generateShareLink}
+                          disabled={busy}
+                          className="w-full py-3.5 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
+                          style={{ background: '#3A7D44' }}>
+                          {busy ? 'Generating…' : 'Generate link & QR →'}
                         </button>
                       </div>
                     </div>
