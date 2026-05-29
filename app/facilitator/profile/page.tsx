@@ -12,11 +12,22 @@ interface PromotedFarmer {
   client_name?: string | null; client_colour?: string | null
 }
 
+interface OnboardingClient {
+  client_id: string
+  client_name: string
+  short_name: string
+  logo_url: string | null
+  primary_colour: string | null
+  is_promoter: boolean
+  onboarded_at: string
+}
+
 interface CompanySummary {
   client_id: string
   client_name: string
   client_colour: string
   farmer_count: number
+  is_promoter: boolean
 }
 
 const COLOUR = '#7D4E00'
@@ -37,25 +48,34 @@ export default function FacilitatorProfilePage() {
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
 
-    api.get<PromotedFarmer[]>('/facilitator/promoted-farmers')
-      .then(res => {
-        const farmers = res.data
-        const map: Record<string, CompanySummary> = {}
+    // /facilitator/onboarding-clients is the source of truth for which
+    // companies have onboarded this Facilitator (R14). Combine it with
+    // /facilitator/promoted-farmers to layer in the per-company farmer
+    // count — that endpoint is the source for farmer assignments, and
+    // a Facilitator can be onboarded by a company without yet being
+    // their Promoter (so farmer count may legitimately be 0).
+    Promise.allSettled([
+      api.get<OnboardingClient[]>('/facilitator/onboarding-clients'),
+      api.get<PromotedFarmer[]>('/facilitator/promoted-farmers'),
+    ])
+      .then(([onboardingRes, farmersRes]) => {
+        const onboarding = onboardingRes.status === 'fulfilled'
+          ? onboardingRes.value.data : []
+        const farmers = farmersRes.status === 'fulfilled'
+          ? farmersRes.value.data : []
+        const farmerCountByClient: Record<string, number> = {}
         farmers.forEach(f => {
           if (!f.client_id) return
-          if (!map[f.client_id]) {
-            map[f.client_id] = {
-              client_id: f.client_id,
-              client_name: f.client_name || 'Company',
-              client_colour: f.client_colour || COLOUR,
-              farmer_count: 0,
-            }
-          }
-          map[f.client_id].farmer_count += 1
+          farmerCountByClient[f.client_id] = (farmerCountByClient[f.client_id] || 0) + 1
         })
-        setCompanies(Object.values(map))
+        setCompanies(onboarding.map(c => ({
+          client_id: c.client_id,
+          client_name: c.client_name || 'Company',
+          client_colour: c.primary_colour || COLOUR,
+          farmer_count: farmerCountByClient[c.client_id] || 0,
+          is_promoter: c.is_promoter,
+        })))
       })
-      .catch(() => {})
       .finally(() => setLoadingData(false))
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -127,7 +147,10 @@ export default function FacilitatorProfilePage() {
           </div>
         </div>
 
-        {/* My Companies — A3b */}
+        {/* My Companies — R14: the source-of-truth list of Clients
+            that have onboarded this Facilitator (active rows only).
+            "Promoter" badge marks the at-most-one Client where the
+            Facilitator is currently the Promoter (§11.2 exclusivity). */}
         {!loadingData && companies.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5">
             <h2 className="font-semibold text-[#6B3F1F] mb-3">My Companies</h2>
@@ -135,13 +158,30 @@ export default function FacilitatorProfilePage() {
               {companies.map(c => (
                 <div key={c.client_id} className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: c.client_colour }} />
-                  <div>
-                    <p className="text-sm font-semibold text-[#6B3F1F]">{c.client_name}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-[#6B3F1F] truncate">{c.client_name}</p>
+                      {c.is_promoter && (
+                        <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0">
+                          Promoter
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-[#7A8C7E]">{c.farmer_count} promoted {c.farmer_count === 1 ? 'farmer' : 'farmers'}</p>
                   </div>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+        {!loadingData && companies.length === 0 && user?.facilitator_declared_at && (
+          <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5 text-center">
+            <span className="text-3xl">🏢</span>
+            <h2 className="font-semibold text-[#6B3F1F] mt-2">No companies yet</h2>
+            <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
+              You haven&apos;t been onboarded as a Facilitator by any company yet.
+              Ask a Field Manager at the company you want to work with to onboard you.
+            </p>
           </div>
         )}
 
