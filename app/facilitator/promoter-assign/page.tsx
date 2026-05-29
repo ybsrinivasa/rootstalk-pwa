@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -8,7 +8,14 @@ import { cropDisplayName } from '@/lib/crop-name'
 
 const COLOUR = '#7D4E00'
 
-type Stage = 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'confirm' | 'done'
+type Stage = 'gate' | 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'measure' | 'confirm' | 'done'
+
+interface KittyInfo {
+  client_id: string
+  client_short_name: string
+  client_display_name: string
+  units_balance: number
+}
 
 interface FarmerInfo {
   id: string
@@ -16,22 +23,6 @@ interface FarmerInfo {
   phone: string
   state_cosh_id: string | null
   district_cosh_id: string | null
-}
-
-interface PromotedFarmer {
-  subscription_id: string
-  farmer_name: string | null
-  farmer_phone: string | null
-  client_id: string
-  status: string
-  reference_number: string | null
-}
-
-interface ClientInfo {
-  id: string
-  display_name: string
-  primary_colour: string
-  logo_url: string | null
 }
 
 interface CropOption {
@@ -48,13 +39,16 @@ interface GuidedStep {
   error?: string
 }
 
+type Measure = 'AREA_WISE' | 'PLANT_WISE'
+
 function formatCropName(coshId: string, name?: string | null): string {
   return cropDisplayName(coshId, name)
 }
 
 function ProgressBar({ stage }: { stage: Stage }) {
-  const steps: Stage[] = ['phone', 'confirm_farmer', 'crop', 'guided', 'confirm', 'done']
+  const steps: Stage[] = ['phone', 'confirm_farmer', 'crop', 'guided', 'measure', 'confirm', 'done']
   const idx = steps.indexOf(stage)
+  if (idx < 0) return null
   return (
     <div className="flex gap-1 mb-6">
       {steps.map((s, i) => (
@@ -67,14 +61,12 @@ function ProgressBar({ stage }: { stage: Stage }) {
 
 export default function FacilitatorPromoterAssignPage() {
   const router = useRouter()
-  const [stage, setStage] = useState<Stage>('phone')
+  const [stage, setStage] = useState<Stage>('gate')
+  const [kitty, setKitty] = useState<KittyInfo | null>(null)
+  const [kittyError, setKittyError] = useState<string | null>(null)
   const [phone, setPhone] = useState('')
   const [farmer, setFarmer] = useState<FarmerInfo | null>(null)
   const [farmerDistrict, setFarmerDistrict] = useState('')
-  const [existingFarmers, setExistingFarmers] = useState<PromotedFarmer[]>([])
-  const [selectedClientId, setSelectedClientId] = useState('')
-  const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null)
-  const [availableClients, setAvailableClients] = useState<{ id: string; name: string }[]>([])
   const [crops, setCrops] = useState<CropOption[]>([])
   const [selectedCrop, setSelectedCrop] = useState('')
   const [answers, setAnswers] = useState('')
@@ -82,62 +74,49 @@ export default function FacilitatorPromoterAssignPage() {
   const [resolvedPackageId, setResolvedPackageId] = useState('')
   const [resolvedPackageName, setResolvedPackageName] = useState('')
   const [answerHistory, setAnswerHistory] = useState<{ param: string; varName: string }[]>([])
+  // Measure step state (B2 contract — exactly one branch required).
+  const [measure, setMeasure] = useState<Measure>('AREA_WISE')
+  const [areaInput, setAreaInput] = useState('')
+  const [plantsInput, setPlantsInput] = useState('')
+  const [yearInput, setYearInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // Pool guard — refreshed whenever the selected company changes.
-  const [poolBalance, setPoolBalance] = useState<number | null>(null)
-  const [poolChecking, setPoolChecking] = useState(false)
+
+  // Single source of truth for the kitty gate. Called on mount, on
+  // tab focus (visibilitychange), and after every send/cancel so the
+  // chip never lies if the CA tops up or reclaims while the F-P is
+  // in the flow.
+  const refreshKitty = useCallback(async () => {
+    try {
+      const { data } = await api.get<KittyInfo>('/promoter/me/kitty')
+      setKitty(data)
+      setKittyError(null)
+    } catch (e: unknown) {
+      const err = e as { response?: { status?: number; data?: { detail?: { code?: string } | string } } }
+      const code = typeof err?.response?.data === 'object'
+        ? (err.response.data as { detail?: { code?: string } }).detail?.code
+        : null
+      if (err?.response?.status === 403 && code === 'not_a_promoter') {
+        setKittyError('You are not currently a Promoter for any company. Ask the company admin to invite you.')
+      } else {
+        setKittyError('Could not load your subscription kitty. Pull to retry.')
+      }
+      setKitty(null)
+    }
+  }, [])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    // Load existing promoted farmers to know current company
-    api.get<PromotedFarmer[]>('/facilitator/promoted-farmers')
-      .then(r => {
-        setExistingFarmers(r.data)
-        // Extract unique client IDs from existing assignments
-        const clientIds = [...new Set(r.data.map((f: PromotedFarmer) => f.client_id))]
-        if (clientIds.length > 0) {
-          // Pre-select the existing company (facilitator can only promote for one)
-          setSelectedClientId(clientIds[0])
-          // Fetch client info for each
-          Promise.allSettled(
-            clientIds.map(id => api.get<ClientInfo>(`/client/${id}/info`).then(res => ({ id, data: res.data })))
-          ).then(results => {
-            const clients: { id: string; name: string }[] = []
-            results.forEach(r => {
-              if (r.status === 'fulfilled') {
-                clients.push({ id: r.value.id, name: r.value.data.display_name })
-              }
-            })
-            setAvailableClients(clients)
-          })
-        }
-      })
-      .catch(() => {})
-  }, [])
+    refreshKitty().then(() => setStage(s => s === 'gate' ? 'phone' : s))
+  }, [refreshKitty, router])
 
-  // Load client info when company selected
   useEffect(() => {
-    if (!selectedClientId) return
-    api.get<ClientInfo>(`/client/${selectedClientId}/info`)
-      .then(r => setClientInfo(r.data))
-      .catch(() => {})
-  }, [selectedClientId])
-
-  // Whenever the promoter picks a company, ask whether that company has
-  // pool balance to spend. Block the Continue button if not — saves the
-  // promoter from walking the entire BL-01 flow only to be 422'd at
-  // initiate-assignment.
-  useEffect(() => {
-    if (!selectedClientId) { setPoolBalance(null); return }
-    setPoolChecking(true)
-    api.get<{ available_units: number; can_assign: boolean }>(
-      `/client/${selectedClientId}/subscription-pool/can-assign`,
-    )
-      .then(r => setPoolBalance(r.data.available_units))
-      .catch(() => setPoolBalance(null))
-      .finally(() => setPoolChecking(false))
-  }, [selectedClientId])
+    function onVisibility() {
+      if (!document.hidden) refreshKitty()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [refreshKitty])
 
   async function verifyPhone() {
     if (phone.length < 10) { setError('Enter a valid 10-digit number'); return }
@@ -154,22 +133,14 @@ export default function FacilitatorPromoterAssignPage() {
     } finally { setLoading(false) }
   }
 
-  async function continueTocrops() {
-    if (!selectedClientId) { setError('Please select a company'); return }
+  async function continueToCrops() {
     if (!farmerDistrict) { setError('Please enter farmer district'); return }
     setError('')
-
-    // Facilitator: check one-company rule
-    const otherCompanyIds = [...new Set(existingFarmers.map(f => f.client_id))].filter(id => id !== selectedClientId)
-    if (otherCompanyIds.length > 0 && !existingFarmers.some(f => f.client_id === selectedClientId)) {
-      const otherClientName = availableClients.find(c => c.id === otherCompanyIds[0])?.name || otherCompanyIds[0]
-      setError(`You are already a Promoter for ${otherClientName}. A facilitator can only promote for one company at a time.`)
-      return
-    }
-
     setLoading(true)
     try {
-      const { data } = await api.get<CropOption[]>(`/farmer/discover/crops?district_cosh_id=${encodeURIComponent(farmerDistrict)}`)
+      const { data } = await api.get<CropOption[]>(
+        `/promoter/crops?district_cosh_id=${encodeURIComponent(farmerDistrict)}`
+      )
       setCrops(data)
       setStage('crop')
     } catch {
@@ -183,14 +154,16 @@ export default function FacilitatorPromoterAssignPage() {
     setAnswerHistory([])
     setLoading(true)
     try {
+      // /promoter/packages/guided-step — server derives client_id
+      // from the F-P's locked binding, so no client_id query param.
       const { data } = await api.get<GuidedStep>(
-        `/farmer/packages/guided-step?crop_cosh_id=${encodeURIComponent(cropId)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&client_id=${encodeURIComponent(selectedClientId)}&answers=`
+        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(cropId)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&answers=`
       )
       setGuidedStep(data)
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
         setResolvedPackageName(data.package.name)
-        setStage('confirm')
+        setStage('measure')
       } else {
         setStage('guided')
       }
@@ -206,44 +179,131 @@ export default function FacilitatorPromoterAssignPage() {
     setLoading(true)
     try {
       const { data } = await api.get<GuidedStep>(
-        `/farmer/packages/guided-step?crop_cosh_id=${encodeURIComponent(selectedCrop)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&client_id=${encodeURIComponent(selectedClientId)}&answers=${encodeURIComponent(newAnswers)}`
+        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(selectedCrop)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&answers=${encodeURIComponent(newAnswers)}`
       )
       setGuidedStep(data)
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
         setResolvedPackageName(data.package.name)
-        setStage('confirm')
+        setStage('measure')
       }
     } catch {
       setError('Error fetching next step.')
     } finally { setLoading(false) }
   }
 
-  // Start over: reset answers and restart guided questions on the same
-  // crop+company. Different intent from "← Back" (which moves stage).
   async function startOver() {
     if (!selectedCrop) return
     setError('')
     setResolvedPackageId('')
     setResolvedPackageName('')
+    setAreaInput('')
+    setPlantsInput('')
+    setYearInput('')
+    setMeasure('AREA_WISE')
     await selectCrop(selectedCrop)
+  }
+
+  function confirmMeasure() {
+    setError('')
+    if (measure === 'AREA_WISE') {
+      const acres = parseFloat(areaInput)
+      if (!Number.isFinite(acres) || acres <= 0) {
+        setError('Enter the farm area in acres (e.g. 1.5).')
+        return
+      }
+    } else {
+      const n = parseInt(plantsInput, 10)
+      const y = parseInt(yearInput, 10)
+      if (!Number.isFinite(n) || n <= 0) {
+        setError('Enter the number of plants.')
+        return
+      }
+      if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+        setError('Enter the planting year (e.g. 2024).')
+        return
+      }
+    }
+    setStage('confirm')
   }
 
   async function sendRequest() {
     setLoading(true)
     setError('')
     try {
-      await api.post('/promoter/assignments/initiate', {
+      const body: Record<string, unknown> = {
         farmer_phone: `+91${phone}`,
-        client_id: selectedClientId,
         package_id: resolvedPackageId,
         promoter_type: 'FACILITATOR',
-      })
+      }
+      if (measure === 'AREA_WISE') {
+        body.farm_area_acres = parseFloat(areaInput)
+      } else {
+        body.number_of_plants = parseInt(plantsInput, 10)
+        body.planting_year = parseInt(yearInput, 10)
+      }
+      await api.post('/promoter/assignments/initiate', body)
+      // Kitty just dropped by 1 — re-fetch to reflect it.
+      await refreshKitty()
       setStage('done')
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string } } }
-      setError(err?.response?.data?.detail || 'Could not send request. Please try again.')
+      const err = e as { response?: { data?: { detail?: string | { message?: string } } } }
+      const detail = err?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : detail?.message || 'Could not send request. Please try again.'
+      setError(msg)
     } finally { setLoading(false) }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────
+
+  if (stage === 'gate') {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title="Assign Advisory" activeRole="FACILITATOR" back="/facilitator/home" />
+        <div className="pt-16 px-4 max-w-lg mx-auto">
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4E00] rounded-full animate-spin" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Empty-state when kitty is empty or F-P has no binding. Blocks
+  // the entire flow per the B1 design — no point letting the F-P
+  // type a phone number when we cannot accept their assignment.
+  if (kittyError || (kitty && kitty.units_balance === 0)) {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title="Assign Advisory" activeRole="FACILITATOR" back="/facilitator/home" />
+        <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-base font-bold text-amber-900 mb-2">No subscriptions available</p>
+            <p className="text-sm text-amber-800 leading-relaxed">
+              {kittyError ||
+                'Your kitty is empty. Ask your company admin to allocate units to you before you assign advisories to farmers.'}
+            </p>
+            {kitty && (
+              <p className="mt-3 text-xs text-amber-800/80">
+                Company: <span className="font-semibold">{kitty.client_display_name}</span>
+              </p>
+            )}
+          </div>
+          <button
+            onClick={refreshKitty}
+            className="mt-4 w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
+            ↻ Refresh
+          </button>
+          <button
+            onClick={() => router.push('/facilitator/promoter-assign/pending')}
+            className="mt-3 w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
+            View pending sent →
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -251,6 +311,23 @@ export default function FacilitatorPromoterAssignPage() {
       <PWAHeader title="Assign Advisory" activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
+          {/* Refreshable kitty chip — pinned across every stage so the
+              F-P always sees their remaining balance. */}
+          {kitty && stage !== 'done' && (
+            <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-full bg-emerald-50 border border-emerald-200">
+              <span className="text-xs text-emerald-800">
+                <span className="font-semibold">{kitty.units_balance.toLocaleString('en-IN')}</span>{' '}
+                subscription{kitty.units_balance === 1 ? '' : 's'} left for{' '}
+                <span className="font-semibold">{kitty.client_display_name}</span>
+              </span>
+              <button
+                onClick={() => router.push('/facilitator/promoter-assign/pending')}
+                className="text-xs font-semibold text-emerald-900 underline underline-offset-2">
+                Pending sent
+              </button>
+            </div>
+          )}
+
           <ProgressBar stage={stage} />
 
           {/* ── STAGE: phone ── */}
@@ -284,7 +361,7 @@ export default function FacilitatorPromoterAssignPage() {
           {stage === 'confirm_farmer' && farmer && (
             <div>
               <p className="text-xl font-bold text-[#6B3F1F] mb-1">Farmer found</p>
-              <p className="text-sm text-[#7A8C7E] mb-5">Confirm details and select a company</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">Confirm details before picking the crop</p>
 
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-5">
                 <p className="font-semibold text-[#6B3F1F]">{farmer.name || 'Unnamed farmer'}</p>
@@ -294,34 +371,6 @@ export default function FacilitatorPromoterAssignPage() {
                 )}
               </div>
 
-              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Which company&apos;s advisory?</p>
-              {availableClients.length > 0 ? (
-                <div className="space-y-2 mb-4">
-                  {availableClients.map(c => (
-                    <button
-                      key={c.id}
-                      onClick={() => setSelectedClientId(c.id)}
-                      className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                        selectedClientId === c.id
-                          ? 'border-[#7D4E00] bg-[#7D4E00]/5 text-[#7D4E00]'
-                          : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
-                      }`}>
-                      {c.name}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <input
-                    value={selectedClientId}
-                    onChange={e => setSelectedClientId(e.target.value.trim())}
-                    placeholder="Enter company (client) ID"
-                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
-                  />
-                  <p className="text-xs text-[#7A8C7E] mt-1">You have no existing promoted farmers. Enter a client ID to continue.</p>
-                </div>
-              )}
-
               <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Farmer&apos;s district</p>
               <input
                 value={farmerDistrict}
@@ -330,36 +379,13 @@ export default function FacilitatorPromoterAssignPage() {
                 className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20 mb-4"
               />
 
-              {/* Allocation-balance guard — block when this promoter
-                  has 0 units allocated for the selected company. */}
-              {selectedClientId && !poolChecking && poolBalance === 0 && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 mb-3">
-                  <span className="font-semibold">You have no subscriptions allocated to you for this company. </span>
-                  Ask the company admin to allocate units to you before you can assign advisories to farmers.
-                </div>
-              )}
-
-              {/* Available-balance chip — only shows when there are units. */}
-              {selectedClientId && !poolChecking && poolBalance != null && poolBalance > 0 && (
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs text-emerald-800 mb-3">
-                  <span aria-hidden>•</span>
-                  <span>
-                    <span className="font-semibold">{poolBalance.toLocaleString('en-IN')}</span>{' '}
-                    subscription{poolBalance === 1 ? '' : 's'} available
-                  </span>
-                </div>
-              )}
-
               {error && <p className="text-[#D4682E] text-xs mt-1 mb-2">{error}</p>}
               <button
-                onClick={continueTocrops}
-                disabled={loading || !selectedClientId || !farmerDistrict || poolBalance === 0 || poolChecking}
+                onClick={continueToCrops}
+                disabled={loading || !farmerDistrict}
                 className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
                 style={{ background: COLOUR }}>
-                {loading ? 'Loading crops…'
-                  : poolChecking ? 'Checking allocation…'
-                  : poolBalance === 0 ? 'No allocation — cannot assign'
-                  : 'Continue →'}
+                {loading ? 'Loading crops…' : 'Continue →'}
               </button>
               <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
                 ← Back
@@ -372,10 +398,12 @@ export default function FacilitatorPromoterAssignPage() {
             <div>
               <p className="text-xl font-bold text-[#6B3F1F] mb-1">Select crop</p>
               <p className="text-sm text-[#7A8C7E] mb-5">
-                Crops available in {farmerDistrict.replace('dist_', '').replace(/_/g, ' ')}
+                Crops available for {kitty?.client_display_name} in {farmerDistrict.replace('dist_', '').replace(/_/g, ' ')}
               </p>
               {crops.length === 0 ? (
-                <p className="text-[#7A8C7E] text-sm py-6 text-center">No crops available in this district for the selected company.</p>
+                <p className="text-[#7A8C7E] text-sm py-6 text-center">
+                  No crops available in this district for {kitty?.client_display_name}.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {crops.map(c => (
@@ -449,6 +477,94 @@ export default function FacilitatorPromoterAssignPage() {
             </div>
           )}
 
+          {/* ── STAGE: measure (F-P B4) ── */}
+          {stage === 'measure' && (
+            <div>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">How is this farm measured?</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">
+                Tell us so the advisory dosage and volume calculations match the farmer&apos;s plot.
+              </p>
+
+              <div className="flex gap-2 mb-5">
+                <button
+                  onClick={() => { setMeasure('AREA_WISE'); setError('') }}
+                  className={`flex-1 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                    measure === 'AREA_WISE'
+                      ? 'border-[#7D4E00] bg-[#7D4E00]/5 text-[#7D4E00]'
+                      : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
+                  }`}>
+                  Area-wise (acres)
+                </button>
+                <button
+                  onClick={() => { setMeasure('PLANT_WISE'); setError('') }}
+                  className={`flex-1 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                    measure === 'PLANT_WISE'
+                      ? 'border-[#7D4E00] bg-[#7D4E00]/5 text-[#7D4E00]'
+                      : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
+                  }`}>
+                  Plant-wise (count)
+                </button>
+              </div>
+
+              {measure === 'AREA_WISE' ? (
+                <div className="mb-4">
+                  <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Farm area (acres)</label>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    step="0.1"
+                    min="0"
+                    value={areaInput}
+                    onChange={e => { setAreaInput(e.target.value); setError('') }}
+                    placeholder="e.g. 1.5"
+                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Number of plants</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      value={plantsInput}
+                      onChange={e => { setPlantsInput(e.target.value); setError('') }}
+                      placeholder="e.g. 120"
+                      className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Planting year</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1900"
+                      max="2100"
+                      value={yearInput}
+                      onChange={e => { setYearInput(e.target.value); setError('') }}
+                      placeholder="e.g. 2024"
+                      className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
+                    />
+                  </div>
+                </>
+              )}
+
+              {error && <p className="text-[#D4682E] text-xs mb-3">{error}</p>}
+              <button
+                onClick={confirmMeasure}
+                className="w-full py-3.5 rounded-2xl text-white font-semibold"
+                style={{ background: COLOUR }}>
+                Review →
+              </button>
+              <button
+                onClick={startOver}
+                className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
+                ↺ Start over
+              </button>
+            </div>
+          )}
+
           {/* ── STAGE: confirm ── */}
           {stage === 'confirm' && (
             <div>
@@ -463,7 +579,7 @@ export default function FacilitatorPromoterAssignPage() {
                 </div>
                 <div className="border-t border-[#DDD0B8] pt-3">
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Company</p>
-                  <p className="font-semibold text-[#6B3F1F]">{clientInfo?.display_name || selectedClientId}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{kitty?.client_display_name}</p>
                 </div>
                 <div className="border-t border-[#DDD0B8] pt-3">
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Crop</p>
@@ -472,6 +588,14 @@ export default function FacilitatorPromoterAssignPage() {
                 <div className="border-t border-[#DDD0B8] pt-3">
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Advisory Package</p>
                   <p className="font-semibold text-[#6B3F1F]">{resolvedPackageName}</p>
+                </div>
+                <div className="border-t border-[#DDD0B8] pt-3">
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Measure</p>
+                  <p className="font-semibold text-[#6B3F1F]">
+                    {measure === 'AREA_WISE'
+                      ? `${areaInput} acres`
+                      : `${plantsInput} plants · planted ${yearInput}`}
+                  </p>
                 </div>
                 {answerHistory.length > 0 && (
                   <div className="border-t border-[#DDD0B8] pt-3">
@@ -496,10 +620,10 @@ export default function FacilitatorPromoterAssignPage() {
                 {loading ? 'Sending…' : 'Send advisory request →'}
               </button>
               <button
-                onClick={startOver}
+                onClick={() => setStage('measure')}
                 disabled={loading}
                 className="mt-3 w-full text-center text-sm text-[#7A8C7E] disabled:opacity-50">
-                ↺ Start over
+                ← Edit measure
               </button>
             </div>
           )}
@@ -510,15 +634,23 @@ export default function FacilitatorPromoterAssignPage() {
               style={{ background: COLOUR }}>
               <p className="text-4xl font-bold text-white mb-4">Request sent!</p>
               <p className="text-white/80 text-center text-base leading-relaxed mb-8">
-                <span className="font-semibold text-white">{farmer?.name || 'The farmer'}</span> will receive a notification to approve the advisory.
-                Once approved, you&apos;ll be their Promoter.
+                <span className="font-semibold text-white">{farmer?.name || 'The farmer'}</span> will receive a
+                notification to approve the advisory. You can withdraw the offer from the &ldquo;Pending sent&rdquo; list
+                until they respond.
               </p>
-              <button
-                onClick={() => router.push('/facilitator/promoted-farmers')}
-                className="py-3.5 px-8 rounded-2xl bg-white font-semibold"
-                style={{ color: COLOUR }}>
-                Back to My Promoted Farmers →
-              </button>
+              <div className="space-y-3 w-full max-w-xs">
+                <button
+                  onClick={() => router.push('/facilitator/promoter-assign/pending')}
+                  className="w-full py-3.5 px-8 rounded-2xl bg-white font-semibold"
+                  style={{ color: COLOUR }}>
+                  View pending sent →
+                </button>
+                <button
+                  onClick={() => router.push('/facilitator/promoted-farmers')}
+                  className="w-full py-3 text-white text-sm underline underline-offset-2">
+                  Back to my promoted farmers
+                </button>
+              </div>
             </div>
           )}
         </div>
