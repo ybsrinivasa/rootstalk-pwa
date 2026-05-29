@@ -53,7 +53,8 @@ interface PreStartInput {
 interface AlertPrefs {
   extra_phone: string | null
   extra_name: string | null
-  source: 'override' | 'auto_promoter' | 'none'
+  source: 'override' | 'auto_promoter' | 'disabled' | 'none'
+  disabled: boolean
 }
 interface ExpertSetting {
   mode: 'SPECIFIC' | 'PROMOTER_PUNDIT' | 'REGULAR_TEAM'
@@ -108,6 +109,8 @@ export default function CropDetailPage() {
   const [alertSheet, setAlertSheet] = useState(false)
   const [alertPhoneInput, setAlertPhoneInput] = useState('')
   const [alertNameInput, setAlertNameInput] = useState('')
+  const [alertDisabled, setAlertDisabled] = useState(false)
+  const [alertError, setAlertError] = useState<string | null>(null)
   const [savingAlerts, setSavingAlerts] = useState(false)
 
   const [expertSheet, setExpertSheet] = useState(false)
@@ -301,21 +304,38 @@ export default function CropDetailPage() {
 
   async function saveAlertPrefs() {
     setSavingAlerts(true)
+    setAlertError(null)
     try {
-      await api.post(`/farmer/subscriptions/${subscriptionId}/alert-preferences`, {
-        extra_phone: alertPhoneInput.trim() || null,
-        extra_name: alertNameInput.trim() || null,
-      })
+      const body: { extra_phone?: string | null; disabled?: boolean } =
+        alertDisabled
+          ? { disabled: true }
+          : { extra_phone: alertPhoneInput.trim() || null }
+      await api.post(`/farmer/subscriptions/${subscriptionId}/alert-preferences`, body)
       const alertsRes = await api.get<AlertPrefs>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`)
       setAlertPrefs(alertsRes.data)
       setAlertSheet(false)
       showToast('Alert preferences saved')
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
+      const detail = err?.response?.data?.detail
+      const code = typeof detail === 'object' ? detail?.code : null
+      const msg = typeof detail === 'string'
+        ? detail
+        : detail?.message ||
+          (code === 'user_not_found'
+            ? 'No RootsTalk user is registered with this number. Ask them to register first.'
+            : code === 'not_a_dealer_or_facilitator'
+              ? "This person isn't registered as a Dealer or Facilitator. Pick a number that belongs to one."
+              : 'Could not save alert preferences. Please try again.')
+      setAlertError(msg)
     } finally { setSavingAlerts(false) }
   }
 
   function openAlertSheet() {
     setAlertPhoneInput(alertPrefs?.extra_phone || '')
     setAlertNameInput(alertPrefs?.extra_name || '')
+    setAlertDisabled(alertPrefs?.disabled ?? false)
+    setAlertError(null)
     setAlertSheet(true)
   }
 
@@ -998,54 +1018,66 @@ export default function CropDetailPage() {
       )}
 
       {/* Alerts bottom sheet — single extra-recipient editor.
-          Farmer always gets alerts; this captures one phone. Empty
-          phone == clear. ASSIGNED case shows a hint that the promoter
-          will auto-prefill on next reload if cleared. */}
+          Farmer always gets alerts; this captures one phone OR an
+          explicit "nobody extra" opt-out. ASSIGNED case shows a hint
+          that the promoter auto-prefills if neither is set. */}
       {alertSheet && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingAlerts && setAlertSheet(false)}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
             <p className="font-bold text-[#6B3F1F] text-base">Extra alert recipient</p>
             <p className="text-xs text-[#7A8C7E] mt-1">
-              Enter a dealer or facilitator who should also receive alerts about this crop. You can edit this any time.
+              Choose a dealer or facilitator who should also receive alerts about this crop, or opt out of any extra recipient. You can edit this any time.
             </p>
-            <div className="mt-4 space-y-3">
-              <div>
-                <p className="text-xs text-[#7A8C7E] mb-1">Phone number</p>
-                <input
-                  type="tel" inputMode="tel"
-                  value={alertPhoneInput}
-                  onChange={e => setAlertPhoneInput(e.target.value)}
-                  placeholder="+91 XXXXX XXXXX"
-                  className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-                />
-                {/* Verify chip — auto-fills the name field with the
-                    looked-up name so the farmer can see who they're
-                    about to add before tapping Save. */}
-                <PhoneVerify
-                  phone={alertPhoneInput}
-                  onResolve={r => {
-                    if (r?.found && r.name && !alertNameInput.trim()) {
-                      setAlertNameInput(r.name)
-                    }
-                  }}
-                />
+
+            {/* Opt-out toggle. When ON, the phone input is collapsed
+                and Save persists `disabled: true`. */}
+            <label className="mt-4 flex items-center gap-3 px-3 py-2.5 rounded-xl border border-[#DDD0B8] bg-[#F5F0E8]/60 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={alertDisabled}
+                onChange={e => { setAlertDisabled(e.target.checked); setAlertError(null) }}
+                className="w-4 h-4"
+              />
+              <span className="text-sm text-[#6B3F1F]">Don&apos;t send alerts to anyone else</span>
+            </label>
+
+            {!alertDisabled && (
+              <div className="mt-3 space-y-3">
+                <div>
+                  <p className="text-xs text-[#7A8C7E] mb-1">Phone number</p>
+                  <input
+                    type="tel" inputMode="tel"
+                    value={alertPhoneInput}
+                    onChange={e => { setAlertPhoneInput(e.target.value); setAlertError(null) }}
+                    placeholder="+91 XXXXX XXXXX"
+                    className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+                  />
+                  {/* Verify chip — looks the phone up so the farmer can
+                      see who they're about to add. The backend re-verifies
+                      and refuses if not a Dealer/Facilitator. */}
+                  <PhoneVerify
+                    phone={alertPhoneInput}
+                    onResolve={r => {
+                      if (r?.found && r.name && !alertNameInput.trim()) {
+                        setAlertNameInput(r.name)
+                      }
+                    }}
+                  />
+                </div>
+                {isAssigned && (
+                  <p className="text-xs text-[#7A8C7E]">
+                    Leave blank to fall back to your promoter&apos;s number automatically.
+                  </p>
+                )}
               </div>
-              <div>
-                <p className="text-xs text-[#7A8C7E] mb-1">Name (optional)</p>
-                <input
-                  type="text"
-                  value={alertNameInput}
-                  onChange={e => setAlertNameInput(e.target.value)}
-                  placeholder="Dealer / facilitator name"
-                  className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-                />
-              </div>
-              {isAssigned && (
-                <p className="text-xs text-[#7A8C7E]">
-                  Tip: leave blank to fall back to your promoter's number automatically.
-                </p>
-              )}
-            </div>
+            )}
+
+            {alertError && (
+              <p className="mt-3 text-xs text-[#D4682E] bg-[#D4682E]/10 border border-[#D4682E]/30 rounded-lg px-3 py-2">
+                {alertError}
+              </p>
+            )}
+
             <div className="grid grid-cols-2 gap-3 mt-5">
               <button
                 onClick={() => setAlertSheet(false)}
