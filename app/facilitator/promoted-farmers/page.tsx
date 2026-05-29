@@ -47,18 +47,24 @@ export default function FacilitatorPromotedFarmersPage() {
         ) : (
           <div className="mt-4 space-y-3">
             {farmers.map(f => (
-              <div key={f.subscription_id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
+              <button
+                key={f.subscription_id}
+                onClick={() => router.push(`/facilitator/promoted-farmers/${f.subscription_id}/advisory`)}
+                className="w-full text-left bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm hover:border-[#7D4E00] transition-colors">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-[#6B3F1F]">{f.farmer_name || 'Farmer'}</p>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-[#6B3F1F] truncate">{f.farmer_name || 'Farmer'}</p>
                     <p className="text-xs text-[#7A8C7E] mt-0.5">{f.farmer_phone}</p>
                     {f.reference_number && <p className="text-xs font-mono text-[#7A8C7E] mt-0.5">{f.reference_number}</p>}
                   </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${f.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                    {f.status}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${f.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
+                      {f.status}
+                    </span>
+                    <span className="text-[#7A8C7E] text-sm" aria-hidden>›</span>
+                  </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
