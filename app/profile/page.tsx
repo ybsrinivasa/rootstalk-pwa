@@ -31,9 +31,10 @@ export default function ProfilePage() {
   const [locationLabel, setLocationLabel] = useState<string>('')
 
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
-  const [alertPref, setAlertPref] = useState<Record<string, { send_to_self: boolean; promoter_user_id: string }>>({})
-  const [savingAlert, setSavingAlert] = useState<string | null>(null)
-  const [alertSuccess, setAlertSuccess] = useState<string | null>(null)
+  // Alert-preference state used to live here (pre-2026-05-20). The
+  // canonical place to configure alert recipients is now the alert
+  // sheet on /crop-detail/<id>, which speaks the verified
+  // dealer/facilitator + opt-out contract. Profile keeps a nudge link.
 
   // Inline edit state
   const [editingName, setEditingName] = useState(false)
@@ -195,15 +196,6 @@ export default function ProfilePage() {
       }
     } catch { /* best effort */ }
     window.location.reload()
-  }
-
-  async function saveAlertPref(subId: string) {
-    setSavingAlert(subId)
-    try {
-      await api.post(`/farmer/subscriptions/${subId}/alert-preferences`, alertPref[subId] || { send_to_self: true })
-      setAlertSuccess(subId)
-      setTimeout(() => setAlertSuccess(null), 2000)
-    } finally { setSavingAlert(null) }
   }
 
   async function requestDeleteOtp() {
@@ -598,43 +590,21 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Alert Preferences (Farmer only, when subscriptions exist) */}
+            {/* Alert recipient configuration moved to /crop-detail per
+                Alerts A/B/C (2026-05-29). Each crop's alert sheet there
+                speaks the verified Dealer/Facilitator + opt-out contract;
+                the old send_to_self / raw promoter_user_id form here was
+                no longer reaching the alerts task. */}
             {subscriptions.length > 0 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-3">Alert Preferences</p>
-                <div className="space-y-3">
-                  {subscriptions.map(sub => (
-                    <div key={sub.id} className="border-t border-[#DDD0B8] first:border-0 pt-3 first:pt-0">
-                      <p className="text-xs text-[#7A8C7E] font-mono mb-3">{sub.id.slice(0, 12)}…</p>
-                      <label className="flex items-center gap-3 cursor-pointer mb-3">
-                        <input type="checkbox"
-                          checked={alertPref[sub.id]?.send_to_self !== false}
-                          onChange={e => setAlertPref(p => ({
-                            ...p,
-                            [sub.id]: { ...(p[sub.id] || {}), send_to_self: e.target.checked, promoter_user_id: p[sub.id]?.promoter_user_id || '' }
-                          }))}
-                          className="w-4 h-4 rounded" />
-                        <span className="text-sm text-[#6B3F1F]">Send alerts to my phone</span>
-                      </label>
-                      <div className="mb-3">
-                        <label className="block text-xs text-[#7A8C7E] mb-1">Also alert my promoter (user ID, optional)</label>
-                        <input
-                          value={alertPref[sub.id]?.promoter_user_id || ''}
-                          onChange={e => setAlertPref(p => ({
-                            ...p,
-                            [sub.id]: { ...(p[sub.id] || { send_to_self: true }), promoter_user_id: e.target.value }
-                          }))}
-                          placeholder="Dealer or facilitator user ID"
-                          className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-xs font-mono focus:outline-none" />
-                      </div>
-                      <button onClick={() => saveAlertPref(sub.id)} disabled={savingAlert === sub.id}
-                        className="w-full py-2.5 rounded-xl text-white text-xs font-semibold disabled:opacity-50"
-                        style={{ background: '#3A7D44' }}>
-                        {alertSuccess === sub.id ? '✓ Saved' : savingAlert === sub.id ? 'Saving…' : 'Save Preferences'}
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Alert Preferences</p>
+                <p className="text-sm text-[#6B3F1F]">
+                  Set who else gets alerts on each crop&apos;s page — open the crop and tap the alert recipient sheet.
+                </p>
+                <button onClick={() => router.push('/home')}
+                  className="mt-3 text-xs font-semibold text-[#7D4E00] underline">
+                  Open my crops →
+                </button>
               </div>
             )}
 

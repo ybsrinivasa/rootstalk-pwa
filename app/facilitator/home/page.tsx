@@ -108,6 +108,12 @@ export default function FacilitatorHomePage() {
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Service Profile</p>
             <p className="text-xs text-[#7A8C7E]">My declaration</p>
           </button>
+          <button onClick={() => router.push('/facilitator/alerts-incoming')}
+            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
+            <span className="text-2xl">🔔</span>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Alerts I receive</p>
+            <p className="text-xs text-[#7A8C7E]">Farmer-added + auto</p>
+          </button>
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
