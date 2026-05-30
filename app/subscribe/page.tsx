@@ -413,8 +413,12 @@ function SubscribeFlow() {
       })
       setStage('done')
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Could not send payment request. Check the phone number and try again.')
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message
+            || 'Could not send payment request. Check the phone number and try again.'
+      setError(msg)
     } finally { setBusy(false) }
   }
 
