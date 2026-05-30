@@ -8,6 +8,11 @@ interface AssignmentDetail {
   subscription_id: string
   company: { id: string; name: string; logo_url: string | null; primary_colour: string; tagline: string | null } | null
   crop_cosh_id: string | null
+  /** 2026-05-31 — crop's English display name resolved server-side
+   *  from Cosh, so the review screen renders "Coconut" instead of
+   *  the raw UUID. Null when the crop isn't in the Cosh catalogue. */
+  crop_name?: string | null
+  package_name?: string | null
   package_description: string | null
   duration_days: number | null
   package_type: string | null
@@ -18,9 +23,15 @@ interface AssignmentDetail {
   paid_by_company: boolean
 }
 
-function formatCropName(coshId: string | null): string {
-  if (!coshId) return 'Crop'
-  return coshId.replace(/^crop_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+function formatCropName(detail: AssignmentDetail | null): string {
+  if (!detail) return 'Crop'
+  if (detail.crop_name) return detail.crop_name
+  // Fallback for legacy crop_<slug> ids — modern Cosh ids are UUIDs
+  // and look ugly under this transform; the server now sets crop_name
+  // for those, so we only reach this path when the crop isn't yet
+  // classified in Cosh.
+  if (!detail.crop_cosh_id) return 'Crop'
+  return detail.crop_cosh_id.replace(/^crop_/, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 export default function AssignmentReviewPage() {
@@ -41,7 +52,7 @@ export default function AssignmentReviewPage() {
 
   async function respond(approved: boolean) {
     const message = approved
-      ? `Subscribe to ${detail?.company?.name}'s ${formatCropName(detail?.crop_cosh_id || null)} advisory? You won't be able to unsubscribe — your company has paid for this.`
+      ? `Subscribe to ${detail?.company?.name}'s ${formatCropName(detail)} advisory? You won't be able to unsubscribe — your company has paid for this.`
       : `Decline this advisory request from ${detail?.promoter?.name}?`
     if (!confirm(message)) return
     setBusy(true); setError('')
@@ -61,7 +72,7 @@ export default function AssignmentReviewPage() {
   )
 
   const colour = detail.company?.primary_colour || '#3A7D44'
-  const cropName = formatCropName(detail.crop_cosh_id)
+  const cropName = formatCropName(detail)
 
   return (
     <div className="min-h-screen bg-[#F7F5F0]">
