@@ -13,11 +13,6 @@ type Subscription = {
   id: string; client_id: string; package_id: string
   status: string; reference_number: string | null; crop_start_date: string | null
   subscription_type?: string
-  // 2026-05-30 — Promoter-assigned subs are ACTIVE from initiate
-  // but carry this flag while the PromoterAssignment is still
-  // PENDING_FARMER_APPROVAL. Home suppresses these from ACTIVE
-  // tiles; they show as "Pending approval" cards instead.
-  pending_approval?: boolean
   // 2026-05-20 — backend decorates each sub with the SE-authored
   // package label, the resolved crop name, and (for WAITLISTED
   // rows) who owes the payment. Drives the Home pending-payment
@@ -158,11 +153,11 @@ export default function HomePage() {
   // section above the live tiles so the farmer has a clear path
   // to finish payment.
   //
-  // 2026-05-30 — Promoter-assigned subs are now ACTIVE from initiate
-  // (no WAITLISTED hop) but carry `pending_approval=true` while the
-  // PromoterAssignment row is still PENDING_FARMER_APPROVAL. We
-  // skip those from the ACTIVE-tiles bucket — they're rendered as
-  // "Pending approval" cards from /farmer/assignments/pending below.
+  // 2026-05-31 — Promoter-assigned subs awaiting the farmer's
+  // explicit accept are no longer included in /farmer/my-subscriptions
+  // at all (backend filter). The pending-approval card from
+  // /farmer/assignments/pending is the only surface for them until
+  // the farmer accepts.
   const grouped: Record<string, Subscription[]> = {}
   const waitlisted: Subscription[] = []
   for (const sub of subscriptions) {
@@ -171,7 +166,6 @@ export default function HomePage() {
       continue
     }
     if (sub.status !== 'ACTIVE') continue
-    if (sub.pending_approval) continue   // shown via pendingAssignments
     if (!grouped[sub.client_id]) grouped[sub.client_id] = []
     grouped[sub.client_id].push(sub)
   }
