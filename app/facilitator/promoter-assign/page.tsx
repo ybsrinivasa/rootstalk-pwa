@@ -8,7 +8,7 @@ import { cropDisplayName } from '@/lib/crop-name'
 
 const COLOUR = '#7D4E00'
 
-type Stage = 'gate' | 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'measure' | 'confirm' | 'done'
+type Stage = 'gate' | 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'confirm' | 'done'
 
 // Cosh-driven location universe — same shape as /subscribe.
 type CoshDistrict = { cosh_id: string; name: string | null }
@@ -33,10 +33,6 @@ interface FarmerInfo {
 interface CropOption {
   crop_cosh_id: string
   name?: string | null
-  // 2026-05-30 — crop's intrinsic AREA_WISE / PLANT_WISE measure
-  // from Cosh. Drives the measure stage (acres vs plants+year)
-  // automatically — the Promoter no longer chooses.
-  measure?: 'AREA_WISE' | 'PLANT_WISE' | null
 }
 
 interface GuidedStep {
@@ -48,14 +44,12 @@ interface GuidedStep {
   error?: string
 }
 
-type Measure = 'AREA_WISE' | 'PLANT_WISE'
-
 function formatCropName(coshId: string, name?: string | null): string {
   return cropDisplayName(coshId, name)
 }
 
 function ProgressBar({ stage }: { stage: Stage }) {
-  const steps: Stage[] = ['phone', 'confirm_farmer', 'crop', 'guided', 'measure', 'confirm', 'done']
+  const steps: Stage[] = ['phone', 'confirm_farmer', 'crop', 'guided', 'confirm', 'done']
   const idx = steps.indexOf(stage)
   if (idx < 0) return null
   return (
@@ -89,11 +83,6 @@ export default function FacilitatorPromoterAssignPage() {
   const [resolvedPackageId, setResolvedPackageId] = useState('')
   const [resolvedPackageName, setResolvedPackageName] = useState('')
   const [answerHistory, setAnswerHistory] = useState<{ param: string; varName: string }[]>([])
-  // Measure step state (B2 contract — exactly one branch required).
-  const [measure, setMeasure] = useState<Measure>('AREA_WISE')
-  const [areaInput, setAreaInput] = useState('')
-  const [plantsInput, setPlantsInput] = useState('')
-  const [yearInput, setYearInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -176,11 +165,6 @@ export default function FacilitatorPromoterAssignPage() {
     setSelectedCrop(cropId)
     setAnswers('')
     setAnswerHistory([])
-    // Pin the measure from the crop's Cosh classification — promoter
-    // no longer chooses. AREA_WISE is the safe default for crops
-    // whose Cosh measure hasn't been classified yet.
-    const crop = crops.find(c => c.crop_cosh_id === cropId)
-    setMeasure(crop?.measure === 'PLANT_WISE' ? 'PLANT_WISE' : 'AREA_WISE')
     setLoading(true)
     try {
       // /promoter/packages/guided-step — server derives client_id
@@ -192,7 +176,7 @@ export default function FacilitatorPromoterAssignPage() {
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
         setResolvedPackageName(data.package.name)
-        setStage('measure')
+        setStage('confirm')
       } else {
         setStage('guided')
       }
@@ -214,7 +198,7 @@ export default function FacilitatorPromoterAssignPage() {
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
         setResolvedPackageName(data.package.name)
-        setStage('measure')
+        setStage('confirm')
       }
     } catch {
       setError('Error fetching next step.')
@@ -226,51 +210,20 @@ export default function FacilitatorPromoterAssignPage() {
     setError('')
     setResolvedPackageId('')
     setResolvedPackageName('')
-    setAreaInput('')
-    setPlantsInput('')
-    setYearInput('')
-    // measure is re-derived from the crop inside selectCrop(); no
-    // need to reset to a hardcoded default here.
     await selectCrop(selectedCrop)
-  }
-
-  function confirmMeasure() {
-    setError('')
-    if (measure === 'AREA_WISE') {
-      const acres = parseFloat(areaInput)
-      if (!Number.isFinite(acres) || acres <= 0) {
-        setError('Enter the farm area in acres (e.g. 1.5).')
-        return
-      }
-    } else {
-      const n = parseInt(plantsInput, 10)
-      const y = parseInt(yearInput, 10)
-      if (!Number.isFinite(n) || n <= 0) {
-        setError('Enter the number of plants.')
-        return
-      }
-      if (!Number.isFinite(y) || y < 1900 || y > 2100) {
-        setError('Enter the planting year (e.g. 2024).')
-        return
-      }
-    }
-    setStage('confirm')
   }
 
   async function sendRequest() {
     setLoading(true)
     setError('')
     try {
+      // 2026-05-30: farmer's farm area / plant count are no longer
+      // collected during Promoter-assign — they're the farmer's data,
+      // set + confirmed on the farmer's Crop Dashboard after accept.
       const body: Record<string, unknown> = {
         farmer_phone: `+91${phone}`,
         package_id: resolvedPackageId,
         promoter_type: 'FACILITATOR',
-      }
-      if (measure === 'AREA_WISE') {
-        body.farm_area_acres = parseFloat(areaInput)
-      } else {
-        body.number_of_plants = parseInt(plantsInput, 10)
-        body.planting_year = parseInt(yearInput, 10)
       }
       await api.post('/promoter/assignments/initiate', body)
       // Kitty just dropped by 1 — re-fetch to reflect it.
@@ -626,77 +579,6 @@ export default function FacilitatorPromoterAssignPage() {
             </div>
           )}
 
-          {/* ── STAGE: measure (F-P B4) ── */}
-          {stage === 'measure' && (
-            <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">
-                {measure === 'AREA_WISE' ? 'Farm area' : 'Plant count'}
-              </p>
-              <p className="text-sm text-[#7A8C7E] mb-5">
-                {measure === 'AREA_WISE'
-                  ? 'This crop is measured by area. The advisory dose is computed from acreage.'
-                  : 'This crop is measured plant-wise. The advisory dose is computed from plant count and age.'}
-              </p>
-
-              {measure === 'AREA_WISE' ? (
-                <div className="mb-4">
-                  <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Farm area (acres)</label>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    step="0.1"
-                    min="0"
-                    value={areaInput}
-                    onChange={e => { setAreaInput(e.target.value); setError('') }}
-                    placeholder="e.g. 1.5"
-                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
-                  />
-                </div>
-              ) : (
-                <>
-                  <div className="mb-4">
-                    <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Number of plants</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      value={plantsInput}
-                      onChange={e => { setPlantsInput(e.target.value); setError('') }}
-                      placeholder="e.g. 120"
-                      className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
-                    />
-                  </div>
-                  <div className="mb-4">
-                    <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Planting year</label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="1900"
-                      max="2100"
-                      value={yearInput}
-                      onChange={e => { setYearInput(e.target.value); setError('') }}
-                      placeholder="e.g. 2024"
-                      className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"
-                    />
-                  </div>
-                </>
-              )}
-
-              {error && <p className="text-[#D4682E] text-xs mb-3">{error}</p>}
-              <button
-                onClick={confirmMeasure}
-                className="w-full py-3.5 rounded-2xl text-white font-semibold"
-                style={{ background: COLOUR }}>
-                Review →
-              </button>
-              <button
-                onClick={startOver}
-                className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
-                ↺ Start over
-              </button>
-            </div>
-          )}
-
           {/* ── STAGE: confirm ── */}
           {stage === 'confirm' && (
             <div>
@@ -721,14 +603,6 @@ export default function FacilitatorPromoterAssignPage() {
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Advisory Package</p>
                   <p className="font-semibold text-[#6B3F1F]">{resolvedPackageName}</p>
                 </div>
-                <div className="border-t border-[#DDD0B8] pt-3">
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Measure</p>
-                  <p className="font-semibold text-[#6B3F1F]">
-                    {measure === 'AREA_WISE'
-                      ? `${areaInput} acres`
-                      : `${plantsInput} plants · planted ${yearInput}`}
-                  </p>
-                </div>
                 {answerHistory.length > 0 && (
                   <div className="border-t border-[#DDD0B8] pt-3">
                     <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Your selections</p>
@@ -752,10 +626,10 @@ export default function FacilitatorPromoterAssignPage() {
                 {loading ? 'Sending…' : 'Send advisory request →'}
               </button>
               <button
-                onClick={() => setStage('measure')}
+                onClick={startOver}
                 disabled={loading}
                 className="mt-3 w-full text-center text-sm text-[#7A8C7E] disabled:opacity-50">
-                ← Edit measure
+                ↺ Start over
               </button>
             </div>
           )}
