@@ -13,8 +13,21 @@ declare global {
 
 interface PaymentRequest {
   id: string; subscription_id: string; farmer_user_id: string
+  // 2026-05-30: backend decorates the row with the context the
+  // Dealer needs to decide whether to pay — farmer name + phone
+  // (tap-to-call), package + crop name, and `hours_remaining` for
+  // the countdown.
+  farmer_name?: string | null
+  farmer_phone?: string | null
+  package_id?: string
+  package_name?: string | null
+  crop_cosh_id?: string | null
+  crop_name?: string | null
+  hours_remaining?: number
   amount: number; status: string; expires_at: string; created_at: string
 }
+
+const COLOUR = '#085041'
 
 export default function DealerPaymentsPage() {
   const router = useRouter()
@@ -26,38 +39,31 @@ export default function DealerPaymentsPage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    load()
-  }, [])
-
-  const load = () => {
     api.get<PaymentRequest[]>('/dealer/payment-requests')
       .then(r => setRequests(r.data))
       .finally(() => setLoading(false))
-  }
+  }, [router])
+
+  const load = () => api.get<PaymentRequest[]>('/dealer/payment-requests')
+    .then(r => setRequests(r.data)).catch(() => {})
 
   async function openPayment(req: PaymentRequest) {
     setPaying(req.id); setError('')
     try {
       const { data: order } = await api.post(`/dealer/payment-requests/${req.id}/create-order`)
       const options = {
-        key: order.key_id,
-        amount: order.amount,
-        currency: order.currency,
-        // Attribution: dealer is paying for the software infrastructure
+        key: order.key_id, amount: order.amount, currency: order.currency,
+        // Attribution: dealer pays for the software infrastructure
         // rootsTALK.in provides on behalf of the farmer — not paying
-        // the company that owns the advisory.
+        // the company whose advisory it is.
         name: 'rootsTALK.in',
         description: 'Advisory subscription on behalf of farmer · paid to rootsTALK.in',
         order_id: order.razorpay_order_id,
         prefill: { name: user?.name || '', contact: user?.phone || '' },
-        theme: { color: '#085041' },
+        theme: { color: COLOUR },
         handler: async (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => {
           try {
-            await api.post(`/dealer/payment-requests/${req.id}/verify`, {
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-            })
+            await api.post(`/dealer/payment-requests/${req.id}/verify`, response)
             load()
           } catch { setError('Payment verification failed.') }
         },
@@ -74,15 +80,18 @@ export default function DealerPaymentsPage() {
     load()
   }
 
+  // Backend filters to PENDING since 2026-05-30 — no historical rows
+  // surface here. Keep the alias so the empty-state guard stays
+  // readable.
   const pending = requests.filter(r => r.status === 'PENDING')
-  const done = requests.filter(r => r.status !== 'PENDING')
+  const done: PaymentRequest[] = []
 
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="min-h-screen bg-[#F5F0E8]">
         <PWAHeader title="Farmer Payments" activeRole="DEALER" back="/dealer/home" />
-        <div className="pt-16 pb-20 px-4">
+        <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
           <div className="mt-4 space-y-3">
             {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
             {loading ? (
@@ -96,63 +105,67 @@ export default function DealerPaymentsPage() {
               <>
                 {pending.length > 0 && (
                   <>
-                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Pending Payment ({pending.length})</p>
+                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Pending ({pending.length})</p>
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
                       You pay to <strong>rootsTALK.in</strong> for the software infrastructure
-                      that powers the farmer's advisory. It is <em>not</em> paid to the company
+                      that powers the farmer&apos;s advisory. It is <em>not</em> paid to the company
                       whose advisory the farmer subscribed to.
                     </div>
-                    {pending.map(req => (
-                      <div key={req.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <p className="font-semibold text-[#6B3F1F] text-lg">₹{Number(req.amount).toFixed(0)}</p>
-                            <p className="text-xs text-[#7A8C7E]">Farmer subscription payment request</p>
-                            <p className="text-xs text-[#7A8C7E] mt-0.5">
-                              Expires: {new Date(req.expires_at).toLocaleDateString()}
-                            </p>
+                    {pending.map(req => {
+                      const cropPackage = [req.crop_name, req.package_name].filter(Boolean).join(' · ')
+                      const hoursLow = typeof req.hours_remaining === 'number' && req.hours_remaining <= 6
+                      return (
+                        <div key={req.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
+                          <div className="flex items-start justify-between mb-3 gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-[#6B3F1F] text-sm truncate">
+                                {req.farmer_name || 'Farmer'}
+                              </p>
+                              {cropPackage && (
+                                <p className="text-[12px] text-[#7A8C7E] truncate">{cropPackage}</p>
+                              )}
+                              {req.farmer_phone && (
+                                <a href={`tel:${req.farmer_phone}`}
+                                  className="inline-flex items-center gap-1 mt-1.5 text-[12px] font-medium px-2.5 py-1 rounded-full"
+                                  style={{ background: '#F5F0E8', color: COLOUR, border: `1px solid ${COLOUR}33` }}>
+                                  📞 {req.farmer_phone}
+                                </a>
+                              )}
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-bold text-[#6B3F1F] text-xl leading-none">₹{Number(req.amount).toFixed(0)}</p>
+                              {typeof req.hours_remaining === 'number' && (
+                                <p className={`text-[11px] font-medium mt-1 ${hoursLow ? 'text-[#B85C00]' : 'text-[#7A8C7E]'}`}>
+                                  {req.hours_remaining === 0
+                                    ? 'Expiring soon'
+                                    : `${req.hours_remaining}h remaining`}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">PENDING</span>
+                          <div className="flex gap-2">
+                            <button onClick={() => openPayment(req)} disabled={paying === req.id}
+                              className="flex-1 py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
+                              style={{ background: `linear-gradient(135deg, #054a3a, ${COLOUR})` }}>
+                              {paying === req.id ? 'Opening…' : `Pay ₹${Number(req.amount).toFixed(0)}`}
+                            </button>
+                            <button onClick={() => decline(req.id)}
+                              className="px-5 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
+                              Decline
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <button onClick={() => openPayment(req)}
-                            disabled={paying === req.id}
-                            className="flex-1 py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
-                            style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-                            {paying === req.id ? 'Opening…' : `Pay ₹${Number(req.amount).toFixed(0)}`}
-                          </button>
-                          <button onClick={() => decline(req.id)}
-                            className="px-5 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
-                            Decline
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </>
                 )}
-                {done.length > 0 && (
-                  <>
-                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mt-4">Past Requests</p>
-                    {done.map(req => (
-                      <div key={req.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-[#6B3F1F]">₹{Number(req.amount).toFixed(0)}</p>
-                            <p className="text-xs text-[#7A8C7E]">{new Date(req.created_at).toLocaleDateString()}</p>
-                          </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${req.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                            {req.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
+                {/* Past Requests dropped 2026-05-30 — backend filters
+                    to PENDING. History can be a separate route. */}
               </>
             )}
           </div>
         </div>
-        <BottomNav color="#085041" activeRole="DEALER" />
+        <BottomNav color={COLOUR} activeRole="DEALER" />
       </div>
     </>
   )
