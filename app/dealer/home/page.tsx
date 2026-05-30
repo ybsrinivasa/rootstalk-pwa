@@ -16,6 +16,7 @@ export default function DealerHomePage() {
   const [pendingCount, setPendingCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
   const [promotedCount, setPromotedCount] = useState(0)
+  const [onboardingClientCount, setOnboardingClientCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
@@ -25,15 +26,22 @@ export default function DealerHomePage() {
     // added fields (e.g. dealer_profile_complete on legacy sessions
     // that logged in before the field existed). Cheap; one fetch.
     void refreshUser()
-    // Gate: incomplete shop profile = can't enter dealer home.
-    // Profile page shows a banner explaining why the redirect
-    // happened and which fields are pending.
+    // Gate 1 (existing): incomplete shop profile = can't enter
+    // dealer home. Profile page shows a banner explaining why the
+    // redirect happened and which fields are pending.
     api.get<{ is_profile_complete: boolean }>('/dealer/profile').then(r => {
       if (!r.data.is_profile_complete) {
         router.replace('/dealer/profile')
         return
       }
+      // Gate 2 (V1.1 Item 5): "must be onboarded by ≥1 client to
+      // be functional". We don't bounce — instead render an
+      // explanatory empty state below so the user understands
+      // why the tiles aren't useful yet.
       Promise.all([
+        api.get<{ onboarded: boolean; client_count: number }>('/dealer/me/onboarding-status')
+          .then(r => setOnboardingClientCount(r.data.client_count))
+          .catch(() => setOnboardingClientCount(0)),
         api.get('/dealer/orders').then(r => {
           const active = (r.data as { status: string }[]).filter(o =>
             !['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status)
@@ -50,6 +58,8 @@ export default function DealerHomePage() {
     }).catch(() => setLoading(false))
   }, [router])
 
+  const notOnboarded = onboardingClientCount === 0
+
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader activeRole="DEALER" onRoleSwitch={() => setShowRoleDrawer(true)} />
@@ -59,9 +69,37 @@ export default function DealerHomePage() {
         <div>
           <p className="text-xl font-bold text-[#6B3F1F]">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
           <p className="text-[#7A8C7E] text-sm mt-0.5">
-            {pendingCount > 0 ? `${pendingCount} order${pendingCount > 1 ? 's' : ''} waiting` : 'No pending orders'}
+            {notOnboarded
+              ? 'Awaiting onboarding'
+              : pendingCount > 0 ? `${pendingCount} order${pendingCount > 1 ? 's' : ''} waiting` : 'No pending orders'}
           </p>
         </div>
+
+        {/* Lifecycle gate (V1.1 Item 5): not onboarded by any company →
+            show explanatory empty state instead of the action tiles.
+            The user keeps full access to their profile and dealerships
+            screens so they can finish setup while waiting. */}
+        {notOnboarded && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-base font-bold text-amber-900 mb-2">Ask a Field Manager to onboard you</p>
+            <p className="text-sm text-amber-800 leading-relaxed">
+              You&apos;ve set up your shop profile — well done. To start receiving farmer orders, you need to be
+              onboarded by at least one RootsTalk company. Share your registered phone number with a Field
+              Manager from any company you sell for. Once any one of them adds you, your tiles below will start
+              showing live activity.
+            </p>
+            <div className="mt-4 flex gap-2">
+              <button onClick={() => router.push('/dealer/profile')}
+                className="flex-1 py-2.5 rounded-xl border border-amber-300 bg-white text-sm font-semibold text-amber-900">
+                Review profile
+              </button>
+              <button onClick={() => router.push('/dealer/dealerships')}
+                className="flex-1 py-2.5 rounded-xl border border-amber-300 bg-white text-sm font-semibold text-amber-900">
+                My dealerships
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Pending orders CTA */}
         <button onClick={() => router.push('/dealer/orders')}
