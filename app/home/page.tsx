@@ -153,10 +153,19 @@ export default function HomePage() {
   // section above the live tiles so the farmer has a clear path
   // to finish payment — pre-fix they rendered identically to live
   // advisories and confused users into thinking they were active.
+  //
+  // 2026-05-30 — ASSIGNED-type WAITLISTED subs are Promoter
+  // assignments awaiting the farmer's approval; the Promoter
+  // already consumed a unit from their kitty, so the farmer has
+  // NO payment to make. Drop them out of the pending-payment
+  // bucket — they're rendered as "Pending approval" cards from
+  // /farmer/assignments/pending below. Pre-fix they double-
+  // surfaced as "Complete payment" cards too.
   const grouped: Record<string, Subscription[]> = {}
   const waitlisted: Subscription[] = []
   for (const sub of subscriptions) {
     if (sub.status === 'WAITLISTED') {
+      if (sub.subscription_type === 'ASSIGNED') continue
       waitlisted.push(sub)
       continue
     }

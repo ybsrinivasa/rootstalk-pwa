@@ -35,6 +35,10 @@ interface FarmerInfo {
 interface CropOption {
   crop_cosh_id: string
   name?: string | null
+  // 2026-05-30 — crop's intrinsic AREA_WISE / PLANT_WISE measure
+  // from Cosh. Drives the measure stage (acres vs plants+year)
+  // automatically — the Promoter no longer chooses.
+  measure?: 'AREA_WISE' | 'PLANT_WISE' | null
 }
 
 interface GuidedStep {
@@ -164,6 +168,11 @@ export default function DealerPromoterAssignPage() {
     setSelectedCrop(cropId)
     setAnswers('')
     setAnswerHistory([])
+    // Pin the measure from the crop's Cosh classification — promoter
+    // no longer chooses. AREA_WISE is the safe default for crops
+    // whose Cosh measure hasn't been classified yet.
+    const crop = crops.find(c => c.crop_cosh_id === cropId)
+    setMeasure(crop?.measure === 'PLANT_WISE' ? 'PLANT_WISE' : 'AREA_WISE')
     setLoading(true)
     try {
       const { data } = await api.get<GuidedStep>(
@@ -210,7 +219,8 @@ export default function DealerPromoterAssignPage() {
     setAreaInput('')
     setPlantsInput('')
     setYearInput('')
-    setMeasure('AREA_WISE')
+    // measure is re-derived from the crop inside selectCrop(); no
+    // need to reset to a hardcoded default here.
     await selectCrop(selectedCrop)
   }
 
@@ -634,31 +644,14 @@ export default function DealerPromoterAssignPage() {
           {/* ── STAGE: measure ── */}
           {stage === 'measure' && (
             <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">How is this farm measured?</p>
-              <p className="text-sm text-[#7A8C7E] mb-5">
-                Tell us so the advisory dosage and volume calculations match the farmer&apos;s plot.
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">
+                {measure === 'AREA_WISE' ? 'Farm area' : 'Plant count'}
               </p>
-
-              <div className="flex gap-2 mb-5">
-                <button
-                  onClick={() => { setMeasure('AREA_WISE'); setError('') }}
-                  className={`flex-1 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                    measure === 'AREA_WISE'
-                      ? 'border-[#085041] bg-[#085041]/5 text-[#085041]'
-                      : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
-                  }`}>
-                  Area-wise (acres)
-                </button>
-                <button
-                  onClick={() => { setMeasure('PLANT_WISE'); setError('') }}
-                  className={`flex-1 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                    measure === 'PLANT_WISE'
-                      ? 'border-[#085041] bg-[#085041]/5 text-[#085041]'
-                      : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
-                  }`}>
-                  Plant-wise (count)
-                </button>
-              </div>
+              <p className="text-sm text-[#7A8C7E] mb-5">
+                {measure === 'AREA_WISE'
+                  ? 'This crop is measured by area. The advisory dose is computed from acreage.'
+                  : 'This crop is measured plant-wise. The advisory dose is computed from plant count and age.'}
+              </p>
 
               {measure === 'AREA_WISE' ? (
                 <div className="mb-4">
