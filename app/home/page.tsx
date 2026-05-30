@@ -13,6 +13,11 @@ type Subscription = {
   id: string; client_id: string; package_id: string
   status: string; reference_number: string | null; crop_start_date: string | null
   subscription_type?: string
+  // 2026-05-30 — Promoter-assigned subs are ACTIVE from initiate
+  // but carry this flag while the PromoterAssignment is still
+  // PENDING_FARMER_APPROVAL. Home suppresses these from ACTIVE
+  // tiles; they show as "Pending approval" cards instead.
+  pending_approval?: boolean
   // 2026-05-20 — backend decorates each sub with the SE-authored
   // package label, the resolved crop name, and (for WAITLISTED
   // rows) who owes the payment. Drives the Home pending-payment
@@ -149,27 +154,24 @@ export default function HomePage() {
   }
 
   // Group ACTIVE subscriptions by client_id. WAITLISTED rows
-  // (subscription created but payment not completed) get their own
+  // (SELF-pay subs awaiting payment) get their own pending-payment
   // section above the live tiles so the farmer has a clear path
-  // to finish payment — pre-fix they rendered identically to live
-  // advisories and confused users into thinking they were active.
+  // to finish payment.
   //
-  // 2026-05-30 — ASSIGNED-type WAITLISTED subs are Promoter
-  // assignments awaiting the farmer's approval; the Promoter
-  // already consumed a unit from their kitty, so the farmer has
-  // NO payment to make. Drop them out of the pending-payment
-  // bucket — they're rendered as "Pending approval" cards from
-  // /farmer/assignments/pending below. Pre-fix they double-
-  // surfaced as "Complete payment" cards too.
+  // 2026-05-30 — Promoter-assigned subs are now ACTIVE from initiate
+  // (no WAITLISTED hop) but carry `pending_approval=true` while the
+  // PromoterAssignment row is still PENDING_FARMER_APPROVAL. We
+  // skip those from the ACTIVE-tiles bucket — they're rendered as
+  // "Pending approval" cards from /farmer/assignments/pending below.
   const grouped: Record<string, Subscription[]> = {}
   const waitlisted: Subscription[] = []
   for (const sub of subscriptions) {
     if (sub.status === 'WAITLISTED') {
-      if (sub.subscription_type === 'ASSIGNED') continue
       waitlisted.push(sub)
       continue
     }
     if (sub.status !== 'ACTIVE') continue
+    if (sub.pending_approval) continue   // shown via pendingAssignments
     if (!grouped[sub.client_id]) grouped[sub.client_id] = []
     grouped[sub.client_id].push(sub)
   }
