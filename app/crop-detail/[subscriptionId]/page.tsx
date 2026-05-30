@@ -114,6 +114,8 @@ export default function CropDetailPage() {
   const [savingAlerts, setSavingAlerts] = useState(false)
 
   const [expertSheet, setExpertSheet] = useState(false)
+  const [expertPhoneInput, setExpertPhoneInput] = useState('')
+  const [expertError, setExpertError] = useState<string | null>(null)
   const [savingExpert, setSavingExpert] = useState(false)
 
   const [showNeedDateSheet, setShowNeedDateSheet] = useState<'advisory' | 'diagnose' | null>(null)
@@ -339,14 +341,28 @@ export default function CropDetailPage() {
     setAlertSheet(true)
   }
 
-  async function setExpert(punditId: string) {
+  async function setExpertByPhone(phone: string) {
     setSavingExpert(true)
+    setExpertError(null)
     try {
-      await api.post(`/farmer/subscriptions/${subscriptionId}/pundit-preference`, { pundit_id: punditId })
+      await api.post(`/farmer/subscriptions/${subscriptionId}/pundit-preference`, { phone })
       const res = await api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`)
       setExpertSetting(res.data)
       setExpertSheet(false)
       showToast('Expert preference saved')
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
+      const detail = err?.response?.data?.detail
+      const code = typeof detail === 'object' ? detail?.code : null
+      const msg = typeof detail === 'string'
+        ? detail
+        : detail?.message ||
+          (code === 'user_not_found'
+            ? 'No RootsTalk user is registered with this number. Check the digits.'
+            : code === 'not_a_promoter_pundit'
+              ? 'This number doesn’t belong to a Promoter-Pundit for this company. Ask your promoter or RM for the correct number.'
+              : 'Could not save. Try again.')
+      setExpertError(msg)
     } finally { setSavingExpert(false) }
   }
 
@@ -358,6 +374,19 @@ export default function CropDetailPage() {
       setExpertSetting(res.data)
       showToast('Reverted to default')
     } finally { setSavingExpert(false) }
+  }
+
+  function openExpertSheet() {
+    // Pre-fill with whichever phone is currently effective — the
+    // farmer's saved override, or the auto-promoter-pundit fall-back.
+    // If neither, leave empty so the placeholder shows.
+    setExpertPhoneInput(
+      expertSetting?.preferred_pundit?.phone ||
+      expertSetting?.promoter_pundit?.phone ||
+      ''
+    )
+    setExpertError(null)
+    setExpertSheet(true)
   }
 
   if (loading || !sub) return (
@@ -849,7 +878,7 @@ export default function CropDetailPage() {
               <p className="text-xs text-[#7A8C7E] mt-1">Your queries go directly to this expert.</p>
               <div className="grid grid-cols-2 gap-2 mt-3">
                 <button
-                  onClick={() => setExpertSheet(true)}
+                  onClick={openExpertSheet}
                   className="py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
                 >Change</button>
                 <button
@@ -872,7 +901,7 @@ export default function CropDetailPage() {
                 Your Promoter is also an Expert. Queries go to them by default.
               </p>
               <button
-                onClick={() => setExpertSheet(true)}
+                onClick={openExpertSheet}
                 className="mt-3 w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
               >Choose a different expert</button>
             </>
@@ -887,7 +916,7 @@ export default function CropDetailPage() {
               </p>
               {expertSetting.company_experts.length > 0 && (
                 <button
-                  onClick={() => setExpertSheet(true)}
+                  onClick={openExpertSheet}
                   className="mt-3 w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
                 >Choose a specific expert</button>
               )}
@@ -1098,37 +1127,48 @@ export default function CropDetailPage() {
       {/* Expert picker bottom sheet */}
       {expertSheet && expertSetting && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingExpert && setExpertSheet(false)}>
-          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
             <p className="font-bold text-[#6B3F1F] text-base">Choose your expert</p>
-            <p className="text-xs text-[#7A8C7E] mt-1">Your queries will be routed to this expert directly.</p>
-            <div className="mt-4 space-y-2">
-              {expertSetting.company_experts.length === 0 ? (
-                <p className="text-sm text-[#7A8C7E] italic py-4 text-center">No specific experts available.</p>
-              ) : (
-                expertSetting.company_experts.map(exp => {
-                  const isCurrent = expertSetting.preferred_pundit?.pundit_id === exp.pundit_id
-                  return (
-                    <button
-                      key={exp.pundit_id}
-                      onClick={() => setExpert(exp.pundit_id)}
-                      disabled={savingExpert}
-                      className={`w-full text-left rounded-xl px-4 py-3 border ${isCurrent ? 'border-[#6B3F1F] bg-[#F5F0E8]' : 'border-[#DDD0B8]'} disabled:opacity-40`}
-                    >
-                      <p className="text-sm font-semibold text-[#6B3F1F]">{exp.name || 'Expert'}</p>
-                      <p className="text-xs text-[#7A8C7E]">
-                        {exp.role}{exp.phone ? ` · ${exp.phone}` : ''}
-                      </p>
-                      {isCurrent && <p className="text-xs mt-1" style={{ color: colour }}>Current selection</p>}
-                    </button>
-                  )
-                })
-              )}
+            <p className="text-xs text-[#7A8C7E] mt-1">
+              Enter the phone number of your Promoter-Pundit (given to you by your promoter or the company&apos;s
+              relationship manager). If you leave this empty, your queries go to the company&apos;s expert team.
+            </p>
+            <div className="mt-4">
+              <p className="text-xs text-[#7A8C7E] mb-1">Phone number</p>
+              <input
+                type="tel" inputMode="tel"
+                value={expertPhoneInput}
+                onChange={e => { setExpertPhoneInput(e.target.value); setExpertError(null) }}
+                placeholder="+91 XXXXX XXXXX"
+                className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
+              />
             </div>
-            <button
-              onClick={() => setExpertSheet(false)}
-              disabled={savingExpert}
-              className="mt-4 w-full py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
-            >Close</button>
+            {expertError && (
+              <p className="mt-3 text-xs text-[#D4682E] bg-[#D4682E]/10 border border-[#D4682E]/30 rounded-lg px-3 py-2">
+                {expertError}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => setExpertSheet(false)}
+                disabled={savingExpert}
+                className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
+              >Cancel</button>
+              <button
+                onClick={() => setExpertByPhone(expertPhoneInput.trim())}
+                disabled={savingExpert || !expertPhoneInput.trim()}
+                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}
+              >{savingExpert ? '…' : 'Save'}</button>
+            </div>
+            {expertSetting.preferred_pundit && (
+              <button
+                onClick={revertExpert}
+                disabled={savingExpert}
+                className="mt-3 w-full py-2.5 text-xs text-[#7A8C7E] underline underline-offset-2 disabled:opacity-40">
+                Clear and go to the company&apos;s expert team
+              </button>
+            )}
           </div>
         </div>
       )}
