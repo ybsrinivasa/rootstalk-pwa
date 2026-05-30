@@ -22,7 +22,7 @@ declare global {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Stage = 'location' | 'crop' | 'company' | 'guided' | 'confirm' | 'payment' | 'delegate' | 'done'
+type Stage = 'location' | 'crop' | 'company' | 'guided' | 'confirm' | 'payment' | 'delegate' | 'delegate_sent' | 'done'
 
 interface CompanyInfo {
   id: string
@@ -99,6 +99,13 @@ function SubscribeFlow() {
   const user = getUser()
 
   const [stage, setStage] = useState<Stage>('location')
+
+  // Delegate-success info populated by sendDelegateRequest() so the
+  // 'delegate_sent' stage can render "Sent to <name> · <phone>"
+  // instead of a misleading "You're subscribed!" screen.
+  const [delegateSentInfo, setDelegateSentInfo] = useState<{
+    name: string | null; phone: string | null; expiresAt: string | null;
+  }>({ name: null, phone: null, expiresAt: null })
 
   // Location pickers — store real cosh_ids (sent to backend) and
   // resolved names (rendered). `district` (cosh_id) drives the
@@ -407,11 +414,20 @@ function SubscribeFlow() {
     }
     setBusy(true); setError('')
     try {
-      await api.post(`/farmer/subscriptions/${subscription.id}/delegate-payment`, {
+      const { data } = await api.post<{
+        detail: string; expires_at: string;
+        requested_from_name: string | null;
+        requested_from_phone: string | null;
+      }>(`/farmer/subscriptions/${subscription.id}/delegate-payment`, {
         delegate_phone: fullPhone,
         role: delegateRole,
       })
-      setStage('done')
+      setDelegateSentInfo({
+        name: data.requested_from_name,
+        phone: data.requested_from_phone,
+        expiresAt: data.expires_at,
+      })
+      setStage('delegate_sent')
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
       const msg = typeof detail === 'string'
@@ -477,6 +493,7 @@ function SubscribeFlow() {
     confirm: 'Your advisory',
     payment: 'Almost there',
     delegate: 'Send request',
+    delegate_sent: 'Request sent',
     done: 'Subscribed!',
   }
 
@@ -509,6 +526,45 @@ function SubscribeFlow() {
               style={{ color: '#3A7D44' }}>
               Go to your advisory →
             </button>
+          </div>
+        ) : stage === 'delegate_sent' ? (
+          <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center"
+            style={{ background: 'linear-gradient(160deg, #1e3a5f, #2a4d6f)' }}>
+            <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6">
+              <span className="text-3xl">📤</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white">Payment request sent</h1>
+            {delegateSentInfo.name || delegateSentInfo.phone ? (
+              <p className="text-white/85 mt-3 max-w-[280px]">
+                Asked{' '}
+                <strong>{delegateSentInfo.name || 'the recipient'}</strong>
+                {delegateSentInfo.phone && (
+                  <> (<span className="font-mono">{delegateSentInfo.phone}</span>)</>
+                )}
+                {' '}to pay ₹199 for your {cropDisplay} advisory from {company?.display_name}.
+              </p>
+            ) : (
+              <p className="text-white/85 mt-3 max-w-[280px]">
+                Your request to pay ₹199 for the {cropDisplay} advisory from {company?.display_name} has been sent.
+              </p>
+            )}
+            <p className="text-white/60 text-sm mt-4 max-w-[280px]">
+              You&apos;ll be notified the moment they pay. The request expires in 24 hours;
+              your advisory goes active as soon as the payment is completed.
+            </p>
+            <div className="flex flex-col gap-2 mt-10 w-full max-w-[280px]">
+              <button
+                onClick={() => router.replace('/home')}
+                className="py-4 rounded-2xl font-semibold bg-white"
+                style={{ color: '#1e3a5f' }}>
+                Go home
+              </button>
+              <button
+                onClick={() => router.replace('/my-subscriptions')}
+                className="py-3 rounded-2xl font-medium text-white/85 border border-white/30">
+                Track this request →
+              </button>
+            </div>
           </div>
         ) : (
           <>
