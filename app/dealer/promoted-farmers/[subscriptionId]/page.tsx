@@ -2,76 +2,275 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
+import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
-
-interface TLWindow {
-  timeline_id: string; timeline_name: string; from_type: string
-  from_value: number; to_value: number; source: string
-  practices: { id: string; l0_type: string; l1_type: string | null; l2_type: string | null; status: string }[]
-}
+import { cropDisplayName } from '@/lib/crop-name'
 
 const COLOUR = '#085041'
 
+interface ElementRow {
+  element_type: string
+  cosh_ref: string | null
+  value: string | null
+  unit_cosh_id: string | null
+}
+
+interface Practice {
+  id: string
+  l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
+  l1_type: string | null
+  l2_type: string | null
+  display_order: number
+  elements: ElementRow[]
+  is_purchased?: boolean
+  frequency_days?: number | null
+  is_frequency_due_today?: boolean
+}
+
+interface TimelineItem {
+  id: string
+  name: string
+  source: string
+  from_date: string
+  to_date: string
+  day_number: number
+  practices: Practice[]
+  problem_name?: string
+  triggered_at?: string
+}
+
+interface AdvisoryDay {
+  subscription_id: string
+  client_id: string
+  package_id: string
+  package_name: string
+  crop_cosh_id: string
+  crop_start_date: string | null
+  day_offset: number
+  reference_number: string | null
+  timelines: TimelineItem[]
+}
+
+const L0_BG: Record<string, string> = {
+  INPUT: '#5B7BA8',
+  NON_INPUT: '#8B6FA8',
+  INSTRUCTION: '#B58A4A',
+  MEDIA: '#A85F76',
+}
+const L0_LABEL: Record<string, string> = {
+  INPUT: 'Apply Input',
+  NON_INPUT: 'Crop Activity',
+  INSTRUCTION: 'Advisory',
+  MEDIA: 'Reference',
+}
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+}
+function timelineDateLabel(from: string | null, to: string | null): string {
+  if (!from && !to) return 'Today'
+  if (from && to && from !== to) return `${fmtDate(from)} – ${fmtDate(to)}`
+  return fmtDate((to || from)!)
+}
+function humanize(s: string | null): string {
+  if (!s) return ''
+  return s.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+}
+function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+}
+
+function renderElements(elements: ElementRow[]): { label: string; value: string }[] {
+  const out: { label: string; value: string }[] = []
+  for (const e of elements) {
+    const type = e.element_type
+    const valueStr = (e.value ?? '').toString()
+    if (!valueStr) continue
+    if (type.endsWith('_UNIT')) {
+      const prev = out[out.length - 1]
+      if (prev) prev.value = `${prev.value} ${valueStr}`
+      continue
+    }
+    const label = humanize(type)
+    const value = isUuid(valueStr) ? '' : valueStr
+    if (!value) continue
+    out.push({ label, value })
+  }
+  return out
+}
+
 export default function DealerFarmerAdvisoryPage() {
-  const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
-  const [advisory, setAdvisory] = useState<{ active_timelines: TLWindow[]; farmer_name?: string } | null>(null)
+  const { subscriptionId } = useParams<{ subscriptionId: string }>()
+  const [day, setDay] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
+  const [errCode, setErrCode] = useState<string | null>(null)
+  const [errMsg, setErrMsg] = useState<string | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get(`/farmer/advisory/today?subscription_id=${subscriptionId}`)
-      .then(r => setAdvisory(r.data))
+    api.get<AdvisoryDay>(`/promoter/assignments/${subscriptionId}/today`)
+      .then(r => { setDay(r.data); setErrCode(null); setErrMsg(null) })
+      .catch((e: unknown) => {
+        const err = e as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } | string } } }
+        const status = err?.response?.status
+        const detail = err?.response?.data?.detail
+        if (typeof detail === 'object' && detail && detail.code) {
+          setErrCode(detail.code)
+          setErrMsg(detail.message || null)
+        } else if (status === 404) {
+          setErrCode('not_found')
+          setErrMsg(typeof detail === 'string' ? detail : 'Assignment not found.')
+        } else {
+          setErrCode('unknown')
+          setErrMsg('Could not load the advisory.')
+        }
+      })
       .finally(() => setLoading(false))
-  }, [subscriptionId])
+  }, [router, subscriptionId])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title="Farmer advisory" activeRole="DEALER" back="/dealer/promoted-farmers" />
+        <div className="pt-16 px-4 max-w-lg mx-auto">
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (errCode) {
+    const isNoAdvisory = errCode === 'no_advisory_yet'
+    const isPending = errCode === 'assignment_not_active'
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title="Farmer advisory" activeRole="DEALER" back="/dealer/promoted-farmers" />
+        <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+          <div className="mt-8 rounded-2xl border border-[#DDD0B8] bg-white p-5">
+            <p className="text-base font-bold text-[#6B3F1F] mb-2">
+              {isNoAdvisory ? 'Waiting on the farmer' : isPending ? 'Awaiting farmer approval' : 'Not available'}
+            </p>
+            <p className="text-sm text-[#7A8C7E] leading-relaxed">
+              {errMsg ||
+                (isNoAdvisory
+                  ? "The farmer hasn't set the crop's start date yet. Advisory will appear here once they do."
+                  : isPending
+                    ? "The farmer hasn't accepted this offer yet. Advisory becomes visible after they approve."
+                    : 'Could not load advisory for this assignment.')}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!day) return null
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      {/* Read-only teal header */}
-      <div className="sticky top-0 z-30 px-4 py-3" style={{ background: COLOUR }}>
-        <div className="flex items-center justify-between">
-          <button onClick={() => router.back()} className="text-white opacity-70 text-sm">← Back</button>
-          <p className="text-white font-bold text-sm">Farmer Advisory</p>
-          <div className="w-12" />
+      <PWAHeader title="Farmer advisory" activeRole="DEALER" back="/dealer/promoted-farmers" />
+      <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+        <div className="mt-3 mb-3 rounded-xl border border-[#DDD0B8] bg-white px-3 py-2 text-[11px] text-[#7A8C7E] text-center">
+          Read-only view. The farmer is the one acting on this advisory.
         </div>
-        <div className="mt-1 bg-white/20 rounded-xl px-3 py-1.5 text-center">
-          <p className="text-white text-xs font-medium">📖 Read-only view — you are viewing as their Promoter</p>
-        </div>
-      </div>
 
-      <div className="pt-4 pb-24 px-4 max-w-lg mx-auto">
-        {loading ? (
-          <div className="space-y-3 mt-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" />)}
-          </div>
-        ) : !advisory || advisory.active_timelines.length === 0 ? (
-          <div className="mt-12 text-center px-6">
-            <span className="text-5xl">🌿</span>
-            <p className="font-semibold text-[#6B3F1F] mt-4">No action recommended for today</p>
-            <p className="text-[#7A8C7E] text-sm mt-2 leading-relaxed">
-              We will notify you when your next recommended action is available.
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-4">
+          <p className="text-lg font-bold text-[#6B3F1F]">
+            {cropDisplayName(day.crop_cosh_id)}
+          </p>
+          <p className="text-sm text-[#7A8C7E] mt-0.5">{day.package_name}</p>
+          {day.reference_number && (
+            <p className="text-xs font-mono text-[#7A8C7E] mt-1">{day.reference_number}</p>
+          )}
+          <p className="text-xs text-[#7A8C7E] mt-2">
+            Day {day.day_offset} · {day.timelines.length} active timeline
+            {day.timelines.length === 1 ? '' : 's'}
+          </p>
+        </div>
+
+        {day.timelines.length === 0 ? (
+          <div className="rounded-2xl border border-[#DDD0B8] bg-white p-5 text-center">
+            <p className="text-sm text-[#7A8C7E]">
+              Nothing is due in the farmer&apos;s advisory window today.
             </p>
           </div>
         ) : (
-          <div className="space-y-3 mt-4">
-            {advisory.active_timelines.map(tl => (
-              <div key={tl.timeline_id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-[#DDD0B8]">
-                  <p className="font-semibold text-[#6B3F1F] text-sm">{tl.timeline_name}</p>
-                  <p className="text-xs text-[#7A8C7E]">{tl.source}</p>
-                </div>
-                <div className="divide-y divide-slate-50">
-                  {tl.practices.map(p => (
-                    <div key={p.id} className="px-4 py-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-[#6B3F1F]">{p.l2_type || p.l1_type || p.l0_type}</p>
-                        <p className="text-xs text-[#7A8C7E]">{p.l0_type}</p>
-                      </div>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-slate-100 text-[#7A8C7E]">
-                        {p.status}
-                      </span>
+          <div className="space-y-4">
+            {day.timelines.map(tl => (
+              <div key={tl.id}
+                className="bg-white rounded-2xl border border-[#DDD0B8] overflow-hidden">
+                <div className="px-4 py-3 border-b border-[#DDD0B8] bg-[#F5F0E8]/40">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      {tl.problem_name && (
+                        <p className="text-[10px] uppercase tracking-wide font-semibold text-[#D4682E] mb-0.5">
+                          {tl.source} · {tl.problem_name}
+                        </p>
+                      )}
+                      <p className="font-semibold text-[#6B3F1F] truncate">{tl.name}</p>
                     </div>
-                  ))}
+                    <span className="text-xs text-[#7A8C7E] shrink-0">
+                      {timelineDateLabel(tl.from_date, tl.to_date)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 space-y-3">
+                  {tl.practices.length === 0 ? (
+                    <p className="text-xs text-[#7A8C7E] py-3 text-center">
+                      No practice due today on this timeline.
+                    </p>
+                  ) : tl.practices.map(p => {
+                    const rows = renderElements(p.elements)
+                    return (
+                      <div key={p.id}
+                        className="rounded-xl border border-[#DDD0B8] overflow-hidden">
+                        <div className="px-3 py-2 text-white text-[11px] font-semibold uppercase tracking-wide"
+                          style={{ background: L0_BG[p.l0_type] || '#7A8C7E' }}>
+                          {L0_LABEL[p.l0_type] || p.l0_type}
+                          {p.l1_type && <span className="opacity-80"> · {humanize(p.l1_type)}</span>}
+                          {p.l2_type && <span className="opacity-80"> · {humanize(p.l2_type)}</span>}
+                        </div>
+                        <div className="p-3 text-sm">
+                          {rows.length === 0 ? (
+                            <p className="text-[#7A8C7E] text-xs">No specific instructions.</p>
+                          ) : (
+                            <dl className="space-y-1.5">
+                              {rows.map((r, i) => (
+                                <div key={i} className="flex justify-between gap-3 text-[13px]">
+                                  <dt className="text-[#7A8C7E] shrink-0">{r.label}</dt>
+                                  <dd className="text-[#6B3F1F] font-medium text-right">{r.value}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          )}
+
+                          <div className="flex flex-wrap gap-1.5 mt-2.5">
+                            {p.l0_type === 'INPUT' && (
+                              p.is_purchased ? (
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-800 font-medium">
+                                  ✓ Farmer has purchased
+                                </span>
+                              ) : (
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-medium">
+                                  Purchase pending
+                                </span>
+                              )
+                            )}
+                            {p.frequency_days != null && (
+                              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-[#7A8C7E]">
+                                Every {p.frequency_days} day{p.frequency_days === 1 ? '' : 's'}
+                                {p.is_frequency_due_today === false && ' · not due today'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ))}

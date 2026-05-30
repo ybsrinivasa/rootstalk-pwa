@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -8,7 +8,21 @@ import { cropDisplayName } from '@/lib/crop-name'
 
 const COLOUR = '#085041'
 
-type Stage = 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'confirm' | 'done'
+type Stage = 'gate' | 'company' | 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'measure' | 'confirm' | 'done'
+
+// Cosh-driven location universe — same shape as /subscribe.
+type CoshDistrict = { cosh_id: string; name: string | null }
+type CoshState = { cosh_id: string; name: string | null; districts: CoshDistrict[] }
+type CoshLocations = { states: CoshState[] }
+
+interface AllocationRow {
+  client_id: string
+  client_name: string
+  units_balance: number
+  allocated_total: number
+  reclaimed_total: number
+  consumed_total: number
+}
 
 interface FarmerInfo {
   id: string
@@ -16,19 +30,6 @@ interface FarmerInfo {
   phone: string
   state_cosh_id: string | null
   district_cosh_id: string | null
-}
-
-interface Dealership {
-  id: string
-  manufacturer_name: string
-  manufacturer_client_id: string | null
-}
-
-interface ClientInfo {
-  id: string
-  display_name: string
-  primary_colour: string
-  logo_url: string | null
 }
 
 interface CropOption {
@@ -45,16 +46,16 @@ interface GuidedStep {
   error?: string
 }
 
-// Local wrapper around the shared cropDisplayName helper — gives
-// us a one-arg fn for callers that don't have a resolved name to
-// hand in (e.g. the confirm card where we only have the cosh_id).
+type Measure = 'AREA_WISE' | 'PLANT_WISE'
+
 function formatCropName(coshId: string, name?: string | null): string {
   return cropDisplayName(coshId, name)
 }
 
 function ProgressBar({ stage }: { stage: Stage }) {
-  const steps: Stage[] = ['phone', 'confirm_farmer', 'crop', 'guided', 'confirm', 'done']
+  const steps: Stage[] = ['company', 'phone', 'confirm_farmer', 'crop', 'guided', 'measure', 'confirm', 'done']
   const idx = steps.indexOf(stage)
+  if (idx < 0) return null
   return (
     <div className="flex gap-1 mb-6">
       {steps.map((s, i) => (
@@ -67,13 +68,19 @@ function ProgressBar({ stage }: { stage: Stage }) {
 
 export default function DealerPromoterAssignPage() {
   const router = useRouter()
-  const [stage, setStage] = useState<Stage>('phone')
+  const [stage, setStage] = useState<Stage>('gate')
+  const [allocations, setAllocations] = useState<AllocationRow[] | null>(null)
+  const [allocationsError, setAllocationsError] = useState<string | null>(null)
+  const [selectedClientId, setSelectedClientId] = useState('')
   const [phone, setPhone] = useState('')
   const [farmer, setFarmer] = useState<FarmerInfo | null>(null)
-  const [farmerDistrict, setFarmerDistrict] = useState('')
-  const [dealerships, setDealerships] = useState<Dealership[]>([])
-  const [selectedClientId, setSelectedClientId] = useState('')
-  const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null)
+  // Location typeahead state — mirrors /subscribe + F-P.
+  const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
+  const [stateId, setStateId] = useState('')
+  const [stateSearch, setStateSearch] = useState('')
+  const [district, setDistrict] = useState('')
+  const [districtSearch, setDistrictSearch] = useState('')
+  const [editingLocation, setEditingLocation] = useState(false)
   const [crops, setCrops] = useState<CropOption[]>([])
   const [selectedCrop, setSelectedCrop] = useState('')
   const [answers, setAnswers] = useState('')
@@ -81,31 +88,43 @@ export default function DealerPromoterAssignPage() {
   const [resolvedPackageId, setResolvedPackageId] = useState('')
   const [resolvedPackageName, setResolvedPackageName] = useState('')
   const [answerHistory, setAnswerHistory] = useState<{ param: string; varName: string }[]>([])
+  // Measure step (B2 contract).
+  const [measure, setMeasure] = useState<Measure>('AREA_WISE')
+  const [areaInput, setAreaInput] = useState('')
+  const [plantsInput, setPlantsInput] = useState('')
+  const [yearInput, setYearInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  // Pool guard — refreshed whenever the selected company changes.
-  const [poolBalance, setPoolBalance] = useState<number | null>(null)
-  const [poolChecking, setPoolChecking] = useState(false)
+
+  // Multi-client kitty refresh. Dealer assignments span N companies,
+  // so /promoter/me/allocations (not /promoter/me/kitty) is the source.
+  const refreshAllocations = useCallback(async () => {
+    try {
+      const { data } = await api.get<AllocationRow[]>('/promoter/me/allocations')
+      setAllocations(data)
+      setAllocationsError(null)
+    } catch {
+      setAllocationsError('Could not load your kitties. Pull to retry.')
+      setAllocations([])
+    }
+  }, [])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<Dealership[]>('/dealer/dealerships').then(r => setDealerships(r.data)).catch(() => {})
-  }, [])
+    refreshAllocations().then(() => setStage(s => s === 'gate' ? 'company' : s))
+    api.get<CoshLocations>('/cosh/locations/india')
+      .then(r => setCoshLocations(r.data))
+      .catch(() => { /* fall through */ })
+  }, [refreshAllocations, router])
 
-  // Whenever the promoter picks a company, ask whether that company has
-  // pool balance to spend. Block the Continue button if not — saves the
-  // promoter from walking the entire BL-01 flow only to be 422'd at
-  // initiate-assignment.
   useEffect(() => {
-    if (!selectedClientId) { setPoolBalance(null); return }
-    setPoolChecking(true)
-    api.get<{ available_units: number; can_assign: boolean }>(
-      `/client/${selectedClientId}/subscription-pool/can-assign`,
-    )
-      .then(r => setPoolBalance(r.data.available_units))
-      .catch(() => setPoolBalance(null))
-      .finally(() => setPoolChecking(false))
-  }, [selectedClientId])
+    function onVisibility() { if (!document.hidden) refreshAllocations() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [refreshAllocations])
+
+  const spendable = (allocations || []).filter(a => a.units_balance > 0)
+  const selectedRow = (allocations || []).find(a => a.client_id === selectedClientId) || null
 
   async function verifyPhone() {
     if (phone.length < 10) { setError('Enter a valid 10-digit number'); return }
@@ -114,7 +133,11 @@ export default function DealerPromoterAssignPage() {
     try {
       const { data } = await api.get<FarmerInfo>(`/promoter/farmer-lookup?phone=%2B91${phone}`)
       setFarmer(data)
-      setFarmerDistrict(data.district_cosh_id || '')
+      setStateId(data.state_cosh_id || '')
+      setDistrict(data.district_cosh_id || '')
+      setEditingLocation(!data.district_cosh_id)
+      setStateSearch('')
+      setDistrictSearch('')
       setStage('confirm_farmer')
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
@@ -122,17 +145,18 @@ export default function DealerPromoterAssignPage() {
     } finally { setLoading(false) }
   }
 
-  async function continueTocrops() {
-    if (!selectedClientId) { setError('Please select a company'); return }
-    if (!farmerDistrict) { setError('Please enter farmer district'); return }
+  async function continueToCrops() {
+    if (!district) { setError('Please pick the district where the farmland is'); return }
     setError('')
     setLoading(true)
     try {
-      const { data } = await api.get<CropOption[]>(`/farmer/discover/crops?district_cosh_id=${encodeURIComponent(farmerDistrict)}`)
+      const { data } = await api.get<CropOption[]>(
+        `/promoter/crops?district_cosh_id=${encodeURIComponent(district)}&client_id=${encodeURIComponent(selectedClientId)}`
+      )
       setCrops(data)
       setStage('crop')
     } catch {
-      setError('Could not load crops. Check the district ID.')
+      setError('Could not load crops. Pick a different district or try again.')
     } finally { setLoading(false) }
   }
 
@@ -143,13 +167,13 @@ export default function DealerPromoterAssignPage() {
     setLoading(true)
     try {
       const { data } = await api.get<GuidedStep>(
-        `/farmer/packages/guided-step?crop_cosh_id=${encodeURIComponent(cropId)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&client_id=${encodeURIComponent(selectedClientId)}&answers=`
+        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(cropId)}&district_cosh_id=${encodeURIComponent(district)}&client_id=${encodeURIComponent(selectedClientId)}&answers=`
       )
       setGuidedStep(data)
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
         setResolvedPackageName(data.package.name)
-        setStage('confirm')
+        setStage('measure')
       } else {
         setStage('guided')
       }
@@ -165,63 +189,186 @@ export default function DealerPromoterAssignPage() {
     setLoading(true)
     try {
       const { data } = await api.get<GuidedStep>(
-        `/farmer/packages/guided-step?crop_cosh_id=${encodeURIComponent(selectedCrop)}&district_cosh_id=${encodeURIComponent(farmerDistrict)}&client_id=${encodeURIComponent(selectedClientId)}&answers=${encodeURIComponent(newAnswers)}`
+        `/promoter/packages/guided-step?crop_cosh_id=${encodeURIComponent(selectedCrop)}&district_cosh_id=${encodeURIComponent(district)}&client_id=${encodeURIComponent(selectedClientId)}&answers=${encodeURIComponent(newAnswers)}`
       )
       setGuidedStep(data)
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
         setResolvedPackageName(data.package.name)
-        setStage('confirm')
+        setStage('measure')
       }
     } catch {
       setError('Error fetching next step.')
     } finally { setLoading(false) }
   }
 
-  // Start over: reset answers and restart guided questions on the same
-  // crop+company. Different intent from "← Back" (which moves stage).
   async function startOver() {
     if (!selectedCrop) return
     setError('')
     setResolvedPackageId('')
     setResolvedPackageName('')
+    setAreaInput('')
+    setPlantsInput('')
+    setYearInput('')
+    setMeasure('AREA_WISE')
     await selectCrop(selectedCrop)
+  }
+
+  function confirmMeasure() {
+    setError('')
+    if (measure === 'AREA_WISE') {
+      const acres = parseFloat(areaInput)
+      if (!Number.isFinite(acres) || acres <= 0) {
+        setError('Enter the farm area in acres (e.g. 1.5).')
+        return
+      }
+    } else {
+      const n = parseInt(plantsInput, 10)
+      const y = parseInt(yearInput, 10)
+      if (!Number.isFinite(n) || n <= 0) {
+        setError('Enter the number of plants.')
+        return
+      }
+      if (!Number.isFinite(y) || y < 1900 || y > 2100) {
+        setError('Enter the planting year (e.g. 2024).')
+        return
+      }
+    }
+    setStage('confirm')
   }
 
   async function sendRequest() {
     setLoading(true)
     setError('')
     try {
-      await api.post('/promoter/assignments/initiate', {
+      const body: Record<string, unknown> = {
         farmer_phone: `+91${phone}`,
         client_id: selectedClientId,
         package_id: resolvedPackageId,
         promoter_type: 'DEALER',
-      })
+      }
+      if (measure === 'AREA_WISE') {
+        body.farm_area_acres = parseFloat(areaInput)
+      } else {
+        body.number_of_plants = parseInt(plantsInput, 10)
+        body.planting_year = parseInt(yearInput, 10)
+      }
+      await api.post('/promoter/assignments/initiate', body)
+      await refreshAllocations()
       setStage('done')
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string } } }
-      setError(err?.response?.data?.detail || 'Could not send request. Please try again.')
+      const err = e as { response?: { data?: { detail?: string | { message?: string } } } }
+      const detail = err?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : detail?.message || 'Could not send request. Please try again.'
+      setError(msg)
     } finally { setLoading(false) }
   }
 
-  // Load client info when company selected
-  useEffect(() => {
-    if (!selectedClientId) return
-    const deal = dealerships.find(d => d.manufacturer_client_id === selectedClientId)
-    if (deal) {
-      api.get<ClientInfo>(`/client/${selectedClientId}/info`)
-        .then(r => setClientInfo(r.data))
-        .catch(() => {})
-    }
-  }, [selectedClientId])
+  // ── Render ─────────────────────────────────────────────────────────────
+
+  if (stage === 'gate') {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title="Assign Advisory" activeRole="DEALER" back="/dealer/home" />
+        <div className="pt-16 px-4 max-w-lg mx-auto">
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // No companies with spendable units → empty state. Cleaner than
+  // letting the user pick a company and fail at initiate-time.
+  if (allocationsError || spendable.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title="Assign Advisory" activeRole="DEALER" back="/dealer/home" />
+        <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
+          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-base font-bold text-amber-900 mb-2">No subscriptions available</p>
+            <p className="text-sm text-amber-800 leading-relaxed">
+              {allocationsError ||
+                'None of the companies that have onboarded you have allocated subscriptions to your kitty yet. Ask a company admin to allocate units before you assign advisories to farmers.'}
+            </p>
+          </div>
+          <button
+            onClick={refreshAllocations}
+            className="mt-4 w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
+            ↻ Refresh
+          </button>
+          <button
+            onClick={() => router.push('/dealer/promoter-assign/pending')}
+            className="mt-3 w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
+            View pending sent →
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Assign Advisory" activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
+          {/* Active-company chip — pinned across every stage past
+              company-pick so the Dealer always sees which kitty
+              they're spending from. */}
+          {selectedRow && stage !== 'company' && stage !== 'done' && (
+            <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-full bg-emerald-50 border border-emerald-200">
+              <span className="text-xs text-emerald-800 truncate">
+                <span className="font-semibold">{selectedRow.units_balance.toLocaleString('en-IN')}</span>{' '}
+                left for{' '}
+                <span className="font-semibold">{selectedRow.client_name}</span>
+              </span>
+              <button
+                onClick={() => router.push('/dealer/promoter-assign/pending')}
+                className="text-xs font-semibold text-emerald-900 underline underline-offset-2 shrink-0 ml-2">
+                Pending sent
+              </button>
+            </div>
+          )}
+
           <ProgressBar stage={stage} />
+
+          {/* ── STAGE: company ── */}
+          {stage === 'company' && (
+            <div>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Which company&apos;s advisory?</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">
+                Pick the company you want to assign this farmer a subscription for. Only companies with units in your
+                kitty are shown.
+              </p>
+              <div className="space-y-2 mb-5">
+                {spendable.map(a => (
+                  <button
+                    key={a.client_id}
+                    onClick={() => { setSelectedClientId(a.client_id); setStage('phone') }}
+                    className="w-full flex items-center justify-between text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white hover:border-[#085041] transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#6B3F1F] truncate">{a.client_name}</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">
+                        <span className="font-medium text-[#085041]">
+                          {a.units_balance.toLocaleString('en-IN')}
+                        </span>{' '}
+                        subscription{a.units_balance === 1 ? '' : 's'} left
+                      </p>
+                    </div>
+                    <span className="text-[#7A8C7E] text-sm" aria-hidden>›</span>
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => router.push('/dealer/promoter-assign/pending')}
+                className="w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
+                Pending sent →
+              </button>
+            </div>
+          )}
 
           {/* ── STAGE: phone ── */}
           {stage === 'phone' && (
@@ -247,96 +394,169 @@ export default function DealerPromoterAssignPage() {
                 style={{ background: COLOUR }}>
                 {loading ? 'Checking…' : 'Verify →'}
               </button>
+              <button onClick={() => setStage('company')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
+                ← Change company
+              </button>
             </div>
           )}
 
           {/* ── STAGE: confirm_farmer ── */}
-          {stage === 'confirm_farmer' && farmer && (
-            <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Farmer found</p>
-              <p className="text-sm text-[#7A8C7E] mb-5">Confirm details and select a company</p>
+          {stage === 'confirm_farmer' && farmer && (() => {
+            const coshStates = coshLocations?.states ?? []
+            const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
+            const selectedDistrict = (selectedState?.districts ?? []).find(d => d.cosh_id === district) || null
+            const stateName = selectedState?.name || ''
+            const districtName = selectedDistrict?.name || ''
+            const filteredStates = coshStates
+              .filter(s => s.name)
+              .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+            const filteredDistricts = (selectedState?.districts ?? [])
+              .filter(d => d.name)
+              .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
+            const hasResolvedLocation = !!(district && districtName)
 
-              <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-5">
-                <p className="font-semibold text-[#6B3F1F]">{farmer.name || 'Unnamed farmer'}</p>
-                <p className="text-sm text-[#7A8C7E] mt-0.5">+91{phone}</p>
-                {farmer.district_cosh_id && (
-                  <p className="text-xs text-[#7A8C7E] mt-0.5">District: {farmer.district_cosh_id}</p>
-                )}
-              </div>
+            return (
+              <div>
+                <p className="text-xl font-bold text-[#6B3F1F] mb-1">Farmer found</p>
+                <p className="text-sm text-[#7A8C7E] mb-5">Confirm where the farmland is before picking the crop</p>
 
-              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Which company&apos;s advisory?</p>
-              <div className="space-y-2 mb-4">
-                {dealerships.filter(d => d.manufacturer_client_id).map(d => (
-                  <button
-                    key={d.id}
-                    onClick={() => setSelectedClientId(d.manufacturer_client_id!)}
-                    className={`w-full text-left px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
-                      selectedClientId === d.manufacturer_client_id
-                        ? 'border-[#085041] bg-[#085041]/5 text-[#085041]'
-                        : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
-                    }`}>
-                    {d.manufacturer_name}
-                  </button>
-                ))}
-                {dealerships.filter(d => d.manufacturer_client_id).length === 0 && (
-                  <p className="text-xs text-[#7A8C7E] py-2">No registered companies in your dealerships. Add companies first.</p>
-                )}
-              </div>
-
-              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Farmer&apos;s district</p>
-              <input
-                value={farmerDistrict}
-                onChange={e => setFarmerDistrict(e.target.value)}
-                placeholder="e.g. dist_mh_pune"
-                className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20 mb-4"
-              />
-
-              {/* Allocation-balance guard — block when this promoter
-                  has 0 units allocated for the selected company. */}
-              {selectedClientId && !poolChecking && poolBalance === 0 && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 mb-3">
-                  <span className="font-semibold">You have no subscriptions allocated to you for this company. </span>
-                  Ask the company admin to allocate units to you before you can assign advisories to farmers.
+                <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-5">
+                  <p className="font-semibold text-[#6B3F1F]">{farmer.name || 'Unnamed farmer'}</p>
+                  <p className="text-sm text-[#7A8C7E] mt-0.5">+91{phone}</p>
                 </div>
-              )}
 
-              {/* Available-balance chip — only shows when there are units. */}
-              {selectedClientId && !poolChecking && poolBalance != null && poolBalance > 0 && (
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs text-emerald-800 mb-3">
-                  <span aria-hidden>•</span>
-                  <span>
-                    <span className="font-semibold">{poolBalance.toLocaleString('en-IN')}</span>{' '}
-                    subscription{poolBalance === 1 ? '' : 's'} available
-                  </span>
-                </div>
-              )}
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Farmland location</p>
+                {!coshLocations && (
+                  <div className="flex items-center gap-3 text-[#7A8C7E] text-sm mb-3">
+                    <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin"/>
+                    Loading states and districts…
+                  </div>
+                )}
 
-              {error && <p className="text-[#D4682E] text-xs mt-1 mb-2">{error}</p>}
-              <button
-                onClick={continueTocrops}
-                disabled={loading || !selectedClientId || !farmerDistrict || poolBalance === 0 || poolChecking}
-                className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
-                style={{ background: COLOUR }}>
-                {loading ? 'Loading crops…'
-                  : poolChecking ? 'Checking allocation…'
-                  : poolBalance === 0 ? 'No allocation — cannot assign'
-                  : 'Continue →'}
-              </button>
-              <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
-                ← Back
-              </button>
-            </div>
-          )}
+                {coshLocations && hasResolvedLocation && !editingLocation && (
+                  <div className="mb-4 px-4 py-3 rounded-2xl border border-[#085041]/30 bg-[#085041]/10 flex items-start gap-3">
+                    <span className="text-lg leading-none mt-0.5">📍</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] uppercase tracking-wide font-semibold text-[#085041]">Farmland district</p>
+                      <p className="text-[#6B3F1F] font-semibold text-[15px] mt-0.5">
+                        {districtName} <span className="text-[#7A8C7E] font-normal">· {stateName || '—'}</span>
+                      </p>
+                    </div>
+                    <button onClick={() => { setEditingLocation(true); setStateSearch(''); setDistrictSearch('') }}
+                      className="text-[12px] text-[#085041] underline shrink-0">
+                      Change
+                    </button>
+                  </div>
+                )}
+
+                {coshLocations && (!hasResolvedLocation || editingLocation) && (
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">State</label>
+                      {stateId ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#085041]/10 text-[#085041] text-sm font-medium px-3 py-1.5 rounded-full">
+                            {stateName || '(unnamed)'}
+                          </span>
+                          <button onClick={() => {
+                              setStateId(''); setStateSearch('')
+                              setDistrict(''); setDistrictSearch('')
+                            }}
+                            className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                        </div>
+                      ) : (
+                        <>
+                          <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
+                            placeholder="Search state…"
+                            className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"/>
+                          {stateSearch && (
+                            <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                              {filteredStates.length === 0
+                                ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No states found</p>
+                                : filteredStates.map(s => (
+                                  <button key={s.cosh_id}
+                                    onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
+                                    className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                    {s.name}
+                                  </button>
+                                ))
+                              }
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {stateId && (
+                      <div>
+                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">District</label>
+                        {district ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#085041]/10 text-[#085041] text-sm font-medium px-3 py-1.5 rounded-full">
+                              {districtName || '(unnamed)'}
+                            </span>
+                            <button onClick={() => { setDistrict(''); setDistrictSearch('') }}
+                              className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                          </div>
+                        ) : (
+                          <>
+                            <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
+                              placeholder="Search district…"
+                              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"/>
+                            {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
+                              <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
+                                {filteredDistricts.length === 0
+                                  ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No districts found</p>
+                                  : filteredDistricts.map(d => (
+                                    <button key={d.cosh_id}
+                                      onClick={() => {
+                                        setDistrict(d.cosh_id); setDistrictSearch('')
+                                        setEditingLocation(false)
+                                      }}
+                                      className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                      {d.name}
+                                    </button>
+                                  ))
+                                }
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {error && <p className="text-[#D4682E] text-xs mt-1 mb-2">{error}</p>}
+                <button
+                  onClick={continueToCrops}
+                  disabled={loading || !district}
+                  className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
+                  style={{ background: COLOUR }}>
+                  {loading ? 'Loading crops…' : 'Continue →'}
+                </button>
+                <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
+                  ← Back
+                </button>
+              </div>
+            )
+          })()}
 
           {/* ── STAGE: crop ── */}
-          {stage === 'crop' && (
+          {stage === 'crop' && (() => {
+            const stateRow = coshLocations?.states.find(s => s.cosh_id === stateId)
+            const districtRow = stateRow?.districts.find(d => d.cosh_id === district)
+            const districtLabel = districtRow?.name || district
+            return (
             <div>
               <p className="text-xl font-bold text-[#6B3F1F] mb-1">Select crop</p>
               <p className="text-sm text-[#7A8C7E] mb-5">
-                Crops available in {farmerDistrict.replace('dist_', '').replace(/_/g, ' ')}
+                Crops available for {selectedRow?.client_name} in {districtLabel}
               </p>
               {crops.length === 0 ? (
-                <p className="text-[#7A8C7E] text-sm py-6 text-center">No crops available in this district for the selected company.</p>
+                <p className="text-[#7A8C7E] text-sm py-6 text-center">
+                  No crops available in this district for {selectedRow?.client_name}.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {crops.map(c => (
@@ -359,7 +579,8 @@ export default function DealerPromoterAssignPage() {
                 ← Back
               </button>
             </div>
-          )}
+            )
+          })()}
 
           {/* ── STAGE: guided ── */}
           {stage === 'guided' && guidedStep && !guidedStep.done && (
@@ -410,6 +631,86 @@ export default function DealerPromoterAssignPage() {
             </div>
           )}
 
+          {/* ── STAGE: measure ── */}
+          {stage === 'measure' && (
+            <div>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">How is this farm measured?</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">
+                Tell us so the advisory dosage and volume calculations match the farmer&apos;s plot.
+              </p>
+
+              <div className="flex gap-2 mb-5">
+                <button
+                  onClick={() => { setMeasure('AREA_WISE'); setError('') }}
+                  className={`flex-1 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                    measure === 'AREA_WISE'
+                      ? 'border-[#085041] bg-[#085041]/5 text-[#085041]'
+                      : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
+                  }`}>
+                  Area-wise (acres)
+                </button>
+                <button
+                  onClick={() => { setMeasure('PLANT_WISE'); setError('') }}
+                  className={`flex-1 px-4 py-3 rounded-xl border text-sm font-medium transition-colors ${
+                    measure === 'PLANT_WISE'
+                      ? 'border-[#085041] bg-[#085041]/5 text-[#085041]'
+                      : 'border-[#DDD0B8] bg-white text-[#6B3F1F]'
+                  }`}>
+                  Plant-wise (count)
+                </button>
+              </div>
+
+              {measure === 'AREA_WISE' ? (
+                <div className="mb-4">
+                  <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Farm area (acres)</label>
+                  <input
+                    type="number" inputMode="decimal" step="0.1" min="0"
+                    value={areaInput}
+                    onChange={e => { setAreaInput(e.target.value); setError('') }}
+                    placeholder="e.g. 1.5"
+                    className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="mb-4">
+                    <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Number of plants</label>
+                    <input
+                      type="number" inputMode="numeric" min="1"
+                      value={plantsInput}
+                      onChange={e => { setPlantsInput(e.target.value); setError('') }}
+                      placeholder="e.g. 120"
+                      className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="text-sm font-semibold text-[#6B3F1F] mb-2 block">Planting year</label>
+                    <input
+                      type="number" inputMode="numeric" min="1900" max="2100"
+                      value={yearInput}
+                      onChange={e => { setYearInput(e.target.value); setError('') }}
+                      placeholder="e.g. 2024"
+                      className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"
+                    />
+                  </div>
+                </>
+              )}
+
+              {error && <p className="text-[#D4682E] text-xs mb-3">{error}</p>}
+              <button
+                onClick={confirmMeasure}
+                className="w-full py-3.5 rounded-2xl text-white font-semibold"
+                style={{ background: COLOUR }}>
+                Review →
+              </button>
+              <button
+                onClick={startOver}
+                className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
+                ↺ Start over
+              </button>
+            </div>
+          )}
+
           {/* ── STAGE: confirm ── */}
           {stage === 'confirm' && (
             <div>
@@ -424,7 +725,7 @@ export default function DealerPromoterAssignPage() {
                 </div>
                 <div className="border-t border-[#DDD0B8] pt-3">
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Company</p>
-                  <p className="font-semibold text-[#6B3F1F]">{clientInfo?.display_name || selectedClientId}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{selectedRow?.client_name}</p>
                 </div>
                 <div className="border-t border-[#DDD0B8] pt-3">
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Crop</p>
@@ -433,6 +734,14 @@ export default function DealerPromoterAssignPage() {
                 <div className="border-t border-[#DDD0B8] pt-3">
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Advisory Package</p>
                   <p className="font-semibold text-[#6B3F1F]">{resolvedPackageName}</p>
+                </div>
+                <div className="border-t border-[#DDD0B8] pt-3">
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Measure</p>
+                  <p className="font-semibold text-[#6B3F1F]">
+                    {measure === 'AREA_WISE'
+                      ? `${areaInput} acres`
+                      : `${plantsInput} plants · planted ${yearInput}`}
+                  </p>
                 </div>
                 {answerHistory.length > 0 && (
                   <div className="border-t border-[#DDD0B8] pt-3">
@@ -457,10 +766,10 @@ export default function DealerPromoterAssignPage() {
                 {loading ? 'Sending…' : 'Send advisory request →'}
               </button>
               <button
-                onClick={startOver}
+                onClick={() => setStage('measure')}
                 disabled={loading}
                 className="mt-3 w-full text-center text-sm text-[#7A8C7E] disabled:opacity-50">
-                ↺ Start over
+                ← Edit measure
               </button>
             </div>
           )}
@@ -471,15 +780,23 @@ export default function DealerPromoterAssignPage() {
               style={{ background: COLOUR }}>
               <p className="text-4xl font-bold text-white mb-4">Request sent!</p>
               <p className="text-white/80 text-center text-base leading-relaxed mb-8">
-                <span className="font-semibold text-white">{farmer?.name || 'The farmer'}</span> will receive a notification to approve the advisory.
-                Once approved, you&apos;ll be their Promoter.
+                <span className="font-semibold text-white">{farmer?.name || 'The farmer'}</span> will receive a
+                notification to approve the advisory. You can withdraw the offer from the &ldquo;Pending sent&rdquo; list
+                until they respond.
               </p>
-              <button
-                onClick={() => router.push('/dealer/promoted-farmers')}
-                className="py-3.5 px-8 rounded-2xl bg-white font-semibold"
-                style={{ color: COLOUR }}>
-                Back to My Promoted Farmers →
-              </button>
+              <div className="space-y-3 w-full max-w-xs">
+                <button
+                  onClick={() => router.push('/dealer/promoter-assign/pending')}
+                  className="w-full py-3.5 px-8 rounded-2xl bg-white font-semibold"
+                  style={{ color: COLOUR }}>
+                  View pending sent →
+                </button>
+                <button
+                  onClick={() => router.push('/dealer/promoted-farmers')}
+                  className="w-full py-3 text-white text-sm underline underline-offset-2">
+                  Back to my promoted farmers
+                </button>
+              </div>
             </div>
           )}
         </div>
