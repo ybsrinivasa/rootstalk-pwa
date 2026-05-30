@@ -152,6 +152,19 @@ function SubscribeFlow() {
   const [delegatePhone, setDelegatePhone] = useState('')
   const [delegateRole, setDelegateRole] = useState<'DEALER' | 'FACILITATOR'>('DEALER')
 
+  // Two-step Check → Send (2026-05-30). After the farmer types a
+  // phone and hits Check, this holds the resolved delegate's profile
+  // so the page can render a confirmation card. Cleared whenever the
+  // phone input changes — the farmer must re-check before sending.
+  type DelegateLookup = {
+    user_id: string; name: string | null; phone: string;
+    roles: ('FACILITATOR' | 'DEALER')[];
+    affiliations: { role: 'FACILITATOR' | 'DEALER'; company_name: string; client_id: string }[];
+  }
+  const [delegateLookup, setDelegateLookup] = useState<DelegateLookup | null>(null)
+  const [checking, setChecking] = useState(false)
+  const [checkError, setCheckError] = useState('')
+
   // UI state
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -404,7 +417,30 @@ function SubscribeFlow() {
     } finally { setBusy(false) }
   }
 
-  // ── Delegate payment ───────────────────────────────────────────────────────
+  // ── Delegate payment — two-step Check → Send ────────────────────────────
+  async function checkDelegate() {
+    if (!delegatePhone || delegatePhone.length < 10) return
+    const fullPhone = `+91${delegatePhone.trim()}`
+    if (user?.phone === fullPhone) {
+      setCheckError('You cannot ask yourself to pay. Please choose someone else.')
+      return
+    }
+    setChecking(true); setCheckError(''); setDelegateLookup(null); setError('')
+    try {
+      const { data } = await api.get<DelegateLookup>(
+        `/farmer/delegate-lookup?phone=${encodeURIComponent(fullPhone)}`,
+      )
+      setDelegateLookup(data)
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string })?.message
+            || 'Could not look up this number. Please try again.'
+      setCheckError(msg)
+    } finally { setChecking(false) }
+  }
+
   async function sendDelegateRequest() {
     if (!subscription || !delegatePhone.trim()) return
     const fullPhone = `+91${delegatePhone.trim()}`
@@ -1049,22 +1085,86 @@ function SubscribeFlow() {
                       </span>
                       <input
                         value={delegatePhone}
-                        onChange={e => setDelegatePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        onChange={e => {
+                          setDelegatePhone(e.target.value.replace(/\D/g, '').slice(0, 10))
+                          // Editing the phone invalidates any prior
+                          // lookup — force a re-check before Send.
+                          setDelegateLookup(null)
+                          setCheckError('')
+                          setError('')
+                        }}
                         placeholder="10-digit mobile number"
                         inputMode="numeric"
                         className="flex-1 px-4 py-3 text-sm focus:outline-none font-mono"
                       />
                     </div>
 
+                    {/* Confirmation card after a successful Check. The
+                        Send button only appears once a lookup has
+                        verified the person is an onboarded
+                        Facilitator/Dealer. */}
+                    {delegateLookup && (
+                      <div className="rounded-2xl border-2 p-4 mb-3"
+                        style={{ borderColor: '#3A7D44', background: '#F0F9F2' }}>
+                        <div className="flex items-start gap-2 mb-2">
+                          <span className="text-xl leading-none mt-0.5">✓</span>
+                          <div className="flex-1">
+                            <p className="font-semibold text-[#3A7D44]">
+                              {delegateLookup.name || 'Registered user'}
+                            </p>
+                            <p className="text-[#7A8C7E] text-xs font-mono">
+                              {delegateLookup.phone}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {delegateLookup.roles.map(r => (
+                            <span key={r} className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                              style={{ background: '#3A7D44', color: 'white' }}>
+                              {r === 'FACILITATOR' ? 'Facilitator' : 'Dealer'}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-[12px] text-[#6B3F1F]">
+                          {delegateLookup.affiliations.length === 1
+                            ? `At ${delegateLookup.affiliations[0].company_name}`
+                            : `At ${delegateLookup.affiliations.map(a => a.company_name).join(', ')}`}
+                        </p>
+                      </div>
+                    )}
+
+                    {checkError && (
+                      <div className="rounded-xl border border-[#D4682E] bg-red-50 p-3 mb-3">
+                        <p className="text-sm text-[#D4682E] font-medium">Cannot send request</p>
+                        <p className="text-xs text-[#7A2F0F] mt-1">{checkError}</p>
+                      </div>
+                    )}
+
                     {error && <p className="text-sm text-[#D4682E] mb-3">{error}</p>}
 
-                    <button
-                      onClick={sendDelegateRequest}
-                      disabled={busy || delegatePhone.length < 10}
-                      className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-                      style={{ background: '#3A7D44' }}>
-                      {busy ? 'Sending…' : `Send to ${delegateRole === 'DEALER' ? 'dealer' : 'facilitator'} →`}
-                    </button>
+                    {/* Step 1: Check */}
+                    {!delegateLookup && (
+                      <button
+                        onClick={checkDelegate}
+                        disabled={checking || delegatePhone.length < 10}
+                        className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                        style={{ background: '#3A7D44' }}>
+                        {checking ? 'Checking…' : checkError ? 'Check again' : 'Check'}
+                      </button>
+                    )}
+
+                    {/* Step 2: Send (only after a successful Check) */}
+                    {delegateLookup && (
+                      <button
+                        onClick={sendDelegateRequest}
+                        disabled={busy}
+                        className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                        style={{ background: '#3A7D44' }}>
+                        {busy
+                          ? 'Sending…'
+                          : `Send request to ${delegateLookup.name || 'them'} →`}
+                      </button>
+                    )}
 
                     <button
                       onClick={() => setStage('payment')}
