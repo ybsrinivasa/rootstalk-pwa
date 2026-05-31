@@ -77,6 +77,19 @@ export default function OrdersPage() {
           ))}
         </div>
 
+        {/* Batch 14 — quick entry to the farmer-side seed-orders
+            surface. Seeds aren't part of the pesticide/fertiliser
+            list, but the farmer's mental model is "all my orders
+            live here" so we surface the link at the top of /orders. */}
+        <button onClick={() => router.push('/seed-orders')}
+          className="mx-4 mt-4 w-[calc(100%-2rem)] bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 flex items-center justify-between text-left shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🌱</span>
+            <p className="font-semibold text-[#6B3F1F] text-sm">Seed orders</p>
+          </div>
+          <span className="text-[#7A8C7E]">→</span>
+        </button>
+
         <div className="px-4 mt-4 space-y-3">
           {loading ? (
             <div className="h-20 bg-white rounded-2xl animate-pulse" />
