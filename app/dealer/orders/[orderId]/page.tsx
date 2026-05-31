@@ -126,6 +126,25 @@ export default function DealerOrderDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
 
+  // Orders V2 Batch 2: presence heartbeat. While the dealer is on
+  // this screen, ping the server every 20 s. The server stamps a
+  // 30-s lease on the order; the farmer's cancel endpoint refuses
+  // while the lease is in the future. Closing the tab or
+  // navigating away clears the interval and the lease expires
+  // naturally within 30 s. Network errors are swallowed — the
+  // worst case is the lease lapses and the farmer can cancel.
+  useEffect(() => {
+    if (!orderId || !getToken()) return
+    let cancelled = false
+    const ping = () => {
+      if (cancelled) return
+      api.put(`/dealer/orders/${orderId}/heartbeat`, {}).catch(() => {})
+    }
+    ping()  // first heartbeat right away so the lease lands fast
+    const handle = setInterval(ping, 20_000)
+    return () => { cancelled = true; clearInterval(handle) }
+  }, [orderId])
+
   async function acceptOrder() {
     setAccepting(true)
     try {

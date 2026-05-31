@@ -64,8 +64,21 @@ export default function FarmerOrderDetailPage() {
 
   async function cancelOrder() {
     if (!confirm('Cancel this order?')) return
-    await api.put(`/farmer/orders/${orderId}/cancel`, {})
-    router.replace('/orders')
+    try {
+      await api.put(`/farmer/orders/${orderId}/cancel`, {})
+      router.replace('/orders')
+    } catch (err: unknown) {
+      // The 409 dealer-currently-viewing case is the one we want to
+      // explain in plain language. Any other error falls through to
+      // the generic alert so the farmer isn't left guessing.
+      const e = err as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } } } }
+      const detail = e?.response?.data?.detail
+      if (e?.response?.status === 409 && detail && typeof detail === 'object' && detail.code === 'dealer_currently_viewing') {
+        alert(detail.message || 'The dealer is reviewing this order right now. Try again in a minute.')
+      } else {
+        alert('Could not cancel the order. Please try again.')
+      }
+    }
   }
 
   async function approveAll() {
