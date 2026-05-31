@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           the column instead of the viewport top/bottom. Below md, the
           wrapper is inert: no max-width, no transform, no inner scroll
           — phones behave exactly as before. */}
-      <body className={`${inter.className} h-full bg-white md:bg-black`}>
+      <body className={`${inter.className} h-full bg-white md:bg-black md:overflow-hidden`}>
         <div className="md:mx-auto md:max-w-[430px] md:h-dvh md:overflow-y-auto md:overflow-x-hidden md:bg-white md:shadow-2xl md:transform-gpu md:relative">
           {children}
         </div>
