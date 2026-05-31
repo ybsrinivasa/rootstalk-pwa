@@ -78,6 +78,29 @@ export default function FarmerOrderDetailPage() {
     load()
   }, [orderId])
 
+  // Orders V2 Batch 10 — bundled re-route for Returned items
+  async function bundleReroute() {
+    if (!order) return
+    // Server returns 400 with `nothing_to_reroute` if the count is
+    // zero, but we already gate the CTA so this is purely defensive.
+    if (!confirm('Send the returned items to a different dealer or facilitator? Your other items stay where they are.')) return
+    try {
+      const { data } = await api.post<{ new_draft_order_id: string; rerouted_count: number }>(
+        `/farmer/orders/${order.id}/reroute-returned`,
+      )
+      alert(`${data.rerouted_count} item${data.rerouted_count === 1 ? ' has' : 's have'} been saved in a new draft. Pick a new dealer or facilitator on the next screen.`)
+      router.replace(`/orders/${data.new_draft_order_id}`)
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: { code?: string; message?: string } } } }
+      const detail = e?.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.message) {
+        alert(detail.message)
+      } else {
+        alert('Could not re-route the items. Please try again.')
+      }
+    }
+  }
+
   async function openPicker() {
     if (!order) return
     setPickerOpen(true)
@@ -209,6 +232,15 @@ export default function FarmerOrderDetailPage() {
   const canCancel = !['DRAFT', 'CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
   const canDeleteHusk = order.status === 'CANCELLED'
   const isDraft = order.status === 'DRAFT'
+  // Orders V2 Batch 10 — bundled re-route is offered when there are
+  // dealer-returned (NOT_AVAILABLE), farmer-rejected (REJECTED), or
+  // farmer-cancellable postpones (POSTPONED) items on the order.
+  // Farmer doesn't see item names; one CTA covers all of them.
+  const reroutableItems = order.items.filter(i =>
+    ['NOT_AVAILABLE', 'REJECTED', 'POSTPONED'].includes(i.status),
+  )
+  const canBundleReroute = !isDraft && reroutableItems.length > 0
+    && !['CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -237,6 +269,18 @@ export default function FarmerOrderDetailPage() {
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
             style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
             ✓ Approve All ({awaitingApproval.length} item{awaitingApproval.length > 1 ? 's' : ''})
+          </button>
+        )}
+
+        {/* Batch 10 — bundled re-route CTA. The narrative is clear
+            (FU-9): "three returned items = one re-route action, not
+            three". Item names stay hidden from the farmer; the
+            count is what they see + act on. */}
+        {canBundleReroute && (
+          <button onClick={bundleReroute}
+            className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
+            style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
+            Send {reroutableItems.length} returned item{reroutableItems.length === 1 ? '' : 's'} to a different dealer
           </button>
         )}
 
