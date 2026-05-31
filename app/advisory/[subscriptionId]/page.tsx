@@ -8,6 +8,21 @@ import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 interface Element { element_type: string; cosh_ref: string | null; value: string | null; unit_cosh_id: string | null }
+interface Fulfilment {
+  status: 'PENDING' | 'AVAILABLE' | 'POSTPONED' | 'NOT_AVAILABLE'
+        | 'SENT_FOR_APPROVAL' | 'APPROVED' | 'REJECTED'
+  order_id: string
+  order_item_id: string
+  order_status: string
+  dealer_user_id: string | null
+  facilitator_user_id: string | null
+  brand_name: string | null
+  given_volume: number | null
+  volume_unit: string | null
+  price: number | null
+  postponed_until: string | null
+  postpone_days_remaining: number | null
+}
 interface Practice {
   id: string; l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
   l1_type: string | null; l2_type: string | null; display_order: number
@@ -18,6 +33,7 @@ interface Practice {
   frequency_days?: number | null
   is_frequency_due_today?: boolean
   is_purchased?: boolean
+  fulfilment?: Fulfilment | null
 }
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
@@ -666,6 +682,17 @@ function BundleOrderSheet({
   )
 }
 
+// Orders V2 Batch 11 — palette + copy for the tappable status chip.
+const FULFILMENT_TONE: Record<string, { bg: string; fg: string; copy: string }> = {
+  PENDING:             { bg: '#fef3c7', fg: '#92400e', copy: 'Dealer processing' },
+  AVAILABLE:           { bg: '#dbeafe', fg: '#1e40af', copy: 'Dealer processing' },
+  SENT_FOR_APPROVAL:   { bg: '#ede9fe', fg: '#5b21b6', copy: 'Ready for approval' },
+  APPROVED:            { bg: '#d1fae5', fg: '#065f46', copy: 'Purchased' },
+  POSTPONED:           { bg: '#fed7aa', fg: '#9a3412', copy: 'Postponed' },
+  NOT_AVAILABLE:       { bg: '#fee2e2', fg: '#991b1b', copy: 'Returned — needs action' },
+  REJECTED:            { bg: '#fce7f3', fg: '#9d174d', copy: 'Rejected' },
+}
+
 function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   practice: Practice
   onOrder: () => void
@@ -673,8 +700,11 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   ordered: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const label = L0_LABEL[practice.l0_type] || practice.l0_type
+  const fulf = practice.fulfilment ?? null
+  const tone = fulf ? FULFILMENT_TONE[fulf.status] : null
   // INPUT details (brand, dose, formulation) are hidden until the
   // farmer purchases — the dealer picks the actual product, and
   // resolved details surface on the order page after fulfilment.
@@ -715,15 +745,40 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           </p>
         </div>
         {practice.l0_type === 'INPUT' && (
-          <button
-            onClick={e => { e.stopPropagation(); if (!practice.is_purchased) onOrder() }}
-            disabled={isOrdering || ordered || practice.is_purchased === true}
-            className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
-            style={{ background: (ordered || practice.is_purchased) ? '#16a34a' : '#3A7D44' }}>
-            {practice.is_purchased ? '✓ Purchased' : ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
-          </button>
+          // Status chip when the practice has a live OrderItem;
+          // Order button otherwise. The chip is tappable — opens a
+          // small detail sheet with the right info per status.
+          fulf && tone ? (
+            <button
+              onClick={e => { e.stopPropagation(); setSheetOpen(true) }}
+              className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl"
+              style={{ background: tone.bg, color: tone.fg }}>
+              {tone.copy}{fulf.status === 'POSTPONED' && fulf.postpone_days_remaining != null
+                ? ` · ${fulf.postpone_days_remaining}d` : ''}
+            </button>
+          ) : (
+            <button
+              onClick={e => { e.stopPropagation(); if (!practice.is_purchased) onOrder() }}
+              disabled={isOrdering || ordered || practice.is_purchased === true}
+              className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
+              style={{ background: (ordered || practice.is_purchased) ? '#16a34a' : '#3A7D44' }}>
+              {practice.is_purchased ? '✓ Purchased' : ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
+            </button>
+          )
         )}
       </div>
+
+      {/* Batch 11 — fulfilment detail sheet. What's shown depends on
+          the item's status; the action button always navigates the
+          farmer to /orders/{id} where the full per-item actions
+          (re-route, postpone, accept brand & price) already live. */}
+      {sheetOpen && fulf && tone && (
+        <FulfilmentSheet
+          fulfilment={fulf}
+          chipCopy={tone.copy}
+          onClose={() => setSheetOpen(false)}
+        />
+      )}
 
       {detailsVisible && expanded && (
         <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
@@ -912,6 +967,110 @@ function InnerPracticeRow({ practice }: { practice: Practice }) {
       <p className="text-sm font-medium text-[#6B3F1F]">
         {[humanizeType(practice.l1_type), humanizeType(practice.l2_type)].filter(Boolean).join(' — ') || 'General Advisory'}
       </p>
+    </div>
+  )
+}
+
+// Orders V2 Batch 11 — drill-down sheet that opens from the status
+// chip on each INPUT card. The copy/CTA per status mirrors the
+// 2026-05-31 narrative: brand/price hidden until APPROVED;
+// Returned points to the bundled-reroute CTA on the order page;
+// Postponed shows remaining days.
+function FulfilmentSheet({
+  fulfilment, chipCopy, onClose,
+}: {
+  fulfilment: Fulfilment
+  chipCopy: string
+  onClose: () => void
+}) {
+  const router = useRouter()
+  const goToOrder = () => {
+    onClose()
+    router.push(`/orders/${fulfilment.order_id}`)
+  }
+
+  const tone = FULFILMENT_TONE[fulfilment.status]
+  const isReturned = fulfilment.status === 'NOT_AVAILABLE' || fulfilment.status === 'REJECTED'
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/40 flex items-end" onClick={onClose}>
+      <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto"
+        onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
+            style={{ background: tone.bg, color: tone.fg }}>
+            {chipCopy}
+          </span>
+          <button onClick={onClose} className="text-[#7A8C7E] text-xl leading-none">×</button>
+        </div>
+
+        {fulfilment.status === 'APPROVED' && (
+          <div className="space-y-2">
+            {fulfilment.brand_name && (
+              <div>
+                <p className="text-xs text-[#7A8C7E]">Brand</p>
+                <p className="font-semibold text-[#6B3F1F]">{fulfilment.brand_name}</p>
+              </div>
+            )}
+            {fulfilment.given_volume != null && (
+              <div>
+                <p className="text-xs text-[#7A8C7E]">Quantity</p>
+                <p className="text-[#6B3F1F]">{fulfilment.given_volume} {fulfilment.volume_unit}</p>
+              </div>
+            )}
+            {fulfilment.price != null && (
+              <div>
+                <p className="text-xs text-[#7A8C7E]">Price</p>
+                <p className="text-[#6B3F1F]">₹{fulfilment.price}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {fulfilment.status === 'POSTPONED' && (
+          <div className="space-y-1.5">
+            <p className="text-sm text-[#6B3F1F]">
+              The dealer has delayed this item. It will be back in their list automatically.
+            </p>
+            {fulfilment.postpone_days_remaining != null && (
+              <p className="text-xs text-[#7A8C7E]">
+                {fulfilment.postpone_days_remaining} day{fulfilment.postpone_days_remaining === 1 ? '' : 's'} remaining before it auto-returns to you.
+              </p>
+            )}
+          </div>
+        )}
+
+        {isReturned && (
+          <div className="space-y-1.5">
+            <p className="text-sm text-[#6B3F1F]">
+              {fulfilment.status === 'NOT_AVAILABLE'
+                ? "The dealer couldn't fulfil this item. Send it to a different dealer or facilitator."
+                : "You rejected the dealer's brand and price. Send it to a different dealer or facilitator."}
+            </p>
+            <p className="text-xs text-[#7A8C7E]">
+              Use the &quot;Send returned items&quot; button on the order page — it bundles every returned item from this order in one go.
+            </p>
+          </div>
+        )}
+
+        {(fulfilment.status === 'PENDING' || fulfilment.status === 'AVAILABLE') && (
+          <p className="text-sm text-[#6B3F1F]">
+            The dealer is working on this item. The brand and price will be visible once you approve them.
+          </p>
+        )}
+
+        {fulfilment.status === 'SENT_FOR_APPROVAL' && (
+          <p className="text-sm text-[#6B3F1F]">
+            The dealer has sent you the brand and price for approval — open the order to review them.
+          </p>
+        )}
+
+        <button onClick={goToOrder}
+          className="w-full mt-5 py-3 rounded-2xl text-white font-semibold text-sm"
+          style={{ background: '#3A7D44' }}>
+          Open order →
+        </button>
+      </div>
     </div>
   )
 }
