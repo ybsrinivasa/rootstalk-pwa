@@ -40,6 +40,11 @@ export default function OrderingScreenPage() {
   const [placing, setPlacing] = useState<string | null>(null)
   const [customPhone, setCustomPhone] = useState('')
   const [sub, setSub] = useState<Subscription | null>(null)
+  // Orders V2 Batch 9 — locked-brand awareness on the new-order
+  // picker. Server returns a banner string if any of the bundled
+  // practices is brand-locked; we render it and hide the
+  // facilitators tab (locked-brand can't be routed via facilitator).
+  const [lockedBrandExplainer, setLockedBrandExplainer] = useState<string | null>(null)
 
   // Hard-confirm acreage step (only when farm_area_confirmed_at is null)
   const [confirmStep, setConfirmStep] = useState<{ person: Person; isDealer: boolean } | null>(null)
@@ -54,14 +59,31 @@ export default function OrderingScreenPage() {
 
   async function load() {
     try {
-      const [subsRes, dealerRes, facRes] = await Promise.allSettled([
+      // Batch 9 — one server-filtered endpoint replaces the two
+      // nearby-* calls. The server applies licence-category AND
+      // locked-brand filtering, identical to the cancel→re-send
+      // picker on /orders/[id]. Inconsistency was a real gap.
+      const pidsParam = practiceIds.length ? `&practice_ids=${encodeURIComponent(practiceIds.join(','))}` : ''
+      const [subsRes, eligibleRes] = await Promise.allSettled([
         api.get<Subscription[]>('/farmer/my-subscriptions'),
-        api.get<Person[]>(`/farmer/subscriptions/${subscriptionId}/nearby-dealers?order_type=${orderType}`),
-        api.get<Person[]>(`/farmer/subscriptions/${subscriptionId}/nearby-facilitators`),
+        api.get<{
+          dealers: Person[]
+          facilitators: Person[]
+          has_locked_brand: boolean
+          locked_brand_explainer: string | null
+        }>(
+          `/farmer/subscriptions/${subscriptionId}/eligible-recipients-for-new-order`
+          + `?category=${encodeURIComponent(orderType)}${pidsParam}`,
+        ),
       ])
       if (subsRes.status === 'fulfilled') setSub(subsRes.value.data.find(s => s.id === subscriptionId) || null)
-      if (dealerRes.status === 'fulfilled') setDealers(dealerRes.value.data)
-      if (facRes.status === 'fulfilled') setFacilitators(facRes.value.data)
+      if (eligibleRes.status === 'fulfilled') {
+        setDealers(eligibleRes.value.data.dealers || [])
+        setFacilitators(eligibleRes.value.data.facilitators || [])
+        setLockedBrandExplainer(eligibleRes.value.data.locked_brand_explainer)
+        // Force the dealers tab when only dealers are eligible.
+        if (eligibleRes.value.data.has_locked_brand) setTab('dealers')
+      }
     } finally { setLoading(false) }
   }
 
@@ -89,6 +111,9 @@ export default function OrderingScreenPage() {
         subscription_id: subscriptionId,
         client_id: sub?.client_id,
         practice_ids: practiceIds,
+        // Batch 9 — pass category so the server doesn't have to
+        // re-derive from practices, and so Order.category lands set.
+        category: orderType,
         date_from: dateFrom || new Date().toISOString(),
         date_to: dateTo || new Date(Date.now() + 30 * 86400000).toISOString(),
       }
@@ -187,14 +212,27 @@ export default function OrderingScreenPage() {
           )}
         </div>
 
-        {/* Tabs */}
+        {/* Batch 9 — locked-brand explainer, same surface as the
+            cancel→re-send picker so the farmer's mental model stays
+            consistent across both entry points. */}
+        {lockedBrandExplainer && (
+          <div className="mt-3 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed">
+            <p className="font-semibold mb-0.5">Brand-locked order</p>
+            <p>{lockedBrandExplainer}</p>
+          </div>
+        )}
+
+        {/* Tabs — hide the facilitators tab when locked-brand is on. */}
         <div className="flex bg-white rounded-2xl border border-[#DDD0B8] mt-3 p-1">
-          {(['dealers', 'facilitators'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-2.5 text-sm font-medium rounded-xl capitalize transition-all ${tab === t ? 'bg-green-700 text-white shadow-sm' : 'text-[#7A8C7E]'}`}>
-              {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
-            </button>
-          ))}
+          {(['dealers', 'facilitators'] as const).map(t => {
+            if (t === 'facilitators' && lockedBrandExplainer) return null
+            return (
+              <button key={t} onClick={() => setTab(t)}
+                className={`flex-1 py-2.5 text-sm font-medium rounded-xl capitalize transition-all ${tab === t ? 'bg-green-700 text-white shadow-sm' : 'text-[#7A8C7E]'}`}>
+                {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
+              </button>
+            )
+          })}
         </div>
 
         {/* List */}
