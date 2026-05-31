@@ -1,9 +1,12 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
+import {
+  type DraftEntry, readDraftMap, writeDraftMap, clearDraftForOrder,
+} from '@/lib/dealer-drafts'
 
 // Batch 26 — SE-authored element guidance the dealer reads after
 // picking a brand. Plant-wise fields are null on area-wise items.
@@ -63,6 +66,11 @@ interface Order {
   items: OrderItem[]
   relations?: RelationGroup[]
   standalone_items?: OrderItem[]
+  // Batch 28 — server-authoritative in-flight per-item edits the
+  // dealer's app debounce-syncs every ~3 s. Hydrated into the
+  // client's draft map on mount; IndexedDB mirror lives at
+  // `dealer-drafts.ts` so a power-off can't lose partial work.
+  dealer_draft?: Record<string, DraftEntry>
 }
 interface BrandGroup { label: string; brands: { cosh_id: string; name: string; manufacturer: string | null }[] }
 interface BrandOptions {
@@ -133,10 +141,26 @@ export default function DealerOrderDetailPage() {
   >(null)
   const [committingOption, setCommittingOption] = useState<string | null>(null)
 
+  // Batch 28 — draft state. Map of item_id -> {brand_cosh_id, brand_name,
+  // given_volume, volume_unit, price}. On mount we read the server copy
+  // from the order payload and merge IDB on top (IDB wins for entries
+  // present in both — the user's most recent local edit). After that,
+  // `itemEdit` changes get debounced into PUT /draft/{item_id} + IDB.
+  const [drafts, setDrafts] = useState<Record<string, DraftEntry>>({})
+  const draftSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastSyncedItem = useRef<string | null>(null)
+
   const load = async () => {
     try {
       const { data } = await api.get<Order>(`/dealer/orders/${orderId}`)
       setOrder(data)
+      // Batch 28 — server payload + IDB hydration. IDB entries win
+      // over server entries for the same item id: if both exist, the
+      // local one is by definition newer or equal (the debounced
+      // sync writes to IDB first, server second).
+      const server = data.dealer_draft || {}
+      const local = await readDraftMap(orderId)
+      setDrafts({ ...server, ...local })
       // Auto-expand the first PENDING Part for each relation
       if (data.relations) {
         setExpandedPartByRelation(prev => {
@@ -178,6 +202,49 @@ export default function DealerOrderDetailPage() {
     return () => { cancelled = true; clearInterval(handle) }
   }, [orderId])
 
+  // Batch 28 — debounced sync of in-flight per-item edits. Every
+  // time itemEdit changes for an open item, wait ~3 s of typing
+  // quiet then write to IDB and PUT to the server. The IDB write
+  // is synchronous-feeling so even a power-off seconds later won't
+  // lose work; the server PUT is the cross-device source of truth.
+  useEffect(() => {
+    if (!editingItem || !orderId) return
+    // Skip the synthetic edit fired by openItemForm — no point
+    // round-tripping the values we just hydrated.
+    if (lastSyncedItem.current === editingItem &&
+        !itemEdit.brand_cosh_id && !itemEdit.given_volume && !itemEdit.price) {
+      return
+    }
+    if (draftSyncTimer.current) clearTimeout(draftSyncTimer.current)
+    draftSyncTimer.current = setTimeout(async () => {
+      const entry: DraftEntry = {
+        brand_cosh_id: itemEdit.brand_cosh_id || null,
+        brand_name: itemEdit.brand_name || null,
+        given_volume: itemEdit.given_volume ? parseFloat(itemEdit.given_volume) : null,
+        volume_unit: itemEdit.volume_unit || null,
+        price: itemEdit.price ? parseFloat(itemEdit.price) : null,
+      }
+      const hasAny = Object.values(entry).some(v => v !== null && v !== '')
+      const next = { ...drafts }
+      if (hasAny) next[editingItem] = entry
+      else delete next[editingItem]
+      setDrafts(next)
+      await writeDraftMap(orderId, next)
+      try {
+        await api.put(
+          `/dealer/orders/${orderId}/draft/${editingItem}`,
+          hasAny ? entry : {},
+        )
+      } catch {
+        // server-side sync best-effort; IDB still has it for next mount
+      }
+    }, 3000)
+    return () => {
+      if (draftSyncTimer.current) clearTimeout(draftSyncTimer.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemEdit, editingItem, orderId])
+
   async function acceptOrder() {
     setAccepting(true)
     try {
@@ -189,12 +256,21 @@ export default function DealerOrderDetailPage() {
   async function openItemForm(item: OrderItem) {
     setEditingItem(item.id)
     setEstimate(null)
+    // Batch 28 — draft beats the item's committed fields. The dealer
+    // closed the screen mid-edit with no Mark-Available; on re-open,
+    // the in-flight values resurface so they don't have to type again.
+    const d = drafts[item.id] || {}
+    lastSyncedItem.current = item.id  // skip the immediate sync on open
     setItemEdit({
-      brand_cosh_id: item.brand_cosh_id || '',
-      brand_name: item.brand_name || '',
-      given_volume: item.given_volume != null ? String(item.given_volume) : '',
-      volume_unit: item.volume_unit || 'kg',
-      price: item.price != null ? String(item.price) : '',
+      brand_cosh_id: d.brand_cosh_id ?? item.brand_cosh_id ?? '',
+      brand_name: d.brand_name ?? item.brand_name ?? '',
+      given_volume: d.given_volume != null
+        ? String(d.given_volume)
+        : (item.given_volume != null ? String(item.given_volume) : ''),
+      volume_unit: d.volume_unit ?? item.volume_unit ?? 'kg',
+      price: d.price != null
+        ? String(d.price)
+        : (item.price != null ? String(item.price) : ''),
     })
 
     try {
@@ -233,6 +309,13 @@ export default function DealerOrderDetailPage() {
 
   async function markAvailable(itemId: string) {
     if (!itemEdit.given_volume) return
+    // Batch 28 — cancel any pending debounced sync so we don't race
+    // the AVAILABLE flip with a stale draft write that would
+    // recreate the entry the server just cleared.
+    if (draftSyncTimer.current) {
+      clearTimeout(draftSyncTimer.current)
+      draftSyncTimer.current = null
+    }
     await api.put(`/dealer/orders/${orderId}/items/${itemId}/available`, {
       brand_name: itemEdit.brand_name || null,
       brand_cosh_id: itemEdit.brand_cosh_id || null,
@@ -240,6 +323,11 @@ export default function DealerOrderDetailPage() {
       volume_unit: itemEdit.volume_unit,
       price: itemEdit.price ? parseFloat(itemEdit.price) : null,
     })
+    // Drop matching entry locally + from IDB.
+    const nextDrafts = { ...drafts }
+    delete nextDrafts[itemId]
+    setDrafts(nextDrafts)
+    await writeDraftMap(orderId, nextDrafts)
     setEditingItem(null)
     setEstimate(null)
     setBrandOptions(null)
