@@ -201,9 +201,47 @@ export default function DealerOrderDetailPage() {
     load()
   }
 
-  async function markPostpone(itemId: string) {
-    await api.put(`/dealer/orders/${orderId}/items/${itemId}/postpone`, {})
-    load()
+  // Orders V2 Batch 7 — postpone-days picker
+  const [postponeItemId, setPostponeItemId] = useState<string | null>(null)
+  const [postponeMaxDays, setPostponeMaxDays] = useState<number>(0)
+  const [postponeDays, setPostponeDays] = useState<number>(1)
+  const [postponeBusy, setPostponeBusy] = useState(false)
+
+  async function openPostponePicker(itemId: string) {
+    setPostponeBusy(true)
+    try {
+      const { data } = await api.get<{
+        max_days: number; can_postpone: boolean; remaining_days: number
+        timeline_end: string | null
+      }>(`/dealer/orders/${orderId}/items/${itemId}/postpone-window`)
+      if (!data.can_postpone || data.max_days < 1) {
+        alert(`This item's window is too tight to postpone. ${data.remaining_days} day(s) remain — please mark Available or Not Available.`)
+        return
+      }
+      setPostponeItemId(itemId)
+      setPostponeMaxDays(data.max_days)
+      setPostponeDays(1)
+    } finally { setPostponeBusy(false) }
+  }
+
+  async function confirmPostpone() {
+    if (!postponeItemId) return
+    setPostponeBusy(true)
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${postponeItemId}/postpone`, {
+        days: postponeDays,
+      })
+      setPostponeItemId(null)
+      load()
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: { code?: string; message?: string } } } }
+      const detail = e?.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.message) {
+        alert(detail.message)
+      } else {
+        alert('Could not postpone the item. Please try again.')
+      }
+    } finally { setPostponeBusy(false) }
   }
 
   async function markUnavailable(itemId: string) {
@@ -551,8 +589,9 @@ export default function DealerOrderDetailPage() {
                 className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
                 ✓ Available
               </button>
-              <button onClick={() => markPostpone(item.id)}
-                className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2.5 rounded-xl">
+              <button onClick={() => openPostponePicker(item.id)}
+                disabled={postponeBusy}
+                className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
                 ⏰ Later
               </button>
               <button onClick={() => markUnavailable(item.id)}
@@ -766,6 +805,50 @@ export default function DealerOrderDetailPage() {
                 <p className="font-bold text-lg text-[#6B3F1F]">₹{packingList.total_amount.toFixed(2)}</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Orders V2 Batch 7 — Postpone picker. Server gives us the max
+          days (= remaining timeline window minus one). The dealer
+          picks a value; we send `{ days }` to the postpone endpoint
+          and the server stamps `postponed_until` in UTC. */}
+      {postponeItemId && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => !postponeBusy && setPostponeItemId(null)}>
+          <div className="bg-white rounded-t-2xl w-full" onClick={e => e.stopPropagation()}
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
+              <p className="font-semibold text-[#6B3F1F]">Postpone this item</p>
+              <button onClick={() => !postponeBusy && setPostponeItemId(null)} className="text-[#7A8C7E] text-xl">×</button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-[#7A8C7E] mb-1">How many days?</p>
+              <p className="text-xs text-[#7A8C7E] mb-4">
+                Pick 1 to {postponeMaxDays} — the farmer needs at least one clear day to re-route after the postpone elapses.
+              </p>
+              <div className="flex items-center justify-center gap-3 mb-5">
+                <button onClick={() => setPostponeDays(d => Math.max(1, d - 1))}
+                  disabled={postponeDays <= 1 || postponeBusy}
+                  className="w-12 h-12 rounded-full border border-[#DDD0B8] text-[#6B3F1F] text-xl font-bold disabled:opacity-30">
+                  −
+                </button>
+                <div className="min-w-[80px] text-center">
+                  <p className="text-3xl font-bold text-[#6B3F1F]">{postponeDays}</p>
+                  <p className="text-xs text-[#7A8C7E]">day{postponeDays === 1 ? '' : 's'}</p>
+                </div>
+                <button onClick={() => setPostponeDays(d => Math.min(postponeMaxDays, d + 1))}
+                  disabled={postponeDays >= postponeMaxDays || postponeBusy}
+                  className="w-12 h-12 rounded-full border border-[#DDD0B8] text-[#6B3F1F] text-xl font-bold disabled:opacity-30">
+                  +
+                </button>
+              </div>
+              <button onClick={confirmPostpone}
+                disabled={postponeBusy}
+                className="w-full py-3 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
+                {postponeBusy ? 'Postponing…' : `Postpone for ${postponeDays} day${postponeDays === 1 ? '' : 's'}`}
+              </button>
+            </div>
           </div>
         </div>
       )}
