@@ -55,7 +55,13 @@ interface BrandGroup { label: string; brands: { cosh_id: string; name: string; m
 interface BrandOptions {
   type: 'LOCKED' | 'UNLOCKED'
   locked_brand_cosh_id: string | null; locked_brand_name: string | null
+  locked_brand_unit_family?: 'solid' | 'liquid' | 'discrete' | null
   groups: BrandGroup[]
+  // Batch 25 — formulation-derived unit family per brand. The Given-
+  // Volume Unit dropdown reads from `unit_options_by_family[family]`
+  // to constrain what the dealer can pick once a brand is selected.
+  brand_unit_family?: Record<string, 'solid' | 'liquid' | 'discrete'>
+  unit_options_by_family?: Record<'solid' | 'liquid' | 'discrete', string[]>
 }
 interface PackingItem {
   id: string; brand_name: string | null; given_volume: number | null
@@ -397,21 +403,19 @@ export default function DealerOrderDetailPage() {
             <p className="text-sm font-bold text-blue-900">{brandOptions.locked_brand_name}</p>
           </div>
         ) : (
-          <div>
-            <button onClick={() => setShowBrandSheet(true)}
-              className="w-full flex items-center justify-between border border-[#DDD0B8] rounded-lg px-3 py-2.5 bg-white text-sm text-left">
-              <span className={itemEdit.brand_name ? 'text-[#6B3F1F] font-medium' : 'text-[#7A8C7E]'}>
-                {itemEdit.brand_name || 'Select brand…'}
-              </span>
-              <span className="text-[#7A8C7E] text-xs">▼</span>
-            </button>
-            {!itemEdit.brand_name && (
-              <input value={itemEdit.brand_name}
-                onChange={e => setItemEdit(f => ({ ...f, brand_name: e.target.value, brand_cosh_id: '' }))}
-                placeholder="Or type brand name manually"
-                className="w-full mt-1.5 border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
-            )}
-          </div>
+          // Batch 25 — three-group dropdown only. The manual brand
+          // text input was removed (2026-05-31): "In the current UI
+          // you've allowed the dealer to enter a brand name manually.
+          // That shouldn't be allowed. It will make room for
+          // manipulations."  If the dealer's brand isn't in the list,
+          // they use the Report-Missing-Brand flow further down.
+          <button onClick={() => setShowBrandSheet(true)}
+            className="w-full flex items-center justify-between border border-[#DDD0B8] rounded-lg px-3 py-2.5 bg-white text-sm text-left">
+            <span className={itemEdit.brand_name ? 'text-[#6B3F1F] font-medium' : 'text-[#7A8C7E]'}>
+              {itemEdit.brand_name || 'Select brand…'}
+            </span>
+            <span className="text-[#7A8C7E] text-xs">▼</span>
+          </button>
         )}
 
         <button onClick={() => getEstimate(item.id)} disabled={estimating}
@@ -419,26 +423,35 @@ export default function DealerOrderDetailPage() {
           {estimating ? 'Calculating…' : estimate ? `Est. ${estimate.volume} ${estimate.unit}` : '⚡ Auto-calculate estimated volume'}
         </button>
 
-        <div className="grid grid-cols-3 gap-2">
-          <input type="number" value={itemEdit.given_volume}
-            onChange={e => setItemEdit(f => ({ ...f, given_volume: e.target.value }))}
-            placeholder="Qty *"
-            className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
-          <select value={itemEdit.volume_unit}
-            onChange={e => setItemEdit(f => ({ ...f, volume_unit: e.target.value }))}
-            className="border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm bg-white focus:outline-none">
-            <option value="kg">kg</option>
-            <option value="L">L</option>
-            <option value="g">g</option>
-            <option value="mL">mL</option>
-            <option value="bag">bag</option>
-            <option value="number">no.</option>
-          </select>
-          <input type="number" value={itemEdit.price}
-            onChange={e => setItemEdit(f => ({ ...f, price: e.target.value }))}
-            placeholder="₹ Price"
-            className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
-        </div>
+        {/* Batch 25 — Unit dropdown constrained to the brand's
+            formulation family. Solid brands get kg/g, liquid brands
+            get L/ml, discrete brands get numbers. Falls back to the
+            full set when no brand is picked yet. */}
+        {(() => {
+          const family = brandOptions?.brand_unit_family?.[itemEdit.brand_cosh_id]
+            ?? brandOptions?.locked_brand_unit_family
+            ?? null
+          const allowed = family && brandOptions?.unit_options_by_family
+            ? brandOptions.unit_options_by_family[family]
+            : ['kg', 'g', 'L', 'mL', 'numbers']
+          return (
+            <div className="grid grid-cols-3 gap-2">
+              <input type="number" value={itemEdit.given_volume}
+                onChange={e => setItemEdit(f => ({ ...f, given_volume: e.target.value }))}
+                placeholder="Qty *"
+                className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+              <select value={itemEdit.volume_unit}
+                onChange={e => setItemEdit(f => ({ ...f, volume_unit: e.target.value }))}
+                className="border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm bg-white focus:outline-none">
+                {allowed.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+              <input type="number" value={itemEdit.price}
+                onChange={e => setItemEdit(f => ({ ...f, price: e.target.value }))}
+                placeholder="₹ Price"
+                className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+            </div>
+          )
+        })()}
         <div className="flex gap-2">
           <button onClick={() => markAvailable(item.id)}
             disabled={!itemEdit.given_volume}
@@ -738,11 +751,11 @@ export default function DealerOrderDetailPage() {
                             <p className="text-xs text-[#7A8C7E]">{brand.manufacturer}</p>
                           )}
                         </div>
-                        {gi === 0 && (
-                          <span className="text-xs bg-[#085041]/10 text-[#085041] px-2 py-0.5 rounded-full font-medium">
-                            Your brand
-                          </span>
-                        )}
+                        {/* Batch 25 — group label is the affordance now;
+                            the old "Your brand" badge presumed group 0
+                            was My Brands but with three groups that's
+                            no longer true. The section header tells
+                            the dealer where this brand sits. */}
                       </button>
                     ))}
                   </div>
