@@ -22,9 +22,46 @@
 body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  background: white;
 }
-/* `background` deliberately omitted — body background is set
-   responsively via Tailwind utility classes in app/layout.tsx
-   (white on phones, black on ≥md so the 430-px phone-frame
-   sits on a dark backdrop on laptops). An unlayered `background`
-   rule here would win the cascade over Tailwind v4 utilities. */
+
+/* Desktop "phone frame" — ≥md viewports show the PWA inside a
+   430-px centred white column on a black backdrop. We do this in
+   plain CSS (not Tailwind utilities) so we don't depend on the
+   v4 JIT generating every responsive class correctly, and so the
+   contract is debuggable from one place.
+
+   How it works:
+   - html + body get locked to viewport height and overflow:hidden
+     so the browser window NEVER scrolls.
+   - .app-frame is the ONLY scroll container — 430-px wide,
+     centred, full viewport height, overflow-y auto.
+   - `transform: translateZ(0)` on .app-frame makes it the
+     containing block for `position: fixed` descendants (header,
+     bottom-nav, bottom-sheets, role-switcher, install-prompt,
+     toasts). They auto-pin to the column edges instead of the
+     1080-px viewport, with zero per-component changes.
+   - The `body { background: white }` rule above keeps phones
+     looking identical to before the frame was introduced; the
+     media query below paints body black on laptops. */
+@media (min-width: 768px) {
+  html, body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  body {
+    background: #000;
+  }
+  .app-frame {
+    margin: 0 auto;
+    max-width: 430px;
+    width: 100%;
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #fff;
+    position: relative;
+    transform: translateZ(0);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.55);
+  }
+}
