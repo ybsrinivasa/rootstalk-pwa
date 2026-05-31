@@ -13,7 +13,14 @@ interface OrderItem {
 interface Order {
   id: string; status: string; date_from: string; date_to: string; created_at: string
   dealer_user_id: string | null; facilitator_user_id: string | null
+  subscription_id: string; category: string | null
   items: OrderItem[]
+}
+interface Recipient {
+  user_id: string; name: string; phone: string
+  shop_name?: string | null; shop_address?: string | null
+  sell_categories?: string[]; distance_km?: number
+  is_promoter?: boolean
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -50,6 +57,14 @@ export default function FarmerOrderDetailPage() {
   const [rerouting, setRerouting] = useState<string | null>(null)
   const [newDealerPhone, setNewDealerPhone] = useState('')
 
+  // Orders V2 Batch 4 — DRAFT recipient picker
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickerTab, setPickerTab] = useState<'dealers' | 'facilitators'>('dealers')
+  const [dealers, setDealers] = useState<Recipient[]>([])
+  const [facilitators, setFacilitators] = useState<Recipient[]>([])
+  const [pickerLoading, setPickerLoading] = useState(false)
+  const [sending, setSending] = useState<string | null>(null)
+
   const load = async () => {
     try {
       const { data } = await api.get<Order>(`/farmer/orders/${orderId}`)
@@ -61,6 +76,44 @@ export default function FarmerOrderDetailPage() {
     if (!getToken()) { router.replace('/register'); return }
     load()
   }, [orderId])
+
+  async function openPicker() {
+    if (!order) return
+    setPickerOpen(true)
+    setPickerLoading(true)
+    try {
+      // Reuse the same `nearby-*` endpoints `/order/new` uses so we
+      // get a consistent ranking (Promoter pinned, then by distance).
+      // The backend's category map accepts both PESTICIDE and FERTILIZER.
+      const params = order.category ? `?order_type=${encodeURIComponent(order.category)}` : ''
+      const [d, f] = await Promise.allSettled([
+        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-dealers${params}`),
+        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-facilitators`),
+      ])
+      setDealers(d.status === 'fulfilled' ? d.value.data : [])
+      setFacilitators(f.status === 'fulfilled' ? f.value.data : [])
+    } finally { setPickerLoading(false) }
+  }
+
+  async function sendToRecipient(r: Recipient, isDealer: boolean) {
+    setSending(r.user_id)
+    try {
+      const payload = isDealer
+        ? { dealer_user_id: r.user_id }
+        : { facilitator_user_id: r.user_id }
+      await api.put(`/farmer/orders/${orderId}/send`, payload)
+      setPickerOpen(false)
+      load()  // refresh — status flips DRAFT → SENT
+    } catch (err: unknown) {
+      const e = err as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } } } }
+      const detail = e?.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.message) {
+        alert(detail.message)
+      } else {
+        alert('Could not send the order. Please try again.')
+      }
+    } finally { setSending(null) }
+  }
 
   async function deleteCancelledOrder() {
     if (!confirm('Delete this cancelled order from your list? Your items are safe in the draft.')) return
@@ -279,19 +332,22 @@ export default function FarmerOrderDetailPage() {
         </div>
 
         {/* DRAFT — items migrated here from a cancelled order; the
-            farmer still needs to pick a new recipient and send.
-            The send affordance arrives in Batch 4; for now we tell
-            the farmer what this is and let them delete the draft if
-            they don't want to re-send. */}
+            farmer picks a new recipient via the picker sheet. */}
         {isDraft && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
-            <p className="font-semibold mb-1">This is a draft</p>
-            <p>
-              These items were saved when you cancelled the original order.
-              Picking a new dealer or facilitator and sending is coming soon —
-              for now your draft is safe here.
-            </p>
-          </div>
+          <>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
+              <p className="font-semibold mb-1">This is a draft</p>
+              <p>
+                These items were saved when you cancelled the original order.
+                Pick a new dealer or facilitator and send them on their way.
+              </p>
+            </div>
+            <button onClick={openPicker}
+              className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
+              style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
+              Pick a recipient →
+            </button>
+          </>
         )}
 
         {/* Cancel order */}
@@ -313,6 +369,59 @@ export default function FarmerOrderDetailPage() {
           </button>
         )}
       </div>
+
+      {/* DRAFT recipient picker — bottom sheet with two tabs.
+          The same nearby-* endpoints `/order/new` uses so ranking
+          (Promoter pinned, then by distance) stays consistent. */}
+      {pickerOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => !sending && setPickerOpen(false)}>
+          <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
+              <p className="font-semibold text-[#6B3F1F]">Send to</p>
+              <button onClick={() => !sending && setPickerOpen(false)} className="text-[#7A8C7E] text-xl">×</button>
+            </div>
+            <div className="flex border-b border-[#DDD0B8]">
+              {(['dealers', 'facilitators'] as const).map(t => (
+                <button key={t} onClick={() => setPickerTab(t)}
+                  className={`flex-1 py-3 text-sm font-medium ${pickerTab === t ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
+                  {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
+                </button>
+              ))}
+            </div>
+            <div className="p-4 space-y-3">
+              {pickerLoading ? (
+                [1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)
+              ) : (pickerTab === 'dealers' ? dealers : facilitators).length === 0 ? (
+                <div className="text-center py-10 text-sm text-[#7A8C7E]">
+                  No {pickerTab} found nearby.
+                </div>
+              ) : (
+                (pickerTab === 'dealers' ? dealers : facilitators).map(r => {
+                  const isDealer = pickerTab === 'dealers'
+                  const busy = sending === r.user_id
+                  return (
+                    <div key={r.user_id} className="bg-white border border-[#DDD0B8] rounded-xl p-3 flex items-center justify-between">
+                      <div className="min-w-0 mr-3">
+                        <p className="font-semibold text-[#6B3F1F] text-sm truncate">{r.name}</p>
+                        {isDealer && r.shop_name && <p className="text-xs text-[#7A8C7E] truncate">{r.shop_name}</p>}
+                        {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{r.distance_km} km away</p>}
+                        {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">Promoter</span>}
+                      </div>
+                      <button onClick={() => sendToRecipient(r, isDealer)}
+                        disabled={!!sending}
+                        className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
+                        style={{ background: '#3A7D44' }}>
+                        {busy ? 'Sending…' : 'Send'}
+                      </button>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
