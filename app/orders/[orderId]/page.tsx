@@ -57,13 +57,14 @@ export default function FarmerOrderDetailPage() {
   const [rerouting, setRerouting] = useState<string | null>(null)
   const [newDealerPhone, setNewDealerPhone] = useState('')
 
-  // Orders V2 Batch 4 — DRAFT recipient picker
+  // Orders V2 Batch 4/5 — DRAFT recipient picker
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerTab, setPickerTab] = useState<'dealers' | 'facilitators'>('dealers')
   const [dealers, setDealers] = useState<Recipient[]>([])
   const [facilitators, setFacilitators] = useState<Recipient[]>([])
   const [pickerLoading, setPickerLoading] = useState(false)
   const [sending, setSending] = useState<string | null>(null)
+  const [lockedBrandExplainer, setLockedBrandExplainer] = useState<string | null>(null)
 
   const load = async () => {
     try {
@@ -82,16 +83,22 @@ export default function FarmerOrderDetailPage() {
     setPickerOpen(true)
     setPickerLoading(true)
     try {
-      // Reuse the same `nearby-*` endpoints `/order/new` uses so we
-      // get a consistent ranking (Promoter pinned, then by distance).
-      // The backend's category map accepts both PESTICIDE and FERTILIZER.
-      const params = order.category ? `?order_type=${encodeURIComponent(order.category)}` : ''
-      const [d, f] = await Promise.allSettled([
-        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-dealers${params}`),
-        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-facilitators`),
-      ])
-      setDealers(d.status === 'fulfilled' ? d.value.data : [])
-      setFacilitators(f.status === 'fulfilled' ? f.value.data : [])
+      // Batch 5 — single endpoint that applies the licence-category
+      // gate AND the locked-brand gate server-side. The PWA just
+      // renders what comes back. Locked-brand orders get an explainer
+      // banner above the lists; facilitators come back empty.
+      const { data } = await api.get<{
+        category: string | null
+        has_locked_brand: boolean
+        locked_brand_explainer: string | null
+        dealers: Recipient[]
+        facilitators: Recipient[]
+      }>(`/farmer/orders/${order.id}/eligible-recipients`)
+      setDealers(data.dealers || [])
+      setFacilitators(data.facilitators || [])
+      setLockedBrandExplainer(data.locked_brand_explainer)
+      // Force the dealers tab when only dealers are eligible.
+      if (data.has_locked_brand) setPickerTab('dealers')
     } finally { setPickerLoading(false) }
   }
 
@@ -381,13 +388,26 @@ export default function FarmerOrderDetailPage() {
               <p className="font-semibold text-[#6B3F1F]">Send to</p>
               <button onClick={() => !sending && setPickerOpen(false)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
+            {lockedBrandExplainer && (
+              <div className="mx-4 mt-3 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed">
+                <p className="font-semibold mb-0.5">Brand-locked order</p>
+                <p>{lockedBrandExplainer}</p>
+              </div>
+            )}
             <div className="flex border-b border-[#DDD0B8]">
-              {(['dealers', 'facilitators'] as const).map(t => (
-                <button key={t} onClick={() => setPickerTab(t)}
-                  className={`flex-1 py-3 text-sm font-medium ${pickerTab === t ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
-                  {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
-                </button>
-              ))}
+              {(['dealers', 'facilitators'] as const).map(t => {
+                // Hide the facilitators tab entirely for locked-brand
+                // orders — they're not an eligible path. Keep both
+                // tabs present otherwise so an empty list still has
+                // its own pane and "0" reads naturally.
+                if (t === 'facilitators' && lockedBrandExplainer) return null
+                return (
+                  <button key={t} onClick={() => setPickerTab(t)}
+                    className={`flex-1 py-3 text-sm font-medium ${pickerTab === t ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
+                    {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
+                  </button>
+                )
+              })}
             </div>
             <div className="p-4 space-y-3">
               {pickerLoading ? (
