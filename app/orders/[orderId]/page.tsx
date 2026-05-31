@@ -62,15 +62,44 @@ export default function FarmerOrderDetailPage() {
     load()
   }, [orderId])
 
-  async function cancelOrder() {
-    if (!confirm('Cancel this order?')) return
+  async function deleteCancelledOrder() {
+    if (!confirm('Delete this cancelled order from your list? Your items are safe in the draft.')) return
     try {
-      await api.put(`/farmer/orders/${orderId}/cancel`, {})
+      await api.delete(`/farmer/orders/${orderId}`)
       router.replace('/orders')
     } catch (err: unknown) {
-      // The 409 dealer-currently-viewing case is the one we want to
-      // explain in plain language. Any other error falls through to
-      // the generic alert so the farmer isn't left guessing.
+      const e = err as { response?: { data?: { detail?: { code?: string; message?: string } } } }
+      const detail = e?.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.code === 'must_cancel_first') {
+        alert(detail.message || 'Cancel the order first.')
+      } else {
+        alert('Could not delete the order. Please try again.')
+      }
+    }
+  }
+
+  async function cancelOrder() {
+    if (!confirm('Cancel this order? Your items will be saved in a new draft so you can re-send them.')) return
+    try {
+      // Orders V2 Batch 3: cancel migrates items to a fresh DRAFT
+      // and returns its id. We route the farmer to the draft so
+      // they can pick a new recipient. If migration produced no
+      // items (e.g. the order had none to migrate), fall back to
+      // the orders list.
+      const { data } = await api.put<{
+        status: string
+        new_draft_order_id?: string
+        migrated_item_count?: number
+      }>(`/farmer/orders/${orderId}/cancel`, {})
+      const draftId = data?.new_draft_order_id
+      const count = data?.migrated_item_count ?? 0
+      if (draftId && count > 0) {
+        alert(`Cancelled. ${count} item${count === 1 ? ' has' : 's have'} been saved in a new draft — pick a new dealer or facilitator to send to.`)
+        router.replace(`/orders/${draftId}`)
+      } else {
+        router.replace('/orders')
+      }
+    } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } } } }
       const detail = e?.response?.data?.detail
       if (e?.response?.status === 409 && detail && typeof detail === 'object' && detail.code === 'dealer_currently_viewing') {
@@ -114,7 +143,12 @@ export default function FarmerOrderDetailPage() {
   )
 
   const awaitingApproval = order.items.filter(i => i.status === 'SENT_FOR_APPROVAL')
-  const canCancel = ['SENT', 'PROCESSING'].includes(order.status)
+  // Orders V2 (2026-05-31): farmer keeps cancel rights through every
+  // non-terminal status. The backend gates on live dealer presence,
+  // not on a status threshold.
+  const canCancel = !['DRAFT', 'CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
+  const canDeleteHusk = order.status === 'CANCELLED'
+  const isDraft = order.status === 'DRAFT'
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -244,11 +278,38 @@ export default function FarmerOrderDetailPage() {
           ))}
         </div>
 
+        {/* DRAFT — items migrated here from a cancelled order; the
+            farmer still needs to pick a new recipient and send.
+            The send affordance arrives in Batch 4; for now we tell
+            the farmer what this is and let them delete the draft if
+            they don't want to re-send. */}
+        {isDraft && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
+            <p className="font-semibold mb-1">This is a draft</p>
+            <p>
+              These items were saved when you cancelled the original order.
+              Picking a new dealer or facilitator and sending is coming soon —
+              for now your draft is safe here.
+            </p>
+          </div>
+        )}
+
         {/* Cancel order */}
         {canCancel && (
           <button onClick={cancelOrder}
             className="w-full py-3 rounded-2xl border-2 border-red-200 text-[#D4682E] font-semibold text-sm">
             Cancel Order
+          </button>
+        )}
+
+        {/* Delete the empty CANCELLED husk. Items already moved to a
+            fresh draft on cancel; this just removes the historical
+            husk row from the farmer's order list. Events table keeps
+            the lineage trail via SET NULL on order_id. */}
+        {canDeleteHusk && (
+          <button onClick={deleteCancelledOrder}
+            className="w-full py-3 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold text-sm">
+            Delete Cancelled Order
           </button>
         )}
       </div>
