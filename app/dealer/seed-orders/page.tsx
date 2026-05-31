@@ -14,10 +14,18 @@ interface SeedOrder {
 }
 
 const STATUS_COLOUR: Record<string, string> = {
+  // Batch 13 (Orders V2): seeds share the OrderItem vocabulary —
+  // statuses align with the pesticide/fertiliser palette so the
+  // dealer's mental model stays the same across both flows.
+  DRAFT: 'bg-slate-100 text-[#7A8C7E]',
   SENT: 'bg-indigo-100 text-indigo-700',
   ACCEPTED: 'bg-sky-100 text-sky-700',
+  AVAILABLE: 'bg-blue-100 text-blue-700',
+  POSTPONED: 'bg-amber-100 text-amber-800',
+  NOT_AVAILABLE: 'bg-red-100 text-[#D4682E]',
   SENT_FOR_APPROVAL: 'bg-amber-100 text-amber-700',
   PURCHASED: 'bg-emerald-100 text-emerald-700',
+  REROUTED: 'bg-slate-100 text-[#7A8C7E]',
   CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
   REJECTED: 'bg-rose-100 text-rose-600',
 }
@@ -63,8 +71,55 @@ export default function DealerSeedOrdersPage() {
     } finally { setSubmitting(false) }
   }
 
-  const pending = orders.filter(o => !['PURCHASED', 'CANCELLED', 'REJECTED'].includes(o.status))
-  const done = orders.filter(o => ['PURCHASED', 'CANCELLED', 'REJECTED'].includes(o.status))
+  // Orders V2 Batch 13 — postpone-days picker for seeds
+  const [postponeId, setPostponeId] = useState<string | null>(null)
+  const [postponeMaxDays, setPostponeMaxDays] = useState(0)
+  const [postponeDays, setPostponeDays] = useState(1)
+  const [postponeBusy, setPostponeBusy] = useState(false)
+
+  async function openPostpone(id: string) {
+    setPostponeBusy(true)
+    try {
+      const { data } = await api.get<{ max_days: number; can_postpone: boolean }>(
+        `/dealer/seed-orders/${id}/postpone-window`,
+      )
+      if (!data.can_postpone) {
+        alert('This seed order cannot be postponed right now.')
+        return
+      }
+      setPostponeId(id)
+      setPostponeMaxDays(data.max_days)
+      setPostponeDays(1)
+    } finally { setPostponeBusy(false) }
+  }
+
+  async function confirmPostpone() {
+    if (!postponeId) return
+    setPostponeBusy(true)
+    try {
+      await api.put(`/dealer/seed-orders/${postponeId}/postpone`, {
+        days: postponeDays,
+      })
+      setPostponeId(null)
+      load()
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message || 'Could not postpone. Please try again.')
+    } finally { setPostponeBusy(false) }
+  }
+
+  async function markNotAvailable(id: string) {
+    if (!confirm("Mark this seed order as Not Available? The farmer will be able to send it to a different dealer.")) return
+    try {
+      await api.put(`/dealer/seed-orders/${id}/not-available`, {})
+      load()
+    } catch {
+      alert('Could not mark as Not Available. Please try again.')
+    }
+  }
+
+  const pending = orders.filter(o => !['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED'].includes(o.status))
+  const done = orders.filter(o => ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED'].includes(o.status))
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -134,6 +189,27 @@ export default function DealerSeedOrdersPage() {
                       </button>
                     )}
 
+                    {/* Batch 13 — Postpone + Not Available, available
+                        in the same statuses the pesticide/fertiliser
+                        flow allows. The two buttons sit on a row of
+                        their own so they don't compete with the
+                        primary green Process CTA above. */}
+                    {(['SENT', 'ACCEPTED', 'POSTPONED'].includes(order.status)) && processing !== order.id && (
+                      <div className="mt-2 flex gap-2">
+                        {order.status !== 'POSTPONED' && (
+                          <button onClick={() => openPostpone(order.id)}
+                            disabled={postponeBusy}
+                            className="flex-1 bg-amber-100 text-amber-800 text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                            ⏰ Later
+                          </button>
+                        )}
+                        <button onClick={() => markNotAvailable(order.id)}
+                          className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+                          ✗ Not Available
+                        </button>
+                      </div>
+                    )}
+
                     {/* Processing form */}
                     {processing === order.id && (
                       <div className="mt-3 bg-[#F5F0E8] rounded-xl p-4 space-y-3">
@@ -191,6 +267,16 @@ export default function DealerSeedOrdersPage() {
                         Order complete — farmer approved
                       </div>
                     )}
+                    {order.status === 'POSTPONED' && (
+                      <div className="mt-3 bg-amber-50 rounded-xl p-3 text-xs text-amber-800 text-center font-medium">
+                        Postponed. Tap Not Available to release this order back to the farmer.
+                      </div>
+                    )}
+                    {order.status === 'NOT_AVAILABLE' && (
+                      <div className="mt-3 bg-red-50 rounded-xl p-3 text-xs text-[#D4682E] text-center font-medium">
+                        Returned to the farmer to send to someone else.
+                      </div>
+                    )}
                   </div>
                 </div>
               ))
@@ -198,6 +284,49 @@ export default function DealerSeedOrdersPage() {
           }
         </div>
       </div>
+
+      {/* Batch 13 — Postpone picker. Mirrors the pesticide picker
+          on /dealer/orders/[id] so the dealer's gesture is identical
+          across both flows. Max-days is fetched from the server. */}
+      {postponeId && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => !postponeBusy && setPostponeId(null)}>
+          <div className="bg-white rounded-t-2xl w-full" onClick={e => e.stopPropagation()}
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
+              <p className="font-semibold text-[#6B3F1F]">Postpone this seed order</p>
+              <button onClick={() => !postponeBusy && setPostponeId(null)} className="text-[#7A8C7E] text-xl">×</button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-[#7A8C7E] mb-1">How many days?</p>
+              <p className="text-xs text-[#7A8C7E] mb-4">
+                Pick 1 to {postponeMaxDays}. After this window the order auto-returns to the farmer.
+              </p>
+              <div className="flex items-center justify-center gap-3 mb-5">
+                <button onClick={() => setPostponeDays(d => Math.max(1, d - 1))}
+                  disabled={postponeDays <= 1 || postponeBusy}
+                  className="w-12 h-12 rounded-full border border-[#DDD0B8] text-[#6B3F1F] text-xl font-bold disabled:opacity-30">
+                  −
+                </button>
+                <div className="min-w-[80px] text-center">
+                  <p className="text-3xl font-bold text-[#6B3F1F]">{postponeDays}</p>
+                  <p className="text-xs text-[#7A8C7E]">day{postponeDays === 1 ? '' : 's'}</p>
+                </div>
+                <button onClick={() => setPostponeDays(d => Math.min(postponeMaxDays, d + 1))}
+                  disabled={postponeDays >= postponeMaxDays || postponeBusy}
+                  className="w-12 h-12 rounded-full border border-[#DDD0B8] text-[#6B3F1F] text-xl font-bold disabled:opacity-30">
+                  +
+                </button>
+              </div>
+              <button onClick={confirmPostpone}
+                disabled={postponeBusy}
+                className="w-full py-3 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
+                {postponeBusy ? 'Postponing…' : `Postpone for ${postponeDays} day${postponeDays === 1 ? '' : 's'}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
