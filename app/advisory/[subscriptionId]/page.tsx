@@ -652,18 +652,23 @@ function BundleOrderSheet({
           ) : preview ? (
             <>
               <p className="text-sm font-semibold text-[#6B3F1F]">
-                {preview.count} {preview.count === 1 ? 'item' : 'items'} will be in this order
+                {preview.count} {preview.count === 1 ? 'option' : 'options'} will be in this order
               </p>
+              {preview.count > 0 && (
+                <p className="text-[11px] text-[#7A8C7E] mt-0.5 leading-snug">
+                  The dealer may pick between alternatives — your final list could be shorter.
+                </p>
+              )}
               {preview.count === 0 && (
                 <p className="text-xs text-[#7A8C7E] mt-1">
                   {preview.excluded_already_ordered > 0
                     ? "Everything in this window is already in another order. Pick a later TO date if you want to add more."
-                    : "No items match this date range yet. Extend the TO date."}
+                    : "No options match this date range yet. Extend the TO date."}
                 </p>
               )}
               {preview.excluded_already_ordered > 0 && preview.count > 0 && (
                 <p className="text-xs text-[#7A8C7E] mt-1">
-                  {preview.excluded_already_ordered} already in an existing order — not shown.
+                  {preview.excluded_already_ordered} {preview.excluded_already_ordered === 1 ? 'option' : 'options'} already in an existing order — not shown.
                 </p>
               )}
             </>
@@ -1195,6 +1200,7 @@ function DBSStrip({ subscriptionId }: { subscriptionId: string }) {
         </div>
         <p className="text-xs text-[#7A8C7E] mb-3 leading-relaxed">
           Order what you need before sowing. One bulk order per category.
+          The dealer may pick between alternatives — your final list could be shorter.
         </p>
         <div className="grid grid-cols-2 gap-2">
           <button onClick={() => openPicker('PESTICIDE')}
@@ -1204,7 +1210,7 @@ function DBSStrip({ subscriptionId }: { subscriptionId: string }) {
               background: pesticideAvailable ? '#3A7D44' : '#e5e5e5',
               color: pesticideAvailable ? 'white' : '#7A8C7E',
             }}>
-            {pesticideAvailable ? `Pesticides · ${pesticideCount}` : 'Pesticides — none'}
+            {pesticideAvailable ? `Pesticides · ${pesticideCount} ${pesticideCount === 1 ? 'option' : 'options'}` : 'Pesticides — none'}
           </button>
           <button onClick={() => openPicker('FERTILIZER')}
             disabled={!fertilizerAvailable}
@@ -1213,7 +1219,7 @@ function DBSStrip({ subscriptionId }: { subscriptionId: string }) {
               background: fertilizerAvailable ? '#3A7D44' : '#e5e5e5',
               color: fertilizerAvailable ? 'white' : '#7A8C7E',
             }}>
-            {fertilizerAvailable ? `Fertilizers · ${fertilizerCount}` : 'Fertilizers — none'}
+            {fertilizerAvailable ? `Fertilizers · ${fertilizerCount} ${fertilizerCount === 1 ? 'option' : 'options'}` : 'Fertilizers — none'}
           </button>
         </div>
       </div>
