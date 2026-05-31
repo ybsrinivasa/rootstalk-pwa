@@ -41,10 +41,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           — phones behave exactly as before. */}
       <body className={`${inter.className} h-full`}>
         {/* The frame's responsive sizing + black backdrop are in
-            globals.css under `.app-frame` — pure CSS so we don't
-            depend on Tailwind v4 JIT for the cascade-layer-sensitive
-            bits. See the comment block there for the full design. */}
-        <div className="app-frame">{children}</div>
+            globals.css. Two-layer wrapper:
+              - .app-frame  → 430-px column, transformed (containing
+                              block for `fixed` descendants), NO scroll
+              - .app-scroll → fills the frame, owns the scroll
+            Splitting these avoids a Chrome quirk where transform +
+            overflow on the same element mis-positions fixed children.
+            On phones (<768px) both wrappers are inert pass-throughs. */}
+        <div className="app-frame">
+          <div className="app-scroll">{children}</div>
+        </div>
       </body>
     </html>
   );

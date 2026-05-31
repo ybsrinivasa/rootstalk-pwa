@@ -52,16 +52,27 @@ body {
   body {
     background: #000;
   }
+  /* Outer frame owns the containing-block job: transform makes it
+     the containing block for `position: fixed` descendants. It does
+     NOT scroll — that's the inner child's job. Splitting these
+     responsibilities sidesteps a Chrome quirk where transform +
+     overflow:auto on the same element sometimes positions fixed
+     descendants to the scroll content's bottom instead of the
+     visible padding box. */
   .app-frame {
     margin: 0 auto;
     max-width: 430px;
     width: 100%;
     height: 100dvh;
-    overflow-y: auto;
-    overflow-x: hidden;
     background: #fff;
     position: relative;
     transform: translateZ(0);
     box-shadow: 0 0 60px rgba(0, 0, 0, 0.55);
+  }
+  /* Inner scroll container — 100% of the (already-100dvh) frame. */
+  .app-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
