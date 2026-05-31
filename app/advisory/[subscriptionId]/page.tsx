@@ -301,6 +301,12 @@ export default function AdvisoryPage() {
       <div className="pt-16 pb-24">
         <ClientCropChip subscriptionId={subscriptionId} />
 
+        {/* Batch 18 — Pre-sowing inputs strip (DBS V1 carve-out). Visible
+            whenever EITHER category is available per the server. Renders
+            two buttons: each greys out independently if its category has
+            no remaining DBS practices in the package. */}
+        <DBSStrip subscriptionId={subscriptionId} />
+
         {/* Start date gate */}
         {!hasStartDate && (
           <div className="mx-4 mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-5">
@@ -1072,5 +1078,208 @@ function FulfilmentSheet({
         </button>
       </div>
     </div>
+  )
+}
+
+// ── Batch 18 — DBS Pre-sowing inputs strip ─────────────────────────────────
+//
+// Per the 2026-05-31 carve-out (project_rootstalk_dbs_v1.md):
+// - DBS purchase available pre-start-date, advisory listing deferred.
+// - Annual packages only.
+// - Window closes when crop_start_date <= today.
+// - Server tells us count + has_locked_brand + practice_ids per category.
+// Strip is invisible when both categories return `available: false`.
+type DBSPreview = {
+  category: 'PESTICIDE' | 'FERTILIZER'
+  count: number
+  available: boolean
+  reason: string | null
+  has_locked_brand: boolean
+  practice_ids: string[]
+  client_id: string
+}
+
+type Recipient = {
+  user_id: string
+  name: string
+  phone: string
+  shop_name?: string | null
+  distance_km?: number
+  is_promoter?: boolean
+}
+
+function DBSStrip({ subscriptionId }: { subscriptionId: string }) {
+  const router = useRouter()
+  const [pesticide, setPesticide] = useState<DBSPreview | null>(null)
+  const [fertilizer, setFertilizer] = useState<DBSPreview | null>(null)
+  const [pickerCategory, setPickerCategory] = useState<'PESTICIDE' | 'FERTILIZER' | null>(null)
+  const [pickerTab, setPickerTab] = useState<'dealers' | 'facilitators'>('dealers')
+  const [dealers, setDealers] = useState<Recipient[]>([])
+  const [facilitators, setFacilitators] = useState<Recipient[]>([])
+  const [pickerLoading, setPickerLoading] = useState(false)
+  const [sending, setSending] = useState<string | null>(null)
+  const [lockedExplainer, setLockedExplainer] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchPreview = async (category: 'PESTICIDE' | 'FERTILIZER') => {
+      try {
+        const { data } = await api.get<DBSPreview>(
+          `/farmer/subscriptions/${subscriptionId}/dbs-bulk-preview?category=${category}`,
+        )
+        if (category === 'PESTICIDE') setPesticide(data)
+        else setFertilizer(data)
+      } catch { /* preview failures hide the strip */ }
+    }
+    void fetchPreview('PESTICIDE')
+    void fetchPreview('FERTILIZER')
+  }, [subscriptionId])
+
+  const visible = (pesticide?.available || fertilizer?.available) ?? false
+  if (!visible) return null
+
+  async function openPicker(category: 'PESTICIDE' | 'FERTILIZER') {
+    const preview = category === 'PESTICIDE' ? pesticide : fertilizer
+    if (!preview || !preview.available) return
+    setPickerCategory(category)
+    setPickerLoading(true)
+    try {
+      const params = new URLSearchParams({
+        category,
+        practice_ids: preview.practice_ids.join(','),
+      })
+      const { data } = await api.get<{
+        dealers: Recipient[]
+        facilitators: Recipient[]
+        has_locked_brand: boolean
+        locked_brand_explainer: string | null
+      }>(`/farmer/subscriptions/${subscriptionId}/eligible-recipients-for-new-order?${params}`)
+      setDealers(data.dealers || [])
+      setFacilitators(data.facilitators || [])
+      setLockedExplainer(data.locked_brand_explainer)
+    } finally { setPickerLoading(false) }
+  }
+
+  async function sendToRecipient(r: Recipient, isDealer: boolean) {
+    if (!pickerCategory) return
+    const preview = pickerCategory === 'PESTICIDE' ? pesticide : fertilizer
+    if (!preview) return
+    setSending(r.user_id)
+    try {
+      const payload = isDealer
+        ? { dealer_user_id: r.user_id }
+        : { facilitator_user_id: r.user_id }
+      const { data } = await api.post<{ id: string }>(`/farmer/orders/dbs-bulk`, {
+        subscription_id: subscriptionId,
+        client_id: preview.client_id,
+        category: pickerCategory,
+        ...payload,
+      })
+      router.push(`/orders/${data.id}`)
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message || 'Could not send the order.')
+    } finally { setSending(null) }
+  }
+
+  const pesticideCount = pesticide?.count ?? 0
+  const fertilizerCount = fertilizer?.count ?? 0
+  const pesticideAvailable = pesticide?.available ?? false
+  const fertilizerAvailable = fertilizer?.available ?? false
+
+  return (
+    <>
+      <div className="mx-4 mt-4 bg-white border border-[#DDD0B8] rounded-2xl p-4 shadow-sm">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-xl">🌾</span>
+          <p className="font-semibold text-[#6B3F1F] text-sm">Pre-sowing inputs</p>
+        </div>
+        <p className="text-xs text-[#7A8C7E] mb-3 leading-relaxed">
+          Order what you need before sowing. One bulk order per category.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={() => openPicker('PESTICIDE')}
+            disabled={!pesticideAvailable}
+            className="py-2.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-40"
+            style={{
+              background: pesticideAvailable ? '#3A7D44' : '#e5e5e5',
+              color: pesticideAvailable ? 'white' : '#7A8C7E',
+            }}>
+            {pesticideAvailable ? `Pesticides · ${pesticideCount}` : 'Pesticides — none'}
+          </button>
+          <button onClick={() => openPicker('FERTILIZER')}
+            disabled={!fertilizerAvailable}
+            className="py-2.5 rounded-xl text-xs font-semibold transition-colors disabled:opacity-40"
+            style={{
+              background: fertilizerAvailable ? '#3A7D44' : '#e5e5e5',
+              color: fertilizerAvailable ? 'white' : '#7A8C7E',
+            }}>
+            {fertilizerAvailable ? `Fertilizers · ${fertilizerCount}` : 'Fertilizers — none'}
+          </button>
+        </div>
+      </div>
+
+      {/* Picker — same shape as /orders/[id]'s picker. Locked-brand
+          orders show the purple banner + hide the facilitators tab. */}
+      {pickerCategory && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => !sending && setPickerCategory(null)}>
+          <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}
+            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
+              <p className="font-semibold text-[#6B3F1F]">
+                Send pre-sowing {pickerCategory === 'PESTICIDE' ? 'pesticides' : 'fertilizers'} to
+              </p>
+              <button onClick={() => !sending && setPickerCategory(null)} className="text-[#7A8C7E] text-xl">×</button>
+            </div>
+            {lockedExplainer && (
+              <div className="mx-4 mt-3 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed">
+                <p className="font-semibold mb-0.5">Brand-locked order</p>
+                <p>{lockedExplainer}</p>
+              </div>
+            )}
+            <div className="flex border-b border-[#DDD0B8]">
+              {(['dealers', 'facilitators'] as const).map(t => {
+                if (t === 'facilitators' && lockedExplainer) return null
+                return (
+                  <button key={t} onClick={() => setPickerTab(t)}
+                    className={`flex-1 py-3 text-sm font-medium ${pickerTab === t ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
+                    {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="p-4 space-y-3">
+              {pickerLoading ? (
+                [1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)
+              ) : (pickerTab === 'dealers' ? dealers : facilitators).length === 0 ? (
+                <div className="text-center py-10 text-sm text-[#7A8C7E]">
+                  No {pickerTab} found nearby.
+                </div>
+              ) : (
+                (pickerTab === 'dealers' ? dealers : facilitators).map(r => {
+                  const isDealer = pickerTab === 'dealers'
+                  const busy = sending === r.user_id
+                  return (
+                    <div key={r.user_id} className="bg-white border border-[#DDD0B8] rounded-xl p-3 flex items-center justify-between">
+                      <div className="min-w-0 mr-3">
+                        <p className="font-semibold text-[#6B3F1F] text-sm truncate">{r.name}</p>
+                        {isDealer && r.shop_name && <p className="text-xs text-[#7A8C7E] truncate">{r.shop_name}</p>}
+                        {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{r.distance_km} km away</p>}
+                        {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">Promoter</span>}
+                      </div>
+                      <button onClick={() => sendToRecipient(r, isDealer)}
+                        disabled={!!sending}
+                        className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
+                        style={{ background: '#3A7D44' }}>
+                        {busy ? 'Sending…' : 'Send'}
+                      </button>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

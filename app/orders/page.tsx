@@ -90,6 +90,20 @@ export default function OrdersPage() {
           <span className="text-[#7A8C7E]">→</span>
         </button>
 
+        {/* Batch 18 — fallback link to the Pre-sowing inputs strip on
+            the advisory page. Lives next to Seeds so the farmer can
+            find it from /orders too. Tap routes to /crops-and-companies
+            so the farmer picks the crop first (the actual DBS strip
+            lives on /advisory/[subscriptionId] per the design call). */}
+        <button onClick={() => router.push('/crops-and-companies')}
+          className="mx-4 mt-2 w-[calc(100%-2rem)] bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 flex items-center justify-between text-left shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🌾</span>
+            <p className="font-semibold text-[#6B3F1F] text-sm">Pre-sowing inputs</p>
+          </div>
+          <span className="text-[#7A8C7E]">→</span>
+        </button>
+
         <div className="px-4 mt-4 space-y-3">
           {loading ? (
             <div className="h-20 bg-white rounded-2xl animate-pulse" />
