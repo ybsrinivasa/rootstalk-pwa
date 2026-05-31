@@ -5,12 +5,25 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
+// Batch 26 — SE-authored element guidance the dealer reads after
+// picking a brand. Plant-wise fields are null on area-wise items.
+interface ElementBlock {
+  dosage_value: number | null
+  dosage_unit_cosh_id: string | null
+  dosage_unit_name: string | null
+  application_method_cosh_id: string | null
+  application_method_name: string | null
+  vol_per_plant_value: number | null
+  vol_per_plant_unit_cosh_id: string | null
+  vol_per_plant_unit_name: string | null
+}
 interface OrderItem {
   id: string; practice_id: string; status: string
   relation_id: string | null; relation_type: string | null; relation_role?: string | null
   brand_cosh_id: string | null; brand_name: string | null
   given_volume: number | null; estimated_volume: number | null
   volume_unit: string | null; price: number | null
+  element_block?: ElementBlock | null
 }
 interface RelationOption {
   option_index: number
@@ -416,6 +429,17 @@ export default function DealerOrderDetailPage() {
             </span>
             <span className="text-[#7A8C7E] text-xs">▼</span>
           </button>
+        )}
+
+        {/* Batch 26 — SE-authored guidance shown ONCE the dealer has
+            committed to a brand. Pre-brand-selection this stays
+            collapsed so the dealer focuses on the picker; once a
+            brand lands we surface Recommended Dosage, Application
+            Method, and (plant-wise only) Volume per Plant — the
+            three pieces of SE guidance that frame the Given-Volume
+            entry below. */}
+        {(itemEdit.brand_cosh_id || brandOptions?.type === 'LOCKED') && item.element_block && (
+          <ElementGuidance block={item.element_block} />
         )}
 
         <button onClick={() => getEstimate(item.id)} disabled={estimating}
@@ -884,6 +908,38 @@ export default function DealerOrderDetailPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Batch 26 — Element guidance block ─────────────────────────────────────────
+// Three short lines the dealer reads after picking a brand:
+//   - Recommended Dosage + Unit
+//   - Application Method
+//   - Volume per Plant + Unit (plant-wise items only)
+// Pure render; values come from the backend's `element_block`.
+function ElementGuidance({ block }: { block: ElementBlock }) {
+  const rows: { label: string; value: string }[] = []
+  if (block.dosage_value != null) {
+    const unit = block.dosage_unit_name || block.dosage_unit_cosh_id || ''
+    rows.push({ label: 'Recommended dosage', value: `${block.dosage_value} ${unit}`.trim() })
+  }
+  if (block.application_method_name) {
+    rows.push({ label: 'Application method', value: block.application_method_name })
+  }
+  if (block.vol_per_plant_value != null) {
+    const unit = block.vol_per_plant_unit_name || block.vol_per_plant_unit_cosh_id || ''
+    rows.push({ label: 'Volume per plant', value: `${block.vol_per_plant_value} ${unit}`.trim() })
+  }
+  if (rows.length === 0) return null
+  return (
+    <div className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-lg p-3 space-y-1.5">
+      {rows.map((r) => (
+        <div key={r.label} className="flex items-baseline justify-between gap-3">
+          <span className="text-[11px] text-[#7A8C7E]">{r.label}</span>
+          <span className="text-xs font-semibold text-[#6B3F1F] text-right">{r.value}</span>
+        </div>
+      ))}
     </div>
   )
 }
