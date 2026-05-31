@@ -201,16 +201,29 @@ export default function DealerOrderDetailPage() {
       const { data } = await api.get<BrandOptions>(`/dealer/orders/${orderId}/items/${item.id}/brand-options`)
       setBrandOptions(data)
       if (data.type === 'LOCKED' && data.locked_brand_name) {
-        setItemEdit(f => ({ ...f, brand_cosh_id: data.locked_brand_cosh_id || '', brand_name: data.locked_brand_name || '' }))
+        const family = data.locked_brand_unit_family
+        const defaultUnit = family && data.unit_options_by_family
+          ? data.unit_options_by_family[family]?.[0]
+          : undefined
+        setItemEdit(f => ({
+          ...f,
+          brand_cosh_id: data.locked_brand_cosh_id || '',
+          brand_name: data.locked_brand_name || '',
+          volume_unit: defaultUnit || f.volume_unit,
+        }))
+        // Batch 27 — auto-fire BL-06 estimate for locked-brand flow
+        // too, so the dealer sees the estimate without an extra tap.
+        void getEstimate(item.id, defaultUnit)
       }
     } catch { setBrandOptions(null) }
   }
 
-  async function getEstimate(itemId: string) {
+  async function getEstimate(itemId: string, brandUnitOverride?: string) {
     setEstimating(true)
     setEstimate(null)
     try {
-      const { data } = await api.get(`/dealer/orders/${orderId}/items/${itemId}/volume-estimate`)
+      const qs = brandUnitOverride ? `?brand_unit=${encodeURIComponent(brandUnitOverride)}` : ''
+      const { data } = await api.get(`/dealer/orders/${orderId}/items/${itemId}/volume-estimate${qs}`)
       if (data.estimated_volume) {
         setEstimate({ volume: data.estimated_volume, unit: data.volume_unit })
         setItemEdit(f => ({ ...f, given_volume: String(data.estimated_volume), volume_unit: data.volume_unit || f.volume_unit }))
@@ -335,8 +348,28 @@ export default function DealerOrderDetailPage() {
   }
 
   function selectBrand(cosh_id: string, name: string) {
-    setItemEdit(f => ({ ...f, brand_cosh_id: cosh_id, brand_name: name }))
+    // Derive default unit from the brand's formulation family so
+    // the BL-06 lookup has a brand_unit to key on (the volume-estimate
+    // endpoint returns BRAND_UNIT_MISSING otherwise).
+    const family = brandOptions?.brand_unit_family?.[cosh_id]
+      ?? brandOptions?.locked_brand_unit_family
+    const defaultUnit = family && brandOptions?.unit_options_by_family
+      ? brandOptions.unit_options_by_family[family]?.[0]
+      : undefined
+    setItemEdit(f => ({
+      ...f,
+      brand_cosh_id: cosh_id,
+      brand_name: name,
+      volume_unit: defaultUnit || f.volume_unit,
+    }))
     setShowBrandSheet(false)
+    // Batch 27 — auto-fire BL-06 estimate as soon as the brand is
+    // committed. The dealer no longer has to tap a "Calculate"
+    // button; the estimated volume appears in the guidance block
+    // and pre-fills the Given-Volume input.
+    if (editingItem) {
+      void getEstimate(editingItem, defaultUnit)
+    }
   }
 
   // Standalone items: items without a relation_id (or without relation_role)
@@ -364,6 +397,17 @@ export default function DealerOrderDetailPage() {
     activeItems.filter(i => i.status === 'AVAILABLE').every(i => i.given_volume)
 
   const showPL = ['SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED', 'COMPLETED'].includes(order.status)
+
+  // Batch 27 — Total amount footer. `price` is the line-item total
+  // the dealer entered for the given volume (e.g., "2 kg · ₹500"
+  // means ₹500 for the whole 2 kg). Sum across every AVAILABLE
+  // item that has a price. Price is optional, so partial coverage
+  // is expected — show "N of M priced" so the dealer sees coverage.
+  const pricedItems = activeItems.filter(
+    i => i.status === 'AVAILABLE' && i.price != null
+  )
+  const availableItemCount = activeItems.filter(i => i.status === 'AVAILABLE').length
+  const totalAmount = pricedItems.reduce((s, i) => s + i.price!, 0)
 
   // ── Renderers ───────────────────────────────────────────────────────────────
 
@@ -439,13 +483,12 @@ export default function DealerOrderDetailPage() {
             three pieces of SE guidance that frame the Given-Volume
             entry below. */}
         {(itemEdit.brand_cosh_id || brandOptions?.type === 'LOCKED') && item.element_block && (
-          <ElementGuidance block={item.element_block} />
+          <ElementGuidance
+            block={item.element_block}
+            estimate={estimate}
+            estimating={estimating}
+          />
         )}
-
-        <button onClick={() => getEstimate(item.id)} disabled={estimating}
-          className="w-full text-xs font-medium text-[#085041] bg-[#085041]/5 border border-[#085041]/20 rounded-lg py-2 disabled:opacity-50">
-          {estimating ? 'Calculating…' : estimate ? `Est. ${estimate.volume} ${estimate.unit}` : '⚡ Auto-calculate estimated volume'}
-        </button>
 
         {/* Batch 25 — Unit dropdown constrained to the brand's
             formulation family. Solid brands get kg/g, liquid brands
@@ -712,6 +755,18 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
+        {pricedItems.length > 0 && (
+          <div className="bg-white border-2 border-[#085041]/15 rounded-2xl p-4 flex items-baseline justify-between gap-3">
+            <div>
+              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">Total amount</p>
+              <p className="text-[10px] text-[#7A8C7E] mt-0.5">
+                {pricedItems.length} of {availableItemCount} priced
+              </p>
+            </div>
+            <p className="text-2xl font-bold text-[#085041]">₹{totalAmount.toLocaleString('en-IN')}</p>
+          </div>
+        )}
+
         {canSubmit && (
           <button onClick={submitForApproval} disabled={submitting}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
@@ -918,8 +973,14 @@ export default function DealerOrderDetailPage() {
 //   - Application Method
 //   - Volume per Plant + Unit (plant-wise items only)
 // Pure render; values come from the backend's `element_block`.
-function ElementGuidance({ block }: { block: ElementBlock }) {
-  const rows: { label: string; value: string }[] = []
+function ElementGuidance({
+  block, estimate, estimating,
+}: {
+  block: ElementBlock
+  estimate: { volume: number; unit: string } | null
+  estimating: boolean
+}) {
+  const rows: { label: string; value: string; emphasis?: boolean }[] = []
   if (block.dosage_value != null) {
     const unit = block.dosage_unit_name || block.dosage_unit_cosh_id || ''
     rows.push({ label: 'Recommended dosage', value: `${block.dosage_value} ${unit}`.trim() })
@@ -931,13 +992,24 @@ function ElementGuidance({ block }: { block: ElementBlock }) {
     const unit = block.vol_per_plant_unit_name || block.vol_per_plant_unit_cosh_id || ''
     rows.push({ label: 'Volume per plant', value: `${block.vol_per_plant_value} ${unit}`.trim() })
   }
+  // Batch 27 — BL-06 estimated volume in the same warm-tan card so
+  // the dealer reads SE guidance + computed estimate together, right
+  // above the Given-Volume input. "Calculating…" while the request
+  // is in flight; empty when no estimate could be computed.
+  if (estimating) {
+    rows.push({ label: 'Estimated volume', value: 'Calculating…', emphasis: true })
+  } else if (estimate) {
+    rows.push({ label: 'Estimated volume', value: `${estimate.volume} ${estimate.unit || ''}`.trim(), emphasis: true })
+  }
   if (rows.length === 0) return null
   return (
     <div className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-lg p-3 space-y-1.5">
       {rows.map((r) => (
         <div key={r.label} className="flex items-baseline justify-between gap-3">
           <span className="text-[11px] text-[#7A8C7E]">{r.label}</span>
-          <span className="text-xs font-semibold text-[#6B3F1F] text-right">{r.value}</span>
+          <span className={`text-xs ${r.emphasis ? 'font-bold text-[#085041]' : 'font-semibold text-[#6B3F1F]'} text-right`}>
+            {r.value}
+          </span>
         </div>
       ))}
     </div>
