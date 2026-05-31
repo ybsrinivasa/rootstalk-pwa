@@ -30,9 +30,23 @@ interface RelationGroup {
   relation_type: string | null
   parts: RelationPart[]
 }
+// Batch 24 — farmer context for the dealer's order detail header.
+// Crop-age semantics: plant-wise = years (today.year - planting_year),
+// area-wise = days (today - crop_start_date).
+interface FarmerContext {
+  farmer_name: string | null
+  farmer_phone: string | null
+  crop_name: string | null
+  measure: 'PLANT_WISE' | 'AREA_WISE' | null
+  age_value: number | null
+  age_unit: 'years' | 'days' | null
+  farm_area_acres: number | null
+  number_of_plants: number | null
+}
 interface Order {
   id: string; status: string; farmer_user_id: string; client_id: string
   date_from: string; date_to: string; created_at: string
+  farmer_context?: FarmerContext
   items: OrderItem[]
   relations?: RelationGroup[]
   standalone_items?: OrderItem[]
@@ -612,6 +626,11 @@ export default function DealerOrderDetailPage() {
       <PWAHeader title="Order Details" activeRole="DEALER" back="/dealer/orders" />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
+        {/* Batch 24 — farmer context. The dealer needs farmer name,
+            a tap-to-call number, crop, crop age, and acres/plants
+            to make sense of the order. Per user 2026-05-31. */}
+        {order.farmer_context && <FarmerContextCard ctx={order.farmer_context} />}
+
         {/* Header card */}
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-center justify-between">
@@ -852,6 +871,60 @@ export default function DealerOrderDetailPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Batch 24 — farmer context card ────────────────────────────────────────────
+// Renders the farmer details + crop context the dealer needs to act on the
+// order. Phone is a `tel:` link for one-tap calling. Age renders as days
+// (area-wise) or years (plant-wise) per the subscription's measure.
+function FarmerContextCard({ ctx }: { ctx: FarmerContext }) {
+  const measureLine = ctx.measure === 'PLANT_WISE' && ctx.number_of_plants != null
+    ? `${ctx.number_of_plants} plant${ctx.number_of_plants === 1 ? '' : 's'}`
+    : ctx.measure === 'AREA_WISE' && ctx.farm_area_acres != null
+      ? `${ctx.farm_area_acres} ${ctx.farm_area_acres === 1 ? 'acre' : 'acres'}`
+      : null
+
+  const ageLine = ctx.age_value != null && ctx.age_unit
+    ? `${ctx.age_value} ${
+        ctx.age_unit === 'years'
+          ? (ctx.age_value === 1 ? 'year' : 'years')
+          : (ctx.age_value === 1 ? 'day' : 'days')
+      } old`
+    : null
+
+  return (
+    <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs text-[#7A8C7E]">Farmer</p>
+          <p className="font-semibold text-[#6B3F1F] truncate">{ctx.farmer_name || '—'}</p>
+        </div>
+        {ctx.farmer_phone && (
+          <a href={`tel:${ctx.farmer_phone}`}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-semibold">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Call
+          </a>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#F0E8D6]">
+        <div>
+          <p className="text-xs text-[#7A8C7E]">Crop</p>
+          <p className="text-sm font-medium text-[#6B3F1F] truncate">{ctx.crop_name || '—'}</p>
+          {ageLine && <p className="text-xs text-[#7A8C7E] mt-0.5">{ageLine}</p>}
+        </div>
+        <div>
+          <p className="text-xs text-[#7A8C7E]">
+            {ctx.measure === 'PLANT_WISE' ? 'Plants' : 'Area'}
+          </p>
+          <p className="text-sm font-medium text-[#6B3F1F]">{measureLine || '—'}</p>
+        </div>
+      </div>
     </div>
   )
 }
