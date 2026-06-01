@@ -307,6 +307,11 @@ export default function AdvisoryPage() {
             no remaining DBS practices in the package. */}
         <DBSStrip subscriptionId={subscriptionId} />
 
+        {/* Phase 2 of the Orders restructure (2026-06-02) — the
+            farmer's orders for this crop live ON this page. /orders
+            stays as the global cross-subscription history view. */}
+        <SubscriptionOrders subscriptionId={subscriptionId} />
+
         {/* Start date gate */}
         {!hasStartDate && (
           <div className="mx-4 mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-5">
@@ -1111,6 +1116,120 @@ type Recipient = {
   shop_name?: string | null
   distance_km?: number
   is_promoter?: boolean
+}
+
+// Phase 2 of the Orders restructure (2026-06-02): show all orders
+// (regular + seed) for ONE subscription, inline on its advisory page.
+// Reuses the same status palette + card shape /orders uses so the
+// farmer reads them consistently. Empty state explicitly says "for
+// this crop" so the farmer doesn't worry about other crops' orders.
+
+const ORDERS_STATUS_COLOUR: Record<string, string> = {
+  SENT:               'bg-purple-100 text-purple-700',
+  PROCESSING:         'bg-blue-100 text-blue-700',
+  SENT_FOR_APPROVAL:  'bg-amber-100 text-amber-700',
+  PARTIALLY_APPROVED: 'bg-orange-100 text-orange-700',
+  COMPLETED:          'bg-emerald-100 text-emerald-700',
+  CANCELLED:          'bg-stone-100 text-[#7A8C7E]',
+  // Seed-only statuses
+  DRAFT:              'bg-stone-100 text-[#7A8C7E]',
+  APPROVED:           'bg-blue-100 text-blue-700',
+  PURCHASED:          'bg-emerald-100 text-emerald-700',
+}
+
+type SubOrder =
+  | {
+      kind: 'REGULAR'
+      id: string; status: string; date_from: string; date_to: string
+      created_at: string
+      item_count?: number; is_max_count?: boolean
+      category?: 'PESTICIDE' | 'FERTILIZER' | null
+    }
+  | {
+      kind: 'SEED'
+      id: string; status: string; variety_name: string | null
+      unit: string | null; quantity: number | null; total_price: number | null
+      created_at: string
+    }
+
+function SubscriptionOrders({ subscriptionId }: { subscriptionId: string }) {
+  const router = useRouter()
+  const [orders, setOrders] = useState<SubOrder[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    api.get<{ orders: SubOrder[] }>(
+      `/farmer/subscriptions/${subscriptionId}/orders`,
+    )
+      .then(({ data }) => { if (!cancelled) setOrders(data.orders || []) })
+      .catch(() => { if (!cancelled) setOrders([]) })
+    return () => { cancelled = true }
+  }, [subscriptionId])
+
+  if (orders === null) {
+    return (
+      <div className="mx-4 mt-4 h-20 bg-white/60 border border-[#DDD0B8] rounded-2xl animate-pulse" />
+    )
+  }
+
+  return (
+    <div className="mx-4 mt-4">
+      <p className="text-xs font-semibold text-[#6B3F1F] uppercase tracking-wider mb-2 px-1">
+        Orders for this crop
+      </p>
+      {orders.length === 0 ? (
+        <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 text-center">
+          <p className="text-xs text-[#7A8C7E]">No orders yet for this crop.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {orders.map(o => (
+            <button key={`${o.kind}:${o.id}`} onClick={() => router.push(
+              o.kind === 'SEED' ? `/seed-orders/${o.id}` : `/orders/${o.id}`,
+            )}
+              className="w-full bg-white rounded-2xl p-3 border border-[#DDD0B8] shadow-sm text-left active:scale-[0.98] transition-transform">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
+                    {o.kind === 'SEED' ? 'Seed' : (o.category?.toLowerCase() || 'order')}
+                  </span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${ORDERS_STATUS_COLOUR[o.status] || 'bg-stone-100 text-[#7A8C7E]'}`}>
+                    {o.status.replace(/_/g, ' ')}
+                  </span>
+                </div>
+                <span className="text-[10px] text-[#7A8C7E]">
+                  {new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                </span>
+              </div>
+              {o.kind === 'SEED' ? (
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-sm font-semibold text-[#6B3F1F] truncate">{o.variety_name || 'Unknown variety'}</p>
+                  {o.quantity != null && o.unit && (
+                    <p className="text-xs text-[#7A8C7E] shrink-0">
+                      {o.quantity} {o.unit}{o.total_price != null ? ` · ₹${o.total_price}` : ''}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm text-[#6B3F1F]">
+                    {new Date(o.date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    {' — '}
+                    {new Date(o.date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                  </p>
+                  {o.item_count !== undefined && o.item_count > 0 && (
+                    <span className="text-xs text-[#7A8C7E] shrink-0">
+                      {o.is_max_count ? 'Max ' : ''}{o.item_count} item{o.item_count !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function DBSStrip({ subscriptionId }: { subscriptionId: string }) {
