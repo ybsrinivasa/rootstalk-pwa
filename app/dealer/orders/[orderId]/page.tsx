@@ -147,6 +147,10 @@ interface BrandOptions {
   // to constrain what the dealer can pick once a brand is selected.
   brand_unit_family?: Record<string, 'solid' | 'liquid' | 'discrete'>
   unit_options_by_family?: Record<'solid' | 'liquid' | 'discrete', string[]>
+  // Fix 2026-06-01 — per-brand allowed pack units from Cosh's
+  // tradenames_units Connect. When present this wins over the
+  // formulation-family fallback (above).
+  units_by_brand?: Record<string, { cosh_id: string; name: string }[]>
 }
 interface PackingItem {
   id: string; brand_name: string | null; given_volume: number | null
@@ -671,14 +675,19 @@ export default function DealerOrderDetailPage() {
   }
 
   function selectBrand(cosh_id: string, name: string) {
-    // Derive default unit from the brand's formulation family so
-    // the BL-06 lookup has a brand_unit to key on (the volume-estimate
-    // endpoint returns BRAND_UNIT_MISSING otherwise).
-    const family = brandOptions?.brand_unit_family?.[cosh_id]
-      ?? brandOptions?.locked_brand_unit_family
-    const defaultUnit = family && brandOptions?.unit_options_by_family
-      ? brandOptions.unit_options_by_family[family]?.[0]
-      : undefined
+    // Fix 2026-06-01 — tradenames_units wins. If Cosh has unit rows
+    // for this brand, the dropdown shows only those; the default unit
+    // is the first one. Falls back to the formulation-family inference
+    // when Cosh has no tradenames_units rows yet for this brand.
+    const tnUnits = brandOptions?.units_by_brand?.[cosh_id] || []
+    let defaultUnit: string | undefined = tnUnits[0]?.name
+    if (!defaultUnit) {
+      const family = brandOptions?.brand_unit_family?.[cosh_id]
+        ?? brandOptions?.locked_brand_unit_family
+      defaultUnit = family && brandOptions?.unit_options_by_family
+        ? brandOptions.unit_options_by_family[family]?.[0]
+        : undefined
+    }
     setItemEdit(f => ({
       ...f,
       brand_cosh_id: cosh_id,
@@ -829,17 +838,23 @@ export default function DealerOrderDetailPage() {
           />
         )}
 
-        {/* Batch 25 — Unit dropdown constrained to the brand's
-            formulation family. Solid brands get kg/g, liquid brands
-            get L/ml, discrete brands get numbers. Falls back to the
-            full set when no brand is picked yet. */}
+        {/* Fix 2026-06-01 — Unit dropdown sources from Cosh's
+            tradenames_units Connect via units_by_brand. Falls back to
+            the formulation-family inference when Cosh hasn't shipped
+            unit rows for the brand. */}
         {(() => {
-          const family = brandOptions?.brand_unit_family?.[itemEdit.brand_cosh_id]
-            ?? brandOptions?.locked_brand_unit_family
-            ?? null
-          const allowed = family && brandOptions?.unit_options_by_family
-            ? brandOptions.unit_options_by_family[family]
-            : ['kg', 'g', 'L', 'mL', 'numbers']
+          const tnUnits = brandOptions?.units_by_brand?.[itemEdit.brand_cosh_id] || []
+          let allowed: string[]
+          if (tnUnits.length > 0) {
+            allowed = tnUnits.map(u => u.name)
+          } else {
+            const family = brandOptions?.brand_unit_family?.[itemEdit.brand_cosh_id]
+              ?? brandOptions?.locked_brand_unit_family
+              ?? null
+            allowed = family && brandOptions?.unit_options_by_family
+              ? brandOptions.unit_options_by_family[family]
+              : ['kg', 'g', 'L', 'mL', 'numbers']
+          }
           return (
             <div className="grid grid-cols-3 gap-2">
               <input type="number" value={itemEdit.given_volume}
