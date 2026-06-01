@@ -390,22 +390,21 @@ export default function DealerOrderDetailPage() {
         // Batch 27 — auto-fire BL-06 estimate for locked-brand flow
         // too, so the dealer sees the estimate without an extra tap.
         void getEstimate(item.id, defaultUnit)
-      } else if (item.brand_cosh_id) {
-        // Fix 2026-06-01 — on re-open of an item that already has a
-        // brand committed (page refresh, returning to the order), the
-        // estimate state is gone from React memory. Re-fire it so the
-        // dealer doesn't have to re-select the brand to see the
-        // Estimated Volume row again. Prefer the brand's allowed unit
-        // (defaulting to item.volume_unit which the dealer already
-        // picked, falling back to the first units_by_brand entry).
-        const reopenedUnit = (
-          item.volume_unit
-          ?? data.units_by_brand?.[item.brand_cosh_id]?.[0]?.name
-          ?? undefined
-        )
-        void getEstimate(item.id, reopenedUnit)
+        return
       }
     } catch { setBrandOptions(null) }
+
+    // Fix 2026-06-01 — on re-open of an item that already has a brand
+    // committed (page refresh, returning to the order), the estimate
+    // state is gone from React memory. Re-fire it so the dealer
+    // doesn't have to re-pick the brand. Sits OUTSIDE the
+    // brand-options try-catch because a brand-options blip shouldn't
+    // suppress the estimate — the brand is already committed on the
+    // item and BL-06 reads its own inputs (dosage + farm area +
+    // application method + brand_unit).
+    if (item.brand_cosh_id) {
+      void getEstimate(item.id, item.volume_unit ?? undefined)
+    }
   }
 
   async function getEstimate(itemId: string, brandUnitOverride?: string) {
