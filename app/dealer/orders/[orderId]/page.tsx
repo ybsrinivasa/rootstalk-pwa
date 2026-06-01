@@ -25,6 +25,9 @@ interface NPKMixed {
   cosh_id: string; name: string
   n: number; p: number; k: number
   kg_product: number
+  // Batch 30C — total over all fertigation applications (= kg_product
+  // × applications_multiplier). Same as kg_product for chemical NPK.
+  kg_product_total?: number
   delivered: { n: number; p: number; k: number }
   match_target: 'N' | 'P' | 'K'
   total_delivered: number
@@ -38,6 +41,9 @@ interface NPKStraight {
 interface NPKOptions {
   is_npk_practice: boolean
   fertigation: boolean
+  // Batch 30C — Fertigation multiplier the dealer screen surfaces so
+  // the dealer understands "per app × N apps = total kg".
+  applications_multiplier?: number
   required_dose: { n: number; p: number; k: number } | null
   ranked_mixed: NPKMixed[]
   enabled_straights: NPKStraight[]
@@ -45,6 +51,14 @@ interface NPKOptions {
 }
 interface NPKTradeName {
   cosh_id: string; name: string; manufacturer_cosh_id: string | null
+}
+// Batch 30C — three-group brand picker (spec §3.1). Recommended is
+// always empty for NPK because the practice has no BRAND_NAME element;
+// hidden in the UI. My Brands = dealer's onboarded manufacturers.
+interface NPKTradeNameGroups {
+  group_recommended: NPKTradeName[]
+  group_my: NPKTradeName[]
+  group_other: NPKTradeName[]
 }
 interface NPKPickedTradeName {
   common_name_cosh_id: string
@@ -98,6 +112,15 @@ interface Order {
   items: OrderItem[]
   relations?: RelationGroup[]
   standalone_items?: OrderItem[]
+  // Batch 30C — server-side brand consolidation for NPK Volume/Price
+  // (spec §4.2). Dealer-facing convenience; farmer view stays per-timeline.
+  consolidated_brands?: {
+    brand_cosh_id: string
+    brand_name: string | null
+    volume_unit: string | null
+    total_volume: number
+    line_count: number
+  }[]
   // Batch 28 — server-authoritative in-flight per-item edits the
   // dealer's app debounce-syncs every ~3 s. Hydrated into the
   // client's draft map on mount; IndexedDB mirror lives at
@@ -183,6 +206,7 @@ export default function DealerOrderDetailPage() {
   const [npkPickedStraights, setNpkPickedStraights] = useState<Set<string>>(new Set())  // common_name_cosh_ids
   const [npkTradeNameSheet, setNpkTradeNameSheet] = useState<{ common_name_cosh_id: string; target?: 'N' | 'P' | 'K' } | null>(null)
   const [npkTradeNameList, setNpkTradeNameList] = useState<NPKTradeName[]>([])
+  const [npkTradeNameGroups, setNpkTradeNameGroups] = useState<NPKTradeNameGroups | null>(null)
   const [npkSubmitting, setNpkSubmitting] = useState(false)
 
   // Batch 28 — draft state. Map of item_id -> {brand_cosh_id, brand_name,
@@ -519,12 +543,18 @@ export default function DealerOrderDetailPage() {
     if (!editingItem) return
     setNpkTradeNameSheet({ common_name_cosh_id, target })
     setNpkTradeNameList([])
+    setNpkTradeNameGroups(null)
     try {
-      const { data } = await api.get<{ trade_names: NPKTradeName[] }>(
+      const { data } = await api.get<{ trade_names: NPKTradeName[] } & NPKTradeNameGroups>(
         `/dealer/orders/${orderId}/items/${editingItem}/npk-trade-names?common_name_cosh_id=${encodeURIComponent(common_name_cosh_id)}`,
       )
       setNpkTradeNameList(data.trade_names || [])
-    } catch { setNpkTradeNameList([]) }
+      setNpkTradeNameGroups({
+        group_recommended: data.group_recommended || [],
+        group_my: data.group_my || [],
+        group_other: data.group_other || [],
+      })
+    } catch { setNpkTradeNameList([]); setNpkTradeNameGroups(null) }
   }
 
   function npkPickTradeName(tn: NPKTradeName) {
@@ -832,11 +862,16 @@ export default function DealerOrderDetailPage() {
       <div className="mt-3 space-y-3 bg-[#F5F0E8] rounded-xl p-3">
         <div className="bg-white rounded-lg p-3 border border-[#DDD0B8]">
           <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
-            {npkOptions.fertigation ? 'Fertigation NPK · required' : 'NPK dosage · required'}
+            {npkOptions.fertigation ? 'Fertigation NPK · per application' : 'NPK dosage · required'}
           </p>
           <p className="text-sm font-bold text-[#6B3F1F] mt-1">
             {dose.n} kg N · {dose.p} kg P · {dose.k} kg K
           </p>
+          {npkOptions.fertigation && (npkOptions.applications_multiplier ?? 1) > 1 && (
+            <p className="text-[11px] text-[#085041] font-semibold mt-1">
+              × {npkOptions.applications_multiplier} applications — total purchase scales accordingly
+            </p>
+          )}
         </div>
 
         {/* Mixed fertilisers — ranked list, single-select. */}
@@ -858,6 +893,9 @@ export default function DealerOrderDetailPage() {
                       <p className="text-sm font-semibold text-[#6B3F1F]">{m.name}</p>
                       <p className="text-[11px] text-[#7A8C7E]">
                         {m.n}:{m.p}:{m.k} · approx {m.kg_product} kg
+                        {npkOptions.fertigation && m.kg_product_total && m.kg_product_total !== m.kg_product && (
+                          <> · <span className="font-semibold text-[#085041]">{m.kg_product_total} kg total</span></>
+                        )}
                       </p>
                     </div>
                     <div className={`w-4 h-4 rounded-full border-2 ${selected ? 'border-[#085041] bg-[#085041]' : 'border-[#7A8C7E]'}`} />
@@ -1169,6 +1207,33 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
+        {/* Batch 30C — brand consolidation (spec §4.2). Only renders
+            when at least one brand spans more than one line — single
+            lines stay on their items so the dealer doesn't see noise. */}
+        {(order.consolidated_brands || []).filter(b => b.line_count > 1).length > 0 && (
+          <div className="bg-emerald-50/40 border border-[#085041]/15 rounded-2xl p-4 space-y-2">
+            <div className="flex items-baseline justify-between">
+              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
+                Consolidated brands
+              </p>
+              <p className="text-[10px] text-[#7A8C7E]">Across timelines</p>
+            </div>
+            {(order.consolidated_brands || [])
+              .filter(b => b.line_count > 1)
+              .map(b => (
+                <div key={b.brand_cosh_id} className="flex items-baseline justify-between gap-3 border-t border-[#085041]/10 pt-1.5 first:border-0 first:pt-0">
+                  <div>
+                    <p className="text-sm font-semibold text-[#6B3F1F]">{b.brand_name}</p>
+                    <p className="text-[10px] text-[#7A8C7E]">{b.line_count} lines</p>
+                  </div>
+                  <p className="text-sm font-bold text-[#085041]">
+                    {b.total_volume} {b.volume_unit}
+                  </p>
+                </div>
+              ))}
+          </div>
+        )}
+
         {pricedItems.length > 0 && (
           <div className="bg-white border-2 border-[#085041]/15 rounded-2xl p-4 flex items-baseline justify-between gap-3">
             <div>
@@ -1378,9 +1443,10 @@ export default function DealerOrderDetailPage() {
         </div>
       )}
 
-      {/* Batch 30B — NPK trade-name picker bottom sheet. Flat
-          alphabetical list for V1 — three-group (Recommended / My /
-          Other) layered over later. */}
+      {/* Batch 30C — NPK trade-name picker bottom sheet, three groups
+          (Recommended / My / Other) per spec §3.1. Empty groups are
+          hidden. Falls back to the flat list when grouping wasn't
+          returned (older backend). */}
       {npkTradeNameSheet && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setNpkTradeNameSheet(null)}>
           <div className="bg-white w-full rounded-t-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
@@ -1388,15 +1454,36 @@ export default function DealerOrderDetailPage() {
               <p className="text-sm font-bold text-[#6B3F1F]">Pick brand</p>
               <button onClick={() => setNpkTradeNameSheet(null)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
-            <div className="overflow-y-auto p-3 space-y-1.5">
-              {npkTradeNameList.length === 0 ? (
-                <p className="text-xs text-[#7A8C7E] italic text-center py-6">No brands available for this fertiliser.</p>
-              ) : npkTradeNameList.map(tn => (
-                <button key={tn.cosh_id} onClick={() => npkPickTradeName(tn)}
-                  className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-emerald-50">
-                  <p className="text-sm font-semibold text-[#6B3F1F]">{tn.name}</p>
-                </button>
-              ))}
+            <div className="overflow-y-auto p-3 space-y-3">
+              {npkTradeNameGroups
+                ? (['group_recommended', 'group_my', 'group_other'] as const).map(key => {
+                    const list = npkTradeNameGroups[key]
+                    if (!list || list.length === 0) return null
+                    const label = key === 'group_recommended' ? 'Recommended Brands'
+                                : key === 'group_my' ? 'My Brands'
+                                : 'Other Brands'
+                    return (
+                      <div key={key} className="space-y-1.5">
+                        <p className="text-[11px] font-semibold text-[#7A8C7E] uppercase tracking-wide px-1">
+                          {label}
+                        </p>
+                        {list.map(tn => (
+                          <button key={tn.cosh_id} onClick={() => npkPickTradeName(tn)}
+                            className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-emerald-50">
+                            <p className="text-sm font-semibold text-[#6B3F1F]">{tn.name}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  })
+                : npkTradeNameList.length === 0
+                  ? <p className="text-xs text-[#7A8C7E] italic text-center py-6">No brands available for this fertiliser.</p>
+                  : npkTradeNameList.map(tn => (
+                      <button key={tn.cosh_id} onClick={() => npkPickTradeName(tn)}
+                        className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-emerald-50">
+                        <p className="text-sm font-semibold text-[#6B3F1F]">{tn.name}</p>
+                      </button>
+                    ))}
             </div>
           </div>
         </div>
