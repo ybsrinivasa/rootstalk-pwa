@@ -525,21 +525,10 @@ export default function AdvisoryPage() {
               </div>
             ))}
 
-            {/* Quick links */}
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              <button onClick={() => router.push(`/advisory/${subscriptionId}/diagnose`)}
-                className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-left shadow-sm active:scale-95 transition-transform">
-                <span className="text-2xl">🔍</span>
-                <p className="text-sm font-medium text-[#6B3F1F] mt-2">Diagnose Problem</p>
-                <p className="text-xs text-[#7A8C7E]">Identify crop issues</p>
-              </button>
-              <button onClick={() => router.push('/orders')}
-                className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-left shadow-sm active:scale-95 transition-transform">
-                <span className="text-2xl">📦</span>
-                <p className="text-sm font-medium text-[#6B3F1F] mt-2">My Orders</p>
-                <p className="text-xs text-[#7A8C7E]">Track input orders</p>
-              </button>
-            </div>
+            {/* Phase 3+ (2026-06-02) — Diagnose / My Orders quick links
+                removed. The crop dashboard already exposes both as
+                primary tiles; surfacing them again here was visual
+                noise that competed with the actual advisory content. */}
           </div>
         )}
       </div>

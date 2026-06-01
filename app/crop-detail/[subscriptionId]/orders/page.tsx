@@ -20,6 +20,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 type Subscription = {
@@ -36,6 +37,11 @@ type SubOrder = {
   date_from?: string; date_to?: string
   created_at: string
   item_count?: number; is_max_count?: boolean
+  // Per-status item breakdown (added 2026-06-02). The Manage card
+  // surfaces only counts; item names stay hidden from the farmer
+  // to prevent identity-based manipulation.
+  awaiting_approval_count?: number
+  returned_count?: number
   category?: 'PESTICIDE' | 'FERTILIZER' | null
   variety_name?: string | null
   unit?: string | null; quantity?: number | null; total_price?: number | null
@@ -108,6 +114,11 @@ export default function CropOrdersPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Orders" activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
       <div className="pt-16 pb-20">
+        {/* Same company/crop anchor the Advisory / Diagnose / Ask
+            Expert surfaces use, so the farmer is grounded the
+            instant the page opens. */}
+        <ClientCropChip subscriptionId={subscriptionId} />
+
         <div className="flex bg-white border-b border-[#DDD0B8] sticky top-16 z-30">
           <button onClick={() => setTab('order')}    className={tabClass('order')}>Order</button>
           <button onClick={() => setTab('manage')}   className={tabClass('manage')}>Manage</button>
@@ -354,11 +365,12 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     const { data } = await api.get<{ orders: SubOrder[] }>(
       `/farmer/subscriptions/${subscriptionId}/orders`,
     )
-    setOrders((data.orders || []).filter(o => !['COMPLETED', 'CANCELLED', 'PURCHASED'].includes(o.status)))
+    setOrders((data.orders || []).filter(o => !['COMPLETED', 'PURCHASED'].includes(o.status)))
   }
   useEffect(() => { load().catch(() => setOrders([])) }, [subscriptionId])
 
   async function cancel(orderId: string) {
+    if (!confirm('Cancel this order? You can still forward or delete it after.')) return
     setBusy(orderId)
     try {
       await api.put(`/farmer/orders/${orderId}/cancel`, {})
@@ -367,10 +379,31 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   }
 
   async function deleteOrder(orderId: string) {
+    if (!confirm('Delete this cancelled order permanently?')) return
     setBusy(orderId)
     try {
       await api.delete(`/farmer/orders/${orderId}`)
       await load()
+    } finally { setBusy(null) }
+  }
+
+  async function approveAll(orderId: string) {
+    setBusy(orderId)
+    try {
+      await api.put(`/farmer/orders/${orderId}/items/approve-all`, {})
+      await load()
+    } finally { setBusy(null) }
+  }
+
+  async function rerouteReturned(orderId: string) {
+    if (!confirm('Send the returned items to a different dealer or facilitator? Your other items stay where they are.')) return
+    setBusy(orderId)
+    try {
+      const { data } = await api.post<{ new_draft_order_id: string }>(
+        `/farmer/orders/${orderId}/reroute-returned`,
+      )
+      // /order/new is the existing dealer-picker for a draft order.
+      router.push(`/order/new/${subscriptionId}?from=draft&order_id=${data.new_draft_order_id}`)
     } finally { setBusy(null) }
   }
 
@@ -388,12 +421,16 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   return (
     <div className="p-4 space-y-3">
       {orders.map(o => {
-        const target = o.kind === 'SEED' ? `/seed-orders/${o.id}` : `/orders/${o.id}`
         const cancelled = o.status === 'CANCELLED'
+        const awaitingN = o.awaiting_approval_count || 0
+        const returnedN = o.returned_count || 0
+        // The card no longer routes to /orders/[id] (per
+        // 2026-06-02: item identity hidden from the farmer; the
+        // counts + inline actions are everything they need to act).
         return (
           <div key={`${o.kind}:${o.id}`}
             className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-            <button onClick={() => router.push(target)} className="w-full text-left p-4">
+            <div className="p-4">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
@@ -408,10 +445,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                 </span>
               </div>
               {o.kind === 'SEED' ? (
-                <p className="text-sm text-[#6B3F1F] truncate">
-                  {o.variety_name || 'Unknown variety'}
-                  {o.quantity != null && o.unit && <span className="text-xs text-[#7A8C7E]"> · {o.quantity} {o.unit}</span>}
-                </p>
+                <p className="text-sm text-[#6B3F1F] truncate">{o.variety_name || 'Seed order'}</p>
               ) : (
                 <p className="text-sm text-[#6B3F1F]">
                   {o.date_from && o.date_to ? (
@@ -425,32 +459,50 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                   )}
                 </p>
               )}
-              {(o.status === 'SENT_FOR_APPROVAL' || o.status === 'PARTIALLY_APPROVED') && (
-                <p className="text-[11px] text-amber-700 font-medium mt-1">Action needed — tap to approve items</p>
-              )}
-            </button>
+            </div>
+
+            {/* Returned items — inline action; never names an item. */}
+            {!cancelled && returnedN > 0 && (
+              <div className="border-t border-[#F0E5D0] bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
+                <p className="text-xs text-amber-800">
+                  {returnedN} returned item{returnedN === 1 ? '' : 's'}
+                </p>
+                <button onClick={() => rerouteReturned(o.id)} disabled={busy === o.id}
+                  className="text-xs font-semibold text-amber-800 underline disabled:opacity-50">
+                  {busy === o.id ? '…' : 'Send to another dealer'}
+                </button>
+              </div>
+            )}
+
+            {/* Awaiting-approval — same anti-naming principle.
+                The farmer trusts the count and approves in one tap;
+                they read brand + qty after approval lands. */}
+            {!cancelled && awaitingN > 0 && (
+              <div className="border-t border-[#F0E5D0] bg-emerald-50/40 px-4 py-3 flex items-center justify-between gap-3">
+                <p className="text-xs text-[#3A7D44]">
+                  {awaitingN} item{awaitingN === 1 ? '' : 's'} awaiting approval
+                </p>
+                <button onClick={() => approveAll(o.id)} disabled={busy === o.id}
+                  className="text-xs font-semibold text-white px-3 py-1 rounded-lg disabled:opacity-50"
+                  style={{ background: '#3A7D44' }}>
+                  {busy === o.id ? '…' : 'Approve all'}
+                </button>
+              </div>
+            )}
+
             <div className="border-t border-[#F0E5D0] px-4 py-2 flex gap-2">
               {!cancelled ? (
-                <>
-                  {(o.status === 'SENT_FOR_APPROVAL' || o.status === 'PARTIALLY_APPROVED') && (
-                    <button onClick={() => router.push(target)}
-                      className="flex-1 py-1.5 rounded-lg text-white text-xs font-semibold"
-                      style={{ background: '#3A7D44' }}>
-                      Review & approve
-                    </button>
-                  )}
-                  {o.kind !== 'SEED' && (
-                    <button onClick={() => cancel(o.id)} disabled={busy === o.id}
-                      className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-                      {busy === o.id ? '…' : 'Cancel'}
-                    </button>
-                  )}
-                </>
+                o.kind !== 'SEED' ? (
+                  <button onClick={() => cancel(o.id)} disabled={busy === o.id}
+                    className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+                    {busy === o.id ? '…' : 'Cancel order'}
+                  </button>
+                ) : null
               ) : (
                 <>
-                  <button onClick={() => router.push(target)}
-                    className="flex-1 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium">
-                    Forward
+                  <button onClick={() => rerouteReturned(o.id)} disabled={busy === o.id}
+                    className="flex-1 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium disabled:opacity-50">
+                    {busy === o.id ? '…' : 'Forward'}
                   </button>
                   <button onClick={() => deleteOrder(o.id)} disabled={busy === o.id}
                     className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
