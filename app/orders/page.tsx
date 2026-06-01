@@ -11,6 +11,18 @@ type Order = {
   date_to: string; dealer_user_id: string | null; created_at: string
   item_count?: number
   is_max_count?: boolean
+  category?: 'PESTICIDE' | 'FERTILIZER' | null
+  // Phase 1 of the Orders restructure (2026-06-02) — every card
+  // shows crop name / company / start date so the farmer can read
+  // the list without re-attaching context per row.
+  subscription_id?: string | null
+  package_id?: string | null
+  package_name?: string | null
+  crop_name?: string | null
+  company_name?: string | null
+  company_short_name?: string | null
+  crop_start_date?: string | null
+  planting_year?: number | null
 }
 type PurchasedItem = {
   id: string; brand_name: string | null; l1_type: string | null; l2_type: string | null
@@ -192,6 +204,28 @@ export default function OrdersPage() {
                     </span>
                     <span className="text-xs text-[#7A8C7E]">{new Date(order.created_at).toLocaleDateString('en-IN')}</span>
                   </div>
+                  {/* Phase 1 (2026-06-02) — package-anchor header.
+                      Crop and company go first because they're how a
+                      farmer with multiple subscriptions tells two
+                      otherwise-similar orders apart. */}
+                  {(order.crop_name || order.company_name) && (
+                    <div className="mb-2">
+                      <p className="text-sm font-semibold text-[#6B3F1F]">
+                        {order.crop_name || '—'}
+                        {order.company_name && (
+                          <span className="text-xs text-[#7A8C7E] font-normal"> · {order.company_name}</span>
+                        )}
+                      </p>
+                      {(order.crop_start_date || order.planting_year) && (
+                        <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+                          {order.crop_start_date
+                            ? `Sown ${new Date(order.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                            : `Planted ${order.planting_year}`}
+                          {order.category && ` · ${order.category.toLowerCase()}`}
+                        </p>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm text-[#6B3F1F]">
                       {new Date(order.date_from).toLocaleDateString('en-IN')} — {new Date(order.date_to).toLocaleDateString('en-IN')}

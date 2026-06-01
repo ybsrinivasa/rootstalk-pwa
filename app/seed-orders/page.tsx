@@ -22,6 +22,14 @@ interface SeedOrder {
   created_at: string
   dealer_user_id?: string | null
   facilitator_user_id?: string | null
+  // Phase 1 of the Orders restructure (2026-06-02) — package-anchor
+  // metadata so the seed card reads consistently with /orders.
+  subscription_id?: string | null
+  package_name?: string | null
+  crop_name?: string | null
+  company_name?: string | null
+  crop_start_date?: string | null
+  planting_year?: number | null
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -104,12 +112,25 @@ export default function FarmerSeedOrdersPage() {
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="min-w-0">
                     <p className="font-semibold text-[#6B3F1F] truncate">{order.variety_name || 'Unknown variety'}</p>
-                    <p className="text-xs text-[#7A8C7E]">{cropDisplayName(order.crop_cosh_id ?? null)}</p>
+                    {/* Phase 1 (2026-06-02) — crop name comes from the
+                        package via backend (preferred over the in-PWA
+                        cropDisplayName lookup which can fall behind). */}
+                    <p className="text-xs text-[#7A8C7E]">
+                      {order.crop_name || cropDisplayName(order.crop_cosh_id ?? null)}
+                      {order.company_name && <span> · {order.company_name}</span>}
+                    </p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[order.status] || 'bg-slate-100'}`}>
                     {STATUS_FARMER[order.status] || order.status.replace(/_/g, ' ')}
                   </span>
                 </div>
+                {(order.crop_start_date || order.planting_year) && (
+                  <p className="text-[11px] text-[#7A8C7E]">
+                    {order.crop_start_date
+                      ? `Sown ${new Date(order.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                      : `Planted ${order.planting_year}`}
+                  </p>
+                )}
                 {order.unit && order.quantity != null && (
                   <p className="text-xs text-[#7A8C7E]">
                     {order.quantity} {order.unit}
