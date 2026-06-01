@@ -282,9 +282,27 @@ export default function AdvisoryPage() {
     if (u === 'FERTILIZER') return 'FERTILIZER'
     return null
   }
-  function orderPractice(practice: Practice) {
+  function orderPractice(practice: Practice, timeline?: TimelineItem) {
+    // Phase 3 of the Orders restructure (2026-06-02) — Advisory taps
+    // now route to the package's Orders page with the right
+    // accordion pre-opened and the practice's date range prefilled.
+    // BundleOrderSheet stays defined below for the legacy direct
+    // flow but no longer mounts from here.
     const cat = basketCategoryFor(practice.l1_type)
-    if (cat) setBundleSheet({ category: cat })
+    if (!cat) return
+    const todayIso = new Date().toISOString().split('T')[0]
+    // Default to_date = the timeline's to_date the practice belongs
+    // to. CategorySection on the next page re-previews against the
+    // bundle for this window — identical to what BundleOrderSheet
+    // computed inline before.
+    const toIso = (timeline?.to_date || '').slice(0, 10)
+    const params = new URLSearchParams({
+      tab: 'order',
+      open: cat.toLowerCase(),
+      date_from: todayIso,
+    })
+    if (toIso) params.set('date_to', toIso)
+    router.push(`/crop-detail/${subscriptionId}/orders?${params.toString()}`)
   }
 
   if (loading) return (
@@ -301,16 +319,13 @@ export default function AdvisoryPage() {
       <div className="pt-16 pb-24">
         <ClientCropChip subscriptionId={subscriptionId} />
 
-        {/* Batch 18 — Pre-sowing inputs strip (DBS V1 carve-out). Visible
-            whenever EITHER category is available per the server. Renders
-            two buttons: each greys out independently if its category has
-            no remaining DBS practices in the package. */}
-        <DBSStrip subscriptionId={subscriptionId} />
-
-        {/* Phase 2 of the Orders restructure (2026-06-02) — the
-            farmer's orders for this crop live ON this page. /orders
-            stays as the global cross-subscription history view. */}
-        <SubscriptionOrders subscriptionId={subscriptionId} />
+        {/* Phase 3 of the Orders restructure (2026-06-02) — Orders
+            moved off the Advisory surface entirely. The crop dashboard
+            now has its own Orders button that opens a dedicated three-
+            tab page; placing them inline on Advisory crossed two
+            mental contexts (what-to-do vs what-to-procure). Pre-sowing
+            now lives as a sub-mode inside the Pesticide/Fertilizer
+            accordions on that page. */}
 
         {/* Start date gate */}
         {!hasStartDate && (
@@ -464,7 +479,7 @@ export default function AdvisoryPage() {
                           <PracticeCard
                             key={p.id}
                             practice={p}
-                            onOrder={() => orderPractice(p)}
+                            onOrder={() => orderPractice(p, tl)}
                             isOrdering={orderingPractice === p.id}
                             ordered={orderSuccess === p.id}
                           />
@@ -484,7 +499,7 @@ export default function AdvisoryPage() {
                             // from the first practice's L1; AND/OR groups
                             // are always homogeneous by L1. ids ignored.
                             const first = row.parts?.[0]?.options?.[0]?.practices?.[0]
-                            if (first) orderPractice(first)
+                            if (first) orderPractice(first, tl)
                           }}
                         />
                       )

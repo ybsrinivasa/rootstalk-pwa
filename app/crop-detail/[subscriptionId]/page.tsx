@@ -710,8 +710,11 @@ export default function CropDetailPage() {
           )
         })()}
 
-        {/* Three action tiles */}
-        <div className="grid grid-cols-3 gap-3 mt-6">
+        {/* Four action tiles (2026-06-02): Orders joins as a sibling
+            to Advisory / Diagnose / Ask Expert. Advisory is "what to
+            do", Orders is "what to procure" — different mental
+            contexts; keeping them separate makes the hub readable. */}
+        <div className="grid grid-cols-2 gap-3 mt-6">
           <button
             onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowNeedDateSheet('advisory')}
             className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-[#DDD0B8] active:scale-95' : 'bg-stone-100 border-[#DDD0B8] opacity-60'}`}>
@@ -757,6 +760,17 @@ export default function CropDetailPage() {
             {!sub.client_has_primary_expert && (
               <p className="text-xs text-[#7A8C7E] mt-0.5">No expert yet</p>
             )}
+          </button>
+
+          {/* Orders — entry to the three-tab Orders page. Always
+              enabled (the farmer can browse the Order tab to see
+              what they could buy even before setting a start date,
+              though specific accordions may gate themselves). */}
+          <button
+            onClick={() => router.push(`/crop-detail/${subscriptionId}/orders`)}
+            className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
+            <span className="text-3xl block mb-2">📦</span>
+            <p className="text-xs font-bold text-[#6B3F1F]">Orders</p>
           </button>
         </div>
 

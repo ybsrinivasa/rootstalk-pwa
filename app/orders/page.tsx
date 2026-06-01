@@ -52,22 +52,14 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [purchased, setPurchased] = useState<PurchasedItem[]>([])
   const [loading, setLoading] = useState(true)
-  // True iff at least one of the farmer's subscriptions has unbooked
-  // DBS Pre-sowing items right now. When false, the Pre-sowing entry
-  // is hidden so the farmer isn't routed to /crops-and-companies
-  // without anything actionable behind it. Bug reported 2026-06-01.
-  const [preSowingAvailable, setPreSowingAvailable] = useState(false)
-
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     Promise.allSettled([
       api.get<Order[]>('/farmer/orders'),
       api.get<PurchasedItem[]>('/farmer/purchased-items').catch(() => ({ data: [] as PurchasedItem[] })),
-      api.get<{ available: boolean }>('/farmer/pre-sowing-available').catch(() => ({ data: { available: false } })),
-    ]).then(([ordersRes, purchasedRes, dbsRes]) => {
+    ]).then(([ordersRes, purchasedRes]) => {
       if (ordersRes.status === 'fulfilled') setOrders(ordersRes.value.data)
       if (purchasedRes.status === 'fulfilled') setPurchased((purchasedRes.value as { data: PurchasedItem[] }).data)
-      if (dbsRes.status === 'fulfilled') setPreSowingAvailable((dbsRes.value as { data: { available: boolean } }).data.available)
     }).finally(() => setLoading(false))
   }, [router])
 
@@ -100,31 +92,15 @@ export default function OrdersPage() {
             surface. Seeds aren't part of the pesticide/fertiliser
             list, but the farmer's mental model is "all my orders
             live here" so we surface the link at the top of /orders. */}
-        <button onClick={() => router.push('/seed-orders')}
-          className="mx-4 mt-4 w-[calc(100%-2rem)] bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 flex items-center justify-between text-left shadow-sm">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🌱</span>
-            <p className="font-semibold text-[#6B3F1F] text-sm">Seed orders</p>
-          </div>
-          <span className="text-[#7A8C7E]">→</span>
-        </button>
-
-        {/* Batch 18 — fallback link to the Pre-sowing inputs strip on
-            the advisory page. Hidden when the farmer has nothing
-            actionable behind it (no ANNUAL subscription in the
-            pre-start-date window with unbooked DBS practices) so
-            tapping doesn't land on a confusing Crops & Companies
-            page. Fix 2026-06-01. */}
-        {preSowingAvailable && (
-          <button onClick={() => router.push('/crops-and-companies')}
-            className="mx-4 mt-2 w-[calc(100%-2rem)] bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 flex items-center justify-between text-left shadow-sm">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">🌾</span>
-              <p className="font-semibold text-[#6B3F1F] text-sm">Pre-sowing inputs</p>
-            </div>
-            <span className="text-[#7A8C7E]">→</span>
-          </button>
-        )}
+        {/* Phase 3 of the Orders restructure (2026-06-02): /orders is
+            now the cross-subscription pool — pending action + history.
+            Fresh ordering (Seed / Pre-sowing / by date range) moved to
+            the per-package Orders page at /crop-detail/[id]/orders. */}
+        <div className="mx-4 mt-4 bg-emerald-50/40 border border-[#3A7D44]/20 rounded-xl px-4 py-3">
+          <p className="text-xs text-[#6B3F1F]">
+            Tip: place new orders from each crop's Orders button.
+          </p>
+        </div>
 
         <div className="px-4 mt-4 space-y-3">
           {loading ? (
