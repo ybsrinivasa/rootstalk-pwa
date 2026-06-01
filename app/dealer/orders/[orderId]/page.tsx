@@ -68,6 +68,11 @@ interface NPKPickedTradeName {
 
 interface OrderItem {
   id: string; practice_id: string; status: string
+  // Fix 2026-06-01: dealer card now reads the SE's COMMON_NAME (or
+  // an NPK label) instead of the practice UUID.
+  common_name?: string | null
+  l2_type?: string | null
+  display_name?: string | null
   relation_id: string | null; relation_type: string | null; relation_role?: string | null
   brand_cosh_id: string | null; brand_name: string | null
   given_volume: number | null; estimated_volume: number | null
@@ -723,7 +728,9 @@ export default function DealerOrderDetailPage() {
               </span>
             </div>
             {!opts.compactMeta && (
-              <p className="text-[10px] text-[#7A8C7E] font-mono mt-1 truncate">{item.practice_id}</p>
+              <p className="text-sm font-semibold text-[#6B3F1F] mt-1 truncate">
+                {item.display_name || item.common_name || 'Practice'}
+              </p>
             )}
             {item.brand_name && <p className="text-sm font-semibold text-[#6B3F1F] mt-1">{item.brand_name}</p>}
             {item.given_volume != null && (
@@ -790,7 +797,12 @@ export default function DealerOrderDetailPage() {
             Method, and (plant-wise only) Volume per Plant — the
             three pieces of SE guidance that frame the Given-Volume
             entry below. */}
-        {(itemEdit.brand_cosh_id || brandOptions?.type === 'LOCKED') && item.element_block && (
+        {/* Fix 2026-06-01: surface the SE's dosage + application method
+            BEFORE the dealer picks a brand. Previously gated on brand
+            pick, which left this card empty on first open. The
+            Estimated Volume row stays gated on brand pick because BL-06
+            needs brand_unit. */}
+        {item.element_block && (
           <ElementGuidance
             block={item.element_block}
             estimate={estimate}
@@ -1119,8 +1131,10 @@ export default function DealerOrderDetailPage() {
                   {item.status.replace(/_/g, ' ')}
                 </span>
               </div>
-              <p className="text-xs text-[#7A8C7E] font-mono mt-1.5 truncate">{item.practice_id}</p>
-              {item.brand_name && <p className="text-sm font-semibold text-[#6B3F1F] mt-1">{item.brand_name}</p>}
+              <p className="text-base font-semibold text-[#6B3F1F] mt-1.5 truncate">
+                {item.display_name || item.common_name || 'Practice'}
+              </p>
+              {item.brand_name && <p className="text-sm text-[#6B3F1F] mt-1">{item.brand_name}</p>}
               {item.given_volume != null && (
                 <p className="text-xs text-[#7A8C7E] mt-0.5">
                   {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
@@ -1295,12 +1309,19 @@ export default function DealerOrderDetailPage() {
               <button onClick={() => setShowBrandSheet(false)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             {brandOptions.groups.every(g => g.brands.length === 0) ? (
+              // Batch 25 / fix 2026-06-01 — manual entry removed
+              // (creates manipulation risk and dilutes brand analytics).
+              // When the system has no brands for this common name yet,
+              // the dealer's only path is to report the missing brand
+              // so the CM can add it to Cosh.
               <div className="px-5 py-8 text-center">
                 <p className="text-[#7A8C7E] text-sm font-medium">No brands in system yet</p>
-                <p className="text-[#7A8C7E] text-xs mt-1">Enter brand name manually below, or report a missing brand</p>
+                <p className="text-[#7A8C7E] text-xs mt-1">
+                  Tap below to report a missing brand. The system will pick it up once added.
+                </p>
                 <button onClick={() => setShowBrandSheet(false)}
-                  className="mt-4 px-4 py-2 bg-slate-100 rounded-xl text-sm text-[#6B3F1F] font-medium">
-                  Enter manually
+                  className="mt-4 px-4 py-2 border border-[#085041] text-[#085041] rounded-xl text-sm font-medium">
+                  Close
                 </button>
               </div>
             ) : (
