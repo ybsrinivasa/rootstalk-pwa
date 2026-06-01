@@ -140,6 +140,10 @@ export default function DealerOrderDetailPage() {
     | { relationId: string; partIndex: number; optionIndex: number; check: DuplicateCheck }
   >(null)
   const [committingOption, setCommittingOption] = useState<string | null>(null)
+  // Batch 29 — confirm-before-submit + dealer Abort dialog.
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
+  const [showAbortConfirm, setShowAbortConfirm] = useState(false)
+  const [aborting, setAborting] = useState(false)
 
   // Batch 28 — draft state. Map of item_id -> {brand_cosh_id, brand_name,
   // given_volume, volume_unit, price}. On mount we read the server copy
@@ -425,8 +429,27 @@ export default function DealerOrderDetailPage() {
     setSubmitting(true)
     try {
       await api.put(`/dealer/orders/${orderId}/submit-for-approval`, {})
+      setShowSubmitConfirm(false)
       load()
     } finally { setSubmitting(false) }
+  }
+
+  // Batch 29 — Abort: dealer returns the order to the pool. Server
+  // resets items, wipes the draft map, and flips status back to
+  // SENT. We additionally clear the local IndexedDB mirror and
+  // bounce to the dealer home so the dealer doesn't sit on a stale
+  // detail screen.
+  async function abortOrder() {
+    if (!order) return
+    setAborting(true)
+    try {
+      await api.put(`/dealer/orders/${orderId}/abort`, {})
+      await clearDraftForOrder(orderId)
+      router.replace('/dealer/home')
+    } finally {
+      setAborting(false)
+      setShowAbortConfirm(false)
+    }
   }
 
   async function loadPackingList() {
@@ -856,7 +879,7 @@ export default function DealerOrderDetailPage() {
         )}
 
         {canSubmit && (
-          <button onClick={submitForApproval} disabled={submitting}
+          <button onClick={() => setShowSubmitConfirm(true)} disabled={submitting}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
             {submitting ? 'Sending…' : '✓ Send to Farmer for Approval'}
@@ -867,6 +890,17 @@ export default function DealerOrderDetailPage() {
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
             <p className="text-amber-700 font-semibold text-sm">Waiting for farmer approval</p>
           </div>
+        )}
+
+        {/* Batch 29 — Abort. Returns the order to SENT so a different
+            dealer can pick it up. Backend gate covers PROCESSING /
+            SENT_FOR_APPROVAL / PARTIALLY_APPROVED — mirror it here so
+            terminal orders don't show a misleading button. */}
+        {['PROCESSING', 'SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED'].includes(order.status) && (
+          <button onClick={() => setShowAbortConfirm(true)}
+            className="w-full py-3 rounded-2xl border-2 border-red-300 text-red-600 font-medium text-sm">
+            Abort order
+          </button>
         )}
 
         {showPL && (
@@ -967,6 +1001,74 @@ export default function DealerOrderDetailPage() {
                 onClick={() => commitSelectOption(dupModal.relationId, dupModal.partIndex, dupModal.optionIndex)}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl">
                 Continue anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch 29 — Submit confirmation. Shows the farmer-visible
+          summary so the dealer can catch a missing price or stray
+          PENDING item before the order leaves their hands. */}
+      {showSubmitConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => !submitting && setShowSubmitConfirm(false)}>
+          <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
+            <p className="text-sm font-bold text-[#6B3F1F]">Send to farmer for approval?</p>
+            <div className="mt-3 space-y-1.5 text-xs text-[#6B3F1F]">
+              <div className="flex justify-between gap-3">
+                <span className="text-[#7A8C7E]">Items ready</span>
+                <span className="font-semibold">{availableItemCount}</span>
+              </div>
+              {pricedItems.length < availableItemCount && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-[#7A8C7E]">Unpriced</span>
+                  <span className="font-semibold text-amber-700">
+                    {availableItemCount - pricedItems.length}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
+                <span className="text-[#7A8C7E]">Total amount</span>
+                <span className="font-bold text-[#085041]">
+                  ₹{totalAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowSubmitConfirm(false)} disabled={submitting}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={submitForApproval} disabled={submitting}
+                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {submitting ? 'Sending…' : 'Confirm & send'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch 29 — Abort confirmation. Explicitly red so the dealer
+          reads the destructive intent before tapping again. */}
+      {showAbortConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => !aborting && setShowAbortConfirm(false)}>
+          <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
+            <p className="text-sm font-bold text-red-700">Abort this order?</p>
+            <p className="text-xs text-[#6B3F1F] mt-2">
+              All your brand selections, volumes, prices and partial drafts
+              for this order will be discarded. Items return to the pool so
+              a different dealer can pick the order up.
+            </p>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowAbortConfirm(false)} disabled={aborting}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                Keep working
+              </button>
+              <button onClick={abortOrder} disabled={aborting}
+                className="flex-1 bg-red-600 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {aborting ? 'Aborting…' : 'Yes, abort'}
               </button>
             </div>
           </div>
