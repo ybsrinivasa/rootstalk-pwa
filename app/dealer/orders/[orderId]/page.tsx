@@ -404,6 +404,11 @@ export default function DealerOrderDetailPage() {
       if (data.estimated_volume) {
         setEstimate({ volume: data.estimated_volume, unit: data.volume_unit })
         setItemEdit(f => ({ ...f, given_volume: String(data.estimated_volume), volume_unit: data.volume_unit || f.volume_unit }))
+      } else if (data.error_code === 'UNIT_PAIR_MISMATCH' && data.message) {
+        // Backend caught a brand-unit × dosage-unit phase mismatch
+        // (e.g. g brand + ml/L dose). Surface its specific message so
+        // the dealer / SE can see what's wrong.
+        setEstimateError(data.message)
       } else if (data.error_code === 'FORMULA_NOT_FOUND') {
         // Common pre-launch state — formula table not yet populated
         // for this (measure, L2, method, unit) combination. Don't
