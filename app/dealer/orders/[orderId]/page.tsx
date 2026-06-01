@@ -394,16 +394,19 @@ export default function DealerOrderDetailPage() {
       }
     } catch { setBrandOptions(null) }
 
-    // Fix 2026-06-01 — on re-open of an item that already has a brand
-    // committed (page refresh, returning to the order), the estimate
-    // state is gone from React memory. Re-fire it so the dealer
-    // doesn't have to re-pick the brand. Sits OUTSIDE the
-    // brand-options try-catch because a brand-options blip shouldn't
-    // suppress the estimate — the brand is already committed on the
-    // item and BL-06 reads its own inputs (dosage + farm area +
-    // application method + brand_unit).
-    if (item.brand_cosh_id) {
-      void getEstimate(item.id, item.volume_unit ?? undefined)
+    // Fix 2026-06-01 — on re-open of an item with a brand already
+    // picked (either committed on the OrderItem, or persisted in the
+    // dealer_draft from Batch 28's debounced sync), re-fire the
+    // estimate so the dealer doesn't have to re-pick the brand. Sits
+    // OUTSIDE the brand-options try-catch because a brand-options
+    // blip shouldn't suppress the estimate. The brand_cosh_id itself
+    // isn't required by BL-06 — the practice + brand_unit + dosage
+    // carries enough. Reuses the `d` draft snapshot from the top of
+    // openItemForm.
+    const persistedBrand = item.brand_cosh_id || d.brand_cosh_id
+    const persistedUnit = item.volume_unit ?? d.volume_unit ?? undefined
+    if (persistedBrand) {
+      void getEstimate(item.id, persistedUnit ?? undefined)
     }
   }
 
