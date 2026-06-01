@@ -194,7 +194,7 @@ export default function OrderingScreenPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER" back />
+      <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>

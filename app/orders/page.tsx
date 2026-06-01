@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -46,22 +46,61 @@ const STATUS_COLOUR: Record<string, string> = {
   CANCELLED:          'bg-stone-100 text-[#7A8C7E]',
 }
 
+type SubscriptionLite = {
+  id: string; status: string; client_id: string
+  crop_start_date: string | null; reference_number: string | null
+}
+type ClientInfo = { display_name: string }
+
 export default function OrdersPage() {
   const router = useRouter()
   const [tab, setTab] = useState<'active' | 'history' | 'purchased'>('active')
   const [orders, setOrders] = useState<Order[]>([])
   const [purchased, setPurchased] = useState<PurchasedItem[]>([])
+  const [subs, setSubs] = useState<SubscriptionLite[]>([])
+  const [clientNames, setClientNames] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
+  // "All roads lead to Rome" (2026-06-02) — the Orders button on
+  // bottom nav lands the farmer on a package picker first; tapping a
+  // crop routes to that crop's Orders page. The cross-subscription
+  // pool view (Active / History / Purchased tabs) is still here but
+  // collapsed by default so it doesn't compete with the picker.
+  const [poolOpen, setPoolOpen] = useState(false)
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     Promise.allSettled([
       api.get<Order[]>('/farmer/orders'),
       api.get<PurchasedItem[]>('/farmer/purchased-items').catch(() => ({ data: [] as PurchasedItem[] })),
-    ]).then(([ordersRes, purchasedRes]) => {
+      api.get<SubscriptionLite[]>('/farmer/my-subscriptions'),
+    ]).then(async ([ordersRes, purchasedRes, subsRes]) => {
       if (ordersRes.status === 'fulfilled') setOrders(ordersRes.value.data)
       if (purchasedRes.status === 'fulfilled') setPurchased((purchasedRes.value as { data: PurchasedItem[] }).data)
+      if (subsRes.status === 'fulfilled') {
+        const ss = subsRes.value.data
+        setSubs(ss)
+        // Branding lookup for the picker (display_name only).
+        const clientIds = [...new Set(ss.map(s => s.client_id))]
+        const results = await Promise.allSettled(clientIds.map(id =>
+          api.get<ClientInfo>(`/client/${id}/info`).then(res => ({ id, name: res.data.display_name })),
+        ))
+        const m: Record<string, string> = {}
+        results.forEach(r => { if (r.status === 'fulfilled') m[r.value.id] = r.value.name })
+        setClientNames(m)
+      }
     }).finally(() => setLoading(false))
   }, [router])
+
+  const activeSubs = subs.filter(s => s.status === 'ACTIVE')
+  const activeOrderCountBySub = useMemo(() => {
+    const m: Record<string, number> = {}
+    for (const o of orders) {
+      if (['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status)) continue
+      if (!o.subscription_id) continue
+      m[o.subscription_id] = (m[o.subscription_id] || 0) + 1
+    }
+    return m
+  }, [orders])
 
   const active    = orders.filter(o => !['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status))
   const history   = orders.filter(o => ['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status))
@@ -76,8 +115,66 @@ export default function OrdersPage() {
     <div className="min-h-screen bg-[#F7F5F0]">
       <PWAHeader title="Orders" activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20">
+        {/* Phase 3 part 2 (2026-06-02) — "All roads lead to Rome".
+            The bottom-nav Orders button lands the farmer on a package
+            picker. Tapping a crop routes to /crop-detail/[id]/orders
+            so they stay anchored to one package context. The pool
+            view (Active / History / Purchased) is still here but
+            collapsed by default. */}
+        <div className="px-4 mt-4">
+          <p className="text-xs font-semibold text-[#6B3F1F] uppercase tracking-wider mb-2">
+            Order for a crop
+          </p>
+          {loading ? (
+            <div className="h-20 bg-white rounded-2xl animate-pulse" />
+          ) : activeSubs.length === 0 ? (
+            <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 text-center">
+              <p className="text-xs text-[#7A8C7E]">No active crops yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {activeSubs.map(s => (
+                <button key={s.id}
+                  onClick={() => router.push(`/crop-detail/${s.id}/orders`)}
+                  className="w-full bg-white rounded-2xl p-3 border border-[#DDD0B8] shadow-sm text-left active:scale-[0.98] transition-transform">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-[#6B3F1F] truncate">
+                        {clientNames[s.client_id] || '—'}
+                      </p>
+                      {s.reference_number && (
+                        <p className="text-[10px] text-[#7A8C7E] font-mono mt-0.5">
+                          {s.reference_number}
+                        </p>
+                      )}
+                    </div>
+                    {(activeOrderCountBySub[s.id] || 0) > 0 ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 shrink-0">
+                        {activeOrderCountBySub[s.id]} in flight
+                      </span>
+                    ) : (
+                      <span className="text-[#7A8C7E] text-sm shrink-0">→</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="px-4 mt-6">
+          <button onClick={() => setPoolOpen(o => !o)}
+            className="w-full flex items-center justify-between text-left">
+            <p className="text-xs font-semibold text-[#6B3F1F] uppercase tracking-wider">
+              All my orders (pool view)
+            </p>
+            <span className={`text-[#7A8C7E] text-sm transition-transform ${poolOpen ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+        </div>
+
+        {!poolOpen ? null : <>
         {/* Three tabs */}
-        <div className="flex bg-white border-b border-[#DDD0B8] sticky top-16 z-30">
+        <div className="flex bg-white border-b border-[#DDD0B8] mt-2">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
@@ -86,20 +183,6 @@ export default function OrdersPage() {
               {t.label}
             </button>
           ))}
-        </div>
-
-        {/* Batch 14 — quick entry to the farmer-side seed-orders
-            surface. Seeds aren't part of the pesticide/fertiliser
-            list, but the farmer's mental model is "all my orders
-            live here" so we surface the link at the top of /orders. */}
-        {/* Phase 3 of the Orders restructure (2026-06-02): /orders is
-            now the cross-subscription pool — pending action + history.
-            Fresh ordering (Seed / Pre-sowing / by date range) moved to
-            the per-package Orders page at /crop-detail/[id]/orders. */}
-        <div className="mx-4 mt-4 bg-emerald-50/40 border border-[#3A7D44]/20 rounded-xl px-4 py-3">
-          <p className="text-xs text-[#6B3F1F]">
-            Tip: place new orders from each crop's Orders button.
-          </p>
         </div>
 
         <div className="px-4 mt-4 space-y-3">
@@ -222,6 +305,7 @@ export default function OrdersPage() {
             )
           )}
         </div>
+        </>}
       </div>
       <BottomNav color="#3A7D44" />
     </div>

@@ -257,7 +257,7 @@ export default function AskExpertPage() {
           but `Script` with lazyOnload is cheap to include unconditionally
           and matches the pattern used on /subscribe. */}
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <PWAHeader title="Ask an Expert" activeRole="FARMER" back />
+      <PWAHeader title="Ask an Expert" activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>

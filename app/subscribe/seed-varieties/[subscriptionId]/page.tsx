@@ -176,7 +176,7 @@ export default function SeedVarietiesPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Select a Variety" activeRole="FARMER" back />
+      <PWAHeader title="Select a Variety" activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <p className="text-xs text-[#7A8C7E] mt-4 mb-4 leading-relaxed">
           Browse and select one variety for your crop. Tap a card to see full details.

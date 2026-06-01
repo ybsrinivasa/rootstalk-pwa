@@ -244,7 +244,8 @@ export default function FarmerOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Order Details" activeRole="FARMER" back="/orders" />
+      <PWAHeader title="Order Details" activeRole="FARMER"
+        back={order.subscription_id ? `/crop-detail/${order.subscription_id}/orders?tab=manage` : '/orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         {/* Status card */}

@@ -183,7 +183,8 @@ export default function FarmerSeedOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Seed Order" activeRole="FARMER" back="/seed-orders" />
+      <PWAHeader title="Seed Order" activeRole="FARMER"
+        back={order.subscription_id ? `/crop-detail/${order.subscription_id}/orders?tab=manage` : '/seed-orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">

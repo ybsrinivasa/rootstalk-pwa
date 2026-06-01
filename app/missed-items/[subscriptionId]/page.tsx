@@ -34,7 +34,7 @@ export default function MissedItemsPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Missed Items" activeRole="FARMER" back />
+      <PWAHeader title="Missed Items" activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>
