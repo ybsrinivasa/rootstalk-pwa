@@ -78,6 +78,10 @@ interface OrderItem {
   given_volume: number | null; estimated_volume: number | null
   volume_unit: string | null; price: number | null
   element_block?: ElementBlock | null
+  // Fix 2026-06-01: per-item application window. Orders spanning
+  // multiple timelines have different windows per item.
+  application_date_from?: string | null
+  application_date_to?: string | null
 }
 interface RelationOption {
   option_index: number
@@ -192,6 +196,10 @@ export default function DealerOrderDetailPage() {
   const [itemEdit, setItemEdit] = useState({ brand_cosh_id: '', brand_name: '', given_volume: '', volume_unit: 'kg', price: '' })
   const [estimating, setEstimating] = useState(false)
   const [estimate, setEstimate] = useState<{ volume: number; unit: string } | null>(null)
+  // Fix 2026-06-01: surface volume-estimate errors so the dealer sees
+  // why no estimate appeared (formula missing, brand_unit unknown,
+  // etc.) instead of silently nothing.
+  const [estimateError, setEstimateError] = useState<string | null>(null)
   // Per-relation: which Part is currently expanded (defaults to first PENDING)
   const [expandedPartByRelation, setExpandedPartByRelation] = useState<Record<string, number>>({})
   // Duplicate-check modal
@@ -385,12 +393,21 @@ export default function DealerOrderDetailPage() {
   async function getEstimate(itemId: string, brandUnitOverride?: string) {
     setEstimating(true)
     setEstimate(null)
+    setEstimateError(null)
     try {
       const qs = brandUnitOverride ? `?brand_unit=${encodeURIComponent(brandUnitOverride)}` : ''
       const { data } = await api.get(`/dealer/orders/${orderId}/items/${itemId}/volume-estimate${qs}`)
       if (data.estimated_volume) {
         setEstimate({ volume: data.estimated_volume, unit: data.volume_unit })
         setItemEdit(f => ({ ...f, given_volume: String(data.estimated_volume), volume_unit: data.volume_unit || f.volume_unit }))
+      } else if (data.error_code === 'FORMULA_NOT_FOUND') {
+        // Common pre-launch state — formula table not yet populated
+        // for this (measure, L2, method, unit) combination. Don't
+        // surface the raw DATA_CONFIG_ERROR; a short hint is enough
+        // for the dealer to enter Qty manually.
+        setEstimateError('Estimate unavailable for this combination — enter Qty manually.')
+      } else if (data.message) {
+        setEstimateError(data.message)
       }
     } catch { } finally { setEstimating(false) }
   }
@@ -732,6 +749,7 @@ export default function DealerOrderDetailPage() {
                 {item.display_name || item.common_name || 'Practice'}
               </p>
             )}
+            <ItemDateRange from={item.application_date_from} to={item.application_date_to} />
             {item.brand_name && <p className="text-sm font-semibold text-[#6B3F1F] mt-1">{item.brand_name}</p>}
             {item.given_volume != null && (
               <p className="text-xs text-[#7A8C7E] mt-0.5">
@@ -807,6 +825,7 @@ export default function DealerOrderDetailPage() {
             block={item.element_block}
             estimate={estimate}
             estimating={estimating}
+            estimateError={estimateError}
           />
         )}
 
@@ -1134,6 +1153,7 @@ export default function DealerOrderDetailPage() {
               <p className="text-base font-semibold text-[#6B3F1F] mt-1.5 truncate">
                 {item.display_name || item.common_name || 'Practice'}
               </p>
+              <ItemDateRange from={item.application_date_from} to={item.application_date_to} />
               {item.brand_name && <p className="text-sm text-[#6B3F1F] mt-1">{item.brand_name}</p>}
               {item.given_volume != null && (
                 <p className="text-xs text-[#7A8C7E] mt-0.5">
@@ -1275,13 +1295,14 @@ export default function DealerOrderDetailPage() {
         )}
 
         {/* Batch 29 — Abort. Returns the order to SENT so a different
-            dealer can pick it up. Backend gate covers PROCESSING /
-            SENT_FOR_APPROVAL / PARTIALLY_APPROVED — mirror it here so
-            terminal orders don't show a misleading button. */}
+            order back to the pool. Spec correction 2026-06-01: now a
+            "Reset items" affordance — clears the dealer's in-flight
+            picks but KEEPS the order's acceptance. Backend gate still
+            covers PROCESSING / SENT_FOR_APPROVAL / PARTIALLY_APPROVED. */}
         {['PROCESSING', 'SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED'].includes(order.status) && (
           <button onClick={() => setShowAbortConfirm(true)}
-            className="w-full py-3 rounded-2xl border-2 border-red-300 text-red-600 font-medium text-sm">
-            Abort order
+            className="w-full py-3 rounded-2xl border-2 border-amber-300 text-amber-700 font-medium text-sm">
+            Reset items
           </button>
         )}
 
@@ -1438,17 +1459,18 @@ export default function DealerOrderDetailPage() {
         </div>
       )}
 
-      {/* Batch 29 — Abort confirmation. Explicitly red so the dealer
-          reads the destructive intent before tapping again. */}
+      {/* Reset items confirmation (was Abort order pre-2026-06-01).
+          The order's acceptance stays — only the item-level work is
+          rolled back, like a Refresh & Go Back. */}
       {showAbortConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => !aborting && setShowAbortConfirm(false)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-bold text-red-700">Abort this order?</p>
+            <p className="text-sm font-bold text-amber-700">Reset items?</p>
             <p className="text-xs text-[#6B3F1F] mt-2">
-              All your brand selections, volumes, prices and partial drafts
-              for this order will be discarded. Items return to the pool so
-              a different dealer can pick the order up.
+              Your brand selections, volumes, prices and partial drafts for
+              this order will be discarded so you can start over. Your
+              acceptance of the order remains — the order stays with you.
             </p>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowAbortConfirm(false)} disabled={aborting}
@@ -1456,8 +1478,8 @@ export default function DealerOrderDetailPage() {
                 Keep working
               </button>
               <button onClick={abortOrder} disabled={aborting}
-                className="flex-1 bg-red-600 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {aborting ? 'Aborting…' : 'Yes, abort'}
+                className="flex-1 bg-amber-600 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {aborting ? 'Resetting…' : 'Yes, reset'}
               </button>
             </div>
           </div>
@@ -1597,15 +1619,35 @@ export default function DealerOrderDetailPage() {
 //   - Recommended Dosage + Unit
 //   - Application Method
 //   - Volume per Plant + Unit (plant-wise items only)
+// Fix 2026-06-01: per-item application window. Orders that span
+// multiple timelines have different windows per item; the order-level
+// date range at the top doesn't tell the dealer when this specific
+// item should be sold. Renders `Apply: DD MMM – DD MMM` when the
+// backend resolved a window; null otherwise (calendar timelines, no
+// crop_start_date, etc.) so we don't fall back to the order range.
+function ItemDateRange({ from, to }: { from?: string | null; to?: string | null }) {
+  if (!from || !to) return null
+  const fmt = (iso: string) => {
+    const d = new Date(iso + 'T00:00:00')
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+  }
+  return (
+    <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+      Apply: {fmt(from)} – {fmt(to)}
+    </p>
+  )
+}
+
 // Pure render; values come from the backend's `element_block`.
 function ElementGuidance({
-  block, estimate, estimating,
+  block, estimate, estimating, estimateError,
 }: {
   block: ElementBlock
   estimate: { volume: number; unit: string } | null
   estimating: boolean
+  estimateError?: string | null
 }) {
-  const rows: { label: string; value: string; emphasis?: boolean }[] = []
+  const rows: { label: string; value: string; emphasis?: boolean; italic?: boolean }[] = []
   if (block.dosage_value != null) {
     const unit = block.dosage_unit_name || block.dosage_unit_cosh_id || ''
     rows.push({ label: 'Recommended dosage', value: `${block.dosage_value} ${unit}`.trim() })
@@ -1620,11 +1662,14 @@ function ElementGuidance({
   // Batch 27 — BL-06 estimated volume in the same warm-tan card so
   // the dealer reads SE guidance + computed estimate together, right
   // above the Given-Volume input. "Calculating…" while the request
-  // is in flight; empty when no estimate could be computed.
+  // is in flight; the error row appears when the formula isn't yet
+  // configured for this combination.
   if (estimating) {
     rows.push({ label: 'Estimated volume', value: 'Calculating…', emphasis: true })
   } else if (estimate) {
     rows.push({ label: 'Estimated volume', value: `${estimate.volume} ${estimate.unit || ''}`.trim(), emphasis: true })
+  } else if (estimateError) {
+    rows.push({ label: 'Estimated volume', value: estimateError, italic: true })
   }
   if (rows.length === 0) return null
   return (
@@ -1632,7 +1677,7 @@ function ElementGuidance({
       {rows.map((r) => (
         <div key={r.label} className="flex items-baseline justify-between gap-3">
           <span className="text-[11px] text-[#7A8C7E]">{r.label}</span>
-          <span className={`text-xs ${r.emphasis ? 'font-bold text-[#085041]' : 'font-semibold text-[#6B3F1F]'} text-right`}>
+          <span className={`text-xs ${r.emphasis ? 'font-bold text-[#085041]' : r.italic ? 'italic text-[#7A8C7E]' : 'font-semibold text-[#6B3F1F]'} text-right`}>
             {r.value}
           </span>
         </div>
