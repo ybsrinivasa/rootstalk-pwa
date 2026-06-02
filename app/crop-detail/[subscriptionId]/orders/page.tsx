@@ -430,10 +430,14 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     } finally { setBusy(null) }
   }
 
-  async function approveAll(orderId: string) {
+  async function approveAll(orderId: string, kind: 'REGULAR' | 'SEED') {
     setBusy(orderId)
     try {
-      await api.put(`/farmer/orders/${orderId}/items/approve-all`, {})
+      if (kind === 'SEED') {
+        await api.put(`/farmer/seed-orders/${orderId}/approve`, {})
+      } else {
+        await api.put(`/farmer/orders/${orderId}/items/approve-all`, {})
+      }
       await load()
     } finally { setBusy(null) }
   }
@@ -531,7 +535,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                 <p className="text-xs text-[#3A7D44]">
                   {awaitingN} item{awaitingN === 1 ? '' : 's'} awaiting approval
                 </p>
-                <button onClick={() => approveAll(o.id)} disabled={busy === o.id}
+                <button onClick={() => approveAll(o.id, o.kind)} disabled={busy === o.id}
                   className="text-xs font-semibold text-white px-3 py-1 rounded-lg disabled:opacity-50"
                   style={{ background: '#3A7D44' }}>
                   {busy === o.id ? '…' : 'Approve all'}
