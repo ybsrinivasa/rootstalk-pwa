@@ -295,14 +295,18 @@ function CategorySection({
         // Without a crop_start_date the practice timelines have no
         // DAS anchor — duration orders can't be computed. Send the
         // farmer back to the dashboard where Set start date lives.
+        // Secondary text deliberately doesn't reference pre-sowing
+        // status — the section above already speaks for itself, and
+        // claiming "pre-sowing is available" reads as a contradiction
+        // when the pre-sowing section has nothing recommended
+        // (reported 2026-06-02).
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
           <p className="text-xs font-semibold text-amber-800 mb-1">
             Set the start date to order {category.toLowerCase()}s by date range
           </p>
           <p className="text-[11px] text-amber-700">
-            Pre-sowing items above are still available; the date-range
-            order needs a sowing / planting date to compute the
-            recommended items.
+            The date-range order needs a sowing / planting date to compute
+            which items are recommended for your crop.
           </p>
           <button
             onClick={() => router.push(`/crop-detail/${subscriptionId}`)}
