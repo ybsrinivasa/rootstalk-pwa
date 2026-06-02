@@ -33,6 +33,9 @@ export default function SeedVarietiesPage() {
   const [ordering, setOrdering] = useState(false)
   const [showDUS, setShowDUS] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
+  // 2026-06-02 — Lightbox state. Variety sale depends heavily on the
+  // seed-company photos; we want them readable in detail. null = closed.
+  const [lightboxAt, setLightboxAt] = useState<number | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -66,20 +69,19 @@ export default function SeedVarietiesPage() {
       <div className="min-h-screen bg-[#F5F0E8]">
         <PWAHeader title={selected.name} activeRole="FARMER" back={{ onClick: () => setSelected(null) }} />
         <div className="pt-16 pb-24">
-          {/* Photo carousel */}
+          {/* 2026-06-02 — Photo carousel. Swipeable horizontal scroll
+              with snap; each card is 4:3 so seed-company photos
+              render at a flattering aspect. Tap any image to open
+              the pinch-zoom lightbox (a variety's sale appeal lives
+              in these images). */}
           {selected.photos.length > 0 ? (
-            <div className="relative">
-              <img src={selected.photos[activePhoto]} alt={selected.name}
-                className="w-full h-64 object-cover" />
-              {selected.photos.length > 1 && (
-                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-                  {selected.photos.map((_, i) => (
-                    <button key={i} onClick={() => setActivePhoto(i)}
-                      className={`w-2 h-2 rounded-full transition-colors ${i === activePhoto ? 'bg-white' : 'bg-white/50'}`} />
-                  ))}
-                </div>
-              )}
-            </div>
+            <PhotoCarousel
+              photos={selected.photos}
+              alt={selected.name}
+              activeIndex={activePhoto}
+              onActiveChange={setActivePhoto}
+              onOpen={i => setLightboxAt(i)}
+            />
           ) : (
             <div className="w-full h-40 bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
               <span className="text-6xl">🌾</span>
@@ -163,6 +165,18 @@ export default function SeedVarietiesPage() {
             </div>
           </div>
         </div>
+
+        {/* Pinch-zoom lightbox — opens when farmer taps any carousel
+            photo. Renders OUTSIDE the scrollable parent so its fixed
+            positioning fills the viewport. */}
+        {lightboxAt !== null && (
+          <PhotoLightbox
+            photos={selected.photos}
+            startIndex={lightboxAt}
+            alt={selected.name}
+            onClose={() => setLightboxAt(null)}
+          />
+        )}
       </div>
     )
   }
@@ -239,6 +253,131 @@ export default function SeedVarietiesPage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+
+// ── Photo carousel ──────────────────────────────────────────────────────────
+//
+// Horizontal CSS scroll-snap carousel — gives native swipe between
+// photos without any JS gesture handling. Tap any photo to open the
+// pinch-zoom lightbox. Dot indicators sync to whichever photo is
+// currently snapped in view.
+
+function PhotoCarousel({
+  photos, alt, activeIndex, onActiveChange, onOpen,
+}: {
+  photos: string[]; alt: string
+  activeIndex: number
+  onActiveChange: (i: number) => void
+  onOpen: (i: number) => void
+}) {
+  return (
+    <div className="relative bg-black">
+      <div
+        className="flex overflow-x-auto snap-x snap-mandatory"
+        style={{ scrollbarWidth: 'none' }}
+        onScroll={e => {
+          const w = e.currentTarget.clientWidth
+          const i = Math.round(e.currentTarget.scrollLeft / w)
+          if (i !== activeIndex) onActiveChange(i)
+        }}>
+        {photos.map((src, i) => (
+          <button key={i}
+            onClick={() => onOpen(i)}
+            className="w-full shrink-0 snap-start aspect-[4/3] focus:outline-none">
+            <img src={src} alt={`${alt} — photo ${i + 1}`}
+              className="w-full h-full object-cover pointer-events-none" />
+          </button>
+        ))}
+      </div>
+      {photos.length > 1 && (
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+          {photos.map((_, i) => (
+            <div key={i}
+              className={`w-2 h-2 rounded-full transition-colors ${i === activeIndex ? 'bg-white' : 'bg-white/40'}`} />
+          ))}
+        </div>
+      )}
+      <div className="absolute top-3 right-3 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm pointer-events-none">
+        Tap to zoom
+      </div>
+    </div>
+  )
+}
+
+
+// ── Pinch-zoom lightbox ─────────────────────────────────────────────────────
+//
+// Full-viewport modal showing one photo at a time. `touch-action:
+// pinch-zoom` on the image container lets the browser handle pinch
+// natively (no gesture library); a wrapping scroll lets the farmer
+// pan a zoomed image. Left/right buttons + dot indicators navigate
+// between photos. Body scroll locked while open.
+
+import { useRef as _useRef, useEffect as _useEffect } from 'react'
+
+function PhotoLightbox({
+  photos, startIndex, alt, onClose,
+}: {
+  photos: string[]
+  startIndex: number
+  alt: string
+  onClose: () => void
+}) {
+  const [index, setIndex] = useState(startIndex)
+  const wrap = _useRef<HTMLDivElement>(null)
+
+  _useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = prev }
+  }, [])
+
+  // Reset zoom by remounting the image on index change (cleanest way
+  // to drop the browser's accumulated pinch state).
+  const photo = photos[index]
+  return (
+    <div className="fixed inset-0 bg-black z-50 flex flex-col" ref={wrap}>
+      <button onClick={onClose}
+        className="absolute top-3 right-3 z-20 text-white bg-white/10 backdrop-blur-sm rounded-full w-10 h-10 flex items-center justify-center text-xl">
+        ✕
+      </button>
+
+      <div className="flex-1 overflow-auto flex items-center justify-center"
+        style={{ touchAction: 'pinch-zoom' }}>
+        <img key={index}
+          src={photo}
+          alt={`${alt} — photo ${index + 1}`}
+          className="max-w-full max-h-full object-contain select-none"
+          draggable={false} />
+      </div>
+
+      {photos.length > 1 && (
+        <>
+          <button onClick={() => setIndex(i => Math.max(0, i - 1))}
+            disabled={index === 0}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 text-white bg-white/10 backdrop-blur-sm rounded-full w-10 h-10 flex items-center justify-center text-xl disabled:opacity-30">
+            ‹
+          </button>
+          <button onClick={() => setIndex(i => Math.min(photos.length - 1, i + 1))}
+            disabled={index === photos.length - 1}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-white bg-white/10 backdrop-blur-sm rounded-full w-10 h-10 flex items-center justify-center text-xl disabled:opacity-30">
+            ›
+          </button>
+
+          <div className="absolute bottom-4 left-0 right-0 flex flex-col items-center gap-2 pointer-events-none">
+            <p className="text-white/80 text-xs">{index + 1} / {photos.length}</p>
+            <div className="flex gap-1.5">
+              {photos.map((_, i) => (
+                <div key={i}
+                  className={`w-2 h-2 rounded-full ${i === index ? 'bg-white' : 'bg-white/40'}`} />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
