@@ -1,10 +1,14 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
+// 2026-06-02 — pinch+pan via react-zoom-pan-pinch (no native
+// `touch-action: pinch-zoom` for scoped containers; browser only
+// pinch-zooms the viewport).
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 
 interface DusCharacterRow {
   part_cosh_id?: string; part_name_en?: string
@@ -316,8 +320,6 @@ function PhotoCarousel({
 // pan a zoomed image. Left/right buttons + dot indicators navigate
 // between photos. Body scroll locked while open.
 
-import { useRef as _useRef, useEffect as _useEffect } from 'react'
-
 function PhotoLightbox({
   photos, startIndex, alt, onClose,
 }: {
@@ -327,16 +329,14 @@ function PhotoLightbox({
   onClose: () => void
 }) {
   const [index, setIndex] = useState(startIndex)
-  const wrap = _useRef<HTMLDivElement>(null)
+  const wrap = useRef<HTMLDivElement>(null)
 
-  _useEffect(() => {
+  useEffect(() => {
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = prev }
   }, [])
 
-  // Reset zoom by remounting the image on index change (cleanest way
-  // to drop the browser's accumulated pinch state).
   const photo = photos[index]
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col" ref={wrap}>
@@ -345,14 +345,27 @@ function PhotoLightbox({
         ✕
       </button>
 
-      <div className="flex-1 overflow-auto flex items-center justify-center"
-        style={{ touchAction: 'pinch-zoom' }}>
-        <img key={index}
-          src={photo}
-          alt={`${alt} — photo ${index + 1}`}
-          className="max-w-full max-h-full object-contain select-none"
-          draggable={false} />
-      </div>
+      {/* Pinch + pan via react-zoom-pan-pinch (key={index} resets
+          zoom whenever the farmer flips to the next photo so they
+          don't carry a previous zoom level over). doubleClick zooms
+          in, wheel works on desktop. */}
+      <TransformWrapper key={index}
+        minScale={1} maxScale={5} initialScale={1}
+        centerOnInit
+        doubleClick={{ mode: 'toggle', step: 2 }}
+        wheel={{ step: 0.2 }}
+        pinch={{ step: 5 }}
+        panning={{ velocityDisabled: true }}>
+        <TransformComponent
+          wrapperStyle={{ width: '100%', height: '100%' }}
+          contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src={photo}
+            alt={`${alt} — photo ${index + 1}`}
+            className="max-w-full max-h-full object-contain select-none"
+            draggable={false} />
+        </TransformComponent>
+      </TransformWrapper>
 
       {photos.length > 1 && (
         <>
