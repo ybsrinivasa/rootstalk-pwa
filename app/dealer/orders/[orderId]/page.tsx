@@ -204,6 +204,12 @@ export default function DealerOrderDetailPage() {
   // why no estimate appeared (formula missing, brand_unit unknown,
   // etc.) instead of silently nothing.
   const [estimateError, setEstimateError] = useState<string | null>(null)
+  // Surfaces server errors from PUT /items/{id}/available (BRAND_REQUIRED,
+  // BRAND_NOT_IN_SYSTEM, transition failures, etc.) — previously these
+  // bubbled as unhandled promise rejections and the Save button looked
+  // dead. 2026-06-02.
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   // Per-relation: which Part is currently expanded (defaults to first PENDING)
   const [expandedPartByRelation, setExpandedPartByRelation] = useState<Record<string, number>>({})
   // Duplicate-check modal
@@ -341,6 +347,7 @@ export default function DealerOrderDetailPage() {
   async function openItemForm(item: OrderItem) {
     setEditingItem(item.id)
     setEstimate(null)
+    setSaveError(null)
     // Batch 28 — draft beats the item's committed fields. The dealer
     // closed the screen mid-edit with no Mark-Available; on re-open,
     // the in-flight values resurface so they don't have to type again.
@@ -439,6 +446,8 @@ export default function DealerOrderDetailPage() {
 
   async function markAvailable(itemId: string) {
     if (!itemEdit.given_volume) return
+    setSaveError(null)
+    setSaving(true)
     // Batch 28 — cancel any pending debounced sync so we don't race
     // the AVAILABLE flip with a stale draft write that would
     // recreate the entry the server just cleared.
@@ -446,13 +455,28 @@ export default function DealerOrderDetailPage() {
       clearTimeout(draftSyncTimer.current)
       draftSyncTimer.current = null
     }
-    await api.put(`/dealer/orders/${orderId}/items/${itemId}/available`, {
-      brand_name: itemEdit.brand_name || null,
-      brand_cosh_id: itemEdit.brand_cosh_id || null,
-      given_volume: parseFloat(itemEdit.given_volume),
-      volume_unit: itemEdit.volume_unit,
-      price: itemEdit.price ? parseFloat(itemEdit.price) : null,
-    })
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/available`, {
+        brand_name: itemEdit.brand_name || null,
+        brand_cosh_id: itemEdit.brand_cosh_id || null,
+        given_volume: parseFloat(itemEdit.given_volume),
+        volume_unit: itemEdit.volume_unit,
+        price: itemEdit.price ? parseFloat(itemEdit.price) : null,
+      })
+    } catch (err) {
+      // axios error shape: err.response.data.detail can be a string
+      // OR a {error_code, message} object (BL-07 strict-brand errors).
+      const e = err as { response?: { data?: { detail?: unknown } } }
+      const detail = e.response?.data?.detail
+      let msg = 'Could not save. Please try again.'
+      if (typeof detail === 'string') msg = detail
+      else if (detail && typeof detail === 'object' && 'message' in (detail as object)) {
+        msg = String((detail as { message?: unknown }).message ?? msg)
+      }
+      setSaveError(msg)
+      setSaving(false)
+      return
+    }
     // Drop matching entry locally + from IDB.
     const nextDrafts = { ...drafts }
     delete nextDrafts[itemId]
@@ -462,6 +486,7 @@ export default function DealerOrderDetailPage() {
     setEstimate(null)
     setBrandOptions(null)
     setItemEdit({ brand_cosh_id: '', brand_name: '', given_volume: '', volume_unit: 'kg', price: '' })
+    setSaving(false)
     load()
   }
 
@@ -894,13 +919,21 @@ export default function DealerOrderDetailPage() {
             </div>
           )
         })()}
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700">
+            {saveError}
+          </div>
+        )}
+        {!itemEdit.brand_cosh_id && (
+          <p className="text-[11px] text-amber-700">Pick a brand from the list before saving.</p>
+        )}
         <div className="flex gap-2">
           <button onClick={() => markAvailable(item.id)}
-            disabled={!itemEdit.given_volume}
+            disabled={!itemEdit.given_volume || !itemEdit.brand_cosh_id || saving}
             className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
-            Save details
+            {saving ? 'Saving…' : 'Save details'}
           </button>
-          <button onClick={() => { setEditingItem(null); setEstimate(null); setBrandOptions(null) }}
+          <button onClick={() => { setEditingItem(null); setEstimate(null); setBrandOptions(null); setSaveError(null) }}
             className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
             Cancel
           </button>
