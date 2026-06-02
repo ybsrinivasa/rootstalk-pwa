@@ -25,7 +25,11 @@ interface Variety {
   dus_characters: DusCharacterRow[] | null
 }
 
-interface NearbyDealer { id: string; name: string; phone: string | null; distance_km?: number }
+interface Recipient {
+  user_id: string; name: string | null; phone: string | null; distance_km: number
+  is_promoter?: boolean
+  shop_name?: string | null; shop_address?: string | null
+}
 
 export default function SeedVarietiesPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -34,12 +38,19 @@ export default function SeedVarietiesPage() {
   const [selected, setSelected] = useState<Variety | null>(null)
   const [confirming, setConfirming] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [ordering, setOrdering] = useState(false)
   const [showDUS, setShowDUS] = useState(false)
   const [activePhoto, setActivePhoto] = useState(0)
   // 2026-06-02 — Lightbox state. Variety sale depends heavily on the
   // seed-company photos; we want them readable in detail. null = closed.
   const [lightboxAt, setLightboxAt] = useState<number | null>(null)
+  // 2026-06-02 — recipient picker step inserted between confirm and POST.
+  // Seed orders were previously created with null dealer/facilitator, so
+  // the Manage card had no recipient line and dealers never saw them.
+  const [pickingRecipient, setPickingRecipient] = useState(false)
+  const [dealers, setDealers] = useState<Recipient[]>([])
+  const [facilitators, setFacilitators] = useState<Recipient[]>([])
+  const [pickerLoading, setPickerLoading] = useState(false)
+  const [placing, setPlacing] = useState<string | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -48,18 +59,33 @@ export default function SeedVarietiesPage() {
       .finally(() => setLoading(false))
   }, [subscriptionId])
 
-  async function placeOrder() {
+  async function openPicker() {
+    setConfirming(false)
+    setPickingRecipient(true)
+    setPickerLoading(true)
+    try {
+      const [d, f] = await Promise.allSettled([
+        api.get<Recipient[]>(`/farmer/subscriptions/${subscriptionId}/nearby-dealers?order_type=SEED`),
+        api.get<Recipient[]>(`/farmer/subscriptions/${subscriptionId}/nearby-facilitators`),
+      ])
+      setDealers(d.status === 'fulfilled' ? d.value.data : [])
+      setFacilitators(f.status === 'fulfilled' ? f.value.data : [])
+    } finally { setPickerLoading(false) }
+  }
+
+  async function sendOrder(recipient: Recipient, isDealer: boolean) {
     if (!selected) return
-    setOrdering(true)
+    setPlacing(recipient.user_id)
     try {
       await api.post('/farmer/seed-orders', {
         subscription_id: subscriptionId,
         variety_id: selected.id,
+        ...(isDealer
+          ? { dealer_user_id: recipient.user_id }
+          : { facilitator_user_id: recipient.user_id }),
       })
-      // Land on the per-package Orders Manage tab where the new
-      // seed order shows up (fix 2026-06-02 per user report).
       router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
-    } catch { setOrdering(false) }
+    } catch { setPlacing(null) }
   }
 
   if (loading) return (
@@ -200,18 +226,79 @@ export default function SeedVarietiesPage() {
             <p className="text-amber-600 text-xs mt-2 font-medium">
               This cannot be changed once you place the order.
             </p>
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              Next, you will choose the dealer or facilitator who fulfils this seed order.
+            </p>
           </div>
           <div className="flex gap-3">
             <button onClick={() => setConfirming(false)}
               className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
               Cancel
             </button>
-            <button onClick={placeOrder} disabled={ordering}
-              className="flex-1 py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
+            <button onClick={openPicker}
+              className="flex-1 py-3 rounded-xl text-white font-semibold text-sm"
               style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-              {ordering ? 'Placing…' : 'Confirm & Order'}
+              Choose Recipient
             </button>
           </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (pickingRecipient && selected) {
+    const noOne = !pickerLoading && dealers.length === 0 && facilitators.length === 0
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER"
+          back={`/crop-detail/${subscriptionId}/orders`} />
+        <div className="pt-20 pb-24 px-4 max-w-lg mx-auto">
+          <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-4">
+            <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">SEED</span>
+            <p className="text-sm text-[#6B3F1F] mt-2">
+              Sending order for <strong>{selected.name}</strong>
+            </p>
+          </div>
+          {pickerLoading && (
+            <div className="flex justify-center py-12">
+              <div className="w-6 h-6 border-2 border-[#085041] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {!pickerLoading && dealers.length > 0 && (
+            <>
+              <p className="text-xs uppercase tracking-wide text-[#7A8C7E] font-semibold mt-2 mb-2">Nearby Dealers</p>
+              <div className="space-y-3 mb-4">
+                {dealers.map(p => (
+                  <RecipientCard key={p.user_id} person={p} isDealer
+                    placing={placing} onSend={() => sendOrder(p, true)} />
+                ))}
+              </div>
+            </>
+          )}
+          {!pickerLoading && facilitators.length > 0 && (
+            <>
+              <p className="text-xs uppercase tracking-wide text-[#7A8C7E] font-semibold mt-2 mb-2">Nearby Facilitators</p>
+              <div className="space-y-3">
+                {facilitators.map(p => (
+                  <RecipientCard key={p.user_id} person={p} isDealer={false}
+                    placing={placing} onSend={() => sendOrder(p, false)} />
+                ))}
+              </div>
+            </>
+          )}
+          {noOne && (
+            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-6 text-center">
+              <p className="text-3xl mb-2">🤷</p>
+              <p className="text-sm text-[#6B3F1F] font-medium">No dealer or facilitator nearby</p>
+              <p className="text-xs text-[#7A8C7E] mt-1">
+                Ask your company to onboard a seed dealer or facilitator in your area.
+              </p>
+              <button onClick={() => { setPickingRecipient(false); setConfirming(true) }}
+                className="mt-4 text-sm text-[#085041] font-medium underline">
+                Back
+              </button>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -268,6 +355,51 @@ export default function SeedVarietiesPage() {
 // photos without any JS gesture handling. Tap any photo to open the
 // pinch-zoom lightbox. Dot indicators sync to whichever photo is
 // currently snapped in view.
+
+function RecipientCard({
+  person, isDealer, placing, onSend,
+}: {
+  person: Recipient; isDealer: boolean
+  placing: string | null
+  onSend: () => void
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="font-bold text-[#6B3F1F]">
+              {(isDealer ? person.shop_name : null) || person.name || 'Unknown'}
+            </p>
+            {person.is_promoter && (
+              <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Your Promoter</span>
+            )}
+          </div>
+          {isDealer && person.name && person.shop_name && (
+            <p className="text-xs text-[#7A8C7E]">{person.name}</p>
+          )}
+          <p className="text-xs text-[#7A8C7E] mt-0.5">{person.distance_km} km away</p>
+          {isDealer && person.shop_address && (
+            <p className="text-xs text-[#7A8C7E] truncate">{person.shop_address}</p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2 shrink-0">
+          {person.phone && (
+            <a href={`tel:${person.phone}`}
+              className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
+              📞 Call
+            </a>
+          )}
+          <button onClick={onSend} disabled={placing === person.user_id}
+            className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+            style={{ background: '#3A7D44' }}>
+            {placing === person.user_id ? '…' : 'Send Order'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function PhotoCarousel({
   photos, alt, activeIndex, onActiveChange, onOpen,
