@@ -39,7 +39,9 @@ export default function SeedVarietiesPage() {
         subscription_id: subscriptionId,
         variety_id: selected.id,
       })
-      router.replace('/orders')
+      // Land on the per-package Orders Manage tab where the new
+      // seed order shows up (fix 2026-06-02 per user report).
+      router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
     } catch { setOrdering(false) }
   }
 

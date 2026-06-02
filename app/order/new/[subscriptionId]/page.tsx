@@ -89,7 +89,10 @@ export default function OrderingScreenPage() {
 
   function startSendOrder(person: Person, isDealer: boolean) {
     if (practiceIds.length === 0) {
-      router.replace(`/orders`)
+      // Defensive fallback — should not normally fire, but route
+      // back to the package's Orders page rather than the global
+      // pool so "all roads lead to Rome" still holds.
+      router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
       return
     }
     // If acreage not yet hard-locked, force a confirmation step.
@@ -126,7 +129,10 @@ export default function OrderingScreenPage() {
 
       await api.post('/farmer/orders', payload)
       setConfirmStep(null)
-      router.replace('/orders')
+      // After submitting, land the farmer on the per-package Orders
+      // Manage tab where the newly-created order is now visible —
+      // not the global pool (fix 2026-06-02 per user report).
+      router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
       setErrorMsg(err.response?.data?.detail || 'Could not send order')
