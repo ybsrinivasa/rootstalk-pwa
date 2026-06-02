@@ -574,16 +574,37 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
 
 // ── Tab: Received ───────────────────────────────────────────────────────────
 
+interface SeedPurchased {
+  id: string; status: string; variety_name?: string | null
+  unit?: string | null; quantity?: number | null
+  total_price?: number | null; created_at: string
+  subscription_id: string
+  recipient_name?: string | null
+  recipient_shop_name?: string | null
+  recipient_phone?: string | null
+  recipient_role?: 'DEALER' | 'FACILITATOR' | null
+}
+
 function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
   const [items, setItems] = useState<PurchasedItem[] | null>(null)
+  const [seeds, setSeeds] = useState<SeedPurchased[] | null>(null)
   useEffect(() => {
     api.get<PurchasedItem[]>(`/farmer/purchased-items?subscription_id=${subscriptionId}`)
       .then(({ data }) => setItems(data))
       .catch(() => setItems([]))
+    // Seed orders carry no item-level rows, so /farmer/purchased-items
+    // ignores them. Pull /farmer/seed-orders and filter to PURCHASED on
+    // this subscription so an approved seed appears alongside other
+    // received items.
+    api.get<SeedPurchased[]>(`/farmer/seed-orders`)
+      .then(({ data }) => setSeeds(data.filter(s =>
+        s.subscription_id === subscriptionId && s.status === 'PURCHASED'
+      )))
+      .catch(() => setSeeds([]))
   }, [subscriptionId])
 
-  if (items === null) return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
-  if (items.length === 0) {
+  if (items === null || seeds === null) return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
+  if (items.length === 0 && seeds.length === 0) {
     return (
       <div className="p-4">
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
@@ -594,6 +615,28 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
   }
   return (
     <div className="p-4 space-y-3">
+      {seeds.map(s => (
+        <div key={s.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="min-w-0">
+              <span className="text-[10px] uppercase tracking-wide text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded-full font-semibold">Seed</span>
+              <p className="font-semibold text-[#6B3F1F] truncate mt-1">{s.variety_name || 'Seed variety'}</p>
+            </div>
+            {s.quantity != null && s.unit && (
+              <p className="text-xs text-[#7A8C7E] shrink-0">{s.quantity} {s.unit}{s.total_price != null ? ` · ₹${s.total_price}` : ''}</p>
+            )}
+          </div>
+          <p className="text-[11px] text-[#7A8C7E] mt-1">
+            Purchased {new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+          </p>
+          <RecipientLine
+            name={s.recipient_name}
+            shopName={s.recipient_shop_name}
+            phone={s.recipient_phone}
+            role={s.recipient_role}
+          />
+        </div>
+      ))}
       {items.map(it => (
         <div key={it.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
           <div className="flex items-baseline justify-between gap-2">
