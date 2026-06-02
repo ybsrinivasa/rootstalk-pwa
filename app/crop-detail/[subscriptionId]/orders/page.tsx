@@ -234,7 +234,7 @@ function CategorySection({
   const router = useRouter()
   const [dateFrom, setDateFrom] = useState(initialDateFrom || new Date().toISOString().slice(0, 10))
   const [dateTo, setDateTo] = useState(initialDateTo || '')
-  const [preview, setPreview] = useState<{ count: number } | null>(null)
+  const [preview, setPreview] = useState<{ count: number; practice_ids: string[] } | null>(null)
   const [loading, setLoading] = useState(false)
 
   // Auto-preview when To-date is set. The server defaults date_from
@@ -244,10 +244,21 @@ function CategorySection({
     if (!dateTo) { setPreview(null); return }
     let cancelled = false
     setLoading(true)
-    api.get<{ count: number }>(
+    api.get<{ count: number; practices: { id: string }[] }>(
       `/farmer/subscriptions/${subscriptionId}/order-preview?category=${category}&to_date=${dateTo}`,
     )
-      .then(({ data }) => { if (!cancelled) setPreview({ count: data.count }) })
+      .then(({ data }) => {
+        if (!cancelled) {
+          // Hold practice_ids alongside the count — /order/new needs
+          // them in the URL so its POST hits the right bundle. Without
+          // this hand-off the page's defensive empty-practices guard
+          // redirects without posting.
+          setPreview({
+            count: data.count,
+            practice_ids: (data.practices || []).map(p => p.id),
+          })
+        }
+      })
       .catch(() => { if (!cancelled) setPreview(null) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
@@ -288,9 +299,16 @@ function CategorySection({
         )}
         <button
           disabled={!canContinue}
-          onClick={() => router.push(
-            `/order/new/${subscriptionId}?category=${category}&date_from=${dateFrom}&date_to=${dateTo}`,
-          )}
+          onClick={() => {
+            const params = new URLSearchParams({
+              category,
+              order_type: category,
+              date_from: dateFrom,
+              date_to: dateTo,
+              practice_ids: (preview?.practice_ids || []).join(','),
+            })
+            router.push(`/order/new/${subscriptionId}?${params.toString()}`)
+          }}
           className="mt-3 w-full py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
           style={{ background: '#3A7D44' }}>
           Continue
