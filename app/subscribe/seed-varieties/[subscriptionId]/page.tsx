@@ -94,7 +94,7 @@ export default function SeedVarietiesPage() {
     </div>
   )
 
-  if (selected && !confirming) {
+  if (selected && !confirming && !pickingRecipient) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
         <PWAHeader title={selected.name} activeRole="FARMER" back={{ onClick: () => setSelected(null) }} />
