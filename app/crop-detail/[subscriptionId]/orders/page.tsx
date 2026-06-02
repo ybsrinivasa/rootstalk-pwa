@@ -110,6 +110,10 @@ export default function CropOrdersPage() {
     const start = new Date(sub.crop_start_date)
     return new Date() < start
   }, [sub])
+  // Duration-based orders need a start_date reference to compute the
+  // DAS-anchored practice windows. Pre-sowing sub-mode still renders
+  // without one (it just shows the empty-state line).
+  const hasStartDate = !!sub?.crop_start_date
 
   const tabClass = (k: typeof tab) =>
     `flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
@@ -135,6 +139,7 @@ export default function CropOrdersPage() {
           <OrderTab
             subscriptionId={subscriptionId}
             todayBeforeStart={todayBeforeStart}
+            hasStartDate={hasStartDate}
             openHint={(search.get('open') || '').toLowerCase() as 'seed' | 'pesticide' | 'fertilizer' | ''}
             initialDateFrom={search.get('date_from') || ''}
             initialDateTo={search.get('date_to') || ''}
@@ -153,10 +158,11 @@ export default function CropOrdersPage() {
 // sub-mode when today < crop_start_date.
 
 function OrderTab({
-  subscriptionId, todayBeforeStart, openHint, initialDateFrom, initialDateTo,
+  subscriptionId, todayBeforeStart, hasStartDate, openHint, initialDateFrom, initialDateTo,
 }: {
   subscriptionId: string
   todayBeforeStart: boolean
+  hasStartDate: boolean
   openHint: 'seed' | 'pesticide' | 'fertilizer' | ''
   initialDateFrom: string
   initialDateTo: string
@@ -174,6 +180,7 @@ function OrderTab({
           subscriptionId={subscriptionId}
           category="PESTICIDE"
           todayBeforeStart={todayBeforeStart}
+          hasStartDate={hasStartDate}
           initialDateFrom={initialDateFrom}
           initialDateTo={initialDateTo}
         />
@@ -183,6 +190,7 @@ function OrderTab({
           subscriptionId={subscriptionId}
           category="FERTILIZER"
           todayBeforeStart={todayBeforeStart}
+          hasStartDate={hasStartDate}
           initialDateFrom={initialDateFrom}
           initialDateTo={initialDateTo}
         />
@@ -229,11 +237,12 @@ function SeedSection({ subscriptionId }: { subscriptionId: string }) {
 
 
 function CategorySection({
-  subscriptionId, category, todayBeforeStart, initialDateFrom, initialDateTo,
+  subscriptionId, category, todayBeforeStart, hasStartDate, initialDateFrom, initialDateTo,
 }: {
   subscriptionId: string
   category: 'PESTICIDE' | 'FERTILIZER'
   todayBeforeStart: boolean
+  hasStartDate: boolean
   initialDateFrom: string
   initialDateTo: string
 }) {
@@ -282,44 +291,66 @@ function CategorySection({
         <PreSowingSubMode subscriptionId={subscriptionId} category={category} />
       )}
 
-      <div>
-        <p className="text-[11px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
-          Order {category.toLowerCase()}s by date range
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          <label className="text-[11px] text-[#7A8C7E]">From
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-              className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm" />
-          </label>
-          <label className="text-[11px] text-[#7A8C7E]">To
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-              className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm" />
-          </label>
-        </div>
-        {dateTo && (
-          <p className="text-xs text-[#7A8C7E] mt-2">
-            {loading ? 'Checking…' :
-             preview && preview.count > 0 ? `${preview.count} item${preview.count === 1 ? '' : 's'} recommended in this window.` :
-             preview ? 'Nothing recommended in this window.' : 'No preview available.'}
+      {!hasStartDate ? (
+        // Without a crop_start_date the practice timelines have no
+        // DAS anchor — duration orders can't be computed. Send the
+        // farmer back to the dashboard where Set start date lives.
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <p className="text-xs font-semibold text-amber-800 mb-1">
+            Set the start date to order {category.toLowerCase()}s by date range
           </p>
-        )}
-        <button
-          disabled={!canContinue}
-          onClick={() => {
-            const params = new URLSearchParams({
-              category,
-              order_type: category,
-              date_from: dateFrom,
-              date_to: dateTo,
-              practice_ids: (preview?.practice_ids || []).join(','),
-            })
-            router.push(`/order/new/${subscriptionId}?${params.toString()}`)
-          }}
-          className="mt-3 w-full py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-          style={{ background: '#3A7D44' }}>
-          Continue
-        </button>
-      </div>
+          <p className="text-[11px] text-amber-700">
+            Pre-sowing items above are still available; the date-range
+            order needs a sowing / planting date to compute the
+            recommended items.
+          </p>
+          <button
+            onClick={() => router.push(`/crop-detail/${subscriptionId}`)}
+            className="mt-2 w-full py-2 rounded-lg text-white text-xs font-semibold"
+            style={{ background: '#b45309' }}>
+            Set start date
+          </button>
+        </div>
+      ) : (
+        <div>
+          <p className="text-[11px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
+            Order {category.toLowerCase()}s by date range
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[11px] text-[#7A8C7E]">From
+              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm" />
+            </label>
+            <label className="text-[11px] text-[#7A8C7E]">To
+              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+                className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm" />
+            </label>
+          </div>
+          {dateTo && (
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              {loading ? 'Checking…' :
+               preview && preview.count > 0 ? `${preview.count} item${preview.count === 1 ? '' : 's'} recommended in this window.` :
+               preview ? 'Nothing recommended in this window.' : 'No preview available.'}
+            </p>
+          )}
+          <button
+            disabled={!canContinue}
+            onClick={() => {
+              const params = new URLSearchParams({
+                category,
+                order_type: category,
+                date_from: dateFrom,
+                date_to: dateTo,
+                practice_ids: (preview?.practice_ids || []).join(','),
+              })
+              router.push(`/order/new/${subscriptionId}?${params.toString()}`)
+            }}
+            className="mt-3 w-full py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+            style={{ background: '#3A7D44' }}>
+            Continue
+          </button>
+        </div>
+      )}
     </div>
   )
 }
