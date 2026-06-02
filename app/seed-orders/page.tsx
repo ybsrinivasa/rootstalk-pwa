@@ -22,6 +22,12 @@ interface SeedOrder {
   created_at: string
   dealer_user_id?: string | null
   facilitator_user_id?: string | null
+  // 2026-06-02 — recipient (dealer / facilitator) name + shop +
+  // phone so the farmer can track who's holding the seed order.
+  recipient_name?: string | null
+  recipient_phone?: string | null
+  recipient_shop_name?: string | null
+  recipient_role?: 'DEALER' | 'FACILITATOR' | null
   // Phase 1 of the Orders restructure (2026-06-02) — package-anchor
   // metadata so the seed card reads consistently with /orders.
   subscription_id?: string | null
@@ -137,12 +143,51 @@ export default function FarmerSeedOrdersPage() {
                     {order.total_price != null && order.status === 'PURCHASED' ? ` · ₹${order.total_price}` : ''}
                   </p>
                 )}
+                <SeedRecipientLine
+                  name={order.recipient_name}
+                  shopName={order.recipient_shop_name}
+                  phone={order.recipient_phone}
+                  role={order.recipient_role}
+                />
               </button>
             ))
           )}
         </div>
       </div>
       <BottomNav activeRole="FARMER" />
+    </div>
+  )
+}
+
+
+function SeedRecipientLine({
+  name, shopName, phone, role,
+}: {
+  name?: string | null
+  shopName?: string | null
+  phone?: string | null
+  role?: 'DEALER' | 'FACILITATOR' | null
+}) {
+  if (!name && !shopName && !phone) return null
+  const primary = role === 'DEALER' ? (shopName || name) : (name || shopName)
+  const secondary = role === 'DEALER'
+    ? (name && shopName && name !== shopName ? `${name} (Dealer)` : 'Dealer')
+    : 'Facilitator'
+  return (
+    <div className="mt-2 pt-2 border-t border-[#F0E5D0] flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-[#6B3F1F] truncate">{primary || secondary}</p>
+        {primary && (
+          <p className="text-[10px] text-[#7A8C7E] truncate">{secondary}</p>
+        )}
+      </div>
+      {phone && (
+        <a href={`tel:${phone}`}
+          onClick={e => e.stopPropagation()}
+          className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
+          📞 {phone}
+        </a>
+      )}
     </div>
   )
 }

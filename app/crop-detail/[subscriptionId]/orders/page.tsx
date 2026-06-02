@@ -45,6 +45,12 @@ type SubOrder = {
   category?: 'PESTICIDE' | 'FERTILIZER' | null
   variety_name?: string | null
   unit?: string | null; quantity?: number | null; total_price?: number | null
+  // Recipient (dealer or facilitator) so the farmer can track who's
+  // holding the order without drilling in. Phone is a tel: link.
+  recipient_name?: string | null
+  recipient_phone?: string | null
+  recipient_shop_name?: string | null
+  recipient_role?: 'DEALER' | 'FACILITATOR' | null
 }
 
 type DBSPreview = {
@@ -477,6 +483,12 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                   )}
                 </p>
               )}
+              <RecipientLine
+                name={o.recipient_name}
+                shopName={o.recipient_shop_name}
+                phone={o.recipient_phone}
+                role={o.recipient_role}
+              />
             </div>
 
             {/* Returned items — inline action; never names an item. */}
@@ -577,6 +589,44 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+
+// Recipient sub-line on every Order card. Shop name leads when the
+// holder is a dealer (that's how farmers recognise them); for a
+// facilitator the personal name leads. Phone is a tel: link so it
+// dials on tap. All nullable — renders nothing if every field is
+// blank (e.g. a DRAFT order with no recipient set yet).
+function RecipientLine({
+  name, shopName, phone, role,
+}: {
+  name?: string | null
+  shopName?: string | null
+  phone?: string | null
+  role?: 'DEALER' | 'FACILITATOR' | null
+}) {
+  if (!name && !shopName && !phone) return null
+  const primary = role === 'DEALER' ? (shopName || name) : (name || shopName)
+  const secondary = role === 'DEALER'
+    ? (name && shopName && name !== shopName ? `${name} (Dealer)` : 'Dealer')
+    : 'Facilitator'
+  return (
+    <div className="mt-1.5 pt-1.5 border-t border-[#F0E5D0] flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-[#6B3F1F] truncate">{primary || secondary}</p>
+        {primary && (
+          <p className="text-[10px] text-[#7A8C7E] truncate">{secondary}</p>
+        )}
+      </div>
+      {phone && (
+        <a href={`tel:${phone}`}
+          onClick={e => e.stopPropagation()}
+          className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
+          📞 {phone}
+        </a>
+      )}
     </div>
   )
 }

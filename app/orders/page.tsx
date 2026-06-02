@@ -12,6 +12,12 @@ type Order = {
   item_count?: number
   is_max_count?: boolean
   category?: 'PESTICIDE' | 'FERTILIZER' | null
+  // 2026-06-02 — recipient (dealer / facilitator) surface so the
+  // farmer can track who's holding the order without drilling in.
+  recipient_name?: string | null
+  recipient_phone?: string | null
+  recipient_shop_name?: string | null
+  recipient_role?: 'DEALER' | 'FACILITATOR' | null
   // Phase 1 of the Orders restructure (2026-06-02) — every card
   // shows crop name / company / start date so the farmer can read
   // the list without re-attaching context per row.
@@ -295,6 +301,12 @@ export default function OrdersPage() {
                       </span>
                     )}
                   </div>
+                  <RecipientLineFlat
+                    name={order.recipient_name}
+                    shopName={order.recipient_shop_name}
+                    phone={order.recipient_phone}
+                    role={order.recipient_role}
+                  />
                   {order.status === 'SENT_FOR_APPROVAL' && (
                     <div className="mt-2 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
                       <p className="text-xs text-amber-700 font-medium">Action needed — tap to review and approve</p>
@@ -308,6 +320,42 @@ export default function OrdersPage() {
         </>}
       </div>
       <BottomNav color="#3A7D44" />
+    </div>
+  )
+}
+
+
+// Same shape as the per-package Orders page (RecipientLine there);
+// duplicated here so the two surfaces stay aligned without sharing a
+// component file. If a third surface needs it, lift to /components.
+function RecipientLineFlat({
+  name, shopName, phone, role,
+}: {
+  name?: string | null
+  shopName?: string | null
+  phone?: string | null
+  role?: 'DEALER' | 'FACILITATOR' | null
+}) {
+  if (!name && !shopName && !phone) return null
+  const primary = role === 'DEALER' ? (shopName || name) : (name || shopName)
+  const secondary = role === 'DEALER'
+    ? (name && shopName && name !== shopName ? `${name} (Dealer)` : 'Dealer')
+    : 'Facilitator'
+  return (
+    <div className="mt-2 pt-2 border-t border-[#F0E5D0] flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-[#6B3F1F] truncate">{primary || secondary}</p>
+        {primary && (
+          <p className="text-[10px] text-[#7A8C7E] truncate">{secondary}</p>
+        )}
+      </div>
+      {phone && (
+        <a href={`tel:${phone}`}
+          onClick={e => e.stopPropagation()}
+          className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
+          📞 {phone}
+        </a>
+      )}
     </div>
   )
 }
