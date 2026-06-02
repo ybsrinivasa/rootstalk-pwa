@@ -6,9 +6,19 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
+interface DusCharacterRow {
+  part_cosh_id?: string; part_name_en?: string
+  character_cosh_id?: string; character_name_en?: string
+  descriptor_cosh_id?: string; descriptor_name_en?: string
+}
 interface Variety {
   id: string; name: string; crop_cosh_id: string; variety_type: string
-  description_points: string[]; photos: string[]; dus_characters: Record<string, string> | null
+  description_points: string[]; photos: string[]
+  // Backend ships an array of {part, character, descriptor} rows
+  // (Cosh `dus_characters_descriptors` Connect). Was previously
+  // typed as Record<string,string> which led to a runtime render
+  // error when the PWA tried Object.entries it; fixed 2026-06-02.
+  dus_characters: DusCharacterRow[] | null
 }
 
 interface NearbyDealer { id: string; name: string; phone: string | null; distance_km?: number }
@@ -95,7 +105,7 @@ export default function SeedVarietiesPage() {
               </div>
             )}
 
-            {selected.dus_characters && Object.keys(selected.dus_characters).length > 0 && (
+            {Array.isArray(selected.dus_characters) && selected.dus_characters.length > 0 && (
               <div>
                 <button onClick={() => setShowDUS(!showDUS)}
                   className="w-full flex items-center justify-between bg-white rounded-2xl border border-[#DDD0B8] p-4">
@@ -104,26 +114,39 @@ export default function SeedVarietiesPage() {
                 </button>
                 {showDUS && (
                   <div className="bg-white rounded-b-2xl border border-t-0 border-[#DDD0B8] px-4 pb-4">
-                    <table className="w-full text-xs">
-                      <tbody>
-                        {Object.entries(selected.dus_characters).map(([k, v]) => (
-                          <tr key={k} className="border-b border-[#DDD0B8]">
-                            <td className="py-1.5 text-[#7A8C7E] w-1/2">{k}</td>
-                            <td className="py-1.5 text-[#6B3F1F] font-medium">{v}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    {/* Fix 2026-06-02 — dus_characters is an ARRAY of
+                        {part_name_en, character_name_en, descriptor_name_en}
+                        rows (per `dus_characters_descriptors` Cosh
+                        Connect), not a flat object. Group by Part →
+                        Character → [descriptors] so the table reads
+                        as "WHOLE PLANT · Resistance: Mi, Fusarium". */}
+                    {(() => {
+                      const rows = selected.dus_characters || []
+                      const grouped: Record<string, Record<string, string[]>> = {}
+                      for (const r of rows) {
+                        const part = r.part_name_en || '—'
+                        const char = r.character_name_en || '—'
+                        const desc = r.descriptor_name_en || ''
+                        grouped[part] = grouped[part] || {}
+                        grouped[part][char] = grouped[part][char] || []
+                        if (desc) grouped[part][char].push(desc)
+                      }
+                      return Object.entries(grouped).map(([part, chars]) => (
+                        <div key={part} className="pt-3">
+                          <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">{part}</p>
+                          {Object.entries(chars).map(([char, descs]) => (
+                            <div key={char} className="flex gap-2 text-xs py-1">
+                              <span className="text-[#7A8C7E] w-1/3 shrink-0">{char}</span>
+                              <span className="text-[#6B3F1F] font-medium">{descs.join(', ')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))
+                    })()}
                   </div>
                 )}
               </div>
             )}
-
-            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-              <p className="text-sm text-amber-700">
-                <strong>Note:</strong> Price and quantity will be confirmed by the seller. No amount is shown until the seller responds.
-              </p>
-            </div>
           </div>
 
           <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#DDD0B8] max-w-lg mx-auto">
