@@ -888,14 +888,31 @@ export default function DealerOrderDetailPage() {
           </button>
         )}
         {/* 2026-06-03 — Change decision on POSTPONED / NOT_AVAILABLE.
-            Re-opens to PENDING via /reopen so the dealer can re-pick
-            brand & qty. Prior values are preserved server-side for
-            the form pre-fill. */}
-        {order!.status === 'PROCESSING' && (item.status === 'POSTPONED' || item.status === 'NOT_AVAILABLE') && editingItem !== item.id && (
+            For NOT_AVAILABLE we keep the order.status === 'PROCESSING'
+            gate (a once-NA item revisited only makes sense pre-submit).
+            For POSTPONED we relax the gate — the dealer needs to
+            resolve postpones AFTER the order is submitted too, because
+            that's exactly when "I now have this" or "I cannot supply
+            this" happens. Backend's mark_item_available auto-flips
+            POSTPONED → SENT_FOR_APPROVAL when order is past PROCESSING,
+            so the farmer's review picks the item up automatically. */}
+        {order!.status === 'PROCESSING' && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
             Change decision
           </button>
+        )}
+        {item.status === 'POSTPONED' && editingItem !== item.id && (
+          <div className="mt-2 flex gap-2">
+            <button onClick={() => openItemForm(item)}
+              className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
+              ✓ Now available
+            </button>
+            <button onClick={() => markUnavailable(item.id)}
+              className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
+              ✗ Not available
+            </button>
+          </div>
         )}
 
         {editingItem === item.id && renderInlineForm(item)}
@@ -1344,11 +1361,25 @@ export default function DealerOrderDetailPage() {
               Edit details
             </button>
           )}
-          {order!.status === 'PROCESSING' && (item.status === 'POSTPONED' || item.status === 'NOT_AVAILABLE') && editingItem !== item.id && (
+          {order!.status === 'PROCESSING' && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
             <button onClick={() => openItemForm(item)}
               className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
               Change decision
             </button>
+          )}
+          {/* POSTPONED items remain actionable regardless of order
+              status — see comment near the relation-grouped renderer. */}
+          {item.status === 'POSTPONED' && editingItem !== item.id && (
+            <div className="mt-3 flex gap-2">
+              <button onClick={() => openItemForm(item)}
+                className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
+                ✓ Now available
+              </button>
+              <button onClick={() => markUnavailable(item.id)}
+                className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+                ✗ Not available
+              </button>
+            </div>
           )}
 
           {editingItem === item.id && renderInlineForm(item)}
