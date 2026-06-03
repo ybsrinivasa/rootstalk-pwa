@@ -277,17 +277,23 @@ export default function FarmerOrderDetailPage() {
   // Orders V2 (2026-05-31): farmer keeps cancel rights through every
   // non-terminal status. The backend gates on live dealer presence,
   // not on a status threshold.
-  const canCancel = !['DRAFT', 'CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
+  // 2026-06-03 — Per user direction: Cancel Order and "Send returned
+  // items" are GATED on the approval task being complete. While there
+  // are any SENT_FOR_APPROVAL items on the order, the farmer can
+  // neither cancel nor bundle-reroute — both decisions depend on
+  // what they choose for the awaiting items first. Once approvals
+  // are cleared (approved or deleted), the gates reopen.
+  const approvalPending = (order.approval_items?.length ?? 0) > 0
+  const canCancel = !approvalPending &&
+    !['DRAFT', 'CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
   const canDeleteHusk = order.status === 'CANCELLED'
   const isDraft = order.status === 'DRAFT'
-  // Orders V2 Batch 10 — bundled re-route is offered when there are
-  // dealer-returned (NOT_AVAILABLE), farmer-rejected (REJECTED), or
-  // farmer-cancellable postpones (POSTPONED) items on the order.
-  // Farmer doesn't see item names; one CTA covers all of them.
+  // Bundle re-route is offered for NOT_AVAILABLE + REJECTED +
+  // POSTPONED items, BUT only after the approval task is complete.
   const reroutableItems = order.items.filter(i =>
     ['NOT_AVAILABLE', 'REJECTED', 'POSTPONED'].includes(i.status),
   )
-  const canBundleReroute = !isDraft && reroutableItems.length > 0
+  const canBundleReroute = !approvalPending && !isDraft && reroutableItems.length > 0
     && !['CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
 
   return (
@@ -312,19 +318,14 @@ export default function FarmerOrderDetailPage() {
           </div>
         </div>
 
-        {/* Approve all CTA */}
-        {awaitingApproval.length > 0 && (
-          <button onClick={approveAll}
-            className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
-            style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
-            ✓ Approve All ({awaitingApproval.length} item{awaitingApproval.length > 1 ? 's' : ''})
-          </button>
-        )}
+        {/* 2026-06-03 — Top "Approve All" CTA removed per user
+            direction. For legal traceability the farmer must approve
+            item-by-item; the per-row Approve button on each card is
+            now the only path to approval.
 
-        {/* Batch 10 — bundled re-route CTA. The narrative is clear
-            (FU-9): "three returned items = one re-route action, not
-            three". Item names stay hidden from the farmer; the
-            count is what they see + act on. */}
+            Bundle-reroute "Send N returned items" remains, but is
+            now gated by canBundleReroute (which requires the
+            approval task to be complete first). */}
         {canBundleReroute && (
           <button onClick={bundleReroute}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
@@ -410,7 +411,11 @@ export default function FarmerOrderDetailPage() {
           </section>
         )}
 
-        {(order.returned_items?.length ?? 0) > 0 && (
+        {/* 2026-06-03 — Returned section hidden while there are any
+            SENT_FOR_APPROVAL items. Per user: returned actions
+            depend on the approval decision; expose them only after
+            the approval task is complete. */}
+        {!approvalPending && (order.returned_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
             <p className="text-sm font-semibold text-[#6B3F1F] px-1">
               Returned ({order.returned_items!.length})
