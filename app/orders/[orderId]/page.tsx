@@ -223,22 +223,25 @@ export default function FarmerOrderDetailPage() {
   }
 
   async function approveAll() {
-    await api.put(`/farmer/orders/${orderId}/items/approve-all`, {})
-    load()
+    try {
+      await api.put(`/farmer/orders/${orderId}/items/approve-all`, {})
+      // 2026-06-03 — Per user direction: after Approve all, take the
+      // farmer back to the Manage tab. The cleared order shows as
+      // COMPLETED there; no need to stay on the review page.
+      if (order?.subscription_id) {
+        router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage`)
+      } else {
+        router.replace('/orders')
+      }
+    } catch {
+      alert('Could not approve. Please try again.')
+    }
   }
 
   // 2026-06-03 — Per-row actions on the bucketed review. A "row" can
   // be a consolidated brand (covering N underlying OrderItem rows
   // per yesterday's task 4) so the action walks merged_item_ids.
   // Returns void; reload happens after the whole batch.
-  async function approveRow(row: ReviewRow) {
-    const ids = row.merged_item_ids?.length ? row.merged_item_ids : [row.id]
-    for (const id of ids) {
-      try { await api.put(`/farmer/orders/${orderId}/items/${id}/approve`, {}) }
-      catch { /* surface via load + status */ }
-    }
-    load()
-  }
   async function rejectRow(row: ReviewRow) {
     const ids = row.merged_item_ids?.length ? row.merged_item_ids : [row.id]
     for (const id of ids) {
@@ -370,18 +373,25 @@ export default function FarmerOrderDetailPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2 mt-3">
-                  <button onClick={() => approveRow(row)}
-                    className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                    ✓ Approve
-                  </button>
-                  <button onClick={() => setConfirmDelete(row)}
-                    className="flex-1 bg-red-50 border border-red-200 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-                    🗑 Delete
-                  </button>
-                </div>
+                {/* 2026-06-03 — Per-row Approve removed. The farmer's
+                    approval action is the single bottom "Approve all"
+                    button. Per-row affordance is Remove only, which
+                    pulls the row out of the approval batch before the
+                    bulk commit. Reasoning: avoids partial-approval
+                    cumbersomeness AND keeps the legal "looked before
+                    approving" intent — they're still seeing every
+                    row + brand + price right here. */}
+                <button onClick={() => setConfirmDelete(row)}
+                  className="w-full mt-3 bg-red-50 border border-red-200 text-[#D4682E] text-xs font-semibold py-2 rounded-xl">
+                  🗑 Remove
+                </button>
               </div>
             ))}
+            <button onClick={approveAll}
+              className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
+              style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
+              ✓ Approve all ({order.approval_items!.length} item{order.approval_items!.length === 1 ? '' : 's'})
+            </button>
           </section>
         )}
 
