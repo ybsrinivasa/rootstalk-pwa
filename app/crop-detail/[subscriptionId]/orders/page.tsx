@@ -537,18 +537,22 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
               </div>
             )}
 
-            {/* Awaiting-approval — same anti-naming principle.
-                The farmer trusts the count and approves in one tap;
-                they read brand + qty after approval lands. */}
+            {/* Awaiting-approval — 2026-06-03: the button NO LONGER
+                approves directly. Per user direction, the farmer must
+                open the review screen and look at what they're
+                approving (brand, manufacturer, qty, price) before
+                committing. The button label is "Approve" and the tap
+                navigates to the review page for the order. */}
             {!cancelled && awaitingN > 0 && (
               <div className="border-t border-[#F0E5D0] bg-emerald-50/40 px-4 py-3 flex items-center justify-between gap-3">
                 <p className="text-xs text-[#3A7D44]">
                   {awaitingN} item{awaitingN === 1 ? '' : 's'} awaiting approval
                 </p>
-                <button onClick={() => approveAll(o.id, o.kind)} disabled={busy === o.id}
-                  className="text-xs font-semibold text-white px-3 py-1 rounded-lg disabled:opacity-50"
+                <button
+                  onClick={() => router.push(o.kind === 'SEED' ? `/seed-orders/${o.id}` : `/orders/${o.id}`)}
+                  className="text-xs font-semibold text-white px-3 py-1 rounded-lg"
                   style={{ background: '#3A7D44' }}>
-                  {busy === o.id ? '…' : 'Approve all'}
+                  Approve →
                 </button>
               </div>
             )}
