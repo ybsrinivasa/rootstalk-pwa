@@ -478,10 +478,16 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
         // The card no longer routes to /orders/[id] (per
         // 2026-06-02: item identity hidden from the farmer; the
         // counts + inline actions are everything they need to act).
+        // 2026-06-03 — Tap the card body of a REGULAR order to open
+        // the bucketed review page. Seed orders stay non-tappable
+        // (no item-level review needed — single variety).
+        const isReviewable = o.kind === 'REGULAR' &&
+          ['SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED', 'COMPLETED'].includes(o.status)
         return (
           <div key={`${o.kind}:${o.id}`}
             className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-            <div className="p-4">
+            <div className={`p-4 ${isReviewable ? 'cursor-pointer active:bg-stone-50' : ''}`}
+              onClick={isReviewable ? () => router.push(`/orders/${o.id}`) : undefined}>
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">

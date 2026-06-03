@@ -10,10 +10,32 @@ interface OrderItem {
   brand_name: string | null; given_volume: number | null
   volume_unit: string | null; price: number | null
 }
+// 2026-06-03 — bucketed row shape from the review endpoint. The
+// approval + approved buckets are consolidated (one row per
+// brand+unit, summed across timelines), so the row's `id` keys to
+// the FIRST merged OrderItem and `merged_item_ids` lists the others.
+interface ReviewRow {
+  id: string; practice_id?: string | null
+  practice_name?: string | null
+  status: string
+  brand_cosh_id?: string | null
+  brand_name: string | null
+  manufacturer_name?: string | null
+  given_volume: number | null
+  volume_unit: string | null
+  price: number | null
+  postponed_until?: string | null
+  merged_item_ids?: string[]
+  merged_timeline_count?: number
+}
 interface Order {
   id: string; status: string; date_from: string; date_to: string; created_at: string
   dealer_user_id: string | null; facilitator_user_id: string | null
   subscription_id: string; category: string | null
+  approval_items?: ReviewRow[]
+  approved_items?: ReviewRow[]
+  postponed_items?: ReviewRow[]
+  returned_items?: ReviewRow[]
   items: OrderItem[]
 }
 interface Recipient {
@@ -58,6 +80,13 @@ export default function FarmerOrderDetailPage() {
   const [newDealerPhone, setNewDealerPhone] = useState('')
 
   // Orders V2 Batch 4/5 — DRAFT recipient picker
+  // 2026-06-03 — confirmation state for destructive actions on the
+  // review page. confirmDelete holds the row being deleted from the
+  // approval list; confirmCancelPostponed holds a postponed row about
+  // to flip into Returned.
+  const [confirmDelete, setConfirmDelete] = useState<ReviewRow | null>(null)
+  const [confirmCancelPostponed, setConfirmCancelPostponed] = useState<ReviewRow | null>(null)
+
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerTab, setPickerTab] = useState<'dealers' | 'facilitators'>('dealers')
   const [dealers, setDealers] = useState<Recipient[]>([])
@@ -198,13 +227,32 @@ export default function FarmerOrderDetailPage() {
     load()
   }
 
-  async function approveItem(itemId: string) {
-    await api.put(`/farmer/orders/${orderId}/items/${itemId}/approve`, {})
+  // 2026-06-03 — Per-row actions on the bucketed review. A "row" can
+  // be a consolidated brand (covering N underlying OrderItem rows
+  // per yesterday's task 4) so the action walks merged_item_ids.
+  // Returns void; reload happens after the whole batch.
+  async function approveRow(row: ReviewRow) {
+    const ids = row.merged_item_ids?.length ? row.merged_item_ids : [row.id]
+    for (const id of ids) {
+      try { await api.put(`/farmer/orders/${orderId}/items/${id}/approve`, {}) }
+      catch { /* surface via load + status */ }
+    }
     load()
   }
-
-  async function rejectItem(itemId: string) {
-    await api.put(`/farmer/orders/${orderId}/items/${itemId}/reject`, {})
+  async function rejectRow(row: ReviewRow) {
+    const ids = row.merged_item_ids?.length ? row.merged_item_ids : [row.id]
+    for (const id of ids) {
+      try { await api.put(`/farmer/orders/${orderId}/items/${id}/reject`, {}) }
+      catch { /* surface via load + status */ }
+    }
+    setConfirmDelete(null)
+    load()
+  }
+  async function cancelPostponedRow(row: ReviewRow) {
+    try {
+      await api.put(`/farmer/orders/${orderId}/items/${row.id}/cancel-postponed`, {})
+    } catch { /* surface via load + status */ }
+    setConfirmCancelPostponed(null)
     load()
   }
 
@@ -285,103 +333,129 @@ export default function FarmerOrderDetailPage() {
           </button>
         )}
 
-        {/* Items */}
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-[#6B3F1F] px-1">Items ({order.items.length})</p>
-          {order.items.map(item => (
-            <div key={item.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100'}`}>
-                    {STATUS_FARMER[item.status] || item.status.replace(/_/g, ' ')}
-                  </span>
-                  <p className="text-xs text-[#7A8C7E] font-mono mt-1.5 truncate">{item.practice_id}</p>
+        {/* 2026-06-03 — Bucketed review sections. The backend returns
+            approval_items / postponed_items / returned_items /
+            approved_items already partitioned by status and (for the
+            approval + approved sections) consolidated by brand+unit
+            across timelines. */}
 
-                  {/* Brand shown only after approval */}
-                  {item.status === 'APPROVED' && item.brand_name && (
-                    <div className="mt-2 bg-emerald-50 rounded-lg px-3 py-2">
-                      <p className="text-xs text-emerald-600 font-medium">Brand</p>
-                      <p className="text-sm font-bold text-emerald-800">{item.brand_name}</p>
-                      {item.given_volume && (
-                        <p className="text-xs text-emerald-600">{item.given_volume} {item.volume_unit}
-                          {item.price ? ` · ₹${item.price}` : ''}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Approval pending — show qty/price but not brand */}
-                  {item.status === 'SENT_FOR_APPROVAL' && (
-                    <div className="mt-2 bg-purple-50 rounded-lg px-3 py-2">
-                      <p className="text-xs text-purple-600">
-                        {item.given_volume} {item.volume_unit}
-                        {item.price ? ` · ₹${item.price}` : ''}
+        {(order.approval_items?.length ?? 0) > 0 && (
+          <section className="space-y-2">
+            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
+              Awaiting your approval ({order.approval_items!.length})
+            </p>
+            {order.approval_items!.map(row => (
+              <div key={row.id} className="bg-white rounded-2xl border border-purple-200 shadow-sm p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || 'Brand pending'}</p>
+                    {row.manufacturer_name && (
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">by {row.manufacturer_name}</p>
+                    )}
+                    <p className="text-sm text-[#6B3F1F] mt-1.5">
+                      {row.given_volume ?? '—'} {row.volume_unit ?? ''}
+                    </p>
+                    {row.merged_timeline_count && row.merged_timeline_count > 1 && (
+                      <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+                        across {row.merged_timeline_count} timelines
                       </p>
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">Brand shown after approval</p>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="text-right shrink-0">
+                    {row.price != null ? (
+                      <p className="text-lg font-bold text-[#085041]">₹{row.price.toLocaleString('en-IN')}</p>
+                    ) : (
+                      <p className="text-[11px] text-amber-700 italic">Price not provided</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              {/* Actions for items awaiting approval */}
-              {item.status === 'SENT_FOR_APPROVAL' && (
                 <div className="flex gap-2 mt-3">
-                  <button onClick={() => approveItem(item.id)}
+                  <button onClick={() => approveRow(row)}
                     className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
                     ✓ Approve
                   </button>
-                  <button onClick={() => rejectItem(item.id)}
-                    className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-                    ✗ Reject
+                  <button onClick={() => setConfirmDelete(row)}
+                    className="flex-1 bg-red-50 border border-red-200 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+                    🗑 Delete
                   </button>
                 </div>
-              )}
+              </div>
+            ))}
+          </section>
+        )}
 
-              {/* Actions for NOT_AVAILABLE items */}
-              {item.status === 'NOT_AVAILABLE' && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-xs text-[#D4682E] font-medium">Dealer cannot fulfil this item</p>
-                  {rerouting === item.id ? (
-                    <div className="space-y-2">
-                      <input value={newDealerPhone}
-                        onChange={e => setNewDealerPhone(e.target.value)}
-                        placeholder="Dealer phone number"
-                        className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm focus:outline-none" />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={async () => {
-                            setRerouting(null)
-                            setNewDealerPhone('')
-                          }}
-                          className="flex-1 bg-slate-100 text-[#6B3F1F] text-xs font-medium py-2 rounded-xl">
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button onClick={() => setRerouting(item.id)}
-                        className="flex-1 bg-blue-100 text-blue-700 text-xs font-semibold py-2 rounded-xl">
-                        Try another dealer
-                      </button>
-                      <button onClick={() => skipItem(item.id)}
-                        className="flex-1 bg-slate-100 text-[#6B3F1F] text-xs font-semibold py-2 rounded-xl">
-                        Skip for now
-                      </button>
-                    </div>
+        {(order.postponed_items?.length ?? 0) > 0 && (
+          <section className="space-y-2">
+            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
+              Postponed by dealer ({order.postponed_items!.length})
+            </p>
+            {order.postponed_items!.map(row => (
+              <div key={row.id} className="bg-white rounded-2xl border border-amber-200 shadow-sm p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || row.practice_name || 'Item'}</p>
+                    {row.postponed_until && (
+                      <p className="text-xs text-amber-700 mt-1">
+                        Dealer will revisit by {new Date(row.postponed_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button onClick={() => setConfirmCancelPostponed(row)}
+                  className="mt-3 w-full bg-red-50 border border-red-200 text-[#D4682E] text-xs font-semibold py-2 rounded-xl">
+                  Cancel — don't want to wait
+                </button>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {(order.returned_items?.length ?? 0) > 0 && (
+          <section className="space-y-2">
+            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
+              Returned ({order.returned_items!.length})
+            </p>
+            <p className="text-[11px] text-[#7A8C7E] px-1 -mt-1">
+              These items can't be fulfilled. Send the whole returned batch to a different dealer with the button above, or leave them for now.
+            </p>
+            {order.returned_items!.map(row => (
+              <div key={row.id} className="bg-white rounded-2xl border border-red-200 shadow-sm p-4">
+                <p className="font-semibold text-[#6B3F1F] truncate">
+                  {row.brand_name || row.practice_name || 'Item'}
+                </p>
+                <p className="text-xs text-[#D4682E] mt-1">
+                  {row.status === 'REJECTED' ? 'Deleted from approval' : 'Not available at dealer'}
+                </p>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {(order.approved_items?.length ?? 0) > 0 && (
+          <section className="space-y-2">
+            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
+              Approved — Received ({order.approved_items!.length})
+            </p>
+            {order.approved_items!.map(row => (
+              <div key={row.id} className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || 'Item'}</p>
+                    {row.manufacturer_name && (
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">by {row.manufacturer_name}</p>
+                    )}
+                    <p className="text-sm text-emerald-700 mt-1.5">
+                      {row.given_volume ?? '—'} {row.volume_unit ?? ''}
+                    </p>
+                  </div>
+                  {row.price != null && (
+                    <p className="text-lg font-bold text-[#085041]">₹{row.price.toLocaleString('en-IN')}</p>
                   )}
                 </div>
-              )}
-
-              {/* Remove item (before approval) */}
-              {['PENDING', 'AVAILABLE', 'POSTPONED'].includes(item.status) && order.status === 'PROCESSING' && (
-                <button onClick={() => removeItem(item.id)}
-                  className="mt-2 text-xs text-[#D4682E] underline">
-                  Remove item
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </section>
+        )}
 
         {/* DRAFT — items migrated here from a cancelled order; the
             farmer picks a new recipient via the picker sheet. */}
@@ -483,6 +557,50 @@ export default function FarmerOrderDetailPage() {
                   )
                 })
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2026-06-03 — Confirm modal for Delete (reject) from the
+          approval bucket. Per user's note: confirm deletion. */}
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmDelete(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Delete this item?</p>
+            <p className="text-xs text-[#7A8C7E] mt-1.5">
+              <strong className="text-[#6B3F1F]">{confirmDelete.brand_name || 'Item'}</strong> will be moved to your Returned list. You can send it to another dealer from there.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmDelete(null)}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
+                Cancel
+              </button>
+              <button onClick={() => rejectRow(confirmDelete)}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl">
+                Yes, delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmCancelPostponed && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmCancelPostponed(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Cancel postponed item?</p>
+            <p className="text-xs text-[#7A8C7E] mt-1.5">
+              <strong className="text-[#6B3F1F]">{confirmCancelPostponed.brand_name || confirmCancelPostponed.practice_name || 'Item'}</strong> will move to your Returned list. You can send it to another dealer from there.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmCancelPostponed(null)}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
+                Keep waiting
+              </button>
+              <button onClick={() => cancelPostponedRow(confirmCancelPostponed)}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl">
+                Yes, cancel
+              </button>
             </div>
           </div>
         </div>
