@@ -584,10 +584,20 @@ export default function DealerOrderDetailPage() {
   async function submitForApproval() {
     if (!order) return
     setSubmitting(true)
+    setSaveError(null)
     try {
       await api.put(`/dealer/orders/${orderId}/submit-for-approval`, {})
       setShowSubmitConfirm(false)
       load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: unknown } } }
+      const d = e.response?.data?.detail
+      let msg = 'Could not send. Please try again.'
+      if (typeof d === 'string') msg = d
+      else if (d && typeof d === 'object' && 'message' in (d as object)) {
+        msg = String((d as { message?: unknown }).message ?? msg)
+      }
+      setSaveError(msg)
     } finally { setSubmitting(false) }
   }
 
@@ -776,9 +786,25 @@ export default function DealerOrderDetailPage() {
   const activeItems = order.items.filter(i =>
     !['NOT_NEEDED', 'SKIPPED', 'REMOVED', 'APPROVED', 'SENT_FOR_APPROVAL'].includes(i.status)
   )
-  const canSubmit = activeItems.some(i => i.status === 'AVAILABLE') &&
+  // 2026-06-03 — every active item must be decided (no PENDING) before
+  // the dealer can submit. Submit succeeds if at least one item is
+  // AVAILABLE or NOT_AVAILABLE (both give the farmer something to act on).
+  // All-POSTPONED blocks submit — dealer waits, nothing for farmer.
+  const pendingCount = activeItems.filter(i => i.status === 'PENDING').length
+  const availableCount = activeItems.filter(i => i.status === 'AVAILABLE').length
+  const notAvailableCount = activeItems.filter(i => i.status === 'NOT_AVAILABLE').length
+  const everyAvailableHasVolume = activeItems
+    .filter(i => i.status === 'AVAILABLE')
+    .every(i => i.given_volume)
+  const canSubmit =
     order.status === 'PROCESSING' &&
-    activeItems.filter(i => i.status === 'AVAILABLE').every(i => i.given_volume)
+    pendingCount === 0 &&
+    (availableCount > 0 || notAvailableCount > 0) &&
+    everyAvailableHasVolume
+  const submitButtonLabel =
+    availableCount === 0 && notAvailableCount > 0
+      ? `Notify farmer (${notAvailableCount} returned)`
+      : 'Send to farmer for approval'
 
   const showPL = ['SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED', 'COMPLETED'].includes(order.status)
 
@@ -1272,6 +1298,22 @@ export default function DealerOrderDetailPage() {
             </div>
           )}
 
+          {/* 2026-06-03 — Edit on decided standalone items. AVAILABLE
+              re-opens the brand form; POSTPONED / NOT_AVAILABLE flip
+              the decision via the state-machine self-edges. */}
+          {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && editingItem !== item.id && (
+            <button onClick={() => openItemForm(item)}
+              className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
+              Edit details
+            </button>
+          )}
+          {order!.status === 'PROCESSING' && (item.status === 'POSTPONED' || item.status === 'NOT_AVAILABLE') && editingItem !== item.id && (
+            <button onClick={() => openItemForm(item)}
+              className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
+              Change decision
+            </button>
+          )}
+
           {editingItem === item.id && renderInlineForm(item)}
         </div>
       </div>
@@ -1371,11 +1413,26 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
+        {/* 2026-06-03 — Hint when there are still undecided items, so
+            the dealer knows what's blocking submission. The Submit
+            button only renders once everyone is decided. */}
+        {order.status === 'PROCESSING' && pendingCount > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-800">
+            {pendingCount} item{pendingCount === 1 ? '' : 's'} still need a decision
+            (Available / Later / Not available) before you can send.
+          </div>
+        )}
+        {order.status === 'PROCESSING' && pendingCount === 0 && availableCount === 0 && notAvailableCount === 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-800">
+            All items are postponed — nothing to send right now. Wait for the
+            postponed dates, or change a decision.
+          </div>
+        )}
         {canSubmit && (
           <button onClick={() => setShowSubmitConfirm(true)} disabled={submitting}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-            {submitting ? 'Sending…' : '✓ Send to Farmer for Approval'}
+            {submitting ? 'Sending…' : `✓ ${submitButtonLabel}`}
           </button>
         )}
 
@@ -1515,10 +1572,12 @@ export default function DealerOrderDetailPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => !submitting && setShowSubmitConfirm(false)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-bold text-[#6B3F1F]">Send to farmer for approval?</p>
+            <p className="text-sm font-bold text-[#6B3F1F]">
+              {availableCount === 0 ? 'Notify farmer that nothing is available?' : 'Send to farmer for approval?'}
+            </p>
             <p className="text-xs text-amber-700 mt-1.5">
               You will not be able to edit this order after sending — the
-              farmer takes over the approval decision.
+              farmer takes over from here.
             </p>
             <div className="mt-3 space-y-1.5 text-xs text-[#6B3F1F]">
               <div className="flex justify-between gap-3">
