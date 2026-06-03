@@ -426,7 +426,13 @@ export default function DealerOrderDetailPage() {
       const { data } = await api.get(`/dealer/orders/${orderId}/items/${itemId}/volume-estimate${qs}`)
       if (data.estimated_volume) {
         setEstimate({ volume: data.estimated_volume, unit: data.volume_unit })
-        setItemEdit(f => ({ ...f, given_volume: String(data.estimated_volume), volume_unit: data.volume_unit || f.volume_unit }))
+        // 2026-06-03 — DO NOT auto-fill `given_volume`. Estimated
+        // volume rarely matches a real pack size (1.125 L when packs
+        // are 1 L / 500 mL) and the dealer kept committing the raw
+        // estimate. Show the estimate as guidance only; the dealer
+        // types in the actual pack-multiple. Unit hint is still
+        // useful so we keep that pre-fill.
+        setItemEdit(f => ({ ...f, volume_unit: data.volume_unit || f.volume_unit }))
       } else if (data.error_code === 'UNIT_PAIR_MISMATCH' && data.message) {
         // Backend caught a brand-unit × dosage-unit phase mismatch
         // (e.g. g brand + ml/L dose). Surface its specific message so
@@ -786,6 +792,12 @@ export default function DealerOrderDetailPage() {
   )
   const availableItemCount = activeItems.filter(i => i.status === 'AVAILABLE').length
   const totalAmount = pricedItems.reduce((s, i) => s + i.price!, 0)
+  // Count N/A items so the submit-confirmation modal can tell the
+  // dealer how many items the farmer will see as "returned" — these
+  // become his lead to forward to another dealer.
+  const notAvailableItemCount = order?.items.filter(
+    i => i.status === 'NOT_AVAILABLE'
+  ).length || 0
 
   // ── Renderers ───────────────────────────────────────────────────────────────
 
@@ -824,6 +836,16 @@ export default function DealerOrderDetailPage() {
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
             Edit details
+          </button>
+        )}
+        {/* 2026-06-03 — Change decision on POSTPONED / NOT_AVAILABLE.
+            Re-opens to PENDING via /reopen so the dealer can re-pick
+            brand & qty. Prior values are preserved server-side for
+            the form pre-fill. */}
+        {order!.status === 'PROCESSING' && (item.status === 'POSTPONED' || item.status === 'NOT_AVAILABLE') && editingItem !== item.id && (
+          <button onClick={() => openItemForm(item)}
+            className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
+            Change decision
           </button>
         )}
 
@@ -1494,6 +1516,10 @@ export default function DealerOrderDetailPage() {
           onClick={() => !submitting && setShowSubmitConfirm(false)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
             <p className="text-sm font-bold text-[#6B3F1F]">Send to farmer for approval?</p>
+            <p className="text-xs text-amber-700 mt-1.5">
+              You will not be able to edit this order after sending — the
+              farmer takes over the approval decision.
+            </p>
             <div className="mt-3 space-y-1.5 text-xs text-[#6B3F1F]">
               <div className="flex justify-between gap-3">
                 <span className="text-[#7A8C7E]">Items ready</span>
@@ -1505,6 +1531,12 @@ export default function DealerOrderDetailPage() {
                   <span className="font-semibold text-amber-700">
                     {availableItemCount - pricedItems.length}
                   </span>
+                </div>
+              )}
+              {notAvailableItemCount > 0 && (
+                <div className="flex justify-between gap-3">
+                  <span className="text-[#7A8C7E]">Returned (Not available)</span>
+                  <span className="font-semibold text-red-700">{notAvailableItemCount}</span>
                 </div>
               )}
               <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
