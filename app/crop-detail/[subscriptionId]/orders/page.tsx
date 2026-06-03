@@ -256,7 +256,11 @@ function CategorySection({
   initialDateTo: string
 }) {
   const router = useRouter()
-  const [dateFrom, setDateFrom] = useState(initialDateFrom || new Date().toISOString().slice(0, 10))
+  // 2026-06-03 — dateFrom is locked to today. The deep-link param is
+  // ignored for From (we no longer let advisory pre-fill it to a past
+  // date) — orders only flow forward from "now". To stays editable.
+  const todayISO = new Date().toISOString().slice(0, 10)
+  const [dateFrom, setDateFrom] = useState(todayISO)
   const [dateTo, setDateTo] = useState(initialDateTo || '')
   const [preview, setPreview] = useState<{ count: number; practice_ids: string[] } | null>(null)
   const [loading, setLoading] = useState(false)
@@ -313,15 +317,29 @@ function CategorySection({
           <p className="text-[11px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
             Order {category.toLowerCase()}s by date range
           </p>
+          {/* 2026-06-03 — From is a locked "Today" pill (no input).
+              To is a styled button overlaying a hidden native date
+              picker so we control the visible DD/MM/YYYY format. */}
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-[11px] text-[#7A8C7E]">From
-              <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-                className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm" />
-            </label>
-            <label className="text-[11px] text-[#7A8C7E]">To
-              <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-                className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm" />
-            </label>
+            <div>
+              <p className="text-[11px] text-[#7A8C7E]">From</p>
+              <div className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-stone-50 text-[#6B3F1F] font-medium">
+                Today
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] text-[#7A8C7E]">To</p>
+              <div className="mt-1 relative w-full border border-[#DDD0B8] rounded-lg bg-white">
+                <p className={`px-3 py-2 text-sm ${dateTo ? 'text-[#6B3F1F] font-medium' : 'text-[#7A8C7E]'}`}>
+                  {dateTo
+                    ? new Date(dateTo).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    : 'Pick a date'}
+                </p>
+                <input type="date" value={dateTo} min={todayISO}
+                  onChange={e => setDateTo(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              </div>
+            </div>
           </div>
           {dateTo && (
             <p className="text-xs text-[#7A8C7E] mt-2">
