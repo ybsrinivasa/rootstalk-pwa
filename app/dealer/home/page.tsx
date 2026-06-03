@@ -14,6 +14,7 @@ export default function DealerHomePage() {
   const router = useRouter()
   const user = getUser()
   const [pendingCount, setPendingCount] = useState(0)
+  const [postponedCount, setPostponedCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
   const [promotedCount, setPromotedCount] = useState(0)
   const [onboardingClientCount, setOnboardingClientCount] = useState<number | null>(null)
@@ -47,6 +48,9 @@ export default function DealerHomePage() {
             !['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status)
           )
           setPendingCount(active.length)
+        }).catch(() => {}),
+        api.get('/dealer/postponed-items').then(r => {
+          setPostponedCount((r.data as unknown[]).length)
         }).catch(() => {}),
         api.get('/dealer/payment-requests').then(r => {
           setPaymentCount((r.data as { status: string }[]).filter(p => p.status === 'PENDING').length)
@@ -116,6 +120,22 @@ export default function DealerHomePage() {
             <p className="text-xs opacity-70 mt-2">Tap to process →</p>
           )}
         </button>
+
+        {/* 2026-06-03 — Postponed items surface. Dedicated card so the
+            dealer doesn't have to remember which orders they postponed
+            against and dig through the orders list to find them. */}
+        {postponedCount > 0 && (
+          <button onClick={() => router.push('/dealer/postponed')}
+            className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between active:scale-98 transition-transform">
+            <div className="text-left">
+              <p className="font-semibold text-amber-800">Postponed items</p>
+              <p className="text-xs text-amber-600 mt-0.5">{postponedCount} item{postponedCount > 1 ? 's' : ''} you still need to decide on</p>
+            </div>
+            <span className="bg-amber-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">
+              {postponedCount}
+            </span>
+          </button>
+        )}
 
         {/* Payment requests badge */}
         {paymentCount > 0 && (

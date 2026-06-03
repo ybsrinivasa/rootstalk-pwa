@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -187,6 +187,12 @@ const PART_STATUS_COLOUR: Record<string, string> = {
 
 export default function DealerOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
+  // 2026-06-03 — focus_item=<id> hides everything else and pre-opens
+  // the brand form on that one item. Used by /dealer/postponed to
+  // route the dealer straight into resolving one postponed item
+  // without the noise of the full order.
+  const searchParams = useSearchParams()
+  const focusItemId = searchParams.get('focus_item')
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [packingList, setPackingList] = useState<PackingList | null>(null)
@@ -273,6 +279,18 @@ export default function DealerOrderDetailPage() {
     load()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId])
+
+  // 2026-06-03 — focus_item mode: auto-open the brand form on the
+  // target item once the order is loaded. Saves the dealer a tap
+  // and matches the "go straight into resolving" expectation.
+  useEffect(() => {
+    if (!focusItemId || !order) return
+    const target = order.items?.find(i => i.id === focusItemId)
+    if (target && editingItem !== focusItemId) {
+      openItemForm(target)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusItemId, order])
 
   // Orders V2 Batch 2: presence heartbeat. While the dealer is on
   // this screen, ping the server every 20 s. The server stamps a
@@ -493,6 +511,13 @@ export default function DealerOrderDetailPage() {
     setBrandOptions(null)
     setItemEdit({ brand_cosh_id: '', brand_name: '', given_volume: '', volume_unit: 'kg', price: '' })
     setSaving(false)
+    // 2026-06-03 — In focus_item mode, the dealer came in to resolve
+    // exactly one postponed item; pop back to the Postponed list
+    // when it's saved so they continue with the next one.
+    if (focusItemId === itemId) {
+      router.replace('/dealer/postponed')
+      return
+    }
     load()
   }
 
@@ -541,6 +566,10 @@ export default function DealerOrderDetailPage() {
 
   async function markUnavailable(itemId: string) {
     await api.put(`/dealer/orders/${orderId}/items/${itemId}/not-available`, {})
+    if (focusItemId === itemId) {
+      router.replace('/dealer/postponed')
+      return
+    }
     load()
   }
 
@@ -1390,32 +1419,36 @@ export default function DealerOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Order Details" activeRole="DEALER" back="/dealer/orders" />
+      <PWAHeader title={focusItemId ? 'Postponed item' : 'Order Details'} activeRole="DEALER"
+        back={focusItemId ? '/dealer/postponed' : '/dealer/orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
-        {/* Batch 24 — farmer context. The dealer needs farmer name,
-            a tap-to-call number, crop, crop age, and acres/plants
-            to make sense of the order. Per user 2026-05-31. */}
-        {order.farmer_context && <FarmerContextCard ctx={order.farmer_context} />}
+        {/* Batch 24 — farmer context. Skipped in focus mode (the dealer
+            knows who the farmer is from the Postponed list they came
+            from). */}
+        {!focusItemId && order.farmer_context && <FarmerContextCard ctx={order.farmer_context} />}
 
-        {/* Header card */}
-        <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-[#7A8C7E]">Order status</p>
-              <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-[#7A8C7E]">Date range</p>
-              <p className="text-xs text-[#6B3F1F]">
-                {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
-              </p>
+        {/* Header card — skipped in focus mode so the screen stays
+            clean on a single postponed-item resolve. */}
+        {!focusItemId && (
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-[#7A8C7E]">Order status</p>
+                <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-[#7A8C7E]">Date range</p>
+                <p className="text-xs text-[#6B3F1F]">
+                  {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Accept CTA */}
-        {order.status === 'SENT' && (
+        {!focusItemId && order.status === 'SENT' && (
           <button onClick={acceptOrder} disabled={accepting}
             className="w-full py-4 rounded-2xl bg-[#085041] text-white font-semibold text-sm disabled:opacity-50">
             {accepting ? 'Accepting…' : 'Accept Order & Start Processing'}
@@ -1423,7 +1456,13 @@ export default function DealerOrderDetailPage() {
         )}
 
         {/* Relations (Build C) */}
-        {relations.length > 0 && (
+        {/* 2026-06-03 — focus_item mode renders ONLY that one item so
+            the dealer resolving a postponed item isn't distracted by
+            the rest of the order. Hides the multi-step + relations
+            entirely; if the focus item is standalone it still shows
+            under "Standalone items"; if it's part of a relation we
+            render only its relation. */}
+        {!focusItemId && relations.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#6B3F1F] px-1">
               Multi-step recommendations ({relations.length})
@@ -1433,14 +1472,27 @@ export default function DealerOrderDetailPage() {
         )}
 
         {/* Standalone items */}
-        {standaloneItems.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              Standalone items ({standaloneItems.length})
-            </p>
-            {standaloneItems.map(renderStandaloneItem)}
-          </div>
-        )}
+        {(() => {
+          const visible = focusItemId
+            ? standaloneItems.filter(i => i.id === focusItemId)
+            : standaloneItems
+          if (visible.length === 0) return null
+          return (
+            <div className="space-y-3">
+              {!focusItemId && (
+                <p className="text-sm font-semibold text-[#6B3F1F] px-1">
+                  Standalone items ({standaloneItems.length})
+                </p>
+              )}
+              {focusItemId && (
+                <p className="text-sm font-semibold text-[#6B3F1F] px-1">
+                  Resolve this postponed item
+                </p>
+              )}
+              {visible.map(renderStandaloneItem)}
+            </div>
+          )
+        })()}
 
         {/* Batch 30C — brand consolidation (spec §4.2). Only renders
             when at least one brand spans more than one line — single
