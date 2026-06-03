@@ -70,6 +70,10 @@ type PurchasedItem = {
   timeline_name?: string | null
   application_date_from?: string | null
   application_date_to?: string | null
+  // 2026-06-03 — set when the backend consolidates same-brand rows
+  // across multiple timelines. Lets the UI show "Applied across N
+  // timelines" instead of pretending it's a single-timeline row.
+  merged_timeline_count?: number
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -648,6 +652,9 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
           {(it.application_date_from && it.application_date_to) && (
             <p className="text-[11px] text-[#7A8C7E] mt-1">
               Apply: {new Date(it.application_date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – {new Date(it.application_date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+              {it.merged_timeline_count && it.merged_timeline_count > 1 && (
+                <span className="ml-1 text-[#7A8C7E]">· across {it.merged_timeline_count} timelines</span>
+              )}
             </p>
           )}
           {it.l2_type && (
