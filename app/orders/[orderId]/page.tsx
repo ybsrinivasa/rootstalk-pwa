@@ -107,17 +107,33 @@ export default function FarmerOrderDetailPage() {
     load()
   }, [orderId])
 
-  // Orders V2 Batch 10 — bundled re-route for Returned items
-  async function bundleReroute() {
+  // 2026-06-03 — Bundled re-route flow with a soft nudge when the
+  // farmer still has postponed items with the original dealer. The
+  // nudge sheet asks "cancel those and send together, or keep them
+  // with the current dealer?" — the farmer chooses, then we either
+  // POST with include_postponed=true (cancel + bundle) or without
+  // (leave postpones, send only the already-returned items).
+  const [rerouteNudge, setRerouteNudge] = useState(false)
+
+  async function startReroute() {
     if (!order) return
-    // Server returns 400 with `nothing_to_reroute` if the count is
-    // zero, but we already gate the CTA so this is purely defensive.
-    if (!confirm('Send the returned items to a different dealer or facilitator? Your other items stay where they are.')) return
+    // If postponed items exist on this order, show the nudge sheet;
+    // otherwise go straight to the confirm-and-send path.
+    if ((order.postponed_items?.length ?? 0) > 0) {
+      setRerouteNudge(true)
+      return
+    }
+    await doReroute(false)
+  }
+
+  async function doReroute(includePostponed: boolean) {
+    if (!order) return
+    setRerouteNudge(false)
     try {
       const { data } = await api.post<{ new_draft_order_id: string; rerouted_count: number }>(
         `/farmer/orders/${order.id}/reroute-returned`,
+        { include_postponed: includePostponed },
       )
-      alert(`${data.rerouted_count} item${data.rerouted_count === 1 ? ' has' : 's have'} been saved in a new draft. Pick a new dealer or facilitator on the next screen.`)
       router.replace(`/orders/${data.new_draft_order_id}`)
     } catch (err: unknown) {
       const e = err as { response?: { data?: { detail?: { code?: string; message?: string } } } }
@@ -330,7 +346,7 @@ export default function FarmerOrderDetailPage() {
             now gated by canBundleReroute (which requires the
             approval task to be complete first). */}
         {canBundleReroute && (
-          <button onClick={bundleReroute}
+          <button onClick={startReroute}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
             style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
             Send {reroutableItems.length} returned item{reroutableItems.length === 1 ? '' : 's'} to a different dealer
@@ -615,6 +631,37 @@ export default function FarmerOrderDetailPage() {
               <button onClick={() => cancelPostponedRow(confirmCancelPostponed)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl">
                 Yes, cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2026-06-03 — Reroute nudge sheet. Surfaces the dealer's name
+          and the postponed-item count, lets the farmer choose between
+          "cancel and bundle" or "keep with current dealer". */}
+      {rerouteNudge && order && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setRerouteNudge(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Send returned items to another dealer</p>
+            <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
+              You have <strong className="text-[#6B3F1F]">{order.postponed_items?.length ?? 0} postponed item{(order.postponed_items?.length ?? 0) === 1 ? '' : 's'}</strong> still
+              with the current dealer. Do you want to cancel them and send everything together to a new dealer,
+              or leave them with the current dealer in case they deliver later?
+            </p>
+            <div className="space-y-2 mt-4">
+              <button onClick={() => doReroute(true)}
+                className="w-full py-3 rounded-xl text-white text-sm font-semibold"
+                style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
+                Cancel postponed & send everything ({(order.returned_items?.length ?? 0) + (order.postponed_items?.length ?? 0)} items)
+              </button>
+              <button onClick={() => doReroute(false)}
+                className="w-full py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
+                Keep postponed with current dealer · send only returned ({order.returned_items?.length ?? 0})
+              </button>
+              <button onClick={() => setRerouteNudge(false)}
+                className="w-full py-2 text-[#7A8C7E] text-sm">
+                Cancel
               </button>
             </div>
           </div>

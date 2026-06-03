@@ -42,6 +42,11 @@ type SubOrder = {
   // to prevent identity-based manipulation.
   awaiting_approval_count?: number
   returned_count?: number
+  postponed_count?: number
+  // 2026-06-03 — Lineage so the Manage tab can group reroute-child
+  // orders under one card. Root of the chain has lineage_root_id ===
+  // its own id (backend backfills this on first reroute).
+  lineage_root_id?: string
   category?: 'PESTICIDE' | 'FERTILIZER' | null
   variety_name?: string | null
   unit?: string | null; quantity?: number | null; total_price?: number | null
@@ -446,16 +451,11 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     } finally { setBusy(null) }
   }
 
-  async function rerouteReturned(orderId: string) {
-    if (!confirm('Send the returned items to a different dealer or facilitator? Your other items stay where they are.')) return
-    setBusy(orderId)
-    try {
-      const { data } = await api.post<{ new_draft_order_id: string }>(
-        `/farmer/orders/${orderId}/reroute-returned`,
-      )
-      // /order/new is the existing dealer-picker for a draft order.
-      router.push(`/order/new/${subscriptionId}?from=draft&order_id=${data.new_draft_order_id}`)
-    } finally { setBusy(null) }
+  // 2026-06-03 — Inline reroute action routes through the review page
+  // so the soft-nudge for postponed items always fires. Direct POST
+  // bypassed the nudge and bundled postpones silently.
+  function rerouteReturned(orderId: string) {
+    router.push(`/orders/${orderId}`)
   }
 
   if (orders === null) return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
@@ -469,12 +469,38 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     )
   }
 
+  // 2026-06-03 — Lineage indexing. Group orders by lineage_root_id and
+  // assign each one its "Split N of M" position. The first order in
+  // a lineage (by created_at ascending) is the original; subsequent
+  // ones are reroute children. We only show the pill when the
+  // lineage has >1 entry — single-order lineages stay clean.
+  const lineageIndex: Record<string, { pos: number; total: number }> = {}
+  if (orders) {
+    const byRoot: Record<string, SubOrder[]> = {}
+    for (const o of orders) {
+      if (o.kind !== 'REGULAR') continue
+      const root = o.lineage_root_id || o.id
+      byRoot[root] = byRoot[root] || []
+      byRoot[root].push(o)
+    }
+    for (const root in byRoot) {
+      const arr = byRoot[root].slice().sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      )
+      arr.forEach((o, i) => {
+        lineageIndex[o.id] = { pos: i + 1, total: arr.length }
+      })
+    }
+  }
+
   return (
     <div className="p-4 space-y-3">
       {orders.map(o => {
         const cancelled = o.status === 'CANCELLED'
         const awaitingN = o.awaiting_approval_count || 0
         const returnedN = o.returned_count || 0
+        const lineage = lineageIndex[o.id]
+        const showLineagePill = lineage && lineage.total > 1
         // The card no longer routes to /orders/[id] (per
         // 2026-06-02: item identity hidden from the farmer; the
         // counts + inline actions are everything they need to act).
@@ -489,10 +515,15 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
             <div className={`p-4 ${isReviewable ? 'cursor-pointer active:bg-stone-50' : ''}`}
               onClick={isReviewable ? () => router.push(`/orders/${o.id}`) : undefined}>
               <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
                     {o.kind === 'SEED' ? 'Seed' : (o.category?.toLowerCase() || 'order')}
                   </span>
+                  {showLineagePill && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      Split {lineage!.pos} of {lineage!.total}
+                    </span>
+                  )}
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[o.status] || 'bg-stone-100 text-[#7A8C7E]'}`}>
                     {o.status.replace(/_/g, ' ')}
                   </span>
