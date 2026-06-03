@@ -312,8 +312,14 @@ export default function FarmerOrderDetailPage() {
   const reroutableItems = order.items.filter(i =>
     ['NOT_AVAILABLE', 'REJECTED', 'POSTPONED'].includes(i.status),
   )
+  // 2026-06-03 — COMPLETED no longer blocks reroute: the dealer can
+  // mark some items NA while the rest get approved (order moves to
+  // COMPLETED via _update_order_status which only looks at the
+  // approval items). Those NA items still need to find a dealer.
+  // CANCELLED / EXPIRED orders stay non-reroutable (the order itself
+  // is dead).
   const canBundleReroute = !approvalPending && !isDraft && reroutableItems.length > 0
-    && !['CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
+    && !['CANCELLED', 'EXPIRED'].includes(order.status)
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">

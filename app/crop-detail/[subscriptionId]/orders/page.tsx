@@ -417,7 +417,19 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     const { data } = await api.get<{ orders: SubOrder[] }>(
       `/farmer/subscriptions/${subscriptionId}/orders`,
     )
-    setOrders((data.orders || []).filter(o => !['COMPLETED', 'PURCHASED'].includes(o.status)))
+    // 2026-06-03 — Manage hides truly-done orders, but a COMPLETED
+    // order can still have NA items the farmer hasn't rerouted yet
+    // (dealer marked them NA, farmer approved the rest, order moved
+    // to COMPLETED). Keep COMPLETED orders visible whenever there's
+    // any returned_count or postponed_count outstanding so the
+    // farmer can still reach their review page and reroute.
+    setOrders((data.orders || []).filter(o => {
+      if (o.status === 'PURCHASED') return false
+      if (o.status === 'COMPLETED' &&
+          !(o.returned_count || 0) &&
+          !(o.postponed_count || 0)) return false
+      return true
+    }))
   }
   useEffect(() => { load().catch(() => setOrders([])) }, [subscriptionId])
 
