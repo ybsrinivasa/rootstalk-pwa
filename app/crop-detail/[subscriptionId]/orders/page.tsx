@@ -524,8 +524,12 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
               />
             </div>
 
-            {/* Returned items — inline action; never names an item. */}
-            {!cancelled && returnedN > 0 && (
+            {/* Returned items — inline action; never names an item.
+                2026-06-03 — Hidden while there are still items
+                awaiting the farmer's approval. Per user: returned
+                actions depend on the approval decision and must
+                wait until the approval task is complete. */}
+            {!cancelled && returnedN > 0 && awaitingN === 0 && (
               <div className="border-t border-[#F0E5D0] bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
                 <p className="text-xs text-amber-800">
                   {returnedN} returned item{returnedN === 1 ? '' : 's'}
@@ -557,27 +561,33 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
               </div>
             )}
 
-            <div className="border-t border-[#F0E5D0] px-4 py-2 flex gap-2">
-              {!cancelled ? (
-                o.kind !== 'SEED' ? (
+            {/* 2026-06-03 — Cancel order is GATED on awaitingN === 0.
+                Once the farmer has decided every approval row, the
+                gate reopens. Forward / Delete on a CANCELLED order
+                stay available because they're post-cancellation
+                cleanup. The whole strip collapses when nothing is
+                actionable so the card isn't padded with empty space. */}
+            {((!cancelled && o.kind !== 'SEED' && awaitingN === 0) || cancelled) && (
+              <div className="border-t border-[#F0E5D0] px-4 py-2 flex gap-2">
+                {!cancelled ? (
                   <button onClick={() => cancel(o.id)} disabled={busy === o.id}
                     className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
                     {busy === o.id ? '…' : 'Cancel order'}
                   </button>
-                ) : null
-              ) : (
-                <>
-                  <button onClick={() => rerouteReturned(o.id)} disabled={busy === o.id}
-                    className="flex-1 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium disabled:opacity-50">
-                    {busy === o.id ? '…' : 'Forward'}
-                  </button>
-                  <button onClick={() => deleteOrder(o.id)} disabled={busy === o.id}
-                    className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-                    {busy === o.id ? '…' : 'Delete'}
-                  </button>
-                </>
-              )}
-            </div>
+                ) : (
+                  <>
+                    <button onClick={() => rerouteReturned(o.id)} disabled={busy === o.id}
+                      className="flex-1 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium disabled:opacity-50">
+                      {busy === o.id ? '…' : 'Forward'}
+                    </button>
+                    <button onClick={() => deleteOrder(o.id)} disabled={busy === o.id}
+                      className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+                      {busy === o.id ? '…' : 'Delete'}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )
       })}
