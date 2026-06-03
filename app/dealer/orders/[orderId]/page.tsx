@@ -766,13 +766,26 @@ export default function DealerOrderDetailPage() {
     }
   }
 
-  // Standalone items: items without a relation_id (or without relation_role)
+  // Standalone items: items without a relation_id (or without relation_role).
+  // 2026-06-03 — sort so the items the dealer needs to look at first
+  // (POSTPONED / NOT_AVAILABLE) land at the top, PENDING in the middle
+  // (his open work), and AVAILABLE settled at the bottom. Lets the
+  // dealer cross-check the problem cases without scrolling past
+  // already-decided items.
+  const ITEM_SORT_RANK: Record<string, number> = {
+    POSTPONED: 0,
+    NOT_AVAILABLE: 1,
+    PENDING: 2,
+    AVAILABLE: 3,
+  }
   const standaloneItems = useMemo<OrderItem[]>(() => {
     if (!order) return []
-    if (order.standalone_items && order.standalone_items.length >= 0 && order.relations) {
-      return order.standalone_items
-    }
-    return order.items.filter(i => !(i.relation_id && i.relation_role))
+    const base = (order.standalone_items && order.standalone_items.length >= 0 && order.relations)
+      ? order.standalone_items
+      : order.items.filter(i => !(i.relation_id && i.relation_role))
+    return [...base].sort((a, b) =>
+      (ITEM_SORT_RANK[a.status] ?? 9) - (ITEM_SORT_RANK[b.status] ?? 9)
+    )
   }, [order])
 
   const relations = order?.relations || []
@@ -828,6 +841,7 @@ export default function DealerOrderDetailPage() {
   // ── Renderers ───────────────────────────────────────────────────────────────
 
   function renderItemRow(item: OrderItem, opts: { compactMeta?: boolean } = {}) {
+    const showPriceColumn = item.status === 'AVAILABLE'
     return (
       <div key={item.id} className="bg-white rounded-xl border border-[#DDD0B8] p-3">
         <div className="flex items-start justify-between gap-2">
@@ -846,10 +860,19 @@ export default function DealerOrderDetailPage() {
             {item.brand_name && <p className="text-sm font-semibold text-[#6B3F1F] mt-1">{item.brand_name}</p>}
             {item.given_volume != null && (
               <p className="text-xs text-[#7A8C7E] mt-0.5">
-                {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
+                {item.given_volume} {item.volume_unit}
               </p>
             )}
           </div>
+          {showPriceColumn && (
+            <div className="text-right shrink-0">
+              {item.price != null ? (
+                <p className="text-base font-bold text-[#085041]">₹{item.price.toLocaleString('en-IN')}</p>
+              ) : (
+                <p className="text-[10px] text-amber-700 font-medium italic">Price not provided</p>
+              )}
+            </div>
+          )}
         </div>
 
         {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
@@ -1257,6 +1280,11 @@ export default function DealerOrderDetailPage() {
   }
 
   function renderStandaloneItem(item: OrderItem) {
+    // 2026-06-03 — Right-aligned price column so the dealer can
+    // scan the price list down the right edge. "Price not provided"
+    // for AVAILABLE items without a price (still optional, not
+    // mandatory). No price column for non-AVAILABLE statuses.
+    const showPriceColumn = item.status === 'AVAILABLE'
     return (
       <div key={item.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
         <div className="p-4">
@@ -1274,10 +1302,19 @@ export default function DealerOrderDetailPage() {
               {item.brand_name && <p className="text-sm text-[#6B3F1F] mt-1">{item.brand_name}</p>}
               {item.given_volume != null && (
                 <p className="text-xs text-[#7A8C7E] mt-0.5">
-                  {item.given_volume} {item.volume_unit}{item.price != null ? ` · ₹${item.price}` : ''}
+                  {item.given_volume} {item.volume_unit}
                 </p>
               )}
             </div>
+            {showPriceColumn && (
+              <div className="text-right shrink-0">
+                {item.price != null ? (
+                  <p className="text-lg font-bold text-[#085041]">₹{item.price.toLocaleString('en-IN')}</p>
+                ) : (
+                  <p className="text-[11px] text-amber-700 font-medium italic">Price not provided</p>
+                )}
+              </div>
+            )}
           </div>
 
           {order!.status === 'PROCESSING' && item.status === 'PENDING' && editingItem !== item.id && (
