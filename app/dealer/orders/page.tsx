@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -104,6 +104,14 @@ function belongsTo(o: Order, pill: Pill): boolean {
 }
 
 export default function DealerOrdersPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F5F0E8]" />}>
+      <DealerOrdersInner />
+    </Suspense>
+  )
+}
+
+function DealerOrdersInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialPill = (searchParams.get('pill') as Pill) || 'pending'
