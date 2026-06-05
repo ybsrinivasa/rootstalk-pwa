@@ -468,8 +468,23 @@ export default function DealerOrderDetailPage() {
     } catch { } finally { setEstimating(false) }
   }
 
-  async function markAvailable(itemId: string) {
+  // 2026-06-05 — In focus_item (postpone-resolve) mode, the Save
+  // details click first opens a confirmation modal that summarises
+  // brand + qty + price and confirms "Send to farmer for approval?"
+  // The backend auto-flips POSTPONED → SENT_FOR_APPROVAL on the
+  // PUT, so the dealer's confirm = farmer's review queue grows by
+  // one item. Outside focus mode (regular order processing) the
+  // bulk Submit-for-Approval modal handles that confirmation step;
+  // here we mirror it inline since the focus flow has only one
+  // item and no batch UI.
+  const [showFocusConfirm, setShowFocusConfirm] = useState(false)
+
+  async function markAvailable(itemId: string, opts?: { skipFocusConfirm?: boolean }) {
     if (!itemEdit.given_volume) return
+    if (focusItemId === itemId && !opts?.skipFocusConfirm) {
+      setShowFocusConfirm(true)
+      return
+    }
     setSaveError(null)
     setSaving(true)
     // Batch 28 — cancel any pending debounced sync so we don't race
@@ -1426,7 +1441,11 @@ export default function DealerOrderDetailPage() {
         {/* Batch 24 — farmer context. Skipped in focus mode (the dealer
             knows who the farmer is from the Postponed list they came
             from). */}
-        {!focusItemId && order.farmer_context && <FarmerContextCard ctx={order.farmer_context} />}
+        {/* 2026-06-05 — Show farmer context in focus mode too. The
+            dealer needs the crop name + farmer + acres/plants to
+            decide on the resolving postponed item. The "hide
+            distractions" gate from before stripped too much. */}
+        {order.farmer_context && <FarmerContextCard ctx={order.farmer_context} />}
 
         {/* Header card — skipped in focus mode so the screen stays
             clean on a single postponed-item resolve. */}
@@ -1679,6 +1698,49 @@ export default function DealerOrderDetailPage() {
                 onClick={() => commitSelectOption(dupModal.relationId, dupModal.partIndex, dupModal.optionIndex)}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl">
                 Continue anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2026-06-05 — Focus-mode submit confirmation. Mirrors the
+          bulk Submit-for-Approval sheet but with the single-item
+          summary the dealer just authored. */}
+      {showFocusConfirm && focusItemId && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          onClick={() => !saving && setShowFocusConfirm(false)}>
+          <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
+            <p className="text-sm font-bold text-[#6B3F1F]">Send to farmer for approval?</p>
+            <p className="text-xs text-amber-700 mt-1.5">
+              You will not be able to edit this after sending — the farmer takes over the approval decision.
+            </p>
+            <div className="mt-3 space-y-1.5 text-xs text-[#6B3F1F]">
+              <div className="flex justify-between gap-3">
+                <span className="text-[#7A8C7E]">Brand</span>
+                <span className="font-semibold">{itemEdit.brand_name || '—'}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-[#7A8C7E]">Quantity</span>
+                <span className="font-semibold">{itemEdit.given_volume || '—'} {itemEdit.volume_unit}</span>
+              </div>
+              <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
+                <span className="text-[#7A8C7E]">Price</span>
+                <span className="font-bold text-[#085041]">
+                  {itemEdit.price ? `₹${parseFloat(itemEdit.price).toLocaleString('en-IN')}` : 'Not provided'}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowFocusConfirm(false)} disabled={saving}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowFocusConfirm(false); markAvailable(focusItemId, { skipFocusConfirm: true }) }}
+                disabled={saving}
+                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {saving ? 'Sending…' : 'Confirm & send'}
               </button>
             </div>
           </div>

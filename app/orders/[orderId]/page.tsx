@@ -36,6 +36,9 @@ interface Order {
   approved_items?: ReviewRow[]
   postponed_items?: ReviewRow[]
   returned_items?: ReviewRow[]
+  // 2026-06-05 — Per-order approval round queueing.
+  approval_round_current?: number | null
+  approval_rounds_pending?: number
   items: OrderItem[]
 }
 interface Recipient {
@@ -367,9 +370,19 @@ export default function FarmerOrderDetailPage() {
 
         {(order.approval_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
-            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              Awaiting your approval ({order.approval_items!.length})
-            </p>
+            <div className="flex items-baseline justify-between gap-2 px-1">
+              <p className="text-sm font-semibold text-[#6B3F1F]">
+                Awaiting your approval ({order.approval_items!.length})
+              </p>
+              {/* 2026-06-05 — Round-queue indicator. When the dealer has
+                  resolved a postpone while an earlier batch is still
+                  being decided, the second batch waits behind. */}
+              {(order.approval_rounds_pending ?? 0) > 1 && (
+                <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full">
+                  Batch {order.approval_round_current ?? 1} of {order.approval_rounds_pending}
+                </span>
+              )}
+            </div>
             {order.approval_items!.map(row => (
               <div key={row.id} className="bg-white rounded-2xl border border-purple-200 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-3">
