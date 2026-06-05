@@ -121,19 +121,23 @@ export default function DealerHomePage() {
           )}
         </button>
 
-        {/* 2026-06-03 — Postponed items surface. Dedicated card so the
-            dealer doesn't have to remember which orders they postponed
-            against and dig through the orders list to find them. */}
+        {/* 2026-06-05 — Postponed items elevated to a primary CTA
+            (same visual weight as Pending Orders) per user 2026-06-05.
+            Easier-than-digging-through-orders surface so the dealer's
+            second-most-frequent action lives at thumb-distance from
+            the first. */}
         {postponedCount > 0 && (
           <button onClick={() => router.push('/dealer/postponed')}
-            className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between active:scale-98 transition-transform">
-            <div className="text-left">
-              <p className="font-semibold text-amber-800">Postponed items</p>
-              <p className="text-xs text-amber-600 mt-0.5">{postponedCount} item{postponedCount > 1 ? 's' : ''} you still need to decide on</p>
+            className="w-full rounded-2xl p-5 text-white text-left shadow-lg active:scale-98 transition-transform"
+            style={{ background: 'linear-gradient(135deg, #b45309, #d97706)' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm opacity-80">Postponed items</p>
+                <p className="text-4xl font-bold mt-1">{postponedCount}</p>
+              </div>
+              <span className="text-5xl opacity-30">⏰</span>
             </div>
-            <span className="bg-amber-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">
-              {postponedCount}
-            </span>
+            <p className="text-xs opacity-70 mt-2">Tap to resolve →</p>
           </button>
         )}
 

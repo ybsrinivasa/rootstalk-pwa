@@ -523,9 +523,32 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     }
   }
 
+  // 2026-06-05 — Farmer approval queue. Per user direction: show the
+  // approval lists one at a time, in arrival order (earliest first),
+  // with a small "1 of N" peek so the farmer knows others are
+  // waiting. Other surfaces (returned-only cards, postponed cards,
+  // etc.) stay visible since they're independent decisions.
+  const awaitingOrders = (orders || [])
+    .filter(o => (o.awaiting_approval_count || 0) > 0)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  const currentAwaiting = awaitingOrders[0]
+  const otherAwaiting = awaitingOrders.slice(1)
+  const visibleOrders = (orders || []).filter(o => {
+    if ((o.awaiting_approval_count || 0) > 0) return o.id === currentAwaiting?.id
+    return true
+  })
+
   return (
     <div className="p-4 space-y-3">
-      {orders.map(o => {
+      {currentAwaiting && otherAwaiting.length > 0 && (
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 text-xs text-indigo-800">
+          Approval <strong>1 of {awaitingOrders.length}</strong> ·{' '}
+          <span className="text-indigo-600">
+            next will appear after this one
+          </span>
+        </div>
+      )}
+      {visibleOrders.map(o => {
         const cancelled = o.status === 'CANCELLED'
         const awaitingN = o.awaiting_approval_count || 0
         const returnedN = o.returned_count || 0
