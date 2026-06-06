@@ -3,10 +3,29 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import api from '@/lib/api'
 
+interface ParameterOption {
+  parameter_name: string
+  option_name: string
+}
+
 interface CropRecord {
-  reference_number: string; farmer_name: string | null; farmer_district: string | null; farmer_state: string | null
-  company_name: string | null; company_display_name: string | null; crop_cosh_id: string | null; package_name: string | null
-  subscription_date: string | null; crop_start_date: string | null; status: string
+  reference_number: string
+  farmer_name: string | null
+  farmer_phone: string | null
+  farmer_district: string | null
+  farmer_state: string | null
+  crop_name: string | null
+  company: string | null
+  package_id: string | null
+  package_name: string | null
+  crop_start_date: string | null
+  crop_closure_date: string | null
+  parameters_options: ParameterOption[]
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export default function CropPublicPage() {
@@ -16,7 +35,9 @@ export default function CropPublicPage() {
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
-    api.get<CropRecord>(`/public/crop/${referenceNumber}`)
+    // 2026-06-06 — switched to /public/crop-record/{ref} (the spec
+    // path; the old /public/crop/{ref} is a 301 redirect alias).
+    api.get<CropRecord>(`/public/crop-record/${referenceNumber}`)
       .then(r => setRecord(r.data))
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
@@ -38,11 +59,13 @@ export default function CropPublicPage() {
   )
 
   const fieldRow = (label: string, value: string | null | undefined) => value ? (
-    <div className="flex items-start justify-between py-3 border-b border-gray-100 last:border-0">
-      <p className="text-sm text-gray-400 w-2/5">{label}</p>
+    <div className="flex items-start justify-between py-2.5 border-b border-gray-100 last:border-0">
+      <p className="text-sm text-gray-500 w-2/5">{label}</p>
       <p className="text-sm font-semibold text-gray-800 text-right w-3/5">{value}</p>
     </div>
   ) : null
+
+  const locationLine = [record.farmer_district, record.farmer_state].filter(Boolean).join(', ') || null
 
   return (
     <div className="min-h-screen bg-green-50">
@@ -64,30 +87,70 @@ export default function CropPublicPage() {
         <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
           <p className="text-xs text-gray-400 mb-1">Reference Number</p>
           <p className="text-2xl font-bold text-green-700 font-mono">{record.reference_number}</p>
-          <p className="text-xs text-gray-400 mt-1">This is an official RootsTalk crop advisory record</p>
+          <p className="text-xs text-gray-400 mt-1">Official RootsTalk crop advisory record</p>
         </div>
 
-        {/* Farmer & Crop details */}
+        {/* Farmer */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Farmer</p>
-          {fieldRow("Name", record.farmer_name)}
-          {fieldRow("District", record.farmer_district)}
-          {fieldRow("State", record.farmer_state)}
+          {fieldRow('Name', record.farmer_name)}
+          {record.farmer_phone && (
+            <div className="flex items-start justify-between py-2.5 border-b border-gray-100 last:border-0">
+              <p className="text-sm text-gray-500 w-2/5">Phone</p>
+              <a href={`tel:${record.farmer_phone}`} className="text-sm font-semibold text-green-700 text-right w-3/5">
+                {record.farmer_phone}
+              </a>
+            </div>
+          )}
+          {fieldRow('Location', locationLine)}
         </div>
 
+        {/* Crop & Company */}
         <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Crop & Advisory</p>
-          {fieldRow("Company", record.company_display_name || record.company_name)}
-          {fieldRow("Crop", record.crop_cosh_id)}
-          {fieldRow("Advisory Package", record.package_name)}
-          {fieldRow("Subscribed On", record.subscription_date ? new Date(record.subscription_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null)}
-          {fieldRow("Crop Started", record.crop_start_date ? new Date(record.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null)}
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Crop</p>
+          {fieldRow('Crop', record.crop_name)}
+          {fieldRow('Company', record.company)}
+          {fieldRow('Start date', formatDate(record.crop_start_date))}
+          {fieldRow('Closure date', formatDate(record.crop_closure_date))}
         </div>
+
+        {/* Package */}
+        {(record.package_name || record.package_id) && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Advisory Package</p>
+            {fieldRow('Package', record.package_name)}
+            {record.package_id && (
+              <div className="flex items-start justify-between py-2.5 border-b border-gray-100 last:border-0">
+                <p className="text-sm text-gray-500 w-2/5">Package ID</p>
+                <p className="text-[11px] font-mono text-gray-700 text-right w-3/5 break-all">
+                  {record.package_id}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Parameters-Options */}
+        {record.parameters_options.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Parameters &amp; Options</p>
+            <p className="text-xs text-gray-500 mb-3">
+              The package&apos;s fingerprint — what this advisory plan is configured for.
+            </p>
+            <div className="space-y-0">
+              {record.parameters_options.map((p, i) => (
+                <div key={i} className="flex items-start justify-between py-2.5 border-b border-gray-100 last:border-0">
+                  <p className="text-sm text-gray-500 w-2/5">{p.parameter_name}</p>
+                  <p className="text-sm font-semibold text-gray-800 text-right w-3/5">{p.option_name}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <p className="text-center text-xs text-gray-400 leading-relaxed">
-          This record was generated from RootsTalk, an agricultural advisory platform by
-          Neytiri Eywafarm Agritech Private Limited. The information shown reflects the
-          farmer's registered crop advisory subscription.
+          Generated by RootsTalk, an agricultural advisory platform by
+          Neytiri Eywafarm Agritech Private Limited.
         </p>
       </div>
     </div>
