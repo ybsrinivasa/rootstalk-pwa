@@ -43,6 +43,9 @@ type SubOrder = {
   awaiting_approval_count?: number
   returned_count?: number
   postponed_count?: number
+  // 2026-06-06 — Approved items awaiting farmer-confirmed pickup.
+  // Drives the emerald "Pick up N items from X" banner.
+  pickup_ready_count?: number
   // 2026-06-03 — Lineage so the Manage tab can group reroute-child
   // orders under one card. Root of the chain has lineage_root_id ===
   // its own id (backend backfills this on first reroute).
@@ -607,6 +610,26 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                 role={o.recipient_role}
               />
             </div>
+
+            {/* 2026-06-06 — Pickup banner. Routes to the focused
+                pickup page (no review-screen detour). The
+                recipient_shop_name OR recipient_name renders as the
+                "from X" so the farmer reads where to go. */}
+            {!cancelled && (o.pickup_ready_count ?? 0) > 0 && awaitingN === 0 && (
+              <button
+                onClick={e => { e.stopPropagation(); router.push(`/orders/${o.id}/pickup`) }}
+                className="w-full border-t border-[#F0E5D0] bg-emerald-50 px-4 py-3 flex items-center justify-between gap-3 text-left active:bg-emerald-100/60">
+                <p className="text-xs text-emerald-800">
+                  Pick up <strong>{o.pickup_ready_count} item{(o.pickup_ready_count || 0) === 1 ? '' : 's'}</strong>
+                  {(o.recipient_shop_name || o.recipient_name) && (
+                    <> from <strong>{o.recipient_shop_name || o.recipient_name}</strong></>
+                  )}
+                </p>
+                <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
+                  Confirm →
+                </span>
+              </button>
+            )}
 
             {/* Returned items — inline action; never names an item.
                 2026-06-03 — Hidden while there are still items
