@@ -17,6 +17,7 @@ interface Fulfilment {
   dealer_user_id: string | null
   facilitator_user_id: string | null
   brand_name: string | null
+  manufacturer_name: string | null
   given_volume: number | null
   volume_unit: string | null
   price: number | null
@@ -126,6 +127,60 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
 }
 
 // ── Relation grouping helpers ───────────────────────────────────────────────
+// 2026-06-06 — Visible summary block on APPROVED practice cards.
+// Renders Brand · by Manufacturer + Application Method + Dosage
+// (or the given_volume the dealer actually committed). Replaces
+// what used to live behind the "Hide details" toggle for purchased
+// items — the farmer shouldn't have to expand to see what they
+// bought.
+function PurchasedSummary({
+  brand, manufacturer, elements, givenVolume, volumeUnit,
+}: {
+  brand: string
+  manufacturer: string | null
+  elements: Element[]
+  givenVolume: number | null
+  volumeUnit: string | null
+}) {
+  // Pull application method + dosage from the SE elements; merged
+  // so the dosage + unit appear on one line.
+  const merged = mergeUnitElements(elements)
+  const appMethod = merged.find(e => (e.element_type || '').toUpperCase() === 'APPLICATION_METHOD')
+  const dosage = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
+  const dosageUnit = (dosage?.unit_cosh_id && !isUuid(dosage.unit_cosh_id))
+    ? dosage.unit_cosh_id
+    : (dosage?.trailing_unit || '')
+  return (
+    <div className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-3 space-y-1">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
+        {givenVolume != null && volumeUnit && (
+          <p className="text-xs font-semibold text-emerald-800 shrink-0">{givenVolume} {volumeUnit}</p>
+        )}
+      </div>
+      {manufacturer && (
+        <p className="text-xs text-emerald-800">by {manufacturer}</p>
+      )}
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-emerald-900 pt-1">
+        {appMethod && (appMethod.value || appMethod.cosh_ref) && (
+          <p>
+            <span className="text-emerald-700">Application:</span>{' '}
+            <span className="font-medium">{appMethod.value || appMethod.cosh_ref}</span>
+          </p>
+        )}
+        {dosage && (dosage.value || dosage.cosh_ref) && (
+          <p>
+            <span className="text-emerald-700">Dosage:</span>{' '}
+            <span className="font-medium">
+              {dosage.value || dosage.cosh_ref}{dosageUnit ? ` ${dosageUnit}` : ''}
+            </span>
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function decodeRole(role: string): { part: number; option: number; position: number } | null {
   const m = /^PART_(\d+)__OPT_(\d+)__POS_(\d+)$/.exec(role)
   if (!m) return null
@@ -804,9 +859,28 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
         />
       )}
 
+      {/* 2026-06-06 — Post-purchase brand summary on the card itself.
+          What the farmer most needs to see — brand + manufacturer +
+          how to apply — is visible without expanding. Common Name
+          (the SE authoring vocabulary) is intentionally NOT shown
+          here; it's filtered out of the details below too. */}
+      {fulf?.status === 'APPROVED' && fulf.brand_name && (
+        <PurchasedSummary
+          brand={fulf.brand_name}
+          manufacturer={fulf.manufacturer_name}
+          elements={practice.elements}
+          givenVolume={fulf.given_volume}
+          volumeUnit={fulf.volume_unit}
+        />
+      )}
+
       {detailsVisible && expanded && (
         <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
-          {mergeUnitElements(practice.elements).map((el, i) => {
+          {mergeUnitElements(practice.elements)
+            // 2026-06-06 — Common Name is SE-authoring vocabulary;
+            // not useful to the farmer. Strip it from the details.
+            .filter(el => (el.element_type || '').toUpperCase() !== 'COMMON_NAME')
+            .map((el, i) => {
             const showRef = el.cosh_ref && !isUuid(el.cosh_ref)
             const inlineUnit =
               (el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : '')
@@ -829,11 +903,16 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           })}
         </div>
       )}
-      {detailsVisible && (
-        <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
-          {expanded ? '▲ Hide details' : `▼ ${mergeUnitElements(practice.elements).length} detail${mergeUnitElements(practice.elements).length > 1 ? 's' : ''}`}
-        </div>
-      )}
+      {detailsVisible && (() => {
+        const visibleEls = mergeUnitElements(practice.elements)
+          .filter(el => (el.element_type || '').toUpperCase() !== 'COMMON_NAME')
+        if (visibleEls.length === 0) return null
+        return (
+          <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
+            {expanded ? '▲ Hide details' : `▼ ${visibleEls.length} detail${visibleEls.length > 1 ? 's' : ''}`}
+          </div>
+        )
+      })()}
     </div>
   )
 }
