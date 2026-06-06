@@ -22,6 +22,10 @@ interface Fulfilment {
   price: number | null
   postponed_until: string | null
   postpone_days_remaining: number | null
+  // 2026-06-06 — Packing receipt state for the "📦 Tap to confirm
+  // pickup" hint on APPROVED-but-not-yet-received advisory rows.
+  packing_code?: string | null
+  farmer_received_at?: string | null
 }
 interface Practice {
   id: string; l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
@@ -1043,6 +1047,20 @@ function FulfilmentSheet({
                 <p className="text-xs text-[#7A8C7E]">Price</p>
                 <p className="text-[#6B3F1F]">₹{fulfilment.price}</p>
               </div>
+            )}
+            {/* 2026-06-06 — Highest-intent moment to confirm pickup:
+                the farmer is reading dosage instructions, almost
+                certainly holding the bottle. One tap closes the loop. */}
+            {!fulfilment.farmer_received_at && (
+              <button
+                onClick={() => { window.location.href = `/orders/${fulfilment.order_id}/pickup` }}
+                className="w-full mt-1 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-left active:bg-emerald-100/60">
+                <p className="text-xs font-semibold text-emerald-800">📦 Tap to confirm pickup</p>
+                <p className="text-[11px] text-emerald-700 mt-0.5">
+                  These items haven&apos;t been marked as picked up yet.
+                  {fulfilment.packing_code && <> Packing ID: <span className="font-mono tracking-widest">{fulfilment.packing_code}</span></>}
+                </p>
+              </button>
             )}
           </div>
         )}
