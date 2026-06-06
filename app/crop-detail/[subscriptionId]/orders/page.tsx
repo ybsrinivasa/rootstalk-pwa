@@ -72,7 +72,8 @@ type DBSPreview = {
 }
 
 type PurchasedItem = {
-  id: string; brand_name: string | null; l1_type: string | null; l2_type: string | null
+  id: string; brand_name: string | null; manufacturer_name?: string | null
+  l1_type: string | null; l2_type: string | null
   given_volume: number | null; volume_unit: string | null; price: number | null
   scan_verified: boolean; order_id: string; created_at: string
   timeline_name?: string | null
@@ -82,6 +83,13 @@ type PurchasedItem = {
   // across multiple timelines. Lets the UI show "Applied across N
   // timelines" instead of pretending it's a single-timeline row.
   merged_timeline_count?: number
+  // 2026-06-06 — Recipient context per item so every Received card
+  // can render dealer name + shop + phone (matching the seed-order
+  // card shape).
+  dealer_name?: string | null
+  dealer_phone?: string | null
+  dealer_shop_name?: string | null
+  received_at?: string | null
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -801,23 +809,56 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
         </div>
       ))}
       {items.map(it => (
-        <div key={it.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="font-semibold text-[#6B3F1F] truncate">{it.brand_name || 'Unknown brand'}</p>
-            {it.given_volume != null && it.volume_unit && (
-              <p className="text-xs text-[#7A8C7E] shrink-0">{it.given_volume} {it.volume_unit}{it.price != null ? ` · ₹${it.price}` : ''}</p>
+        <div key={it.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+          <div className="p-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-semibold text-[#6B3F1F] truncate">{it.brand_name || 'Unknown brand'}</p>
+                {it.manufacturer_name && (
+                  <p className="text-xs text-[#7A8C7E] truncate">by {it.manufacturer_name}</p>
+                )}
+              </div>
+              {it.given_volume != null && it.volume_unit && (
+                <p className="text-xs text-[#7A8C7E] shrink-0">{it.given_volume} {it.volume_unit}{it.price != null ? ` · ₹${it.price}` : ''}</p>
+              )}
+            </div>
+            {(it.application_date_from && it.application_date_to) && (
+              <p className="text-[11px] text-[#7A8C7E] mt-1">
+                Apply: {new Date(it.application_date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – {new Date(it.application_date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {it.merged_timeline_count && it.merged_timeline_count > 1 && (
+                  <span className="ml-1 text-[#7A8C7E]">· across {it.merged_timeline_count} timelines</span>
+                )}
+              </p>
+            )}
+            {it.l2_type && (
+              <p className="text-[10px] text-[#7A8C7E] mt-0.5">{it.l2_type.replace(/_/g, ' ')}</p>
+            )}
+            {it.received_at && (
+              <p className="text-[11px] text-[#7A8C7E] mt-1">
+                Received {new Date(it.received_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+              </p>
             )}
           </div>
-          {(it.application_date_from && it.application_date_to) && (
-            <p className="text-[11px] text-[#7A8C7E] mt-1">
-              Apply: {new Date(it.application_date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – {new Date(it.application_date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-              {it.merged_timeline_count && it.merged_timeline_count > 1 && (
-                <span className="ml-1 text-[#7A8C7E]">· across {it.merged_timeline_count} timelines</span>
+          {/* 2026-06-06 — Dealer line on every Received card so the
+              farmer can call the dealer / re-order easily. Matches the
+              seed-order card shape. Phone is a tel: link. */}
+          {(it.dealer_shop_name || it.dealer_name || it.dealer_phone) && (
+            <div className="border-t border-[#F0E5D0] px-4 py-2 flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[#6B3F1F] truncate">
+                  {it.dealer_shop_name || it.dealer_name}
+                </p>
+                {it.dealer_shop_name && it.dealer_name && (
+                  <p className="text-[10px] text-[#7A8C7E] truncate">{it.dealer_name} (Dealer)</p>
+                )}
+              </div>
+              {it.dealer_phone && (
+                <a href={`tel:${it.dealer_phone}`}
+                  className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
+                  📞 {it.dealer_phone}
+                </a>
               )}
-            </p>
-          )}
-          {it.l2_type && (
-            <p className="text-[10px] text-[#7A8C7E] mt-0.5">{it.l2_type.replace(/_/g, ' ')}</p>
+            </div>
           )}
         </div>
       ))}

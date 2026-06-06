@@ -877,9 +877,17 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
       {detailsVisible && expanded && (
         <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
           {mergeUnitElements(practice.elements)
-            // 2026-06-06 — Common Name is SE-authoring vocabulary;
-            // not useful to the farmer. Strip it from the details.
-            .filter(el => (el.element_type || '').toUpperCase() !== 'COMMON_NAME')
+            // 2026-06-06 — Strip Common Name (SE authoring jargon,
+            // never useful to the farmer). When the PurchasedSummary
+            // block is showing, also strip Application Method +
+            // Dosage so they don't appear twice on the same card.
+            .filter(el => {
+              const t = (el.element_type || '').toUpperCase()
+              if (t === 'COMMON_NAME') return false
+              const summaryShown = fulf?.status === 'APPROVED' && !!fulf.brand_name
+              if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
+              return true
+            })
             .map((el, i) => {
             const showRef = el.cosh_ref && !isUuid(el.cosh_ref)
             const inlineUnit =
@@ -904,8 +912,14 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
         </div>
       )}
       {detailsVisible && (() => {
+        const summaryShown = fulf?.status === 'APPROVED' && !!fulf.brand_name
         const visibleEls = mergeUnitElements(practice.elements)
-          .filter(el => (el.element_type || '').toUpperCase() !== 'COMMON_NAME')
+          .filter(el => {
+            const t = (el.element_type || '').toUpperCase()
+            if (t === 'COMMON_NAME') return false
+            if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
+            return true
+          })
         if (visibleEls.length === 0) return null
         return (
           <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
