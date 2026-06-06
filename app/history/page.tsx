@@ -7,37 +7,45 @@ import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
 interface Subscription {
-  id: string; status: string; client_id: string
-  crop_start_date: string | null; reference_number: string | null
+  id: string
+  status: string
+  client_id: string
+  crop_start_date: string | null
+  reference_number: string | null
+  package_name: string | null
+  crop_name: string | null
+  client_display_name: string | null
+  client_primary_colour: string | null
+  subscription_type: 'SELF' | 'ASSIGNED' | string
+  farmer_district_name: string | null
 }
-interface Branding { display_name: string; primary_colour: string }
 
 export default function HistoryPage() {
   const router = useRouter()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
-  const [brandings, setBrandings] = useState<Record<string, Branding>>({})
   const [loading, setLoading] = useState(true)
 
-  // QR share state
+  // QR + unsubscribe state
   const [qrSub, setQrSub] = useState<string | null>(null)
   const [qrUrl, setQrUrl] = useState<string | null>(null)
   const [loadingQr, setLoadingQr] = useState(false)
+  const [confirmUnsub, setConfirmUnsub] = useState<Subscription | null>(null)
+  const [unsubBusy, setUnsubBusy] = useState(false)
+
+  async function load() {
+    setLoading(true)
+    try {
+      const { data } = await api.get<Subscription[]>('/farmer/my-subscriptions')
+      setSubscriptions(data)
+    } finally { setLoading(false) }
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<Subscription[]>('/farmer/my-subscriptions').then(async r => {
-      setSubscriptions(r.data)
-      const ids = [...new Set(r.data.map(s => s.client_id))]
-      const results = await Promise.allSettled(ids.map(id =>
-        api.get<Branding>(`/client/${id}/info`).then(res => ({ id, data: res.data }))
-      ))
-      const m: Record<string, Branding> = {}
-      results.forEach(res => { if (res.status === 'fulfilled') m[res.value.id] = res.value.data })
-      setBrandings(m)
-    }).finally(() => setLoading(false))
+    load()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function shareQR(subId: string) {
+  async function openQR(subId: string) {
     setQrSub(subId)
     setLoadingQr(true)
     try {
@@ -52,19 +60,55 @@ export default function HistoryPage() {
     finally { setLoadingQr(false) }
   }
 
-  // A5 spec: ongoing = ACTIVE or WAITLISTED, completed = everything else
+  // 2026-06-06 — Web Share for the QR. Falls back to save (download)
+  // when navigator.share isn't available on the device.
+  async function shareQR() {
+    if (!qrUrl) return
+    const navAny = navigator as Navigator & { share?: (data: ShareData) => Promise<void>, canShare?: (data: ShareData) => boolean }
+    try {
+      const blob = await (await fetch(qrUrl)).blob()
+      const file = new File([blob], 'crop-record-qr.png', { type: 'image/png' })
+      const shareData: ShareData = {
+        title: 'My crop record',
+        text: 'Scan this to see my crop record on rootsTALK.in',
+        files: [file],
+      } as ShareData
+      if (navAny.share && (!navAny.canShare || navAny.canShare(shareData))) {
+        await navAny.share(shareData)
+        return
+      }
+    } catch { /* user cancelled or unsupported */ }
+    // Fallback: open the download.
+    const a = document.createElement('a')
+    a.href = qrUrl
+    a.download = 'crop-record-qr.png'
+    a.click()
+  }
+
+  async function unsubscribe(sub: Subscription) {
+    setUnsubBusy(true)
+    try {
+      await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`, {})
+      setConfirmUnsub(null)
+      load()
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string } } }
+      alert(e?.response?.data?.detail || 'Could not unsubscribe. Please try again.')
+    } finally { setUnsubBusy(false) }
+  }
+
   const ongoing = subscriptions.filter(s => ['ACTIVE', 'WAITLISTED'].includes(s.status))
   const completed = subscriptions.filter(s => !['ACTIVE', 'WAITLISTED'].includes(s.status))
+  const district = subscriptions[0]?.farmer_district_name
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Crop History" activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
         {loading ? (
-          <div className="mt-4 space-y-3">{[1, 2].map(i => <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" />)}</div>
+          <div className="mt-4 space-y-3">{[1, 2].map(i => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}</div>
         ) : subscriptions.length === 0 ? (
           <div className="text-center py-20 mt-4">
-            {/* SVG clipboard — replaces 📋 emoji */}
             <svg className="w-12 h-12 mx-auto text-[#DDD0B8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round"
                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -73,7 +117,11 @@ export default function HistoryPage() {
           </div>
         ) : (
           <div className="mt-4">
-            {/* Ongoing crops — shown FIRST per A5 spec */}
+            {district && (
+              <p className="text-[11px] text-[#7A8C7E] mb-3">
+                Showing crops registered from <strong className="text-[#6B3F1F]">{district}</strong>
+              </p>
+            )}
             {ongoing.length > 0 && (
               <section>
                 <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3">Active Subscriptions</p>
@@ -82,16 +130,15 @@ export default function HistoryPage() {
                     <SubCard
                       key={sub.id}
                       sub={sub}
-                      branding={brandings[sub.client_id]}
                       router={router}
-                      onShareQR={shareQR}
+                      onShareQR={openQR}
+                      onUnsubscribe={() => setConfirmUnsub(sub)}
                     />
                   ))}
                 </div>
               </section>
             )}
 
-            {/* Completed seasons — shown BELOW per A5 spec */}
             {completed.length > 0 && (
               <section>
                 <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6">Past Seasons</p>
@@ -100,9 +147,9 @@ export default function HistoryPage() {
                     <SubCard
                       key={sub.id}
                       sub={sub}
-                      branding={brandings[sub.client_id]}
                       router={router}
-                      onShareQR={shareQR}
+                      onShareQR={openQR}
+                      onUnsubscribe={() => setConfirmUnsub(sub)}
                     />
                   ))}
                 </div>
@@ -116,10 +163,11 @@ export default function HistoryPage() {
       {/* QR bottom sheet */}
       {qrSub && (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-black/40"
+          className="fixed inset-0 z-[60] flex items-end bg-black/40"
           onClick={() => { setQrSub(null); setQrUrl(null) }}>
           <div
-            className="bg-white rounded-t-2xl w-full pb-10 pt-5"
+            className="bg-white rounded-t-2xl w-full pt-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
             <div className="w-10 h-1 bg-stone-200 rounded-full mx-auto mb-5" />
             <p className="text-center font-semibold text-[#6B3F1F] mb-4">Crop Record QR</p>
@@ -133,15 +181,46 @@ export default function HistoryPage() {
                 <p className="text-[#7A8C7E] text-xs text-center max-w-xs px-4">
                   Anyone can scan this to see your crop record — no app needed.
                 </p>
-                <a
-                  href={qrUrl}
-                  download="crop-record-qr.png"
-                  className="px-6 py-3 rounded-2xl text-white text-sm font-medium"
-                  style={{ background: '#3A7D44' }}>
-                  Save QR image
-                </a>
+                <div className="flex gap-2 px-4 w-full max-w-sm">
+                  <button onClick={shareQR}
+                    className="flex-1 py-3 rounded-2xl text-white text-sm font-medium"
+                    style={{ background: '#3A7D44' }}>
+                    ↗ Share
+                  </button>
+                  <a href={qrUrl} download="crop-record-qr.png"
+                    className="flex-1 py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium text-center">
+                    💾 Save
+                  </a>
+                </div>
               </div>
             ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Unsubscribe confirm */}
+      {confirmUnsub && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => !unsubBusy && setConfirmUnsub(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Unsubscribe?</p>
+            <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
+              You&apos;ll stop receiving advisory for{' '}
+              <strong className="text-[#6B3F1F]">{confirmUnsub.crop_name || confirmUnsub.package_name || 'this crop'}</strong>{' '}
+              from <strong className="text-[#6B3F1F]">{confirmUnsub.client_display_name}</strong>.
+              Past records stay accessible. You can re-subscribe later if you change your mind.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmUnsub(null)} disabled={unsubBusy}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={() => unsubscribe(confirmUnsub)} disabled={unsubBusy}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {unsubBusy ? '…' : 'Yes, unsubscribe'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -150,53 +229,59 @@ export default function HistoryPage() {
 }
 
 function SubCard({
-  sub, branding, router, onShareQR,
+  sub, router, onShareQR, onUnsubscribe,
 }: {
   sub: Subscription
-  branding?: Branding
   router: ReturnType<typeof useRouter>
   onShareQR: (id: string) => void
+  onUnsubscribe: () => void
 }) {
-  const colour = branding?.primary_colour || '#3A7D44'
+  const colour = sub.client_primary_colour || '#3A7D44'
+  // 2026-06-06 — Only SELF-subscribed packages can be self-unsubscribed.
+  // Promoter-assigned ones must be cancelled by the company.
+  const canUnsubscribe = sub.subscription_type === 'SELF' &&
+    ['ACTIVE', 'WAITLISTED'].includes(sub.status)
   return (
-    <div className="w-full bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden text-left">
-      <button
-        onClick={() => router.push(`/crop-detail/${sub.id}`)}
-        className="w-full active:scale-98 transition-transform">
-        <div className="px-4 py-2 flex items-center justify-between" style={{ background: colour + '18' }}>
-          <p className="text-xs font-semibold" style={{ color: colour }}>{branding?.display_name || 'Company'}</p>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sub.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : sub.status === 'WAITLISTED' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-            {sub.status}
-          </span>
-        </div>
-        <div className="px-4 pt-3 flex items-center justify-between">
-          <div>
-            {sub.reference_number && <p className="text-xs font-mono text-[#7A8C7E]">{sub.reference_number}</p>}
-            <p className="text-xs text-[#7A8C7E] mt-0.5">
-              {sub.crop_start_date
-                ? `Started ${new Date(sub.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
-                : 'Start date not set'}
-            </p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <button onClick={e => { e.stopPropagation(); router.push(`/missed-items/${sub.id}`) }}
-              className="text-xs text-amber-600 border border-amber-200 rounded-lg px-2 py-1">
-              Missed
-            </button>
-            <span className="text-[#DDD0B8] text-lg">›</span>
-          </div>
-        </div>
-      </button>
-      {/* Share crop record button */}
-      <div className="px-4 pb-3">
-        <button
-          onClick={() => onShareQR(sub.id)}
-          className="text-xs font-medium px-3 py-1.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] mt-3 flex items-center gap-1.5">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <div className="w-full bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+      <div className="px-4 py-2 flex items-center justify-between" style={{ background: colour + '18' }}>
+        <p className="text-xs font-semibold" style={{ color: colour }}>{sub.client_display_name || 'Company'}</p>
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${sub.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : sub.status === 'WAITLISTED' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
+          {sub.status}
+        </span>
+      </div>
+      <div className="px-4 pt-3">
+        <p className="text-base font-bold text-[#6B3F1F]">
+          {sub.crop_name || sub.package_name || 'Crop'}
+        </p>
+        {sub.reference_number && (
+          <p className="text-[11px] font-mono text-[#7A8C7E] mt-0.5">{sub.reference_number}</p>
+        )}
+        <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+          {sub.crop_start_date
+            ? `Started ${new Date(sub.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+            : 'Start date not set'}
+        </p>
+      </div>
+      <div className="px-4 pt-3 pb-3 flex gap-2 flex-wrap">
+        <button onClick={() => onShareQR(sub.id)}
+          className="text-[11px] font-medium px-3 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] flex items-center gap-1.5">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
           </svg>
-          Share crop record
+          Share crop QR
         </button>
+        {/* 2026-06-06 — "Missed" pill rephrased so the farmer reads
+            what it does (advisory days they didn't act on). */}
+        <button onClick={() => router.push(`/missed-items/${sub.id}`)}
+          className="text-[11px] font-medium px-3 py-1.5 rounded-lg border border-amber-200 text-amber-700 bg-amber-50">
+          📋 Missed advisories
+        </button>
+        {canUnsubscribe && (
+          <button onClick={onUnsubscribe}
+            className="text-[11px] font-medium px-3 py-1.5 rounded-lg border border-red-200 text-[#D4682E] bg-red-50 ml-auto">
+            ✗ Unsubscribe
+          </button>
+        )}
       </div>
     </div>
   )
