@@ -59,6 +59,11 @@ type SubOrder = {
   recipient_phone?: string | null
   recipient_shop_name?: string | null
   recipient_role?: 'DEALER' | 'FACILITATOR' | null
+  // 2026-06-06 — When a facilitator owns the order, returned items
+  // stay with the facilitator (not the farmer). Drives the
+  // returned-items strip suppression on this tab — see the
+  // `returnedN > 0` block below.
+  facilitator_user_id?: string | null
 }
 
 type DBSPreview = {
@@ -669,8 +674,14 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                 2026-06-03 — Hidden while there are still items
                 awaiting the farmer's approval. Per user: returned
                 actions depend on the approval decision and must
-                wait until the approval task is complete. */}
-            {!cancelled && returnedN > 0 && awaitingN === 0 && (
+                wait until the approval task is complete.
+                2026-06-06 — Hidden also when a facilitator owns the
+                order. Per spec: returned items stay with the
+                facilitator's queue (facilitator either re-forwards to
+                another dealer or hands back to the farmer). The
+                farmer would otherwise see a CTA they can't act on
+                meaningfully. Surfaced instead as a status note. */}
+            {!cancelled && returnedN > 0 && awaitingN === 0 && !o.facilitator_user_id && (
               <div className="border-t border-[#F0E5D0] bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
                 <p className="text-xs text-amber-800">
                   {returnedN} returned item{returnedN === 1 ? '' : 's'}
@@ -679,6 +690,13 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                   className="text-xs font-semibold text-amber-800 underline disabled:opacity-50">
                   {busy === o.id ? '…' : 'Send to another dealer'}
                 </button>
+              </div>
+            )}
+            {!cancelled && returnedN > 0 && awaitingN === 0 && o.facilitator_user_id && (
+              <div className="border-t border-[#F0E5D0] bg-amber-50/60 px-4 py-3">
+                <p className="text-xs text-amber-800">
+                  {returnedN} returned item{returnedN === 1 ? '' : 's'} · your facilitator is handling
+                </p>
               </div>
             )}
 
