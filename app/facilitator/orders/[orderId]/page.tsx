@@ -39,7 +39,6 @@ export default function FacilitatorOrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [forwarding, setForwarding] = useState(false)
   const [returning, setReturning] = useState(false)
-  const [confirming, setConfirming] = useState(false)
   const [showDealerSelect, setShowDealerSelect] = useState(false)
   const [loadingDealers, setLoadingDealers] = useState(false)
   const [packingList, setPackingList] = useState<PackingList | null>(null)
@@ -83,11 +82,22 @@ export default function FacilitatorOrderDetailPage() {
   }
 
   async function returnToFarmer() {
-    if (!confirm('Return unresourceable items to the farmer?')) return
+    if (!confirm("Hand the returned items back to the farmer? You won't see this order again — the farmer picks a new dealer / facilitator from here.")) return
     setReturning(true)
     try {
-      await api.put(`/facilitator/orders/${orderId}/return-to-farmer`, {})
-      load()
+      // 2026-06-06 — Backend now cancel-and-migrates: the returned
+      // items move to a fresh DRAFT on the farmer's Manage tab. The
+      // facilitator's view of this order drops out of the "Returned"
+      // pill once we reload.
+      await api.put<{ new_draft_order_id?: string }>(`/facilitator/orders/${orderId}/return-to-farmer`, {})
+      router.push('/facilitator/orders')
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: { message?: string } | string } } }
+      const detail = e?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string } | undefined)?.message
+      alert(msg || 'Could not return to farmer. Please try again.')
     } finally { setReturning(false) }
   }
 
@@ -104,13 +114,11 @@ export default function FacilitatorOrderDetailPage() {
     setPackingShared(true)
   }
 
-  async function confirmDelivery() {
-    setConfirming(true)
-    try {
-      await api.put(`/facilitator/orders/${orderId}/confirm-delivery`, {})
-      load()
-    } finally { setConfirming(false) }
-  }
+  // 2026-06-06 — confirm-delivery retired. The order auto-completes
+  // when the farmer marks received (mark-received stamps
+  // farmer_received_at; backend's _update_order_status flips
+  // COMPLETED on the next read). Keeping the function as a no-op
+  // would mask the intent; removed.
 
   if (loading || !order) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -202,22 +210,19 @@ export default function FacilitatorOrderDetailPage() {
               </div>
             </div>
 
-            {/* Packing + delivery actions */}
+            {/* Packing + delivery actions.
+                2026-06-06 — Delivery completion is no longer a
+                facilitator button. The order auto-completes when the
+                farmer marks received from their side; the
+                facilitator's job ends at picking up + handing over.
+                The pickup banner (top of page) handles the pickup
+                action. */}
             {!isCompleted && (
-              <div className="space-y-2">
-                <button onClick={openPacking}
-                  className="w-full py-3.5 rounded-2xl border-2 font-semibold text-sm"
-                  style={{ borderColor: COLOUR, color: COLOUR }}>
-                  View Delivery List
-                </button>
-                {packingShared && (
-                  <button onClick={confirmDelivery} disabled={confirming}
-                    className="w-full py-3.5 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-                    style={{ background: COLOUR }}>
-                    {confirming ? 'Confirming…' : '✓ Done — Delivery Complete'}
-                  </button>
-                )}
-              </div>
+              <button onClick={openPacking}
+                className="w-full py-3.5 rounded-2xl border-2 font-semibold text-sm"
+                style={{ borderColor: COLOUR, color: COLOUR }}>
+                View Delivery List
+              </button>
             )}
           </div>
         )}

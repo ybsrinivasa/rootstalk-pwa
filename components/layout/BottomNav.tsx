@@ -31,8 +31,10 @@ const TABS: Record<Role, { href: string; label: string; Icon: React.ComponentTyp
     { href: '/profile',                 label: 'Profile',  Icon: ProfileIcon },
   ],
   FACILITATOR: [
-    { href: '/facilitator/orders', label: 'Orders',  Icon: BoxIcon },
-    { href: '/profile',            label: 'Profile', Icon: ProfileIcon },
+    { href: '/facilitator/orders',           label: 'Orders',   Icon: BoxIcon },
+    { href: '/facilitator/payments',         label: 'Payments', Icon: PaymentIcon },
+    { href: '/facilitator/alerts-incoming',  label: 'Alerts',   Icon: BellIcon },
+    { href: '/profile',                      label: 'Profile',  Icon: ProfileIcon },
   ],
   FARM_PUNDIT: [
     { href: '/pundit/home',    label: 'Dashboard', Icon: HomeIcon },

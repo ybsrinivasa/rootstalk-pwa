@@ -16,6 +16,8 @@ export default function FacilitatorHomePage() {
   const [pendingCount, setPendingCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
   const [promotedCount, setPromotedCount] = useState(0)
+  // 2026-06-06 — Alerts shared across Promoter/Facilitator/Dealer.
+  const [alertCount, setAlertCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
@@ -42,6 +44,9 @@ export default function FacilitatorHomePage() {
       }).catch(() => {}),
       api.get('/facilitator/promoted-farmers').then(r => {
         setPromotedCount((r.data as unknown[]).length)
+      }).catch(() => {}),
+      api.get('/promoter/me/incoming-alerts').then(r => {
+        setAlertCount((r.data as unknown[]).length)
       }).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
@@ -98,7 +103,7 @@ export default function FacilitatorHomePage() {
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">💳</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Payments</p>
-            <p className="text-xs text-[#7A8C7E]">Farmer subscriptions</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${paymentCount} pending`}</p>
           </button>
           <button onClick={() => router.push('/facilitator/profile')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
@@ -112,7 +117,7 @@ export default function FacilitatorHomePage() {
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🔔</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Alerts I receive</p>
-            <p className="text-xs text-[#7A8C7E]">Farmer-added + auto</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${alertCount} unread`}</p>
           </button>
         </div>
       </div>

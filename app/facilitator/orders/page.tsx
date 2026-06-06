@@ -28,6 +28,58 @@ interface Order {
   dealer_name?: string | null
   dealer_phone?: string | null
   dealer_shop_name?: string | null
+  packing_code?: string | null
+  packing_picked_up_at?: string | null
+  packing_farmer_received_at?: string | null
+}
+
+// 2026-06-06 — Action pills on facilitator feed mirror the dealer
+// pattern: each pill answers "what do I need to do?". An order can
+// appear in multiple pills (returned items waiting AND items
+// awaiting farmer approval, etc.).
+type Pill = 'pending' | 'routed' | 'returned' | 'farmer' | 'pickup' | 'completed'
+
+const PILL_LABEL: Record<Pill, string> = {
+  pending: 'Pending',
+  routed: 'Routed',
+  returned: 'Returned',
+  farmer: 'With Farmer',
+  pickup: 'Pickup',
+  completed: 'Completed',
+}
+
+function belongsTo(o: Order, pill: Pill): boolean {
+  const c = o.item_status_counts
+  const cancelled = o.status === 'CANCELLED'
+  const returnedN = c?.not_available ?? 0
+  const awaitingN = c?.sent_for_approval ?? 0
+  const approvedN = c?.approved ?? 0
+  switch (pill) {
+    case 'pending':
+      // Fresh order — facilitator hasn't accepted yet.
+      return o.status === 'SENT' && !o.dealer_user_id
+    case 'routed':
+      // Dealer assigned, no returned/approval/pickup work outstanding
+      // — order is being processed by the dealer.
+      return (
+        !cancelled && !!o.dealer_user_id &&
+        returnedN === 0 && awaitingN === 0 && approvedN === 0
+      )
+    case 'returned':
+      return !cancelled && returnedN > 0
+    case 'farmer':
+      return !cancelled && awaitingN > 0
+    case 'pickup':
+      // Approved items the facilitator hasn't picked up + handed off
+      // yet (farmer hasn't confirmed receipt).
+      return !cancelled && approvedN > 0 && !o.packing_farmer_received_at
+    case 'completed':
+      return (
+        cancelled ||
+        o.status === 'COMPLETED' ||
+        !!o.packing_farmer_received_at
+      )
+  }
 }
 
 interface NearbyDealer {
@@ -52,7 +104,7 @@ export default function FacilitatorOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
-  const [tab, setTab] = useState<'pending' | 'done'>('pending')
+  const [pill, setPill] = useState<Pill>('pending')
 
   const load = () =>
     api.get<Order[]>('/facilitator/orders')
@@ -123,33 +175,54 @@ export default function FacilitatorOrdersPage() {
     } finally { setRerouting(false) }
   }
 
-  const pending = orders.filter(o => !['COMPLETED', 'CANCELLED'].includes(o.status))
-  const done = orders.filter(o => ['COMPLETED', 'CANCELLED'].includes(o.status))
+  // 2026-06-06 — Pill counts and visible list. Same pattern as the
+  // dealer feed: an order can belong to multiple pills (returned +
+  // farmer + pickup are independent attention states).
+  const counts: Record<Pill, number> = {
+    pending: 0, routed: 0, returned: 0, farmer: 0, pickup: 0, completed: 0,
+  }
+  for (const o of orders) {
+    for (const p of Object.keys(counts) as Pill[]) {
+      if (belongsTo(o, p)) counts[p] += 1
+    }
+  }
+  const visible = orders.filter(o => belongsTo(o, pill))
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Acting as Facilitator" activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-20">
-        <div className="flex bg-white border-b border-[#DDD0B8]">
-          {(['pending', 'done'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t
-                ? 'border-[#7D4E00] text-[#7D4E00]' : 'border-transparent text-[#7A8C7E]'}`}>
-              {t === 'pending' ? `Active (${pending.length})` : 'Done'}
-            </button>
-          ))}
+
+        {/* Pill row */}
+        <div className="px-4 pt-3 overflow-x-auto">
+          <div className="flex gap-2 min-w-max">
+            {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
+              const active = pill === p
+              const n = counts[p]
+              return (
+                <button key={p} onClick={() => setPill(p)}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
+                    active
+                      ? 'bg-[#7D4E00] text-white border-[#7D4E00]'
+                      : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
+                  }`}>
+                  {PILL_LABEL[p]} · {n}
+                </button>
+              )
+            })}
+          </div>
         </div>
 
         <div className="px-4 mt-4 space-y-3 max-w-lg mx-auto">
           {loading ? (
             <div className="h-24 bg-white rounded-2xl animate-pulse" />
-          ) : (tab === 'pending' ? pending : done).length === 0 ? (
+          ) : visible.length === 0 ? (
             <div className="text-center py-20">
               <span className="text-4xl">🌾</span>
-              <p className="text-[#7A8C7E] text-sm mt-3">No orders here</p>
+              <p className="text-[#7A8C7E] text-sm mt-3">Nothing under {PILL_LABEL[pill]}</p>
             </div>
           ) : (
-            (tab === 'pending' ? pending : done).map(order => {
+            visible.map(order => {
               const counts = order.item_status_counts
               const returnedN = counts?.not_available ?? 0
               const awaitingN = counts?.sent_for_approval ?? 0
