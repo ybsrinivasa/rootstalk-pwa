@@ -123,11 +123,17 @@ export default function FarmerOrderDetailPage() {
   // POST with include_postponed=true (cancel + bundle) or without
   // (leave postpones, send only the already-returned items).
   const [rerouteNudge, setRerouteNudge] = useState(false)
+  // 2026-06-06 — When the picker is opened for a reroute (vs. for a
+  // DRAFT order's initial send), this holds the include_postponed
+  // choice from the nudge. The pick handler reads it to know whether
+  // to POST /reroute-returned BEFORE the /send call.
+  // Backing out of the picker clears this — nothing happens server-
+  // side, items stay in their original state, the CTA stays available.
+  const [rerouteIncludePostponed, setRerouteIncludePostponed] =
+    useState<boolean | null>(null)
 
   async function startReroute() {
     if (!order) return
-    // If postponed items exist on this order, show the nudge sheet;
-    // otherwise go straight to the confirm-and-send path.
     if ((order.postponed_items?.length ?? 0) > 0) {
       setRerouteNudge(true)
       return
@@ -138,21 +144,14 @@ export default function FarmerOrderDetailPage() {
   async function doReroute(includePostponed: boolean) {
     if (!order) return
     setRerouteNudge(false)
-    try {
-      const { data } = await api.post<{ new_draft_order_id: string; rerouted_count: number }>(
-        `/farmer/orders/${order.id}/reroute-returned`,
-        { include_postponed: includePostponed },
-      )
-      router.replace(`/orders/${data.new_draft_order_id}`)
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { detail?: { code?: string; message?: string } } } }
-      const detail = e?.response?.data?.detail
-      if (detail && typeof detail === 'object' && detail.message) {
-        alert(detail.message)
-      } else {
-        alert('Could not re-route the items. Please try again.')
-      }
-    }
+    // 2026-06-06 — Don't POST /reroute-returned yet. Open the picker
+    // first; the actual reroute + send chain runs only when the user
+    // picks a recipient. Earlier flow created the DRAFT immediately
+    // and navigated away — if the user backed out, the original's
+    // returned items had already moved to REROUTED on the husk and
+    // the entire CTA disappeared on the original review.
+    setRerouteIncludePostponed(includePostponed)
+    await openPicker()
   }
 
   async function openPicker() {
@@ -179,14 +178,36 @@ export default function FarmerOrderDetailPage() {
     } finally { setPickerLoading(false) }
   }
 
+  function closePicker() {
+    setPickerOpen(false)
+    // Clear reroute context so the next picker open is treated as
+    // a normal DRAFT recipient pick.
+    setRerouteIncludePostponed(null)
+  }
+
   async function sendToRecipient(r: Recipient, isDealer: boolean) {
     setSending(r.user_id)
     try {
       const payload = isDealer
         ? { dealer_user_id: r.user_id }
         : { facilitator_user_id: r.user_id }
+      // 2026-06-06 — Reroute mode: create the DRAFT and send it in
+      // one atomic-from-user-POV step. If anything fails, the user
+      // can retry; if they back out before picking, nothing happens.
+      if (rerouteIncludePostponed !== null && order) {
+        const { data } = await api.post<{ new_draft_order_id: string }>(
+          `/farmer/orders/${order.id}/reroute-returned`,
+          { include_postponed: rerouteIncludePostponed },
+        )
+        await api.put(`/farmer/orders/${data.new_draft_order_id}/send`, payload)
+        closePicker()
+        router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage`)
+        return
+      }
+      // DRAFT-recipient mode (the original flow for orders that arrive
+      // as DRAFT, e.g. dealer-declined husks).
       await api.put(`/farmer/orders/${orderId}/send`, payload)
-      setPickerOpen(false)
+      closePicker()
       load()  // refresh — status flips DRAFT → SENT
     } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } } } }
@@ -564,12 +585,12 @@ export default function FarmerOrderDetailPage() {
           The same nearby-* endpoints `/order/new` uses so ranking
           (Promoter pinned, then by distance) stays consistent. */}
       {pickerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => !sending && setPickerOpen(false)}>
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => !sending && closePicker()}>
           <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}
-            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+            style={{ paddingBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-semibold text-[#6B3F1F]">Send to</p>
-              <button onClick={() => !sending && setPickerOpen(false)} className="text-[#7A8C7E] text-xl">×</button>
+              <p className="font-semibold text-[#6B3F1F]">{rerouteIncludePostponed !== null ? 'Forward to' : 'Send to'}</p>
+              <button onClick={() => !sending && closePicker()} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             {lockedBrandExplainer && (
               <div className="mx-4 mt-3 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed">

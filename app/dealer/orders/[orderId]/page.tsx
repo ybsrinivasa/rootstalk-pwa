@@ -362,6 +362,24 @@ export default function DealerOrderDetailPage() {
     } finally { setAccepting(false) }
   }
 
+  // 2026-06-06 — Decline a fresh SENT order. Backend mirrors farmer
+  // cancel-with-migrate: original goes CANCELLED, items duplicate to
+  // a new DRAFT carrying lineage_root_id so the farmer can pick a
+  // new dealer.
+  const [showDeclineConfirm, setShowDeclineConfirm] = useState(false)
+  const [declining, setDeclining] = useState(false)
+  async function declineOrder() {
+    setDeclining(true)
+    try {
+      await api.put(`/dealer/orders/${orderId}/decline`, {})
+      router.replace('/dealer/orders')
+    } catch { alert('Could not decline. Please try again.') }
+    finally {
+      setDeclining(false)
+      setShowDeclineConfirm(false)
+    }
+  }
+
   async function openItemForm(item: OrderItem) {
     setEditingItem(item.id)
     setEstimate(null)
@@ -1466,12 +1484,29 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
-        {/* Accept CTA */}
+        {/* 2026-06-06 — Accept + Decline CTAs. Item details are
+            hidden until acceptance (the next blocks render only when
+            order.status !== 'SENT'), so the dealer makes their
+            accept/decline call WITHOUT seeing what's inside. */}
         {!focusItemId && order.status === 'SENT' && (
-          <button onClick={acceptOrder} disabled={accepting}
-            className="w-full py-4 rounded-2xl bg-[#085041] text-white font-semibold text-sm disabled:opacity-50">
-            {accepting ? 'Accepting…' : 'Accept Order & Start Processing'}
-          </button>
+          <>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
+              <p className="font-semibold mb-1">New order — your call</p>
+              <p className="text-xs">
+                Accept this order to see the items and start processing.
+                Decline to send it back to the farmer so they can pick
+                another dealer or facilitator.
+              </p>
+            </div>
+            <button onClick={acceptOrder} disabled={accepting || declining}
+              className="w-full py-4 rounded-2xl bg-[#085041] text-white font-semibold text-sm disabled:opacity-50">
+              {accepting ? 'Accepting…' : '✓ Accept order'}
+            </button>
+            <button onClick={() => setShowDeclineConfirm(true)} disabled={accepting || declining}
+              className="w-full py-3 rounded-2xl border-2 border-red-200 text-[#D4682E] font-semibold text-sm disabled:opacity-50">
+              ✗ Decline order
+            </button>
+          </>
         )}
 
         {/* Relations (Build C) */}
@@ -1481,7 +1516,7 @@ export default function DealerOrderDetailPage() {
             entirely; if the focus item is standalone it still shows
             under "Standalone items"; if it's part of a relation we
             render only its relation. */}
-        {!focusItemId && relations.length > 0 && (
+        {!focusItemId && order.status !== 'SENT' && relations.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#6B3F1F] px-1">
               Multi-step recommendations ({relations.length})
@@ -1490,8 +1525,11 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
-        {/* Standalone items */}
+        {/* Standalone items — hidden when order.status === 'SENT'
+            (pre-accept) so the dealer makes their accept/decline call
+            blind. */}
         {(() => {
+          if (order.status === 'SENT' && !focusItemId) return null
           const visible = focusItemId
             ? standaloneItems.filter(i => i.id === focusItemId)
             : standaloneItems
@@ -1795,6 +1833,33 @@ export default function DealerOrderDetailPage() {
               <button onClick={submitForApproval} disabled={submitting}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
                 {submitting ? 'Sending…' : 'Confirm & send'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2026-06-06 — Decline order confirmation. The dealer hasn't
+          seen items (they're hidden pre-accept), so the copy keeps
+          it generic — "this order goes back to the farmer." */}
+      {showDeclineConfirm && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => !declining && setShowDeclineConfirm(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Decline this order?</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              The order goes back to the farmer as a fresh draft. They&apos;ll
+              pick another dealer or facilitator. You won&apos;t see it again.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setShowDeclineConfirm(false)} disabled={declining}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={declineOrder} disabled={declining}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {declining ? '…' : 'Yes, decline'}
               </button>
             </div>
           </div>
