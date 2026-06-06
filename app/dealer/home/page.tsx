@@ -17,6 +17,11 @@ export default function DealerHomePage() {
   const [postponedCount, setPostponedCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
   const [promotedCount, setPromotedCount] = useState(0)
+  // 2026-06-06 — Per-tile counts so the dashboard surfaces a live
+  // signal at a glance, not just a static "what's in here" label.
+  const [seedPendingCount, setSeedPendingCount] = useState(0)
+  const [dealershipCount, setDealershipCount] = useState(0)
+  const [alertCount, setAlertCount] = useState(0)
   const [onboardingClientCount, setOnboardingClientCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
@@ -61,9 +66,11 @@ export default function DealerHomePage() {
           setBoth()
         }).catch(() => {}),
         api.get('/dealer/seed-orders').then(r => {
-          seedPending = (r.data as { status: string }[]).filter(o =>
+          const sps = (r.data as { status: string }[]).filter(o =>
             !SEED_TERMINAL.includes(o.status)
           ).length
+          seedPending = sps
+          setSeedPendingCount(sps)
           setBoth()
         }).catch(() => {}),
         api.get('/dealer/postponed-items').then(r => {
@@ -74,6 +81,16 @@ export default function DealerHomePage() {
         }).catch(() => {}),
         api.get('/dealer/promoted-farmers').then(r => {
           setPromotedCount((r.data as unknown[]).length)
+        }).catch(() => {}),
+        // 2026-06-06 — Dealerships: no category param → all rows.
+        // Alerts: promoter incoming-alerts is shared across the
+        // Promoter / Facilitator / Dealer dashboards (see
+        // project_rootstalk_promoter_alerts).
+        api.get('/dealer/dealerships').then(r => {
+          setDealershipCount((r.data as unknown[]).length)
+        }).catch(() => {}),
+        api.get('/promoter/me/incoming-alerts').then(r => {
+          setAlertCount((r.data as unknown[]).length)
         }).catch(() => {}),
       ]).finally(() => setLoading(false))
     }).catch(() => setLoading(false))
@@ -173,6 +190,9 @@ export default function DealerHomePage() {
         )}
 
         {/* Quick actions grid */}
+        {/* 2026-06-06 — Every tile now surfaces a live count so the
+            dashboard is a signal, not just a menu. Loading shows '…';
+            zero shows '0' (intentional — empty is meaningful). */}
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => router.push('/dealer/promoted-farmers')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
@@ -184,19 +204,19 @@ export default function DealerHomePage() {
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🏭</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">My Dealerships</p>
-            <p className="text-xs text-[#7A8C7E]">Manufacturer brands</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${dealershipCount} manufacturer${dealershipCount === 1 ? '' : 's'}`}</p>
           </button>
           <button onClick={() => router.push('/dealer/payments')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">💳</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Payments</p>
-            <p className="text-xs text-[#7A8C7E]">Farmer subscriptions</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${paymentCount} pending`}</p>
           </button>
           <button onClick={() => router.push('/dealer/seed-orders')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🌱</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Seed Orders</p>
-            <p className="text-xs text-[#7A8C7E]">Seed and seedling</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${seedPendingCount} active`}</p>
           </button>
           <button onClick={() => router.push('/dealer/profile')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
@@ -210,7 +230,7 @@ export default function DealerHomePage() {
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🔔</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Alerts I receive</p>
-            <p className="text-xs text-[#7A8C7E]">Farmer-added + auto</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${alertCount} unread`}</p>
           </button>
         </div>
       </div>
