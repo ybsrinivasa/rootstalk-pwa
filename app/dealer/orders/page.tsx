@@ -39,7 +39,11 @@ interface Order {
   farmer_name: string | null
   farmer_phone: string | null
   farmer_photo_url: string | null
+  farmer_gps_lat: number | null
+  farmer_gps_lng: number | null
   facilitator_user_id: string | null
+  facilitator_name: string | null
+  facilitator_phone: string | null
   client_id: string
   client_name: string | null
   category: string | null
@@ -48,6 +52,7 @@ interface Order {
   created_at: string
   item_status_counts: ItemStatusCounts
   packing_items: PackingItem[]
+  packing_code: string | null
   packing_list_shared_at: string | null
   packing_list_removed_at: string | null
 }
@@ -121,6 +126,9 @@ function DealerOrdersInner() {
   // Local state for share/remove busy spinners + the confirm-remove
   // sheet payload.
   const [confirmRemove, setConfirmRemove] = useState<Order | null>(null)
+  // 2026-06-06 — Re-share confirmation. First share is friction-free;
+  // subsequent shares show a warning about duplicate-delivery risk.
+  const [confirmReshare, setConfirmReshare] = useState<Order | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
   async function load() {
@@ -150,42 +158,74 @@ function DealerOrdersInner() {
 
   const visible = orders.filter(o => belongsTo(o, pill))
 
+  function buildShareText(o: Order): string {
+    // Structured for legibility on WhatsApp / SMS.
+    const orderDate = new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    const lines: string[] = []
+    lines.push('*Packing List*')
+    if (o.packing_code) lines.push(`Packing ID: *${o.packing_code}*`)
+    lines.push(`Order date: ${orderDate}`)
+    lines.push('')
+    lines.push(`Farmer: ${o.farmer_name || 'Unknown'}`)
+    if (o.farmer_phone) lines.push(`Farmer phone: ${o.farmer_phone}`)
+    if (o.farmer_gps_lat != null && o.farmer_gps_lng != null) {
+      lines.push(`Location: https://maps.google.com/?q=${o.farmer_gps_lat},${o.farmer_gps_lng}`)
+    }
+    if (o.facilitator_name || o.facilitator_phone) {
+      lines.push('')
+      lines.push(`Facilitator: ${o.facilitator_name || ''}`.trim())
+      if (o.facilitator_phone) lines.push(`Facilitator phone: ${o.facilitator_phone}`)
+    }
+    if (o.client_name) {
+      lines.push('')
+      lines.push(`Company: ${o.client_name}`)
+    }
+    lines.push('')
+    lines.push('Items:')
+    let total = 0
+    for (const it of o.packing_items) {
+      const qty = it.given_volume != null ? ` · ${it.given_volume} ${it.volume_unit || ''}`.trim() : ''
+      const price = it.price != null ? ` · ₹${it.price}` : ''
+      const mfr = it.manufacturer_name ? ` (${it.manufacturer_name})` : ''
+      lines.push(`• ${it.brand_name || 'Item'}${mfr}${qty}${price}`)
+      if (it.price) total += it.price
+    }
+    lines.push('')
+    lines.push(`*Total: ₹${total.toLocaleString('en-IN')}*`)
+    return lines.join('\n')
+  }
+
   async function shareOrder(o: Order) {
     setBusy(o.id)
+    setConfirmReshare(null)
     try {
-      // Build a clean text summary suitable for SMS/WhatsApp.
-      // PDF generation is a follow-up — text covers the demo path.
-      const lines: string[] = []
-      lines.push(`Packing list — ${o.farmer_name || 'Farmer'}`)
-      if (o.client_name) lines.push(o.client_name)
-      lines.push('')
-      let total = 0
-      for (const it of o.packing_items) {
-        const qty = it.given_volume != null ? ` · ${it.given_volume} ${it.volume_unit || ''}`.trim() : ''
-        const price = it.price != null ? ` · ₹${it.price}` : ''
-        const mfr = it.manufacturer_name ? ` (${it.manufacturer_name})` : ''
-        lines.push(`• ${it.brand_name || 'Item'}${mfr}${qty}${price}`)
-        if (it.price) total += it.price
-      }
-      lines.push('')
-      lines.push(`Total: ₹${total.toLocaleString('en-IN')}`)
-      const text = lines.join('\n')
-
+      const text = buildShareText(o)
       const navigatorAny = navigator as Navigator & { share?: (data: ShareData) => Promise<void> }
       if (navigatorAny.share) {
         try {
           await navigatorAny.share({ title: 'Packing list', text })
         } catch { /* user cancelled */ }
       } else {
-        // Fallback: copy to clipboard.
         await navigator.clipboard?.writeText(text)
         alert('Copied to clipboard — paste into your messenger.')
       }
       // Mark as shared on the backend regardless of whether the share
       // sheet was completed — the dealer initiated the share intent.
+      // Backend lazy-creates the PackingList row and generates the
+      // packing_code on first call.
       await api.put(`/dealer/orders/${o.id}/packing-list/mark-shared`, {})
       await load()
     } finally { setBusy(null) }
+  }
+
+  function onSharePressed(o: Order) {
+    // First share is friction-free; subsequent shares warn about
+    // duplicate-delivery risk per user direction 2026-06-06.
+    if (o.packing_list_shared_at) {
+      setConfirmReshare(o)
+      return
+    }
+    void shareOrder(o)
   }
 
   async function removeOrder(o: Order) {
@@ -236,7 +276,7 @@ function DealerOrdersInner() {
             visible.map(order => {
               if (pill === 'packing') {
                 return <PackingCard key={order.id} order={order}
-                  onShare={() => shareOrder(order)}
+                  onShare={() => onSharePressed(order)}
                   onRemove={() => setConfirmRemove(order)}
                   busy={busy === order.id} />
               }
@@ -288,6 +328,39 @@ function DealerOrdersInner() {
           )}
         </div>
       </div>
+
+      {/* Re-share warning sheet */}
+      {confirmReshare && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmReshare(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Share again?</p>
+            <p className="text-xs text-amber-700 mt-2">
+              This packing list was already shared
+              {confirmReshare.packing_list_shared_at && (
+                <span>
+                  {' at '}
+                  <strong>
+                    {new Date(confirmReshare.packing_list_shared_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    {' on '}
+                    {new Date(confirmReshare.packing_list_shared_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                  </strong>
+                </span>
+              )}. Re-sharing could lead to duplicate deliveries — only do this
+              if the first share didn&apos;t reach the recipient.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmReshare(null)}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
+                Cancel
+              </button>
+              <button onClick={() => shareOrder(confirmReshare)} disabled={busy === confirmReshare.id}
+                className="flex-1 bg-amber-600 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {busy === confirmReshare.id ? '…' : 'Yes, share again'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Remove-confirm sheet */}
       {confirmRemove && (
@@ -359,11 +432,23 @@ function PackingCard({
 }) {
   const shared = !!order.packing_list_shared_at
   const total = order.packing_items.reduce((s, i) => s + (i.price || 0), 0)
+  const sharedAt = order.packing_list_shared_at
+    ? new Date(order.packing_list_shared_at)
+    : null
   return (
     <div className="bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden">
+      {/* Packing ID strip — paper-friendly cross-surface identifier
+          so the dealer, farmer, and facilitator all reference the
+          same batch. Big mono so the dealer can read it aloud. */}
+      {order.packing_code && (
+        <div className="px-4 py-2 bg-emerald-600 text-white flex items-baseline justify-between">
+          <p className="text-[10px] uppercase tracking-wider opacity-75">Packing ID</p>
+          <p className="text-base font-bold font-mono tracking-widest">{order.packing_code}</p>
+        </div>
+      )}
       <div className="p-4 bg-emerald-50/40 border-b border-emerald-100">
         <OrderHeaderRow order={order} />
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
           {order.farmer_phone && (
             <a href={`tel:${order.farmer_phone}`}
               onClick={e => e.stopPropagation()}
@@ -371,12 +456,24 @@ function PackingCard({
               📞 Farmer
             </a>
           )}
-          {order.facilitator_user_id && (
+          {order.facilitator_phone && (
+            <a href={`tel:${order.facilitator_phone}`}
+              onClick={e => e.stopPropagation()}
+              className="text-[11px] font-semibold text-[#6B3F1F] bg-slate-100 px-2.5 py-1 rounded-lg">
+              📞 Facilitator
+            </a>
+          )}
+          {order.facilitator_user_id && !order.facilitator_phone && (
             <span className="text-[11px] font-semibold text-[#6B3F1F] bg-slate-100 px-2.5 py-1 rounded-lg">
               + Facilitator
             </span>
           )}
         </div>
+        {sharedAt && (
+          <p className="text-[11px] text-emerald-700 mt-2 font-medium">
+            ✓ Shared {sharedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} at {sharedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+        )}
       </div>
       <div className="divide-y divide-emerald-100">
         {order.packing_items.map(it => (
@@ -401,13 +498,9 @@ function PackingCard({
         <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString('en-IN')}</p>
       </div>
       <div className="p-3 flex gap-2">
-        <button onClick={onShare} disabled={busy || shared}
-          className={`flex-1 text-xs font-semibold py-2.5 rounded-xl ${
-            shared
-              ? 'bg-emerald-100 text-emerald-700 cursor-default'
-              : 'bg-[#085041] text-white'
-          } disabled:opacity-60`}>
-          {shared ? '✓ Shared' : (busy ? '…' : '↗ Share')}
+        <button onClick={onShare} disabled={busy}
+          className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-60">
+          {busy ? '…' : (shared ? '↗ Share again' : '↗ Share')}
         </button>
         <button onClick={onRemove} disabled={busy}
           className="flex-1 border border-red-200 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
