@@ -331,8 +331,10 @@ function DealerOrdersInner() {
 
       {/* Re-share warning sheet */}
       {confirmReshare && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmReshare(null)}>
-          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => setConfirmReshare(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
             <p className="font-bold text-[#6B3F1F]">Share again?</p>
             <p className="text-xs text-amber-700 mt-2">
               This packing list was already shared
@@ -364,8 +366,10 @@ function DealerOrdersInner() {
 
       {/* Remove-confirm sheet */}
       {confirmRemove && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmRemove(null)}>
-          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => setConfirmRemove(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
             <p className="font-bold text-[#6B3F1F]">Remove from Packing?</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
               The order will move to Completed. You won&apos;t see it here again
