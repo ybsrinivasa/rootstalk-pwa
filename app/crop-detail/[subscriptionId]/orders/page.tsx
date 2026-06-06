@@ -84,11 +84,13 @@ type PurchasedItem = {
   // timelines" instead of pretending it's a single-timeline row.
   merged_timeline_count?: number
   // 2026-06-06 — Recipient context per item so every Received card
-  // can render dealer name + shop + phone (matching the seed-order
-  // card shape).
-  dealer_name?: string | null
-  dealer_phone?: string | null
-  dealer_shop_name?: string | null
+  // can render shop / name + phone (matching the seed-order card
+  // shape). Role-aware: an order may have been handled by a
+  // dealer OR a facilitator (mutually exclusive backend-side).
+  recipient_role?: 'DEALER' | 'FACILITATOR' | null
+  recipient_name?: string | null
+  recipient_phone?: string | null
+  recipient_shop_name?: string | null
   received_at?: string | null
 }
 
@@ -839,23 +841,27 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
               </p>
             )}
           </div>
-          {/* 2026-06-06 — Dealer line on every Received card so the
-              farmer can call the dealer / re-order easily. Matches the
-              seed-order card shape. Phone is a tel: link. */}
-          {(it.dealer_shop_name || it.dealer_name || it.dealer_phone) && (
+          {/* 2026-06-06 — Recipient line on every Received card so the
+              farmer can call the dealer / facilitator easily. Matches
+              the seed-order card shape. Phone is a tel: link. */}
+          {(it.recipient_shop_name || it.recipient_name || it.recipient_phone) && (
             <div className="border-t border-[#F0E5D0] px-4 py-2 flex items-center justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[#6B3F1F] truncate">
-                  {it.dealer_shop_name || it.dealer_name}
+                  {it.recipient_shop_name || it.recipient_name}
                 </p>
-                {it.dealer_shop_name && it.dealer_name && (
-                  <p className="text-[10px] text-[#7A8C7E] truncate">{it.dealer_name} (Dealer)</p>
-                )}
+                {(it.recipient_shop_name && it.recipient_name) || it.recipient_role === 'FACILITATOR' ? (
+                  <p className="text-[10px] text-[#7A8C7E] truncate">
+                    {it.recipient_role === 'FACILITATOR'
+                      ? `${it.recipient_name ?? ''} (Facilitator)`
+                      : `${it.recipient_name} (Dealer)`}
+                  </p>
+                ) : null}
               </div>
-              {it.dealer_phone && (
-                <a href={`tel:${it.dealer_phone}`}
+              {it.recipient_phone && (
+                <a href={`tel:${it.recipient_phone}`}
                   className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
-                  📞 {it.dealer_phone}
+                  📞 {it.recipient_phone}
                 </a>
               )}
             </div>
