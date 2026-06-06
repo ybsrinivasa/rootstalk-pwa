@@ -464,7 +464,29 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   }
   useEffect(() => { load().catch(() => setOrders([])) }, [subscriptionId])
 
-  async function cancel(orderId: string) {
+  async function cancel(orderId: string, kind: 'REGULAR' | 'SEED') {
+    // 2026-06-06 — Seed cancel uses the seed-specific endpoint which
+    // returns a `new_draft_seed_order_id`. The husk becomes
+    // CANCELLED; the draft carries the variety + quantity so the
+    // farmer can pick a new recipient without re-keying. Regular
+    // cancel keeps its existing behaviour (items flip to NA, husk
+    // stays for forward/delete).
+    if (kind === 'SEED') {
+      if (!confirm('Cancel this seed order? Your variety + quantity will be saved in a new draft so you can re-send.')) return
+      setBusy(orderId)
+      try {
+        const { data } = await api.put<{ status: string; new_draft_seed_order_id?: string }>(
+          `/farmer/seed-orders/${orderId}/cancel`, {},
+        )
+        const draftId = data?.new_draft_seed_order_id
+        if (draftId) {
+          router.push(`/seed-orders/${draftId}`)
+        } else {
+          await load()
+        }
+      } finally { setBusy(null) }
+      return
+    }
     if (!confirm('Cancel this order? You can still forward or delete it after.')) return
     setBusy(orderId)
     try {
@@ -473,11 +495,15 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     } finally { setBusy(null) }
   }
 
-  async function deleteOrder(orderId: string) {
+  async function deleteOrder(orderId: string, kind: 'REGULAR' | 'SEED') {
     if (!confirm('Delete this cancelled order permanently?')) return
     setBusy(orderId)
     try {
-      await api.delete(`/farmer/orders/${orderId}`)
+      if (kind === 'SEED') {
+        await api.delete(`/farmer/seed-orders/${orderId}`)
+      } else {
+        await api.delete(`/farmer/orders/${orderId}`)
+      }
       await load()
     } finally { setBusy(null) }
   }
@@ -676,18 +702,39 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
               </div>
             )}
 
-            {/* 2026-06-03 — Cancel order is GATED on awaitingN === 0.
-                Once the farmer has decided every approval row, the
-                gate reopens. Forward / Delete on a CANCELLED order
-                stay available because they're post-cancellation
-                cleanup. The whole strip collapses when nothing is
-                actionable so the card isn't padded with empty space. */}
-            {((!cancelled && o.kind !== 'SEED' && awaitingN === 0) || cancelled) && (
+            {/* 2026-06-03 — Cancel order is GATED on awaitingN === 0
+                for regular orders (don't let the farmer cancel a row
+                they haven't decided yet). For seed orders the gate
+                is status-based: not in DRAFT/CANCELLED/PURCHASED/
+                REJECTED/REROUTED/SENT_FOR_APPROVAL (i.e. matches the
+                per-order page's canCancel + adds SFA exclusion since
+                the farmer should approve or reject mid-decision).
+                On cancel, seeds spin out a new DRAFT carrying the
+                same variety + quantity; the farmer picks a new
+                recipient there. Regular husks stay cancelled with
+                Forward + Delete cleanup actions. Seed husks only
+                get Delete — the new DRAFT lives separately.
+                The whole strip collapses when nothing is actionable
+                so the card isn't padded with empty space. */}
+            {(() => {
+              const seedCanCancel = o.kind === 'SEED' && ![
+                'DRAFT', 'CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'SENT_FOR_APPROVAL',
+              ].includes(o.status)
+              const regularCanCancel = o.kind !== 'SEED' && awaitingN === 0
+              return ((!cancelled && (regularCanCancel || seedCanCancel)) || cancelled)
+            })() && (
               <div className="border-t border-[#F0E5D0] px-4 py-2 flex gap-2">
                 {!cancelled ? (
-                  <button onClick={() => cancel(o.id)} disabled={busy === o.id}
+                  <button onClick={() => cancel(o.id, o.kind)} disabled={busy === o.id}
                     className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
                     {busy === o.id ? '…' : 'Cancel order'}
+                  </button>
+                ) : o.kind === 'SEED' ? (
+                  // Seed husk: only Delete makes sense — the new
+                  // DRAFT is a separate row, no items to forward.
+                  <button onClick={() => deleteOrder(o.id, 'SEED')} disabled={busy === o.id}
+                    className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+                    {busy === o.id ? '…' : 'Delete'}
                   </button>
                 ) : (
                   <>
@@ -695,7 +742,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                       className="flex-1 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium disabled:opacity-50">
                       {busy === o.id ? '…' : 'Forward'}
                     </button>
-                    <button onClick={() => deleteOrder(o.id)} disabled={busy === o.id}
+                    <button onClick={() => deleteOrder(o.id, 'REGULAR')} disabled={busy === o.id}
                       className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
                       {busy === o.id ? '…' : 'Delete'}
                     </button>
