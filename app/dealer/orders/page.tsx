@@ -199,7 +199,18 @@ function DealerOrdersInner() {
     setBusy(o.id)
     setConfirmReshare(null)
     try {
-      const text = buildShareText(o)
+      // 2026-06-06 — Call mark-shared FIRST so the backend lazy-creates
+      // the PackingList row and stamps a packing_code. We use the
+      // returned code to compose the share text — earlier flow had the
+      // code only after the share was done, so the first share went
+      // out without the ID.
+      const { data } = await api.put<{
+        packing_code: string | null
+        first_shared_at: string | null
+      }>(`/dealer/orders/${o.id}/packing-list/mark-shared`, {})
+      const code = data.packing_code || o.packing_code || null
+      const text = buildShareText({ ...o, packing_code: code })
+
       const navigatorAny = navigator as Navigator & { share?: (data: ShareData) => Promise<void> }
       if (navigatorAny.share) {
         try {
@@ -209,11 +220,6 @@ function DealerOrdersInner() {
         await navigator.clipboard?.writeText(text)
         alert('Copied to clipboard — paste into your messenger.')
       }
-      // Mark as shared on the backend regardless of whether the share
-      // sheet was completed — the dealer initiated the share intent.
-      // Backend lazy-creates the PackingList row and generates the
-      // packing_code on first call.
-      await api.put(`/dealer/orders/${o.id}/packing-list/mark-shared`, {})
       await load()
     } finally { setBusy(null) }
   }
