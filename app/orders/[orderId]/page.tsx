@@ -39,6 +39,12 @@ interface Order {
   // 2026-06-05 — Per-order approval round queueing.
   approval_round_current?: number | null
   approval_rounds_pending?: number
+  // 2026-06-06 — Packing surface so the farmer can confirm receipt.
+  packing_code?: string | null
+  packing_shared_at?: string | null
+  packing_picked_up_at?: string | null
+  packing_picked_up_by_role?: 'FARMER' | 'FACILITATOR' | null
+  packing_farmer_received_at?: string | null
   items: OrderItem[]
 }
 interface Recipient {
@@ -483,9 +489,17 @@ export default function FarmerOrderDetailPage() {
 
         {(order.approved_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
-            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              Approved — Received ({order.approved_items!.length})
-            </p>
+            <div className="flex items-baseline justify-between px-1">
+              <p className="text-sm font-semibold text-[#6B3F1F]">
+                Approved ({order.approved_items!.length})
+              </p>
+              {order.packing_code && (
+                <span className="text-[10px] font-mono tracking-widest bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                  {order.packing_code}
+                </span>
+              )}
+            </div>
+            <ReceiveBanner order={order} onReceived={load} />
             {order.approved_items!.map(row => (
               <div key={row.id} className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -687,5 +701,96 @@ export default function FarmerOrderDetailPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// 2026-06-06 — Receive-confirmation banner shown above the Approved
+// list. Three states based on packing pickup + farmer_received:
+//   1. Not yet picked up → "Confirm receipt" CTA (counts as both
+//      pickup + receipt — typical direct dealer→farmer handover).
+//   2. Picked up by FACILITATOR → "Facilitator has the items; tap
+//      Received once they reach you."
+//   3. Received → green confirmation strip.
+function ReceiveBanner({
+  order, onReceived,
+}: {
+  order: Order
+  onReceived: () => void
+}) {
+  const [confirm, setConfirm] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  async function markReceived() {
+    setBusy(true)
+    try {
+      await api.put(`/farmer/orders/${order.id}/packing-list/mark-received`, {})
+      setConfirm(false)
+      onReceived()
+    } catch { alert('Could not confirm receipt. Please try again.') }
+    finally { setBusy(false) }
+  }
+
+  if (order.packing_farmer_received_at) {
+    const t = new Date(order.packing_farmer_received_at)
+    return (
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-800">
+        ✓ Received on {t.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} at {t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+      </div>
+    )
+  }
+
+  const facilitatorPickedUp =
+    order.packing_picked_up_at && order.packing_picked_up_by_role === 'FACILITATOR'
+
+  return (
+    <>
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-3">
+        {facilitatorPickedUp ? (
+          <p className="text-xs text-amber-800 mb-2">
+            Your facilitator has picked these items up.
+            Tap below once they reach you.
+          </p>
+        ) : (
+          <p className="text-xs text-amber-800 mb-2">
+            Tap when you have the items in hand. Please cross-check the Packing ID
+            with what the dealer shared.
+          </p>
+        )}
+        <button onClick={() => setConfirm(true)}
+          className="w-full bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl">
+          ✓ I have received the items
+        </button>
+      </div>
+
+      {confirm && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => setConfirm(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Confirm receipt?</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              By confirming, you tell the dealer you have the items in hand.
+              They will mark the order as completed. Only do this when the
+              items are physically with you.
+            </p>
+            {order.packing_code && (
+              <p className="text-xs text-[#6B3F1F] mt-2">
+                Packing ID: <strong className="font-mono tracking-widest">{order.packing_code}</strong>
+              </p>
+            )}
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirm(false)}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
+                Cancel
+              </button>
+              <button onClick={markReceived} disabled={busy}
+                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {busy ? '…' : 'Yes, I have them'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

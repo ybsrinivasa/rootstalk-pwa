@@ -55,6 +55,12 @@ interface Order {
   packing_code: string | null
   packing_list_shared_at: string | null
   packing_list_removed_at: string | null
+  // 2026-06-06 — Pickup + farmer-received tracking. Renders the
+  // status line under the contact chips on the Packing card.
+  packing_picked_up_at: string | null
+  packing_picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
+  packing_picked_up_by_name: string | null
+  packing_farmer_received_at: string | null
 }
 
 type Pill = 'pending' | 'postponed' | 'farmer' | 'packing' | 'completed'
@@ -93,17 +99,15 @@ function belongsTo(o: Order, pill: Pill): boolean {
     case 'farmer':
       return c.sent_for_approval > 0
     case 'packing':
-      return c.approved > 0 && !o.packing_list_removed_at
+      // 2026-06-06 — Order leaves Packing when EITHER the dealer
+      // removed it manually OR the farmer confirmed receipt. Either
+      // signals "done from the dealer's standpoint".
+      return c.approved > 0 && !o.packing_list_removed_at && !o.packing_farmer_received_at
     case 'completed':
-      // Truly done from the dealer's standpoint: nothing awaiting
-      // packing, nothing with the farmer, nothing postponed, nothing
-      // still pending decision. Either everything is NA/REJECTED, or
-      // the dealer has removed the packing list after handing items
-      // over.
       return (
         c.pending === 0 && c.available === 0 && c.postponed === 0 &&
         c.sent_for_approval === 0 &&
-        (c.approved === 0 || !!o.packing_list_removed_at)
+        (c.approved === 0 || !!o.packing_list_removed_at || !!o.packing_farmer_received_at)
       )
   }
 }
@@ -432,6 +436,34 @@ function OrderHeaderRow({ order }: { order: Order }) {
   )
 }
 
+function PickupStatus({ order }: { order: Order }) {
+  if (order.packing_farmer_received_at) {
+    const t = new Date(order.packing_farmer_received_at)
+    return (
+      <p className="text-[11px] text-emerald-700 mt-1 font-semibold">
+        ✓ Received by farmer · {t.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} {t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+      </p>
+    )
+  }
+  if (order.packing_picked_up_at) {
+    const t = new Date(order.packing_picked_up_at)
+    const who = order.packing_picked_up_by_role === 'FACILITATOR'
+      ? `facilitator${order.packing_picked_up_by_name ? ` (${order.packing_picked_up_by_name})` : ''}`
+      : 'farmer'
+    return (
+      <p className="text-[11px] text-amber-700 mt-1 font-medium">
+        📦 Picked up by {who} · {t.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} {t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+        {order.packing_picked_up_by_role === 'FACILITATOR' && ' · awaiting farmer receipt'}
+      </p>
+    )
+  }
+  return (
+    <p className="text-[11px] text-[#7A8C7E] mt-1">
+      Awaiting pickup
+    </p>
+  )
+}
+
 function PackingCard({
   order, onShare, onRemove, busy,
 }: {
@@ -484,6 +516,9 @@ function PackingCard({
             ✓ Shared {sharedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} at {sharedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
           </p>
         )}
+        {/* 2026-06-06 — Pickup + farmer-received status line. Three
+            possible states the dealer cares about. */}
+        <PickupStatus order={order} />
       </div>
       <div className="divide-y divide-emerald-100">
         {order.packing_items.map(it => (

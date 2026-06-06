@@ -11,6 +11,12 @@ interface OrderDetail {
   date_from: string; date_to: string
   items: { id: string; practice_id: string; status: string; brand_name: string | null
            given_volume: number | null; volume_unit: string | null; price: number | null }[]
+  // 2026-06-06 — Packing surface fields so the facilitator can
+  // confirm pickup and the farmer can see status.
+  packing_code?: string | null
+  packing_picked_up_at?: string | null
+  packing_picked_up_by_role?: 'FARMER' | 'FACILITATOR' | null
+  packing_farmer_received_at?: string | null
 }
 interface NearbyDealer {
   user_id: string; name: string | null; phone: string | null; shop_name: string | null
@@ -121,6 +127,12 @@ export default function FacilitatorOrderDetailPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Order Details" activeRole="FACILITATOR" back="/facilitator/orders" />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
+
+        {/* 2026-06-06 — Packing pickup CTA. Shows when items are
+            approved + the facilitator hasn't already marked pickup. */}
+        {order.packing_code && approvedItems.length > 0 && (
+          <FacilitatorPickupBanner order={order} onPickedUp={load} />
+        )}
 
         {/* Status card */}
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
@@ -347,5 +359,92 @@ export default function FacilitatorOrderDetailPage() {
         </div>
       )}
     </div>
+  )
+}
+
+
+// 2026-06-06 — Facilitator pickup banner. Three render states:
+//   1. Not yet picked up → CTA + confirm sheet.
+//   2. Picked up by this facilitator → status + waiting for farmer.
+//   3. Farmer received → green confirmation strip.
+function FacilitatorPickupBanner({
+  order, onPickedUp,
+}: {
+  order: OrderDetail
+  onPickedUp: () => void
+}) {
+  const [confirm, setConfirm] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  async function markPickedUp() {
+    setBusy(true)
+    try {
+      await api.put(`/facilitator/orders/${order.id}/packing-list/mark-picked-up`, {})
+      setConfirm(false)
+      onPickedUp()
+    } catch { alert("Could not mark pickup. Please try again.") }
+    finally { setBusy(false) }
+  }
+
+  if (order.packing_farmer_received_at) {
+    return (
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-800">
+        ✓ Farmer confirmed receipt.
+      </div>
+    )
+  }
+
+  if (order.packing_picked_up_at) {
+    const t = new Date(order.packing_picked_up_at)
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
+        📦 You picked these up on {t.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} at {t.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}.
+        Farmer hasn’t confirmed receipt yet.
+      </div>
+    )
+  }
+
+  return (
+    <>
+      <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-3">
+        <div className="flex items-baseline justify-between mb-2">
+          <p className="text-xs text-amber-800 font-medium">Pickup from dealer</p>
+          <span className="text-[10px] font-mono tracking-widest bg-amber-600 text-white px-2 py-0.5 rounded-full">
+            {order.packing_code}
+          </span>
+        </div>
+        <button onClick={() => setConfirm(true)}
+          className="w-full bg-[#7D4E00] text-white text-sm font-semibold py-2.5 rounded-xl">
+          📦 I picked these up from the dealer
+        </button>
+      </div>
+      {confirm && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => setConfirm(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: "max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))" }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Confirm pickup?</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              By confirming, you tell the dealer the items have left their shop with you.
+              You’ll still need to hand them to the farmer; the farmer will confirm
+              separately once they have them.
+            </p>
+            <p className="text-xs text-[#6B3F1F] mt-2">
+              Packing ID: <strong className="font-mono tracking-widest">{order.packing_code}</strong>
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirm(false)}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
+                Cancel
+              </button>
+              <button onClick={markPickedUp} disabled={busy}
+                className="flex-1 bg-[#7D4E00] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {busy ? "…" : "Yes, picked up"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
