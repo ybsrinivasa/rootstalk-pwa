@@ -39,15 +39,32 @@ export default function DealerHomePage() {
       // be functional". We don't bounce — instead render an
       // explanatory empty state below so the user understands
       // why the tiles aren't useful yet.
+      // 2026-06-06 — Pending count now spans BOTH regular input
+      // orders AND seed orders so the dealer has one mental model
+      // instead of a siloed Seed Orders tile. Same terminal-state
+      // filter for both feeds (COMPLETED / CANCELLED / EXPIRED for
+      // inputs; PURCHASED / CANCELLED / REJECTED / REROUTED for
+      // seeds — the seed lifecycle's terminal equivalents).
+      const SEED_TERMINAL = ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED']
+      const INPUT_TERMINAL = ['COMPLETED', 'CANCELLED', 'EXPIRED']
+      let regularPending = 0
+      let seedPending = 0
+      const setBoth = () => setPendingCount(regularPending + seedPending)
       Promise.all([
         api.get<{ onboarded: boolean; client_count: number }>('/dealer/me/onboarding-status')
           .then(r => setOnboardingClientCount(r.data.client_count))
           .catch(() => setOnboardingClientCount(0)),
         api.get('/dealer/orders').then(r => {
-          const active = (r.data as { status: string }[]).filter(o =>
-            !['COMPLETED', 'CANCELLED', 'EXPIRED'].includes(o.status)
-          )
-          setPendingCount(active.length)
+          regularPending = (r.data as { status: string }[]).filter(o =>
+            !INPUT_TERMINAL.includes(o.status)
+          ).length
+          setBoth()
+        }).catch(() => {}),
+        api.get('/dealer/seed-orders').then(r => {
+          seedPending = (r.data as { status: string }[]).filter(o =>
+            !SEED_TERMINAL.includes(o.status)
+          ).length
+          setBoth()
         }).catch(() => {}),
         api.get('/dealer/postponed-items').then(r => {
           setPostponedCount((r.data as unknown[]).length)

@@ -118,6 +118,24 @@ export default function DealerSeedOrdersPage() {
     }
   }
 
+  // 2026-06-06 — Blind-accept on fresh seed orders. SENT-state cards
+  // surface only Accept + Decline so the dealer can't cherry-pick by
+  // staring at the variety + farm area before committing. Decline
+  // reuses /not-available (it bounces the order back to the farmer
+  // for re-route). Other actions reveal after ACCEPTED.
+  const [confirmDecline, setConfirmDecline] = useState<string | null>(null)
+  const [declining, setDeclining] = useState(false)
+  async function declineOrder(id: string) {
+    setDeclining(true)
+    try {
+      await api.put(`/dealer/seed-orders/${id}/not-available`, {})
+      setConfirmDecline(null)
+      load()
+    } catch {
+      alert('Could not decline. Please try again.')
+    } finally { setDeclining(false) }
+  }
+
   const pending = orders.filter(o => !['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED'].includes(o.status))
   const done = orders.filter(o => ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED'].includes(o.status))
 
@@ -168,33 +186,40 @@ export default function DealerSeedOrdersPage() {
                       )}
                     </div>
 
-                    {/* Action buttons */}
+                    {/* 2026-06-06 — Blind-accept on SENT seed orders.
+                        Mirrors the regular dealer-orders flow: the
+                        only decision at SENT is Accept vs Decline.
+                        Process / Postpone / Not-Available reveal only
+                        after the dealer has accepted. */}
                     {order.status === 'SENT' && processing !== order.id && (
-                      <div className="flex gap-2 mt-3">
-                        <button onClick={() => accept(order.id)}
-                          className="flex-1 bg-sky-100 text-sky-700 text-xs font-semibold py-2.5 rounded-xl">
-                          Accept Order
-                        </button>
-                        <button onClick={() => { setProcessing(order.id); setForm({ unit: 'Kilograms', quantity: '', total_price: '' }) }}
-                          className="flex-1 bg-indigo-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                          Process
-                        </button>
-                      </div>
+                      <>
+                        <p className="mt-3 text-[11px] text-[#7A8C7E]">
+                          New order — your call. Item details reveal after you Accept.
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <button onClick={() => accept(order.id)}
+                            className="flex-1 bg-emerald-600 text-white text-xs font-semibold py-2.5 rounded-xl">
+                            ✓ Accept
+                          </button>
+                          <button onClick={() => setConfirmDecline(order.id)}
+                            className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+                            ✗ Decline
+                          </button>
+                        </div>
+                      </>
                     )}
 
-                    {(order.status === 'ACCEPTED' || order.status === 'SENT') && processing !== order.id && (
+                    {order.status === 'ACCEPTED' && processing !== order.id && (
                       <button onClick={() => { setProcessing(order.id); setForm({ unit: 'Kilograms', quantity: '', total_price: '' }) }}
                         className="w-full mt-3 bg-indigo-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                        {order.status === 'ACCEPTED' ? 'Enter Quantity & Price' : 'Process & Send for Approval'}
+                        Enter Quantity & Price
                       </button>
                     )}
 
-                    {/* Batch 13 — Postpone + Not Available, available
-                        in the same statuses the pesticide/fertiliser
-                        flow allows. The two buttons sit on a row of
-                        their own so they don't compete with the
-                        primary green Process CTA above. */}
-                    {(['SENT', 'ACCEPTED', 'POSTPONED'].includes(order.status)) && processing !== order.id && (
+                    {/* Postpone + Not Available reveal after Accept.
+                        Two-button row independent of the primary
+                        Process CTA above. */}
+                    {(['ACCEPTED', 'POSTPONED'].includes(order.status)) && processing !== order.id && (
                       <div className="mt-2 flex gap-2">
                         {order.status !== 'POSTPONED' && (
                           <button onClick={() => openPostpone(order.id)}
@@ -322,6 +347,37 @@ export default function DealerSeedOrdersPage() {
                 className="w-full py-3 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
                 {postponeBusy ? 'Postponing…' : `Postpone for ${postponeDays} day${postponeDays === 1 ? '' : 's'}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2026-06-06 — Decline confirmation sheet for SENT seed orders.
+          Mirrors the bottom-sheet shape used elsewhere in dealer
+          surfaces (z-[60] + safe-area-bottom so it sits above the
+          BottomNav). Confirms the dealer-facing wording — the
+          back-end action is /not-available which bounces the order
+          back to the farmer's queue. */}
+      {confirmDecline && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => !declining && setConfirmDecline(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">Decline this seed order?</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              The farmer will be able to send it to a different dealer.
+              You won&apos;t see this order again.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmDecline(null)} disabled={declining}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={() => declineOrder(confirmDecline)} disabled={declining}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {declining ? '…' : 'Yes, decline'}
               </button>
             </div>
           </div>

@@ -61,6 +61,32 @@ interface Order {
   packing_picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
   packing_picked_up_by_name: string | null
   packing_farmer_received_at: string | null
+  // 2026-06-06 — Discriminator for seed orders folded into the
+  // unified feed. Seed cards carry the variety + crop_cosh_id used
+  // for the seed-specific label and route to /dealer/seed-orders
+  // for the action surface (no per-id seed page yet).
+  is_seed?: boolean
+  variety_name?: string | null
+  crop_cosh_id?: string | null
+}
+
+// 2026-06-06 — Raw shape from /dealer/seed-orders before adapter.
+interface SeedOrderRaw {
+  id: string
+  status: string
+  category: string | null
+  variety_name: string | null
+  crop_cosh_id: string | null
+  farmer_user_id: string
+  farmer_name: string | null
+  farmer_phone: string | null
+  farmer_photo_url: string | null
+  client_id: string
+  client_name: string | null
+  unit: string | null
+  quantity: number | null
+  total_price: number | null
+  created_at: string
 }
 
 type Pill = 'pending' | 'postponed' | 'farmer' | 'packing' | 'completed'
@@ -89,6 +115,25 @@ function shortDate(iso: string | null): string {
 // + some Postponed (Postponed) — because the dealer's next action
 // depends on which bucket they're focusing on.
 function belongsTo(o: Order, pill: Pill): boolean {
+  // 2026-06-06 — Seed orders use the SeedOrderStatus enum directly
+  // (no per-item counts) since each seed order has one item by
+  // definition. Membership is keyed off o.status alone.
+  if (o.is_seed) {
+    switch (pill) {
+      case 'pending':
+        return ['SENT', 'ACCEPTED'].includes(o.status)
+      case 'postponed':
+        return o.status === 'POSTPONED'
+      case 'farmer':
+        return o.status === 'SENT_FOR_APPROVAL'
+      case 'packing':
+        // Seeds don't have a packing-list surface yet — treat
+        // PURCHASED as the equivalent terminal-with-receipt state.
+        return false
+      case 'completed':
+        return ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED', 'NOT_AVAILABLE'].includes(o.status)
+    }
+  }
   const c = o.item_status_counts
   switch (pill) {
     case 'pending':
@@ -109,6 +154,48 @@ function belongsTo(o: Order, pill: Pill): boolean {
         c.sent_for_approval === 0 &&
         (c.approved === 0 || !!o.packing_list_removed_at || !!o.packing_farmer_received_at)
       )
+  }
+}
+
+// 2026-06-06 — Adapter: shape a /dealer/seed-orders row into the
+// unified Order interface so the same OrderHeaderRow + pill-routing
+// machinery handles both flows without per-call branching.
+function adaptSeedOrder(s: SeedOrderRaw): Order {
+  return {
+    id: s.id,
+    status: s.status,
+    farmer_user_id: s.farmer_user_id,
+    farmer_name: s.farmer_name,
+    farmer_phone: s.farmer_phone,
+    farmer_photo_url: s.farmer_photo_url,
+    farmer_gps_lat: null,
+    farmer_gps_lng: null,
+    facilitator_user_id: null,
+    facilitator_name: null,
+    facilitator_phone: null,
+    client_id: s.client_id,
+    client_name: s.client_name,
+    category: s.category || 'SEED',
+    date_from: s.created_at,
+    date_to: s.created_at,
+    created_at: s.created_at,
+    // Empty placeholder — seed orders aren't multi-item; the
+    // belongsTo() guard above short-circuits before these are read.
+    item_status_counts: {
+      pending: 0, available: 0, postponed: 0, not_available: 0,
+      sent_for_approval: 0, approved: 0, rejected: 0,
+    },
+    packing_items: [],
+    packing_code: null,
+    packing_list_shared_at: null,
+    packing_list_removed_at: null,
+    packing_picked_up_at: null,
+    packing_picked_up_by_role: null,
+    packing_picked_up_by_name: null,
+    packing_farmer_received_at: null,
+    is_seed: true,
+    variety_name: s.variety_name,
+    crop_cosh_id: s.crop_cosh_id,
   }
 }
 
@@ -138,8 +225,18 @@ function DealerOrdersInner() {
   async function load() {
     setLoading(true)
     try {
-      const { data } = await api.get<Order[]>('/dealer/orders')
-      setOrders(data)
+      // 2026-06-06 — Fetch both feeds in parallel and merge into a
+      // single chronological timeline. Seed cards are tagged via
+      // is_seed for downstream branching (label, route, pill rules).
+      const [regular, seeds] = await Promise.all([
+        api.get<Order[]>('/dealer/orders').catch(() => ({ data: [] as Order[] })),
+        api.get<SeedOrderRaw[]>('/dealer/seed-orders').catch(() => ({ data: [] as SeedOrderRaw[] })),
+      ])
+      const merged: Order[] = [
+        ...regular.data,
+        ...seeds.data.map(adaptSeedOrder),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      setOrders(merged)
     } finally { setLoading(false) }
   }
 
@@ -323,13 +420,18 @@ function DealerOrdersInner() {
                 )
               }
               // Pending — original card pattern, tappable to detail.
+              // 2026-06-06 — Seed cards route to /dealer/seed-orders
+              // (the list page; no per-id seed page exists yet).
+              const target = order.is_seed
+                ? '/dealer/seed-orders'
+                : `/dealer/orders/${order.id}`
               return (
-                <button key={order.id} onClick={() => router.push(`/dealer/orders/${order.id}`)}
+                <button key={order.id} onClick={() => router.push(target)}
                   className="w-full bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left active:scale-[0.99] transition-transform">
                   <OrderHeaderRow order={order} />
                   <p className="text-[11px] text-[#7A8C7E] mt-2">
                     {order.status === 'SENT' && 'New · tap to accept'}
-                    {order.status === 'ACCEPTED' && 'Accepted · tap to process'}
+                    {order.status === 'ACCEPTED' && (order.is_seed ? 'Accepted · tap to enter qty + price' : 'Accepted · tap to process')}
                     {order.status === 'PROCESSING' && 'Processing · tap to continue'}
                   </p>
                 </button>
@@ -405,6 +507,9 @@ function DealerOrdersInner() {
 }
 
 function OrderHeaderRow({ order }: { order: Order }) {
+  // 2026-06-06 — Seed cards in the unified feed surface a 🌱 badge
+  // + the variety name so the dealer can recognise a seed order at
+  // a glance vs. a pesticide / fertiliser order.
   return (
     <div className="flex items-start gap-3">
       {order.farmer_photo_url ? (
@@ -416,19 +521,32 @@ function OrderHeaderRow({ order }: { order: Order }) {
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-[#6B3F1F] truncate">
-          {order.farmer_name || 'Unknown farmer'}
-        </p>
+        <div className="flex items-baseline gap-2">
+          <p className="font-semibold text-[#6B3F1F] truncate">
+            {order.farmer_name || 'Unknown farmer'}
+          </p>
+          {order.is_seed && (
+            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
+              🌱 Seed
+            </span>
+          )}
+        </div>
         {order.client_name && (
           <p className="text-xs text-[#7A8C7E] truncate">{order.client_name}</p>
         )}
         <p className="text-[11px] text-[#7A8C7E]">
-          {order.category && (
-            <span className="uppercase tracking-wider font-medium text-[10px]">
-              {order.category.toLowerCase()}
-            </span>
-          )}
-          {order.category && ' · '}
+          {order.is_seed
+            ? (
+                <span className="uppercase tracking-wider font-medium text-[10px]">
+                  Seed / Seedling
+                </span>
+              )
+            : order.category && (
+                <span className="uppercase tracking-wider font-medium text-[10px]">
+                  {order.category.toLowerCase()}
+                </span>
+              )}
+          {(order.is_seed || order.category) && ' · '}
           Received {shortDate(order.created_at)}
         </p>
       </div>
