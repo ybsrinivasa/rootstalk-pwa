@@ -1,10 +1,16 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
+
+// 2026-06-07 — Order-ID-grouped active feed.
+// Spec: one card per Order ID; pills filter by sub-order status;
+// per-pill body chunk shows the matching sub-order(s); tap the
+// card to expand to the full sub-order list. Completed + Cancelled
+// live behind a History header chip, not here.
 
 interface ItemStatusCounts {
   pending: number
@@ -17,12 +23,17 @@ interface ItemStatusCounts {
 }
 
 interface Order {
-  id: string; status: string; farmer_user_id: string; client_id: string
-  // 2026-06-07 — Human-readable Order ID, shared across the lineage.
+  id: string
+  status: string
   reference_number: string | null
-  dealer_user_id: string | null; date_from: string; date_to: string
-  created_at: string; item_count: number; pending_count: number
-  // 2026-06-06 — Enriched payload (see backend /facilitator/orders).
+  farmer_user_id: string
+  client_id: string
+  dealer_user_id: string | null
+  date_from: string
+  date_to: string
+  created_at: string
+  item_count: number
+  pending_count: number
   item_status_counts?: ItemStatusCounts
   farmer_name?: string | null
   farmer_phone?: string | null
@@ -30,63 +41,46 @@ interface Order {
   dealer_name?: string | null
   dealer_phone?: string | null
   dealer_shop_name?: string | null
+  dealer_shop_address?: string | null
+  dealer_shop_gps_lat?: number | null
+  dealer_shop_gps_lng?: number | null
+  crop_name?: string | null
+  subscription_id?: string | null
   packing_code?: string | null
   packing_picked_up_at?: string | null
   packing_farmer_received_at?: string | null
 }
 
-// 2026-06-06 — Action pills on facilitator feed mirror the dealer
-// pattern: each pill answers "what do I need to do?". An order can
-// appear in multiple pills (returned items waiting AND items
-// awaiting farmer approval, etc.).
-type Pill = 'pending' | 'routed' | 'returned' | 'farmer' | 'pickup' | 'completed'
+interface NearbyDealer {
+  user_id: string; name: string | null; phone: string | null; shop_name: string | null
+  shop_address: string | null; distance_km: number; sell_categories: string[]
+}
+
+type Pill = 'pending' | 'routed' | 'returned' | 'farmer'
 
 const PILL_LABEL: Record<Pill, string> = {
   pending: 'Pending',
   routed: 'Routed',
   returned: 'Returned',
   farmer: 'With Farmer',
-  pickup: 'Pickup',
-  completed: 'Completed',
 }
 
-function belongsTo(o: Order, pill: Pill): boolean {
+function subBelongsTo(o: Order, pill: Pill): boolean {
   const c = o.item_status_counts
-  const cancelled = o.status === 'CANCELLED'
-  const returnedN = c?.not_available ?? 0
-  const awaitingN = c?.sent_for_approval ?? 0
-  const approvedN = c?.approved ?? 0
   switch (pill) {
     case 'pending':
-      // Fresh order — facilitator hasn't accepted yet.
       return o.status === 'SENT' && !o.dealer_user_id
     case 'routed':
-      // Dealer assigned, no returned/approval/pickup work outstanding
-      // — order is being processed by the dealer.
-      return (
-        !cancelled && !!o.dealer_user_id &&
-        returnedN === 0 && awaitingN === 0 && approvedN === 0
-      )
+      return !!o.dealer_user_id &&
+        (c?.pending ?? 0) + (c?.available ?? 0) + (c?.postponed ?? 0) > 0 &&
+        (c?.not_available ?? 0) === 0 &&
+        (c?.sent_for_approval ?? 0) === 0 &&
+        (c?.approved ?? 0) === 0
     case 'returned':
-      return !cancelled && returnedN > 0
+      return (c?.not_available ?? 0) > 0
     case 'farmer':
-      return !cancelled && awaitingN > 0
-    case 'pickup':
-      // Approved items the facilitator hasn't picked up + handed off
-      // yet (farmer hasn't confirmed receipt).
-      return !cancelled && approvedN > 0 && !o.packing_farmer_received_at
-    case 'completed':
-      return (
-        cancelled ||
-        o.status === 'COMPLETED' ||
-        !!o.packing_farmer_received_at
-      )
+      return (c?.sent_for_approval ?? 0) > 0
   }
-}
-
-interface NearbyDealer {
-  user_id: string; name: string | null; phone: string | null; shop_name: string | null
-  shop_address: string | null; distance_km: number; sell_categories: string[]
 }
 
 const COLOUR = '#7D4E00'
@@ -101,12 +95,19 @@ const STATUS_COLOUR: Record<string, string> = {
   CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
 }
 
+function initials(name: string | null | undefined): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
+}
+
 export default function FacilitatorOrdersPage() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
   const [pill, setPill] = useState<Pill>('pending')
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
   const load = () =>
     api.get<Order[]>('/facilitator/orders')
@@ -126,10 +127,8 @@ export default function FacilitatorOrdersPage() {
     } finally { setActing(null) }
   }
 
-  // 2026-06-06 — Reject = cancel-and-migrate. Husk goes CANCELLED;
-  // backend spins a new DRAFT for the farmer's Manage tab. Use a
-  // confirm sheet (z-[60]) instead of window.confirm so the action
-  // matches the dealer-side blind-decline pattern.
+  // Reject = cancel-and-migrate (backend spins a new DRAFT on the
+  // farmer's Manage tab). Confirm sheet at z-[60].
   const [confirmReject, setConfirmReject] = useState<string | null>(null)
   async function reject(id: string) {
     setActing(id)
@@ -140,11 +139,7 @@ export default function FacilitatorOrdersPage() {
     } finally { setActing(null) }
   }
 
-  // 2026-06-06 — Returned-items strip + re-route picker. Returned
-  // items belong to the facilitator's queue while the facilitator
-  // owns the order. Tap opens the nearby-dealers picker; on commit
-  // the new DRAFT lands on the facilitator's list as a fresh SENT
-  // order (single-step, no separate /send).
+  // Returned-items re-route picker.
   const [rerouteOrderId, setRerouteOrderId] = useState<string | null>(null)
   const [nearbyDealers, setNearbyDealers] = useState<NearbyDealer[]>([])
   const [loadingDealers, setLoadingDealers] = useState(false)
@@ -177,27 +172,63 @@ export default function FacilitatorOrdersPage() {
     } finally { setRerouting(false) }
   }
 
-  // 2026-06-06 — Pill counts and visible list. Same pattern as the
-  // dealer feed: an order can belong to multiple pills (returned +
-  // farmer + pickup are independent attention states).
-  const counts: Record<Pill, number> = {
-    pending: 0, routed: 0, returned: 0, farmer: 0, pickup: 0, completed: 0,
-  }
-  for (const o of orders) {
-    for (const p of Object.keys(counts) as Pill[]) {
-      if (belongsTo(o, p)) counts[p] += 1
+  // 2026-06-07 — Group orders by reference_number (Order ID). Pre-
+  // batch-1 rows may have null reference_number; fall back to the
+  // row id so the group is still rendered (transient until backfill
+  // sweeps catch up).
+  const groups = useMemo(() => {
+    const map = new Map<string, Order[]>()
+    for (const o of orders) {
+      const key = o.reference_number || `legacy:${o.id}`
+      const list = map.get(key)
+      if (list) list.push(o)
+      else map.set(key, [o])
     }
-  }
-  const visible = orders.filter(o => belongsTo(o, pill))
+    // Sort within each group by created_at ascending so the first
+    // sub-order is the original root.
+    for (const list of map.values()) {
+      list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    }
+    return map
+  }, [orders])
+
+  // Pill counts: count GROUPS that have at least one sub-order
+  // matching the pill (not raw sub-orders) so the count matches
+  // what the user sees rendered.
+  const counts: Record<Pill, number> = useMemo(() => {
+    const c: Record<Pill, number> = { pending: 0, routed: 0, returned: 0, farmer: 0 }
+    for (const list of groups.values()) {
+      for (const p of Object.keys(c) as Pill[]) {
+        if (list.some(o => subBelongsTo(o, p))) c[p] += 1
+      }
+    }
+    return c
+  }, [groups])
+
+  const visibleGroups = useMemo(() => {
+    const out: { key: string; subs: Order[]; matching: Order[] }[] = []
+    for (const [key, list] of groups.entries()) {
+      const matching = list.filter(o => subBelongsTo(o, pill))
+      if (matching.length > 0) out.push({ key, subs: list, matching })
+    }
+    // Sort by newest sub-order in the group so the most-recent
+    // activity lands at the top of the queue.
+    out.sort((a, b) => {
+      const aT = Math.max(...a.subs.map(o => new Date(o.created_at).getTime()))
+      const bT = Math.max(...b.subs.map(o => new Date(o.created_at).getTime()))
+      return bT - aT
+    })
+    return out
+  }, [groups, pill])
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Acting as Facilitator" activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-20">
 
-        {/* Pill row */}
-        <div className="px-4 pt-3 overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
+        {/* Pill row + History chip */}
+        <div className="px-4 pt-3 flex items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto flex-1">
             {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
               const active = pill === p
               const n = counts[p]
@@ -213,116 +244,43 @@ export default function FacilitatorOrdersPage() {
               )
             })}
           </div>
+          {/* History chip — Completed + Cancelled live elsewhere */}
+          <button onClick={() => router.push('/facilitator/history')}
+            className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
+            📁 History
+          </button>
         </div>
 
         <div className="px-4 mt-4 space-y-3 max-w-lg mx-auto">
           {loading ? (
             <div className="h-24 bg-white rounded-2xl animate-pulse" />
-          ) : visible.length === 0 ? (
+          ) : visibleGroups.length === 0 ? (
             <div className="text-center py-20">
               <span className="text-4xl">🌾</span>
               <p className="text-[#7A8C7E] text-sm mt-3">Nothing under {PILL_LABEL[pill]}</p>
             </div>
           ) : (
-            visible.map(order => {
-              const counts = order.item_status_counts
-              const returnedN = counts?.not_available ?? 0
-              const awaitingN = counts?.sent_for_approval ?? 0
-              const approvedN = counts?.approved ?? 0
-              return (
-              <div key={order.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-                <button onClick={() => router.push(`/facilitator/orders/${order.id}`)}
-                  className="w-full p-4 text-left">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[order.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
-                      {order.status.replace(/_/g, ' ')}
-                    </span>
-                    <span className="text-xs text-[#7A8C7E]">{new Date(order.created_at).toLocaleDateString()}</span>
-                  </div>
-                  {/* 2026-06-07 — Order ID chip (shared across the
-                      lineage). Lets the facilitator cross-reference
-                      the same order on calls / WhatsApp. */}
-                  {order.reference_number && (
-                    <p className="text-[10px] font-mono tracking-wide text-[#7D4E00] mb-2">
-                      {order.reference_number}
-                    </p>
-                  )}
-                  {/* Farmer → Dealer chain (when assigned) */}
-                  <div className="space-y-1 mb-2">
-                    {order.farmer_name && (
-                      <p className="text-sm font-semibold text-[#6B3F1F] truncate">
-                        {order.farmer_name}
-                      </p>
-                    )}
-                    {order.dealer_user_id && (
-                      <p className="text-xs text-[#7A8C7E] truncate">
-                        → {order.dealer_shop_name || order.dealer_name || 'Dealer assigned'}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-[#6B3F1F]">{order.item_count} items</p>
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">
-                        {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      {!order.dealer_user_id && order.status !== 'CANCELLED' && (
-                        <p className="text-xs text-amber-600">Awaiting dealer</p>
-                      )}
-                      {awaitingN > 0 && (
-                        <p className="text-xs text-amber-700 font-medium">{awaitingN} awaiting farmer ✓</p>
-                      )}
-                      {approvedN > 0 && (
-                        <p className="text-xs text-emerald-700 font-medium">{approvedN} approved</p>
-                      )}
-                    </div>
-                  </div>
-                </button>
-
-                {/* New order — accept/reject inline */}
-                {order.status === 'SENT' && !order.dealer_user_id && (
-                  <div className="flex gap-2 px-4 pb-4">
-                    <button onClick={() => accept(order.id)} disabled={acting === order.id}
-                      className="flex-1 py-2.5 rounded-xl text-white text-xs font-semibold disabled:opacity-50"
-                      style={{ background: COLOUR }}>
-                      {acting === order.id ? 'Processing…' : '✓ Accept & Forward'}
-                    </button>
-                    <button onClick={() => setConfirmReject(order.id)} disabled={acting === order.id}
-                      className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#D4682E] text-xs font-semibold disabled:opacity-50">
-                      ✗ Reject
-                    </button>
-                  </div>
-                )}
-
-                {/* 2026-06-06 — Returned items strip. Per spec, returned
-                    items belong to the facilitator (not the farmer)
-                    while the facilitator owns the order. Tap opens the
-                    nearby-dealers picker; on commit the items move to a
-                    fresh SENT order routed to the picked dealer. */}
-                {returnedN > 0 && order.status !== 'CANCELLED' && (
-                  <div className="border-t border-[#F0E5D0] bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
-                    <p className="text-xs text-amber-800">
-                      {returnedN} returned item{returnedN === 1 ? '' : 's'}
-                    </p>
-                    <button onClick={() => openRerouteSheet(order.id)} disabled={rerouting}
-                      className="text-xs font-semibold text-amber-800 underline disabled:opacity-50">
-                      Forward to another dealer
-                    </button>
-                  </div>
-                )}
-              </div>
-              )
-            })
+            visibleGroups.map(({ key, subs, matching }) => (
+              <OrderIdCard
+                key={key}
+                orderId={subs[0]?.reference_number || subs[0]?.id || 'unknown'}
+                subs={subs}
+                matching={matching}
+                pill={pill}
+                expanded={expandedGroup === key}
+                onToggleExpand={() => setExpandedGroup(expandedGroup === key ? null : key)}
+                onAccept={accept}
+                onReject={(id) => setConfirmReject(id)}
+                onForwardReturned={(id) => openRerouteSheet(id)}
+                onOpenDetail={(id) => router.push(`/facilitator/orders/${id}`)}
+                acting={acting}
+              />
+            ))
           )}
         </div>
       </div>
 
-      {/* 2026-06-06 — Reject confirmation. Backend cancel-and-migrates
-          the husk: a fresh DRAFT carrying the items lands on the
-          farmer's Manage tab, so they can pick a new recipient
-          without re-keying. */}
+      {/* Reject confirmation sheet */}
       {confirmReject && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
           onClick={() => acting !== confirmReject && setConfirmReject(null)}>
@@ -348,9 +306,7 @@ export default function FacilitatorOrdersPage() {
         </div>
       )}
 
-      {/* 2026-06-06 — Reroute returned-items picker. Same shape as the
-          dealer detail page picker but driven from the list so the
-          facilitator doesn't have to drill in. */}
+      {/* Reroute picker */}
       {rerouteOrderId && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
           onClick={() => !rerouting && setRerouteOrderId(null)}>
@@ -408,6 +364,243 @@ export default function FacilitatorOrdersPage() {
       )}
 
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
+    </div>
+  )
+}
+
+
+// ── Order-ID grouped card ────────────────────────────────────────────────────
+
+function OrderIdCard({
+  orderId, subs, matching, pill, expanded, onToggleExpand,
+  onAccept, onReject, onForwardReturned, onOpenDetail, acting,
+}: {
+  orderId: string
+  subs: Order[]
+  matching: Order[]
+  pill: Pill
+  expanded: boolean
+  onToggleExpand: () => void
+  onAccept: (id: string) => void
+  onReject: (id: string) => void
+  onForwardReturned: (id: string) => void
+  onOpenDetail: (id: string) => void
+  acting: string | null
+}) {
+  // Header data comes from the first sub-order in the group (the
+  // farmer + crop are stable across the lineage).
+  const head = subs[0]
+  // 2026-06-07 — Inline-vs-rows decision: if only one sub-order
+  // matches the pill, render its chunk inline. If 2+, render each
+  // as a separate row inside the card.
+  const renderRows = matching.length > 1
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+      <CardHeader head={head} subCount={subs.length} expanded={expanded}
+        onToggleExpand={onToggleExpand} orderId={orderId} />
+      <div className="divide-y divide-[#F0E5D0]">
+        {renderRows
+          ? matching.map(sub => (
+              <PillChunk key={sub.id} sub={sub} pill={pill}
+                onAccept={onAccept} onReject={onReject}
+                onForwardReturned={onForwardReturned}
+                onOpenDetail={onOpenDetail}
+                acting={acting}
+                showSubHeader />
+            ))
+          : matching.length === 1 && (
+              <PillChunk sub={matching[0]} pill={pill}
+                onAccept={onAccept} onReject={onReject}
+                onForwardReturned={onForwardReturned}
+                onOpenDetail={onOpenDetail}
+                acting={acting} />
+            )
+        }
+      </div>
+      {expanded && (
+        <ExpandedSubOrderList subs={subs} onOpenDetail={onOpenDetail} />
+      )}
+    </div>
+  )
+}
+
+function CardHeader({
+  head, subCount, expanded, onToggleExpand, orderId,
+}: {
+  head: Order | undefined
+  subCount: number
+  expanded: boolean
+  onToggleExpand: () => void
+  orderId: string
+}) {
+  return (
+    <div className="px-4 py-3 bg-[#F5F0E8]/40">
+      <div className="flex items-start gap-3">
+        {head?.farmer_photo_url ? (
+          <img src={head.farmer_photo_url} alt={head?.farmer_name || 'Farmer'}
+            className="w-10 h-10 rounded-full object-cover border border-[#DDD0B8] shrink-0" />
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-[#7D4E00]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
+            <span className="text-xs font-bold text-[#7D4E00]">{initials(head?.farmer_name)}</span>
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="font-semibold text-[#6B3F1F] truncate">
+              {head?.farmer_name || 'Unknown farmer'}
+            </p>
+            {head?.farmer_phone && (
+              <a href={`tel:${head.farmer_phone}`}
+                onClick={e => e.stopPropagation()}
+                className="text-[11px] font-semibold text-[#7D4E00] bg-amber-50 px-2 py-0.5 rounded-md shrink-0">
+                📞
+              </a>
+            )}
+          </div>
+          {head?.crop_name && (
+            <p className="text-xs text-[#7A8C7E] truncate">{head.crop_name}</p>
+          )}
+          <p className="text-[10px] font-mono tracking-wide text-[#7D4E00] mt-0.5">
+            {orderId}
+          </p>
+        </div>
+      </div>
+      {subCount > 1 && (
+        <button onClick={onToggleExpand}
+          className="text-[10px] font-semibold text-[#7A8C7E] mt-2 flex items-center gap-1">
+          {expanded ? '▾' : '▸'} {subCount} sub-orders
+        </button>
+      )}
+    </div>
+  )
+}
+
+function PillChunk({
+  sub, pill, onAccept, onReject, onForwardReturned, onOpenDetail,
+  acting, showSubHeader,
+}: {
+  sub: Order
+  pill: Pill
+  onAccept: (id: string) => void
+  onReject: (id: string) => void
+  onForwardReturned: (id: string) => void
+  onOpenDetail: (id: string) => void
+  acting: string | null
+  showSubHeader?: boolean
+}) {
+  return (
+    <div className="px-4 py-3 space-y-2">
+      {showSubHeader && (
+        <p className="text-[10px] font-mono tracking-wide text-[#7A8C7E]">
+          Sub-order · {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+        </p>
+      )}
+      {pill === 'pending' && (
+        <>
+          <p className="text-xs text-amber-700">
+            New order — your call. {sub.item_count} item{sub.item_count === 1 ? '' : 's'}.
+          </p>
+          <div className="flex gap-2">
+            <button onClick={() => onAccept(sub.id)} disabled={acting === sub.id}
+              className="flex-1 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+              style={{ background: COLOUR }}>
+              {acting === sub.id ? '…' : '✓ Accept'}
+            </button>
+            <button onClick={() => onReject(sub.id)} disabled={acting === sub.id}
+              className="flex-1 py-2 rounded-lg bg-red-100 text-[#D4682E] text-xs font-semibold disabled:opacity-50">
+              ✗ Reject
+            </button>
+          </div>
+        </>
+      )}
+      {pill === 'routed' && <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />}
+      {pill === 'returned' && (
+        <>
+          <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
+          <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2 mt-2">
+            <p className="text-xs text-amber-800">
+              {sub.item_status_counts?.not_available ?? 0} returned item{(sub.item_status_counts?.not_available ?? 0) === 1 ? '' : 's'}
+            </p>
+            <button onClick={() => onForwardReturned(sub.id)}
+              className="text-xs font-semibold text-amber-800 underline">
+              Forward to another dealer
+            </button>
+          </div>
+        </>
+      )}
+      {pill === 'farmer' && (
+        <>
+          <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
+          <p className="text-xs text-amber-700 font-medium mt-2">
+            ⏳ Waiting for farmer to approve {sub.item_status_counts?.sent_for_approval ?? 0} item{(sub.item_status_counts?.sent_for_approval ?? 0) === 1 ? '' : 's'}
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+function RoutedBody({ sub, onOpenDetail }: { sub: Order; onOpenDetail: (id: string) => void }) {
+  const mapsHref = (sub.dealer_shop_gps_lat != null && sub.dealer_shop_gps_lng != null)
+    ? `https://maps.google.com/?q=${sub.dealer_shop_gps_lat},${sub.dealer_shop_gps_lng}`
+    : null
+  return (
+    <button onClick={() => onOpenDetail(sub.id)} className="w-full text-left">
+      <p className="text-xs font-semibold text-[#6B3F1F] truncate">
+        🏪 {sub.dealer_shop_name || sub.dealer_name || 'Dealer assigned'}
+      </p>
+      {sub.dealer_shop_address && (
+        <p className="text-[11px] text-[#7A8C7E] truncate">{sub.dealer_shop_address}</p>
+      )}
+      <div className="flex items-center gap-2 mt-1 flex-wrap">
+        {sub.dealer_phone && (
+          <a href={`tel:${sub.dealer_phone}`} onClick={e => e.stopPropagation()}
+            className="text-[10px] font-semibold text-[#7D4E00] bg-amber-50 px-2 py-0.5 rounded-md">
+            📞 {sub.dealer_phone}
+          </a>
+        )}
+        {mapsHref && (
+          <a href={mapsHref} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
+            className="text-[10px] font-semibold text-[#085041] bg-emerald-50 px-2 py-0.5 rounded-md">
+            🗺️ Maps
+          </a>
+        )}
+        <span className="text-[10px] text-[#7A8C7E]">· {sub.item_count} item{sub.item_count === 1 ? '' : 's'}</span>
+      </div>
+    </button>
+  )
+}
+
+function ExpandedSubOrderList({
+  subs, onOpenDetail,
+}: {
+  subs: Order[]
+  onOpenDetail: (id: string) => void
+}) {
+  return (
+    <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
+      <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
+        All sub-orders ({subs.length})
+      </p>
+      <div className="space-y-2">
+        {subs.map(sub => (
+          <button key={sub.id} onClick={() => onOpenDetail(sub.id)}
+            className="w-full text-left flex items-center justify-between gap-2 bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-xs text-[#6B3F1F] truncate">
+                {sub.dealer_shop_name || sub.dealer_name || 'No dealer assigned'}
+              </p>
+              <p className="text-[10px] text-[#7A8C7E]">
+                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} · {sub.item_count} item{sub.item_count === 1 ? '' : 's'}
+              </p>
+            </div>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
+              {sub.status.replace(/_/g, ' ')}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
