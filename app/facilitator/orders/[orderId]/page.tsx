@@ -126,9 +126,15 @@ export default function FacilitatorOrderDetailPage() {
     </div>
   )
 
-  const approvedItems = order.items.filter(i => ['APPROVED', 'SENT_FOR_APPROVAL'].includes(i.status))
+  // 2026-06-07 — Anti-manipulation rule: only APPROVED items expose
+  // brand / qty / cost to the facilitator. Pre-approval all per-item
+  // detail is null on the backend; the PWA renders count-only
+  // summaries so the facilitator can't peek at what the farmer is
+  // about to approve.
+  const approvedItems = order.items.filter(i => i.status === 'APPROVED')
+  const awaitingApprovalCount = order.items.filter(i => i.status === 'SENT_FOR_APPROVAL').length
   const notAvailableItems = order.items.filter(i => i.status === 'NOT_AVAILABLE')
-  const showPackingBand = approvedItems.length > 0 && ['PARTIALLY_APPROVED', 'COMPLETED', 'SENT_FOR_APPROVAL'].includes(order.status)
+  const showPackingBand = approvedItems.length > 0 && ['PARTIALLY_APPROVED', 'COMPLETED'].includes(order.status)
   const isCompleted = order.status === 'COMPLETED'
 
   return (
@@ -155,6 +161,20 @@ export default function FacilitatorOrderDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* 2026-06-07 — Awaiting farmer approval count. Count-only by
+            design: facilitator can follow up with the farmer but
+            can't peek at brand / qty / cost the dealer submitted. */}
+        {awaitingApprovalCount > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p className="text-amber-900 font-semibold text-sm">
+              {awaitingApprovalCount} item{awaitingApprovalCount > 1 ? 's' : ''} waiting for farmer approval
+            </p>
+            <p className="text-xs text-amber-700 mt-1">
+              You&apos;ll see the brand and price after the farmer approves.
+            </p>
+          </div>
+        )}
 
         {/* ── Packing screen: two-band collect + deliver ── */}
         {showPackingBand && (
