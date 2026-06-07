@@ -35,6 +35,8 @@ interface ItemStatusCounts {
 interface Order {
   id: string
   status: string
+  // 2026-06-07 — Human-readable Order ID shared across the lineage.
+  reference_number: string | null
   farmer_user_id: string
   farmer_name: string | null
   farmer_phone: string | null
@@ -164,6 +166,10 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
   return {
     id: s.id,
     status: s.status,
+    // Seed orders don't carry an Order ID in V1 (Batch 1 covers
+    // app/modules/orders only). When seed-order parity ships, this
+    // will surface like the regular ID.
+    reference_number: null,
     farmer_user_id: s.farmer_user_id,
     farmer_name: s.farmer_name,
     farmer_phone: s.farmer_phone,
@@ -549,6 +555,14 @@ function OrderHeaderRow({ order }: { order: Order }) {
           {(order.is_seed || order.category) && ' · '}
           Received {shortDate(order.created_at)}
         </p>
+        {/* 2026-06-07 — Human-readable Order ID, shared across the
+            lineage. Mono so it reads cleanly off the screen for
+            phone/WhatsApp cross-reference. */}
+        {order.reference_number && (
+          <p className="text-[10px] font-mono tracking-wide text-[#085041] mt-1">
+            {order.reference_number}
+          </p>
+        )}
       </div>
     </div>
   )

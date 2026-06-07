@@ -18,6 +18,8 @@ interface ItemStatusCounts {
 
 interface Order {
   id: string; status: string; farmer_user_id: string; client_id: string
+  // 2026-06-07 — Human-readable Order ID, shared across the lineage.
+  reference_number: string | null
   dealer_user_id: string | null; date_from: string; date_to: string
   created_at: string; item_count: number; pending_count: number
   // 2026-06-06 — Enriched payload (see backend /facilitator/orders).
@@ -237,6 +239,14 @@ export default function FacilitatorOrdersPage() {
                     </span>
                     <span className="text-xs text-[#7A8C7E]">{new Date(order.created_at).toLocaleDateString()}</span>
                   </div>
+                  {/* 2026-06-07 — Order ID chip (shared across the
+                      lineage). Lets the facilitator cross-reference
+                      the same order on calls / WhatsApp. */}
+                  {order.reference_number && (
+                    <p className="text-[10px] font-mono tracking-wide text-[#7D4E00] mb-2">
+                      {order.reference_number}
+                    </p>
+                  )}
                   {/* Farmer → Dealer chain (when assigned) */}
                   <div className="space-y-1 mb-2">
                     {order.farmer_name && (

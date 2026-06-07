@@ -34,6 +34,10 @@ type Subscription = {
 type SubOrder = {
   kind: 'REGULAR' | 'SEED'
   id: string; status: string
+  // 2026-06-07 — Human-readable Order ID shared across the lineage.
+  // Surfaces on the Manage card so the farmer can recognise the
+  // same order on dealer/facilitator calls.
+  reference_number?: string | null
   date_from?: string; date_to?: string
   created_at: string
   item_count?: number; is_max_count?: boolean
@@ -627,6 +631,14 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                   {new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                 </span>
               </div>
+              {/* 2026-06-07 — Order ID chip. Shared across the
+                  lineage so the farmer recognises the same order on
+                  dealer/facilitator calls. */}
+              {o.reference_number && (
+                <p className="text-[10px] font-mono tracking-wide text-[#3A7D44] mb-1">
+                  {o.reference_number}
+                </p>
+              )}
               {o.kind === 'SEED' ? (
                 <p className="text-sm text-[#6B3F1F] truncate">{o.variety_name || 'Seed order'}</p>
               ) : (
