@@ -84,7 +84,7 @@ export default function FarmerPickupPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Pick up" activeRole="FARMER"
+      <PWAHeader title={facilitatorPickedUp ? 'Receive' : 'Pick up'} activeRole="FARMER"
         back={`/crop-detail/${order.subscription_id}/orders?tab=manage`} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto space-y-3">
 
@@ -134,7 +134,9 @@ export default function FarmerPickupPage() {
           </div>
         )}
 
-        {/* Action */}
+        {/* Action — verb switches based on who actually picked up:
+            facilitator-handover → "received", direct dealer pickup
+            → "picked up". 2026-06-08 user direction. */}
         {already ? (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-3 text-sm text-emerald-800 text-center font-medium">
             ✓ You confirmed receipt on{' '}
@@ -145,7 +147,7 @@ export default function FarmerPickupPage() {
         ) : (
           <button onClick={() => setConfirm(true)}
             className="w-full py-4 rounded-2xl bg-[#085041] text-white font-semibold text-sm">
-            ✓ I have picked up these items
+            {facilitatorPickedUp ? '✓ I have received these items' : '✓ I have picked up these items'}
           </button>
         )}
       </div>
@@ -155,11 +157,13 @@ export default function FarmerPickupPage() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Confirm pickup?</p>
+            <p className="font-bold text-[#6B3F1F]">
+              {facilitatorPickedUp ? 'Confirm receipt?' : 'Confirm pickup?'}
+            </p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              By confirming, you tell the dealer the items are in your hands.
-              They will mark the order as completed. Only do this when the
-              items are physically with you.
+              {facilitatorPickedUp
+                ? 'By confirming, you tell the facilitator and the dealer that the items are now with you. The order will be marked as completed. Only do this when the items are physically in your hands.'
+                : 'By confirming, you tell the dealer the items are in your hands. They will mark the order as completed. Only do this when the items are physically with you.'}
             </p>
             {order.packing_code && (
               <p className="text-xs text-[#6B3F1F] mt-2">

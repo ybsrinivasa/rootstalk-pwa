@@ -71,11 +71,17 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
     case 'pending':
       return o.status === 'SENT' && !o.dealer_user_id
     case 'routed':
+      // 2026-06-08 — Routed = dealer is processing.
+      // Includes orders with POSTPONED items even if some items are
+      // already APPROVED (those live in /facilitator/pickup; their
+      // presence shouldn't hide the order from active). Excludes
+      // orders where NA / SFA dominate — those have their own pill.
+      // The approved-count check was dropped (was incorrectly making
+      // any order with picked-up items disappear from the queue).
       return !!o.dealer_user_id &&
         (c?.pending ?? 0) + (c?.available ?? 0) + (c?.postponed ?? 0) > 0 &&
         (c?.not_available ?? 0) === 0 &&
-        (c?.sent_for_approval ?? 0) === 0 &&
-        (c?.approved ?? 0) === 0
+        (c?.sent_for_approval ?? 0) === 0
     case 'returned':
       return (c?.not_available ?? 0) > 0
     case 'farmer':
@@ -514,7 +520,13 @@ function PillChunk({
           </div>
         </>
       )}
-      {pill === 'routed' && <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />}
+      {pill === 'routed' && (
+        <>
+          <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
+          <PostponedStrip sub={sub} />
+          <ApprovedHintStrip sub={sub} />
+        </>
+      )}
       {pill === 'returned' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
@@ -527,6 +539,7 @@ function PillChunk({
               Forward to another dealer
             </button>
           </div>
+          <PostponedStrip sub={sub} />
         </>
       )}
       {pill === 'farmer' && (
@@ -535,9 +548,40 @@ function PillChunk({
           <p className="text-xs text-amber-700 font-medium mt-2">
             ⏳ Waiting for farmer to approve {sub.item_status_counts?.sent_for_approval ?? 0} item{(sub.item_status_counts?.sent_for_approval ?? 0) === 1 ? '' : 's'}
           </p>
+          <PostponedStrip sub={sub} />
         </>
       )}
     </div>
+  )
+}
+
+// 2026-06-08 — Postponed strip. Shown on Routed/Returned/With-Farmer
+// chunks when the dealer postponed any items. The facilitator can't
+// act here (only the dealer can resolve a postponed item), but they
+// need visibility so the order doesn't silently vanish from view.
+function PostponedStrip({ sub }: { sub: Order }) {
+  const n = sub.item_status_counts?.postponed ?? 0
+  if (n === 0) return null
+  return (
+    <div className="bg-amber-50/40 rounded-lg px-3 py-2 mt-2">
+      <p className="text-xs text-amber-800">
+        ⏰ {n} postponed item{n === 1 ? '' : 's'} · dealer is following up
+      </p>
+    </div>
+  )
+}
+
+// 2026-06-08 — Approved hint on a Routed card. When items have been
+// approved + picked up (or are pending pickup) AND there are still
+// non-approved items in play, surface a tiny note so the facilitator
+// remembers the partial state.
+function ApprovedHintStrip({ sub }: { sub: Order }) {
+  const n = sub.item_status_counts?.approved ?? 0
+  if (n === 0) return null
+  return (
+    <p className="text-[10px] text-emerald-700 mt-2">
+      ✓ {n} approved item{n === 1 ? '' : 's'} · check Pickup
+    </p>
   )
 }
 

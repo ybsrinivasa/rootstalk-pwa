@@ -50,6 +50,11 @@ type SubOrder = {
   // 2026-06-06 — Approved items awaiting farmer-confirmed pickup.
   // Drives the emerald "Pick up N items from X" banner.
   pickup_ready_count?: number
+  // 2026-06-08 — When 'FACILITATOR', the banner switches from
+  // "Pick up N items from X" → "Receive N items from X" (the
+  // facilitator has already collected from the dealer; the farmer
+  // is now receiving them from the facilitator).
+  packing_picked_up_by_role?: 'FARMER' | 'FACILITATOR' | null
   // 2026-06-03 — Lineage so the Manage tab can group reroute-child
   // orders under one card. Root of the chain has lineage_root_id ===
   // its own id (backend backfills this on first reroute).
@@ -671,7 +676,9 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                 onClick={e => { e.stopPropagation(); router.push(`/orders/${o.id}/pickup`) }}
                 className="w-full border-t border-[#F0E5D0] bg-emerald-50 px-4 py-3 flex items-center justify-between gap-3 text-left active:bg-emerald-100/60">
                 <p className="text-xs text-emerald-800">
-                  Pick up <strong>{o.pickup_ready_count} item{(o.pickup_ready_count || 0) === 1 ? '' : 's'}</strong>
+                  {o.packing_picked_up_by_role === 'FACILITATOR' ? 'Receive' : 'Pick up'}
+                  {' '}
+                  <strong>{o.pickup_ready_count} item{(o.pickup_ready_count || 0) === 1 ? '' : 's'}</strong>
                   {(o.recipient_shop_name || o.recipient_name) && (
                     <> from <strong>{o.recipient_shop_name || o.recipient_name}</strong></>
                   )}
@@ -843,9 +850,13 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
       {pickupReady.length > 0 && (
         <section className="space-y-2">
           <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wider px-1">
-            Ready to pick up
+            {pickupReady.every(o => o.packing_picked_up_by_role === 'FACILITATOR')
+              ? 'Ready to receive'
+              : 'Ready to pick up'}
           </p>
-          {pickupReady.map(o => (
+          {pickupReady.map(o => {
+            const receiveMode = o.packing_picked_up_by_role === 'FACILITATOR'
+            return (
             <button key={o.id}
               onClick={() => router.push(`/orders/${o.id}/pickup`)}
               className="w-full bg-white rounded-2xl border border-emerald-300 shadow-sm p-4 text-left active:scale-[0.99] transition-transform">
@@ -853,16 +864,17 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
                 <div className="min-w-0">
                   <p className="font-semibold text-[#6B3F1F]">
                     {o.pickup_ready_count} item{(o.pickup_ready_count || 0) === 1 ? '' : 's'} from{' '}
-                    {o.recipient_shop_name || o.recipient_name || 'dealer'}
+                    {o.recipient_shop_name || o.recipient_name || (receiveMode ? 'facilitator' : 'dealer')}
                   </p>
                   <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-                    Tap to confirm pickup
+                    {receiveMode ? 'Tap to confirm receipt' : 'Tap to confirm pickup'}
                   </p>
                 </div>
                 <span className="text-emerald-700 font-semibold text-xs shrink-0">Confirm →</span>
               </div>
             </button>
-          ))}
+            )
+          })}
         </section>
       )}
       {seeds.map(s => (
