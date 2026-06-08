@@ -348,8 +348,17 @@ export default function FarmerOrderDetailPage() {
   // approval items). Those NA items still need to find a dealer.
   // CANCELLED / EXPIRED orders stay non-reroutable (the order itself
   // is dead).
+  // 2026-06-08 — Hide the farmer's reroute CTA when a facilitator
+  // owns the order. Spec: returned items belong to the facilitator's
+  // queue (they forward to a new dealer OR hand back via
+  // /facilitator/orders/{id}/return-to-farmer). The farmer's
+  // /reroute-returned would null facilitator_user_id and steal the
+  // order out of the facilitator's loop. The Manage tab strip
+  // already has this guard; mirroring it here.
+  const facilitatorOwns = !!order.facilitator_user_id
   const canBundleReroute = !approvalPending && !isDraft && reroutableItems.length > 0
     && !['CANCELLED', 'EXPIRED'].includes(order.status)
+    && !facilitatorOwns
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -387,6 +396,22 @@ export default function FarmerOrderDetailPage() {
             style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
             Send {reroutableItems.length} returned item{reroutableItems.length === 1 ? '' : 's'} to a different dealer
           </button>
+        )}
+
+        {/* 2026-06-08 — Passive note for facilitator-owned orders
+            with returned items. The facilitator is responsible for
+            forwarding NA items to another dealer (or handing them
+            back to the farmer); the farmer can't act here. */}
+        {facilitatorOwns && !approvalPending && reroutableItems.length > 0
+          && !['CANCELLED', 'EXPIRED'].includes(order.status) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p className="text-sm text-amber-900 font-medium">
+              {reroutableItems.length} returned item{reroutableItems.length === 1 ? '' : 's'} · your facilitator is handling
+            </p>
+            <p className="text-xs text-amber-700 mt-1">
+              Your facilitator will forward these to another dealer or hand them back to you. No action needed from you.
+            </p>
+          </div>
         )}
 
         {/* 2026-06-03 — Bucketed review sections. The backend returns
@@ -493,7 +518,9 @@ export default function FarmerOrderDetailPage() {
               Returned ({order.returned_items!.length})
             </p>
             <p className="text-[11px] text-[#7A8C7E] px-1 -mt-1">
-              These items can't be fulfilled. Send the whole returned batch to a different dealer with the button above, or leave them for now.
+              {facilitatorOwns
+                ? "These items couldn't be fulfilled. Your facilitator is handling them — they'll forward to another dealer or hand them back to you."
+                : "These items can't be fulfilled. Send the whole returned batch to a different dealer with the button above, or leave them for now."}
             </p>
             {order.returned_items!.map(row => (
               <div key={row.id} className="bg-white rounded-2xl border border-red-200 shadow-sm p-4">
