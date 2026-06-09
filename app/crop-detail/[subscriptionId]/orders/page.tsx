@@ -453,10 +453,68 @@ function PreSowingSubMode({ subscriptionId, category }: { subscriptionId: string
 
 // ── Tab: Manage ─────────────────────────────────────────────────────────────
 
+// 2026-06-09 — Mirror Facilitator pattern on Farmer Manage tab:
+// Order-ID grouped cards + 4 action pills (Routed / For Approval /
+// Returned / Pickup). "With Farmer" on the facilitator is "For
+// Approval" here — the farmer is the one approving. An Order ID
+// card appears in multiple pills if its sub-orders span multiple
+// statuses (same rule as Facilitator).
+type Pill = 'routed' | 'approval' | 'returned' | 'pickup'
+
+const PILL_LABEL: Record<Pill, string> = {
+  routed: 'Routed',
+  approval: 'For Approval',
+  returned: 'Returned',
+  pickup: 'Pickup',
+}
+
+function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
+  // Terminal sub-orders never show in active pills — they belong
+  // to History (separate surface, Batch 3).
+  if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED'].includes(o.status)) {
+    return false
+  }
+
+  if (o.kind === 'SEED') {
+    // Seed lifecycle uses status directly (no per-item counts).
+    switch (pill) {
+      case 'routed':
+        return ['DRAFT', 'SENT', 'ACCEPTED', 'AVAILABLE', 'POSTPONED'].includes(o.status)
+      case 'approval':
+        return o.status === 'SENT_FOR_APPROVAL'
+      case 'returned':
+        return o.status === 'NOT_AVAILABLE'
+      case 'pickup':
+        // Seeds don't have a separate physical-pickup step.
+        return false
+    }
+  }
+
+  const awaiting = o.awaiting_approval_count ?? 0
+  const returned = o.returned_count ?? 0
+  const pickup = o.pickup_ready_count ?? 0
+  switch (pill) {
+    case 'routed':
+      // Dealer is processing or order is DRAFT awaiting send.
+      // Nothing else needs farmer attention. COMPLETED-with-leftover
+      // (NA / postponed) drops to Returned / Routed via their own
+      // counts; truly-done COMPLETED filtered out earlier.
+      return awaiting === 0 && returned === 0 && pickup === 0
+    case 'approval':
+      return awaiting > 0
+    case 'returned':
+      return returned > 0
+    case 'pickup':
+      return pickup > 0
+  }
+}
+
 function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
   const [orders, setOrders] = useState<SubOrder[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [pill, setPill] = useState<Pill>('approval')
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
   async function load() {
     const { data } = await api.get<{ orders: SubOrder[] }>(
@@ -553,246 +611,406 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     )
   }
 
-  // 2026-06-03 — Lineage indexing. Group orders by lineage_root_id and
-  // assign each one its "Split N of M" position. The first order in
-  // a lineage (by created_at ascending) is the original; subsequent
-  // ones are reroute children. We only show the pill when the
-  // lineage has >1 entry — single-order lineages stay clean.
-  const lineageIndex: Record<string, { pos: number; total: number }> = {}
-  if (orders) {
-    const byRoot: Record<string, SubOrder[]> = {}
-    for (const o of orders) {
-      if (o.kind !== 'REGULAR') continue
-      const root = o.lineage_root_id || o.id
-      byRoot[root] = byRoot[root] || []
-      byRoot[root].push(o)
+  // 2026-06-09 — Group sub-orders by reference_number (Order ID).
+  // Pre-batch-1 rows may have null reference_number; fall back to
+  // lineage_root_id, then to the row id. Sub-orders within a group
+  // sort by created_at ascending so the first is the original root.
+  const groups = (() => {
+    const map = new Map<string, SubOrder[]>()
+    for (const o of orders || []) {
+      const key = o.reference_number || o.lineage_root_id || o.id
+      const list = map.get(key)
+      if (list) list.push(o)
+      else map.set(key, [o])
     }
-    for (const root in byRoot) {
-      const arr = byRoot[root].slice().sort(
-        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
-      )
-      arr.forEach((o, i) => {
-        lineageIndex[o.id] = { pos: i + 1, total: arr.length }
-      })
+    for (const list of map.values()) {
+      list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    }
+    return map
+  })()
+
+  // 2026-06-05 — Approval queue (kept inside the For Approval pill
+  // per user direction 2026-06-09). Show approvals one at a time in
+  // arrival order with a "1 of N" peek so the farmer knows others
+  // are queued. Independent decisions (Returned / Pickup / Routed)
+  // are shown all-at-once on their respective pills.
+  const allAwaiting = (orders || [])
+    .filter(o => (o.awaiting_approval_count || 0) > 0)
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  const currentAwaiting = allAwaiting[0]
+  const otherAwaiting = allAwaiting.slice(1)
+
+  // Pill counts: count GROUPS that have at least one matching
+  // sub-order (matches what the user sees rendered).
+  const counts: Record<Pill, number> = { routed: 0, approval: 0, returned: 0, pickup: 0 }
+  for (const list of groups.values()) {
+    for (const p of Object.keys(counts) as Pill[]) {
+      if (list.some(o => subBelongsToPill(o, p))) counts[p] += 1
     }
   }
 
-  // 2026-06-05 — Farmer approval queue. Per user direction: show the
-  // approval lists one at a time, in arrival order (earliest first),
-  // with a small "1 of N" peek so the farmer knows others are
-  // waiting. Other surfaces (returned-only cards, postponed cards,
-  // etc.) stay visible since they're independent decisions.
-  const awaitingOrders = (orders || [])
-    .filter(o => (o.awaiting_approval_count || 0) > 0)
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-  const currentAwaiting = awaitingOrders[0]
-  const otherAwaiting = awaitingOrders.slice(1)
-  const visibleOrders = (orders || []).filter(o => {
-    if ((o.awaiting_approval_count || 0) > 0) return o.id === currentAwaiting?.id
-    return true
+  // Visible groups for the selected pill.
+  const visibleGroups: { key: string; subs: SubOrder[]; matching: SubOrder[] }[] = []
+  for (const [key, list] of groups.entries()) {
+    let matching = list.filter(o => subBelongsToPill(o, pill))
+    // Approval-queue: only the earliest approval sub-order shows
+    // when on the For Approval pill — others wait behind.
+    if (pill === 'approval' && matching.length > 0 && currentAwaiting) {
+      matching = matching.filter(o => o.id === currentAwaiting.id)
+    }
+    if (matching.length > 0) {
+      visibleGroups.push({ key, subs: list, matching })
+    }
+  }
+  visibleGroups.sort((a, b) => {
+    const aT = Math.max(...a.subs.map(o => new Date(o.created_at).getTime()))
+    const bT = Math.max(...b.subs.map(o => new Date(o.created_at).getTime()))
+    return bT - aT
   })
 
   return (
     <div className="p-4 space-y-3">
-      {currentAwaiting && otherAwaiting.length > 0 && (
+      {/* Pill row + History chip placeholder (Batch 3) */}
+      <div className="flex items-center gap-2">
+        <div className="flex gap-2 overflow-x-auto flex-1">
+          {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
+            const active = pill === p
+            const n = counts[p]
+            return (
+              <button key={p} onClick={() => setPill(p)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
+                  active
+                    ? 'bg-[#3A7D44] text-white border-[#3A7D44]'
+                    : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
+                }`}>
+                {PILL_LABEL[p]} · {n}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Approval 1-of-N peek banner — only shown on the For
+          Approval pill when more approvals are queued behind the
+          current one. Per user direction 2026-06-09. */}
+      {pill === 'approval' && currentAwaiting && otherAwaiting.length > 0 && (
         <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 text-xs text-indigo-800">
-          Approval <strong>1 of {awaitingOrders.length}</strong> ·{' '}
-          <span className="text-indigo-600">
-            next will appear after this one
-          </span>
+          Approval <strong>1 of {allAwaiting.length}</strong> ·{' '}
+          <span className="text-indigo-600">next will appear after this one</span>
         </div>
       )}
-      {visibleOrders.map(o => {
-        const cancelled = o.status === 'CANCELLED'
-        const awaitingN = o.awaiting_approval_count || 0
-        const returnedN = o.returned_count || 0
-        const lineage = lineageIndex[o.id]
-        const showLineagePill = lineage && lineage.total > 1
-        // The card no longer routes to /orders/[id] (per
-        // 2026-06-06 — Card body is no longer tappable. Per user:
-        // only the inline links (Pick up / Send to another dealer /
-        // Approve / Cancel) navigate. The header section is read-
-        // only context. Eliminates accidental navigations to the
-        // review page that the farmer didn't ask for.
-        return (
-          <div key={`${o.kind}:${o.id}`}
-            className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
-                    {o.kind === 'SEED' ? 'Seed' : (o.category?.toLowerCase() || 'order')}
-                  </span>
-                  {showLineagePill && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      Split {lineage!.pos} of {lineage!.total}
-                    </span>
-                  )}
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[o.status] || 'bg-stone-100 text-[#7A8C7E]'}`}>
-                    {o.status.replace(/_/g, ' ')}
-                  </span>
-                </div>
-                <span className="text-[10px] text-[#7A8C7E]">
-                  {new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                </span>
-              </div>
-              {/* 2026-06-07 — Order ID chip. Shared across the
-                  lineage so the farmer recognises the same order on
-                  dealer/facilitator calls. */}
-              {o.reference_number && (
-                <p className="text-[10px] font-mono tracking-wide text-[#3A7D44] mb-1">
-                  {o.reference_number}
-                </p>
-              )}
-              {o.kind === 'SEED' ? (
-                <p className="text-sm text-[#6B3F1F] truncate">{o.variety_name || 'Seed order'}</p>
-              ) : (
-                <p className="text-sm text-[#6B3F1F]">
-                  {o.date_from && o.date_to ? (
-                    <>
-                      {new Date(o.date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} —
-                      {' '}{new Date(o.date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-                    </>
-                  ) : null}
-                  {o.item_count !== undefined && o.item_count > 0 && (
-                    <span className="text-xs text-[#7A8C7E]"> · {o.is_max_count ? 'Max ' : ''}{o.item_count} item{o.item_count === 1 ? '' : 's'}</span>
-                  )}
-                </p>
-              )}
-              <RecipientLine
-                name={o.recipient_name}
-                shopName={o.recipient_shop_name}
-                phone={o.recipient_phone}
-                role={o.recipient_role}
-              />
-            </div>
 
-            {/* 2026-06-06 — Pickup banner. Routes to the focused
-                pickup page (no review-screen detour). The
-                recipient_shop_name OR recipient_name renders as the
-                "from X" so the farmer reads where to go. */}
-            {!cancelled && (o.pickup_ready_count ?? 0) > 0 && awaitingN === 0 && (
-              <button
-                onClick={e => { e.stopPropagation(); router.push(`/orders/${o.id}/pickup`) }}
-                className="w-full border-t border-[#F0E5D0] bg-emerald-50 px-4 py-3 flex items-center justify-between gap-3 text-left active:bg-emerald-100/60">
-                <p className="text-xs text-emerald-800">
-                  {o.packing_picked_up_by_role === 'FACILITATOR' ? 'Receive' : 'Pick up'}
-                  {' '}
-                  <strong>{o.pickup_ready_count} item{(o.pickup_ready_count || 0) === 1 ? '' : 's'}</strong>
-                  {(o.recipient_shop_name || o.recipient_name) && (
-                    <> from <strong>{o.recipient_shop_name || o.recipient_name}</strong></>
-                  )}
-                </p>
-                <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
-                  Confirm →
-                </span>
-              </button>
-            )}
+      {visibleGroups.length === 0 && (
+        <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
+          <p className="text-sm text-[#7A8C7E]">Nothing under {PILL_LABEL[pill]}</p>
+        </div>
+      )}
 
-            {/* Returned items — inline action; never names an item.
-                2026-06-03 — Hidden while there are still items
-                awaiting the farmer's approval. Per user: returned
-                actions depend on the approval decision and must
-                wait until the approval task is complete.
-                2026-06-06 — Hidden also when a facilitator owns the
-                order. Per spec: returned items stay with the
-                facilitator's queue (facilitator either re-forwards to
-                another dealer or hands back to the farmer). The
-                farmer would otherwise see a CTA they can't act on
-                meaningfully. Surfaced instead as a status note. */}
-            {!cancelled && returnedN > 0 && awaitingN === 0 && !o.facilitator_user_id && (
-              <div className="border-t border-[#F0E5D0] bg-amber-50/60 px-4 py-3 flex items-center justify-between gap-3">
-                <p className="text-xs text-amber-800">
-                  {returnedN} returned item{returnedN === 1 ? '' : 's'}
-                </p>
-                <button onClick={() => rerouteReturned(o.id)} disabled={busy === o.id}
-                  className="text-xs font-semibold text-amber-800 underline disabled:opacity-50">
-                  {busy === o.id ? '…' : 'Send to another dealer'}
-                </button>
-              </div>
-            )}
-            {!cancelled && returnedN > 0 && awaitingN === 0 && o.facilitator_user_id && (
-              <div className="border-t border-[#F0E5D0] bg-amber-50/60 px-4 py-3">
-                <p className="text-xs text-amber-800">
-                  {returnedN} returned item{returnedN === 1 ? '' : 's'} · your facilitator is handling
-                </p>
-              </div>
-            )}
-
-            {/* Awaiting-approval — 2026-06-03: the button NO LONGER
-                approves directly. Per user direction, the farmer must
-                open the review screen and look at what they're
-                approving (brand, manufacturer, qty, price) before
-                committing. The button label is "Approve" and the tap
-                navigates to the review page for the order. */}
-            {!cancelled && awaitingN > 0 && (
-              <div className="border-t border-[#F0E5D0] bg-emerald-50/40 px-4 py-3 flex items-center justify-between gap-3">
-                <p className="text-xs text-[#3A7D44]">
-                  {awaitingN} item{awaitingN === 1 ? '' : 's'} awaiting approval
-                </p>
-                <button
-                  onClick={() => router.push(o.kind === 'SEED' ? `/seed-orders/${o.id}` : `/orders/${o.id}`)}
-                  className="text-xs font-semibold text-white px-3 py-1 rounded-lg"
-                  style={{ background: '#3A7D44' }}>
-                  Approve →
-                </button>
-              </div>
-            )}
-
-            {/* 2026-06-03 — Cancel order is GATED on awaitingN === 0
-                for regular orders (don't let the farmer cancel a row
-                they haven't decided yet). For seed orders the gate
-                is status-based: not in DRAFT/CANCELLED/PURCHASED/
-                REJECTED/REROUTED/SENT_FOR_APPROVAL (i.e. matches the
-                per-order page's canCancel + adds SFA exclusion since
-                the farmer should approve or reject mid-decision).
-                On cancel, seeds spin out a new DRAFT carrying the
-                same variety + quantity; the farmer picks a new
-                recipient there. Regular husks stay cancelled with
-                Forward + Delete cleanup actions. Seed husks only
-                get Delete — the new DRAFT lives separately.
-                The whole strip collapses when nothing is actionable
-                so the card isn't padded with empty space. */}
-            {(() => {
-              const seedCanCancel = o.kind === 'SEED' && ![
-                'DRAFT', 'CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'SENT_FOR_APPROVAL',
-              ].includes(o.status)
-              const regularCanCancel = o.kind !== 'SEED' && awaitingN === 0
-              return ((!cancelled && (regularCanCancel || seedCanCancel)) || cancelled)
-            })() && (
-              <div className="border-t border-[#F0E5D0] px-4 py-2 flex gap-2">
-                {!cancelled ? (
-                  <button onClick={() => cancel(o.id, o.kind)} disabled={busy === o.id}
-                    className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-                    {busy === o.id ? '…' : 'Cancel order'}
-                  </button>
-                ) : o.kind === 'SEED' ? (
-                  // Seed husk: only Delete makes sense — the new
-                  // DRAFT is a separate row, no items to forward.
-                  <button onClick={() => deleteOrder(o.id, 'SEED')} disabled={busy === o.id}
-                    className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-                    {busy === o.id ? '…' : 'Delete'}
-                  </button>
-                ) : (
-                  <>
-                    <button onClick={() => rerouteReturned(o.id)} disabled={busy === o.id}
-                      className="flex-1 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium disabled:opacity-50">
-                      {busy === o.id ? '…' : 'Forward'}
-                    </button>
-                    <button onClick={() => deleteOrder(o.id, 'REGULAR')} disabled={busy === o.id}
-                      className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-                      {busy === o.id ? '…' : 'Delete'}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )
-      })}
+      {visibleGroups.map(({ key, subs, matching }) => (
+        <OrderIdCard
+          key={key}
+          orderId={subs[0]?.reference_number || subs[0]?.id || 'unknown'}
+          subs={subs}
+          matching={matching}
+          pill={pill}
+          expanded={expandedGroup === key}
+          onToggleExpand={() => setExpandedGroup(expandedGroup === key ? null : key)}
+          onCancel={(id, kind) => cancel(id, kind)}
+          onForwardReturned={rerouteReturned}
+          busy={busy}
+        />
+      ))}
     </div>
   )
 }
+
+// ── Per-pill chunk renderers + Order-ID card (Batch 1, 2026-06-09) ─────────
+
+function OrderIdCard({
+  orderId, subs, matching, pill, expanded, onToggleExpand,
+  onCancel, onForwardReturned, busy,
+}: {
+  orderId: string
+  subs: SubOrder[]
+  matching: SubOrder[]
+  pill: Pill
+  expanded: boolean
+  onToggleExpand: () => void
+  onCancel: (id: string, kind: 'REGULAR' | 'SEED') => void
+  onForwardReturned: (id: string) => void
+  busy: string | null
+}) {
+  const head = subs[0]
+  // Single-chunk inline; multi-chunk (e.g. lineage has two sibling
+  // sub-orders both with returned items) renders as rows with
+  // "Sub-order · date" micro-header.
+  const renderRows = matching.length > 1
+
+  // Cancel allowed when source has live work + farmer hasn't
+  // already cancelled it. Cancel walks the lineage server-side
+  // (per Batch 6: cascade across siblings, all migrate to one
+  // new DRAFT). So we offer Cancel at the Order-ID level.
+  const liveSubs = subs.filter(s =>
+    !['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(s.status),
+  )
+  const cancellable = liveSubs.find(s => {
+    if (s.kind === 'SEED') {
+      return !['DRAFT', 'SENT_FOR_APPROVAL'].includes(s.status)
+    }
+    return (s.awaiting_approval_count || 0) === 0
+  })
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+      <OrderCardHeader head={head} subCount={subs.length} expanded={expanded}
+        onToggleExpand={onToggleExpand} orderId={orderId} />
+      <div className="divide-y divide-[#F0E5D0]">
+        {renderRows
+          ? matching.map(sub => (
+              <FarmerPillChunk key={sub.id} sub={sub} pill={pill}
+                onForwardReturned={onForwardReturned} busy={busy}
+                showSubHeader />
+            ))
+          : matching.length === 1 && (
+              <FarmerPillChunk sub={matching[0]} pill={pill}
+                onForwardReturned={onForwardReturned} busy={busy} />
+            )
+        }
+      </div>
+      {expanded && (
+        <ExpandedSubOrderList subs={subs} />
+      )}
+      {/* Cancel / cleanup row — surfaced at the Order ID level
+          because cancel cascades across the lineage. */}
+      {cancellable && (
+        <div className="border-t border-[#F0E5D0] px-4 py-2">
+          <button onClick={() => onCancel(cancellable.id, cancellable.kind)}
+            disabled={busy === cancellable.id}
+            className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+            {busy === cancellable.id ? '…' : 'Cancel order'}
+          </button>
+        </div>
+      )}
+      {/* If every sub-order is CANCELLED but no delete-able husk
+          exists at this card level, the History page (Batch 3) will
+          surface them. Keeping Delete/Forward off the active Manage
+          card for now — Forward is in the Returned chunk. */}
+    </div>
+  )
+}
+
+function OrderCardHeader({
+  head, subCount, expanded, onToggleExpand, orderId,
+}: {
+  head: SubOrder | undefined
+  subCount: number
+  expanded: boolean
+  onToggleExpand: () => void
+  orderId: string
+}) {
+  return (
+    <div className="px-4 py-3 bg-[#F5F0E8]/40">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
+            {head?.kind === 'SEED' ? 'Seed' : (head?.category?.toLowerCase() || 'order')}
+          </span>
+        </div>
+        <span className="text-[10px] text-[#7A8C7E]">
+          {head?.created_at && new Date(head.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+        </span>
+      </div>
+      <p className="text-[10px] font-mono tracking-wide text-[#3A7D44]">
+        {orderId}
+      </p>
+      {head?.kind === 'SEED' ? (
+        <p className="text-sm text-[#6B3F1F] truncate mt-1">{head.variety_name || 'Seed order'}</p>
+      ) : (
+        <p className="text-sm text-[#6B3F1F] mt-1">
+          {head?.date_from && head?.date_to ? (
+            <>
+              {new Date(head.date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} —
+              {' '}{new Date(head.date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+            </>
+          ) : null}
+        </p>
+      )}
+      {subCount > 1 && (
+        <button onClick={onToggleExpand}
+          className="text-[10px] font-semibold text-[#7A8C7E] mt-2 flex items-center gap-1">
+          {expanded ? '▾' : '▸'} {subCount} sub-orders
+        </button>
+      )}
+    </div>
+  )
+}
+
+function FarmerPillChunk({
+  sub, pill, onForwardReturned, busy, showSubHeader,
+}: {
+  sub: SubOrder
+  pill: Pill
+  onForwardReturned: (id: string) => void
+  busy: string | null
+  showSubHeader?: boolean
+}) {
+  const router = useRouter()
+  return (
+    <div className="px-4 py-3 space-y-2">
+      {showSubHeader && (
+        <p className="text-[10px] font-mono tracking-wide text-[#7A8C7E]">
+          Sub-order · {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+        </p>
+      )}
+      <RecipientLine
+        name={sub.recipient_name}
+        shopName={sub.recipient_shop_name}
+        phone={sub.recipient_phone}
+        role={sub.recipient_role}
+      />
+      {pill === 'routed' && <RoutedChunk sub={sub} />}
+      {pill === 'approval' && <ApprovalChunk sub={sub} />}
+      {pill === 'returned' && (
+        <ReturnedChunk sub={sub} onForwardReturned={onForwardReturned} busy={busy} />
+      )}
+      {pill === 'pickup' && <PickupChunk sub={sub} />}
+      {/* Postponed strip — visibility only; the dealer resolves
+          postponed items. Shown on Routed and Approval chunks where
+          postponed_count is non-zero. */}
+      {(pill === 'routed' || pill === 'approval') && (sub.postponed_count ?? 0) > 0 && (
+        <div className="bg-amber-50/40 rounded-lg px-3 py-2">
+          <p className="text-xs text-amber-800">
+            ⏰ {sub.postponed_count} postponed item{(sub.postponed_count || 0) === 1 ? '' : 's'} · dealer is following up
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RoutedChunk({ sub }: { sub: SubOrder }) {
+  if (sub.kind === 'REGULAR' && sub.status === 'DRAFT') {
+    return (
+      <p className="text-xs text-amber-700">
+        Draft — pick a recipient to send.
+      </p>
+    )
+  }
+  return (
+    <p className="text-xs text-[#7A8C7E]">
+      {sub.item_count !== undefined && sub.item_count > 0
+        ? `${sub.item_count} item${sub.item_count === 1 ? '' : 's'} · `
+        : ''}
+      Dealer is processing
+    </p>
+  )
+}
+
+function ApprovalChunk({ sub }: { sub: SubOrder }) {
+  const router = useRouter()
+  const awaiting = sub.awaiting_approval_count ?? 0
+  return (
+    <div className="bg-emerald-50/40 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+      <p className="text-xs text-[#3A7D44]">
+        {awaiting} item{awaiting === 1 ? '' : 's'} awaiting your approval
+      </p>
+      <button
+        onClick={() => router.push(sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}`)}
+        className="text-xs font-semibold text-white px-3 py-1 rounded-lg"
+        style={{ background: '#3A7D44' }}>
+        Approve →
+      </button>
+    </div>
+  )
+}
+
+function ReturnedChunk({
+  sub, onForwardReturned, busy,
+}: {
+  sub: SubOrder
+  onForwardReturned: (id: string) => void
+  busy: string | null
+}) {
+  const returned = sub.returned_count ?? (sub.status === 'NOT_AVAILABLE' ? 1 : 0)
+  // Facilitator-owned: returned items belong to the facilitator's
+  // queue. Farmer sees a passive note.
+  if (sub.facilitator_user_id) {
+    return (
+      <div className="bg-amber-50/60 rounded-lg px-3 py-2">
+        <p className="text-xs text-amber-800">
+          {returned} returned item{returned === 1 ? '' : 's'} · your facilitator is handling
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+      <p className="text-xs text-amber-800">
+        {returned} returned item{returned === 1 ? '' : 's'}
+      </p>
+      <button onClick={() => onForwardReturned(sub.id)} disabled={busy === sub.id}
+        className="text-xs font-semibold text-amber-800 underline disabled:opacity-50">
+        {busy === sub.id ? '…' : 'Send to another dealer'}
+      </button>
+    </div>
+  )
+}
+
+function PickupChunk({ sub }: { sub: SubOrder }) {
+  const router = useRouter()
+  const count = sub.pickup_ready_count ?? 0
+  const receiveMode = sub.packing_picked_up_by_role === 'FACILITATOR'
+  return (
+    <button
+      onClick={() => router.push(`/orders/${sub.id}/pickup`)}
+      className="w-full bg-emerald-50 rounded-lg px-3 py-2 flex items-center justify-between gap-3 text-left active:bg-emerald-100/60">
+      <p className="text-xs text-emerald-800">
+        {receiveMode ? 'Receive' : 'Pick up'}{' '}
+        <strong>{count} item{count === 1 ? '' : 's'}</strong>
+        {(sub.recipient_shop_name || sub.recipient_name) && (
+          <> from <strong>{sub.recipient_shop_name || sub.recipient_name}</strong></>
+        )}
+      </p>
+      <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
+        Confirm →
+      </span>
+    </button>
+  )
+}
+
+function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
+  const router = useRouter()
+  return (
+    <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
+      <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
+        All sub-orders ({subs.length})
+      </p>
+      <div className="space-y-2">
+        {subs.map(sub => (
+          <button key={sub.id}
+            onClick={() => router.push(sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}`)}
+            className="w-full text-left flex items-center justify-between gap-2 bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-xs text-[#6B3F1F] truncate">
+                {sub.recipient_shop_name || sub.recipient_name || 'No recipient'}
+              </p>
+              <p className="text-[10px] text-[#7A8C7E]">
+                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {sub.item_count !== undefined && sub.item_count > 0 && (
+                  <> · {sub.item_count} item{sub.item_count === 1 ? '' : 's'}</>
+                )}
+              </p>
+            </div>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
+              {sub.status.replace(/_/g, ' ')}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 
 
 // ── Tab: Received ───────────────────────────────────────────────────────────
