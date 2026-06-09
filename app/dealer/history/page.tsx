@@ -134,8 +134,12 @@ export default function DealerHistoryPage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
+    // 2026-06-09 — Pass include_husks=true so the audit deep-dive
+    // surfaces CANCELLED / EXPIRED orders AND REROUTED-only husks
+    // (lineage parents that migrated their items away). The active
+    // /dealer/orders feed filters both by default.
     Promise.all([
-      api.get<DealerOrder[]>('/dealer/orders').catch(() => ({ data: [] as DealerOrder[] })),
+      api.get<DealerOrder[]>('/dealer/orders?include_husks=true').catch(() => ({ data: [] as DealerOrder[] })),
       api.get<SeedOrderRaw[]>('/dealer/seed-orders').catch(() => ({ data: [] as SeedOrderRaw[] })),
     ]).then(([regular, seeds]) => {
       setOrders([
