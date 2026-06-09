@@ -18,6 +18,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import ClientCropChip from '@/components/ClientCropChip'
@@ -127,6 +128,7 @@ export default function CropOrdersPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
   const search = useSearchParams()
+  const t = useTranslations('orders.cropOrders')
   const [tab, setTab] = useState<'order' | 'manage' | 'received'>(
     (search.get('tab') as 'order' | 'manage' | 'received') || 'order',
   )
@@ -161,7 +163,7 @@ export default function CropOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Orders" activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
       <div className="pt-16 pb-20">
         {/* Same company/crop anchor the Advisory / Diagnose / Ask
             Expert surfaces use, so the farmer is grounded the
@@ -169,9 +171,9 @@ export default function CropOrdersPage() {
         <ClientCropChip subscriptionId={subscriptionId} />
 
         <div className="flex bg-white border-b border-[#DDD0B8] sticky top-16 z-30">
-          <button onClick={() => setTab('order')}    className={tabClass('order')}>Order</button>
-          <button onClick={() => setTab('manage')}   className={tabClass('manage')}>Manage</button>
-          <button onClick={() => setTab('received')} className={tabClass('received')}>Received</button>
+          <button onClick={() => setTab('order')}    className={tabClass('order')}>{t('tabs.order')}</button>
+          <button onClick={() => setTab('manage')}   className={tabClass('manage')}>{t('tabs.manage')}</button>
+          <button onClick={() => setTab('received')} className={tabClass('received')}>{t('tabs.received')}</button>
         </div>
 
         {tab === 'order' && (
@@ -209,12 +211,13 @@ function OrderTab({
   const [open, setOpen] = useState<'seed' | 'pesticide' | 'fertilizer' | null>(
     openHint || null,
   )
+  const t = useTranslations('orders.cropOrders.accordions')
   return (
     <div className="p-4 space-y-2">
-      <Accordion title="Seed / Seedling" emoji="🌱" open={open === 'seed'} onToggle={() => setOpen(o => o === 'seed' ? null : 'seed')}>
+      <Accordion title={t('seed')} emoji="🌱" open={open === 'seed'} onToggle={() => setOpen(o => o === 'seed' ? null : 'seed')}>
         <SeedSection subscriptionId={subscriptionId} />
       </Accordion>
-      <Accordion title="Pesticide" emoji="🧪" open={open === 'pesticide'} onToggle={() => setOpen(o => o === 'pesticide' ? null : 'pesticide')}>
+      <Accordion title={t('pesticide')} emoji="🧪" open={open === 'pesticide'} onToggle={() => setOpen(o => o === 'pesticide' ? null : 'pesticide')}>
         <CategorySection
           subscriptionId={subscriptionId}
           category="PESTICIDE"
@@ -224,7 +227,7 @@ function OrderTab({
           initialDateTo={initialDateTo}
         />
       </Accordion>
-      <Accordion title="Fertilizer" emoji="🌾" open={open === 'fertilizer'} onToggle={() => setOpen(o => o === 'fertilizer' ? null : 'fertilizer')}>
+      <Accordion title={t('fertilizer')} emoji="🌾" open={open === 'fertilizer'} onToggle={() => setOpen(o => o === 'fertilizer' ? null : 'fertilizer')}>
         <CategorySection
           subscriptionId={subscriptionId}
           category="FERTILIZER"
@@ -260,15 +263,16 @@ function Accordion({ title, emoji, open, onToggle, children }: {
 
 function SeedSection({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.seedSection')
   return (
     <div className="pt-3 space-y-3">
       <p className="text-xs text-[#7A8C7E]">
-        Browse and order seed varieties recommended for this crop.
+        {t('body')}
       </p>
       <button onClick={() => router.push(`/subscribe/seed-varieties/${subscriptionId}`)}
         className="w-full py-3 rounded-xl text-white text-sm font-semibold"
         style={{ background: '#3A7D44' }}>
-        Browse varieties
+        {t('browseCta')}
       </button>
     </div>
   )
@@ -286,6 +290,7 @@ function CategorySection({
   initialDateTo: string
 }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.category')
   // 2026-06-03 — dateFrom is locked to today. The deep-link param is
   // ignored for From (we no longer let advisory pre-fill it to a past
   // date) — orders only flow forward from "now". To stays editable.
@@ -345,25 +350,25 @@ function CategorySection({
       ) : (
         <div>
           <p className="text-[11px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
-            Order {category.toLowerCase()}s by date range
+            {category === 'PESTICIDE' ? t('headerPesticide') : t('headerFertilizer')}
           </p>
           {/* 2026-06-03 — From is a locked "Today" pill (no input).
               To is a styled button overlaying a hidden native date
               picker so we control the visible DD/MM/YYYY format. */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <p className="text-[11px] text-[#7A8C7E]">From</p>
+              <p className="text-[11px] text-[#7A8C7E]">{t('fromLabel')}</p>
               <div className="mt-1 w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-stone-50 text-[#6B3F1F] font-medium">
-                Today
+                {t('todayPill')}
               </div>
             </div>
             <div>
-              <p className="text-[11px] text-[#7A8C7E]">To</p>
+              <p className="text-[11px] text-[#7A8C7E]">{t('toLabel')}</p>
               <div className="mt-1 relative w-full border border-[#DDD0B8] rounded-lg bg-white">
                 <p className={`px-3 py-2 text-sm ${dateTo ? 'text-[#6B3F1F] font-medium' : 'text-[#7A8C7E]'}`}>
                   {dateTo
                     ? new Date(dateTo).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                    : 'Pick a date'}
+                    : t('pickDate')}
                 </p>
                 <input type="date" value={dateTo} min={todayISO}
                   onChange={e => setDateTo(e.target.value)}
@@ -373,9 +378,9 @@ function CategorySection({
           </div>
           {dateTo && (
             <p className="text-xs text-[#7A8C7E] mt-2">
-              {loading ? 'Checking…' :
-               preview && preview.count > 0 ? `${preview.count} item${preview.count === 1 ? '' : 's'} recommended in this window.` :
-               preview ? 'Nothing recommended in this window.' : 'No preview available.'}
+              {loading ? t('checking') :
+               preview && preview.count > 0 ? t('recommendedInWindow', { count: preview.count }) :
+               preview ? t('nothingInWindow') : t('noPreview')}
             </p>
           )}
           <button
@@ -392,7 +397,7 @@ function CategorySection({
             }}
             className="mt-3 w-full py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
             style={{ background: '#3A7D44' }}>
-            Continue
+            {t('continueBtn')}
           </button>
         </div>
       )}
@@ -403,6 +408,7 @@ function CategorySection({
 
 function PreSowingSubMode({ subscriptionId, category }: { subscriptionId: string; category: 'PESTICIDE' | 'FERTILIZER' }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.preSowing')
   const [preview, setPreview] = useState<DBSPreview | null>(null)
 
   useEffect(() => {
@@ -423,13 +429,13 @@ function PreSowingSubMode({ subscriptionId, category }: { subscriptionId: string
   return (
     <div className="bg-emerald-50/40 border border-[#3A7D44]/20 rounded-xl p-3">
       <p className="text-[11px] font-semibold text-[#3A7D44] uppercase tracking-wider">
-        Pre-sowing {category === 'PESTICIDE' ? 'pesticides' : 'fertilizers'}
+        {category === 'PESTICIDE' ? t('headerPesticides') : t('headerFertilizers')}
       </p>
       {preview.available ? (
         <>
           <p className="text-sm text-[#6B3F1F] mt-1">
-            {preview.count} item{preview.count === 1 ? '' : 's'} recommended before sowing.
-            {preview.has_locked_brand && <span className="text-[11px] text-[#7A8C7E] block mt-0.5">Locked brand applies.</span>}
+            {t('recommendedBeforeSowing', { count: preview.count })}
+            {preview.has_locked_brand && <span className="text-[11px] text-[#7A8C7E] block mt-0.5">{t('lockedBrandApplies')}</span>}
           </p>
           <button
             onClick={() => {
@@ -441,12 +447,12 @@ function PreSowingSubMode({ subscriptionId, category }: { subscriptionId: string
             }}
             className="mt-2 w-full py-2 rounded-lg text-white text-xs font-semibold"
             style={{ background: '#3A7D44' }}>
-            Order pre-sowing {category === 'PESTICIDE' ? 'pesticides' : 'fertilizers'}
+            {category === 'PESTICIDE' ? t('ctaPesticides') : t('ctaFertilizers')}
           </button>
         </>
       ) : (
         <p className="text-xs text-[#7A8C7E] mt-1">
-          Nothing recommended for pre-sowing in this package.
+          {t('empty')}
         </p>
       )}
     </div>
@@ -464,12 +470,7 @@ function PreSowingSubMode({ subscriptionId, category }: { subscriptionId: string
 // statuses (same rule as Facilitator).
 type Pill = 'routed' | 'approval' | 'returned' | 'pickup'
 
-const PILL_LABEL: Record<Pill, string> = {
-  routed: 'Routed',
-  approval: 'For Approval',
-  returned: 'Returned',
-  pickup: 'Pickup',
-}
+const PILLS: readonly Pill[] = ['routed', 'approval', 'returned', 'pickup'] as const
 
 function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   // Terminal sub-orders never show in active pills — they belong
@@ -514,6 +515,7 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
 
 function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.manage')
   const [orders, setOrders] = useState<SubOrder[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [pill, setPill] = useState<Pill>('approval')
@@ -547,7 +549,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     // cancel keeps its existing behaviour (items flip to NA, husk
     // stays for forward/delete).
     if (kind === 'SEED') {
-      if (!confirm('Cancel this seed order? Your variety + quantity will be saved in a new draft so you can re-send.')) return
+      if (!confirm(t('confirmCancelSeed'))) return
       setBusy(orderId)
       try {
         const { data } = await api.put<{ status: string; new_draft_seed_order_id?: string }>(
@@ -562,7 +564,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
       } finally { setBusy(null) }
       return
     }
-    if (!confirm('Cancel this order? You can still forward or delete it after.')) return
+    if (!confirm(t('confirmCancelRegular'))) return
     setBusy(orderId)
     try {
       await api.put(`/farmer/orders/${orderId}/cancel`, {})
@@ -578,9 +580,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     // right.
     const target = (orders || []).find(o => o.id === orderId)
     const isDraft = target?.status === 'DRAFT'
-    if (!confirm(isDraft
-      ? 'Delete this draft permanently? The items will be gone.'
-      : 'Delete this cancelled order permanently?')) return
+    if (!confirm(isDraft ? t('confirmDeleteDraft') : t('confirmDeleteCancelled'))) return
     setBusy(orderId)
     try {
       if (kind === 'SEED') {
@@ -617,7 +617,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     return (
       <div className="p-4">
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
-          <p className="text-sm text-[#7A8C7E]">No orders are awaiting action right now.</p>
+          <p className="text-sm text-[#7A8C7E]">{t('emptyAwaiting')}</p>
         </div>
       </div>
     )
@@ -656,7 +656,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   // sub-order (matches what the user sees rendered).
   const counts: Record<Pill, number> = { routed: 0, approval: 0, returned: 0, pickup: 0 }
   for (const list of groups.values()) {
-    for (const p of Object.keys(counts) as Pill[]) {
+    for (const p of PILLS) {
       if (list.some(o => subBelongsToPill(o, p))) counts[p] += 1
     }
   }
@@ -687,7 +687,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
           subscription) opens the terminal sub-orders surface. */}
       <div className="flex items-center gap-2">
         <div className="flex gap-2 overflow-x-auto flex-1">
-          {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
+          {PILLS.map(p => {
             const active = pill === p
             const n = counts[p]
             return (
@@ -697,7 +697,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
                     ? 'bg-[#3A7D44] text-white border-[#3A7D44]'
                     : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                 }`}>
-                <span>{PILL_LABEL[p]}</span>
+                <span>{t(`pill.${p}`)}</span>
                 {/* 2026-06-09 — Count badge: filled circle so the
                     task-load reads at a glance. Tinted for the
                     active pill (white on green), role accent for
@@ -715,7 +715,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
         </div>
         <button onClick={() => router.push(`/crop-detail/${subscriptionId}/orders/history`)}
           className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
-          📁 History
+          {t('historyChip')}
         </button>
       </div>
 
@@ -724,14 +724,14 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
           current one. Per user direction 2026-06-09. */}
       {pill === 'approval' && currentAwaiting && otherAwaiting.length > 0 && (
         <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 text-xs text-indigo-800">
-          Approval <strong>1 of {allAwaiting.length}</strong> ·{' '}
-          <span className="text-indigo-600">next will appear after this one</span>
+          {t('approvalPeek')} <strong>{t('approvalPeekProgress', { total: allAwaiting.length })}</strong> ·{' '}
+          <span className="text-indigo-600">{t('approvalPeekHint')}</span>
         </div>
       )}
 
       {visibleGroups.length === 0 && (
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
-          <p className="text-sm text-[#7A8C7E]">Nothing under {PILL_LABEL[pill]}</p>
+          <p className="text-sm text-[#7A8C7E]">{t('emptyPill', { pillName: t(`pill.${pill}`) })}</p>
         </div>
       )}
 
@@ -771,6 +771,7 @@ function OrderIdCard({
   onForwardReturned: (id: string) => void
   busy: string | null
 }) {
+  const t = useTranslations('orders.cropOrders.manage')
   const head = subs[0]
   // Single-chunk inline; multi-chunk (e.g. lineage has two sibling
   // sub-orders both with returned items) renders as rows with
@@ -829,7 +830,7 @@ function OrderIdCard({
           <button onClick={() => onCancel(cancellable.id, cancellable.kind)}
             disabled={busy === cancellable.id}
             className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-            {busy === cancellable.id ? '…' : 'Cancel order'}
+            {busy === cancellable.id ? '…' : t('cancelOrderBtn')}
           </button>
         </div>
       )}
@@ -841,7 +842,7 @@ function OrderIdCard({
           <button onClick={() => onDelete(deletable.id, deletable.kind)}
             disabled={busy === deletable.id}
             className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-            {busy === deletable.id ? '…' : 'Delete draft'}
+            {busy === deletable.id ? '…' : t('deleteDraftBtn')}
           </button>
         </div>
       )}
@@ -858,12 +859,13 @@ function OrderCardHeader({
   onToggleExpand: () => void
   orderId: string
 }) {
+  const t = useTranslations('orders.cropOrders.orderHeader')
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
       <div className="flex items-center justify-between gap-2 mb-1">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
-            {head?.kind === 'SEED' ? 'Seed' : (head?.category?.toLowerCase() || 'order')}
+            {head?.kind === 'SEED' ? t('kindSeed') : (head?.category?.toLowerCase() || t('kindFallback'))}
           </span>
         </div>
         <span className="text-[10px] text-[#7A8C7E]">
@@ -874,7 +876,7 @@ function OrderCardHeader({
         {orderId}
       </p>
       {head?.kind === 'SEED' ? (
-        <p className="text-sm text-[#6B3F1F] truncate mt-1">{head.variety_name || 'Seed order'}</p>
+        <p className="text-sm text-[#6B3F1F] truncate mt-1">{head.variety_name || t('seedFallback')}</p>
       ) : (
         <p className="text-sm text-[#6B3F1F] mt-1">
           {head?.date_from && head?.date_to ? (
@@ -888,7 +890,7 @@ function OrderCardHeader({
       {subCount > 1 && (
         <button onClick={onToggleExpand}
           className="text-[10px] font-semibold text-[#7A8C7E] mt-2 flex items-center gap-1">
-          {expanded ? '▾' : '▸'} {subCount} sub-orders
+          {expanded ? '▾' : '▸'} {t('expandSubs', { count: subCount })}
         </button>
       )}
     </div>
@@ -905,11 +907,12 @@ function FarmerPillChunk({
   showSubHeader?: boolean
 }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.chunk')
   return (
     <div className="px-4 py-3 space-y-2">
       {showSubHeader && (
         <p className="text-[10px] font-mono tracking-wide text-[#7A8C7E]">
-          Sub-order · {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+          {t('subOrderPrefix')} {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
         </p>
       )}
       <RecipientLine
@@ -945,6 +948,7 @@ function FarmerPillChunk({
 //   seeds, etc.) where the farmer shouldn't act yet.
 function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.chunk')
   const n = sub.postponed_count ?? 0
   if (n === 0) return null
 
@@ -952,7 +956,7 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
     return (
       <div className="bg-amber-50/40 rounded-lg px-3 py-2">
         <p className="text-xs text-amber-800">
-          ⏰ {n} postponed item{n === 1 ? '' : 's'} · your facilitator is handling
+          {t('postponedFacilitatorHandling', { count: n })}
         </p>
       </div>
     )
@@ -964,11 +968,11 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
     return (
       <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
         <p className="text-xs text-amber-800">
-          ⏰ {n} postponed item{n === 1 ? '' : 's'}
+          {t('postponedCount', { count: n })}
         </p>
         <button onClick={() => router.push(`/orders/${sub.id}/forward`)}
           className="text-xs font-semibold text-amber-800 underline">
-          Send to another dealer
+          {t('sendToAnotherDealer')}
         </button>
       </div>
     )
@@ -977,7 +981,7 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
   return (
     <div className="bg-amber-50/40 rounded-lg px-3 py-2">
       <p className="text-xs text-amber-800">
-        ⏰ {n} postponed item{n === 1 ? '' : 's'} · dealer is following up
+        {t('postponedDealerFollowUp', { count: n })}
       </p>
     </div>
   )
@@ -985,16 +989,17 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
 
 function RoutedChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.chunk')
   if (sub.kind === 'REGULAR' && sub.status === 'DRAFT') {
     return (
       <div className="space-y-2">
         <p className="text-xs text-amber-700">
-          Draft — pick a recipient to send.
+          {t('draftPickRecipient')}
         </p>
         <button onClick={() => router.push(`/orders/${sub.id}`)}
           className="w-full py-2 rounded-lg text-white text-xs font-semibold"
           style={{ background: '#3A7D44' }}>
-          Pick a recipient →
+          {t('pickRecipientCta')}
         </button>
       </div>
     )
@@ -1003,12 +1008,12 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
     return (
       <div className="space-y-2">
         <p className="text-xs text-amber-700">
-          Draft — pick a recipient to send.
+          {t('draftPickRecipient')}
         </p>
         <button onClick={() => router.push(`/seed-orders/${sub.id}`)}
           className="w-full py-2 rounded-lg text-white text-xs font-semibold"
           style={{ background: '#3A7D44' }}>
-          Pick a recipient →
+          {t('pickRecipientCta')}
         </button>
       </div>
     )
@@ -1016,26 +1021,27 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
   return (
     <p className="text-xs text-[#7A8C7E]">
       {sub.item_count !== undefined && sub.item_count > 0
-        ? `${sub.item_count} item${sub.item_count === 1 ? '' : 's'} · `
+        ? t('itemsCountPrefix', { count: sub.item_count })
         : ''}
-      Dealer is processing
+      {t('dealerProcessing')}
     </p>
   )
 }
 
 function ApprovalChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.chunk')
   const awaiting = sub.awaiting_approval_count ?? 0
   return (
     <div className="bg-emerald-50/40 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
       <p className="text-xs text-[#3A7D44]">
-        {awaiting} item{awaiting === 1 ? '' : 's'} awaiting your approval
+        {t('awaitingApproval', { count: awaiting })}
       </p>
       <button
         onClick={() => router.push(sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}`)}
         className="text-xs font-semibold text-white px-3 py-1 rounded-lg"
         style={{ background: '#3A7D44' }}>
-        Approve →
+        {t('approveCta')}
       </button>
     </div>
   )
@@ -1048,6 +1054,7 @@ function ReturnedChunk({
   onForwardReturned: (id: string) => void
   busy: string | null
 }) {
+  const t = useTranslations('orders.cropOrders.chunk')
   const returned = sub.returned_count ?? (sub.status === 'NOT_AVAILABLE' ? 1 : 0)
   // Facilitator-owned: returned items belong to the facilitator's
   // queue. Farmer sees a passive note.
@@ -1055,7 +1062,7 @@ function ReturnedChunk({
     return (
       <div className="bg-amber-50/60 rounded-lg px-3 py-2">
         <p className="text-xs text-amber-800">
-          {returned} returned item{returned === 1 ? '' : 's'} · your facilitator is handling
+          {t('returnedFacilitatorHandling', { count: returned })}
         </p>
       </div>
     )
@@ -1063,11 +1070,11 @@ function ReturnedChunk({
   return (
     <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
       <p className="text-xs text-amber-800">
-        {returned} returned item{returned === 1 ? '' : 's'}
+        {t('returnedCount', { count: returned })}
       </p>
       <button onClick={() => onForwardReturned(sub.id)} disabled={busy === sub.id}
         className="text-xs font-semibold text-amber-800 underline disabled:opacity-50">
-        {busy === sub.id ? '…' : 'Send to another dealer'}
+        {busy === sub.id ? '…' : t('sendToAnotherDealer')}
       </button>
     </div>
   )
@@ -1080,28 +1087,30 @@ function ReturnedChunk({
 // item list + total + I-have-received button live.
 function PickupChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.chunk')
   const count = sub.pickup_ready_count ?? 0
   const receiveMode = sub.packing_picked_up_by_role === 'FACILITATOR'
+  const fromName = sub.recipient_shop_name || sub.recipient_name
   return (
     <button
       onClick={() => router.push(`/orders/${sub.id}/pickup`)}
       className="w-full bg-white rounded-lg border border-emerald-300 overflow-hidden text-left active:bg-emerald-50/50">
       {sub.packing_code && (
         <div className="px-3 py-1.5 bg-emerald-600 text-white flex items-baseline justify-between">
-          <p className="text-[9px] uppercase tracking-wider opacity-75">Packing ID</p>
+          <p className="text-[9px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
           <p className="text-xs font-bold font-mono tracking-widest">{sub.packing_code}</p>
         </div>
       )}
       <div className="px-3 py-2 flex items-center justify-between gap-3 bg-emerald-50">
         <p className="text-xs text-emerald-800">
-          {receiveMode ? 'Receive' : 'Pick up'}{' '}
-          <strong>{count} item{count === 1 ? '' : 's'}</strong>
-          {(sub.recipient_shop_name || sub.recipient_name) && (
-            <> from <strong>{sub.recipient_shop_name || sub.recipient_name}</strong></>
+          {receiveMode ? t('receivePrefix') : t('pickupPrefix')}{' '}
+          <strong>{t('pickupItemCount', { count })}</strong>
+          {fromName && (
+            <> {t('fromConnector')} <strong>{fromName}</strong></>
           )}
         </p>
         <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
-          Confirm →
+          {t('confirmCta')}
         </span>
       </div>
     </button>
@@ -1110,10 +1119,12 @@ function PickupChunk({ sub }: { sub: SubOrder }) {
 
 function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.expanded')
+  const tOrdersCommon = useTranslations('orders.common')
   return (
     <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
       <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
-        All sub-orders ({subs.length})
+        {t('allSubOrders', { count: subs.length })}
       </p>
       <div className="space-y-2">
         {subs.map(sub => (
@@ -1122,12 +1133,12 @@ function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
             className="w-full text-left flex items-center justify-between gap-2 bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
             <div className="min-w-0">
               <p className="text-xs text-[#6B3F1F] truncate">
-                {sub.recipient_shop_name || sub.recipient_name || 'No recipient'}
+                {sub.recipient_shop_name || sub.recipient_name || t('noRecipient')}
               </p>
               <p className="text-[10px] text-[#7A8C7E]">
                 {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                 {sub.item_count !== undefined && sub.item_count > 0 && (
-                  <> · {sub.item_count} item{sub.item_count === 1 ? '' : 's'}</>
+                  <> · {tOrdersCommon('itemsCount', { count: sub.item_count })}</>
                 )}
               </p>
             </div>
@@ -1158,6 +1169,8 @@ interface SeedPurchased {
 
 function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
+  const t = useTranslations('orders.cropOrders.received')
+  const tChunk = useTranslations('orders.cropOrders.chunk')
   const [items, setItems] = useState<PurchasedItem[] | null>(null)
   const [seeds, setSeeds] = useState<SeedPurchased[] | null>(null)
   // 2026-06-09 (restored) — "Ready to pick up" strip on top of the
@@ -1188,9 +1201,9 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
     return (
       <div className="p-4">
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
-          <p className="text-sm text-[#7A8C7E]">No items received yet for this crop.</p>
+          <p className="text-sm text-[#7A8C7E]">{t('emptyTitle')}</p>
           <p className="text-xs text-[#7A8C7E] mt-1">
-            Items appear here once the dealer marks them packed and you confirm pickup.
+            {t('emptyHint')}
           </p>
         </div>
       </div>
@@ -1202,8 +1215,8 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
         <section className="space-y-2">
           <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wider px-1">
             {pickupReady.every(o => o.packing_picked_up_by_role === 'FACILITATOR')
-              ? 'Ready to receive'
-              : 'Ready to pick up'}
+              ? t('readyToReceive')
+              : t('readyToPickUp')}
           </p>
           {pickupReady.map(o => {
             const receiveMode = o.packing_picked_up_by_role === 'FACILITATOR'
@@ -1214,18 +1227,18 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
                 className="w-full bg-white rounded-2xl border border-emerald-300 shadow-sm overflow-hidden text-left active:scale-[0.99] transition-transform">
                 {o.packing_code && (
                   <div className="px-4 py-1.5 bg-emerald-600 text-white flex items-baseline justify-between">
-                    <p className="text-[10px] uppercase tracking-wider opacity-75">Packing ID</p>
+                    <p className="text-[10px] uppercase tracking-wider opacity-75">{tChunk('packingIdLabel')}</p>
                     <p className="text-sm font-bold font-mono tracking-widest">{o.packing_code}</p>
                   </div>
                 )}
                 <div className="p-4">
                   <p className="text-sm text-emerald-800">
-                    {receiveMode ? 'Receive' : 'Pick up'}{' '}
-                    <strong>{o.pickup_ready_count} item{o.pickup_ready_count === 1 ? '' : 's'}</strong>
-                    {fromName && <> from <strong>{fromName}</strong></>}
+                    {receiveMode ? t('receivePrefix') : t('pickupPrefix')}{' '}
+                    <strong>{tChunk('pickupItemCount', { count: o.pickup_ready_count ?? 0 })}</strong>
+                    {fromName && <> {tChunk('fromConnector')} <strong>{fromName}</strong></>}
                   </p>
                   <p className="text-[11px] text-emerald-700 mt-1 font-semibold">
-                    Tap to confirm →
+                    {t('tapToConfirm')}
                   </p>
                 </div>
               </button>
@@ -1237,15 +1250,15 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
         <div key={s.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
           <div className="flex items-baseline justify-between gap-2">
             <div className="min-w-0">
-              <span className="text-[10px] uppercase tracking-wide text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded-full font-semibold">Seed</span>
-              <p className="font-semibold text-[#6B3F1F] truncate mt-1">{s.variety_name || 'Seed variety'}</p>
+              <span className="text-[10px] uppercase tracking-wide text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded-full font-semibold">{t('seedBadge')}</span>
+              <p className="font-semibold text-[#6B3F1F] truncate mt-1">{s.variety_name || t('seedVarietyFallback')}</p>
             </div>
             {s.quantity != null && s.unit && (
               <p className="text-xs text-[#7A8C7E] shrink-0">{s.quantity} {s.unit}{s.total_price != null ? ` · ₹${s.total_price}` : ''}</p>
             )}
           </div>
           <p className="text-[11px] text-[#7A8C7E] mt-1">
-            Purchased {new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+            {t('purchasedOn', { date: new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
           </p>
           <RecipientLine
             name={s.recipient_name}
@@ -1260,9 +1273,9 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
           <div className="p-4">
             <div className="flex items-baseline justify-between gap-2">
               <div className="min-w-0">
-                <p className="font-semibold text-[#6B3F1F] truncate">{it.brand_name || 'Unknown brand'}</p>
+                <p className="font-semibold text-[#6B3F1F] truncate">{it.brand_name || t('unknownBrand')}</p>
                 {it.manufacturer_name && (
-                  <p className="text-xs text-[#7A8C7E] truncate">by {it.manufacturer_name}</p>
+                  <p className="text-xs text-[#7A8C7E] truncate">{t('byManufacturer', { manufacturer: it.manufacturer_name })}</p>
                 )}
               </div>
               {it.given_volume != null && it.volume_unit && (
@@ -1271,9 +1284,12 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
             </div>
             {(it.application_date_from && it.application_date_to) && (
               <p className="text-[11px] text-[#7A8C7E] mt-1">
-                Apply: {new Date(it.application_date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} – {new Date(it.application_date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {t('applyDates', {
+                  from: new Date(it.application_date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+                  to: new Date(it.application_date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+                })}
                 {it.merged_timeline_count && it.merged_timeline_count > 1 && (
-                  <span className="ml-1 text-[#7A8C7E]">· across {it.merged_timeline_count} timelines</span>
+                  <span className="ml-1 text-[#7A8C7E]">{t('acrossTimelines', { count: it.merged_timeline_count })}</span>
                 )}
               </p>
             )}
@@ -1282,7 +1298,7 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
             )}
             {it.received_at && (
               <p className="text-[11px] text-[#7A8C7E] mt-1">
-                Received {new Date(it.received_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {t('receivedOn', { date: new Date(it.received_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
               </p>
             )}
           </div>
@@ -1290,26 +1306,12 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
               farmer can call the dealer / facilitator easily. Matches
               the seed-order card shape. Phone is a tel: link. */}
           {(it.recipient_shop_name || it.recipient_name || it.recipient_phone) && (
-            <div className="border-t border-[#F0E5D0] px-4 py-2 flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-[#6B3F1F] truncate">
-                  {it.recipient_shop_name || it.recipient_name}
-                </p>
-                {(it.recipient_shop_name && it.recipient_name) || it.recipient_role === 'FACILITATOR' ? (
-                  <p className="text-[10px] text-[#7A8C7E] truncate">
-                    {it.recipient_role === 'FACILITATOR'
-                      ? `${it.recipient_name ?? ''} (Facilitator)`
-                      : `${it.recipient_name} (Dealer)`}
-                  </p>
-                ) : null}
-              </div>
-              {it.recipient_phone && (
-                <a href={`tel:${it.recipient_phone}`}
-                  className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
-                  📞 {it.recipient_phone}
-                </a>
-              )}
-            </div>
+            <RecipientCardLine
+              recipientName={it.recipient_name}
+              recipientShopName={it.recipient_shop_name}
+              recipientPhone={it.recipient_phone}
+              recipientRole={it.recipient_role}
+            />
           )}
         </div>
       ))}
@@ -1331,11 +1333,12 @@ function RecipientLine({
   phone?: string | null
   role?: 'DEALER' | 'FACILITATOR' | null
 }) {
+  const t = useTranslations('orders.cropOrders.recipient')
   if (!name && !shopName && !phone) return null
   const primary = role === 'DEALER' ? (shopName || name) : (name || shopName)
   const secondary = role === 'DEALER'
-    ? (name && shopName && name !== shopName ? `${name} (Dealer)` : 'Dealer')
-    : 'Facilitator'
+    ? (name && shopName && name !== shopName ? t('nameWithDealer', { name }) : t('dealerLabel'))
+    : t('facilitatorLabel')
   return (
     <div className="mt-1.5 pt-1.5 border-t border-[#F0E5D0] flex items-center justify-between gap-2">
       <div className="min-w-0">
@@ -1349,6 +1352,42 @@ function RecipientLine({
           onClick={e => e.stopPropagation()}
           className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
           📞 {phone}
+        </a>
+      )}
+    </div>
+  )
+}
+
+// Variant of RecipientLine for the Received tab's per-item recipient
+// card. Uses the bordered card layout and renders the "(Dealer)" /
+// "(Facilitator)" annotation slightly differently.
+function RecipientCardLine({
+  recipientName, recipientShopName, recipientPhone, recipientRole,
+}: {
+  recipientName?: string | null
+  recipientShopName?: string | null
+  recipientPhone?: string | null
+  recipientRole?: 'DEALER' | 'FACILITATOR' | null
+}) {
+  const t = useTranslations('orders.cropOrders.recipient')
+  return (
+    <div className="border-t border-[#F0E5D0] px-4 py-2 flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-[#6B3F1F] truncate">
+          {recipientShopName || recipientName}
+        </p>
+        {(recipientShopName && recipientName) || recipientRole === 'FACILITATOR' ? (
+          <p className="text-[10px] text-[#7A8C7E] truncate">
+            {recipientRole === 'FACILITATOR'
+              ? t('nameWithFacilitator', { name: recipientName ?? '' })
+              : t('nameWithDealer', { name: recipientName ?? '' })}
+          </p>
+        ) : null}
+      </div>
+      {recipientPhone && (
+        <a href={`tel:${recipientPhone}`}
+          className="text-[11px] font-semibold text-[#3A7D44] px-2 py-1 rounded-lg bg-emerald-50 shrink-0">
+          📞 {recipientPhone}
         </a>
       )}
     </div>

@@ -447,6 +447,120 @@
     }
   },
   "orders": {
+    "cropOrders": {
+      "headerTitle": "Orders",
+      "tabs": {
+        "order": "Order",
+        "manage": "Manage",
+        "received": "Received"
+      },
+      "accordions": {
+        "seed": "Seed / Seedling",
+        "pesticide": "Pesticide",
+        "fertilizer": "Fertilizer"
+      },
+      "seedSection": {
+        "body": "Browse and order seed varieties recommended for this crop.",
+        "browseCta": "Browse varieties"
+      },
+      "category": {
+        "headerPesticide": "Order pesticides by date range",
+        "headerFertilizer": "Order fertilizers by date range",
+        "fromLabel": "From",
+        "toLabel": "To",
+        "todayPill": "Today",
+        "pickDate": "Pick a date",
+        "checking": "Checking…",
+        "recommendedInWindow": "{count, plural, one {1 item recommended in this window.} other {# items recommended in this window.}}",
+        "nothingInWindow": "Nothing recommended in this window.",
+        "noPreview": "No preview available.",
+        "continueBtn": "Continue"
+      },
+      "preSowing": {
+        "headerPesticides": "Pre-sowing pesticides",
+        "headerFertilizers": "Pre-sowing fertilizers",
+        "recommendedBeforeSowing": "{count, plural, one {1 item recommended before sowing.} other {# items recommended before sowing.}}",
+        "lockedBrandApplies": "Locked brand applies.",
+        "ctaPesticides": "Order pre-sowing pesticides",
+        "ctaFertilizers": "Order pre-sowing fertilizers",
+        "empty": "Nothing recommended for pre-sowing in this package."
+      },
+      "manage": {
+        "confirmCancelSeed": "Cancel this seed order? Your variety + quantity will be saved in a new draft so you can re-send.",
+        "confirmCancelRegular": "Cancel this order? You can still forward or delete it after.",
+        "confirmDeleteDraft": "Delete this draft permanently? The items will be gone.",
+        "confirmDeleteCancelled": "Delete this cancelled order permanently?",
+        "emptyAwaiting": "No orders are awaiting action right now.",
+        "pill": {
+          "routed": "Routed",
+          "approval": "For Approval",
+          "returned": "Returned",
+          "pickup": "Pickup"
+        },
+        "historyChip": "📁 History",
+        "approvalPeek": "Approval",
+        "approvalPeekProgress": "1 of {total}",
+        "approvalPeekHint": "next will appear after this one",
+        "emptyPill": "Nothing under {pillName}",
+        "cancelOrderBtn": "Cancel order",
+        "deleteDraftBtn": "Delete draft"
+      },
+      "orderHeader": {
+        "kindSeed": "Seed",
+        "kindFallback": "order",
+        "seedFallback": "Seed order",
+        "expandSubs": "{count, plural, one {1 sub-order} other {# sub-orders}}"
+      },
+      "chunk": {
+        "subOrderPrefix": "Sub-order ·",
+        "postponedFacilitatorHandling": "{count, plural, one {⏰ 1 postponed item · your facilitator is handling} other {⏰ # postponed items · your facilitator is handling}}",
+        "postponedCount": "{count, plural, one {⏰ 1 postponed item} other {⏰ # postponed items}}",
+        "postponedDealerFollowUp": "{count, plural, one {⏰ 1 postponed item · dealer is following up} other {⏰ # postponed items · dealer is following up}}",
+        "sendToAnotherDealer": "Send to another dealer",
+        "draftPickRecipient": "Draft — pick a recipient to send.",
+        "pickRecipientCta": "Pick a recipient →",
+        "itemsCountPrefix": "{count, plural, one {1 item · } other {# items · }}",
+        "dealerProcessing": "Dealer is processing",
+        "awaitingApproval": "{count, plural, one {1 item awaiting your approval} other {# items awaiting your approval}}",
+        "approveCta": "Approve →",
+        "returnedFacilitatorHandling": "{count, plural, one {1 returned item · your facilitator is handling} other {# returned items · your facilitator is handling}}",
+        "returnedCount": "{count, plural, one {1 returned item} other {# returned items}}",
+        "packingIdLabel": "Packing ID",
+        "pickupPrefix": "Pick up",
+        "receivePrefix": "Receive",
+        "pickupItemCount": "{count, plural, one {1 item} other {# items}}",
+        "fromName": "from {name}",
+        "fromConnector": "from",
+        "confirmCta": "Confirm →"
+      },
+      "expanded": {
+        "allSubOrders": "All sub-orders ({count})",
+        "noRecipient": "No recipient"
+      },
+      "received": {
+        "emptyTitle": "No items received yet for this crop.",
+        "emptyHint": "Items appear here once the dealer marks them packed and you confirm pickup.",
+        "readyToReceive": "Ready to receive",
+        "readyToPickUp": "Ready to pick up",
+        "receivePrefix": "Receive",
+        "pickupPrefix": "Pick up",
+        "tapToConfirm": "Tap to confirm →",
+        "seedBadge": "Seed",
+        "seedVarietyFallback": "Seed variety",
+        "purchasedOn": "Purchased {date}",
+        "unknownBrand": "Unknown brand",
+        "byManufacturer": "by {manufacturer}",
+        "applyDates": "Apply: {from} – {to}",
+        "acrossTimelines": "{count, plural, one {· across 1 timeline} other {· across # timelines}}",
+        "receivedOn": "Received {date}"
+      },
+      "recipient": {
+        "dealerLabel": "Dealer",
+        "facilitatorLabel": "Facilitator",
+        "nameWithDealer": "{name} (Dealer)",
+        "nameWithFacilitator": "{name} (Facilitator)"
+      }
+    },
     "common": {
       "unknownRecipient": "Unknown",
       "promoterBadge": "Your Promoter",
