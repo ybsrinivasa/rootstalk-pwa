@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser } from '@/lib/auth'
 import { setLanguage, getLanguage } from '@/lib/language'
 import api from '@/lib/api'
@@ -88,13 +89,14 @@ function MiniMark() {
 
 // ── Back button ───────────────────────────────────────────────────────────────
 function BackBtn({ onClick }: { onClick: () => void }) {
+  const t = useTranslations('common')
   return (
     <button onClick={onClick}
       className="flex items-center gap-1.5 text-white/55 text-sm hover:text-white/90 transition-colors mt-4 mb-6">
       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
       </svg>
-      Back
+      {t('back')}
     </button>
   )
 }
@@ -141,6 +143,13 @@ function ProgressDots({ filled }: { filled: number }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function RootPage() {
   const router = useRouter()
+  const tCommon = useTranslations('common')
+  const tLanding = useTranslations('landing')
+  const tLanguage = useTranslations('language')
+  const tWelcome = useTranslations('welcome')
+  const tAuth = useTranslations('auth')
+  const tLocation = useTranslations('location')
+  const tAbout = useTranslations('about')
   const [stage,        setStage]       = useState<Stage>('loading')
   const [languages,    setLanguages]   = useState<Lang[]>([])
   const [selectedLang, setSelected]    = useState<string>(getLanguage() || 'en')
@@ -224,7 +233,7 @@ export default function RootPage() {
       const res = await requestOtp('+91' + phone)
       if (res.dev_otp) setDevOtp(res.dev_otp)
       setStage('otp'); setResend(30)
-    } catch { setError('Could not send a code. Please check your number.') }
+    } catch { setError(tAuth('errors.phoneSendFailed')) }
     finally { setBusy(false) }
   }
 
@@ -241,8 +250,8 @@ export default function RootPage() {
       else roleHome(user ?? undefined)
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status
-      if (status === 401) setError("That code didn't match. Please try again.")
-      else setError('Something went wrong. Please try again.')
+      if (status === 401) setError(tAuth('errors.otpMismatch'))
+      else setError(tCommon('errors.generic'))
     }
     finally { setBusy(false) }
   }
@@ -261,7 +270,7 @@ export default function RootPage() {
       await refreshUser()
       setStage('location')
     } catch {
-      setError("Couldn't save your name. Please try again.")
+      setError(tAuth('errors.nameSaveFailed'))
     } finally {
       setBusy(false)
     }
@@ -284,7 +293,7 @@ export default function RootPage() {
       await refreshUser()
       setStage('gps')
     } catch {
-      setError("Couldn't save your location. Please try again.")
+      setError(tLocation('errors.saveFailed'))
     }
   }
 
@@ -305,7 +314,7 @@ export default function RootPage() {
         } catch {
           // GPS captured locally; save failed. Surface so the user
           // can re-attempt from the profile page later.
-          setError("Captured your location but couldn't save it. You can try again from your profile.")
+          setError(tLocation('errors.gpsSaveFailed'))
         }
       },
       (err) => {
@@ -315,11 +324,11 @@ export default function RootPage() {
         //   3 = TIMEOUT (couldn't find a fix in time)
         setGpsStatus('denied')
         if (err.code === 1) {
-          setError("You blocked location access. To retry, enable location for this site in your browser settings, then tap Try again.")
+          setError(tLocation('errors.gpsBlocked'))
         } else if (err.code === 3) {
-          setError("Took too long to find you. Tap Try again.")
+          setError(tLocation('errors.gpsTimeout'))
         } else {
-          setError("Your location isn't available right now. Tap Try again or skip for later.")
+          setError(tLocation('errors.gpsUnavailable'))
         }
       },
       { timeout: 10000 }
@@ -357,7 +366,7 @@ export default function RootPage() {
 
         {/* Tagline */}
         <p className="text-white/50 text-sm mt-4 font-light text-center leading-relaxed tracking-wide max-w-[220px]">
-          Knowledge that grows<br/>with your crop
+          {tLanding('heroTaglineLine1')}<br/>{tLanding('heroTaglineLine2')}
         </p>
       </div>
 
@@ -377,7 +386,7 @@ export default function RootPage() {
         {languages.length > 1 && (
           <div className="mb-5">
             <p className="text-[11px] text-[#7A8C7E] uppercase tracking-widest font-medium mb-3">
-              Choose your language
+              {tLanguage('selectorTitle')}
             </p>
             <div className="overflow-x-auto -mx-1 px-1">
               <div className="flex gap-2 pb-1 w-max">
@@ -402,23 +411,23 @@ export default function RootPage() {
           <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4">
             <p className="text-amber-800 text-sm font-medium">
               {sessionEnded === 'another_device'
-                ? 'You signed in on another device. Please sign in again.'
-                : 'Your session expired. Please sign in again.'}
+                ? tLanding('sessionEndedAnotherDevice')
+                : tLanding('sessionEndedExpired')}
             </p>
           </div>
         )}
 
-        <Btn onClick={() => setStage('phone')}>Get started →</Btn>
+        <Btn onClick={() => setStage('phone')}>{tLanding('getStarted')}</Btn>
 
         <p className="text-[#7A8C7E] text-xs text-center mt-3 tracking-wide">
-          For farmers · dealers · facilitators · experts
+          {tLanding('audience')}
         </p>
         <div className="flex items-center justify-center gap-3 mt-5">
-          <p className="text-[#DDD0B8] text-[10px] font-light">Neytiri Eywafarm Agritech Pvt Ltd</p>
+          <p className="text-[#DDD0B8] text-[10px] font-light">{tAbout('companyFull')}</p>
           <span className="text-[#DDD0B8] text-[10px]">·</span>
           <button onClick={() => router.push('/privacy-policy')}
             className="text-[#7A8C7E] text-[10px] underline">
-            Privacy Policy
+            {tLanding('privacyPolicy')}
           </button>
         </div>
       </div>
@@ -440,10 +449,10 @@ export default function RootPage() {
             <NodeMark size={40} colour="white"/>
           </div>
           <h1 className="text-white font-bold text-center leading-tight" style={{ fontSize: '2rem' }}>
-            Welcome, {user?.name || 'to rootsTALK'}!
+            {tWelcome('greeting', { name: user?.name || tWelcome('fallbackName') })}
           </h1>
           <p className="text-white/60 text-sm mt-2 font-light text-center">
-            Your complete farming companion
+            {tWelcome('subline')}
           </p>
         </div>
 
@@ -470,8 +479,8 @@ export default function RootPage() {
                 <circle cx="21" cy="19" r="5" fill="#3A7D44"/>
                 <path d="M21 16.5v2.5l1.5 1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
               </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">Advisories</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Expert-guided crop management, season by season</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.advisories.title')}</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.advisories.body')}</p>
             </div>
 
             {/* Purchase */}
@@ -481,8 +490,8 @@ export default function RootPage() {
                 <circle cx="12" cy="23" r="1.5" fill="#3A7D44"/>
                 <circle cx="19" cy="23" r="1.5" fill="#3A7D44"/>
               </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">Purchase</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Order recommended inputs through trusted dealers</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.purchase.title')}</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.purchase.body')}</p>
             </div>
 
             {/* Diagnose */}
@@ -492,8 +501,8 @@ export default function RootPage() {
                 <path d="M18.5 18.5L23 23" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
                 <path d="M10 13h6M13 10v6" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">Diagnose</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Identify crop problems with guided diagnosis</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.diagnose.title')}</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.diagnose.body')}</p>
             </div>
 
             {/* Ask Expert */}
@@ -502,19 +511,19 @@ export default function RootPage() {
                 <path d="M5 6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H9l-4 4V6z" stroke="#3A7D44" strokeWidth="1.5" strokeLinejoin="round"/>
                 <path d="M10 10h8M10 13.5h5" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">Ask Expert</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">Get answers from certified agronomists</p>
+              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.askExpert.title')}</p>
+              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.askExpert.body')}</p>
             </div>
           </div>
 
           {/* CTA buttons */}
           <Btn onClick={() => roleHome()}>
-            {`Let's get started →`}
+            {tWelcome('cta')}
           </Btn>
           <button
             onClick={() => roleHome()}
             className="w-full text-center text-[#7A8C7E] text-sm py-3 mt-2">
-            {`I'm also a dealer / facilitator / expert`}
+            {tWelcome('alsoRoles')}
           </button>
         </div>
       </div>
@@ -528,9 +537,9 @@ export default function RootPage() {
         <div className="pt-safe-top"/>
         <BackBtn onClick={() => setStage('location')}/>
         <MiniMark/>
-        <h2 className="text-white font-semibold leading-snug mt-5" style={{ fontSize: '1.6rem' }}>Your location on the map</h2>
+        <h2 className="text-white font-semibold leading-snug mt-5" style={{ fontSize: '1.6rem' }}>{tLocation('gpsTitle')}</h2>
         <p className="text-white/50 text-sm mt-2 font-light leading-relaxed pb-7">
-          Helps us find the 5 nearest dealers and facilitators for you
+          {tLocation('gpsSubtitle')}
         </p>
       </div>
 
@@ -556,20 +565,20 @@ export default function RootPage() {
                 <line x1="4" y1="24" x2="12" y2="24" stroke={G} strokeWidth="2" strokeLinecap="round"/>
                 <line x1="36" y1="24" x2="44" y2="24" stroke={G} strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              <span className="text-[#6B3F1F] font-medium text-base">Get my location</span>
+              <span className="text-[#6B3F1F] font-medium text-base">{tLocation('gpsCta')}</span>
             </button>
           )}
 
           {gpsStatus === 'getting' && (
             <div className="flex flex-col items-center gap-3">
               <div className="w-10 h-10 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin"/>
-              <p className="text-[#7A8C7E] text-sm">Finding you…</p>
+              <p className="text-[#7A8C7E] text-sm">{tLocation('gpsFinding')}</p>
             </div>
           )}
 
           {gpsStatus === 'done' && (
             <div className="w-full bg-green-50 border border-green-200 rounded-2xl px-4 py-4">
-              <p className="text-green-700 font-semibold text-sm">Location captured</p>
+              <p className="text-green-700 font-semibold text-sm">{tLocation('gpsCaptured')}</p>
               <p className="text-green-600/70 text-xs mt-1 font-mono">
                 {gpsLat?.toFixed(5)}, {gpsLng?.toFixed(5)}
               </p>
@@ -579,14 +588,14 @@ export default function RootPage() {
           {gpsStatus === 'denied' && (
             <div className="w-full bg-amber-50 border border-amber-200 rounded-2xl px-4 py-4">
               <p className="text-amber-700 font-semibold text-sm">
-                {error ? 'Couldn’t get your location' : 'Location access was denied'}
+                {error ? tLocation('gpsCouldntGet') : tLocation('gpsDenied')}
               </p>
               <p className="text-amber-600/80 text-xs mt-1 leading-relaxed">
-                {error || 'You can set this from your profile later.'}
+                {error || tLocation('gpsLater')}
               </p>
               <button onClick={captureGps}
                 className="mt-3 text-sm font-medium text-amber-800 underline">
-                Try again
+                {tLocation('gpsTryAgain')}
               </button>
             </div>
           )}
@@ -596,7 +605,7 @@ export default function RootPage() {
             is captured. Denied path keeps the Try again button
             inside the error card above; there is no skip. */}
         {gpsStatus === 'done' && (
-          <Btn onClick={() => setStage('welcome')}>Continue →</Btn>
+          <Btn onClick={() => setStage('welcome')}>{tCommon('continue')}</Btn>
         )}
       </div>
     </div>
@@ -618,9 +627,9 @@ export default function RootPage() {
           <div className="pt-safe-top"/>
           <BackBtn onClick={() => setStage('profile')}/>
           <MiniMark/>
-          <h2 className="text-white font-semibold leading-snug mt-5" style={{ fontSize: '1.6rem' }}>Where is your farm?</h2>
+          <h2 className="text-white font-semibold leading-snug mt-5" style={{ fontSize: '1.6rem' }}>{tLocation('title')}</h2>
           <p className="text-white/50 text-sm mt-2 font-light leading-relaxed pb-7">
-            This helps us find nearby dealers and advisories
+            {tLocation('subtitle')}
           </p>
         </div>
 
@@ -637,8 +646,7 @@ export default function RootPage() {
             {locationsError && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                 <p className="text-amber-800 text-sm font-medium">
-                  Couldn&apos;t load the location list. Skip this for now and
-                  add it from your profile when you&apos;re back online.
+                  {tLocation('loadError')}
                 </p>
               </div>
             )}
@@ -646,14 +654,14 @@ export default function RootPage() {
             {!locationsError && !coshLocations && (
               <div className="flex items-center gap-3 text-[#7A8C7E] text-sm">
                 <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin"/>
-                Loading states and districts…
+                {tLocation('loading')}
               </div>
             )}
 
             {/* State selector */}
             {coshLocations && (
               <div>
-                <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">State</p>
+                <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">{tLocation('stateLabel')}</p>
                 {stateId ? (
                   <div className="flex items-center gap-2">
                     <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
@@ -664,20 +672,20 @@ export default function RootPage() {
                         setDistrictId(''); setDistrictName(''); setDistrictSearch('')
                       }}
                       className="text-[#7A8C7E] text-xs underline">
-                      Change
+                      {tCommon('change')}
                     </button>
                   </div>
                 ) : (
                   <>
                     <Input
-                      placeholder="Search state…"
+                      placeholder={tLocation('searchState')}
                       value={stateSearch}
                       onChange={e => setStateSearch(e.target.value)}
                     />
                     {stateSearch && (
                       <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                         {filteredStates.length === 0
-                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No states found</p>
+                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noStates')}</p>
                           : filteredStates.map(s => (
                             <button key={s.cosh_id}
                               onClick={() => {
@@ -701,7 +709,7 @@ export default function RootPage() {
                 a (state, district) pair Cosh doesn't have. */}
             {coshLocations && stateId && (
               <div>
-                <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">District</p>
+                <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">{tLocation('districtLabel')}</p>
                 {districtId ? (
                   <div className="flex items-center gap-2">
                     <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
@@ -711,20 +719,20 @@ export default function RootPage() {
                         setDistrictId(''); setDistrictName(''); setDistrictSearch('')
                       }}
                       className="text-[#7A8C7E] text-xs underline">
-                      Change
+                      {tCommon('change')}
                     </button>
                   </div>
                 ) : (
                   <>
                     <Input
-                      placeholder="Search district…"
+                      placeholder={tLocation('searchDistrict')}
                       value={districtSearch}
                       onChange={e => setDistrictSearch(e.target.value)}
                     />
                     {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
                       <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                         {filteredDistricts.length === 0
-                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No districts found</p>
+                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noDistricts')}</p>
                           : filteredDistricts.map(d => (
                             <button key={d.cosh_id}
                               onClick={() => {
@@ -748,9 +756,9 @@ export default function RootPage() {
                 so we store the typed value as-is for the farmer's
                 own reference. */}
             <div>
-              <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">Sub-district / Village <span className="text-[#DDD0B8]">(optional)</span></p>
+              <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">{tLocation('subDistrictLabel')} <span className="text-[#DDD0B8]">{tCommon('optional')}</span></p>
               <Input
-                placeholder="Village or sub-district — optional"
+                placeholder={tLocation('subDistrictPlaceholder')}
                 value={subDistrict}
                 onChange={e => setSubDistrict(e.target.value)}
               />
@@ -760,7 +768,7 @@ export default function RootPage() {
           <div className="pt-4">
             {error && <p className="text-red-500 text-sm px-1 pb-2">{error}</p>}
             <Btn disabled={!stateId || !districtId} onClick={saveLocation}>
-              Continue →
+              {tCommon('continue')}
             </Btn>
           </div>
         </div>
@@ -769,13 +777,13 @@ export default function RootPage() {
   }
 
   // ── Phone / OTP / Profile (shared structure) ─────────────────────────────────
-  const heading = stage === 'phone'   ? 'Enter your mobile number'
-                : stage === 'otp'     ? 'Enter the code we sent'
-                :                       'Nice to meet you'
+  const heading = stage === 'phone'   ? tAuth('phoneTitle')
+                : stage === 'otp'     ? tAuth('otpTitle')
+                :                       tAuth('nameTitle')
 
-  const sub     = stage === 'phone'   ? "We'll send a one-time code — just to confirm it's you"
-                : stage === 'otp'     ? `We sent a 6-digit code to +91 ${phone}`
-                :                       'What shall we call you?'
+  const sub     = stage === 'phone'   ? tAuth('phoneSubtitle')
+                : stage === 'otp'     ? tAuth('otpSubtitle', { phone })
+                :                       tAuth('nameSubtitle')
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ background: BG, height: '100svh' }}>
@@ -808,15 +816,15 @@ export default function RootPage() {
                 +91
               </div>
               <Input type="tel" inputMode="numeric" value={phone} maxLength={10} autoFocus required
-                placeholder="98765 43210"
+                placeholder={tAuth('phonePlaceholder')}
                 onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}/>
             </div>
             {error && <p className="text-red-500 text-sm px-1">{error}</p>}
             {devOtp && <DevBadge code={devOtp}/>}
             <Btn type="submit" disabled={busy || phone.length < 10}>
-              {busy ? 'Sending…' : 'Send code →'}
+              {busy ? tAuth('sending') : tAuth('sendCode')}
             </Btn>
-            <p className="text-[#7A8C7E] text-xs text-center">Standard SMS charges may apply</p>
+            <p className="text-[#7A8C7E] text-xs text-center">{tAuth('smsNotice')}</p>
           </form>
         )}
 
@@ -831,14 +839,14 @@ export default function RootPage() {
                          focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44] transition-all"/>
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
             <Btn type="submit" disabled={busy || otp.length < 6}>
-              {busy ? 'Checking…' : 'Verify →'}
+              {busy ? tAuth('checking') : tAuth('verify')}
             </Btn>
             <button type="button"
               onClick={() => requestOtp('+91' + phone).then(r => { if (r.dev_otp) setDevOtp(r.dev_otp); setResend(30) })}
               disabled={resend > 0}
               className="text-center text-sm py-2 transition-opacity disabled:opacity-40"
               style={{ color: G }}>
-              {resend > 0 ? `Resend in ${resend}s` : 'Send a new code'}
+              {resend > 0 ? tAuth('resendIn', { seconds: resend }) : tAuth('resendNow')}
             </button>
           </form>
         )}
@@ -846,10 +854,10 @@ export default function RootPage() {
         {stage === 'profile' && (
           <form onSubmit={saveName} className="flex flex-col gap-4">
             <Input value={name} onChange={e => setName(e.target.value)}
-              autoFocus placeholder="e.g. Rajan"/>
+              autoFocus placeholder={tAuth('namePlaceholder')}/>
             {error && <p className="text-red-500 text-sm px-1">{error}</p>}
             <Btn type="submit" disabled={busy || !name.trim()}>
-              {busy ? 'Saving…' : 'Take me in →'}
+              {busy ? tCommon('saving') : tAuth('takeMeIn')}
             </Btn>
           </form>
         )}
@@ -860,9 +868,10 @@ export default function RootPage() {
 }
 
 function DevBadge({ code }: { code: string }) {
+  const t = useTranslations('auth')
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-      <p className="text-amber-700 text-xs font-medium">Dev code: <strong>{code}</strong></p>
+      <p className="text-amber-700 text-xs font-medium">{t('devCode')} <strong>{code}</strong></p>
     </div>
   )
 }

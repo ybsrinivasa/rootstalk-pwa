@@ -3,17 +3,139 @@
     "translationPending": "translation pending",
     "loading": "Loading…",
     "save": "Save",
+    "saving": "Saving…",
     "cancel": "Cancel",
     "confirm": "Confirm",
     "back": "Back",
     "next": "Next",
+    "continue": "Continue →",
+    "change": "Change",
     "yes": "Yes",
     "no": "No",
     "retry": "Retry",
-    "ok": "OK"
+    "ok": "OK",
+    "optional": "(optional)",
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "nav": {
+    "home": "Home",
+    "orders": "Orders",
+    "queries": "Queries",
+    "history": "History",
+    "profile": "Profile",
+    "payments": "Payments",
+    "alerts": "Alerts",
+    "pickup": "Pickup",
+    "dashboard": "Dashboard"
+  },
+  "role": {
+    "farmer": "Farmer",
+    "dealer": "My Shop",
+    "facilitator": "Facilitator",
+    "pundit": "Expert"
+  },
+  "header": {
+    "aboutRootsTalk": "About rootsTALK",
+    "selectLanguage": "Select language"
+  },
+  "about": {
+    "tagline": "Your agricultural advisory network — connecting farmers, experts, and companies across India.",
+    "byOrg": "by Neytiri Eywafarm Agritech",
+    "visitEywaFarm": "Visit eywa.farm",
+    "companyFull": "Neytiri Eywafarm Agritech Pvt Ltd"
   },
   "language": {
     "selectorTitle": "Choose your language",
     "selectorHint": "You can change this any time from the header."
+  },
+  "landing": {
+    "heroTaglineLine1": "Knowledge that grows",
+    "heroTaglineLine2": "with your crop",
+    "getStarted": "Get started →",
+    "audience": "For farmers · dealers · facilitators · experts",
+    "privacyPolicy": "Privacy Policy",
+    "sessionEndedAnotherDevice": "You signed in on another device. Please sign in again.",
+    "sessionEndedExpired": "Your session expired. Please sign in again."
+  },
+  "welcome": {
+    "greeting": "Welcome, {name}!",
+    "fallbackName": "to rootsTALK",
+    "subline": "Your complete farming companion",
+    "cta": "Let's get started →",
+    "alsoRoles": "I'm also a dealer / facilitator / expert",
+    "tile": {
+      "advisories": {
+        "title": "Advisories",
+        "body": "Expert-guided crop management, season by season"
+      },
+      "purchase": {
+        "title": "Purchase",
+        "body": "Order recommended inputs through trusted dealers"
+      },
+      "diagnose": {
+        "title": "Diagnose",
+        "body": "Identify crop problems with guided diagnosis"
+      },
+      "askExpert": {
+        "title": "Ask Expert",
+        "body": "Get answers from certified agronomists"
+      }
+    }
+  },
+  "auth": {
+    "phoneTitle": "Enter your mobile number",
+    "phoneSubtitle": "We'll send a one-time code — just to confirm it's you",
+    "phonePlaceholder": "98765 43210",
+    "smsNotice": "Standard SMS charges may apply",
+    "sending": "Sending…",
+    "sendCode": "Send code →",
+    "otpTitle": "Enter the code we sent",
+    "otpSubtitle": "We sent a 6-digit code to +91 {phone}",
+    "checking": "Checking…",
+    "verify": "Verify →",
+    "resendIn": "Resend in {seconds}s",
+    "resendNow": "Send a new code",
+    "nameTitle": "Nice to meet you",
+    "nameSubtitle": "What shall we call you?",
+    "namePlaceholder": "e.g. Rajan",
+    "takeMeIn": "Take me in →",
+    "devCode": "Dev code:",
+    "errors": {
+      "phoneSendFailed": "Could not send a code. Please check your number.",
+      "otpMismatch": "That code didn't match. Please try again.",
+      "nameSaveFailed": "Couldn't save your name. Please try again."
+    }
+  },
+  "location": {
+    "title": "Where is your farm?",
+    "subtitle": "This helps us find nearby dealers and advisories",
+    "loadError": "Couldn't load the location list. Skip this for now and add it from your profile when you're back online.",
+    "loading": "Loading states and districts…",
+    "stateLabel": "State",
+    "districtLabel": "District",
+    "subDistrictLabel": "Sub-district / Village",
+    "searchState": "Search state…",
+    "searchDistrict": "Search district…",
+    "noStates": "No states found",
+    "noDistricts": "No districts found",
+    "subDistrictPlaceholder": "Village or sub-district — optional",
+    "gpsTitle": "Your location on the map",
+    "gpsSubtitle": "Helps us find the 5 nearest dealers and facilitators for you",
+    "gpsCta": "Get my location",
+    "gpsFinding": "Finding you…",
+    "gpsCaptured": "Location captured",
+    "gpsCouldntGet": "Couldn't get your location",
+    "gpsDenied": "Location access was denied",
+    "gpsLater": "You can set this from your profile later.",
+    "gpsTryAgain": "Try again",
+    "errors": {
+      "saveFailed": "Couldn't save your location. Please try again.",
+      "gpsSaveFailed": "Captured your location but couldn't save it. You can try again from your profile.",
+      "gpsBlocked": "You blocked location access. To retry, enable location for this site in your browser settings, then tap Try again.",
+      "gpsTimeout": "Took too long to find you. Tap Try again.",
+      "gpsUnavailable": "Your location isn't available right now. Tap Try again or skip for later."
+    }
   }
 }

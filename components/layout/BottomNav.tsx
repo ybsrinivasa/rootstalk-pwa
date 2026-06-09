@@ -1,9 +1,11 @@
 'use client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { C } from '@/lib/tokens'
 
 type Role = 'FARMER' | 'DEALER' | 'FACILITATOR' | 'FARM_PUNDIT'
+type NavKey = 'home' | 'orders' | 'queries' | 'history' | 'profile' | 'payments' | 'alerts' | 'pickup' | 'dashboard'
 
 const HomeIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
 const BoxIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -14,39 +16,41 @@ const QueriesIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentCo
 const BellIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
 const PickupIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
 
-const TABS: Record<Role, { href: string; label: string; Icon: React.ComponentType }[]> = {
+// Label key resolves to nav.<key> in messages/<lang>.json at render time.
+const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType }[]> = {
   FARMER: [
-    { href: '/home',        label: 'Home',    Icon: HomeIcon },
-    { href: '/orders',      label: 'Orders',  Icon: BoxIcon },
+    { href: '/home',        key: 'home',    Icon: HomeIcon },
+    { href: '/orders',      key: 'orders',  Icon: BoxIcon },
     // Farmer's view of submitted Ask-Expert queries + the Pundits'
     // responses. Without this tab the only path to /my-queries was
     // a wrongly-routed button on the post-submit success page.
-    { href: '/my-queries',  label: 'Queries', Icon: QueriesIcon },
-    { href: '/history',     label: 'History', Icon: HistoryIcon },
-    { href: '/profile',     label: 'Profile', Icon: ProfileIcon },
+    { href: '/my-queries',  key: 'queries', Icon: QueriesIcon },
+    { href: '/history',     key: 'history', Icon: HistoryIcon },
+    { href: '/profile',     key: 'profile', Icon: ProfileIcon },
   ],
   DEALER: [
-    { href: '/dealer/orders',           label: 'Orders',   Icon: BoxIcon },
-    { href: '/dealer/payments',         label: 'Payments', Icon: PaymentIcon },
-    { href: '/dealer/alerts-incoming',  label: 'Alerts',   Icon: BellIcon },
-    { href: '/profile',                 label: 'Profile',  Icon: ProfileIcon },
+    { href: '/dealer/orders',           key: 'orders',   Icon: BoxIcon },
+    { href: '/dealer/payments',         key: 'payments', Icon: PaymentIcon },
+    { href: '/dealer/alerts-incoming',  key: 'alerts',   Icon: BellIcon },
+    { href: '/profile',                 key: 'profile',  Icon: ProfileIcon },
   ],
   FACILITATOR: [
-    { href: '/facilitator/orders',           label: 'Orders',   Icon: BoxIcon },
-    { href: '/facilitator/pickup',           label: 'Pickup',   Icon: PickupIcon },
-    { href: '/facilitator/payments',         label: 'Payments', Icon: PaymentIcon },
-    { href: '/facilitator/alerts-incoming',  label: 'Alerts',   Icon: BellIcon },
-    { href: '/profile',                      label: 'Profile',  Icon: ProfileIcon },
+    { href: '/facilitator/orders',           key: 'orders',   Icon: BoxIcon },
+    { href: '/facilitator/pickup',           key: 'pickup',   Icon: PickupIcon },
+    { href: '/facilitator/payments',         key: 'payments', Icon: PaymentIcon },
+    { href: '/facilitator/alerts-incoming',  key: 'alerts',   Icon: BellIcon },
+    { href: '/profile',                      key: 'profile',  Icon: ProfileIcon },
   ],
   FARM_PUNDIT: [
-    { href: '/pundit/home',    label: 'Dashboard', Icon: HomeIcon },
-    { href: '/pundit/queries', label: 'Queries',   Icon: QueriesIcon },
-    { href: '/profile',        label: 'Profile',   Icon: ProfileIcon },
+    { href: '/pundit/home',    key: 'dashboard', Icon: HomeIcon },
+    { href: '/pundit/queries', key: 'queries',   Icon: QueriesIcon },
+    { href: '/profile',        key: 'profile',   Icon: ProfileIcon },
   ],
 }
 
 export default function BottomNav({ color = C.primary, activeRole = 'FARMER' }: { color?: string; activeRole?: Role }) {
   const path = usePathname()
+  const t = useTranslations('nav')
   const tabs = TABS[activeRole] || TABS.FARMER
 
   return (
@@ -59,7 +63,7 @@ export default function BottomNav({ color = C.primary, activeRole = 'FARMER' }: 
             className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-colors"
             style={{ color: active ? color : C.textSecond, minHeight: 56 }}>
             <tab.Icon />
-            <span className="text-xs font-medium">{tab.label}</span>
+            <span className="text-xs font-medium">{t(tab.key)}</span>
           </Link>
         )
       })}

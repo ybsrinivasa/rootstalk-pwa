@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getUser, ROLE_COLOURS } from '@/lib/auth'
 import { getLanguage, changeLanguage } from '@/lib/language'
 import api from '@/lib/api'
@@ -19,13 +20,14 @@ export type BackProp =
 
 type Lang = { language_code: string; language_name_native: string; status?: string }
 
-// Role label shown beneath the rootsTALK.in wordmark. Mirrors the
-// labels used in the right drawer for consistency.
-const ROLE_LABEL: Record<string, string> = {
-  FARMER: 'Farmer',
-  DEALER: 'My Shop',
-  FACILITATOR: 'Facilitator',
-  FARM_PUNDIT: 'Expert',
+// Maps activeRole prop → key under role.* in messages/<lang>.json.
+// Resolved per-render so the role pill updates when the active locale
+// changes (mirrors the labels used in the right drawer for consistency).
+const ROLE_KEY: Record<string, 'farmer' | 'dealer' | 'facilitator' | 'pundit'> = {
+  FARMER: 'farmer',
+  DEALER: 'dealer',
+  FACILITATOR: 'facilitator',
+  FARM_PUNDIT: 'pundit',
 }
 
 export default function PWAHeader({
@@ -46,12 +48,16 @@ export default function PWAHeader({
   void title  // unused since 2026-05-20
   const user = getUser()
   const router = useRouter()
+  const tCommon = useTranslations('common')
+  const tHeader = useTranslations('header')
+  const tRole = useTranslations('role')
+  const tAbout = useTranslations('about')
   const [showLang, setShowLang] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [languages, setLanguages] = useState<Lang[]>([])
   const [currentLang, setCurrentLang] = useState<string>(getLanguage())
   const colour = customColour || ROLE_COLOURS[activeRole] || '#3A7D44'
-  const roleLabel = ROLE_LABEL[activeRole] || 'Farmer'
+  const roleLabel = tRole(ROLE_KEY[activeRole] || 'farmer')
 
   // Language pill shows only the languages the SA has marked
   // ACTIVE in the platform settings, plus English as a permanent
@@ -102,7 +108,7 @@ export default function PWAHeader({
               aria-label={
                 typeof back === 'object' && back && 'label' in back && back.label
                   ? back.label
-                  : 'Back'
+                  : tCommon('back')
               }
               className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors text-white text-xl">
               ←
@@ -114,7 +120,7 @@ export default function PWAHeader({
               About bottom sheet. Min-height 44 for tap. */}
           <button
             onClick={() => setShowAbout(true)}
-            aria-label="About rootsTALK"
+            aria-label={tHeader('aboutRootsTalk')}
             className="flex items-center gap-2.5 -mx-1 px-1 py-1 rounded-lg hover:bg-white/10 transition-colors min-w-0">
             <AppMark size={30} tone="mono"/>
             <div className="text-left min-w-0">
@@ -156,7 +162,7 @@ export default function PWAHeader({
           <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto"
             style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-medium text-[#6B3F1F] text-sm">Select language</p>
+              <p className="font-medium text-[#6B3F1F] text-sm">{tHeader('selectLanguage')}</p>
               <button onClick={() => setShowLang(false)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             {languages.map((l: Lang) => (
@@ -189,19 +195,18 @@ export default function PWAHeader({
                 <p className="font-bold text-[#6B3F1F] text-base">
                   rootsTALK<span className="text-[#7A8C7E]">.in</span>
                 </p>
-                <p className="text-[#7A8C7E] text-xs mt-0.5">by Neytiri Eywafarm Agritech</p>
+                <p className="text-[#7A8C7E] text-xs mt-0.5">{tAbout('byOrg')}</p>
               </div>
             </div>
             <div className="px-6 space-y-1 mb-6">
               <p className="text-[#7A8C7E] text-sm leading-relaxed">
-                Your agricultural advisory network — connecting farmers, experts,
-                and companies across India.
+                {tAbout('tagline')}
               </p>
             </div>
             <div className="px-6">
               <a href="https://eywa.farm" target="_blank" rel="noopener noreferrer"
                 className="flex items-center justify-between w-full bg-[#F5F0E8] rounded-xl px-4 py-3.5 border border-[#DDD0B8]">
-                <span className="text-[#6B3F1F] font-medium text-sm">Visit eywa.farm</span>
+                <span className="text-[#6B3F1F] font-medium text-sm">{tAbout('visitEywaFarm')}</span>
                 <svg className="w-4 h-4 text-[#7A8C7E]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                 </svg>
