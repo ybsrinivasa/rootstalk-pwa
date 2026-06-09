@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -40,6 +41,9 @@ interface OrderForPickup {
 export default function FarmerPickupPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
+  const t = useTranslations('orders.pickup')
+  const tCommon = useTranslations('common')
+  const tOrdersCommon = useTranslations('orders.common')
   const [order, setOrder] = useState<OrderForPickup | null>(null)
   const [loading, setLoading] = useState(true)
   const [confirm, setConfirm] = useState(false)
@@ -58,14 +62,14 @@ export default function FarmerPickupPage() {
     try {
       await api.put(`/farmer/orders/${order.id}/packing-list/mark-received`, {})
       router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage`)
-    } catch { alert('Could not confirm receipt. Please try again.') }
+    } catch { alert(tOrdersCommon('errors.receiptFailed')) }
     finally { setBusy(false); setConfirm(false) }
   }
 
   if (loading || !order) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Pick up" activeRole="FARMER" back />
+        <PWAHeader title={t('headerPickUp')} activeRole="FARMER" back />
         <div className="pt-16 px-4 mt-4">
           <div className="h-28 bg-white/60 rounded-2xl animate-pulse" />
         </div>
@@ -79,12 +83,12 @@ export default function FarmerPickupPage() {
   const facilitatorPickedUp =
     order.packing_picked_up_at && order.packing_picked_up_by_role === 'FACILITATOR'
   const from = facilitatorPickedUp
-    ? (order.facilitator_name || 'the facilitator')
-    : (order.dealer_name || 'the dealer')
+    ? (order.facilitator_name || t('fallbackFacilitator'))
+    : (order.dealer_name || t('fallbackDealer'))
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={facilitatorPickedUp ? 'Receive' : 'Pick up'} activeRole="FARMER"
+      <PWAHeader title={facilitatorPickedUp ? t('headerReceive') : t('headerPickUp')} activeRole="FARMER"
         back={`/crop-detail/${order.subscription_id}/orders?tab=manage`} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto space-y-3">
 
@@ -92,16 +96,15 @@ export default function FarmerPickupPage() {
         <div className="bg-white rounded-2xl border border-emerald-200 overflow-hidden mt-3">
           {order.packing_code && (
             <div className="px-4 py-2 bg-emerald-600 text-white flex items-baseline justify-between">
-              <p className="text-[10px] uppercase tracking-wider opacity-75">Packing ID</p>
+              <p className="text-[10px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
               <p className="text-base font-bold font-mono tracking-widest">{order.packing_code}</p>
             </div>
           )}
           <div className="p-4">
-            <p className="text-xs text-[#7A8C7E] uppercase tracking-wider">From</p>
+            <p className="text-xs text-[#7A8C7E] uppercase tracking-wider">{t('fromLabel')}</p>
             <p className="text-base font-semibold text-[#6B3F1F] mt-0.5">{from}</p>
             <p className="text-[11px] text-[#7A8C7E] mt-2 leading-relaxed">
-              Cross-check the Packing ID with what {facilitatorPickedUp ? 'your facilitator' : 'the dealer'} shared
-              before tapping confirm below.
+              {facilitatorPickedUp ? t('crossCheckFacilitator') : t('crossCheckDealer')}
             </p>
           </div>
         </div>
@@ -113,9 +116,9 @@ export default function FarmerPickupPage() {
               {items.map(it => (
                 <div key={it.id} className="p-4 flex items-baseline justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#6B3F1F] truncate">{it.brand_name || 'Item'}</p>
+                    <p className="font-semibold text-[#6B3F1F] truncate">{it.brand_name || t('itemFallback')}</p>
                     {it.manufacturer_name && (
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">by {it.manufacturer_name}</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">{t('itemByPrefix')} {it.manufacturer_name}</p>
                     )}
                     {it.given_volume != null && (
                       <p className="text-xs text-[#7A8C7E] mt-0.5">{it.given_volume} {it.volume_unit || ''}</p>
@@ -128,7 +131,7 @@ export default function FarmerPickupPage() {
               ))}
             </div>
             <div className="px-4 py-2 bg-emerald-50/40 border-t border-emerald-100 flex items-center justify-between">
-              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider">Total</p>
+              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider">{t('totalLabel')}</p>
               <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString('en-IN')}</p>
             </div>
           </div>
@@ -139,15 +142,15 @@ export default function FarmerPickupPage() {
             → "picked up". 2026-06-08 user direction. */}
         {already ? (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-3 text-sm text-emerald-800 text-center font-medium">
-            ✓ You confirmed receipt on{' '}
-            {new Date(order.packing_farmer_received_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
-            {' '}at{' '}
-            {new Date(order.packing_farmer_received_at!).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}.
+            {t('confirmedReceipt', {
+              date: new Date(order.packing_farmer_received_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+              time: new Date(order.packing_farmer_received_at!).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+            })}
           </div>
         ) : (
           <button onClick={() => setConfirm(true)}
             className="w-full py-4 rounded-2xl bg-[#085041] text-white font-semibold text-sm">
-            {facilitatorPickedUp ? '✓ I have received these items' : '✓ I have picked up these items'}
+            {facilitatorPickedUp ? t('ctaReceive') : t('ctaPickup')}
           </button>
         )}
       </div>
@@ -158,26 +161,24 @@ export default function FarmerPickupPage() {
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
             <p className="font-bold text-[#6B3F1F]">
-              {facilitatorPickedUp ? 'Confirm receipt?' : 'Confirm pickup?'}
+              {facilitatorPickedUp ? t('confirmReceiveTitle') : t('confirmPickupTitle')}
             </p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              {facilitatorPickedUp
-                ? 'By confirming, you tell the facilitator and the dealer that the items are now with you. The order will be marked as completed. Only do this when the items are physically in your hands.'
-                : 'By confirming, you tell the dealer the items are in your hands. They will mark the order as completed. Only do this when the items are physically with you.'}
+              {facilitatorPickedUp ? t('confirmReceiveBody') : t('confirmPickupBody')}
             </p>
             {order.packing_code && (
               <p className="text-xs text-[#6B3F1F] mt-2">
-                Packing ID: <strong className="font-mono tracking-widest">{order.packing_code}</strong>
+                {t('packingIdInline')} <strong className="font-mono tracking-widest">{order.packing_code}</strong>
               </p>
             )}
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirm(false)} disabled={busy}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={markReceived} disabled={busy}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy ? '…' : 'Yes, I have them'}
+                {busy ? '…' : t('confirmYes')}
               </button>
             </div>
           </div>

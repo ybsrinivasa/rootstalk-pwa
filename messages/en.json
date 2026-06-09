@@ -446,6 +446,103 @@
       "payMyself": "Pay myself instead"
     }
   },
+  "orders": {
+    "common": {
+      "unknownRecipient": "Unknown",
+      "promoterBadge": "Your Promoter",
+      "distanceKm": "{km} km away",
+      "send": "Send →",
+      "callBtn": "📞 Call",
+      "noRecipient": "No recipient",
+      "itemsCount": "{count, plural, one {1 item} other {# items}}",
+      "errors": {
+        "forwardFailed": "Could not forward. Please try again.",
+        "receiptFailed": "Could not confirm receipt. Please try again.",
+        "sendOrderFailed": "Could not send order"
+      }
+    },
+    "forward": {
+      "headerTitle": "Forward returned items",
+      "postponeOnlyReady": "{count, plural, one {1 postponed item ready to forward (cancel postpone + bundle).} other {# postponed items ready to forward (cancel postpone + bundle).}}",
+      "readyToForward": "{count, plural, one {1 item ready to forward.} other {# items ready to forward.}}",
+      "pickHint": " Pick a dealer or facilitator below.",
+      "brandLockedTitle": "Brand-locked order",
+      "tabDealers": "dealers ({count})",
+      "tabFacilitators": "facilitators ({count})",
+      "emptyDealers": "No dealers available right now.",
+      "emptyFacilitators": "No facilitators available right now.",
+      "nudgeTitle": "Send postponed items too?",
+      "nudgeBodyPrefix": "You have",
+      "nudgeBodyMiddle": "still with the current dealer. Want to cancel them and bundle with the",
+      "nudgeBodySuffix": "returned, or keep them with the current dealer?",
+      "postponedItemsCount": "{count, plural, one {1 postponed item} other {# postponed items}}",
+      "bundleCta": "Cancel postponed & forward together ({count})",
+      "keepCta": "Keep postponed with current dealer · forward {count}"
+    },
+    "pickup": {
+      "headerPickUp": "Pick up",
+      "headerReceive": "Receive",
+      "fallbackFacilitator": "the facilitator",
+      "fallbackDealer": "the dealer",
+      "packingIdLabel": "Packing ID",
+      "fromLabel": "From",
+      "crossCheckFacilitator": "Cross-check the Packing ID with what your facilitator shared before tapping confirm below.",
+      "crossCheckDealer": "Cross-check the Packing ID with what the dealer shared before tapping confirm below.",
+      "itemFallback": "Item",
+      "itemByPrefix": "by",
+      "totalLabel": "Total",
+      "confirmedReceipt": "✓ You confirmed receipt on {date} at {time}.",
+      "ctaReceive": "✓ I have received these items",
+      "ctaPickup": "✓ I have picked up these items",
+      "confirmReceiveTitle": "Confirm receipt?",
+      "confirmPickupTitle": "Confirm pickup?",
+      "confirmReceiveBody": "By confirming, you tell the facilitator and the dealer that the items are now with you. The order will be marked as completed. Only do this when the items are physically in your hands.",
+      "confirmPickupBody": "By confirming, you tell the dealer the items are in your hands. They will mark the order as completed. Only do this when the items are physically with you.",
+      "packingIdInline": "Packing ID:",
+      "confirmYes": "Yes, I have them"
+    },
+    "new": {
+      "headerTitle": "Select Who Will Fulfil",
+      "orderTypeBadge": {
+        "pesticide": "PESTICIDE",
+        "fertiliser": "FERTILISER",
+        "seed": "SEED"
+      },
+      "itemsToOrder": "{count, plural, one {1 item to order} other {# items to order}}",
+      "brandLockedTitle": "Brand-locked order",
+      "tabDealers": "Dealers ({count})",
+      "tabFacilitators": "Facilitators ({count})",
+      "emptyDealers": "No dealers found nearby",
+      "emptyFacilitators": "No facilitators found nearby",
+      "tryPhoneHint": "Try entering a phone number below",
+      "sendOrderBtn": "Send Order",
+      "customPhoneLabel": "Or enter a phone number",
+      "customPhonePlaceholder": "+91 XXXXX XXXXX",
+      "sendBtn": "Send",
+      "customSoon": "Custom phone routing coming soon",
+      "confirmAreaTitle": "Confirm your farm area",
+      "areaInputPlaceholder": "0.00",
+      "areaUnit": "acres",
+      "finalConfirmPrefix": "This is your final confirmation.",
+      "finalConfirmMiddle": "Volumes for ALL your future orders will be calculated on this.",
+      "finalConfirmSuffix": "It cannot be changed afterwards.",
+      "invalidArea": "Enter a valid farm area",
+      "confirmAndSend": "Confirm and send order",
+      "sending": "Sending…"
+    },
+    "history": {
+      "headerTitle": "History",
+      "tabCompleted": "completed",
+      "tabCancelled": "cancelled",
+      "emptyCompleted": "No completed sub-orders",
+      "emptyCancelled": "No cancelled sub-orders",
+      "cancelledHint": "Cancelled or expired orders will appear here.",
+      "kindSeed": "Seed",
+      "kindOrderFallback": "order",
+      "seedFallback": "Seed order",
+      "noRecipient": "No recipient"
+    }
+  },
   "mySubscriptions": {
     "headerTitle": "My Subscriptions",
     "backToHome": "← Back to home",

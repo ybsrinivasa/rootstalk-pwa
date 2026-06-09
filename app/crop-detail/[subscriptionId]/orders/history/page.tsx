@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -83,6 +84,8 @@ const STATUS_COLOUR: Record<string, string> = {
 export default function FarmerOrderHistoryPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
+  const t = useTranslations('orders.history')
+  const tOrdersCommon = useTranslations('orders.common')
   const [orders, setOrders] = useState<SubOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('completed')
@@ -123,16 +126,16 @@ export default function FarmerOrderHistoryPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="History" activeRole="FARMER"
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER"
         back={`/crop-detail/${subscriptionId}/orders?tab=manage`} />
       <div className="pt-16 pb-24">
         <div className="flex bg-white border-b border-[#DDD0B8]">
-          {(['completed', 'cancelled'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
+          {(['completed', 'cancelled'] as const).map(tabKey => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
               className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors capitalize ${
-                tab === t ? 'border-[#3A7D44] text-[#3A7D44]' : 'border-transparent text-[#7A8C7E]'
+                tab === tabKey ? 'border-[#3A7D44] text-[#3A7D44]' : 'border-transparent text-[#7A8C7E]'
               }`}>
-              {t}
+              {tabKey === 'completed' ? t('tabCompleted') : t('tabCancelled')}
             </button>
           ))}
         </div>
@@ -143,10 +146,10 @@ export default function FarmerOrderHistoryPage() {
           ) : visible.length === 0 ? (
             <div className="text-center py-20">
               <span className="text-4xl">📁</span>
-              <p className="text-[#7A8C7E] text-sm mt-3">No {tab} sub-orders</p>
+              <p className="text-[#7A8C7E] text-sm mt-3">{tab === 'completed' ? t('emptyCompleted') : t('emptyCancelled')}</p>
               {tab === 'cancelled' && (
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  Cancelled or expired orders will appear here.
+                  {t('cancelledHint')}
                 </p>
               )}
             </div>
@@ -160,7 +163,7 @@ export default function FarmerOrderHistoryPage() {
                   <div className="px-4 py-3 bg-[#F5F0E8]/40">
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
-                        {head?.kind === 'SEED' ? 'Seed' : (head?.category?.toLowerCase() || 'order')}
+                        {head?.kind === 'SEED' ? t('kindSeed') : (head?.category?.toLowerCase() || t('kindOrderFallback'))}
                       </span>
                       <span className="text-[10px] text-[#7A8C7E]">
                         {head?.created_at && new Date(head.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -170,7 +173,7 @@ export default function FarmerOrderHistoryPage() {
                       {orderId}
                     </p>
                     {head?.kind === 'SEED' ? (
-                      <p className="text-sm text-[#6B3F1F] truncate mt-1">{head.variety_name || 'Seed order'}</p>
+                      <p className="text-sm text-[#6B3F1F] truncate mt-1">{head.variety_name || t('seedFallback')}</p>
                     ) : (
                       head?.date_from && head?.date_to && (
                         <p className="text-sm text-[#6B3F1F] mt-1">
@@ -186,12 +189,12 @@ export default function FarmerOrderHistoryPage() {
                         className="px-4 py-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-xs text-[#6B3F1F] truncate">
-                            {sub.recipient_shop_name || sub.recipient_name || 'No recipient'}
+                            {sub.recipient_shop_name || sub.recipient_name || t('noRecipient')}
                           </p>
                           <p className="text-[10px] text-[#7A8C7E]">
                             {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                             {sub.item_count !== undefined && sub.item_count > 0 && (
-                              <> · {sub.item_count} item{sub.item_count === 1 ? '' : 's'}</>
+                              <> · {tOrdersCommon('itemsCount', { count: sub.item_count })}</>
                             )}
                           </p>
                         </div>

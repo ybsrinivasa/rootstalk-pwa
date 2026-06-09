@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -40,6 +41,9 @@ interface ForwardOrder {
 export default function FarmerForwardPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
+  const t = useTranslations('orders.forward')
+  const tOrdersCommon = useTranslations('orders.common')
+  const tCommon = useTranslations('common')
   const [order, setOrder] = useState<ForwardOrder | null>(null)
   const [recipients, setRecipients] = useState<RecipientResp | null>(null)
   const [tab, setTab] = useState<'dealers' | 'facilitators'>('dealers')
@@ -98,7 +102,7 @@ export default function FarmerForwardPage() {
     } catch (err: unknown) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
       const msg = e?.response?.data?.detail?.message
-      alert(msg || 'Could not forward. Please try again.')
+      alert(msg || tOrdersCommon('errors.forwardFailed'))
       setSending(null)
     }
   }
@@ -106,7 +110,7 @@ export default function FarmerForwardPage() {
   if (loading || !order || !recipients) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Forward returned items" activeRole="FARMER" back />
+        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back />
         <div className="pt-16 px-4 mt-4">
           <div className="h-28 bg-white/60 rounded-2xl animate-pulse" />
         </div>
@@ -127,31 +131,33 @@ export default function FarmerForwardPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Forward returned items" activeRole="FARMER" back={backHref} />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
 
         <p className="text-xs text-[#7A8C7E] mt-4 mb-3 leading-relaxed">
           {postponeOnly
-            ? `${postponedN} postponed item${postponedN === 1 ? '' : 's'} ready to forward (cancel postpone + bundle).`
-            : `${totalForwardable} item${totalForwardable === 1 ? '' : 's'} ready to forward.`}
-          {' '}Pick a dealer or facilitator below.
+            ? t('postponeOnlyReady', { count: postponedN })
+            : t('readyToForward', { count: totalForwardable })}
+          {t('pickHint')}
         </p>
 
         {recipients.locked_brand_explainer && (
           <div className="bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 mb-3 leading-relaxed">
-            <p className="font-semibold mb-0.5">Brand-locked order</p>
+            <p className="font-semibold mb-0.5">{t('brandLockedTitle')}</p>
             <p>{recipients.locked_brand_explainer}</p>
           </div>
         )}
 
         {hasFacilitators && (
           <div className="flex bg-white rounded-xl border border-[#DDD0B8] mb-3 overflow-hidden">
-            {(['dealers', 'facilitators'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
+            {(['dealers', 'facilitators'] as const).map(tabKey => (
+              <button key={tabKey} onClick={() => setTab(tabKey)}
                 className={`flex-1 py-2 text-xs font-semibold capitalize transition-colors ${
-                  tab === t ? 'bg-[#085041] text-white' : 'text-[#6B3F1F]'
+                  tab === tabKey ? 'bg-[#085041] text-white' : 'text-[#6B3F1F]'
                 }`}>
-                {t} ({t === 'dealers' ? dealers.length : facilitators.length})
+                {tabKey === 'dealers'
+                  ? t('tabDealers', { count: dealers.length })
+                  : t('tabFacilitators', { count: facilitators.length })}
               </button>
             ))}
           </div>
@@ -160,7 +166,7 @@ export default function FarmerForwardPage() {
         <div className="space-y-2">
           {(tab === 'dealers' ? dealers : facilitators).length === 0 ? (
             <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
-              <p className="text-sm text-[#7A8C7E]">No {tab} available right now.</p>
+              <p className="text-sm text-[#7A8C7E]">{tab === 'dealers' ? t('emptyDealers') : t('emptyFacilitators')}</p>
             </div>
           ) : (
             (tab === 'dealers' ? dealers : facilitators).map(r => (
@@ -171,24 +177,24 @@ export default function FarmerForwardPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <p className="font-bold text-[#6B3F1F]">
-                        {(tab === 'dealers' ? r.shop_name : null) || r.name || 'Unknown'}
+                        {(tab === 'dealers' ? r.shop_name : null) || r.name || tOrdersCommon('unknownRecipient')}
                       </p>
                       {r.is_promoter && (
-                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Your Promoter</span>
+                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">{tOrdersCommon('promoterBadge')}</span>
                       )}
                     </div>
                     {tab === 'dealers' && r.name && r.shop_name && (
                       <p className="text-xs text-[#7A8C7E]">{r.name}</p>
                     )}
                     {r.distance_km != null && (
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">{r.distance_km} km away</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">{tOrdersCommon('distanceKm', { km: r.distance_km })}</p>
                     )}
                     {tab === 'dealers' && r.shop_address && (
                       <p className="text-xs text-[#7A8C7E] truncate">{r.shop_address}</p>
                     )}
                   </div>
                   <div className="text-xs font-semibold text-[#3A7D44] shrink-0">
-                    {sending === r.user_id ? '…' : 'Send →'}
+                    {sending === r.user_id ? '…' : tOrdersCommon('send')}
                   </div>
                 </div>
               </button>
@@ -204,25 +210,24 @@ export default function FarmerForwardPage() {
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-end">
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}>
-            <p className="font-bold text-[#6B3F1F]">Send postponed items too?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('nudgeTitle')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
-              You have <strong className="text-[#6B3F1F]">{postponedN} postponed item{postponedN === 1 ? '' : 's'}</strong> still
-              with the current dealer. Want to cancel them and bundle with the
-              {returnedN} returned, or keep them with the current dealer?
+              {t('nudgeBodyPrefix')} <strong className="text-[#6B3F1F]">{t('postponedItemsCount', { count: postponedN })}</strong> {t('nudgeBodyMiddle')}{' '}
+              {returnedN} {t('nudgeBodySuffix')}
             </p>
             <div className="space-y-2 mt-4">
               <button onClick={() => setIncludePostponed(true)}
                 className="w-full py-3 rounded-xl text-white text-sm font-semibold"
                 style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
-                Cancel postponed & forward together ({returnedN + postponedN})
+                {t('bundleCta', { count: returnedN + postponedN })}
               </button>
               <button onClick={() => setIncludePostponed(false)}
                 className="w-full py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-                Keep postponed with current dealer · forward {returnedN}
+                {t('keepCta', { count: returnedN })}
               </button>
               <button onClick={() => router.replace(backHref)}
                 className="w-full py-2 text-[#7A8C7E] text-sm">
-                Cancel
+                {tCommon('cancel')}
               </button>
             </div>
           </div>

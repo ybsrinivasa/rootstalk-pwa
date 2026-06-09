@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import PhoneVerify from '@/components/PhoneVerify'
@@ -25,6 +26,9 @@ export default function OrderingScreenPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const searchParams = useSearchParams()
   const router = useRouter()
+  const t = useTranslations('orders.new')
+  const tOrdersCommon = useTranslations('orders.common')
+  const tCommon = useTranslations('common')
 
   const practiceIdsParam = searchParams.get('practice_ids') || ''
   const orderType = searchParams.get('order_type') || 'PESTICIDE'
@@ -135,7 +139,7 @@ export default function OrderingScreenPage() {
       router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
-      setErrorMsg(err.response?.data?.detail || 'Could not send order')
+      setErrorMsg(err.response?.data?.detail || tOrdersCommon('errors.sendOrderFailed'))
       setPlacing(null)
     }
   }
@@ -145,7 +149,7 @@ export default function OrderingScreenPage() {
     // Acreage is required because confirmStep only opens when not yet locked
     const valStr = confirmAreaInput.trim()
     if (!valStr || isNaN(parseFloat(valStr)) || parseFloat(valStr) <= 0) {
-      setErrorMsg('Enter a valid farm area')
+      setErrorMsg(t('invalidArea'))
       return
     }
     await executeSendOrder(confirmStep.person, confirmStep.isDealer, {
@@ -166,15 +170,15 @@ export default function OrderingScreenPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="font-bold text-[#6B3F1F]">{(isDealer ? person.shop_name : null) || person.name || 'Unknown'}</p>
+              <p className="font-bold text-[#6B3F1F]">{(isDealer ? person.shop_name : null) || person.name || tOrdersCommon('unknownRecipient')}</p>
               {person.is_promoter && (
-                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Your Promoter</span>
+                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">{tOrdersCommon('promoterBadge')}</span>
               )}
             </div>
             {isDealer && person.name && person.shop_name && (
               <p className="text-xs text-[#7A8C7E]">{person.name}</p>
             )}
-            <p className="text-xs text-[#7A8C7E] mt-0.5">{person.distance_km} km away</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">{tOrdersCommon('distanceKm', { km: person.distance_km })}</p>
             {isDealer && person.shop_address && (
               <p className="text-xs text-[#7A8C7E] truncate">{person.shop_address}</p>
             )}
@@ -183,14 +187,14 @@ export default function OrderingScreenPage() {
             {person.phone && (
               <a href={`tel:${person.phone}`}
                 className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
-                📞 Call
+                {tOrdersCommon('callBtn')}
               </a>
             )}
             <button onClick={() => startSendOrder(person, isDealer)}
               disabled={placing === person.user_id}
               className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
               style={{ background: '#3A7D44' }}>
-              {placing === person.user_id ? '…' : 'Send Order'}
+              {placing === person.user_id ? '…' : t('sendOrderBtn')}
             </button>
           </div>
         </div>
@@ -200,7 +204,7 @@ export default function OrderingScreenPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>
@@ -209,7 +213,7 @@ export default function OrderingScreenPage() {
         <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex items-center justify-between">
           <div>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeColour}`}>{orderType}</span>
-            <p className="text-xs text-[#7A8C7E] mt-1">{practiceIds.length} item{practiceIds.length !== 1 ? 's' : ''} to order</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">{t('itemsToOrder', { count: practiceIds.length })}</p>
           </div>
           {(dateFrom || dateTo) && (
             <p className="text-xs text-[#7A8C7E]">
@@ -223,19 +227,21 @@ export default function OrderingScreenPage() {
             consistent across both entry points. */}
         {lockedBrandExplainer && (
           <div className="mt-3 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed">
-            <p className="font-semibold mb-0.5">Brand-locked order</p>
+            <p className="font-semibold mb-0.5">{t('brandLockedTitle')}</p>
             <p>{lockedBrandExplainer}</p>
           </div>
         )}
 
         {/* Tabs — hide the facilitators tab when locked-brand is on. */}
         <div className="flex bg-white rounded-2xl border border-[#DDD0B8] mt-3 p-1">
-          {(['dealers', 'facilitators'] as const).map(t => {
-            if (t === 'facilitators' && lockedBrandExplainer) return null
+          {(['dealers', 'facilitators'] as const).map(tabKey => {
+            if (tabKey === 'facilitators' && lockedBrandExplainer) return null
             return (
-              <button key={t} onClick={() => setTab(t)}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-xl capitalize transition-all ${tab === t ? 'bg-green-700 text-white shadow-sm' : 'text-[#7A8C7E]'}`}>
-                {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
+              <button key={tabKey} onClick={() => setTab(tabKey)}
+                className={`flex-1 py-2.5 text-sm font-medium rounded-xl capitalize transition-all ${tab === tabKey ? 'bg-green-700 text-white shadow-sm' : 'text-[#7A8C7E]'}`}>
+                {tabKey === 'dealers'
+                  ? t('tabDealers', { count: dealers.length })
+                  : t('tabFacilitators', { count: facilitators.length })}
               </button>
             )
           })}
@@ -248,8 +254,8 @@ export default function OrderingScreenPage() {
           ) : (tab === 'dealers' ? dealers : facilitators).length === 0 ? (
             <div className="text-center py-12">
               <p className="text-3xl mb-3">{tab === 'dealers' ? '🏪' : '🌾'}</p>
-              <p className="text-[#7A8C7E] font-medium">No {tab} found nearby</p>
-              <p className="text-xs text-[#7A8C7E] mt-1">Try entering a phone number below</p>
+              <p className="text-[#7A8C7E] font-medium">{tab === 'dealers' ? t('emptyDealers') : t('emptyFacilitators')}</p>
+              <p className="text-xs text-[#7A8C7E] mt-1">{t('tryPhoneHint')}</p>
             </div>
           ) : (
             (tab === 'dealers' ? dealers : facilitators).map(person => (
@@ -261,16 +267,16 @@ export default function OrderingScreenPage() {
         {/* Custom phone entry */}
         {!loading && (
           <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-4">
-            <p className="text-xs font-semibold text-[#7A8C7E] mb-2">Or enter a phone number</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] mb-2">{t('customPhoneLabel')}</p>
             <div className="flex gap-2">
               <input value={customPhone} onChange={e => setCustomPhone(e.target.value)}
-                placeholder="+91 XXXXX XXXXX"
+                placeholder={t('customPhonePlaceholder')}
                 type="tel"
                 className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
               <button
-                onClick={() => customPhone.trim() && alert('Custom phone routing coming soon')}
+                onClick={() => customPhone.trim() && alert(t('customSoon'))}
                 className="px-4 py-2 rounded-xl text-white text-sm font-semibold bg-slate-400">
-                Send
+                {t('sendBtn')}
               </button>
             </div>
             <PhoneVerify phone={customPhone} />
@@ -282,15 +288,15 @@ export default function OrderingScreenPage() {
       {confirmStep && sub && (
         <div className="fixed inset-0 z-40 bg-black/50 flex items-end" onClick={() => placing == null && setConfirmStep(null)}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F] text-base">Confirm your farm area</p>
+            <p className="font-bold text-[#6B3F1F] text-base">{t('confirmAreaTitle')}</p>
 
             {sub.farm_area_acres != null && !editingArea ? (
               <p className="text-sm text-[#6B3F1F] mt-3">
-                <span className="font-semibold">{sub.farm_area_acres} acres</span>{' '}
+                <span className="font-semibold">{sub.farm_area_acres} {t('areaUnit')}</span>{' '}
                 <button
                   onClick={() => setEditingArea(true)}
                   className="ml-1 text-xs underline text-green-700"
-                >Change</button>
+                >{tCommon('change')}</button>
               </p>
             ) : (
               <div className="flex gap-2 mt-3">
@@ -298,20 +304,20 @@ export default function OrderingScreenPage() {
                   type="number" inputMode="decimal" step="0.01" min="0"
                   value={confirmAreaInput}
                   onChange={e => setConfirmAreaInput(e.target.value)}
-                  placeholder="0.00"
+                  placeholder={t('areaInputPlaceholder')}
                   className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                 />
                 <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                  acres
+                  {t('areaUnit')}
                 </span>
               </div>
             )}
 
             <div className="mt-4 bg-orange-50 border border-orange-200 rounded-xl px-3 py-3">
               <p className="text-orange-800 text-xs leading-relaxed">
-                <span className="font-bold">This is your final confirmation.</span>{' '}
-                Volumes for ALL your future orders will be calculated on this.{' '}
-                <span className="font-bold">It cannot be changed afterwards.</span>
+                <span className="font-bold">{t('finalConfirmPrefix')}</span>{' '}
+                {t('finalConfirmMiddle')}{' '}
+                <span className="font-bold">{t('finalConfirmSuffix')}</span>
               </p>
             </div>
 
@@ -324,13 +330,13 @@ export default function OrderingScreenPage() {
                 onClick={() => { setConfirmStep(null); setErrorMsg(null) }}
                 disabled={placing != null}
                 className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
-              >Cancel</button>
+              >{tCommon('cancel')}</button>
               <button
                 onClick={confirmAndSend}
                 disabled={placing != null}
                 className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                 style={{ background: '#3A7D44' }}
-              >{placing != null ? 'Sending…' : 'Confirm and send order'}</button>
+              >{placing != null ? t('sending') : t('confirmAndSend')}</button>
             </div>
           </div>
         </div>
