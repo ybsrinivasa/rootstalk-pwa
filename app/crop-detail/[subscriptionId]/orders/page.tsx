@@ -571,7 +571,16 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   }
 
   async function deleteOrder(orderId: string, kind: 'REGULAR' | 'SEED') {
-    if (!confirm('Delete this cancelled order permanently?')) return
+    // 2026-06-09 — Delete now covers two cases: CANCELLED husks
+    // (existing) and DRAFT (e.g. from dealer-decline cancel-and-
+    // migrate where the farmer wants to discard rather than send).
+    // Look up the order's current status so the confirm copy reads
+    // right.
+    const target = (orders || []).find(o => o.id === orderId)
+    const isDraft = target?.status === 'DRAFT'
+    if (!confirm(isDraft
+      ? 'Delete this draft permanently? The items will be gone.'
+      : 'Delete this cancelled order permanently?')) return
     setBusy(orderId)
     try {
       if (kind === 'SEED') {
@@ -736,6 +745,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
           expanded={expandedGroup === key}
           onToggleExpand={() => setExpandedGroup(expandedGroup === key ? null : key)}
           onCancel={(id, kind) => cancel(id, kind)}
+          onDelete={(id, kind) => deleteOrder(id, kind)}
           onForwardReturned={rerouteReturned}
           busy={busy}
         />
@@ -748,7 +758,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
 
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onCancel, onForwardReturned, busy,
+  onCancel, onDelete, onForwardReturned, busy,
 }: {
   orderId: string
   subs: SubOrder[]
@@ -757,6 +767,7 @@ function OrderIdCard({
   expanded: boolean
   onToggleExpand: () => void
   onCancel: (id: string, kind: 'REGULAR' | 'SEED') => void
+  onDelete: (id: string, kind: 'REGULAR' | 'SEED') => void
   onForwardReturned: (id: string) => void
   busy: string | null
 }) {
@@ -773,12 +784,23 @@ function OrderIdCard({
   const liveSubs = subs.filter(s =>
     !['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(s.status),
   )
+  // 2026-06-09 — Cancel-on-DRAFT was visually a no-op (cancel-and-
+  // migrate creates another DRAFT with the same items, so the user
+  // sees no change and thinks Cancel failed). DRAFT now offers a
+  // Delete action instead (different button below) — the review
+  // page already excludes DRAFT from canCancel.
   const cancellable = liveSubs.find(s => {
     if (s.kind === 'SEED') {
       return !['DRAFT', 'SENT_FOR_APPROVAL'].includes(s.status)
     }
-    return (s.awaiting_approval_count || 0) === 0
+    return s.status !== 'DRAFT' && (s.awaiting_approval_count || 0) === 0
   })
+  // A DRAFT sub-order is deletable. Typically arrives via
+  // dealer-decline cancel-and-migrate; farmer can discard it
+  // entirely instead of picking a recipient.
+  const deletable = liveSubs.find(s =>
+    s.kind === 'REGULAR' && s.status === 'DRAFT',
+  )
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
@@ -811,10 +833,18 @@ function OrderIdCard({
           </button>
         </div>
       )}
-      {/* If every sub-order is CANCELLED but no delete-able husk
-          exists at this card level, the History page (Batch 3) will
-          surface them. Keeping Delete/Forward off the active Manage
-          card for now — Forward is in the Returned chunk. */}
+      {/* 2026-06-09 — Delete DRAFT. Per user direction: cancel-and-
+          migrate on a DRAFT is a no-op visually (it creates an
+          identical DRAFT), so DRAFT gets a real Delete instead. */}
+      {!cancellable && deletable && (
+        <div className="border-t border-[#F0E5D0] px-4 py-2">
+          <button onClick={() => onDelete(deletable.id, deletable.kind)}
+            disabled={busy === deletable.id}
+            className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+            {busy === deletable.id ? '…' : 'Delete draft'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -954,11 +984,33 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
 }
 
 function RoutedChunk({ sub }: { sub: SubOrder }) {
+  const router = useRouter()
   if (sub.kind === 'REGULAR' && sub.status === 'DRAFT') {
     return (
-      <p className="text-xs text-amber-700">
-        Draft — pick a recipient to send.
-      </p>
+      <div className="space-y-2">
+        <p className="text-xs text-amber-700">
+          Draft — pick a recipient to send.
+        </p>
+        <button onClick={() => router.push(`/orders/${sub.id}`)}
+          className="w-full py-2 rounded-lg text-white text-xs font-semibold"
+          style={{ background: '#3A7D44' }}>
+          Pick a recipient →
+        </button>
+      </div>
+    )
+  }
+  if (sub.kind === 'SEED' && sub.status === 'DRAFT') {
+    return (
+      <div className="space-y-2">
+        <p className="text-xs text-amber-700">
+          Draft — pick a recipient to send.
+        </p>
+        <button onClick={() => router.push(`/seed-orders/${sub.id}`)}
+          className="w-full py-2 rounded-lg text-white text-xs font-semibold"
+          style={{ background: '#3A7D44' }}>
+          Pick a recipient →
+        </button>
+      </div>
     )
   }
   return (
