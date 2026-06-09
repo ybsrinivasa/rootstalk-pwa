@@ -91,14 +91,15 @@ interface SeedOrderRaw {
   created_at: string
 }
 
-type Pill = 'pending' | 'postponed' | 'farmer' | 'packing' | 'completed'
+// 2026-06-09 — Completed dropped from active pills (Batch 2 of
+// Dealer mirroring). Terminal sub-orders live in /dealer/history.
+type Pill = 'pending' | 'postponed' | 'farmer' | 'packing'
 
 const PILL_LABEL: Record<Pill, string> = {
   pending: 'Pending',
   postponed: 'Postponed',
   farmer: 'With Farmer',
   packing: 'Packing',
-  completed: 'Completed',
 }
 
 function initials(name: string | null): string {
@@ -129,11 +130,8 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       case 'farmer':
         return o.status === 'SENT_FOR_APPROVAL'
       case 'packing':
-        // Seeds don't have a packing-list surface yet — treat
-        // PURCHASED as the equivalent terminal-with-receipt state.
+        // Seeds don't have a packing-list surface yet.
         return false
-      case 'completed':
-        return ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED', 'NOT_AVAILABLE'].includes(o.status)
     }
   }
   const c = o.item_status_counts
@@ -150,12 +148,6 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       // removed it manually OR the farmer confirmed receipt. Either
       // signals "done from the dealer's standpoint".
       return c.approved > 0 && !o.packing_list_removed_at && !o.packing_farmer_received_at
-    case 'completed':
-      return (
-        c.pending === 0 && c.available === 0 && c.postponed === 0 &&
-        c.sent_for_approval === 0 &&
-        (c.approved === 0 || !!o.packing_list_removed_at || !!o.packing_farmer_received_at)
-      )
   }
 }
 
@@ -273,7 +265,7 @@ function DealerOrdersInner() {
   // sub-order (matches what the user sees rendered).
   const counts: Record<Pill, number> = useMemo(() => {
     const c: Record<Pill, number> = {
-      pending: 0, postponed: 0, farmer: 0, packing: 0, completed: 0,
+      pending: 0, postponed: 0, farmer: 0, packing: 0,
     }
     for (const list of groups.values()) {
       for (const p of Object.keys(c) as Pill[]) {
@@ -391,9 +383,11 @@ function DealerOrdersInner() {
 
         {/* Pill row — 2026-06-09: count promoted to filled-circle
             badge so task-load reads at a glance (parity with Farmer
-            + Facilitator). */}
-        <div className="px-4 pt-3 overflow-x-auto">
-          <div className="flex gap-2 min-w-max">
+            + Facilitator). History chip routes to terminal sub-orders
+            (Completed / Cancelled), mirroring the placement on
+            /facilitator/orders + /crop-detail/[id]/orders Manage tab. */}
+        <div className="px-4 pt-3 flex items-center gap-2">
+          <div className="flex gap-2 overflow-x-auto flex-1">
             {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
               const active = pill === p
               const n = counts[p]
@@ -416,6 +410,10 @@ function DealerOrdersInner() {
               )
             })}
           </div>
+          <button onClick={() => router.push('/dealer/history')}
+            className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
+            📁 History
+          </button>
         </div>
 
         <div className="px-4 mt-4 space-y-3">
@@ -698,14 +696,6 @@ function DealerPillChunk({
           onShare={() => onShare(sub)}
           onRemove={() => onRemove(sub)}
           busy={busy === sub.id} />
-      )}
-      {pill === 'completed' && (
-        <div className="px-4 py-3">
-          <p className="text-[11px] text-[#7A8C7E]">
-            Completed · {sub.item_status_counts.approved} sold
-            {sub.item_status_counts.not_available > 0 && `, ${sub.item_status_counts.not_available} unavailable`}
-          </p>
-        </div>
       )}
     </div>
   )
