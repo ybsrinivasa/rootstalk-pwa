@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
@@ -73,6 +74,8 @@ interface SeedAvail { has_varieties: boolean; count: number }
 export default function CropDetailPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
+  const t = useTranslations('crop')
+  const tCommon = useTranslations('common')
   const [sub, setSub] = useState<SubscriptionDetail | null>(null)
   const [branding, setBranding] = useState<Branding | null>(null)
   const [preStart, setPreStart] = useState<PreStartInput[]>([])
@@ -194,7 +197,7 @@ export default function CropDetailPage() {
 
   async function saveStartDate() {
     if (!startDate || !startDate.trim()) {
-      showToast('Please choose a date. The start date cannot be removed once set.')
+      showToast(t('toast.dateRequired'))
       return
     }
     setSavingDate(true)
@@ -206,7 +209,7 @@ export default function CropDetailPage() {
       setShowStartDate(false)
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
-      showToast(err.response?.data?.detail || 'Could not save start date')
+      showToast(err.response?.data?.detail || t('toast.startDateSaveFailed'))
     } finally { setSavingDate(false) }
   }
 
@@ -219,11 +222,11 @@ export default function CropDetailPage() {
         area_unit: 'acres',
       })
       setSub(s => s ? { ...s, farm_area_acres: parseFloat(areaInput), area_unit: 'acres' } : s)
-      showToast('Farm area saved')
+      showToast(t('toast.areaSaved'))
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
       const d = err.response?.data?.detail
-      showToast(typeof d === 'string' ? d : (d as { message?: string } | undefined)?.message || 'Could not save')
+      showToast(typeof d === 'string' ? d : (d as { message?: string } | undefined)?.message || t('toast.saveFailed'))
     } finally { setSavingArea(false) }
   }
 
@@ -248,11 +251,11 @@ export default function CropDetailPage() {
         number_of_plants: body.number_of_plants ?? s.number_of_plants,
         planting_year: body.planting_year ?? s.planting_year,
       } : s)
-      showToast('Saved')
+      showToast(t('toast.saved'))
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string | { message?: string } } } }
       const d = err.response?.data?.detail
-      showToast(typeof d === 'string' ? d : (d as { message?: string } | undefined)?.message || 'Could not save')
+      showToast(typeof d === 'string' ? d : (d as { message?: string } | undefined)?.message || t('toast.saveFailed'))
     } finally { setSavingPlants(false) }
   }
 
@@ -276,7 +279,7 @@ export default function CropDetailPage() {
     const needsAreaInBody = !sub.farm_area_acres || orderSheetEditingArea
     if (needsAreaInBody) {
       if (!orderSheetArea || isNaN(parseFloat(orderSheetArea)) || parseFloat(orderSheetArea) <= 0) {
-        showToast('Enter a valid farm area')
+        showToast(t('toast.invalidArea'))
         return
       }
     }
@@ -300,7 +303,7 @@ export default function CropDetailPage() {
       setOrderSuccess({ order_id: res.data.order_id, item_count: res.data.item_count })
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
-      showToast(err.response?.data?.detail || 'Could not create order')
+      showToast(err.response?.data?.detail || t('toast.orderFailed'))
     } finally { setOrderBusy(false) }
   }
 
@@ -316,7 +319,7 @@ export default function CropDetailPage() {
       const alertsRes = await api.get<AlertPrefs>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`)
       setAlertPrefs(alertsRes.data)
       setAlertSheet(false)
-      showToast('Alert preferences saved')
+      showToast(t('toast.alertsSaved'))
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
       const detail = err?.response?.data?.detail
@@ -325,10 +328,10 @@ export default function CropDetailPage() {
         ? detail
         : detail?.message ||
           (code === 'user_not_found'
-            ? 'No RootsTalk user is registered with this number. Ask them to register first.'
+            ? t('toast.userNotFoundForAlert')
             : code === 'not_a_dealer_or_facilitator'
-              ? "This person isn't registered as a Dealer or Facilitator. Pick a number that belongs to one."
-              : 'Could not save alert preferences. Please try again.')
+              ? t('toast.notDealerOrFacilitator')
+              : t('toast.alertsSaveFailed'))
       setAlertError(msg)
     } finally { setSavingAlerts(false) }
   }
@@ -349,7 +352,7 @@ export default function CropDetailPage() {
       const res = await api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`)
       setExpertSetting(res.data)
       setExpertSheet(false)
-      showToast('Expert preference saved')
+      showToast(t('toast.expertSaved'))
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
       const detail = err?.response?.data?.detail
@@ -358,10 +361,10 @@ export default function CropDetailPage() {
         ? detail
         : detail?.message ||
           (code === 'user_not_found'
-            ? 'No RootsTalk user is registered with this number. Check the digits.'
+            ? t('toast.userNotFoundForExpert')
             : code === 'not_a_promoter_pundit'
-              ? 'This number doesn’t belong to a Promoter-Pundit for this company. Ask your promoter or RM for the correct number.'
-              : 'Could not save. Try again.')
+              ? t('toast.notPromoterPundit')
+              : t('toast.expertSaveFailed'))
       setExpertError(msg)
     } finally { setSavingExpert(false) }
   }
@@ -372,7 +375,7 @@ export default function CropDetailPage() {
       await api.delete(`/farmer/subscriptions/${subscriptionId}/pundit-preference`)
       const res = await api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`)
       setExpertSetting(res.data)
-      showToast('Reverted to default')
+      showToast(t('toast.revertedToDefault'))
     } finally { setSavingExpert(false) }
   }
 
@@ -475,13 +478,13 @@ export default function CropDetailPage() {
             "Beyond 1970"; render the value with a ">" prefix. */}
         {sub.crop_age && (
           <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 mb-4">
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest">Crop Age</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest">{t('age.label')}</p>
             <p className="font-semibold text-[#6B3F1F] mt-1">
               {sub.crop_age.is_minimum ? '> ' : ''}{sub.crop_age.value} {sub.crop_age.unit}
               <span className="text-xs text-[#7A8C7E] font-normal ml-2">
                 {sub.crop_age.source === 'PLANTING_YEAR'
-                  ? 'from planting year'
-                  : 'from start date'}
+                  ? t('age.fromPlantingYear')
+                  : t('age.fromStartDate')}
               </span>
             </p>
           </div>
@@ -492,11 +495,11 @@ export default function CropDetailPage() {
             Cosh; untyped defaults to area-wise. */}
         {!isPlantWise ? (
           <>
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">Farm Area</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">{t('area.sectionHeader')}</p>
 
             {areaTentative && (
               <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
-                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area</p>
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">{t('area.label')}</p>
                 <div className="flex gap-2">
                   <input
                     type="number" inputMode="decimal" step="0.01" min="0"
@@ -506,7 +509,7 @@ export default function CropDetailPage() {
                     className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                   />
                   <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                    acres
+                    {t('area.unitAcres')}
                   </span>
                   <button
                     onClick={saveArea}
@@ -514,16 +517,16 @@ export default function CropDetailPage() {
                     className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                     style={{ background: colour }}
                   >
-                    {savingArea ? '…' : 'Save'}
+                    {savingArea ? '…' : tCommon('save')}
                   </button>
                 </div>
-                <p className="text-[#7A8C7E] text-xs mt-2">Tentative for now. Will be confirmed when you place your first order.</p>
+                <p className="text-[#7A8C7E] text-xs mt-2">{t('area.tentativeNote')}</p>
               </div>
             )}
 
             {areaSoftSet && (
               <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
-                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">Farm area · Tentative</p>
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">{t('area.softSetLabel')}</p>
                 <div className="flex gap-2">
                   <input
                     type="number" inputMode="decimal" step="0.01" min="0"
@@ -533,7 +536,7 @@ export default function CropDetailPage() {
                     className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                   />
                   <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                    acres
+                    {t('area.unitAcres')}
                   </span>
                   <button
                     onClick={saveArea}
@@ -541,65 +544,65 @@ export default function CropDetailPage() {
                     className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                     style={{ background: colour }}
                   >
-                    {savingArea ? '…' : 'Save'}
+                    {savingArea ? '…' : tCommon('save')}
                   </button>
                 </div>
                 <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
-                  Currently set as your tentative area. You can revise it once more when you place your first DAS order at planting time.
+                  {t('area.softSetNote')}
                 </p>
               </div>
             )}
 
             {areaHardLocked && (
               <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
-                <p className="text-sm font-semibold text-[#6B3F1F]">Farm area · Confirmed</p>
+                <p className="text-sm font-semibold text-[#6B3F1F]">{t('area.confirmedLabel')}</p>
                 <p className="font-semibold text-[#6B3F1F] mt-1">
-                  {sub.farm_area_acres ?? '—'} acres
+                  {sub.farm_area_acres ?? '—'} {t('area.unitAcres')}
                 </p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  Locked on {new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}. Volumes for all your inputs are calculated on this.
+                  {t('area.lockedNote', { date: new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })}
                 </p>
               </div>
             )}
           </>
         ) : (
           <>
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">Plant Count & Planting Year</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">{t('plants.sectionHeader')}</p>
             {plantsHardLocked ? (
               <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
-                <p className="text-sm font-semibold text-[#6B3F1F]">Confirmed</p>
+                <p className="text-sm font-semibold text-[#6B3F1F]">{t('plants.confirmed')}</p>
                 <p className="font-semibold text-[#6B3F1F] mt-1">
-                  {sub.number_of_plants ?? '—'} plants · planted{' '}
+                  {sub.number_of_plants ?? '—'} {t('plants.plantedPrefix')}{' '}
                   {sub.planting_year == null
                     ? '—'
                     : sub.planting_year < PLANTING_YEAR_FLOOR
-                      ? `Beyond ${PLANTING_YEAR_FLOOR}`
+                      ? t('plants.beyondYear', { year: PLANTING_YEAR_FLOOR })
                       : sub.planting_year}
                 </p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  Locked on {new Date(sub.plant_count_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.
+                  {t('plants.lockedNote', { date: new Date(sub.plant_count_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })}
                 </p>
               </div>
             ) : (
               <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 space-y-3">
                 <div>
-                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">Number of Plants</label>
+                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">{t('plants.plantsLabel')}</label>
                   <input
                     type="number" inputMode="numeric" step="1" min="1"
                     value={plantsInput}
                     onChange={e => setPlantsInput(e.target.value)}
-                    placeholder="e.g. 120"
+                    placeholder={t('plants.plantsPlaceholder')}
                     className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">Planting Year</label>
+                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">{t('plants.yearLabel')}</label>
                   <select
                     value={yearInput}
                     onChange={e => setYearInput(e.target.value)}
                     className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3A7D44]"
                   >
-                    <option value="">Select…</option>
+                    <option value="">{t('plants.selectYearPlaceholder')}</option>
                     {/* current year down to the floor; older than the
                         floor collapses to a single "Beyond" option
                         which stores the sentinel year. */}
@@ -610,7 +613,7 @@ export default function CropDetailPage() {
                       <option key={y} value={String(y)}>{y}</option>
                     ))}
                     <option value={String(PLANTING_YEAR_BEYOND_SENTINEL)}>
-                      Beyond {PLANTING_YEAR_FLOOR}
+                      {t('plants.beyondYear', { year: PLANTING_YEAR_FLOOR })}
                     </option>
                   </select>
                 </div>
@@ -620,10 +623,10 @@ export default function CropDetailPage() {
                   className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                   style={{ background: colour }}
                 >
-                  {savingPlants ? 'Saving…' : 'Save'}
+                  {savingPlants ? tCommon('saving') : tCommon('save')}
                 </button>
                 <p className="text-[#7A8C7E] text-xs">
-                  Both are needed for the advisory to compute volumes correctly. Plant count locks when you place your first order.
+                  {t('plants.helpText')}
                 </p>
               </div>
             )}
@@ -631,12 +634,12 @@ export default function CropDetailPage() {
         )}
 
         {/* Start date */}
-        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Start Date</p>
+        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">{t('startDate.sectionHeader')}</p>
         {!hasStartDate ? (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-            <p className="font-bold text-amber-800">Set your start date</p>
+            <p className="font-bold text-amber-800">{t('startDate.title')}</p>
             <p className="text-amber-600 text-xs mt-1">
-              Advisory and Diagnosis unlock once you set the {isPlantWise ? 'season start date' : 'sowing date'}.
+              {isPlantWise ? t('startDate.unlockPlantWise') : t('startDate.unlockAreaWise')}
             </p>
             {showStartDate ? (
               <div className="mt-3 flex gap-2">
@@ -646,14 +649,14 @@ export default function CropDetailPage() {
                 <button onClick={saveStartDate} disabled={savingDate || !startDate}
                   className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                   style={{ background: colour }}>
-                  {savingDate ? '…' : 'Set'}
+                  {savingDate ? '…' : t('startDate.setShort')}
                 </button>
               </div>
             ) : (
               <button onClick={() => setShowStartDate(true)}
                 className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                 style={{ background: colour }}>
-                Set Start Date
+                {t('startDate.setCta')}
               </button>
             )}
           </div>
@@ -676,22 +679,22 @@ export default function CropDetailPage() {
             <>
               <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#7A8C7E]">Start date</p>
+                  <p className="text-xs text-[#7A8C7E]">{t('startDate.label')}</p>
                   <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   {editable && daysLeft !== null && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
-                      You can change this for {daysLeft === 0 ? 'one more day' : `${daysLeft} more day${daysLeft === 1 ? '' : 's'}`}.
+                      {t('startDate.editWindow', { days: daysLeft })}
                     </p>
                   )}
                   {!editable && lockedAt && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
-                      Locked on {lockedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}.
+                      {t('startDate.lockedNote', { date: lockedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })}
                     </p>
                   )}
                 </div>
                 {editable && (
                   <button onClick={() => setShowStartDate(!showStartDate)}
-                    className="text-xs text-[#7A8C7E] underline shrink-0">change</button>
+                    className="text-xs text-[#7A8C7E] underline shrink-0">{t('startDate.changeBtn')}</button>
                 )}
               </div>
               {editable && showStartDate && (
@@ -702,7 +705,7 @@ export default function CropDetailPage() {
                   <button onClick={saveStartDate} disabled={savingDate || !startDate}
                     className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                     style={{ background: colour }}>
-                    {savingDate ? '…' : 'Update'}
+                    {savingDate ? '…' : t('startDate.updateCta')}
                   </button>
                 </div>
               )}
@@ -719,15 +722,15 @@ export default function CropDetailPage() {
             onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowNeedDateSheet('advisory')}
             className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-[#DDD0B8] active:scale-95' : 'bg-stone-100 border-[#DDD0B8] opacity-60'}`}>
             <span className="text-3xl block mb-2">🌿</span>
-            <p className="text-xs font-bold text-[#6B3F1F]">Advisory</p>
-            {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">Set date first</p>}
+            <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.advisoryTitle')}</p>
+            {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">{t('tiles.setDateFirst')}</p>}
           </button>
 
           <button
             onClick={() => {
               if (!hasStartDate) { setShowNeedDateSheet('diagnose'); return }
               if (diagnosisEligibility && !diagnosisEligibility.eligible) {
-                setToast(diagnosisEligibility.message || 'Diagnosis is not available for this crop right now.')
+                setToast(diagnosisEligibility.message || t('toast.diagnoseUnavailable'))
                 return
               }
               router.push(`/advisory/${subscriptionId}/diagnose`)
@@ -738,17 +741,17 @@ export default function CropDetailPage() {
                 : 'bg-stone-100 border-[#DDD0B8] opacity-60'
             }`}>
             <span className="text-3xl block mb-2">🔬</span>
-            <p className="text-xs font-bold text-[#6B3F1F]">Diagnose</p>
-            {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">Set date first</p>}
+            <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.diagnoseTitle')}</p>
+            {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">{t('tiles.setDateFirst')}</p>}
             {hasStartDate && diagnosisEligibility && !diagnosisEligibility.eligible && (
-              <p className="text-xs text-[#7A8C7E] mt-0.5">Not available</p>
+              <p className="text-xs text-[#7A8C7E] mt-0.5">{t('tiles.notAvailable')}</p>
             )}
           </button>
 
           <button
             onClick={() => {
               if (!sub.client_has_primary_expert) {
-                showToast('This company has not onboarded a Primary expert yet. Ask Expert will be available once they do.')
+                showToast(t('toast.noPrimaryExpert'))
                 return
               }
               router.push(`/ask-expert/${subscriptionId}`)
@@ -756,9 +759,9 @@ export default function CropDetailPage() {
             disabled={!sub.client_has_primary_expert}
             className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95 disabled:opacity-50 disabled:active:scale-100">
             <span className="text-3xl block mb-2">🎓</span>
-            <p className="text-xs font-bold text-[#6B3F1F]">Ask Expert</p>
+            <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.askExpertTitle')}</p>
             {!sub.client_has_primary_expert && (
-              <p className="text-xs text-[#7A8C7E] mt-0.5">No expert yet</p>
+              <p className="text-xs text-[#7A8C7E] mt-0.5">{t('tiles.noExpertYet')}</p>
             )}
           </button>
 
@@ -770,7 +773,7 @@ export default function CropDetailPage() {
             onClick={() => router.push(`/crop-detail/${subscriptionId}/orders`)}
             className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
             <span className="text-3xl block mb-2">📦</span>
-            <p className="text-xs font-bold text-[#6B3F1F]">Orders</p>
+            <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.ordersTitle')}</p>
           </button>
         </div>
 
@@ -779,16 +782,16 @@ export default function CropDetailPage() {
           <button onClick={() => router.push(`/missed-items/${subscriptionId}`)}
             className="mt-4 w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
             <p className="text-sm text-amber-700 font-medium">
-              {missedCount} missed item{missedCount > 1 ? 's' : ''} — application window passed
+              {t('missedItems.label', { count: missedCount })}
             </p>
-            <span className="text-amber-500 text-sm">View →</span>
+            <span className="text-amber-500 text-sm">{t('missedItems.cta')}</span>
           </button>
         )}
 
         {/* Pre-Start section */}
         {showPreStart && (seedAvail.has_varieties || pestPractices.length > 0 || fertPractices.length > 0) && (
           <>
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Prepare for Sowing</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">{t('preStart.sectionHeader')}</p>
 
             {seedAvail.has_varieties && (
               <button
@@ -798,8 +801,8 @@ export default function CropDetailPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">🌾</span>
                   <div className="text-left">
-                    <p className="font-semibold text-[#6B3F1F] text-sm">Seeds &amp; Seedlings</p>
-                    <p className="text-xs text-[#7A8C7E]">Browse and order recommended varieties</p>
+                    <p className="font-semibold text-[#6B3F1F] text-sm">{t('preStart.seedsTitle')}</p>
+                    <p className="text-xs text-[#7A8C7E]">{t('preStart.seedsBody')}</p>
                   </div>
                 </div>
                 <span className="text-[#DDD0B8] text-xl">›</span>
@@ -811,8 +814,8 @@ export default function CropDetailPage() {
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">🧪</span>
                   <div>
-                    <p className="font-semibold text-[#6B3F1F] text-sm">Pre-Start Pesticides</p>
-                    <p className="text-xs text-[#7A8C7E]">{pestPractices.length} item{pestPractices.length > 1 ? 's' : ''} recommended before sowing</p>
+                    <p className="font-semibold text-[#6B3F1F] text-sm">{t('preStart.pesticidesTitle')}</p>
+                    <p className="text-xs text-[#7A8C7E]">{t('preStart.itemsRecommended', { count: pestPractices.length })}</p>
                   </div>
                 </div>
                 <button
@@ -820,7 +823,7 @@ export default function CropDetailPage() {
                   className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                   style={{ background: colour }}
                 >
-                  Order all pesticides →
+                  {t('preStart.pesticidesCta')}
                 </button>
               </div>
             )}
@@ -830,8 +833,8 @@ export default function CropDetailPage() {
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">🌱</span>
                   <div>
-                    <p className="font-semibold text-[#6B3F1F] text-sm">Pre-Start Fertilisers</p>
-                    <p className="text-xs text-[#7A8C7E]">{fertPractices.length} item{fertPractices.length > 1 ? 's' : ''} recommended before sowing</p>
+                    <p className="font-semibold text-[#6B3F1F] text-sm">{t('preStart.fertilisersTitle')}</p>
+                    <p className="text-xs text-[#7A8C7E]">{t('preStart.itemsRecommended', { count: fertPractices.length })}</p>
                   </div>
                 </div>
                 <button
@@ -839,7 +842,7 @@ export default function CropDetailPage() {
                   className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                   style={{ background: colour }}
                 >
-                  Order all fertilisers →
+                  {t('preStart.fertilisersCta')}
                 </button>
               </div>
             )}
@@ -850,89 +853,89 @@ export default function CropDetailPage() {
             captures one optional extra recipient (dealer / facilitator
             / anyone). ASSIGNED subs prefill from the promoter; SELF
             subs start blank. Either way the farmer can edit. */}
-        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Alerts</p>
+        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">{t('alerts.sectionHeader')}</p>
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
           <p className="text-sm text-[#6B3F1F]">
-            <span className="font-semibold">You</span> will always receive alerts in this app.
+            <span className="font-semibold">{t('alerts.youAlwaysPrefix')}</span> {t('alerts.youAlwaysSuffix')}
           </p>
           {alertPrefs && alertPrefs.extra_phone && (
             <p className="text-sm text-[#6B3F1F] mt-2">
-              Also sent to: <span className="font-semibold">{alertPrefs.extra_name || 'Extra contact'}</span>
+              {t('alerts.alsoSentTo')} <span className="font-semibold">{alertPrefs.extra_name || t('alerts.extraContactFallback')}</span>
               <span className="text-[#7A8C7E]"> ({alertPrefs.extra_phone})</span>
               {alertPrefs.source === 'auto_promoter' && (
-                <span className="text-[#7A8C7E] text-xs ml-1">— from your promoter</span>
+                <span className="text-[#7A8C7E] text-xs ml-1">{t('alerts.fromPromoter')}</span>
               )}
             </p>
           )}
           {alertPrefs && !alertPrefs.extra_phone && (
-            <p className="text-sm text-[#7A8C7E] mt-2 italic">No extra recipient set.</p>
+            <p className="text-sm text-[#7A8C7E] mt-2 italic">{t('alerts.noExtra')}</p>
           )}
           <button
             onClick={openAlertSheet}
             className="w-full mt-3 py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
           >
-            {alertPrefs?.extra_phone ? 'Change extra recipient' : 'Add a dealer or facilitator'}
+            {alertPrefs?.extra_phone ? t('alerts.changeRecipient') : t('alerts.addRecipient')}
           </button>
         </div>
 
         {/* Ask Expert preference */}
-        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">Ask Expert</p>
+        <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">{t('expert.sectionHeader')}</p>
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
           {!expertSetting ? (
-            <p className="text-sm text-[#7A8C7E] italic">Loading…</p>
+            <p className="text-sm text-[#7A8C7E] italic">{tCommon('loading')}</p>
           ) : expertSetting.mode === 'SPECIFIC' && expertSetting.preferred_pundit ? (
             <>
-              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">{t('expert.currentlyLabel')}</p>
               <p className="text-sm font-semibold text-[#6B3F1F]">
-                {expertSetting.preferred_pundit.name || 'Selected Expert'}
+                {expertSetting.preferred_pundit.name || t('expert.selectedFallback')}
                 {expertSetting.preferred_pundit.phone && (
                   <span className="text-[#7A8C7E] font-normal ml-2">({expertSetting.preferred_pundit.phone})</span>
                 )}
               </p>
-              <p className="text-xs text-[#7A8C7E] mt-1">Your queries go directly to this expert.</p>
+              <p className="text-xs text-[#7A8C7E] mt-1">{t('expert.specificHint')}</p>
               <div className="grid grid-cols-2 gap-2 mt-3">
                 <button
                   onClick={openExpertSheet}
                   className="py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
-                >Change</button>
+                >{tCommon('change')}</button>
                 <button
                   onClick={revertExpert}
                   disabled={savingExpert}
                   className="py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-40"
-                >Revert to default</button>
+                >{t('expert.revertToDefault')}</button>
               </div>
             </>
           ) : expertSetting.mode === 'PROMOTER_PUNDIT' && expertSetting.promoter_pundit ? (
             <>
-              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">Currently</p>
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">{t('expert.currentlyLabel')}</p>
               <p className="text-sm font-semibold text-[#6B3F1F]">
-                {expertSetting.promoter_pundit.name || 'Promoter-Expert'}
+                {expertSetting.promoter_pundit.name || t('expert.promoterFallback')}
                 {expertSetting.promoter_pundit.phone && (
                   <span className="text-[#7A8C7E] font-normal ml-2">({expertSetting.promoter_pundit.phone})</span>
                 )}
               </p>
               <p className="text-xs text-[#7A8C7E] mt-1">
-                Your Promoter is also an Expert. Queries go to them by default.
+                {t('expert.promoterHint')}
               </p>
               <button
                 onClick={openExpertSheet}
                 className="mt-3 w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
-              >Choose a different expert</button>
+              >{t('expert.chooseDifferent')}</button>
             </>
           ) : (
             <>
-              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">Currently</p>
-              <p className="text-sm font-semibold text-[#6B3F1F]">Regular team routing</p>
+              <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">{t('expert.currentlyLabel')}</p>
+              <p className="text-sm font-semibold text-[#6B3F1F]">{t('expert.teamLabel')}</p>
               <p className="text-xs text-[#7A8C7E] mt-1">
                 {expertSetting.company_experts.length > 0
-                  ? "Queries go to your company's regular Expert team."
-                  : "Your company has no specific experts available yet. Queries will go to the regular team."}
+                  ? t('expert.teamHint')
+                  : t('expert.noExpertsHint')}
               </p>
               {expertSetting.company_experts.length > 0 && (
                 <button
                   onClick={openExpertSheet}
                   className="mt-3 w-full py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium"
-                >Choose a specific expert</button>
+                >{t('expert.chooseSpecific')}</button>
               )}
             </>
           )}
@@ -945,20 +948,20 @@ export default function CropDetailPage() {
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
             {orderSuccess ? (
               <>
-                <p className="font-bold text-[#6B3F1F] text-base">Order created</p>
+                <p className="font-bold text-[#6B3F1F] text-base">{t('orderSheet.successTitle')}</p>
                 <p className="text-sm text-[#6B3F1F] mt-2">
-                  {orderSuccess.item_count} item{orderSuccess.item_count !== 1 ? 's' : ''} added to a single order. You can pick a dealer on the order screen.
+                  {t('orderSheet.successBody', { count: orderSuccess.item_count })}
                 </p>
                 <div className="grid grid-cols-2 gap-3 mt-5">
                   <button
                     onClick={closeOrderSheet}
                     className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold"
-                  >Close</button>
+                  >{t('orderSheet.close')}</button>
                   <button
                     onClick={() => router.push(`/orders/${orderSuccess.order_id}`)}
                     className="py-3 rounded-xl text-white text-sm font-semibold"
                     style={{ background: colour }}
-                  >Take me to order</button>
+                  >{t('orderSheet.takeMe')}</button>
                 </div>
               </>
             ) : (
@@ -966,9 +969,9 @@ export default function CropDetailPage() {
                 {/* State A: tentative (no acreage set) — entry first */}
                 {!sub.farm_area_acres && !sub.farm_area_confirmed_at && (
                   <>
-                    <p className="font-bold text-[#6B3F1F] text-base">Confirm your tentative area</p>
+                    <p className="font-bold text-[#6B3F1F] text-base">{t('orderSheet.confirmAreaTitle')}</p>
                     <p className="text-xs text-[#7A8C7E] mt-1">
-                      Volumes for these inputs are calculated on this. You can revise it once more at planting.
+                      {t('orderSheet.confirmAreaBody')}
                     </p>
                     <div className="flex gap-2 mt-4">
                       <input
@@ -979,7 +982,7 @@ export default function CropDetailPage() {
                         className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                       />
                       <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                        acres
+                        {t('area.unitAcres')}
                       </span>
                     </div>
                   </>
@@ -989,11 +992,11 @@ export default function CropDetailPage() {
                 {sub.farm_area_acres != null && !sub.farm_area_confirmed_at && (
                   <>
                     <p className="font-bold text-[#6B3F1F] text-base">
-                      Order DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
+                      {orderSheet.category === 'PESTICIDE' ? t('orderSheet.orderDbsPesticides') : t('orderSheet.orderDbsFertilisers')}
                     </p>
                     {orderSheetEditingArea ? (
                       <>
-                        <p className="text-xs text-[#7A8C7E] mt-2">Update tentative area:</p>
+                        <p className="text-xs text-[#7A8C7E] mt-2">{t('orderSheet.updateAreaLabel')}</p>
                         <div className="flex gap-2 mt-2">
                           <input
                             type="number" inputMode="decimal" step="0.01" min="0"
@@ -1003,22 +1006,22 @@ export default function CropDetailPage() {
                             className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                           />
                           <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                            acres
+                            {t('area.unitAcres')}
                           </span>
                         </div>
                       </>
                     ) : (
                       <p className="text-sm text-[#6B3F1F] mt-3">
-                        Current tentative area: <span className="font-semibold">{sub.farm_area_acres} acres</span>{' '}
+                        {t('orderSheet.currentAreaPrefix')} <span className="font-semibold">{sub.farm_area_acres} {t('area.unitAcres')}</span>{' '}
                         <button
                           onClick={() => setOrderSheetEditingArea(true)}
                           className="ml-1 text-xs underline"
                           style={{ color: colour }}
-                        >Change</button>
+                        >{tCommon('change')}</button>
                       </p>
                     )}
                     <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
-                      We'll use this for volume. You can revise once more at planting.
+                      {t('orderSheet.willUseForVolume')}
                     </p>
                   </>
                 )}
@@ -1027,14 +1030,14 @@ export default function CropDetailPage() {
                 {sub.farm_area_confirmed_at && (
                   <>
                     <p className="font-bold text-[#6B3F1F] text-base">
-                      Order DBS {orderSheet.category === 'PESTICIDE' ? 'pesticides' : 'fertilisers'}
+                      {orderSheet.category === 'PESTICIDE' ? t('orderSheet.orderDbsPesticides') : t('orderSheet.orderDbsFertilisers')}
                     </p>
                     <p className="text-sm text-[#6B3F1F] mt-3">
-                      Area: <span className="font-semibold">{sub.farm_area_acres} acres</span>{' '}
-                      <span className="text-xs text-[#7A8C7E]">(locked)</span>
+                      {t('orderSheet.areaPrefix')} <span className="font-semibold">{sub.farm_area_acres} {t('area.unitAcres')}</span>{' '}
+                      <span className="text-xs text-[#7A8C7E]">{t('orderSheet.areaLockedSuffix')}</span>
                     </p>
                     <p className="text-[#7A8C7E] text-xs mt-2">
-                      Locked at planting. Volumes are calculated on this.
+                      {t('orderSheet.lockedAtPlanting')}
                     </p>
                   </>
                 )}
@@ -1044,14 +1047,14 @@ export default function CropDetailPage() {
                     onClick={closeOrderSheet}
                     disabled={orderBusy}
                     className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
-                  >Cancel</button>
+                  >{tCommon('cancel')}</button>
                   <button
                     onClick={placeBuyAllOrder}
                     disabled={orderBusy}
                     className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                     style={{ background: colour }}
                   >
-                    {orderBusy ? '…' : (sub.farm_area_confirmed_at ? 'Place order' : 'Confirm and order')}
+                    {orderBusy ? '…' : (sub.farm_area_confirmed_at ? t('orderSheet.placeOrder') : t('orderSheet.confirmAndOrder'))}
                   </button>
                 </div>
               </>
@@ -1067,9 +1070,9 @@ export default function CropDetailPage() {
       {alertSheet && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingAlerts && setAlertSheet(false)}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F] text-base">Extra alert recipient</p>
+            <p className="font-bold text-[#6B3F1F] text-base">{t('alertsSheet.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-1">
-              Choose a dealer or facilitator who should also receive alerts about this crop, or opt out of any extra recipient. You can edit this any time.
+              {t('alertsSheet.body')}
             </p>
 
             {/* Opt-out toggle. When ON, the phone input is collapsed
@@ -1081,18 +1084,18 @@ export default function CropDetailPage() {
                 onChange={e => { setAlertDisabled(e.target.checked); setAlertError(null) }}
                 className="w-4 h-4"
               />
-              <span className="text-sm text-[#6B3F1F]">Don&apos;t send alerts to anyone else</span>
+              <span className="text-sm text-[#6B3F1F]">{t('alertsSheet.optOut')}</span>
             </label>
 
             {!alertDisabled && (
               <div className="mt-3 space-y-3">
                 <div>
-                  <p className="text-xs text-[#7A8C7E] mb-1">Phone number</p>
+                  <p className="text-xs text-[#7A8C7E] mb-1">{t('alertsSheet.phoneLabel')}</p>
                   <input
                     type="tel" inputMode="tel"
                     value={alertPhoneInput}
                     onChange={e => { setAlertPhoneInput(e.target.value); setAlertError(null) }}
-                    placeholder="+91 XXXXX XXXXX"
+                    placeholder={t('alertsSheet.phonePlaceholder')}
                     className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                   />
                   {/* Verify chip — looks the phone up so the farmer can
@@ -1109,7 +1112,7 @@ export default function CropDetailPage() {
                 </div>
                 {isAssigned && (
                   <p className="text-xs text-[#7A8C7E]">
-                    Leave blank to fall back to your promoter&apos;s number automatically.
+                    {t('alertsSheet.assignedHint')}
                   </p>
                 )}
               </div>
@@ -1126,13 +1129,13 @@ export default function CropDetailPage() {
                 onClick={() => setAlertSheet(false)}
                 disabled={savingAlerts}
                 className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
-              >Cancel</button>
+              >{tCommon('cancel')}</button>
               <button
                 onClick={saveAlertPrefs}
                 disabled={savingAlerts}
                 className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                 style={{ background: colour }}
-              >{savingAlerts ? '…' : 'Save'}</button>
+              >{savingAlerts ? '…' : tCommon('save')}</button>
             </div>
           </div>
         </div>
@@ -1142,18 +1145,17 @@ export default function CropDetailPage() {
       {expertSheet && expertSetting && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={() => !savingExpert && setExpertSheet(false)}>
           <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F] text-base">Choose your expert</p>
+            <p className="font-bold text-[#6B3F1F] text-base">{t('expertSheet.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-1">
-              Enter the phone number of your Promoter-Pundit (given to you by your promoter or the company&apos;s
-              relationship manager). If you leave this empty, your queries go to the company&apos;s expert team.
+              {t('expertSheet.body')}
             </p>
             <div className="mt-4">
-              <p className="text-xs text-[#7A8C7E] mb-1">Phone number</p>
+              <p className="text-xs text-[#7A8C7E] mb-1">{t('alertsSheet.phoneLabel')}</p>
               <input
                 type="tel" inputMode="tel"
                 value={expertPhoneInput}
                 onChange={e => { setExpertPhoneInput(e.target.value); setExpertError(null) }}
-                placeholder="+91 XXXXX XXXXX"
+                placeholder={t('alertsSheet.phonePlaceholder')}
                 className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
             </div>
@@ -1167,20 +1169,20 @@ export default function CropDetailPage() {
                 onClick={() => setExpertSheet(false)}
                 disabled={savingExpert}
                 className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40"
-              >Cancel</button>
+              >{tCommon('cancel')}</button>
               <button
                 onClick={() => setExpertByPhone(expertPhoneInput.trim())}
                 disabled={savingExpert || !expertPhoneInput.trim()}
                 className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                 style={{ background: colour }}
-              >{savingExpert ? '…' : 'Save'}</button>
+              >{savingExpert ? '…' : tCommon('save')}</button>
             </div>
             {expertSetting.preferred_pundit && (
               <button
                 onClick={revertExpert}
                 disabled={savingExpert}
                 className="mt-3 w-full py-2.5 text-xs text-[#7A8C7E] underline underline-offset-2 disabled:opacity-40">
-                Clear and go to the company&apos;s expert team
+                {t('expertSheet.clear')}
               </button>
             )}
           </div>
@@ -1198,23 +1200,23 @@ export default function CropDetailPage() {
               </svg>
             </div>
             <h3 className="text-[#6B3F1F] font-semibold text-lg text-center">
-              {showNeedDateSheet === 'advisory' ? 'Set your start date' : 'Set your start date'}
+              {t('needDate.title')}
             </h3>
             <p className="text-[#7A8C7E] text-sm text-center mt-2 leading-relaxed">
               {showNeedDateSheet === 'advisory'
-                ? 'Once you set when you sowed or transplanted, we will show you today\'s recommended practices.'
-                : 'We need to know when you sowed to help you diagnose any crop issues.'}
+                ? t('needDate.advisory')
+                : t('needDate.diagnose')}
             </p>
             <button
               onClick={() => { setShowNeedDateSheet(null); setShowStartDate(true) }}
               className="w-full mt-6 py-3.5 rounded-xl text-white font-semibold text-sm"
               style={{ background: colour }}>
-              Set start date now
+              {t('needDate.setNow')}
             </button>
             <button
               onClick={() => setShowNeedDateSheet(null)}
               className="w-full mt-2 py-2 text-[#7A8C7E] text-sm">
-              Maybe later
+              {t('needDate.later')}
             </button>
           </div>
         </div>

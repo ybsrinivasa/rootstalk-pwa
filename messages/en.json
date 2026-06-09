@@ -170,6 +170,154 @@
     },
     "subscribeAnother": "+ Subscribe to another advisory"
   },
+  "crop": {
+    "toast": {
+      "dateRequired": "Please choose a date. The start date cannot be removed once set.",
+      "startDateSaveFailed": "Could not save start date",
+      "areaSaved": "Farm area saved",
+      "saveFailed": "Could not save",
+      "saved": "Saved",
+      "invalidArea": "Enter a valid farm area",
+      "orderFailed": "Could not create order",
+      "alertsSaved": "Alert preferences saved",
+      "userNotFoundForAlert": "No RootsTalk user is registered with this number. Ask them to register first.",
+      "notDealerOrFacilitator": "This person isn't registered as a Dealer or Facilitator. Pick a number that belongs to one.",
+      "alertsSaveFailed": "Could not save alert preferences. Please try again.",
+      "expertSaved": "Expert preference saved",
+      "userNotFoundForExpert": "No RootsTalk user is registered with this number. Check the digits.",
+      "notPromoterPundit": "This number doesn't belong to a Promoter-Pundit for this company. Ask your promoter or RM for the correct number.",
+      "expertSaveFailed": "Could not save. Try again.",
+      "revertedToDefault": "Reverted to default",
+      "noPrimaryExpert": "This company has not onboarded a Primary expert yet. Ask Expert will be available once they do.",
+      "diagnoseUnavailable": "Diagnosis is not available for this crop right now."
+    },
+    "age": {
+      "label": "Crop Age",
+      "fromPlantingYear": "from planting year",
+      "fromStartDate": "from start date"
+    },
+    "area": {
+      "sectionHeader": "Farm Area",
+      "label": "Farm area",
+      "tentativeNote": "Tentative for now. Will be confirmed when you place your first order.",
+      "softSetLabel": "Farm area · Tentative",
+      "softSetNote": "Currently set as your tentative area. You can revise it once more when you place your first DAS order at planting time.",
+      "confirmedLabel": "Farm area · Confirmed",
+      "lockedNote": "Locked on {date}. Volumes for all your inputs are calculated on this.",
+      "unitAcres": "acres"
+    },
+    "plants": {
+      "sectionHeader": "Plant Count & Planting Year",
+      "confirmed": "Confirmed",
+      "lockedNote": "Locked on {date}.",
+      "plantsLabel": "Number of Plants",
+      "plantsPlaceholder": "e.g. 120",
+      "yearLabel": "Planting Year",
+      "selectYearPlaceholder": "Select…",
+      "beyondYear": "Beyond {year}",
+      "plantedPrefix": "plants · planted",
+      "helpText": "Both are needed for the advisory to compute volumes correctly. Plant count locks when you place your first order."
+    },
+    "startDate": {
+      "sectionHeader": "Start Date",
+      "title": "Set your start date",
+      "unlockPlantWise": "Advisory and Diagnosis unlock once you set the season start date.",
+      "unlockAreaWise": "Advisory and Diagnosis unlock once you set the sowing date.",
+      "setCta": "Set Start Date",
+      "setShort": "Set",
+      "label": "Start date",
+      "editWindow": "{days, plural, =0 {You can change this for one more day.} one {You can change this for # more day.} other {You can change this for # more days.}}",
+      "lockedNote": "Locked on {date}.",
+      "changeBtn": "change",
+      "updateCta": "Update"
+    },
+    "tiles": {
+      "advisoryTitle": "Advisory",
+      "diagnoseTitle": "Diagnose",
+      "askExpertTitle": "Ask Expert",
+      "ordersTitle": "Orders",
+      "setDateFirst": "Set date first",
+      "notAvailable": "Not available",
+      "noExpertYet": "No expert yet"
+    },
+    "missedItems": {
+      "label": "{count, plural, one {1 missed item — application window passed} other {# missed items — application window passed}}",
+      "cta": "View →"
+    },
+    "preStart": {
+      "sectionHeader": "Prepare for Sowing",
+      "seedsTitle": "Seeds & Seedlings",
+      "seedsBody": "Browse and order recommended varieties",
+      "itemsRecommended": "{count, plural, one {1 item recommended before sowing} other {# items recommended before sowing}}",
+      "pesticidesTitle": "Pre-Start Pesticides",
+      "pesticidesCta": "Order all pesticides →",
+      "fertilisersTitle": "Pre-Start Fertilisers",
+      "fertilisersCta": "Order all fertilisers →"
+    },
+    "alerts": {
+      "sectionHeader": "Alerts",
+      "youAlwaysPrefix": "You",
+      "youAlwaysSuffix": "will always receive alerts in this app.",
+      "alsoSentTo": "Also sent to:",
+      "extraContactFallback": "Extra contact",
+      "fromPromoter": "— from your promoter",
+      "noExtra": "No extra recipient set.",
+      "changeRecipient": "Change extra recipient",
+      "addRecipient": "Add a dealer or facilitator"
+    },
+    "expert": {
+      "sectionHeader": "Ask Expert",
+      "currentlyLabel": "Currently",
+      "selectedFallback": "Selected Expert",
+      "specificHint": "Your queries go directly to this expert.",
+      "revertToDefault": "Revert to default",
+      "promoterFallback": "Promoter-Expert",
+      "promoterHint": "Your Promoter is also an Expert. Queries go to them by default.",
+      "chooseDifferent": "Choose a different expert",
+      "teamLabel": "Regular team routing",
+      "teamHint": "Queries go to your company's regular Expert team.",
+      "noExpertsHint": "Your company has no specific experts available yet. Queries will go to the regular team.",
+      "chooseSpecific": "Choose a specific expert"
+    },
+    "orderSheet": {
+      "successTitle": "Order created",
+      "successBody": "{count, plural, one {1 item added to a single order. You can pick a dealer on the order screen.} other {# items added to a single order. You can pick a dealer on the order screen.}}",
+      "close": "Close",
+      "takeMe": "Take me to order",
+      "confirmAreaTitle": "Confirm your tentative area",
+      "confirmAreaBody": "Volumes for these inputs are calculated on this. You can revise it once more at planting.",
+      "orderDbsPesticides": "Order DBS pesticides",
+      "orderDbsFertilisers": "Order DBS fertilisers",
+      "updateAreaLabel": "Update tentative area:",
+      "currentAreaPrefix": "Current tentative area:",
+      "willUseForVolume": "We'll use this for volume. You can revise once more at planting.",
+      "areaPrefix": "Area:",
+      "areaLockedSuffix": "(locked)",
+      "lockedAtPlanting": "Locked at planting. Volumes are calculated on this.",
+      "placeOrder": "Place order",
+      "confirmAndOrder": "Confirm and order"
+    },
+    "alertsSheet": {
+      "title": "Extra alert recipient",
+      "body": "Choose a dealer or facilitator who should also receive alerts about this crop, or opt out of any extra recipient. You can edit this any time.",
+      "optOut": "Don't send alerts to anyone else",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "+91 XXXXX XXXXX",
+      "assignedHint": "Leave blank to fall back to your promoter's number automatically."
+    },
+    "expertSheet": {
+      "title": "Choose your expert",
+      "body": "Enter the phone number of your Promoter-Pundit (given to you by your promoter or the company's relationship manager). If you leave this empty, your queries go to the company's expert team.",
+      "clear": "Clear and go to the company's expert team"
+    },
+    "needDate": {
+      "title": "Set your start date",
+      "advisory": "Once you set when you sowed or transplanted, we will show you today's recommended practices.",
+      "diagnose": "We need to know when you sowed to help you diagnose any crop issues.",
+      "setNow": "Set start date now",
+      "later": "Maybe later"
+    }
+  },
   "location": {
     "title": "Where is your farm?",
     "subtitle": "This helps us find nearby dealers and advisories",
