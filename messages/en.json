@@ -15,6 +15,8 @@
     "retry": "Retry",
     "ok": "OK",
     "optional": "(optional)",
+    "working": "Working…",
+    "cancelling": "Cancelling…",
     "errors": {
       "generic": "Something went wrong. Please try again."
     }
@@ -107,6 +109,66 @@
       "otpMismatch": "That code didn't match. Please try again.",
       "nameSaveFailed": "Couldn't save your name. Please try again."
     }
+  },
+  "home": {
+    "greetingNamed": "Welcome, {name}",
+    "greetingFallback": "Welcome",
+    "summary": "{companies, plural, one {1 company} other {# companies}} — {crops, plural, one {1 crop} other {# crops}}",
+    "noAdvisoriesYet": "No active advisories yet",
+    "paymentPending": {
+      "title": "Payment pending",
+      "reservedPrefix": "Your",
+      "reservedSuffix": "subscription is reserved.",
+      "fallbackLabel": "advisory",
+      "selfBody": "Complete payment to activate the advisory.",
+      "linkBody": "Your payment link is active — anyone with it can pay via UPI.",
+      "delegateBodyPrefix": "Waiting for",
+      "delegateBodySuffix": "to pay.",
+      "fallbackDelegate": "them",
+      "role": {
+        "dealer": "dealer",
+        "facilitator": "facilitator",
+        "helper": "helper"
+      },
+      "linkChip": "🔗 Payment link",
+      "expiringSoon": "Expiring soon",
+      "hoursRemaining": "{hours}h remaining",
+      "completeCta": "Complete payment →",
+      "cancelSub": "Cancel this subscription",
+      "shareLinkCta": "Show QR & share →",
+      "cancelLink": "Cancel link",
+      "cancelLinkNote": "To cancel the subscription itself, cancel this link first.",
+      "payMyselfCta": "Pay myself instead →",
+      "cancelRequest": "Cancel request",
+      "cancelRequestNote": "To cancel the subscription itself, cancel this request first.",
+      "confirmCancelSelf": "Cancel this pending-payment subscription? You can subscribe again later.",
+      "confirmCancelDelegate": "Cancel this payment request? Your subscription stays — you can pay yourself or ask someone else.",
+      "errorCancelSelf": "Could not cancel. Please try again.",
+      "errorCancelDelegate": "Could not cancel the request."
+    },
+    "assignment": {
+      "title": "Advisory assignment request",
+      "bodyPrefix": "{promoterLabel}",
+      "bodyMiddle": "wants to subscribe you to",
+      "bodySuffix": "'s advisory for your crops.",
+      "fallbackName": "Someone",
+      "fallbackCompany": "a company",
+      "cta": "Review request →",
+      "promoterLabel": {
+        "dealer": "Dealer",
+        "facilitator": "Facilitator"
+      }
+    },
+    "empty": {
+      "title": "No advisories yet",
+      "body": "Subscribe to a company's advisory to get started",
+      "cta": "Subscribe now →"
+    },
+    "tile": {
+      "setStartDate": "Set start date",
+      "cropsSubscribed": "{count, plural, one {1 crop subscribed} other {# crops subscribed}}"
+    },
+    "subscribeAnother": "+ Subscribe to another advisory"
   },
   "location": {
     "title": "Where is your farm?",

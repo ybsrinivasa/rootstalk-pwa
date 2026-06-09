@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -62,6 +63,8 @@ function SeedlingIllustration() {
 export default function HomePage() {
   const router = useRouter()
   const user = getUser()
+  const t = useTranslations('home')
+  const tCommon = useTranslations('common')
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [clientInfos, setClientInfos] = useState<Record<string, ClientInfo>>({})
   const [pendingAssignments, setPendingAssignments] = useState<PendingAssignment[]>([])
@@ -71,7 +74,7 @@ export default function HomePage() {
   const [cancellingSub, setCancellingSub] = useState<string | null>(null)
 
   async function cancelPendingPayment(sub: Subscription) {
-    if (!confirm('Cancel this pending-payment subscription? You can subscribe again later.')) return
+    if (!confirm(t('paymentPending.confirmCancelSelf'))) return
     setCancellingSub(sub.id)
     try {
       await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`)
@@ -84,12 +87,12 @@ export default function HomePage() {
       const msg = typeof detail === 'string'
         ? detail
         : (detail as { message?: string })?.message
-      alert(msg || 'Could not cancel. Please try again.')
+      alert(msg || t('paymentPending.errorCancelSelf'))
     } finally { setCancellingSub(null) }
   }
 
   async function cancelDelegationRequest(sub: Subscription) {
-    if (!confirm('Cancel this payment request? Your subscription stays — you can pay yourself or ask someone else.')) return
+    if (!confirm(t('paymentPending.confirmCancelDelegate'))) return
     setCancellingSub(sub.id)
     try {
       // Removes the SubscriptionPaymentRequest row; the WAITLISTED
@@ -98,7 +101,7 @@ export default function HomePage() {
       await load()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      alert(msg || 'Could not cancel the request.')
+      alert(msg || t('paymentPending.errorCancelDelegate'))
     } finally { setCancellingSub(null) }
   }
 
@@ -187,12 +190,12 @@ export default function HomePage() {
         {/* Greeting */}
         <div className="mt-4 mb-5">
           <p className="text-xl font-bold" style={{ color: C.textPrimary }}>
-            {user?.name ? `Welcome, ${user.name.split(' ')[0]}` : 'Welcome'}
+            {user?.name ? t('greetingNamed', { name: user.name.split(' ')[0] }) : t('greetingFallback')}
           </p>
           <p className="text-sm mt-0.5" style={{ color: C.textSecond }}>
             {uniqueClientIds.length > 0
-              ? `${uniqueClientIds.length} compan${uniqueClientIds.length > 1 ? 'ies' : 'y'} — ${activeCropCount} crop${activeCropCount > 1 ? 's' : ''}`
-              : 'No active advisories yet'}
+              ? t('summary', { companies: uniqueClientIds.length, crops: activeCropCount })
+              : t('noAdvisoriesYet')}
           </p>
         </div>
 
@@ -220,10 +223,11 @@ export default function HomePage() {
                   const isShareLink = delegate?.method === 'SHARE_LINK'
                   const cropLabel = sub.crop_name || (sub.crop_cosh_id ? '' : '')
                   const cardLabel = [info?.display_name, cropLabel].filter(Boolean).join(' · ')
-                  const roleLabel = delegate?.role === 'DEALER' ? 'dealer'
+                  const roleKey = delegate?.role === 'DEALER' ? 'dealer'
                     : delegate?.role === 'FACILITATOR' ? 'facilitator'
                     : 'helper'
-                  const delegateName = delegate?.name || 'them'
+                  const roleLabel = t(`paymentPending.role.${roleKey}`)
+                  const delegateName = delegate?.name || t('paymentPending.fallbackDelegate')
 
                   return (
                     <div key={sub.id}
@@ -233,15 +237,15 @@ export default function HomePage() {
                         <span className="text-lg leading-none mt-0.5">⏳</span>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[15px]" style={{ color: C.textPrimary }}>
-                            Payment pending
+                            {t('paymentPending.title')}
                           </p>
                           <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: C.textPrimary, opacity: 0.85 }}>
-                            Your <span className="font-semibold">{cardLabel || 'advisory'}</span> subscription is reserved.{' '}
+                            {t('paymentPending.reservedPrefix')} <span className="font-semibold">{cardLabel || t('paymentPending.fallbackLabel')}</span> {t('paymentPending.reservedSuffix')}{' '}
                             {isSelfPending
-                              ? 'Complete payment to activate the advisory.'
+                              ? t('paymentPending.selfBody')
                               : isShareLink
-                                ? 'Your payment link is active — anyone with it can pay via UPI.'
-                                : <>Waiting for <span className="font-semibold">{delegateName}</span> ({roleLabel}) to pay.</>
+                                ? t('paymentPending.linkBody')
+                                : <>{t('paymentPending.delegateBodyPrefix')} <span className="font-semibold">{delegateName}</span> ({roleLabel}) {t('paymentPending.delegateBodySuffix')}</>
                             }
                           </p>
                           {!isSelfPending && (
@@ -256,15 +260,15 @@ export default function HomePage() {
                               ) : isShareLink ? (
                                 <span className="inline-flex items-center gap-1 text-[12px] font-medium px-2.5 py-1 rounded-full"
                                   style={{ background: '#fff', color: C.accent, border: `1px solid ${C.accent}66` }}>
-                                  🔗 Payment link
+                                  {t('paymentPending.linkChip')}
                                 </span>
                               ) : <span />}
                               {typeof delegate?.hours_remaining === 'number' && (
                                 <span className="text-[11px] font-medium"
                                   style={{ color: delegate.hours_remaining <= 6 ? '#B85C00' : C.textSecond }}>
                                   {delegate.hours_remaining === 0
-                                    ? 'Expiring soon'
-                                    : `${delegate.hours_remaining}h remaining`}
+                                    ? t('paymentPending.expiringSoon')
+                                    : t('paymentPending.hoursRemaining', { hours: delegate.hours_remaining })}
                                 </span>
                               )}
                             </div>
@@ -278,7 +282,7 @@ export default function HomePage() {
                             onClick={() => router.push(`/subscribe?resume=${sub.id}`)}
                             className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
                             style={{ background: C.accent, minHeight: 48 }}>
-                            Complete payment →
+                            {t('paymentPending.completeCta')}
                           </button>
                           {(sub.subscription_type === 'SELF' || !sub.subscription_type) && (
                             <button
@@ -286,7 +290,7 @@ export default function HomePage() {
                               disabled={cancellingSub === sub.id}
                               className="w-full mt-2 py-2 text-xs"
                               style={{ color: C.textSecond }}>
-                              {cancellingSub === sub.id ? 'Cancelling…' : 'Cancel this subscription'}
+                              {cancellingSub === sub.id ? tCommon('cancelling') : t('paymentPending.cancelSub')}
                             </button>
                           )}
                         </>
@@ -300,17 +304,17 @@ export default function HomePage() {
                             onClick={() => router.push(`/share-link/${delegate!.payment_request_id}`)}
                             className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
                             style={{ background: C.accent, minHeight: 48 }}>
-                            Show QR &amp; share →
+                            {t('paymentPending.shareLinkCta')}
                           </button>
                           <button
                             onClick={() => cancelDelegationRequest(sub)}
                             disabled={cancellingSub === sub.id}
                             className="w-full mt-2 py-2 text-xs"
                             style={{ color: C.textSecond }}>
-                            {cancellingSub === sub.id ? 'Working…' : 'Cancel link'}
+                            {cancellingSub === sub.id ? tCommon('working') : t('paymentPending.cancelLink')}
                           </button>
                           <p className="mt-1 text-[11px] text-center" style={{ color: C.textSecond, opacity: 0.7 }}>
-                            To cancel the subscription itself, cancel this link first.
+                            {t('paymentPending.cancelLinkNote')}
                           </p>
                         </>
                       ) : (
@@ -319,7 +323,7 @@ export default function HomePage() {
                             onClick={() => router.push(`/subscribe?resume=${sub.id}`)}
                             className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
                             style={{ background: C.accent, minHeight: 48 }}>
-                            Pay myself instead →
+                            {t('paymentPending.payMyselfCta')}
                           </button>
                           {/* 2026-05-29: cancel-and-route — while the
                               payment is pending with someone else,
@@ -333,10 +337,10 @@ export default function HomePage() {
                             disabled={cancellingSub === sub.id}
                             className="w-full mt-2 py-2 text-xs"
                             style={{ color: C.textSecond }}>
-                            {cancellingSub === sub.id ? 'Working…' : 'Cancel request'}
+                            {cancellingSub === sub.id ? tCommon('working') : t('paymentPending.cancelRequest')}
                           </button>
                           <p className="mt-1 text-[11px] text-center" style={{ color: C.textSecond, opacity: 0.7 }}>
-                            To cancel the subscription itself, cancel this request first.
+                            {t('paymentPending.cancelRequestNote')}
                           </p>
                         </>
                       )}
@@ -353,8 +357,10 @@ export default function HomePage() {
                   const clientInfo = assignmentClientInfos[assignment.client_id]
                   const colour = clientInfo?.primary_colour || C.primary
                   const initials = (clientInfo?.display_name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
-                  const promoterLabel = assignment.promoter_type === 'DEALER' ? 'Dealer' : 'Facilitator'
-                  const promoterName = assignment.promoter.name || 'Someone'
+                  const promoterLabel = assignment.promoter_type === 'DEALER'
+                    ? t('assignment.promoterLabel.dealer')
+                    : t('assignment.promoterLabel.facilitator')
+                  const promoterName = assignment.promoter.name || t('assignment.fallbackName')
 
                   return (
                     <div key={assignment.subscription_id}
@@ -372,10 +378,10 @@ export default function HomePage() {
                           </div>
                         )}
                         <div className="flex-1">
-                          <p className="font-semibold text-[15px]" style={{ color: C.textPrimary }}>Advisory assignment request</p>
+                          <p className="font-semibold text-[15px]" style={{ color: C.textPrimary }}>{t('assignment.title')}</p>
                           <p className="text-[13px] mt-0.5 leading-relaxed" style={{ color: C.textPrimary, opacity: 0.85 }}>
-                            {promoterLabel} <span className="font-semibold">{promoterName}</span> wants to subscribe you to{' '}
-                            <span className="font-semibold">{clientInfo?.display_name || 'a company'}</span>&apos;s advisory for your crops.
+                            {promoterLabel} <span className="font-semibold">{promoterName}</span> {t('assignment.bodyMiddle')}{' '}
+                            <span className="font-semibold">{clientInfo?.display_name || t('assignment.fallbackCompany')}</span>{t('assignment.bodySuffix')}
                           </p>
                         </div>
                       </div>
@@ -383,7 +389,7 @@ export default function HomePage() {
                         onClick={() => router.push(`/assignment/${assignment.subscription_id}`)}
                         className="w-full py-2.5 rounded-xl text-white font-bold text-sm"
                         style={{ background: C.primary, minHeight: 48 }}>
-                        Review request →
+                        {t('assignment.cta')}
                       </button>
                     </div>
                   )
@@ -395,15 +401,15 @@ export default function HomePage() {
               /* Empty state */
               <div className="flex flex-col items-center justify-center py-16">
                 <SeedlingIllustration/>
-                <p className="font-semibold text-lg mt-4" style={{ color: C.textPrimary }}>No advisories yet</p>
+                <p className="font-semibold text-lg mt-4" style={{ color: C.textPrimary }}>{t('empty.title')}</p>
                 <p className="text-sm text-center mt-2 max-w-[240px]" style={{ color: C.textSecond }}>
-                  Subscribe to a company&apos;s advisory to get started
+                  {t('empty.body')}
                 </p>
                 <button
                   onClick={() => router.push('/subscribe')}
                   className="mt-6 py-3.5 px-8 rounded-2xl text-white font-bold"
                   style={{ background: C.primary, minHeight: 48 }}>
-                  Subscribe now →
+                  {t('empty.cta')}
                 </button>
               </div>
             ) : (
@@ -442,12 +448,12 @@ export default function HomePage() {
                           </div>
                         )}
                         <p className="text-white font-bold text-base flex-1">
-                          {info?.display_name || 'Loading…'}
+                          {info?.display_name || tCommon('loading')}
                         </p>
                         {needsStartDate && (
                           <span className="px-2 py-0.5 rounded-full text-xs font-bold ml-auto shrink-0"
                             style={{ background: C.accent, color: 'white' }}>
-                            Set start date
+                            {t('tile.setStartDate')}
                           </span>
                         )}
                       </div>
@@ -457,7 +463,7 @@ export default function HomePage() {
                         <p className="text-[14px] px-4 py-2" style={{ color: C.textPrimary, opacity: 0.85 }}>{info.tagline}</p>
                       )}
                       <p className="text-xs px-4 pb-3 pt-1" style={{ color: C.textSecond }}>
-                        {subs.length} crop{subs.length > 1 ? 's' : ''} subscribed
+                        {t('tile.cropsSubscribed', { count: subs.length })}
                       </p>
                     </button>
                   )
@@ -475,7 +481,7 @@ export default function HomePage() {
                     color: C.primary,
                     minHeight: 48,
                   }}>
-                  + Subscribe to another advisory
+                  {t('subscribeAnother')}
                 </button>
               </div>
             )}
