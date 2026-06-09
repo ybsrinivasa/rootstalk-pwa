@@ -880,16 +880,61 @@ function FarmerPillChunk({
         <ReturnedChunk sub={sub} onForwardReturned={onForwardReturned} busy={busy} />
       )}
       {pill === 'pickup' && <PickupChunk sub={sub} />}
-      {/* Postponed strip — visibility only; the dealer resolves
-          postponed items. Shown on Routed and Approval chunks where
-          postponed_count is non-zero. */}
-      {(pill === 'routed' || pill === 'approval') && (sub.postponed_count ?? 0) > 0 && (
-        <div className="bg-amber-50/40 rounded-lg px-3 py-2">
-          <p className="text-xs text-amber-800">
-            ⏰ {sub.postponed_count} postponed item{(sub.postponed_count || 0) === 1 ? '' : 's'} · dealer is following up
-          </p>
-        </div>
+      {(pill === 'routed' || pill === 'approval') && (
+        <PostponedStrip sub={sub} pill={pill} />
       )}
+    </div>
+  )
+}
+
+// 2026-06-09 — Postponed strip with three render variants:
+// - Active "Send to another dealer" — direct dealer + Routed pill
+//   (no SFA / NA / pickup in play here, so the farmer can act).
+//   Routes to /orders/[id]/forward where the include-postponed
+//   nudge sheet already lives. The user picks "Include postponed"
+//   in the nudge → /reroute-returned fires with include_postponed:
+//   true → server flips postponed items to NA and bundles them
+//   into the new DRAFT.
+// - Passive "your facilitator is handling" — facilitator owns the
+//   order; postponed items belong to the facilitator's queue.
+// - Passive "dealer is following up" — fallback (Approval pill,
+//   seeds, etc.) where the farmer shouldn't act yet.
+function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
+  const router = useRouter()
+  const n = sub.postponed_count ?? 0
+  if (n === 0) return null
+
+  if (sub.facilitator_user_id) {
+    return (
+      <div className="bg-amber-50/40 rounded-lg px-3 py-2">
+        <p className="text-xs text-amber-800">
+          ⏰ {n} postponed item{n === 1 ? '' : 's'} · your facilitator is handling
+        </p>
+      </div>
+    )
+  }
+
+  // Active variant: Routed pill on a regular (non-seed) order.
+  // Seeds don't go through /forward; passive fallback for them.
+  if (pill === 'routed' && sub.kind === 'REGULAR') {
+    return (
+      <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+        <p className="text-xs text-amber-800">
+          ⏰ {n} postponed item{n === 1 ? '' : 's'}
+        </p>
+        <button onClick={() => router.push(`/orders/${sub.id}/forward`)}
+          className="text-xs font-semibold text-amber-800 underline">
+          Send to another dealer
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-amber-50/40 rounded-lg px-3 py-2">
+      <p className="text-xs text-amber-800">
+        ⏰ {n} postponed item{n === 1 ? '' : 's'} · dealer is following up
+      </p>
     </div>
   )
 }

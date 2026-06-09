@@ -64,9 +64,18 @@ export default function FarmerForwardPage() {
     ]).then(([o, r]) => {
       setOrder(o.data)
       setRecipients(r.data)
-      // If no postponed items, the picker is shown immediately
-      // (includePostponed=false is the right value to chain with).
-      if ((o.data.postponed_items?.length || 0) === 0) {
+      const returnedN = o.data.returned_items?.length || 0
+      const postponedN = o.data.postponed_items?.length || 0
+      // 2026-06-09 — Reachable from Batch 2's Postponed strip on the
+      // Manage Routed pill: the order has POSTPONED items but no
+      // NA. There's no choice to make — auto-include postponed.
+      // (Picking "Keep postponed" with zero NA would 400 the
+      // backend's nothing_to_reroute guard.)
+      if (postponedN > 0 && returnedN === 0) {
+        setIncludePostponed(true)
+      } else if (postponedN === 0) {
+        // Original Batch 10 default: no postponed items → false is
+        // the right value to chain with.
         setIncludePostponed(false)
       }
       if (r.data.has_locked_brand) setTab('dealers')
@@ -107,6 +116,11 @@ export default function FarmerForwardPage() {
 
   const returnedN = order.returned_items?.length || 0
   const postponedN = order.postponed_items?.length || 0
+  // 2026-06-09 — Postpone-only path: order has only POSTPONED
+  // items (no NA). Header + nudge copy adapts so the farmer reads
+  // "N postponed" instead of "0 returned".
+  const postponeOnly = returnedN === 0 && postponedN > 0
+  const totalForwardable = returnedN + (includePostponed ? postponedN : 0)
   const dealers = recipients.dealers || []
   const facilitators = recipients.facilitators || []
   const hasFacilitators = facilitators.length > 0 && !recipients.has_locked_brand
@@ -117,8 +131,10 @@ export default function FarmerForwardPage() {
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
 
         <p className="text-xs text-[#7A8C7E] mt-4 mb-3 leading-relaxed">
-          {returnedN} returned item{returnedN === 1 ? '' : 's'} ready to forward.
-          Pick a dealer or facilitator below.
+          {postponeOnly
+            ? `${postponedN} postponed item${postponedN === 1 ? '' : 's'} ready to forward (cancel postpone + bundle).`
+            : `${totalForwardable} item${totalForwardable === 1 ? '' : 's'} ready to forward.`}
+          {' '}Pick a dealer or facilitator below.
         </p>
 
         {recipients.locked_brand_explainer && (
