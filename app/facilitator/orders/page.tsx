@@ -69,7 +69,16 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   const c = o.item_status_counts
   switch (pill) {
     case 'pending':
-      return o.status === 'SENT' && !o.dealer_user_id
+      // 2026-06-09 — Two flavors of "needs your call":
+      // - SENT + no dealer = fresh from the farmer (Accept / Reject)
+      // - ACCEPTED + no dealer = previously accepted but currently
+      //   needs a dealer pick. Two ways to land here:
+      //   (a) facilitator clicked Accept on a fresh order and is
+      //       about to pick a dealer
+      //   (b) dealer declined a facilitator-forwarded order →
+      //       backend auto-routes it back here (the new order is
+      //       ACCEPTED, facilitator preserved, dealer cleared).
+      return ['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id
     case 'routed':
       // 2026-06-08 — Routed = dealer is processing.
       // Includes orders with POSTPONED items even if some items are
@@ -240,12 +249,24 @@ export default function FacilitatorOrdersPage() {
               const n = counts[p]
               return (
                 <button key={p} onClick={() => setPill(p)}
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                     active
                       ? 'bg-[#7D4E00] text-white border-[#7D4E00]'
                       : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                   }`}>
-                  {PILL_LABEL[p]} · {n}
+                  <span>{PILL_LABEL[p]}</span>
+                  {/* 2026-06-09 — Count badge: filled circle so the
+                      task-load reads at a glance. Tinted for the
+                      active pill (white on COLOUR), the role accent
+                      for inactive pills. Zero is shown muted so the
+                      eye skips it. */}
+                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                    active
+                      ? 'bg-white/25 text-white'
+                      : n === 0
+                        ? 'bg-stone-100 text-[#7A8C7E]'
+                        : 'bg-[#7D4E00]/15 text-[#7D4E00]'
+                  }`}>{n}</span>
                 </button>
               )
             })}
@@ -502,7 +523,7 @@ function PillChunk({
           Sub-order · {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
         </p>
       )}
-      {pill === 'pending' && (
+      {pill === 'pending' && sub.status === 'SENT' && (
         <>
           <p className="text-xs text-amber-700">
             New order — your call. {sub.item_count} item{sub.item_count === 1 ? '' : 's'}.
@@ -518,6 +539,26 @@ function PillChunk({
               ✗ Reject
             </button>
           </div>
+        </>
+      )}
+      {/* 2026-06-09 — ACCEPTED + no dealer = either the facilitator
+          just accepted (about to pick a dealer) OR the previously-
+          chosen dealer declined (server auto-routes the items back
+          here). Either way: pick a dealer. No Accept/Reject — the
+          facilitator already committed. */}
+      {pill === 'pending' && sub.status === 'ACCEPTED' && (
+        <>
+          <p className="text-xs text-amber-700">
+            Forward to a dealer · {sub.item_count} item{sub.item_count === 1 ? '' : 's'}.
+          </p>
+          <p className="text-[11px] text-amber-600 -mt-1">
+            Tap to open and pick a dealer.
+          </p>
+          <button onClick={() => onOpenDetail(sub.id)}
+            className="w-full py-2 rounded-lg text-white text-xs font-semibold"
+            style={{ background: COLOUR }}>
+            Pick a dealer →
+          </button>
         </>
       )}
       {pill === 'routed' && (

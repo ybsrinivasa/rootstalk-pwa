@@ -683,12 +683,23 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
             const n = counts[p]
             return (
               <button key={p} onClick={() => setPill(p)}
-                className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                   active
                     ? 'bg-[#3A7D44] text-white border-[#3A7D44]'
                     : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                 }`}>
-                {PILL_LABEL[p]} · {n}
+                <span>{PILL_LABEL[p]}</span>
+                {/* 2026-06-09 — Count badge: filled circle so the
+                    task-load reads at a glance. Tinted for the
+                    active pill (white on green), role accent for
+                    inactive pills. Zero is muted so the eye skips. */}
+                <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                  active
+                    ? 'bg-white/25 text-white'
+                    : n === 0
+                      ? 'bg-stone-100 text-[#7A8C7E]'
+                      : 'bg-[#3A7D44]/15 text-[#3A7D44]'
+                }`}>{n}</span>
               </button>
             )
           })}
