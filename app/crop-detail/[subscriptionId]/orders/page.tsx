@@ -55,6 +55,9 @@ type SubOrder = {
   // facilitator has already collected from the dealer; the farmer
   // is now receiving them from the facilitator).
   packing_picked_up_by_role?: 'FARMER' | 'FACILITATOR' | null
+  // 2026-06-09 — Packing ID for the Pickup chunk lead (mirrors the
+  // Facilitator pickup card composition).
+  packing_code?: string | null
   // 2026-06-03 — Lineage so the Manage tab can group reroute-child
   // orders under one card. Root of the chain has lineage_root_id ===
   // its own id (backend backfills this on first reroute).
@@ -1007,6 +1010,11 @@ function ReturnedChunk({
   )
 }
 
+// 2026-06-09 — Pickup chunk parity with the Facilitator pickup
+// card composition. Packing ID is the lead identifier (mono
+// banner); the count + recipient line sits beneath; the Confirm
+// CTA routes to the full /orders/[id]/pickup surface where the
+// item list + total + I-have-received button live.
 function PickupChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
   const count = sub.pickup_ready_count ?? 0
@@ -1014,17 +1022,25 @@ function PickupChunk({ sub }: { sub: SubOrder }) {
   return (
     <button
       onClick={() => router.push(`/orders/${sub.id}/pickup`)}
-      className="w-full bg-emerald-50 rounded-lg px-3 py-2 flex items-center justify-between gap-3 text-left active:bg-emerald-100/60">
-      <p className="text-xs text-emerald-800">
-        {receiveMode ? 'Receive' : 'Pick up'}{' '}
-        <strong>{count} item{count === 1 ? '' : 's'}</strong>
-        {(sub.recipient_shop_name || sub.recipient_name) && (
-          <> from <strong>{sub.recipient_shop_name || sub.recipient_name}</strong></>
-        )}
-      </p>
-      <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
-        Confirm →
-      </span>
+      className="w-full bg-white rounded-lg border border-emerald-300 overflow-hidden text-left active:bg-emerald-50/50">
+      {sub.packing_code && (
+        <div className="px-3 py-1.5 bg-emerald-600 text-white flex items-baseline justify-between">
+          <p className="text-[9px] uppercase tracking-wider opacity-75">Packing ID</p>
+          <p className="text-xs font-bold font-mono tracking-widest">{sub.packing_code}</p>
+        </div>
+      )}
+      <div className="px-3 py-2 flex items-center justify-between gap-3 bg-emerald-50">
+        <p className="text-xs text-emerald-800">
+          {receiveMode ? 'Receive' : 'Pick up'}{' '}
+          <strong>{count} item{count === 1 ? '' : 's'}</strong>
+          {(sub.recipient_shop_name || sub.recipient_name) && (
+            <> from <strong>{sub.recipient_shop_name || sub.recipient_name}</strong></>
+          )}
+        </p>
+        <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
+          Confirm →
+        </span>
+      </div>
     </button>
   )
 }
@@ -1081,12 +1097,10 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
   const [items, setItems] = useState<PurchasedItem[] | null>(null)
   const [seeds, setSeeds] = useState<SeedPurchased[] | null>(null)
-  // 2026-06-06 — Approved-but-not-yet-confirmed orders. Driven by
-  // pickup_ready_count on the subscriptions/orders feed. Shown as a
-  // "Ready to pick up" strip at the top of the Received tab so the
-  // farmer is naturally nudged to confirm receipt before browsing
-  // their actually-received items.
-  const [pickupReady, setPickupReady] = useState<SubOrder[] | null>(null)
+  // 2026-06-09 — "Ready to pick up" strip removed. The active
+  // surface is now the Pickup pill on the Manage tab (Batch 1 of
+  // the Farmer mirroring workstream). Received tab is purely
+  // already-received items (history of confirmed pickups).
   useEffect(() => {
     api.get<PurchasedItem[]>(`/farmer/purchased-items?subscription_id=${subscriptionId}`)
       .then(({ data }) => setItems(data))
@@ -1096,56 +1110,23 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
         s.subscription_id === subscriptionId && s.status === 'PURCHASED'
       )))
       .catch(() => setSeeds([]))
-    api.get<{ orders: SubOrder[] }>(`/farmer/subscriptions/${subscriptionId}/orders`)
-      .then(({ data }) => setPickupReady(
-        (data.orders || []).filter(o => (o.pickup_ready_count ?? 0) > 0)
-      ))
-      .catch(() => setPickupReady([]))
   }, [subscriptionId])
 
-  if (items === null || seeds === null || pickupReady === null) return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
-  if (items.length === 0 && seeds.length === 0 && pickupReady.length === 0) {
+  if (items === null || seeds === null) return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
+  if (items.length === 0 && seeds.length === 0) {
     return (
       <div className="p-4">
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
           <p className="text-sm text-[#7A8C7E]">No items received yet for this crop.</p>
-          <p className="text-xs text-[#7A8C7E] mt-1">Items appear here once you tap confirm pickup.</p>
+          <p className="text-xs text-[#7A8C7E] mt-1">
+            Items appear here once you confirm pickup from the Manage tab&apos;s Pickup pill.
+          </p>
         </div>
       </div>
     )
   }
   return (
     <div className="p-4 space-y-3">
-      {pickupReady.length > 0 && (
-        <section className="space-y-2">
-          <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wider px-1">
-            {pickupReady.every(o => o.packing_picked_up_by_role === 'FACILITATOR')
-              ? 'Ready to receive'
-              : 'Ready to pick up'}
-          </p>
-          {pickupReady.map(o => {
-            const receiveMode = o.packing_picked_up_by_role === 'FACILITATOR'
-            return (
-            <button key={o.id}
-              onClick={() => router.push(`/orders/${o.id}/pickup`)}
-              className="w-full bg-white rounded-2xl border border-emerald-300 shadow-sm p-4 text-left active:scale-[0.99] transition-transform">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-[#6B3F1F]">
-                    {o.pickup_ready_count} item{(o.pickup_ready_count || 0) === 1 ? '' : 's'} from{' '}
-                    {o.recipient_shop_name || o.recipient_name || (receiveMode ? 'facilitator' : 'dealer')}
-                  </p>
-                  <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-                    {receiveMode ? 'Tap to confirm receipt' : 'Tap to confirm pickup'}
-                  </p>
-                </div>
-                <span className="text-emerald-700 font-semibold text-xs shrink-0">Confirm →</span>
-              </div>
-            </button>
-            )
-          })}
-        </section>
-      )}
       {seeds.map(s => (
         <div key={s.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
           <div className="flex items-baseline justify-between gap-2">
