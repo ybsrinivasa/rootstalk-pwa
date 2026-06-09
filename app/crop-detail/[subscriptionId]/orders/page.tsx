@@ -670,7 +670,9 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
 
   return (
     <div className="p-4 space-y-3">
-      {/* Pill row + History chip placeholder (Batch 3) */}
+      {/* Pill row + History chip. Active pills filter the live
+          queue; the History chip (right edge, scoped to the same
+          subscription) opens the terminal sub-orders surface. */}
       <div className="flex items-center gap-2">
         <div className="flex gap-2 overflow-x-auto flex-1">
           {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
@@ -688,6 +690,10 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
             )
           })}
         </div>
+        <button onClick={() => router.push(`/crop-detail/${subscriptionId}/orders/history`)}
+          className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
+          📁 History
+        </button>
       </div>
 
       {/* Approval 1-of-N peek banner — only shown on the For
