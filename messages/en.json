@@ -318,6 +318,29 @@
       "later": "Maybe later"
     }
   },
+  "mySubscriptions": {
+    "headerTitle": "My Subscriptions",
+    "backToHome": "← Back to home",
+    "active": "Active ({count})",
+    "other": "Other ({count})",
+    "openAdvisory": "Open Advisory",
+    "unsubscribe": "Unsubscribe",
+    "unsubscribeConfirm": "Unsubscribe from this advisory?",
+    "unsubscribeError": "Cannot unsubscribe from this advisory.",
+    "companyFallback": "Company",
+    "activeBadge": "ACTIVE",
+    "startedOn": "Started {date}",
+    "awaitingStartDate": "Awaiting crop start date",
+    "pendingPayment": "Pending payment delegation",
+    "cancelPending": "Cancel pending request",
+    "cancelPendingConfirm": "Cancel pending payment request? You can then choose someone else or pay yourself.",
+    "cancelPendingError": "Could not cancel the request.",
+    "discoverHeader": "Advisories in your area",
+    "discoverSubheader": "Other companies offering advisories in your district",
+    "explore": "Explore →",
+    "emptyTitle": "No subscriptions yet",
+    "emptyCta": "Subscribe to an advisory"
+  },
   "location": {
     "title": "Where is your farm?",
     "subtitle": "This helps us find nearby dealers and advisories",

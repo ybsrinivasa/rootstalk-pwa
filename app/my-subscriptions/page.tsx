@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -29,6 +30,8 @@ const STATUS_COLOUR: Record<string, string> = {
 
 export default function MySubscriptionsPage() {
   const router = useRouter()
+  const t = useTranslations('mySubscriptions')
+  const tCommon = useTranslations('common')
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [brandings, setBrandings] = useState<Record<string, Branding>>({})
   const [discover, setDiscover] = useState<DiscoverPackage[]>([])
@@ -62,26 +65,26 @@ export default function MySubscriptionsPage() {
   }, [])
 
   async function unsubscribe(sub: Subscription) {
-    if (!confirm(`Unsubscribe from this advisory?`)) return
+    if (!confirm(t('unsubscribeConfirm'))) return
     setUnsubscribing(sub.id)
     try {
       await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`, {})
       load()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      alert(msg || 'Cannot unsubscribe from this advisory.')
+      alert(msg || t('unsubscribeError'))
     } finally { setUnsubscribing(null) }
   }
 
   async function cancelDelegation(sub: Subscription) {
-    if (!confirm('Cancel pending payment request? You can then choose someone else or pay yourself.')) return
+    if (!confirm(t('cancelPendingConfirm'))) return
     setCancelling(sub.id)
     try {
       await api.delete(`/farmer/subscriptions/${sub.id}/delegate-payment`)
       load()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      alert(msg || 'Could not cancel the request.')
+      alert(msg || t('cancelPendingError'))
     } finally { setCancelling(null) }
   }
 
@@ -90,7 +93,7 @@ export default function MySubscriptionsPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Subscriptions" activeRole="FARMER" back="/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {/* Back to home — /my-subscriptions is reached from the
             right drawer, so there's no obvious one-step back; an
@@ -99,7 +102,7 @@ export default function MySubscriptionsPage() {
           onClick={() => router.replace('/home')}
           className="mt-4 mb-2 flex items-center gap-1 text-sm"
           style={{ color: '#7A8C7E' }}>
-          ← Back to home
+          {t('backToHome')}
         </button>
         {loading ? (
           <div className="mt-4 space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}</div>
@@ -108,7 +111,7 @@ export default function MySubscriptionsPage() {
             {/* Active subscriptions */}
             {active.length > 0 && (
               <section>
-                <p className="text-xs font-bold text-[#7A8C7E] uppercase tracking-wider mb-3">Active ({active.length})</p>
+                <p className="text-xs font-bold text-[#7A8C7E] uppercase tracking-wider mb-3">{t('active', { count: active.length })}</p>
                 <div className="space-y-3">
                   {active.map(sub => {
                     const b = brandings[sub.client_id]
@@ -117,8 +120,8 @@ export default function MySubscriptionsPage() {
                       <div key={sub.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
                         <div className="px-4 py-2.5 flex items-center gap-3" style={{ background: colour + '18' }}>
                           {b?.logo_url && <img src={b.logo_url} alt="" className="w-6 h-6 rounded object-cover" />}
-                          <p className="text-sm font-bold flex-1" style={{ color: colour }}>{b?.display_name || 'Company'}</p>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">ACTIVE</span>
+                          <p className="text-sm font-bold flex-1" style={{ color: colour }}>{b?.display_name || t('companyFallback')}</p>
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">{t('activeBadge')}</span>
                         </div>
                         <div className="px-4 py-3">
                           {sub.reference_number && (
@@ -126,19 +129,19 @@ export default function MySubscriptionsPage() {
                           )}
                           <p className="text-xs text-[#7A8C7E]">
                             {sub.crop_start_date
-                              ? `Started ${new Date(sub.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
-                              : 'Awaiting crop start date'}
+                              ? t('startedOn', { date: new Date(sub.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })
+                              : t('awaitingStartDate')}
                           </p>
                           <div className="flex gap-2 mt-3">
                             <button onClick={() => router.push(`/crop-detail/${sub.id}`)}
                               className="flex-1 py-2 rounded-xl text-xs font-semibold text-white"
                               style={{ background: colour }}>
-                              Open Advisory
+                              {t('openAdvisory')}
                             </button>
                             <button onClick={() => unsubscribe(sub)}
                               disabled={unsubscribing === sub.id}
                               className="px-4 py-2 rounded-xl text-xs font-medium text-[#D4682E] border border-red-200 hover:bg-red-50 disabled:opacity-40">
-                              {unsubscribing === sub.id ? '…' : 'Unsubscribe'}
+                              {unsubscribing === sub.id ? '…' : t('unsubscribe')}
                             </button>
                           </div>
                         </div>
@@ -152,7 +155,7 @@ export default function MySubscriptionsPage() {
             {/* Waitlisted / past */}
             {others.length > 0 && (
               <section>
-                <p className="text-xs font-bold text-[#7A8C7E] uppercase tracking-wider mb-3">Other ({others.length})</p>
+                <p className="text-xs font-bold text-[#7A8C7E] uppercase tracking-wider mb-3">{t('other', { count: others.length })}</p>
                 <div className="space-y-2">
                   {others.map(sub => {
                     const b = brandings[sub.client_id]
@@ -161,10 +164,10 @@ export default function MySubscriptionsPage() {
                       <div key={sub.id} className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-[#6B3F1F]">{b?.display_name || 'Company'}</p>
+                            <p className="text-sm font-semibold text-[#6B3F1F]">{b?.display_name || t('companyFallback')}</p>
                             {sub.reference_number && <p className="text-xs font-mono text-[#7A8C7E]">{sub.reference_number}</p>}
                             {isWaitlisted && (
-                              <p className="text-xs text-amber-700 mt-1">Pending payment delegation</p>
+                              <p className="text-xs text-amber-700 mt-1">{t('pendingPayment')}</p>
                             )}
                           </div>
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
@@ -176,7 +179,7 @@ export default function MySubscriptionsPage() {
                             onClick={() => cancelDelegation(sub)}
                             disabled={cancelling === sub.id}
                             className="mt-2 text-xs text-amber-700 underline disabled:opacity-40">
-                            {cancelling === sub.id ? 'Cancelling…' : 'Cancel pending request'}
+                            {cancelling === sub.id ? tCommon('cancelling') : t('cancelPending')}
                           </button>
                         )}
                       </div>
@@ -189,11 +192,11 @@ export default function MySubscriptionsPage() {
             {/* Active Advisories in District — discovery (A3a) */}
             {discover.length > 0 && (
               <section>
-                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-1">Advisories in your area</p>
-                <p className="text-xs text-[#7A8C7E] mb-3">Other companies offering advisories in your district</p>
+                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-1">{t('discoverHeader')}</p>
+                <p className="text-xs text-[#7A8C7E] mb-3">{t('discoverSubheader')}</p>
                 <div className="space-y-2">
                   {discover.map(pkg => {
-                    const companyName = pkg.client_name || pkg.company_name || 'Company'
+                    const companyName = pkg.client_name || pkg.company_name || t('companyFallback')
                     const accentColour = pkg.client_colour || pkg.primary_colour || '#3A7D44'
                     const cropLabel = pkg.crop_cosh_id
                       .replace(/^crop_/, '')
@@ -211,7 +214,7 @@ export default function MySubscriptionsPage() {
                         <button onClick={() => router.push('/subscribe')}
                           className="text-xs px-3 py-1.5 rounded-lg text-white font-medium ml-3 flex-shrink-0"
                           style={{ background: accentColour }}>
-                          Explore →
+                          {t('explore')}
                         </button>
                       </div>
                     )
@@ -223,10 +226,10 @@ export default function MySubscriptionsPage() {
             {subscriptions.length === 0 && discover.length === 0 && (
               <div className="text-center py-16">
                 <span className="text-4xl">🌾</span>
-                <p className="text-[#7A8C7E] font-medium mt-3">No subscriptions yet</p>
+                <p className="text-[#7A8C7E] font-medium mt-3">{t('emptyTitle')}</p>
                 <button onClick={() => router.push('/subscribe')}
                   className="mt-4 px-6 py-3 rounded-2xl text-white text-sm font-semibold bg-green-700">
-                  Subscribe to an advisory
+                  {t('emptyCta')}
                 </button>
               </div>
             )}
