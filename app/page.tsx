@@ -143,7 +143,7 @@ export default function RootPage() {
   const router = useRouter()
   const [stage,        setStage]       = useState<Stage>('loading')
   const [languages,    setLanguages]   = useState<Lang[]>([])
-  const [selectedLang, setSelected]    = useState(getLanguage() || 'en')
+  const [selectedLang, setSelected]    = useState<string>(getLanguage() || 'en')
   const [phone,        setPhone]       = useState('')
   const [otp,          setOtp]         = useState('')
   const [devOtp,       setDevOtp]      = useState('')

@@ -1,0 +1,19 @@
+{
+  "common": {
+    "translationPending": "translation pending",
+    "loading": "Loading…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "yes": "Yes",
+    "no": "No",
+    "retry": "Retry",
+    "ok": "OK"
+  },
+  "language": {
+    "selectorTitle": "Choose your language",
+    "selectorHint": "You can change this any time from the header."
+  }
+}

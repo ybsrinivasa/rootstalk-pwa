@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+import { isRTL } from "@/lib/locales";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,9 +29,16 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Resolve the active locale + messages server-side so the first paint
+  // is in the user's language. The cookie is the source of truth — see
+  // i18n/request.ts. Urdu flips dir=rtl for the full-layout mirror
+  // required by the Localisation Strategy §6.
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const dir = isRTL(locale) ? "rtl" : "ltr";
   return (
-    <html lang="en" className="h-full">
+    <html lang={locale} dir={dir} className="h-full">
       {/* Desktop "phone frame": ≥md viewports get a black backdrop and a
           430-px-wide white column. The wrapper div uses transform-gpu on
           md+ so it becomes the containing block for `position: fixed`
@@ -48,9 +58,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Splitting these avoids a Chrome quirk where transform +
             overflow on the same element mis-positions fixed children.
             On phones (<768px) both wrappers are inert pass-throughs. */}
-        <div className="app-frame">
-          <div className="app-scroll">{children}</div>
-        </div>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <div className="app-frame">
+            <div className="app-scroll">{children}</div>
+          </div>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

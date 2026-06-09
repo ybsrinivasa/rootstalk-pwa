@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getUser, ROLE_COLOURS } from '@/lib/auth'
-import { getLanguage, setLanguage } from '@/lib/language'
+import { getLanguage, changeLanguage } from '@/lib/language'
 import api from '@/lib/api'
 import AppMark from '@/components/AppMark'
 
@@ -49,7 +49,7 @@ export default function PWAHeader({
   const [showLang, setShowLang] = useState(false)
   const [showAbout, setShowAbout] = useState(false)
   const [languages, setLanguages] = useState<Lang[]>([])
-  const [currentLang, setCurrentLang] = useState(getLanguage())
+  const [currentLang, setCurrentLang] = useState<string>(getLanguage())
   const colour = customColour || ROLE_COLOURS[activeRole] || '#3A7D44'
   const roleLabel = ROLE_LABEL[activeRole] || 'Farmer'
 
@@ -66,7 +66,10 @@ export default function PWAHeader({
   }, [])
 
   function switchLang(code: string) {
-    setLanguage(code)
+    // Fire-and-forget backend persist; local state (cookie + localStorage)
+    // is updated synchronously inside changeLanguage so the reload below
+    // picks it up regardless of network outcome.
+    void changeLanguage(code)
     setCurrentLang(code)
     setShowLang(false)
     window.location.reload()
