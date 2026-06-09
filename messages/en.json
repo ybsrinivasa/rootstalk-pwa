@@ -318,6 +318,134 @@
       "later": "Maybe later"
     }
   },
+  "subscribe": {
+    "errors": {
+      "pickDistrict": "Please pick your district.",
+      "loadCrops": "Could not load crops for this area.",
+      "loadCompanies": "Could not load companies.",
+      "startFinder": "Could not start the advisory finder.",
+      "loadNextQuestion": "Could not load next question.",
+      "createSub": "Could not create subscription.",
+      "paymentVerifyFailed": "Payment verification failed. Contact support.",
+      "paymentInit": "Could not initiate payment.",
+      "stagingBypass": "Could not activate (staging bypass).",
+      "shareLinkFailed": "Could not generate the payment link. Please try again.",
+      "selfPay": "You cannot ask yourself to pay. Please choose someone else.",
+      "lookupFailed": "Could not look up this number. Please try again.",
+      "sendDelegateFailed": "Could not send payment request. Check the phone number and try again."
+    },
+    "razorpayDescriptionWithCompany": "Advisory subscription · paid to rootsTALK.in (not to {company})",
+    "razorpayDescription": "Advisory subscription · paid to rootsTALK.in",
+    "titles": {
+      "location": "Find advisories",
+      "crop": "Select crop",
+      "company": "Choose company",
+      "guided": "Find your advisory",
+      "confirm": "Your advisory",
+      "payment": "Almost there",
+      "delegate": "Send request",
+      "delegateSent": "Request sent",
+      "done": "Subscribed!"
+    },
+    "backShort": "← Back",
+    "backToHome": "← Back to home",
+    "done": {
+      "heading": "You're subscribed!",
+      "body": "Your {crop} advisory from {company} is now active.",
+      "hint": "Set your sowing date to unlock the advisory.",
+      "cta": "Go to your advisory →"
+    },
+    "delegateSent": {
+      "heading": "Payment request sent",
+      "askedPrefix": "Asked",
+      "askedToPay": "to pay ₹199 for your {crop} advisory from {company}.",
+      "recipientFallback": "the recipient",
+      "bodyWithoutName": "Your request to pay ₹199 for the {crop} advisory from {company} has been sent.",
+      "hint": "You'll be notified the moment they pay. The request expires in 24 hours; your advisory goes active as soon as the payment is completed.",
+      "goHome": "Go home",
+      "trackRequest": "Track this request →"
+    },
+    "location": {
+      "title": "Where is your farm?",
+      "subtitle": "We'll find advisories available in your area",
+      "savedLabel": "Your location",
+      "unnamed": "(unnamed)",
+      "useSaved": "↺ Use my saved location instead",
+      "loadingShort": "Loading…",
+      "findAdvisories": "Find advisories →"
+    },
+    "crop": {
+      "title": "Select your crop",
+      "subtitle": "Advisories available in your area",
+      "empty": "No advisories are available in your area yet. Check back soon.",
+      "changeLocation": "← Change location"
+    },
+    "company": {
+      "title": "Choose a company",
+      "subtitle": "Companies offering {crop} advisories in your area",
+      "empty": "No company is offering an advisory for this crop in your area yet.",
+      "explore": "Explore advisory →"
+    },
+    "guided": {
+      "firstTitle": "Tell us about your farm",
+      "followupTitle": "One more thing",
+      "subtitle": "We'll find the right advisory for you",
+      "narrowingFrom": "Narrowing from {count} options",
+      "startOver": "↺ Start over",
+      "differentCompany": "← Choose a different company"
+    },
+    "confirm": {
+      "title": "Your advisory",
+      "subtitleAnswers": "Based on your answers",
+      "subtitleOnly": "The only advisory matching your area",
+      "fallbackPackageName": "{crop} advisory",
+      "selectionsLabel": "Your selections",
+      "priceLabel": "Subscription price",
+      "priceAmount": "Rs. 199",
+      "settingUp": "Setting up…",
+      "proceedCta": "Looks right — proceed to payment →"
+    },
+    "payment": {
+      "title": "Almost there!",
+      "subtitle": "Choose how to pay for your advisory",
+      "attributionPrefix": "₹199 is paid to",
+      "attributionMiddle": "for the software infrastructure. It is",
+      "attributionNot": "not",
+      "attributionSuffix": "paid to {company}.",
+      "attributionCompanyFallback": "the company",
+      "payNow": "Pay Rs. 199 now",
+      "payNowBody": "Instant activation after payment",
+      "payUpi": "Pay with UPI →",
+      "stagingBypass": "⚙ Staging: skip Razorpay, activate now",
+      "askDealer": "Ask a dealer to pay",
+      "askDealerBody": "They become your Promoter and receive your order alerts",
+      "selectDealer": "Select dealer →",
+      "askFacilitator": "Ask a facilitator to pay",
+      "askFacilitatorBody": "They coordinate delivery and become your Promoter",
+      "selectFacilitator": "Select facilitator →",
+      "shareLink": "Share a payment link / QR",
+      "shareLinkBody": "Send a link to anyone — your son in the city, a relative, a friend. They pay via any UPI app.",
+      "generating": "Generating…",
+      "generateCta": "Generate link & QR →"
+    },
+    "delegate": {
+      "title": "Send payment request",
+      "subtitleDealer": "Enter the dealer's phone number",
+      "subtitleFacilitator": "Enter the facilitator's phone number",
+      "phonePlaceholder": "10-digit mobile number",
+      "registeredUser": "Registered user",
+      "dealerChip": "Dealer",
+      "facilitatorChip": "Facilitator",
+      "atSingle": "At {company}",
+      "atMultiple": "At {companies}",
+      "cannotSendTitle": "Cannot send request",
+      "checkAgain": "Check again",
+      "check": "Check",
+      "sendRequest": "Send request to {name} →",
+      "fallbackName": "them",
+      "payMyself": "Pay myself instead"
+    }
+  },
   "mySubscriptions": {
     "headerTitle": "My Subscriptions",
     "backToHome": "← Back to home",

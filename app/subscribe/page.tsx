@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -97,6 +98,9 @@ function SubscribeFlow() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const user = getUser()
+  const t = useTranslations('subscribe')
+  const tLocation = useTranslations('location')
+  const tCommon = useTranslations('common')
 
   const [stage, setStage] = useState<Stage>('location')
 
@@ -246,7 +250,7 @@ function SubscribeFlow() {
 
   // ── Stage: Location ────────────────────────────────────────────────────────
   async function proceedFromLocation() {
-    if (!district) { setError('Please pick your district.'); return }
+    if (!district) { setError(t('errors.pickDistrict')); return }
     setBusy(true); setError('')
     try {
       const { data } = await api.get<{ crop_cosh_id: string; name?: string | null }[]>('/farmer/discover/crops', {
@@ -254,7 +258,7 @@ function SubscribeFlow() {
       })
       setCrops(data)
       setStage('crop')
-    } catch { setError('Could not load crops for this area.') }
+    } catch { setError(t('errors.loadCrops')) }
     finally { setBusy(false) }
   }
 
@@ -270,7 +274,7 @@ function SubscribeFlow() {
       })
       setCompanies(data)
       setStage('company')
-    } catch { setError('Could not load companies.') }
+    } catch { setError(t('errors.loadCompanies')) }
     finally { setBusy(false) }
   }
 
@@ -297,7 +301,7 @@ function SubscribeFlow() {
       } else {
         setStage('guided')
       }
-    } catch { setError('Could not start the advisory finder.') }
+    } catch { setError(t('errors.startFinder')) }
     finally { setBusy(false) }
   }
 
@@ -321,7 +325,7 @@ function SubscribeFlow() {
       } else if (data.error) {
         setError(data.error)
       }
-    } catch { setError('Could not load next question.') }
+    } catch { setError(t('errors.loadNextQuestion')) }
     finally { setBusy(false) }
   }
 
@@ -338,7 +342,7 @@ function SubscribeFlow() {
       setStage('payment')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Could not create subscription.')
+      setError(msg || t('errors.createSub'))
     } finally { setBusy(false) }
   }
 
@@ -357,7 +361,9 @@ function SubscribeFlow() {
         // rootsTALK.in provides, NOT paying the company. Company
         // name appears in the description for the farmer's context.
         name: 'rootsTALK.in',
-        description: `Advisory subscription · paid to rootsTALK.in${company?.display_name ? ` (not to ${company.display_name})` : ''}`,
+        description: company?.display_name
+          ? t('razorpayDescriptionWithCompany', { company: company.display_name })
+          : t('razorpayDescription'),
         order_id: order.razorpay_order_id,
         prefill: { name: user?.name || '', contact: user?.phone || '' },
         theme: { color: '#3A7D44' },
@@ -369,15 +375,15 @@ function SubscribeFlow() {
               razorpay_signature: response.razorpay_signature,
             })
             setStage('done')
-          } catch { setError('Payment verification failed. Contact support.') }
+          } catch { setError(t('errors.paymentVerifyFailed')) }
         },
       }
       new window.Razorpay(options).open()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Could not initiate payment.')
+      setError(msg || t('errors.paymentInit'))
     }
-  }, [subscription, user])
+  }, [subscription, user, t])
 
   // ── Staging-only bypass — skip Razorpay entirely ────────────────────────────
   // Razorpay TEST mode rejects real UPI handles so demos can't flip
@@ -394,9 +400,9 @@ function SubscribeFlow() {
       setStage('done')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Could not activate (staging bypass).')
+      setError(msg || t('errors.stagingBypass'))
     }
-  }, [subscription])
+  }, [subscription, t])
 
   // ── V1.1 share-payment-link (2026-05-29) ──────────────────────────────────
   // Anyone with the link/QR can pay via any UPI app; webhook reconciles.
@@ -413,7 +419,7 @@ function SubscribeFlow() {
       const msg = typeof detail === 'string'
         ? detail
         : (detail as { message?: string })?.message
-      setError(msg || 'Could not generate the payment link. Please try again.')
+      setError(msg || t('errors.shareLinkFailed'))
     } finally { setBusy(false) }
   }
 
@@ -422,7 +428,7 @@ function SubscribeFlow() {
     if (!delegatePhone || delegatePhone.length < 10) return
     const fullPhone = `+91${delegatePhone.trim()}`
     if (user?.phone === fullPhone) {
-      setCheckError('You cannot ask yourself to pay. Please choose someone else.')
+      setCheckError(t('errors.selfPay'))
       return
     }
     setChecking(true); setCheckError(''); setDelegateLookup(null); setError('')
@@ -436,7 +442,7 @@ function SubscribeFlow() {
       const msg = typeof detail === 'string'
         ? detail
         : (detail as { message?: string })?.message
-            || 'Could not look up this number. Please try again.'
+            || t('errors.lookupFailed')
       setCheckError(msg)
     } finally { setChecking(false) }
   }
@@ -445,7 +451,7 @@ function SubscribeFlow() {
     if (!subscription || !delegatePhone.trim()) return
     const fullPhone = `+91${delegatePhone.trim()}`
     if (user?.phone === fullPhone) {
-      setError('You cannot ask yourself to pay. Please choose someone else.')
+      setError(t('errors.selfPay'))
       return
     }
     setBusy(true); setError('')
@@ -469,7 +475,7 @@ function SubscribeFlow() {
       const msg = typeof detail === 'string'
         ? detail
         : (detail as { message?: string })?.message
-            || 'Could not send payment request. Check the phone number and try again.'
+            || t('errors.sendDelegateFailed')
       setError(msg)
     } finally { setBusy(false) }
   }
@@ -522,15 +528,15 @@ function SubscribeFlow() {
 
   // ── Heading by stage ───────────────────────────────────────────────────────
   const titles: Record<Stage, string> = {
-    location: 'Find advisories',
-    crop: 'Select crop',
-    company: 'Choose company',
-    guided: 'Find your advisory',
-    confirm: 'Your advisory',
-    payment: 'Almost there',
-    delegate: 'Send request',
-    delegate_sent: 'Request sent',
-    done: 'Subscribed!',
+    location: t('titles.location'),
+    crop: t('titles.crop'),
+    company: t('titles.company'),
+    guided: t('titles.guided'),
+    confirm: t('titles.confirm'),
+    payment: t('titles.payment'),
+    delegate: t('titles.delegate'),
+    delegate_sent: t('titles.delegateSent'),
+    done: t('titles.done'),
   }
 
   // Prefer the resolved name captured at selection time; fall
@@ -549,18 +555,18 @@ function SubscribeFlow() {
             <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6">
               <span className="text-3xl text-green-700">✓</span>
             </div>
-            <h1 className="text-2xl font-bold text-white">You&apos;re subscribed!</h1>
+            <h1 className="text-2xl font-bold text-white">{t('done.heading')}</h1>
             <p className="text-white/70 mt-2 max-w-[280px]">
-              Your {cropDisplay} advisory from {company?.display_name} is now active.
+              {t('done.body', { crop: cropDisplay, company: company?.display_name || '' })}
             </p>
             <p className="text-white/50 text-sm mt-3">
-              Set your sowing date to unlock the advisory.
+              {t('done.hint')}
             </p>
             <button
               onClick={() => router.replace('/home')}
               className="mt-10 py-4 px-10 rounded-2xl font-semibold bg-white"
               style={{ color: '#3A7D44' }}>
-              Go to your advisory →
+              {t('done.cta')}
             </button>
           </div>
         ) : stage === 'delegate_sent' ? (
@@ -569,36 +575,35 @@ function SubscribeFlow() {
             <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6">
               <span className="text-3xl">📤</span>
             </div>
-            <h1 className="text-2xl font-bold text-white">Payment request sent</h1>
+            <h1 className="text-2xl font-bold text-white">{t('delegateSent.heading')}</h1>
             {delegateSentInfo.name || delegateSentInfo.phone ? (
               <p className="text-white/85 mt-3 max-w-[280px]">
-                Asked{' '}
-                <strong>{delegateSentInfo.name || 'the recipient'}</strong>
+                {t('delegateSent.askedPrefix')}{' '}
+                <strong>{delegateSentInfo.name || t('delegateSent.recipientFallback')}</strong>
                 {delegateSentInfo.phone && (
                   <> (<span className="font-mono">{delegateSentInfo.phone}</span>)</>
                 )}
-                {' '}to pay ₹199 for your {cropDisplay} advisory from {company?.display_name}.
+                {' '}{t('delegateSent.askedToPay', { crop: cropDisplay, company: company?.display_name || '' })}
               </p>
             ) : (
               <p className="text-white/85 mt-3 max-w-[280px]">
-                Your request to pay ₹199 for the {cropDisplay} advisory from {company?.display_name} has been sent.
+                {t('delegateSent.bodyWithoutName', { crop: cropDisplay, company: company?.display_name || '' })}
               </p>
             )}
             <p className="text-white/60 text-sm mt-4 max-w-[280px]">
-              You&apos;ll be notified the moment they pay. The request expires in 24 hours;
-              your advisory goes active as soon as the payment is completed.
+              {t('delegateSent.hint')}
             </p>
             <div className="flex flex-col gap-2 mt-10 w-full max-w-[280px]">
               <button
                 onClick={() => router.replace('/home')}
                 className="py-4 rounded-2xl font-semibold bg-white"
                 style={{ color: '#1e3a5f' }}>
-                Go home
+                {t('delegateSent.goHome')}
               </button>
               <button
                 onClick={() => router.replace('/my-subscriptions')}
                 className="py-3 rounded-2xl font-medium text-white/85 border border-white/30">
-                Track this request →
+                {t('delegateSent.trackRequest')}
               </button>
             </div>
           </div>
@@ -614,12 +619,12 @@ function SubscribeFlow() {
               {stage === 'location' ? (
                 <button onClick={() => router.replace('/home')}
                   className="mt-4 mb-2 flex items-center gap-1 text-[#7A8C7E] text-sm">
-                  ← Back to home
+                  {t('backToHome')}
                 </button>
               ) : (
                 <button onClick={goBack}
                   className="mt-4 mb-2 flex items-center gap-1 text-[#7A8C7E] text-sm">
-                  ← Back
+                  {t('backShort')}
                 </button>
               )}
 
@@ -640,15 +645,15 @@ function SubscribeFlow() {
 
                   return (
                     <div>
-                      <h2 className="text-lg font-bold text-[#6B3F1F]">Where is your farm?</h2>
+                      <h2 className="text-lg font-bold text-[#6B3F1F]">{t('location.title')}</h2>
                       <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
-                        We&apos;ll find advisories available in your area
+                        {t('location.subtitle')}
                       </p>
 
                       {!coshLocations && (
                         <div className="flex items-center gap-3 text-[#7A8C7E] text-sm mb-4">
                           <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin"/>
-                          Loading states and districts…
+                          {tLocation('loading')}
                         </div>
                       )}
 
@@ -658,14 +663,14 @@ function SubscribeFlow() {
                         <div className="mb-4 px-4 py-3 rounded-2xl border border-[#3A7D44]/30 bg-[#3A7D44]/10 flex items-start gap-3">
                           <span className="text-lg leading-none mt-0.5">📍</span>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[11px] uppercase tracking-wide font-semibold text-[#3A7D44]">Your location</p>
+                            <p className="text-[11px] uppercase tracking-wide font-semibold text-[#3A7D44]">{t('location.savedLabel')}</p>
                             <p className="text-[#6B3F1F] font-semibold text-[15px] mt-0.5">
                               {districtName} <span className="text-[#7A8C7E] font-normal">· {stateName || '—'}</span>
                             </p>
                           </div>
                           <button onClick={() => { setEditingLocation(true); setStateSearch(''); setDistrictSearch('') }}
                             className="text-[12px] text-[#3A7D44] underline shrink-0">
-                            Change
+                            {tCommon('change')}
                           </button>
                         </div>
                       )}
@@ -676,27 +681,27 @@ function SubscribeFlow() {
                         <div className="space-y-3 mb-2">
                           {/* State */}
                           <div>
-                            <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">State</label>
+                            <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{tLocation('stateLabel')}</label>
                             {stateId ? (
                               <div className="flex items-center gap-2">
                                 <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
-                                  {stateName || '(unnamed)'}
+                                  {stateName || t('location.unnamed')}
                                 </span>
                                 <button onClick={() => {
                                     setStateId(''); setStateName(''); setStateSearch('')
                                     setDistrict(''); setDistrictName(''); setDistrictSearch('')
                                   }}
-                                  className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                                  className="text-[11px] text-[#7A8C7E] underline">{tCommon('change')}</button>
                               </div>
                             ) : (
                               <>
                                 <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
-                                  placeholder="Search state…"
+                                  placeholder={tLocation('searchState')}
                                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44]"/>
                                 {stateSearch && (
                                   <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                                     {filteredStates.length === 0
-                                      ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No states found</p>
+                                      ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noStates')}</p>
                                       : filteredStates.map(s => (
                                         <button key={s.cosh_id}
                                           onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
@@ -714,24 +719,24 @@ function SubscribeFlow() {
                           {/* District — bounded to the chosen state */}
                           {stateId && (
                             <div>
-                              <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">District</label>
+                              <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{tLocation('districtLabel')}</label>
                               {district ? (
                                 <div className="flex items-center gap-2">
                                   <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-sm font-medium px-3 py-1.5 rounded-full">
-                                    {districtName || '(unnamed)'}
+                                    {districtName || t('location.unnamed')}
                                   </span>
                                   <button onClick={() => { setDistrict(''); setDistrictName(''); setDistrictSearch('') }}
-                                    className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                                    className="text-[11px] text-[#7A8C7E] underline">{tCommon('change')}</button>
                                 </div>
                               ) : (
                                 <>
                                   <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
-                                    placeholder="Search district…"
+                                    placeholder={tLocation('searchDistrict')}
                                     className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44]"/>
                                   {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
                                     <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                                       {filteredDistricts.length === 0
-                                        ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No districts found</p>
+                                        ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noDistricts')}</p>
                                         : filteredDistricts.map(d => (
                                           <button key={d.cosh_id}
                                             onClick={() => { setDistrict(d.cosh_id); setDistrictSearch('') }}
@@ -750,7 +755,7 @@ function SubscribeFlow() {
                           {editingLocation && hasSavedLocation && (
                             <button onClick={() => setEditingLocation(false)}
                               className="text-[12px] text-[#7A8C7E] underline mt-1">
-                              ↺ Use my saved location instead
+                              {t('location.useSaved')}
                             </button>
                           )}
                         </div>
@@ -763,7 +768,7 @@ function SubscribeFlow() {
                         disabled={busy || !district || !stateId}
                         className="mt-5 w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                         style={{ background: '#3A7D44' }}>
-                        {busy ? 'Loading…' : 'Find advisories →'}
+                        {busy ? t('location.loadingShort') : t('location.findAdvisories')}
                       </button>
                     </div>
                   )
@@ -772,19 +777,19 @@ function SubscribeFlow() {
                 {/* ── STAGE 2: Crop Selection ── */}
                 {stage === 'crop' && (
                   <div>
-                    <h2 className="text-lg font-bold text-[#6B3F1F]">Select your crop</h2>
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">{t('crop.title')}</h2>
                     <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
-                      Advisories available in your area
+                      {t('crop.subtitle')}
                     </p>
 
                     {crops.length === 0 ? (
                       <div className="text-center py-10">
                         <p className="text-[#7A8C7E] text-sm">
-                          No advisories are available in your area yet. Check back soon.
+                          {t('crop.empty')}
                         </p>
                         <button onClick={() => setStage('location')}
                           className="mt-4 text-green-700 text-sm font-medium">
-                          ← Change location
+                          {t('crop.changeLocation')}
                         </button>
                       </div>
                     ) : (
@@ -808,9 +813,9 @@ function SubscribeFlow() {
                 {/* ── STAGE 3: Company Selection ── */}
                 {stage === 'company' && (
                   <div>
-                    <h2 className="text-lg font-bold text-[#6B3F1F]">Choose a company</h2>
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">{t('company.title')}</h2>
                     <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
-                      Companies offering {cropDisplay} advisories in your area
+                      {t('company.subtitle', { crop: cropDisplay })}
                     </p>
 
                     {busy ? (
@@ -820,7 +825,7 @@ function SubscribeFlow() {
                     ) : companies.length === 0 ? (
                       <div className="text-center py-10">
                         <p className="text-[#7A8C7E] text-sm">
-                          No company is offering an advisory for this crop in your area yet.
+                          {t('company.empty')}
                         </p>
                       </div>
                     ) : (
@@ -837,7 +842,7 @@ function SubscribeFlow() {
                                 onClick={() => selectCompany(c)}
                                 className="w-full py-3 rounded-xl text-white text-sm font-semibold"
                                 style={{ background: c.primary_colour || '#3A7D44' }}>
-                                Explore advisory →
+                                {t('company.explore')}
                               </button>
                             </div>
                           </div>
@@ -853,10 +858,10 @@ function SubscribeFlow() {
                 {stage === 'guided' && (
                   <div>
                     <h2 className="text-lg font-bold text-[#6B3F1F]">
-                      {guidedQuestionIndex === 0 ? 'Tell us about your farm' : 'One more thing'}
+                      {guidedQuestionIndex === 0 ? t('guided.firstTitle') : t('guided.followupTitle')}
                     </h2>
                     <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
-                      We&apos;ll find the right advisory for you
+                      {t('guided.subtitle')}
                     </p>
 
                     {busy ? (
@@ -870,7 +875,7 @@ function SubscribeFlow() {
                       <div>
                         {guidedStep.remaining_count != null && (
                           <p className="text-xs text-[#7A8C7E] mb-2">
-                            Narrowing from {guidedStep.remaining_count} options
+                            {t('guided.narrowingFrom', { count: guidedStep.remaining_count })}
                           </p>
                         )}
                         <p className="text-[#6B3F1F] font-semibold text-lg mb-4">
@@ -891,7 +896,7 @@ function SubscribeFlow() {
                             onClick={startOver}
                             disabled={busy}
                             className="mt-5 w-full py-3 rounded-2xl text-[#7A8C7E] text-sm disabled:opacity-50">
-                            ↺ Start over
+                            {t('guided.startOver')}
                           </button>
                         )}
                       </div>
@@ -900,7 +905,7 @@ function SubscribeFlow() {
                         <p className="text-[#D4682E] text-sm">{guidedStep.error}</p>
                         <button onClick={() => setStage('company')}
                           className="mt-4 text-green-700 text-sm font-medium">
-                          ← Choose a different company
+                          {t('guided.differentCompany')}
                         </button>
                       </div>
                     ) : null}
@@ -912,11 +917,11 @@ function SubscribeFlow() {
                 {/* ── STAGE 5: Confirmation ── */}
                 {stage === 'confirm' && company && (
                   <div>
-                    <h2 className="text-lg font-bold text-[#6B3F1F]">Your advisory</h2>
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">{t('confirm.title')}</h2>
                     <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
                       {selectedVars.length > 0
-                        ? 'Based on your answers'
-                        : 'The only advisory matching your area'}
+                        ? t('confirm.subtitleAnswers')
+                        : t('confirm.subtitleOnly')}
                     </p>
 
                     <div className="rounded-2xl overflow-hidden border border-[#DDD0B8] mb-5">
@@ -926,7 +931,7 @@ function SubscribeFlow() {
                             stays as a subtle sub-line so the user
                             still sees the crop context. */}
                         <p className="font-semibold text-[#6B3F1F] text-base">
-                          {packageName || `${cropDisplay} advisory`}
+                          {packageName || t('confirm.fallbackPackageName', { crop: cropDisplay })}
                         </p>
                         {packageName && (
                           <p className="text-xs text-[#7A8C7E] mt-0.5 mb-2">{cropDisplay}</p>
@@ -940,7 +945,7 @@ function SubscribeFlow() {
                         {selectedVars.length > 0 && (
                           <div className="mt-3 pt-3 border-t border-[#DDD0B8] space-y-1">
                             <p className="text-[11px] uppercase tracking-wide text-[#7A8C7E] font-semibold mb-1">
-                              Your selections
+                              {t('confirm.selectionsLabel')}
                             </p>
                             {selectedVars.map((sv, i) => (
                               <p key={i} className="text-sm text-[#6B3F1F]">
@@ -950,8 +955,8 @@ function SubscribeFlow() {
                           </div>
                         )}
                         <div className="mt-4 pt-4 border-t border-[#DDD0B8] flex items-center justify-between">
-                          <span className="text-[#7A8C7E] text-sm">Subscription price</span>
-                          <span className="text-[#6B3F1F] font-bold text-lg">Rs. 199</span>
+                          <span className="text-[#7A8C7E] text-sm">{t('confirm.priceLabel')}</span>
+                          <span className="text-[#6B3F1F] font-bold text-lg">{t('confirm.priceAmount')}</span>
                         </div>
                       </div>
                     </div>
@@ -963,13 +968,13 @@ function SubscribeFlow() {
                       disabled={busy}
                       className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                       style={{ background: '#3A7D44' }}>
-                      {busy ? 'Setting up…' : 'Looks right — proceed to payment →'}
+                      {busy ? t('confirm.settingUp') : t('confirm.proceedCta')}
                     </button>
                     <button
                       onClick={startOver}
                       disabled={busy}
                       className="w-full mt-2 py-3 rounded-2xl text-[#7A8C7E] text-sm disabled:opacity-50">
-                      ↺ Start over
+                      {t('guided.startOver')}
                     </button>
                   </div>
                 )}
@@ -977,9 +982,9 @@ function SubscribeFlow() {
                 {/* ── STAGE 6: Payment ── */}
                 {stage === 'payment' && subscription && (
                   <div>
-                    <h2 className="text-lg font-bold text-[#6B3F1F]">Almost there!</h2>
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">{t('payment.title')}</h2>
                     <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                      Choose how to pay for your advisory
+                      {t('payment.subtitle')}
                     </p>
 
                     {/* Payment attribution — the farmer is paying for
@@ -987,57 +992,56 @@ function SubscribeFlow() {
                         not paying the company. Same disclaimer renders
                         on the Razorpay sheet description. */}
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4 text-xs text-amber-800">
-                      ₹199 is paid to <strong>rootsTALK.in</strong> for the software
-                      infrastructure. It is <em>not</em> paid to {company?.display_name || 'the company'}.
+                      {t('payment.attributionPrefix')} <strong>rootsTALK.in</strong> {t('payment.attributionMiddle')} <em>{t('payment.attributionNot')}</em> {t('payment.attributionSuffix', { company: company?.display_name || t('payment.attributionCompanyFallback') })}
                     </div>
 
                     <div className="space-y-3">
                       {/* Pay yourself */}
                       <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
-                        <p className="font-semibold text-[#6B3F1F]">Pay Rs. 199 now</p>
+                        <p className="font-semibold text-[#6B3F1F]">{t('payment.payNow')}</p>
                         <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                          Instant activation after payment
+                          {t('payment.payNowBody')}
                         </p>
                         <button
                           onClick={openRazorpay}
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
                           style={{ background: '#3A7D44' }}>
-                          Pay with UPI →
+                          {t('payment.payUpi')}
                         </button>
                         {isStaging && (
                           <button
                             onClick={bypassPayment}
                             className="w-full mt-2 py-2.5 rounded-xl text-xs font-semibold border border-dashed border-amber-400 text-amber-700 bg-amber-50">
-                            ⚙ Staging: skip Razorpay, activate now
+                            {t('payment.stagingBypass')}
                           </button>
                         )}
                       </div>
 
                       {/* Ask a dealer */}
                       <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
-                        <p className="font-semibold text-[#6B3F1F]">Ask a dealer to pay</p>
+                        <p className="font-semibold text-[#6B3F1F]">{t('payment.askDealer')}</p>
                         <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                          They become your Promoter and receive your order alerts
+                          {t('payment.askDealerBody')}
                         </p>
                         <button
                           onClick={() => { setDelegateRole('DEALER'); setStage('delegate') }}
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
                           style={{ background: '#3A7D44' }}>
-                          Select dealer →
+                          {t('payment.selectDealer')}
                         </button>
                       </div>
 
                       {/* Ask a facilitator */}
                       <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
-                        <p className="font-semibold text-[#6B3F1F]">Ask a facilitator to pay</p>
+                        <p className="font-semibold text-[#6B3F1F]">{t('payment.askFacilitator')}</p>
                         <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                          They coordinate delivery and become your Promoter
+                          {t('payment.askFacilitatorBody')}
                         </p>
                         <button
                           onClick={() => { setDelegateRole('FACILITATOR'); setStage('delegate') }}
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
                           style={{ background: '#3A7D44' }}>
-                          Select facilitator →
+                          {t('payment.selectFacilitator')}
                         </button>
                       </div>
 
@@ -1050,10 +1054,10 @@ function SubscribeFlow() {
                           <span className="text-xl leading-none mt-0.5">🔗</span>
                           <div className="flex-1">
                             <p className="font-semibold text-[#6B3F1F]">
-                              Share a payment link / QR
+                              {t('payment.shareLink')}
                             </p>
                             <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                              Send a link to anyone — your son in the city, a relative, a friend. They pay via any UPI app.
+                              {t('payment.shareLinkBody')}
                             </p>
                           </div>
                         </div>
@@ -1062,7 +1066,7 @@ function SubscribeFlow() {
                           disabled={busy}
                           className="w-full py-3.5 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
                           style={{ background: '#3A7D44' }}>
-                          {busy ? 'Generating…' : 'Generate link & QR →'}
+                          {busy ? t('payment.generating') : t('payment.generateCta')}
                         </button>
                       </div>
                     </div>
@@ -1074,9 +1078,9 @@ function SubscribeFlow() {
                 {/* ── STAGE 7: Delegate payment ── */}
                 {stage === 'delegate' && subscription && (
                   <div>
-                    <h2 className="text-lg font-bold text-[#6B3F1F]">Send payment request</h2>
+                    <h2 className="text-lg font-bold text-[#6B3F1F]">{t('delegate.title')}</h2>
                     <p className="text-[#7A8C7E] text-sm mt-0.5 mb-5">
-                      Enter the {delegateRole === 'DEALER' ? 'dealer' : 'facilitator'}&apos;s phone number
+                      {delegateRole === 'DEALER' ? t('delegate.subtitleDealer') : t('delegate.subtitleFacilitator')}
                     </p>
 
                     <div className="flex items-center border border-[#DDD0B8] rounded-xl overflow-hidden mb-3">
@@ -1093,7 +1097,7 @@ function SubscribeFlow() {
                           setCheckError('')
                           setError('')
                         }}
-                        placeholder="10-digit mobile number"
+                        placeholder={t('delegate.phonePlaceholder')}
                         inputMode="numeric"
                         className="flex-1 px-4 py-3 text-sm focus:outline-none font-mono"
                       />
@@ -1110,7 +1114,7 @@ function SubscribeFlow() {
                           <span className="text-xl leading-none mt-0.5">✓</span>
                           <div className="flex-1">
                             <p className="font-semibold text-[#3A7D44]">
-                              {delegateLookup.name || 'Registered user'}
+                              {delegateLookup.name || t('delegate.registeredUser')}
                             </p>
                             <p className="text-[#7A8C7E] text-xs font-mono">
                               {delegateLookup.phone}
@@ -1121,21 +1125,21 @@ function SubscribeFlow() {
                           {delegateLookup.roles.map(r => (
                             <span key={r} className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                               style={{ background: '#3A7D44', color: 'white' }}>
-                              {r === 'FACILITATOR' ? 'Facilitator' : 'Dealer'}
+                              {r === 'FACILITATOR' ? t('delegate.facilitatorChip') : t('delegate.dealerChip')}
                             </span>
                           ))}
                         </div>
                         <p className="text-[12px] text-[#6B3F1F]">
                           {delegateLookup.affiliations.length === 1
-                            ? `At ${delegateLookup.affiliations[0].company_name}`
-                            : `At ${delegateLookup.affiliations.map(a => a.company_name).join(', ')}`}
+                            ? t('delegate.atSingle', { company: delegateLookup.affiliations[0].company_name })
+                            : t('delegate.atMultiple', { companies: delegateLookup.affiliations.map(a => a.company_name).join(', ') })}
                         </p>
                       </div>
                     )}
 
                     {checkError && (
                       <div className="rounded-xl border border-[#D4682E] bg-red-50 p-3 mb-3">
-                        <p className="text-sm text-[#D4682E] font-medium">Cannot send request</p>
+                        <p className="text-sm text-[#D4682E] font-medium">{t('delegate.cannotSendTitle')}</p>
                         <p className="text-xs text-[#7A2F0F] mt-1">{checkError}</p>
                       </div>
                     )}
@@ -1149,7 +1153,7 @@ function SubscribeFlow() {
                         disabled={checking || delegatePhone.length < 10}
                         className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                         style={{ background: '#3A7D44' }}>
-                        {checking ? 'Checking…' : checkError ? 'Check again' : 'Check'}
+                        {checking ? tCommon('working') : checkError ? t('delegate.checkAgain') : t('delegate.check')}
                       </button>
                     )}
 
@@ -1161,15 +1165,15 @@ function SubscribeFlow() {
                         className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                         style={{ background: '#3A7D44' }}>
                         {busy
-                          ? 'Sending…'
-                          : `Send request to ${delegateLookup.name || 'them'} →`}
+                          ? tCommon('saving')
+                          : t('delegate.sendRequest', { name: delegateLookup.name || t('delegate.fallbackName') })}
                       </button>
                     )}
 
                     <button
                       onClick={() => setStage('payment')}
                       className="w-full mt-2 py-3 rounded-2xl text-[#7A8C7E] text-sm">
-                      Pay myself instead
+                      {t('delegate.payMyself')}
                     </button>
                   </div>
                 )}
