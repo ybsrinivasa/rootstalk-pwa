@@ -27,6 +27,16 @@ type SubOrder = {
   recipient_name?: string | null
   recipient_shop_name?: string | null
   recipient_role?: 'DEALER' | 'FACILITATOR' | null
+  // 2026-06-09 — REROUTED-only husks (lineage parents that
+  // migrated their items away) have rerouted_count > 0 and no
+  // live items. Their status is typically PROCESSING /
+  // PARTIALLY_APPROVED, not CANCELLED — so the Cancelled tab
+  // surfaces them via this field, not via order.status.
+  rerouted_count?: number
+  awaiting_approval_count?: number
+  returned_count?: number
+  postponed_count?: number
+  pickup_ready_count?: number
 }
 
 type Tab = 'completed' | 'cancelled'
@@ -42,8 +52,23 @@ function isCompleted(o: SubOrder): boolean {
 const CANCELLED_STATUSES = new Set([
   'CANCELLED', 'EXPIRED', 'REJECTED', 'REROUTED',
 ])
+// 2026-06-09 — A lineage husk is an order with at least one
+// REROUTED item AND no live work remaining. Order.status is
+// typically still PROCESSING / PARTIALLY_APPROVED, so the status
+// check alone misses these. Detect via rerouted_count + zero live
+// activity. Folded into the Cancelled tab since these orders are
+// terminal from the farmer's perspective.
+function isHusk(o: SubOrder): boolean {
+  const rerouted = o.rerouted_count ?? 0
+  if (rerouted === 0) return false
+  const live = (o.awaiting_approval_count ?? 0)
+    + (o.returned_count ?? 0)
+    + (o.postponed_count ?? 0)
+    + (o.pickup_ready_count ?? 0)
+  return live === 0
+}
 function isCancelled(o: SubOrder): boolean {
-  return CANCELLED_STATUSES.has(o.status)
+  return CANCELLED_STATUSES.has(o.status) || isHusk(o)
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -64,7 +89,10 @@ export default function FarmerOrderHistoryPage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<{ orders: SubOrder[] }>(`/farmer/subscriptions/${subscriptionId}/orders`)
+    // 2026-06-09 — Pass include_husks=true so REROUTED-only
+    // lineage husks surface in History (Cancelled tab via
+    // isHusk()). Active Manage tab keeps the default filter.
+    api.get<{ orders: SubOrder[] }>(`/farmer/subscriptions/${subscriptionId}/orders?include_husks=true`)
       .then(r => setOrders(r.data.orders || []))
       .finally(() => setLoading(false))
   }, [subscriptionId, router])
