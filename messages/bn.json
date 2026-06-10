@@ -38,6 +38,33 @@
     "facilitator": "সহায়ক",
     "pundit": "বিশেষজ্ঞ"
   },
+  "roleSwitcher": {
+    "close": "বন্ধ করুন",
+    "activeRoleFallback": "কৃষক",
+    "myDetails": "আমার বিবরণ",
+    "mySubscriptions": "আমার সাবস্ক্রিপশন",
+    "cropsAndCompanies": "শস্য ও কোম্পানি",
+    "messageRootsTalk": "মেসেজ রুটসটক",
+    "rolesHeader": "ভূমিকা",
+    "switchFarmer": "কৃষকে পরিবর্তন করুন",
+    "switchDealer": "আমার দোকানে যান",
+    "switchFacilitator": "ফ্যাসিলিটেটরে পরিবর্তন করুন",
+    "switchPundit": "বিশেষজ্ঞে স্যুইচ করুন",
+    "setupDealer": "আমার দোকান খুলুন",
+    "setupFacilitator": "সহায়ক হিসেবে সাহায্য করুন",
+    "setupPundit": "বিশেষজ্ঞ হয়ে উঠুন",
+    "activeBadge": "সক্রিয়",
+    "setupHint": "সেট আপ করুন →",
+    "helpAndTips": "সাহায্য ও পরামর্শ",
+    "aboutRootsTalk": "রুটসটক সম্পর্কে",
+    "signOut": "সাইন আউট",
+    "about": {
+      "tagline": "আপনার কৃষি পরামর্শ নেটওয়ার্ক",
+      "byOrg": "নেয়তিরি আইওয়াফার্ম এগ্রিটেক দ্বারা",
+      "version": "সংস্করণ ২.০",
+      "visit": "eywa.farm পরিদর্শন করুন →"
+    }
+  },
   "header": {
     "aboutRootsTalk": "রুটসটক সম্পর্কে",
     "selectLanguage": "ভাষা নির্বাচন করুন"
@@ -625,7 +652,7 @@
         "approvalPeekHint": "এর পরে পরবর্তীটি প্রদর্শিত হবে।",
         "emptyPill": "{pillName} এর অধীনে কিছুই নেই",
         "cancelOrderBtn": "অর্ডার বাতিল করুন",
-        "deleteDraftBtn": "খসড়া মুছে ফেলুন"
+        "deleteDraftBtn": "খসড়াটি মুছে ফেলুন"
       },
       "orderHeader": {
         "kindSeed": "বীজ",
@@ -781,7 +808,7 @@
   },
   "farmerHistory": {
     "headerTitle": "শস্যের ইতিহাস",
-    "errorUnsubscribe": "সদস্যতা বাতিল করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "errorUnsubscribe": "আনসাবস্ক্রাইব করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
     "empty": "এখনো কোনো ফসলের রেকর্ড নেই",
     "showingFromPrefix": "নিবন্ধিত ফসল দেখানো হচ্ছে",
     "active": "সক্রিয় সাবস্ক্রিপশন",
@@ -935,7 +962,7 @@
       }
     },
     "payments": {
-      "headerTitle": "কৃষকদের অর্থপ্রদান",
+      "headerTitle": "কৃষকদের অর্থ প্রদান",
       "errorVerify": "পেমেন্ট যাচাইকরণ ব্যর্থ হয়েছে।",
       "errorInit": "পেমেন্ট শুরু করা যায়নি।",
       "empty": "এখনও কোনো অর্থপ্রদানের অনুরোধ আসেনি",
@@ -1131,7 +1158,7 @@
         "mixedHeader": "মিশ্র সার (যেকোনো একটি বেছে নিন বা বাদ দিন)",
         "mixedEmpty": "এই মাত্রার জন্য কোনো মিশ্র সার উপযুক্ত নয়।",
         "mixedSummary": "{n} : {p} : {k} · প্রায় {kg} কেজি",
-        "mixedTotalAffix": "{kg} কেজি মোট",
+        "mixedTotalAffix": "{kg} মোট কেজি",
         "brandPicked": "ব্র্যান্ড: {name} · পরিবর্তন করতে ট্যাপ করুন",
         "pickBrand": "ব্র্যান্ড বাছাই করুন",
         "skipMixed": "মিশ্র এড়িয়ে যান",
@@ -1165,7 +1192,7 @@
       "footer": {
         "totalAmount": "মোট পরিমাণ",
         "pricedCoverage": "{total} মূল্যের মধ্যে {priced} মূল্য",
-        "pendingHint": "{count, plural, one {১টি বিষয়ে এখনও সিদ্ধান্ত নেওয়া বাকি আছে।} other {# আইটেমগুলোর বিষয়ে এখনও সিদ্ধান্ত নেওয়া প্রয়োজন}} পাঠানোর আগে (উপলব্ধ / পরে / অনুপলব্ধ) জানানো হবে।",
+        "pendingHint": "{count, plural, one {১টি বিষয়ে এখনও সিদ্ধান্ত নেওয়া বাকি আছে।} other {# আইটেমগুলোর বিষয়ে এখনও সিদ্ধান্ত নেওয়া প্রয়োজন}} পাঠানোর আগে (উপলব্ধ / পরে / অনুপলব্ধ) দেখানো হবে।",
         "allPostponed": "সমস্ত কার্যক্রম স্থগিত করা হয়েছে — এই মুহূর্তে পাঠানোর মতো কিছু নেই। স্থগিত তারিখগুলোর জন্য অপেক্ষা করুন, অথবা আপনার সিদ্ধান্ত পরিবর্তন করুন।",
         "sending": "প্রেরণ করা হচ্ছে…",
         "submitLabelNotify": "{count, plural, one {কৃষককে অবহিত করুন (১টি ফেরত এসেছে)} other {কৃষককে অবহিত করুন ( # ফেরত এসেছে)}}",
@@ -1594,7 +1621,7 @@
       "callBtn": "📞 ফোন করুন {phone}"
     },
     "payments": {
-      "headerTitle": "কৃষকদের অর্থপ্রদান",
+      "headerTitle": "কৃষকদের অর্থ প্রদান",
       "errorVerify": "পেমেন্ট যাচাইকরণ ব্যর্থ হয়েছে।",
       "errorInitiate": "পেমেন্ট শুরু করা যায়নি।",
       "razorpayName": "rootsTALK.in",

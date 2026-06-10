@@ -38,6 +38,33 @@
     "facilitator": "सुविधाकर्ता",
     "pundit": "तज्ञ"
   },
+  "roleSwitcher": {
+    "close": "बंद करा",
+    "activeRoleFallback": "शेतकरी",
+    "myDetails": "माझी माहिती",
+    "mySubscriptions": "माझी सदस्यत्वे",
+    "cropsAndCompanies": "पिके आणि कंपन्या",
+    "messageRootsTalk": "रूट्सटॉक संदेश",
+    "rolesHeader": "भूमिका",
+    "switchFarmer": "शेतकऱ्याकडे स्विच करा",
+    "switchDealer": "माझ्या दुकानात जा",
+    "switchFacilitator": "सुविधा देणाऱ्याकडे स्विच करा",
+    "switchPundit": "तज्ञाकडे स्विच करा",
+    "setupDealer": "माझे दुकान उघडा",
+    "setupFacilitator": "सुविधाकर्ता म्हणून मदत करा",
+    "setupPundit": "तज्ञ बना",
+    "activeBadge": "सक्रिय",
+    "setupHint": "सेटअप करा →",
+    "helpAndTips": "मदत आणि सूचना",
+    "aboutRootsTalk": "रूट्सटॉक बद्दल",
+    "signOut": "साइन आउट",
+    "about": {
+      "tagline": "तुमचे कृषी सल्लागार नेटवर्क",
+      "byOrg": "नेयतिरी एयवाफार्म ॲग्रीटेक द्वारे",
+      "version": "आवृत्ती २.०",
+      "visit": "eywa.farm ला भेट द्या →"
+    }
+  },
   "header": {
     "aboutRootsTalk": "रूट्सटॉक बद्दल",
     "selectLanguage": "भाषा निवडा"
@@ -458,7 +485,7 @@
         "readyForApproval": "तुमच्या मंजुरीसाठी तयार आहे",
         "purchased": "खरेदी केले",
         "rejectedByYou": "तुमच्याकडून नाकारले",
-        "notRequired": "आवश्यक नाही",
+        "notRequired": "गरज नाही",
         "skipped": "वगळले",
         "removed": "काढले"
       },
@@ -785,7 +812,7 @@
     "empty": "अद्याप पिकांची नोंद नाही",
     "showingFromPrefix": "नोंदणीकृत पिके दाखवत आहे",
     "active": "सक्रिय सदस्यत्वे",
-    "past": "मागील हंगाम",
+    "past": "मागील सीझन",
     "company": "कंपनी",
     "crop": "पीक",
     "thisCropFallback": "हे पीक",
@@ -830,10 +857,10 @@
   "farmerProfile": {
     "headerTitle": "माझे प्रोफाइल",
     "noNameSet": "कोणतेही नाव सेट केलेले नाही",
-    "edit": "संपादन करा",
+    "edit": "संपादन",
     "locationNotSet": "स्थान निश्चित नाही",
     "profileFallback": "प्रोफाइल",
-    "photoUploadError": "तो फोटो अपलोड करता आला नाही. कृपया दुसरा फोटो पाठवून बघा.",
+    "photoUploadError": "तो फोटो अपलोड करता आला नाही. कृपया दुसरा फोटो वापरून पहा.",
     "location": {
       "label": "स्थान",
       "state": "राज्य",
@@ -1088,7 +1115,7 @@
         "dateRangeLabel": "तारीख श्रेणी"
       },
       "acceptDecline": {
-        "title": "नवीन ऑर्डर — तुमचा निर्णय",
+        "title": "नवीन व्यवस्था — तुमचा निर्णय",
         "body": "वस्तू पाहण्यासाठी आणि प्रक्रिया सुरू करण्यासाठी ही ऑर्डर स्वीकारा. शेतकऱ्याला परत पाठवण्यास नकार द्या, जेणेकरून ते दुसरा विक्रेता किंवा मध्यस्थ निवडू शकतील.",
         "accepting": "स्वीकारत आहे…",
         "acceptCta": "✓ ऑर्डर स्वीकारा",
@@ -1143,7 +1170,7 @@
       "relation": {
         "label": "बहु-चरण शिफारस",
         "progress": "प्रत्येक भागावर प्रक्रिया करा. {total} पैकी {resolved} निराकरण झाले.",
-        "progressFailedSuffix": ", {failed} शेतकऱ्याकडे परत केले",
+        "progressFailedSuffix": ", {failed} शेतकऱ्याकडे परतले",
         "partLabel": "भाग {n}",
         "allOptionsUnavailable": "सर्व पर्याय अनुपलब्ध आहेत. या भागातील वस्तू शेतकऱ्याला परत करण्यात आल्या आहेत.",
         "alternativeHint": "जर लॉक केलेल्या ब्रँडचा कोणताही पर्याय काम करत नसेल, तर काही पर्यायी पर्याय दिसतील.",
@@ -1157,7 +1184,7 @@
       "sections": {
         "relations": "बहु-टप्प्यांच्या शिफारसी ( {count} )",
         "standalone": "स्वतंत्र आयटम ( {count} )",
-        "resolvePostponed": "हा स्थगित केलेला विषय सोडवा",
+        "resolvePostponed": "हा प्रलंबित विषय सोडवा",
         "consolidatedBrands": "एकत्रित ब्रँड्स",
         "acrossTimelines": "कालखंडांमध्ये",
         "linesCount": "{count, plural, one {१ ओळ} other {# ओळी}}"
@@ -1273,7 +1300,7 @@
         "shopName": "दुकानाचे नाव",
         "shopAddress": "दुकानाचा पत्ता",
         "shopGps": "दुकानाचे स्थान (जीपीएस)",
-        "whatYouSell": "तुम्ही जे विकता",
+        "whatYouSell": "तुम्ही काय विकता",
         "shopRegistration": "दुकान नोंदणी प्रमाणपत्र"
       },
       "photoCard": {
@@ -2274,7 +2301,7 @@
     "errorCancel": "रद्द करता आले नाही.",
     "whatsappMessage": "रूट्सटॉकवरील माझ्या पीक सल्ला सदस्यतेसाठी कृपया ₹ {amount} भरा. येथे पैसे भरा: {url}",
     "smsMessage": "कृपया माझ्या रूट्सटॉक सदस्यतेसाठी ₹ {amount} भरा: {url}",
-    "nativeTitle": "माझ्या रूट्सटॉक सदस्यत्वासाठी पैसे भरा",
+    "nativeTitle": "माझ्या रूट्सटॉक सदस्यत्वासाठी पैसे भरा.",
     "nativeText": "माझ्या पीक सल्ल्यासाठी कृपया ₹ {amount} भरा."
   },
   "privacyPolicy": {

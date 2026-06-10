@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getUser, getActiveRoles, logout } from '@/lib/auth'
 import AppMark from '@/components/AppMark'
 
@@ -33,24 +34,24 @@ function getActiveRoleFromPath(pathname: string): string {
   return 'FARMER'
 }
 
-const ACTIVE_LABEL: Record<string, string> = {
-  FARMER: 'Farmer',
-  DEALER: 'My Shop',
-  FACILITATOR: 'Facilitator',
-  FARM_PUNDIT: 'Expert',
+const ROLE_LABEL_KEY: Record<string, 'farmer' | 'dealer' | 'facilitator' | 'pundit'> = {
+  FARMER: 'farmer',
+  DEALER: 'dealer',
+  FACILITATOR: 'facilitator',
+  FARM_PUNDIT: 'pundit',
 }
 
-const SWITCH_LABEL: Record<string, string> = {
-  FARMER: 'Switch to Farmer',
-  DEALER: 'Switch to my Shop',
-  FACILITATOR: 'Switch to Facilitator',
-  FARM_PUNDIT: 'Switch to Expert',
+const SWITCH_LABEL_KEY: Record<string, 'switchFarmer' | 'switchDealer' | 'switchFacilitator' | 'switchPundit'> = {
+  FARMER: 'switchFarmer',
+  DEALER: 'switchDealer',
+  FACILITATOR: 'switchFacilitator',
+  FARM_PUNDIT: 'switchPundit',
 }
 
-const SETUP_LABEL: Record<string, string> = {
-  DEALER: 'Open my Shop',
-  FACILITATOR: 'Help as Facilitator',
-  FARM_PUNDIT: 'Become an Expert',
+const SETUP_LABEL_KEY: Record<string, 'setupDealer' | 'setupFacilitator' | 'setupPundit'> = {
+  DEALER: 'setupDealer',
+  FACILITATOR: 'setupFacilitator',
+  FARM_PUNDIT: 'setupPundit',
 }
 
 // Lucide-style outline icons inline — keeping the drawer self-contained
@@ -88,12 +89,14 @@ function MenuRow({
 export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole: propActiveRole }: Props) {
   const router = useRouter()
   const pathname = usePathname()
+  const t = useTranslations('roleSwitcher')
+  const tRole = useTranslations('role')
   const user = getUser()
   const userRoles = getActiveRoles(user)
   const [showAbout, setShowAbout] = useState(false)
 
   const activeRole = propActiveRole ?? getActiveRoleFromPath(pathname)
-  const activeRoleLabel = ACTIVE_LABEL[activeRole] || 'Farmer'
+  const activeRoleLabel = ROLE_LABEL_KEY[activeRole] ? tRole(ROLE_LABEL_KEY[activeRole]) : t('activeRoleFallback')
 
   function go(href: string) {
     router.push(href)
@@ -162,7 +165,7 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
           </div>
           <button
             onClick={onClose}
-            aria-label="Close"
+            aria-label={t('close')}
             className="w-9 h-9 rounded-full flex items-center justify-center -mt-1 -mr-1 hover:bg-black/[0.04] transition-colors"
             style={{ color: C.textSecond }}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -179,28 +182,28 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.12a7.5 7.5 0 0115 0A17.93 17.93 0 0112 21.75c-2.68 0-5.22-.58-7.5-1.63z"/>
             }
-            label="My Details"
+            label={t('myDetails')}
             onClick={() => go('/profile')}
           />
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.27-.63 2.39-1.59 3.07a3.75 3.75 0 01-1.04 3.3 3.75 3.75 0 01-3.3 1.04A3.75 3.75 0 0112 21c-1.27 0-2.39-.63-3.07-1.59a3.75 3.75 0 01-3.3-1.04 3.75 3.75 0 01-1.04-3.3A3.75 3.75 0 013 12c0-1.27.63-2.39 1.59-3.07a3.75 3.75 0 011.04-3.3 3.75 3.75 0 013.3-1.04A3.75 3.75 0 0112 3c1.27 0 2.39.63 3.07 1.59a3.75 3.75 0 013.3 1.04 3.75 3.75 0 011.04 3.3A3.75 3.75 0 0121 12z"/>
             }
-            label="My Subscriptions"
+            label={t('mySubscriptions')}
             onClick={() => go('/my-subscriptions')}
           />
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.95-8.95a1.5 1.5 0 012.12 0L21.75 12M4.5 9.75v9.75a1.5 1.5 0 001.5 1.5h3.75v-6h4.5v6H18a1.5 1.5 0 001.5-1.5V9.75"/>
             }
-            label="Crops & Companies"
+            label={t('cropsAndCompanies')}
             onClick={() => go('/crops-and-companies')}
           />
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.12 2.99 2.71 3.22.39.06.78.1 1.17.15.21.02.41.16.5.36l1.34 2.68a.45.45 0 00.81 0l1.34-2.68a.6.6 0 01.5-.36c.39-.05.78-.09 1.17-.15a3.26 3.26 0 002.71-3.22V6.74c0-1.6-1.12-2.98-2.7-3.21A48.39 48.39 0 0012 3.36c-2.4 0-4.78.18-7.13.55-1.6.23-2.72 1.6-2.72 3.21v6z"/>
             }
-            label="Message RootsTalk"
+            label={t('messageRootsTalk')}
             onClick={() => window.location.href = 'mailto:support@eywa.farm?subject=RootsTalk%20support'}
           />
         </div>
@@ -209,15 +212,15 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
 
         {/* ── Roles section ── */}
         <p className="text-[11px] font-semibold uppercase tracking-widest px-5 pt-4 pb-1.5"
-          style={{ color: C.textSecond }}>Roles</p>
+          style={{ color: C.textSecond }}>{t('rolesHeader')}</p>
 
         {ROLE_ORDER.map(role => {
           const isActive = role === activeRole
           const roleIsSetUp = isRoleSetUp(role)
           let label: string
-          if (isActive) label = ACTIVE_LABEL[role]
-          else if (roleIsSetUp) label = SWITCH_LABEL[role]
-          else label = SETUP_LABEL[role] || SWITCH_LABEL[role]
+          if (isActive) label = tRole(ROLE_LABEL_KEY[role])
+          else if (roleIsSetUp) label = t(SWITCH_LABEL_KEY[role])
+          else label = SETUP_LABEL_KEY[role] ? t(SETUP_LABEL_KEY[role]) : t(SWITCH_LABEL_KEY[role])
 
           // Each role gets a simple monochrome plant/shop/cart-style
           // glyph — keep visual weight even, no per-role brand colour
@@ -240,10 +243,10 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               trailing={isActive ? (
                 <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
                   style={{ background: C.primary + '1A', color: C.primary }}>
-                  Active
+                  {t('activeBadge')}
                 </span>
               ) : !roleIsSetUp ? (
-                <span className="text-[12px]" style={{ color: C.textSecond }}>Set up →</span>
+                <span className="text-[12px]" style={{ color: C.textSecond }}>{t('setupHint')}</span>
               ) : (
                 <span style={{ color: C.textSecond }}>›</span>
               )}
@@ -261,21 +264,21 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.66 17h4.68m-2.34 3v-3m0-14a7 7 0 014.95 11.95l-.7.7c-.6.6-1.21 1.18-1.69 1.86-.4.56-.66 1.19-.66 1.99H9.78c0-.8-.26-1.43-.66-2-.48-.67-1.09-1.25-1.69-1.85l-.7-.7A7 7 0 0112 3z"/>
             }
-            label="Help & Tips"
+            label={t('helpAndTips')}
             onClick={() => go('/privacy-policy')}
           />
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.04-.02a.75.75 0 011.06.85l-.7 2.84a.75.75 0 001.06.85l.04-.02M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.01v.01H12V8.25z"/>
             }
-            label="About RootsTalk"
+            label={t('aboutRootsTalk')}
             onClick={() => setShowAbout(true)}
           />
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 16l-4-4m0 0l4-4m-4 4h12m-6 4v1a3 3 0 003 3h2a3 3 0 003-3V7a3 3 0 00-3-3h-2a3 3 0 00-3 3v1"/>
             }
-            label="Sign out"
+            label={t('signOut')}
             color={C.alert}
             onClick={() => logout()}
           />
@@ -299,14 +302,14 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
                 <AppMark size={34} tone="duo"/>
               </div>
               <p className="font-bold text-lg" style={{ color: C.textPrimary }}>rootsTALK.in</p>
-              <p className="text-sm" style={{ color: C.textSecond }}>Your agricultural advisory network</p>
-              <p className="text-xs" style={{ color: C.textSecond }}>by Neytiri Eywafarm Agritech</p>
-              <p className="text-xs mt-1" style={{ color: C.textSecond, opacity: 0.7 }}>Version 2.0</p>
+              <p className="text-sm" style={{ color: C.textSecond }}>{t('about.tagline')}</p>
+              <p className="text-xs" style={{ color: C.textSecond }}>{t('about.byOrg')}</p>
+              <p className="text-xs mt-1" style={{ color: C.textSecond, opacity: 0.7 }}>{t('about.version')}</p>
               <button
                 onClick={() => window.open('https://eywa.farm', '_blank')}
                 className="mt-3 px-6 py-2.5 rounded-xl text-white text-sm font-bold"
                 style={{ background: C.primary }}>
-                Visit eywa.farm →
+                {t('about.visit')}
               </button>
             </div>
           </div>

@@ -38,6 +38,33 @@
     "facilitator": "સુવિધા આપનાર",
     "pundit": "નિષ્ણાત"
   },
+  "roleSwitcher": {
+    "close": "બંધ કરો",
+    "activeRoleFallback": "ખેડૂત",
+    "myDetails": "મારી વિગતો",
+    "mySubscriptions": "મારા સબ્સ્ક્રિપ્શન્સ",
+    "cropsAndCompanies": "પાક અને કંપનીઓ",
+    "messageRootsTalk": "મેસેજ રૂટ્સટોક",
+    "rolesHeader": "ભૂમિકાઓ",
+    "switchFarmer": "ખેડૂત પર સ્વિચ કરો",
+    "switchDealer": "મારી દુકાન પર સ્વિચ કરો",
+    "switchFacilitator": "ફેસિલિટેટર પર સ્વિચ કરો",
+    "switchPundit": "નિષ્ણાત પર સ્વિચ કરો",
+    "setupDealer": "મારી દુકાન ખોલો",
+    "setupFacilitator": "સુવિધા આપનાર તરીકે મદદ કરો",
+    "setupPundit": "નિષ્ણાત બનો",
+    "activeBadge": "સક્રિય",
+    "setupHint": "સેટ કરો →",
+    "helpAndTips": "મદદ અને ટિપ્સ",
+    "aboutRootsTalk": "રૂટ્સટોક વિશે",
+    "signOut": "સાઇન આઉટ કરો",
+    "about": {
+      "tagline": "તમારું કૃષિ સલાહકાર નેટવર્ક",
+      "byOrg": "નેયતિરી ઇવાફાર્મ એગ્રીટેક દ્વારા",
+      "version": "સંસ્કરણ 2.0",
+      "visit": "eywa.farm ની મુલાકાત લો →"
+    }
+  },
   "header": {
     "aboutRootsTalk": "રૂટ્સટાલ્ક વિશે",
     "selectLanguage": "ભાષા પસંદ કરો"
@@ -199,7 +226,7 @@
     "area": {
       "sectionHeader": "ખેતર વિસ્તાર",
       "label": "ખેતરનો વિસ્તાર",
-      "tentativeNote": "હાલ પૂરતું કામચલાઉ. જ્યારે તમે તમારો પહેલો ઓર્ડર આપશો ત્યારે પુષ્ટિ કરવામાં આવશે.",
+      "tentativeNote": "હાલ પૂરતું કામચલાઉ. જ્યારે તમે તમારો પહેલો ઓર્ડર આપશો ત્યારે પુષ્ટિ થશે.",
       "softSetLabel": "ખેતરનો વિસ્તાર · અંદાજિત",
       "softSetNote": "હાલમાં તમારા કામચલાઉ વિસ્તાર તરીકે સેટ કરેલ છે. જ્યારે તમે વાવેતર સમયે તમારો પહેલો DAS ઓર્ડર આપો છો ત્યારે તમે તેને ફરી એકવાર સુધારી શકો છો.",
       "confirmedLabel": "ખેતરનો વિસ્તાર · પુષ્ટિ થયેલ",
@@ -631,13 +658,13 @@
         "kindSeed": "બીજ",
         "kindFallback": "ઓર્ડર",
         "seedFallback": "બીજ ક્રમ",
-        "expandSubs": "{count, plural, one {1 પેટા-ક્રમ} other {# પેટા-ઓર્ડર}}"
+        "expandSubs": "{count, plural, one {1 સબ-ઓર્ડર} other {# પેટા-ઓર્ડર}}"
       },
       "chunk": {
         "subOrderPrefix": "સબ-ઓર્ડર ·",
         "postponedFacilitatorHandling": "{count, plural, one {⏰ 1 મુલતવી રાખેલી વસ્તુ · તમારા ફેસિલિટેટર સંભાળી રહ્યા છે} other {⏰ # મુલતવી રાખેલી વસ્તુઓ · તમારા ફેસિલિટેટર સંભાળી રહ્યા છે}}",
         "postponedCount": "{count, plural, one {⏰ 1 મુલતવી રાખેલી વસ્તુ} other {⏰ # મુલતવી રાખેલી વસ્તુઓ}}",
-        "postponedDealerFollowUp": "{count, plural, one {⏰ 1 મુલતવી રાખેલી વસ્તુ · ડીલર ફોલોઅપ કરી રહ્યો છે} other {⏰ # મુલતવી રાખેલી વસ્તુઓ · ડીલર ફોલોઅપ કરી રહ્યો છે.}}",
+        "postponedDealerFollowUp": "{count, plural, one {⏰ 1 મુલતવી રાખેલી વસ્તુ · ડીલર ફોલોઅપ કરી રહ્યો છે} other {⏰ # મુલતવી રાખેલી વસ્તુઓ · ડીલર ફોલો-અપ કરી રહ્યો છે.}}",
         "sendToAnotherDealer": "બીજા ડીલરને મોકલો",
         "draftPickRecipient": "ડ્રાફ્ટ — મોકલવા માટે પ્રાપ્તકર્તા પસંદ કરો.",
         "pickRecipientCta": "પ્રાપ્તકર્તા પસંદ કરો →",
@@ -980,7 +1007,7 @@
         "copiedToClipboard": "ક્લિપબોર્ડ પર કોપી કર્યું — તમારા મેસેન્જરમાં પેસ્ટ કરો."
       },
       "reshare": {
-        "title": "ફરીથી શેર કરીએ?",
+        "title": "ફરી શેર કરીએ?",
         "bodyPrefix": "આ પેકિંગ સૂચિ પહેલાથી જ શેર કરવામાં આવી હતી.",
         "bodyAt": "ખાતે",
         "bodyOn": "ચાલુ",
@@ -1006,7 +1033,7 @@
         "seedCategory": "બીજ / રોપા",
         "categoryFallback": "ઓર્ડર",
         "receivedSuffix": " · પ્રાપ્ત {date}",
-        "expandSubOrders": "{count, plural, one {1 પેટા-ક્રમ} other {# પેટા-ઓર્ડર}}"
+        "expandSubOrders": "{count, plural, one {1 સબ-ઓર્ડર} other {# પેટા-ઓર્ડર}}"
       },
       "chunk": {
         "subOrderPrefix": "સબ-ઓર્ડર · {date}",
@@ -1734,7 +1761,7 @@
       "returnedItemsCount": "{count, plural, one {1 વસ્તુ પરત કરી} other {# આઇટમ પરત કરી}}",
       "forwardReturnedLink": "બીજા ડીલરને ફોરવર્ડ કરો",
       "waitingFarmerApproval": "{count, plural, one {⏳ ખેડૂત 1 વસ્તુ મંજૂર કરે તેની રાહ જોઈ રહ્યો છું} other {⏳ ખેડૂત # વસ્તુ મંજૂર કરે તેની રાહ જોઈ રહ્યા છીએ}}",
-      "postponedStrip": "{count, plural, one {⏰ 1 મુલતવી રાખેલી વસ્તુ · ડીલર ફોલોઅપ કરી રહ્યો છે} other {⏰ # મુલતવી રાખેલી વસ્તુઓ · ડીલર ફોલોઅપ કરી રહ્યો છે.}}",
+      "postponedStrip": "{count, plural, one {⏰ 1 મુલતવી રાખેલી વસ્તુ · ડીલર ફોલોઅપ કરી રહ્યો છે} other {⏰ # મુલતવી રાખેલી વસ્તુઓ · ડીલર ફોલો-અપ કરી રહ્યો છે.}}",
       "approvedHint": "{count, plural, one {✓ 1 મંજૂર વસ્તુ · પિકઅપ તપાસો} other {✓ # મંજૂર વસ્તુઓ · પિકઅપ તપાસો}}",
       "itemCountInline": "· {count, plural, one {1 વસ્તુ} other {# આઇટમ}}",
       "rejectSheetTitle": "આ ઓર્ડર નકારીએ?",
@@ -1938,7 +1965,7 @@
       "emptyPending": "કોઈ બાકી ક્વેરી નથી",
       "emptyReturned": "કોઈ પરત કરેલી ક્વેરી નથી",
       "emptyHistory": "કોઈ ઇતિહાસ ક્વેરી નથી",
-      "daysRemaining": "{count} દિવસ બાકી",
+      "daysRemaining": "{count} d બાકી",
       "forwardedTo": "{name} ને ફોરવર્ડ કર્યું"
     },
     "invitations": {

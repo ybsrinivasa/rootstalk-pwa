@@ -38,6 +38,33 @@
     "facilitator": "Facilitator",
     "pundit": "Expert"
   },
+  "roleSwitcher": {
+    "close": "Close",
+    "activeRoleFallback": "Farmer",
+    "myDetails": "My Details",
+    "mySubscriptions": "My Subscriptions",
+    "cropsAndCompanies": "Crops & Companies",
+    "messageRootsTalk": "Message RootsTalk",
+    "rolesHeader": "Roles",
+    "switchFarmer": "Switch to Farmer",
+    "switchDealer": "Switch to my Shop",
+    "switchFacilitator": "Switch to Facilitator",
+    "switchPundit": "Switch to Expert",
+    "setupDealer": "Open my Shop",
+    "setupFacilitator": "Help as Facilitator",
+    "setupPundit": "Become an Expert",
+    "activeBadge": "Active",
+    "setupHint": "Set up →",
+    "helpAndTips": "Help & Tips",
+    "aboutRootsTalk": "About RootsTalk",
+    "signOut": "Sign out",
+    "about": {
+      "tagline": "Your agricultural advisory network",
+      "byOrg": "by Neytiri Eywafarm Agritech",
+      "version": "Version 2.0",
+      "visit": "Visit eywa.farm →"
+    }
+  },
   "header": {
     "aboutRootsTalk": "About rootsTALK",
     "selectLanguage": "Select language"
