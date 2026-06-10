@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -47,6 +48,7 @@ function CheckCircleIcon() {
 
 export default function PunditHomePage() {
   const router = useRouter()
+  const t = useTranslations('pundit.home')
   const user = getUser()
   const [queries, setQueries] = useState<QuerySummary[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
@@ -103,7 +105,7 @@ export default function PunditHomePage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader
-        title="FarmPundit"
+        title={t('headerTitle')}
         activeRole="FARM_PUNDIT"
         onRoleSwitch={() => setShowRoleDrawer(true)}
         urgencyBadges={{ new: newCount, pending: pendingCount, returned: returnedCount }}
@@ -112,24 +114,24 @@ export default function PunditHomePage() {
         {/* Greeting */}
         <div className="mt-4 mb-5">
           <p className="text-xl font-bold text-[#6B3F1F]">
-            {user?.name ? `Welcome, ${user.name.split(' ')[0]}` : 'FarmPundit Dashboard'}
+            {user?.name ? t('welcomeWithName', { name: user.name.split(' ')[0] }) : t('welcomeNoName')}
           </p>
-          <p className="text-[#7A8C7E] text-sm mt-0.5">{companies.length} compan{companies.length === 1 ? 'y' : 'ies'}</p>
+          <p className="text-[#7A8C7E] text-sm mt-0.5">{t('companyCount', { count: companies.length })}</p>
         </div>
 
         {/* Stats — New / Pending / Returned */}
         <div className="grid grid-cols-3 gap-3 mb-5">
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
             <p className="text-2xl font-bold text-[#6B3F1F]">{loading ? '…' : newCount}</p>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">New</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">{t('statNew')}</p>
           </div>
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
             <p className="text-2xl font-bold text-amber-500">{loading ? '…' : pendingCount}</p>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">Pending</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">{t('statPending')}</p>
           </div>
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
             <p className="text-2xl font-bold text-[#D4682E]">{loading ? '…' : returnedCount}</p>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">Returned</p>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">{t('statReturned')}</p>
           </div>
         </div>
 
@@ -137,8 +139,8 @@ export default function PunditHomePage() {
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mb-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex-1">
-              <p className="text-sm font-medium text-[#6B3F1F]">Phone number hidden from company searches</p>
-              <p className="text-xs text-[#7A8C7E] mt-0.5">{phoneHidden ? 'Hidden — companies cannot find you by phone' : 'Visible — companies can find you by phone'}</p>
+              <p className="text-sm font-medium text-[#6B3F1F]">{t('privacyTitle')}</p>
+              <p className="text-xs text-[#7A8C7E] mt-0.5">{phoneHidden ? t('privacyHidden') : t('privacyVisible')}</p>
             </div>
             <button
               onClick={togglePrivacy}
@@ -155,8 +157,8 @@ export default function PunditHomePage() {
             <svg className="w-6 h-6 text-[#3C3489]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/>
             </svg>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Expert Credentials</p>
-            <p className="text-xs text-[#7A8C7E]">View my profile</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileCredentials')}</p>
+            <p className="text-xs text-[#7A8C7E]">{t('tileCredentialsHint')}</p>
           </Link>
         </div>
 
@@ -168,13 +170,13 @@ export default function PunditHomePage() {
                 <MailIcon />
               </span>
               <div className="flex-1">
-                <p className="font-semibold text-amber-800 text-sm">{invitations.length} company invitation{invitations.length > 1 ? 's' : ''}</p>
-                <p className="text-amber-600 text-xs">Review and accept or reject</p>
+                <p className="font-semibold text-amber-800 text-sm">{t('invitationsCount', { count: invitations.length })}</p>
+                <p className="text-amber-600 text-xs">{t('invitationsHint')}</p>
               </div>
               <button onClick={() => router.push('/pundit/invitations')}
                 className="text-xs font-semibold text-white px-3 py-1.5 rounded-xl shrink-0"
                 style={{ background: COLOUR }}>
-                View
+                {t('invitationsViewCta')}
               </button>
             </div>
           </div>
@@ -182,12 +184,12 @@ export default function PunditHomePage() {
 
         {/* My Companies */}
         <div className="mb-5">
-          <h2 className="font-semibold text-[#6B3F1F] mb-3">My Companies</h2>
+          <h2 className="font-semibold text-[#6B3F1F] mb-3">{t('companiesTitle')}</h2>
           {loading ? (
             <div className="h-16 bg-white rounded-2xl animate-pulse" />
           ) : companies.length === 0 ? (
             <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] text-center">
-              <p className="text-[#7A8C7E] text-sm">No companies yet — accept invitations to join companies</p>
+              <p className="text-[#7A8C7E] text-sm">{t('companiesEmpty')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -211,10 +213,10 @@ export default function PunditHomePage() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {c.is_promoter_pundit && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">Promoter</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{t('promoterBadge')}</span>
                       )}
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                        {c.role === 'PRIMARY' ? 'Primary' : 'Panel'}
+                        {c.role === 'PRIMARY' ? t('rolePrimary') : t('rolePanel')}
                       </span>
                     </div>
                   </div>
@@ -227,9 +229,9 @@ export default function PunditHomePage() {
         {/* Active Queries preview */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-[#6B3F1F]">Active Queries</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">{t('activeQueriesTitle')}</h2>
             <button onClick={() => router.push('/pundit/queries')}
-              className="text-xs font-medium" style={{ color: COLOUR }}>View all →</button>
+              className="text-xs font-medium" style={{ color: COLOUR }}>{t('viewAllCta')}</button>
           </div>
 
           {loading ? (
@@ -239,7 +241,7 @@ export default function PunditHomePage() {
               <div className="flex justify-center mb-3">
                 <CheckCircleIcon />
               </div>
-              <p className="text-[#7A8C7E] text-sm">No active queries. You&apos;re all caught up!</p>
+              <p className="text-[#7A8C7E] text-sm">{t('noActiveQueries')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -256,7 +258,7 @@ export default function PunditHomePage() {
                         {q.severity}
                       </span>
                       <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
-                        {q.days_remaining}d left
+                        {t('daysLeft', { count: q.days_remaining })}
                       </span>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -24,6 +25,7 @@ type Tab = 'new' | 'pending' | 'returned' | 'history'
 
 export default function PunditQueriesPage() {
   const router = useRouter()
+  const t = useTranslations('pundit.queries')
   const [tab, setTab] = useState<Tab>('new')
   const [queries, setQueries] = useState<QueryItem[]>([])
   const [history, setHistory] = useState<QueryItem[]>([])
@@ -54,10 +56,10 @@ export default function PunditQueriesPage() {
   const returnedQueries = queries.filter(q => q.status === 'RETURNED')
 
   const TABS: { key: Tab; label: string; count: number | null }[] = [
-    { key: 'new',      label: 'New',      count: newQueries.length },
-    { key: 'pending',  label: 'Pending',  count: pendingQueries.length },
-    { key: 'returned', label: 'Returned', count: returnedQueries.length },
-    { key: 'history',  label: 'History',  count: null },
+    { key: 'new',      label: t('tabNew'),      count: newQueries.length },
+    { key: 'pending',  label: t('tabPending'),  count: pendingQueries.length },
+    { key: 'returned', label: t('tabReturned'), count: returnedQueries.length },
+    { key: 'history',  label: t('tabHistory'),  count: null },
   ]
 
   function getActiveList(): QueryItem[] {
@@ -85,17 +87,17 @@ export default function PunditQueriesPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Queries" activeRole="FARM_PUNDIT" back="/pundit/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARM_PUNDIT" back="/pundit/home" />
       <div className="pt-16 pb-20">
         {/* Four-tab bar */}
         <div className="flex bg-white border-b border-[#DDD0B8]">
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-1 py-3 text-xs font-medium border-b-2 transition-colors ${tab === t.key ? 'border-[#3C3489] text-[#3C3489]' : 'border-transparent text-[#7A8C7E]'}`}>
-              {t.label}
-              {t.count !== null && (
-                <span className={`ml-1 ${tab === t.key ? 'text-[#3C3489]' : 'text-[#DDD0B8]'}`}>
-                  ({t.count})
+          {TABS.map(tabRow => (
+            <button key={tabRow.key} onClick={() => setTab(tabRow.key)}
+              className={`flex-1 py-3 text-xs font-medium border-b-2 transition-colors ${tab === tabRow.key ? 'border-[#3C3489] text-[#3C3489]' : 'border-transparent text-[#7A8C7E]'}`}>
+              {tabRow.label}
+              {tabRow.count !== null && (
+                <span className={`ml-1 ${tab === tabRow.key ? 'text-[#3C3489]' : 'text-[#DDD0B8]'}`}>
+                  {t('tabCount', { count: tabRow.count })}
                 </span>
               )}
             </button>
@@ -111,7 +113,12 @@ export default function PunditQueriesPage() {
                 strokeLinecap="round" strokeLinejoin="round" className="text-[#DDD0B8] mx-auto mb-3">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
               </svg>
-              <p className="text-[#7A8C7E] text-sm">No {tab} queries</p>
+              <p className="text-[#7A8C7E] text-sm">
+                {tab === 'new' ? t('emptyNew')
+                  : tab === 'pending' ? t('emptyPending')
+                  : tab === 'returned' ? t('emptyReturned')
+                  : t('emptyHistory')}
+              </p>
             </div>
           ) : (
             list.map(q => (
@@ -127,11 +134,11 @@ export default function PunditQueriesPage() {
                       </span>
                       {tab === 'new' && q.days_remaining !== undefined && (
                         <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
-                          {q.days_remaining}d remaining
+                          {t('daysRemaining', { count: q.days_remaining })}
                         </span>
                       )}
                       {tab === 'pending' && q.recipient_name && (
-                        <span className="text-xs text-[#7A8C7E]">Forwarded to {q.recipient_name}</span>
+                        <span className="text-xs text-[#7A8C7E]">{t('forwardedTo', { name: q.recipient_name })}</span>
                       )}
                       {tab === 'history' && (
                         <span className="text-xs text-[#7A8C7E]">{q.status}</span>
