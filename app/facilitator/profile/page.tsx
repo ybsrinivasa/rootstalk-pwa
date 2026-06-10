@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
@@ -46,6 +47,7 @@ const COLOUR = '#7D4E00'
 
 export default function FacilitatorProfilePage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.profile')
   const user = getUser()
   const [declared, setDeclared] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -81,7 +83,7 @@ export default function FacilitatorProfilePage() {
     setCompanies(onboarding.map(c => ({
       client_promoter_id: c.client_promoter_id,
       client_id: c.client_id,
-      client_name: c.client_name || 'Company',
+      client_name: c.client_name || t('companyFallback'),
       client_colour: c.primary_colour || COLOUR,
       farmer_count: farmerCountByClient[c.client_id] || 0,
       is_promoter: c.is_promoter,
@@ -111,14 +113,15 @@ export default function FacilitatorProfilePage() {
       const msg = typeof detail === 'string'
         ? detail
         : (detail as { message?: string })?.message
-      setActionError(msg || `Could not ${action} the invitation. Please try again.`)
+      const actionLabel = action === 'accept' ? t('actionAccept') : t('actionDecline')
+      setActionError(msg || t('errorAction', { action: actionLabel }))
     } finally {
       setActingId(null)
     }
   }
 
   async function stepDownAsPromoter(clientPromoterId: string) {
-    if (!confirm('Step down as Promoter at this company? You will stay onboarded as a Facilitator.')) return
+    if (!confirm(t('stepDownConfirm'))) return
     setActingId(clientPromoterId)
     setActionError('')
     try {
@@ -129,7 +132,7 @@ export default function FacilitatorProfilePage() {
       const msg = typeof detail === 'string'
         ? detail
         : (detail as { message?: string })?.message
-      setActionError(msg || 'Could not step down. Please try again.')
+      setActionError(msg || t('errorStepDown'))
     } finally {
       setActingId(null)
     }
@@ -143,7 +146,7 @@ export default function FacilitatorProfilePage() {
 
   async function save() {
     if (!declared) {
-      setError('Please accept the declaration to continue.')
+      setError(t('errorAcceptDeclaration'))
       return
     }
     setError('')
@@ -162,7 +165,7 @@ export default function FacilitatorProfilePage() {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
       const msg = typeof detail === 'string'
         ? detail
-        : (detail as { message?: string })?.message || 'Could not save. Please try again.'
+        : (detail as { message?: string })?.message || t('errorSave')
       setError(msg)
     } finally {
       setSaving(false)
@@ -171,35 +174,35 @@ export default function FacilitatorProfilePage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: COLOUR }}>
-      <PWAHeader title="Service Profile" activeRole="FACILITATOR" customColour={COLOUR}
+      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" customColour={COLOUR}
         onRoleSwitch={() => setShowRoleDrawer(true)} back="/facilitator/home" />
       <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
 
         {!user?.facilitator_declared_at && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
-            <p className="font-semibold text-amber-800 text-sm">Finish your facilitator registration</p>
+            <p className="font-semibold text-amber-800 text-sm">{t('incompleteTitle')}</p>
             <p className="text-xs text-amber-700 mt-1">
-              Confirm the declaration below to start helping farmers. A company will recognise you only once you&apos;ve registered here.
+              {t('incompleteBody')}
             </p>
             <button onClick={() => router.replace('/home')}
               className="mt-3 text-xs underline text-amber-800 font-medium">
-              ← Not now, back to Farmer Home
+              {t('notNow')}
             </button>
           </div>
         )}
 
         {/* Read-only info */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4 mb-5">
-          <h2 className="font-semibold text-[#6B3F1F]">Your Details</h2>
+          <h2 className="font-semibold text-[#6B3F1F]">{t('detailsTitle')}</h2>
 
           <div>
-            <p className="text-xs text-[#7A8C7E] mb-1">Name</p>
-            <p className="text-sm text-[#6B3F1F] font-medium">{user?.name || '—'}</p>
+            <p className="text-xs text-[#7A8C7E] mb-1">{t('nameLabel')}</p>
+            <p className="text-sm text-[#6B3F1F] font-medium">{user?.name || t('missing')}</p>
           </div>
 
           <div>
-            <p className="text-xs text-[#7A8C7E] mb-1">Phone</p>
-            <p className="text-sm text-[#6B3F1F] font-medium">{user?.phone || '—'}</p>
+            <p className="text-xs text-[#7A8C7E] mb-1">{t('phoneLabel')}</p>
+            <p className="text-sm text-[#6B3F1F] font-medium">{user?.phone || t('missing')}</p>
           </div>
         </div>
 
@@ -211,9 +214,9 @@ export default function FacilitatorProfilePage() {
             as future options). */}
         {!loadingData && invitations.length > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-5">
-            <h2 className="font-semibold text-amber-900 mb-1">Promoter Invitations</h2>
+            <h2 className="font-semibold text-amber-900 mb-1">{t('invitationsTitle')}</h2>
             <p className="text-xs text-amber-800 mb-3 leading-relaxed">
-              These companies are inviting you to be their Promoter. You can be a Promoter at one company at a time.
+              {t('invitationsBody')}
             </p>
             <div className="space-y-3">
               {invitations.map(inv => (
@@ -223,7 +226,7 @@ export default function FacilitatorProfilePage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-[#6B3F1F] truncate">{inv.client_name}</p>
                       <p className="text-[11px] text-[#7A8C7E]">
-                        Sent {new Date(inv.sent_at).toLocaleDateString()}
+                        {t('invitationSent', { date: new Date(inv.sent_at).toLocaleDateString() })}
                       </p>
                     </div>
                   </div>
@@ -232,14 +235,14 @@ export default function FacilitatorProfilePage() {
                       onClick={() => actOnInvitation(inv.client_promoter_id, 'decline')}
                       disabled={actingId === inv.client_promoter_id}
                       className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50">
-                      Decline
+                      {t('declineCta')}
                     </button>
                     <button
                       onClick={() => actOnInvitation(inv.client_promoter_id, 'accept')}
                       disabled={actingId === inv.client_promoter_id}
                       className="flex-1 py-2.5 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
                       style={{ background: COLOUR }}>
-                      {actingId === inv.client_promoter_id ? '…' : 'Accept'}
+                      {actingId === inv.client_promoter_id ? '…' : t('acceptCta')}
                     </button>
                   </div>
                 </div>
@@ -260,7 +263,7 @@ export default function FacilitatorProfilePage() {
             Client (the onboarding stays intact). */}
         {!loadingData && companies.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5">
-            <h2 className="font-semibold text-[#6B3F1F] mb-3">My Companies</h2>
+            <h2 className="font-semibold text-[#6B3F1F] mb-3">{t('companiesTitle')}</h2>
             <div className="space-y-3">
               {companies.map(c => (
                 <div key={c.client_id} className="flex items-center gap-3">
@@ -270,18 +273,18 @@ export default function FacilitatorProfilePage() {
                       <p className="text-sm font-semibold text-[#6B3F1F] truncate">{c.client_name}</p>
                       {c.is_promoter && (
                         <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex-shrink-0">
-                          Promoter
+                          {t('promoterBadge')}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-[#7A8C7E]">{c.farmer_count} promoted {c.farmer_count === 1 ? 'farmer' : 'farmers'}</p>
+                    <p className="text-xs text-[#7A8C7E]">{t('farmerCount', { count: c.farmer_count })}</p>
                   </div>
                   {c.is_promoter && (
                     <button
                       onClick={() => stepDownAsPromoter(c.client_promoter_id)}
                       disabled={actingId === c.client_promoter_id}
                       className="text-[11px] text-[#7A8C7E] underline underline-offset-2 disabled:opacity-50 flex-shrink-0">
-                      Step down
+                      {t('stepDown')}
                     </button>
                   )}
                 </div>
@@ -292,17 +295,16 @@ export default function FacilitatorProfilePage() {
         {!loadingData && companies.length === 0 && user?.facilitator_declared_at && (
           <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5 text-center">
             <span className="text-3xl">🏢</span>
-            <h2 className="font-semibold text-[#6B3F1F] mt-2">No companies yet</h2>
+            <h2 className="font-semibold text-[#6B3F1F] mt-2">{t('noCompaniesTitle')}</h2>
             <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
-              You haven&apos;t been onboarded as a Facilitator by any company yet.
-              Ask a Field Manager at the company you want to work with to onboard you.
+              {t('noCompaniesBody')}
             </p>
           </div>
         )}
 
         {/* Declaration */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 mb-5">
-          <h2 className="font-semibold text-[#6B3F1F] mb-3">Declaration</h2>
+          <h2 className="font-semibold text-[#6B3F1F] mb-3">{t('declarationTitle')}</h2>
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -311,7 +313,7 @@ export default function FacilitatorProfilePage() {
               className="w-5 h-5 rounded mt-0.5 accent-[#7D4E00] flex-shrink-0"
             />
             <span className="text-sm text-[#6B3F1F] leading-relaxed">
-              I am willing to promote the RootsTalk PWA and help farmers in procuring inputs.
+              {t('declarationText')}
             </span>
           </label>
           {error && <p className="text-[#D4682E] text-xs mt-2">{error}</p>}
@@ -322,7 +324,7 @@ export default function FacilitatorProfilePage() {
           disabled={saving || !declared}
           className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-40 transition-opacity"
           style={{ background: saving ? `${COLOUR}aa` : COLOUR }}>
-          {saving ? 'Saving…' : saved ? '✓ Saved!' : 'Confirm & Continue'}
+          {saving ? t('saving') : saved ? t('saved') : t('confirmCta')}
         </button>
 
         {/* router.back() is unreliable after a relaunch (empty
@@ -330,7 +332,7 @@ export default function FacilitatorProfilePage() {
             Farmer Home — a stable destination from any entry path. */}
         <button onClick={() => router.replace('/home')}
           className="mt-3 w-full py-3.5 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
-          Back to Farmer Home
+          {t('backToFarmerHome')}
         </button>
       </div>
 

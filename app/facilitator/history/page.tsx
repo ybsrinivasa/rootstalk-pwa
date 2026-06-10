@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -46,6 +47,7 @@ function initials(name: string | null | undefined): string {
 
 export default function FacilitatorHistoryPage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.history')
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('completed')
@@ -85,15 +87,15 @@ export default function FacilitatorHistoryPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="History" activeRole="FACILITATOR" back="/facilitator/orders" />
+      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/orders" />
       <div className="pt-16 pb-20">
         <div className="flex bg-white border-b border-[#DDD0B8]">
-          {(['completed', 'cancelled'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors capitalize ${
-                tab === t ? 'border-[#7D4E00] text-[#7D4E00]' : 'border-transparent text-[#7A8C7E]'
+          {(['completed', 'cancelled'] as const).map(tabKey => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
+              className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
+                tab === tabKey ? 'border-[#7D4E00] text-[#7D4E00]' : 'border-transparent text-[#7A8C7E]'
               }`}>
-              {t}
+              {tabKey === 'completed' ? t('tabCompleted') : t('tabCancelled')}
             </button>
           ))}
         </div>
@@ -104,7 +106,7 @@ export default function FacilitatorHistoryPage() {
           ) : visible.length === 0 ? (
             <div className="text-center py-20">
               <span className="text-4xl">📁</span>
-              <p className="text-[#7A8C7E] text-sm mt-3">No {tab} sub-orders</p>
+              <p className="text-[#7A8C7E] text-sm mt-3">{tab === 'completed' ? t('emptyCompleted') : t('emptyCancelled')}</p>
             </div>
           ) : (
             visible.map(([key, subs]) => {
@@ -116,7 +118,7 @@ export default function FacilitatorHistoryPage() {
                   <div className="px-4 py-3 bg-[#F5F0E8]/40">
                     <div className="flex items-start gap-3">
                       {head?.farmer_photo_url ? (
-                        <img src={head.farmer_photo_url} alt={head?.farmer_name || 'Farmer'}
+                        <img src={head.farmer_photo_url} alt={head?.farmer_name || t('unknownFarmer')}
                           className="w-10 h-10 rounded-full object-cover border border-[#DDD0B8] shrink-0" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-[#7D4E00]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
@@ -125,7 +127,7 @@ export default function FacilitatorHistoryPage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-[#6B3F1F] truncate">
-                          {head?.farmer_name || 'Unknown farmer'}
+                          {head?.farmer_name || t('unknownFarmer')}
                         </p>
                         {head?.crop_name && (
                           <p className="text-xs text-[#7A8C7E] truncate">{head.crop_name}</p>
@@ -141,12 +143,12 @@ export default function FacilitatorHistoryPage() {
                       <div key={sub.id} className="px-4 py-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-xs text-[#6B3F1F] truncate">
-                            {sub.dealer_shop_name || sub.dealer_name || 'No dealer'}
+                            {sub.dealer_shop_name || sub.dealer_name || t('noDealer')}
                           </p>
                           <p className="text-[10px] text-[#7A8C7E]">
                             {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                             {' · '}
-                            {sub.item_count} item{sub.item_count === 1 ? '' : 's'}
+                            {t('itemsSuffix', { count: sub.item_count })}
                           </p>
                         </div>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${
@@ -154,7 +156,7 @@ export default function FacilitatorHistoryPage() {
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-slate-100 text-[#7A8C7E]'
                         }`}>
-                          {tab === 'completed' ? 'Completed' : 'Cancelled'}
+                          {tab === 'completed' ? t('completedBadge') : t('cancelledBadge')}
                         </span>
                       </div>
                     ))}
