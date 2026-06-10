@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -61,18 +62,18 @@ const L0_BG: Record<string, string> = {
   INSTRUCTION: '#B58A4A',
   MEDIA: '#A85F76',
 }
-const L0_LABEL: Record<string, string> = {
-  INPUT: 'Apply Input',
-  NON_INPUT: 'Crop Activity',
-  INSTRUCTION: 'Advisory',
-  MEDIA: 'Reference',
+const L0_LABEL_KEY: Record<string, 'input' | 'nonInput' | 'instruction' | 'media'> = {
+  INPUT: 'input',
+  NON_INPUT: 'nonInput',
+  INSTRUCTION: 'instruction',
+  MEDIA: 'media',
 }
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 }
-function timelineDateLabel(from: string | null, to: string | null): string {
-  if (!from && !to) return 'Today'
+function timelineDateLabel(from: string | null, to: string | null, todayLabel: string): string {
+  if (!from && !to) return todayLabel
   if (from && to && from !== to) return `${fmtDate(from)} – ${fmtDate(to)}`
   return fmtDate((to || from)!)
 }
@@ -108,6 +109,7 @@ function renderElements(elements: ElementRow[]): { label: string; value: string 
 
 export default function FacilitatorAdvisoryViewPage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.promotedFarmers.detail')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [day, setDay] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -127,21 +129,21 @@ export default function FacilitatorAdvisoryViewPage() {
           setErrMsg(detail.message || null)
         } else if (status === 404) {
           setErrCode('not_found')
-          setErrMsg(typeof detail === 'string' ? detail : 'Assignment not found.')
+          setErrMsg(typeof detail === 'string' ? detail : t('errorNotFound'))
         } else {
           setErrCode('unknown')
-          setErrMsg('Could not load the advisory.')
+          setErrMsg(t('errorLoad'))
         }
       })
       .finally(() => setLoading(false))
-  }, [router, subscriptionId])
+  }, [router, subscriptionId, t])
 
   // ── States: loading / error / empty ─────────────────────────────────
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Farmer advisory" activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
+        <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
         <div className="pt-16 px-4 max-w-lg mx-auto">
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4E00] rounded-full animate-spin" />
@@ -156,19 +158,19 @@ export default function FacilitatorAdvisoryViewPage() {
     const isPending = errCode === 'assignment_not_active'
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Farmer advisory" activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
+        <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
         <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
           <div className="mt-8 rounded-2xl border border-[#DDD0B8] bg-white p-5">
             <p className="text-base font-bold text-[#6B3F1F] mb-2">
-              {isNoAdvisory ? 'Waiting on the farmer' : isPending ? 'Awaiting farmer approval' : 'Not available'}
+              {isNoAdvisory ? t('errorTitleWaiting') : isPending ? t('errorTitlePending') : t('errorTitleNotAvailable')}
             </p>
             <p className="text-sm text-[#7A8C7E] leading-relaxed">
               {errMsg ||
                 (isNoAdvisory
-                  ? "The farmer hasn't set the crop's start date yet. Advisory will appear here once they do."
+                  ? t('errorBodyNoAdvisory')
                   : isPending
-                    ? "The farmer hasn't accepted this offer yet. Advisory becomes visible after they approve."
-                    : 'Could not load advisory for this assignment.')}
+                    ? t('errorBodyPending')
+                    : t('errorBodyUnknown'))}
             </p>
           </div>
         </div>
@@ -182,11 +184,11 @@ export default function FacilitatorAdvisoryViewPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Farmer advisory" activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
+      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {/* Read-only banner — sets expectations up front. */}
         <div className="mt-3 mb-3 rounded-xl border border-[#DDD0B8] bg-white px-3 py-2 text-[11px] text-[#7A8C7E] text-center">
-          Read-only view. The farmer is the one acting on this advisory.
+          {t('readOnlyHint')}
         </div>
 
         {/* Sub header — crop + package + day count. */}
@@ -199,8 +201,7 @@ export default function FacilitatorAdvisoryViewPage() {
             <p className="text-xs font-mono text-[#7A8C7E] mt-1">{day.reference_number}</p>
           )}
           <p className="text-xs text-[#7A8C7E] mt-2">
-            Day {day.day_offset} · {day.timelines.length} active timeline
-            {day.timelines.length === 1 ? '' : 's'}
+            {t('dayHeader', { day: day.day_offset, count: day.timelines.length })}
           </p>
         </div>
 
@@ -208,7 +209,7 @@ export default function FacilitatorAdvisoryViewPage() {
         {day.timelines.length === 0 ? (
           <div className="rounded-2xl border border-[#DDD0B8] bg-white p-5 text-center">
             <p className="text-sm text-[#7A8C7E]">
-              Nothing is due in the farmer&apos;s advisory window today.
+              {t('noneToday')}
             </p>
           </div>
         ) : (
@@ -227,7 +228,7 @@ export default function FacilitatorAdvisoryViewPage() {
                       <p className="font-semibold text-[#6B3F1F] truncate">{tl.name}</p>
                     </div>
                     <span className="text-xs text-[#7A8C7E] shrink-0">
-                      {timelineDateLabel(tl.from_date, tl.to_date)}
+                      {timelineDateLabel(tl.from_date, tl.to_date, t('todayLabel'))}
                     </span>
                   </div>
                 </div>
@@ -235,22 +236,28 @@ export default function FacilitatorAdvisoryViewPage() {
                 <div className="p-3 space-y-3">
                   {tl.practices.length === 0 ? (
                     <p className="text-xs text-[#7A8C7E] py-3 text-center">
-                      No practice due today on this timeline.
+                      {t('noPracticeToday')}
                     </p>
                   ) : tl.practices.map(p => {
                     const rows = renderElements(p.elements)
+                    const l0Key = L0_LABEL_KEY[p.l0_type]
+                    const l0Label = l0Key === 'input' ? t('l0.input')
+                      : l0Key === 'nonInput' ? t('l0.nonInput')
+                      : l0Key === 'instruction' ? t('l0.instruction')
+                      : l0Key === 'media' ? t('l0.media')
+                      : p.l0_type
                     return (
                       <div key={p.id}
                         className="rounded-xl border border-[#DDD0B8] overflow-hidden">
                         <div className="px-3 py-2 text-white text-[11px] font-semibold uppercase tracking-wide"
                           style={{ background: L0_BG[p.l0_type] || '#7A8C7E' }}>
-                          {L0_LABEL[p.l0_type] || p.l0_type}
+                          {l0Label}
                           {p.l1_type && <span className="opacity-80"> · {humanize(p.l1_type)}</span>}
                           {p.l2_type && <span className="opacity-80"> · {humanize(p.l2_type)}</span>}
                         </div>
                         <div className="p-3 text-sm">
                           {rows.length === 0 ? (
-                            <p className="text-[#7A8C7E] text-xs">No specific instructions.</p>
+                            <p className="text-[#7A8C7E] text-xs">{t('noSpecificInstructions')}</p>
                           ) : (
                             <dl className="space-y-1.5">
                               {rows.map((r, i) => (
@@ -266,18 +273,18 @@ export default function FacilitatorAdvisoryViewPage() {
                             {p.l0_type === 'INPUT' && (
                               p.is_purchased ? (
                                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-800 font-medium">
-                                  ✓ Farmer has purchased
+                                  {t('farmerPurchased')}
                                 </span>
                               ) : (
                                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-medium">
-                                  Purchase pending
+                                  {t('purchasePending')}
                                 </span>
                               )
                             )}
                             {p.frequency_days != null && (
                               <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-[#7A8C7E]">
-                                Every {p.frequency_days} day{p.frequency_days === 1 ? '' : 's'}
-                                {p.is_frequency_due_today === false && ' · not due today'}
+                                {t('frequencyEvery', { count: p.frequency_days })}
+                                {p.is_frequency_due_today === false && t('frequencyNotDueToday')}
                               </span>
                             )}
                           </div>
