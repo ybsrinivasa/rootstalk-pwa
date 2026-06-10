@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -53,6 +54,7 @@ function initials(name: string | null | undefined): string {
 
 export default function FacilitatorPickupPage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.pickup')
   const [pickups, setPickups] = useState<PickupOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [confirmPickup, setConfirmPickup] = useState<string | null>(null)
@@ -75,7 +77,7 @@ export default function FacilitatorPickupPage() {
       setConfirmPickup(null)
       load()
     } catch {
-      alert('Could not mark pickup. Please try again.')
+      alert(t('errorPickup'))
     } finally { setBusy(null) }
   }
 
@@ -106,7 +108,7 @@ export default function FacilitatorPickupPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="For Pickup" activeRole="FACILITATOR" back="/facilitator/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-20">
         <div className="px-4 pt-4 space-y-4 max-w-lg mx-auto">
           {loading ? (
@@ -114,9 +116,9 @@ export default function FacilitatorPickupPage() {
           ) : groups.length === 0 ? (
             <div className="text-center py-20">
               <span className="text-5xl">📦</span>
-              <p className="text-[#7A8C7E] text-sm mt-3">Nothing waiting for pickup</p>
+              <p className="text-[#7A8C7E] text-sm mt-3">{t('emptyTitle')}</p>
               <p className="text-[#7A8C7E] text-xs mt-1">
-                Approved items will appear here when the dealer has them ready.
+                {t('emptyBody')}
               </p>
             </div>
           ) : (
@@ -131,7 +133,7 @@ export default function FacilitatorPickupPage() {
                       because each sub-order is its own trip. */}
                   <div className="px-2 flex items-center gap-2">
                     {head?.farmer_photo_url ? (
-                      <img src={head.farmer_photo_url} alt={head?.farmer_name || 'Farmer'}
+                      <img src={head.farmer_photo_url} alt={head?.farmer_name || t('farmerFallback')}
                         className="w-8 h-8 rounded-full object-cover border border-[#DDD0B8] shrink-0" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-[#7D4E00]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
@@ -140,7 +142,7 @@ export default function FacilitatorPickupPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-[#6B3F1F] truncate">
-                        {head?.farmer_name || 'Unknown farmer'}{head?.crop_name && ` · ${head.crop_name}`}
+                        {head?.farmer_name || t('unknownFarmer')}{head?.crop_name && ` · ${head.crop_name}`}
                       </p>
                       <p className="text-[10px] font-mono tracking-wide text-[#7D4E00]">{orderId}</p>
                     </div>
@@ -165,21 +167,19 @@ export default function FacilitatorPickupPage() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Confirm pickup?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('confirmTitle')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              By confirming, you tell the dealer the items have left their shop with you.
-              You&apos;ll still need to hand them to the farmer; the farmer confirms separately
-              once they have them.
+              {t('confirmBody')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmPickup(null)} disabled={busy === confirmPickup}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Cancel
+                {t('cancel')}
               </button>
               <button onClick={() => markPickedUp(confirmPickup)} disabled={busy === confirmPickup}
                 className="flex-1 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50"
                 style={{ background: COLOUR }}>
-                {busy === confirmPickup ? '…' : 'Yes, picked up'}
+                {busy === confirmPickup ? '…' : t('confirmCta')}
               </button>
             </div>
           </div>
@@ -199,6 +199,7 @@ function PickupCard({
   onPickupClick: () => void
   busy: boolean
 }) {
+  const t = useTranslations('facilitator.pickup')
   const pickedUp = !!pickup.picked_up_at
   const mapsHref = (pickup.dealer_shop_gps_lat != null && pickup.dealer_shop_gps_lng != null)
     ? `https://maps.google.com/?q=${pickup.dealer_shop_gps_lat},${pickup.dealer_shop_gps_lng}`
@@ -209,7 +210,7 @@ function PickupCard({
           all reference the same batch. */}
       {pickup.packing_code && (
         <div className="px-4 py-2 bg-emerald-600 text-white flex items-baseline justify-between">
-          <p className="text-[10px] uppercase tracking-wider opacity-75">Packing ID</p>
+          <p className="text-[10px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
           <p className="text-base font-bold font-mono tracking-widest">{pickup.packing_code}</p>
         </div>
       )}
@@ -218,20 +219,22 @@ function PickupCard({
       {pickedUp ? (
         <div className="px-4 py-2 bg-amber-50 border-b border-amber-100">
           <p className="text-[11px] text-amber-800 font-medium">
-            📦 Picked up{pickup.picked_up_at ? ` on ${new Date(pickup.picked_up_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}` : ''} · awaiting farmer receipt
+            {pickup.picked_up_at
+              ? t('pickedUpOn', { date: new Date(pickup.picked_up_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })
+              : t('pickedUpNoDate')}
           </p>
         </div>
       ) : (
         <div className="px-4 py-2 bg-amber-50 border-b border-amber-100">
-          <p className="text-[11px] text-amber-800 font-medium">Awaiting pickup from dealer</p>
+          <p className="text-[11px] text-amber-800 font-medium">{t('awaitingPickup')}</p>
         </div>
       )}
 
       {/* Pickup-from: dealer block */}
       <div className="px-4 py-3 border-b border-emerald-50">
-        <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-1">Pickup from</p>
+        <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-1">{t('pickupFrom')}</p>
         <p className="text-sm font-semibold text-[#6B3F1F] truncate">
-          {pickup.dealer_shop_name || pickup.dealer_name || 'Dealer'}
+          {pickup.dealer_shop_name || pickup.dealer_name || t('dealerFallback')}
         </p>
         {pickup.dealer_shop_address && (
           <p className="text-[11px] text-[#7A8C7E] mt-0.5">{pickup.dealer_shop_address}</p>
@@ -258,7 +261,7 @@ function PickupCard({
           <div key={it.id} className="px-4 py-2.5 flex items-baseline justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-[#6B3F1F] truncate">
-                {it.brand_name || 'Item'}
+                {it.brand_name || t('itemFallback')}
               </p>
               {it.given_volume != null && (
                 <p className="text-[11px] text-[#7A8C7E]">
@@ -273,16 +276,16 @@ function PickupCard({
         ))}
       </div>
       <div className="px-4 py-2 bg-emerald-50/40 border-t border-emerald-100 flex items-center justify-between">
-        <p className="text-[11px] text-[#7A8C7E]">Total</p>
+        <p className="text-[11px] text-[#7A8C7E]">{t('totalLabel')}</p>
         <p className="text-sm font-bold text-[#085041]">₹{pickup.total_amount.toLocaleString('en-IN')}</p>
       </div>
 
       {/* Handoff-to: farmer block */}
       <div className="px-4 py-3 bg-[#F5F0E8]/40 border-t border-emerald-50">
-        <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-1">Hand off to</p>
+        <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-1">{t('handOffTo')}</p>
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold text-[#6B3F1F] truncate">
-            {pickup.farmer_name || 'Farmer'}
+            {pickup.farmer_name || t('farmerFallback')}
           </p>
           {pickup.farmer_phone && (
             <a href={`tel:${pickup.farmer_phone}`}
@@ -301,7 +304,7 @@ function PickupCard({
           <button onClick={onPickupClick} disabled={busy}
             className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
             style={{ background: COLOUR }}>
-            {busy ? '…' : '📦 I have picked these up'}
+            {busy ? '…' : t('pickupCta')}
           </button>
         </div>
       )}

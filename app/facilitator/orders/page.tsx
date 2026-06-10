@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -58,11 +59,11 @@ interface NearbyDealer {
 
 type Pill = 'pending' | 'routed' | 'returned' | 'farmer'
 
-const PILL_LABEL: Record<Pill, string> = {
-  pending: 'Pending',
-  routed: 'Routed',
-  returned: 'Returned',
-  farmer: 'With Farmer',
+const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned' | 'pillFarmer'> = {
+  pending: 'pillPending',
+  routed: 'pillRouted',
+  returned: 'pillReturned',
+  farmer: 'pillFarmer',
 }
 
 function subBelongsTo(o: Order, pill: Pill): boolean {
@@ -118,6 +119,7 @@ function initials(name: string | null | undefined): string {
 
 export default function FacilitatorOrdersPage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.orders')
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
@@ -183,7 +185,7 @@ export default function FacilitatorOrdersPage() {
       const msg = typeof detail === 'string'
         ? detail
         : (detail as { message?: string } | undefined)?.message
-      alert(msg || 'Could not re-route. Please try again.')
+      alert(msg || t('errorReroute'))
     } finally { setRerouting(false) }
   }
 
@@ -238,13 +240,13 @@ export default function FacilitatorOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Acting as Facilitator" activeRole="FACILITATOR" back="/facilitator/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-20">
 
         {/* Pill row + History chip */}
         <div className="px-4 pt-3 flex items-center gap-2">
           <div className="flex gap-2 overflow-x-auto flex-1">
-            {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
+            {(Object.keys(PILL_LABEL_KEY) as Pill[]).map(p => {
               const active = pill === p
               const n = counts[p]
               return (
@@ -254,7 +256,7 @@ export default function FacilitatorOrdersPage() {
                       ? 'bg-[#7D4E00] text-white border-[#7D4E00]'
                       : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                   }`}>
-                  <span>{PILL_LABEL[p]}</span>
+                  <span>{t(PILL_LABEL_KEY[p])}</span>
                   {/* 2026-06-09 — Count badge: filled circle so the
                       task-load reads at a glance. Tinted for the
                       active pill (white on COLOUR), the role accent
@@ -274,7 +276,7 @@ export default function FacilitatorOrdersPage() {
           {/* History chip — Completed + Cancelled live elsewhere */}
           <button onClick={() => router.push('/facilitator/history')}
             className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
-            📁 History
+            {t('history')}
           </button>
         </div>
 
@@ -284,7 +286,7 @@ export default function FacilitatorOrdersPage() {
           ) : visibleGroups.length === 0 ? (
             <div className="text-center py-20">
               <span className="text-4xl">🌾</span>
-              <p className="text-[#7A8C7E] text-sm mt-3">Nothing under {PILL_LABEL[pill]}</p>
+              <p className="text-[#7A8C7E] text-sm mt-3">{t('emptyInPill', { pill: t(PILL_LABEL_KEY[pill]) })}</p>
             </div>
           ) : (
             visibleGroups.map(({ key, subs, matching }) => (
@@ -314,19 +316,18 @@ export default function FacilitatorOrdersPage() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Reject this order?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('rejectSheetTitle')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              The farmer will get a fresh draft on their Manage tab so they
-              can send the same items to someone else.
+              {t('rejectSheetBody')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmReject(null)} disabled={acting === confirmReject}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Cancel
+                {t('rejectSheetCancel')}
               </button>
               <button onClick={() => reject(confirmReject)} disabled={acting === confirmReject}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {acting === confirmReject ? '…' : 'Yes, reject'}
+                {acting === confirmReject ? '…' : t('rejectSheetConfirm')}
               </button>
             </div>
           </div>
@@ -341,7 +342,7 @@ export default function FacilitatorOrdersPage() {
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#DDD0B8]">
-              <p className="font-bold text-[#6B3F1F]">Forward returned items to</p>
+              <p className="font-bold text-[#6B3F1F]">{t('rerouteSheetTitle')}</p>
               <button onClick={() => !rerouting && setRerouteOrderId(null)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             {loadingDealers ? (
@@ -351,7 +352,7 @@ export default function FacilitatorOrdersPage() {
             ) : nearbyDealers.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="text-4xl mb-3">🏪</p>
-                <p className="text-[#7A8C7E] font-medium">No nearby dealers found</p>
+                <p className="text-[#7A8C7E] font-medium">{t('rerouteEmpty')}</p>
               </div>
             ) : (
               <div className="divide-y divide-slate-50">
@@ -359,8 +360,8 @@ export default function FacilitatorOrdersPage() {
                   <div key={d.user_id} className="px-5 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <p className="font-semibold text-[#6B3F1F]">{d.shop_name || d.name || 'Dealer'}</p>
-                        <p className="text-xs text-[#7A8C7E] mt-0.5">{d.distance_km} km away</p>
+                        <p className="font-semibold text-[#6B3F1F]">{d.shop_name || d.name || t('dealerAssigned')}</p>
+                        <p className="text-xs text-[#7A8C7E] mt-0.5">{t('kmAway', { km: d.distance_km })}</p>
                         {d.shop_address && <p className="text-xs text-[#7A8C7E]">{d.shop_address}</p>}
                         <div className="flex gap-1 mt-1 flex-wrap">
                           {d.sell_categories.map(c => (
@@ -372,13 +373,13 @@ export default function FacilitatorOrdersPage() {
                         {d.phone && (
                           <a href={`tel:${d.phone}`}
                             className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
-                            📞 Call
+                            {t('callBtn')}
                           </a>
                         )}
                         <button onClick={() => rerouteToDealer(d.user_id)} disabled={rerouting}
                           className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
                           style={{ background: COLOUR }}>
-                          {rerouting ? '…' : 'Forward'}
+                          {rerouting ? '…' : t('forwardBtn')}
                         </button>
                       </div>
                     </div>
@@ -461,11 +462,12 @@ function CardHeader({
   onToggleExpand: () => void
   orderId: string
 }) {
+  const t = useTranslations('facilitator.orders')
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
       <div className="flex items-start gap-3">
         {head?.farmer_photo_url ? (
-          <img src={head.farmer_photo_url} alt={head?.farmer_name || 'Farmer'}
+          <img src={head.farmer_photo_url} alt={head?.farmer_name || t('unknownFarmer')}
             className="w-10 h-10 rounded-full object-cover border border-[#DDD0B8] shrink-0" />
         ) : (
           <div className="w-10 h-10 rounded-full bg-[#7D4E00]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
@@ -475,7 +477,7 @@ function CardHeader({
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline justify-between gap-2">
             <p className="font-semibold text-[#6B3F1F] truncate">
-              {head?.farmer_name || 'Unknown farmer'}
+              {head?.farmer_name || t('unknownFarmer')}
             </p>
             {head?.farmer_phone && (
               <a href={`tel:${head.farmer_phone}`}
@@ -496,7 +498,7 @@ function CardHeader({
       {subCount > 1 && (
         <button onClick={onToggleExpand}
           className="text-[10px] font-semibold text-[#7A8C7E] mt-2 flex items-center gap-1">
-          {expanded ? '▾' : '▸'} {subCount} sub-orders
+          {expanded ? '▾' : '▸'} {t('subOrdersToggle', { count: subCount })}
         </button>
       )}
     </div>
@@ -516,27 +518,28 @@ function PillChunk({
   acting: string | null
   showSubHeader?: boolean
 }) {
+  const t = useTranslations('facilitator.orders')
   return (
     <div className="px-4 py-3 space-y-2">
       {showSubHeader && (
         <p className="text-[10px] font-mono tracking-wide text-[#7A8C7E]">
-          Sub-order · {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+          {t('subOrderHeader', { date: new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
         </p>
       )}
       {pill === 'pending' && sub.status === 'SENT' && (
         <>
           <p className="text-xs text-amber-700">
-            New order — your call. {sub.item_count} item{sub.item_count === 1 ? '' : 's'}.
+            {t('newOrderHint', { count: sub.item_count })}
           </p>
           <div className="flex gap-2">
             <button onClick={() => onAccept(sub.id)} disabled={acting === sub.id}
               className="flex-1 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
               style={{ background: COLOUR }}>
-              {acting === sub.id ? '…' : '✓ Accept'}
+              {acting === sub.id ? '…' : t('acceptCta')}
             </button>
             <button onClick={() => onReject(sub.id)} disabled={acting === sub.id}
               className="flex-1 py-2 rounded-lg bg-red-100 text-[#D4682E] text-xs font-semibold disabled:opacity-50">
-              ✗ Reject
+              {t('rejectCta')}
             </button>
           </div>
         </>
@@ -549,15 +552,15 @@ function PillChunk({
       {pill === 'pending' && sub.status === 'ACCEPTED' && (
         <>
           <p className="text-xs text-amber-700">
-            Forward to a dealer · {sub.item_count} item{sub.item_count === 1 ? '' : 's'}.
+            {t('forwardToDealerHint', { count: sub.item_count })}
           </p>
           <p className="text-[11px] text-amber-600 -mt-1">
-            Tap to open and pick a dealer.
+            {t('tapToPickDealer')}
           </p>
           <button onClick={() => onOpenDetail(sub.id)}
             className="w-full py-2 rounded-lg text-white text-xs font-semibold"
             style={{ background: COLOUR }}>
-            Pick a dealer →
+            {t('pickDealerCta')}
           </button>
         </>
       )}
@@ -573,11 +576,11 @@ function PillChunk({
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2 mt-2">
             <p className="text-xs text-amber-800">
-              {sub.item_status_counts?.not_available ?? 0} returned item{(sub.item_status_counts?.not_available ?? 0) === 1 ? '' : 's'}
+              {t('returnedItemsCount', { count: sub.item_status_counts?.not_available ?? 0 })}
             </p>
             <button onClick={() => onForwardReturned(sub.id)}
               className="text-xs font-semibold text-amber-800 underline">
-              Forward to another dealer
+              {t('forwardReturnedLink')}
             </button>
           </div>
           <PostponedStrip sub={sub} />
@@ -587,7 +590,7 @@ function PillChunk({
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <p className="text-xs text-amber-700 font-medium mt-2">
-            ⏳ Waiting for farmer to approve {sub.item_status_counts?.sent_for_approval ?? 0} item{(sub.item_status_counts?.sent_for_approval ?? 0) === 1 ? '' : 's'}
+            {t('waitingFarmerApproval', { count: sub.item_status_counts?.sent_for_approval ?? 0 })}
           </p>
           <PostponedStrip sub={sub} />
         </>
@@ -601,12 +604,13 @@ function PillChunk({
 // act here (only the dealer can resolve a postponed item), but they
 // need visibility so the order doesn't silently vanish from view.
 function PostponedStrip({ sub }: { sub: Order }) {
+  const t = useTranslations('facilitator.orders')
   const n = sub.item_status_counts?.postponed ?? 0
   if (n === 0) return null
   return (
     <div className="bg-amber-50/40 rounded-lg px-3 py-2 mt-2">
       <p className="text-xs text-amber-800">
-        ⏰ {n} postponed item{n === 1 ? '' : 's'} · dealer is following up
+        {t('postponedStrip', { count: n })}
       </p>
     </div>
   )
@@ -617,23 +621,25 @@ function PostponedStrip({ sub }: { sub: Order }) {
 // non-approved items in play, surface a tiny note so the facilitator
 // remembers the partial state.
 function ApprovedHintStrip({ sub }: { sub: Order }) {
+  const t = useTranslations('facilitator.orders')
   const n = sub.item_status_counts?.approved ?? 0
   if (n === 0) return null
   return (
     <p className="text-[10px] text-emerald-700 mt-2">
-      ✓ {n} approved item{n === 1 ? '' : 's'} · check Pickup
+      {t('approvedHint', { count: n })}
     </p>
   )
 }
 
 function RoutedBody({ sub, onOpenDetail }: { sub: Order; onOpenDetail: (id: string) => void }) {
+  const t = useTranslations('facilitator.orders')
   const mapsHref = (sub.dealer_shop_gps_lat != null && sub.dealer_shop_gps_lng != null)
     ? `https://maps.google.com/?q=${sub.dealer_shop_gps_lat},${sub.dealer_shop_gps_lng}`
     : null
   return (
     <button onClick={() => onOpenDetail(sub.id)} className="w-full text-left">
       <p className="text-xs font-semibold text-[#6B3F1F] truncate">
-        🏪 {sub.dealer_shop_name || sub.dealer_name || 'Dealer assigned'}
+        🏪 {sub.dealer_shop_name || sub.dealer_name || t('dealerAssigned')}
       </p>
       {sub.dealer_shop_address && (
         <p className="text-[11px] text-[#7A8C7E] truncate">{sub.dealer_shop_address}</p>
@@ -651,7 +657,7 @@ function RoutedBody({ sub, onOpenDetail }: { sub: Order; onOpenDetail: (id: stri
             🗺️ Maps
           </a>
         )}
-        <span className="text-[10px] text-[#7A8C7E]">· {sub.item_count} item{sub.item_count === 1 ? '' : 's'}</span>
+        <span className="text-[10px] text-[#7A8C7E]">{t('itemCountInline', { count: sub.item_count })}</span>
       </div>
     </button>
   )
@@ -663,10 +669,11 @@ function ExpandedSubOrderList({
   subs: Order[]
   onOpenDetail: (id: string) => void
 }) {
+  const t = useTranslations('facilitator.orders')
   return (
     <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
       <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
-        All sub-orders ({subs.length})
+        {t('expandedHeader', { count: subs.length })}
       </p>
       <div className="space-y-2">
         {subs.map(sub => (
@@ -674,10 +681,11 @@ function ExpandedSubOrderList({
             className="w-full text-left flex items-center justify-between gap-2 bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
             <div className="min-w-0">
               <p className="text-xs text-[#6B3F1F] truncate">
-                {sub.dealer_shop_name || sub.dealer_name || 'No dealer assigned'}
+                {sub.dealer_shop_name || sub.dealer_name || t('noDealerAssigned')}
               </p>
               <p className="text-[10px] text-[#7A8C7E]">
-                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} · {sub.item_count} item{sub.item_count === 1 ? '' : 's'}
+                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {' '}{t('itemCountInline', { count: sub.item_count })}
               </p>
             </div>
             <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
