@@ -952,6 +952,126 @@
       "decline": "Decline",
       "razorpayDescription": "Advisory subscription on behalf of farmer · paid to rootsTALK.in"
     },
+    "orders": {
+      "headerTitle": "Orders",
+      "pill": {
+        "pending": "Pending",
+        "postponed": "Postponed",
+        "farmer": "With Farmer",
+        "packing": "Packing"
+      },
+      "historyChip": "📁 History",
+      "emptyPill": "Nothing under {pillName}",
+      "shareTitle": "Packing list",
+      "share": {
+        "header": "*Packing List*",
+        "packingIdLine": "Packing ID: *{code}*",
+        "orderDateLine": "Order date: {date}",
+        "farmerLine": "Farmer: {name}",
+        "farmerUnknown": "Unknown",
+        "farmerPhoneLine": "Farmer phone: {phone}",
+        "locationLine": "Location: https://maps.google.com/?q={lat},{lng}",
+        "facilitatorLine": "Facilitator: {name}",
+        "facilitatorPhoneLine": "Facilitator phone: {phone}",
+        "companyLine": "Company: {name}",
+        "itemsHeader": "Items:",
+        "itemFallback": "Item",
+        "totalLine": "*Total: ₹{amount}*",
+        "copiedToClipboard": "Copied to clipboard — paste into your messenger."
+      },
+      "reshare": {
+        "title": "Share again?",
+        "bodyPrefix": "This packing list was already shared",
+        "bodyAt": "at",
+        "bodyOn": "on",
+        "bodySuffix": ". Re-sharing could lead to duplicate deliveries — only do this if the first share didn't reach the recipient.",
+        "yesShareAgain": "Yes, share again"
+      },
+      "removeConfirm": {
+        "title": "Remove from Packing?",
+        "body": "The order will move to Completed. You won't see it here again unless something on it reopens. History stays intact.",
+        "yesRemove": "Yes, remove"
+      },
+      "pickup": {
+        "receivedByFarmer": "✓ Received by farmer · {date} {time}",
+        "pickedUpByFarmer": "📦 Picked up by farmer · {date} {time}",
+        "pickedUpByFacilitatorNamed": "📦 Picked up by facilitator ({name}) · {date} {time} · awaiting farmer receipt",
+        "pickedUpByFacilitator": "📦 Picked up by facilitator · {date} {time} · awaiting farmer receipt",
+        "awaitingPickup": "Awaiting pickup"
+      },
+      "cardHeader": {
+        "farmerAlt": "Farmer",
+        "unknownFarmer": "Unknown farmer",
+        "seedTag": "🌱 Seed",
+        "seedCategory": "Seed / Seedling",
+        "categoryFallback": "order",
+        "receivedSuffix": " · Received {date}",
+        "expandSubOrders": "{count, plural, one {1 sub-order} other {# sub-orders}}"
+      },
+      "chunk": {
+        "subOrderPrefix": "Sub-order · {date}",
+        "pending": {
+          "newAccept": "New · tap to accept",
+          "acceptedSeed": "Accepted · tap to enter qty + price",
+          "acceptedRegular": "Accepted · tap to process",
+          "processing": "Processing · tap to continue"
+        },
+        "postponedTap": "{count, plural, one {⏰ 1 postponed item · tap to resolve} other {⏰ # postponed items · tap to resolve}}",
+        "waitingForFarmer": "{count, plural, one {⏳ Waiting for farmer to approve 1 item} other {⏳ Waiting for farmer to approve # items}}"
+      },
+      "packing": {
+        "packingIdLabel": "Packing ID",
+        "callFarmer": "📞 Farmer",
+        "callFacilitator": "📞 Facilitator",
+        "plusFacilitator": "+ Facilitator",
+        "sharedAt": "✓ Shared {date} at {time}",
+        "itemFallback": "Item",
+        "byManufacturer": "by {manufacturer}",
+        "totalLabel": "Total",
+        "shareCta": "↗ Share",
+        "shareAgainCta": "↗ Share again",
+        "removeCta": "🗑 Remove"
+      },
+      "expanded": {
+        "allSubOrders": "All sub-orders ({count})"
+      }
+    },
+    "history": {
+      "headerTitle": "History",
+      "tabCompleted": "completed",
+      "tabCancelled": "cancelled",
+      "emptyCompleted": "No completed sub-orders",
+      "emptyCancelled": "No cancelled sub-orders",
+      "cancelledHint": "Cancelled, expired, or migrated husks will appear here.",
+      "farmerAlt": "Farmer",
+      "unknownFarmer": "Unknown farmer",
+      "seedFallback": "Seed order",
+      "categoryFallback": "order",
+      "soldLine": "{sold} sold",
+      "soldWithUnavailable": "{sold} sold, {na} unavailable"
+    },
+    "postponed": {
+      "headerTitle": "Postponed items",
+      "intro": "One card per order. Resolve each postponed item with Available, Not available, or Later (keep waiting within the original window).",
+      "emptyTitle": "No postponed items right now.",
+      "emptyHint": "Items you mark Later will show up here.",
+      "receivedShort": "Received {date}",
+      "orderRange": "Order range: {from} – {to}",
+      "callBtn": "📞 Call",
+      "dueToday": "Due today",
+      "daysLeft": "{count, plural, one {1 day left} other {# days left}}",
+      "ctaAvailable": "✓ Available",
+      "ctaNa": "✗ NA",
+      "ctaLater": "⏰ Later",
+      "confirmNa": {
+        "title": "Mark as not available?",
+        "bodyPrefix": "",
+        "bodyMiddle": "will be returned to the farmer",
+        "farmerParen": "({name})",
+        "bodySuffix": ". They can send it to another dealer from their review screen.",
+        "yesReturn": "Yes, return to farmer"
+      }
+    },
     "alertsIncoming": {
       "headerTitle": "Incoming alerts",
       "typeStartDate": "Start Date",

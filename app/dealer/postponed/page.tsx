@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -65,6 +66,8 @@ function shortDate(iso: string | null): string {
 
 export default function DealerPostponedPage() {
   const router = useRouter()
+  const t = useTranslations('dealer.postponed')
+  const tCommon = useTranslations('common')
   const [items, setItems] = useState<PostponedItem[] | null>(null)
   const [confirmNA, setConfirmNA] = useState<PostponedItem | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -138,11 +141,10 @@ export default function DealerPostponedPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Postponed items" activeRole="DEALER" back="/dealer/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto space-y-3">
         <p className="text-xs text-[#7A8C7E] mt-4 leading-relaxed">
-          One card per order. Resolve each postponed item with Available,
-          Not available, or Later (keep waiting within the original window).
+          {t('intro')}
         </p>
 
         {items === null && (
@@ -150,8 +152,8 @@ export default function DealerPostponedPage() {
         )}
         {items !== null && visibleGroups.length === 0 && (
           <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
-            <p className="text-sm text-[#7A8C7E]">No postponed items right now.</p>
-            <p className="text-xs text-[#7A8C7E] mt-1">Items you mark Later will show up here.</p>
+            <p className="text-sm text-[#7A8C7E]">{t('emptyTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">{t('emptyHint')}</p>
           </div>
         )}
 
@@ -185,19 +187,19 @@ export default function DealerPostponedPage() {
                       )}
                       {g.category && g.order_received_at && ' · '}
                       {g.order_received_at && (
-                        <>Received {shortDate(g.order_received_at)}</>
+                        <>{t('receivedShort', { date: shortDate(g.order_received_at) })}</>
                       )}
                     </p>
                     {g.date_from && g.date_to && (
                       <p className="text-[11px] text-[#7A8C7E]">
-                        Order range: {shortDate(g.date_from)} – {shortDate(g.date_to)}
+                        {t('orderRange', { from: shortDate(g.date_from), to: shortDate(g.date_to) })}
                       </p>
                     )}
                   </div>
                   {g.farmer_phone && (
                     <a href={`tel:${g.farmer_phone}`}
                       className="text-[11px] bg-white text-[#085041] border border-amber-300 px-2.5 py-1 rounded-lg shrink-0 font-semibold">
-                      📞 Call
+                      {t('callBtn')}
                     </a>
                   )}
                 </div>
@@ -219,23 +221,23 @@ export default function DealerPostponedPage() {
                           <p className={`text-[11px] font-medium shrink-0 ${
                             dr <= 1 ? 'text-red-600' : 'text-amber-700'
                           }`}>
-                            {dr === 0 ? 'Due today' : `${dr} day${dr === 1 ? '' : 's'} left`}
+                            {dr === 0 ? t('dueToday') : t('daysLeft', { count: dr })}
                           </p>
                         )}
                       </div>
                       <div className="flex gap-2 mt-2">
                         <button onClick={() => nowAvailable(it)}
                           className="flex-1 bg-green-600 text-white text-[11px] font-semibold py-2 rounded-lg">
-                          ✓ Available
+                          {t('ctaAvailable')}
                         </button>
                         <button onClick={() => setConfirmNA(it)}
                           className="flex-1 bg-red-100 text-[#D4682E] text-[11px] font-semibold py-2 rounded-lg">
-                          ✗ NA
+                          {t('ctaNa')}
                         </button>
                         {allowLater && (
                           <button onClick={() => laterSkip(it)}
                             className="flex-1 bg-amber-100 text-amber-800 text-[11px] font-semibold py-2 rounded-lg">
-                            ⏰ Later
+                            {t('ctaLater')}
                           </button>
                         )}
                       </div>
@@ -251,19 +253,19 @@ export default function DealerPostponedPage() {
       {confirmNA && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmNA(null)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Mark as not available?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('confirmNa.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              <strong className="text-[#6B3F1F]">{confirmNA.display_name}</strong> will be returned to the farmer
-              ({confirmNA.farmer_name}). They can send it to another dealer from their review screen.
+              <strong className="text-[#6B3F1F]">{confirmNA.display_name}</strong> {t('confirmNa.bodyMiddle')}{' '}
+              {t('confirmNa.farmerParen', { name: confirmNA.farmer_name })}{t('confirmNa.bodySuffix')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmNA(null)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={() => notAvailable(confirmNA)} disabled={busy === confirmNA.item_id}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy === confirmNA.item_id ? '…' : 'Yes, return to farmer'}
+                {busy === confirmNA.item_id ? '…' : t('confirmNa.yesReturn')}
               </button>
             </div>
           </div>

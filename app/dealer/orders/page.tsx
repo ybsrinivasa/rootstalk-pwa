@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -95,12 +96,7 @@ interface SeedOrderRaw {
 // Dealer mirroring). Terminal sub-orders live in /dealer/history.
 type Pill = 'pending' | 'postponed' | 'farmer' | 'packing'
 
-const PILL_LABEL: Record<Pill, string> = {
-  pending: 'Pending',
-  postponed: 'Postponed',
-  farmer: 'With Farmer',
-  packing: 'Packing',
-}
+const PILLS: readonly Pill[] = ['pending', 'postponed', 'farmer', 'packing'] as const
 
 function initials(name: string | null): string {
   if (!name) return '?'
@@ -208,6 +204,8 @@ export default function DealerOrdersPage() {
 function DealerOrdersInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const t = useTranslations('dealer.orders')
+  const tCommon = useTranslations('common')
   const initialPill = (searchParams.get('pill') as Pill) || 'pending'
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -268,7 +266,7 @@ function DealerOrdersInner() {
       pending: 0, postponed: 0, farmer: 0, packing: 0,
     }
     for (const list of groups.values()) {
-      for (const p of Object.keys(c) as Pill[]) {
+      for (const p of PILLS) {
         if (list.some(o => subBelongsTo(o, p))) c[p] += 1
       }
     }
@@ -295,36 +293,36 @@ function DealerOrdersInner() {
     // Structured for legibility on WhatsApp / SMS.
     const orderDate = new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
     const lines: string[] = []
-    lines.push('*Packing List*')
-    if (o.packing_code) lines.push(`Packing ID: *${o.packing_code}*`)
-    lines.push(`Order date: ${orderDate}`)
+    lines.push(t('share.header'))
+    if (o.packing_code) lines.push(t('share.packingIdLine', { code: o.packing_code }))
+    lines.push(t('share.orderDateLine', { date: orderDate }))
     lines.push('')
-    lines.push(`Farmer: ${o.farmer_name || 'Unknown'}`)
-    if (o.farmer_phone) lines.push(`Farmer phone: ${o.farmer_phone}`)
+    lines.push(t('share.farmerLine', { name: o.farmer_name || t('share.farmerUnknown') }))
+    if (o.farmer_phone) lines.push(t('share.farmerPhoneLine', { phone: o.farmer_phone }))
     if (o.farmer_gps_lat != null && o.farmer_gps_lng != null) {
-      lines.push(`Location: https://maps.google.com/?q=${o.farmer_gps_lat},${o.farmer_gps_lng}`)
+      lines.push(t('share.locationLine', { lat: o.farmer_gps_lat, lng: o.farmer_gps_lng }))
     }
     if (o.facilitator_name || o.facilitator_phone) {
       lines.push('')
-      lines.push(`Facilitator: ${o.facilitator_name || ''}`.trim())
-      if (o.facilitator_phone) lines.push(`Facilitator phone: ${o.facilitator_phone}`)
+      lines.push(t('share.facilitatorLine', { name: o.facilitator_name || '' }).trim())
+      if (o.facilitator_phone) lines.push(t('share.facilitatorPhoneLine', { phone: o.facilitator_phone }))
     }
     if (o.client_name) {
       lines.push('')
-      lines.push(`Company: ${o.client_name}`)
+      lines.push(t('share.companyLine', { name: o.client_name }))
     }
     lines.push('')
-    lines.push('Items:')
+    lines.push(t('share.itemsHeader'))
     let total = 0
     for (const it of o.packing_items) {
       const qty = it.given_volume != null ? ` · ${it.given_volume} ${it.volume_unit || ''}`.trim() : ''
       const price = it.price != null ? ` · ₹${it.price}` : ''
       const mfr = it.manufacturer_name ? ` (${it.manufacturer_name})` : ''
-      lines.push(`• ${it.brand_name || 'Item'}${mfr}${qty}${price}`)
+      lines.push(`• ${it.brand_name || t('share.itemFallback')}${mfr}${qty}${price}`)
       if (it.price) total += it.price
     }
     lines.push('')
-    lines.push(`*Total: ₹${total.toLocaleString('en-IN')}*`)
+    lines.push(t('share.totalLine', { amount: total.toLocaleString('en-IN') }))
     return lines.join('\n')
   }
 
@@ -347,11 +345,11 @@ function DealerOrdersInner() {
       const navigatorAny = navigator as Navigator & { share?: (data: ShareData) => Promise<void> }
       if (navigatorAny.share) {
         try {
-          await navigatorAny.share({ title: 'Packing list', text })
+          await navigatorAny.share({ title: t('shareTitle'), text })
         } catch { /* user cancelled */ }
       } else {
         await navigator.clipboard?.writeText(text)
-        alert('Copied to clipboard — paste into your messenger.')
+        alert(t('share.copiedToClipboard'))
       }
       await load()
     } finally { setBusy(null) }
@@ -378,7 +376,7 @@ function DealerOrdersInner() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Orders" activeRole="DEALER" back="/dealer/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-20">
 
         {/* Pill row — 2026-06-09: count promoted to filled-circle
@@ -388,7 +386,7 @@ function DealerOrdersInner() {
             /facilitator/orders + /crop-detail/[id]/orders Manage tab. */}
         <div className="px-4 pt-3 flex items-center gap-2">
           <div className="flex gap-2 overflow-x-auto flex-1">
-            {(Object.keys(PILL_LABEL) as Pill[]).map(p => {
+            {PILLS.map(p => {
               const active = pill === p
               const n = counts[p]
               return (
@@ -398,7 +396,7 @@ function DealerOrdersInner() {
                       ? 'bg-[#085041] text-white border-[#085041]'
                       : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                   }`}>
-                  <span>{PILL_LABEL[p]}</span>
+                  <span>{t(`pill.${p}`)}</span>
                   <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
                     active
                       ? 'bg-white/25 text-white'
@@ -412,7 +410,7 @@ function DealerOrdersInner() {
           </div>
           <button onClick={() => router.push('/dealer/history')}
             className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
-            📁 History
+            {t('historyChip')}
           </button>
         </div>
 
@@ -423,7 +421,7 @@ function DealerOrdersInner() {
             <div className="text-center py-20">
               <span className="text-5xl">📋</span>
               <p className="text-[#7A8C7E] text-sm mt-3">
-                Nothing under {PILL_LABEL[pill]}
+                {t('emptyPill', { pillName: t(`pill.${pill}`) })}
               </p>
             </div>
           ) : (
@@ -452,29 +450,28 @@ function DealerOrdersInner() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Share again?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('reshare.title')}</p>
             <p className="text-xs text-amber-700 mt-2">
-              This packing list was already shared
+              {t('reshare.bodyPrefix')}
               {confirmReshare.packing_list_shared_at && (
                 <span>
-                  {' at '}
+                  {' '}{t('reshare.bodyAt')}{' '}
                   <strong>
                     {new Date(confirmReshare.packing_list_shared_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                    {' on '}
+                    {' '}{t('reshare.bodyOn')}{' '}
                     {new Date(confirmReshare.packing_list_shared_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                   </strong>
                 </span>
-              )}. Re-sharing could lead to duplicate deliveries — only do this
-              if the first share didn&apos;t reach the recipient.
+              )}{t('reshare.bodySuffix')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmReshare(null)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={() => shareOrder(confirmReshare)} disabled={busy === confirmReshare.id}
                 className="flex-1 bg-amber-600 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy === confirmReshare.id ? '…' : 'Yes, share again'}
+                {busy === confirmReshare.id ? '…' : t('reshare.yesShareAgain')}
               </button>
             </div>
           </div>
@@ -487,19 +484,18 @@ function DealerOrdersInner() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Remove from Packing?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('removeConfirm.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              The order will move to Completed. You won&apos;t see it here again
-              unless something on it reopens. History stays intact.
+              {t('removeConfirm.body')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmRemove(null)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={() => removeOrder(confirmRemove)} disabled={busy === confirmRemove.id}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy === confirmRemove.id ? '…' : 'Yes, remove'}
+                {busy === confirmRemove.id ? '…' : t('removeConfirm.yesRemove')}
               </button>
             </div>
           </div>
@@ -512,29 +508,39 @@ function DealerOrdersInner() {
 }
 
 function PickupStatus({ order }: { order: Order }) {
+  const t = useTranslations('dealer.orders.pickup')
   if (order.packing_farmer_received_at) {
-    const t = new Date(order.packing_farmer_received_at)
+    const stamp = new Date(order.packing_farmer_received_at)
     return (
       <p className="text-[11px] text-emerald-700 mt-1 font-semibold">
-        ✓ Received by farmer · {t.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} {t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+        {t('receivedByFarmer', {
+          date: stamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+          time: stamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        })}
       </p>
     )
   }
   if (order.packing_picked_up_at) {
-    const t = new Date(order.packing_picked_up_at)
-    const who = order.packing_picked_up_by_role === 'FACILITATOR'
-      ? `facilitator${order.packing_picked_up_by_name ? ` (${order.packing_picked_up_by_name})` : ''}`
-      : 'farmer'
+    const stamp = new Date(order.packing_picked_up_at)
+    const date = stamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+    const time = stamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+    let line: string
+    if (order.packing_picked_up_by_role === 'FACILITATOR') {
+      line = order.packing_picked_up_by_name
+        ? t('pickedUpByFacilitatorNamed', { name: order.packing_picked_up_by_name, date, time })
+        : t('pickedUpByFacilitator', { date, time })
+    } else {
+      line = t('pickedUpByFarmer', { date, time })
+    }
     return (
       <p className="text-[11px] text-amber-700 mt-1 font-medium">
-        📦 Picked up by {who} · {t.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} {t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-        {order.packing_picked_up_by_role === 'FACILITATOR' && ' · awaiting farmer receipt'}
+        {line}
       </p>
     )
   }
   return (
     <p className="text-[11px] text-[#7A8C7E] mt-1">
-      Awaiting pickup
+      {t('awaitingPickup')}
     </p>
   )
 }
@@ -600,12 +606,13 @@ function DealerOrderCardHeader({
   onToggleExpand: () => void
   orderId: string
 }) {
+  const t = useTranslations('dealer.orders.cardHeader')
   if (!head) return null
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
       <div className="flex items-start gap-3">
         {head.farmer_photo_url ? (
-          <img src={head.farmer_photo_url} alt={head.farmer_name || 'Farmer'}
+          <img src={head.farmer_photo_url} alt={head.farmer_name || t('farmerAlt')}
             className="w-10 h-10 rounded-full object-cover border border-[#DDD0B8] shrink-0" />
         ) : (
           <div className="w-10 h-10 rounded-full bg-[#085041]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
@@ -615,11 +622,11 @@ function DealerOrderCardHeader({
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2">
             <p className="font-semibold text-[#6B3F1F] truncate">
-              {head.farmer_name || 'Unknown farmer'}
+              {head.farmer_name || t('unknownFarmer')}
             </p>
             {head.is_seed && (
               <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
-                🌱 Seed
+                {t('seedTag')}
               </span>
             )}
           </div>
@@ -628,9 +635,9 @@ function DealerOrderCardHeader({
           )}
           <p className="text-[11px] text-[#7A8C7E] mt-0.5">
             {head.is_seed
-              ? 'Seed / Seedling'
-              : (head.category?.toLowerCase() || 'order')}
-            {' · Received '}{shortDate(head.created_at)}
+              ? t('seedCategory')
+              : (head.category?.toLowerCase() || t('categoryFallback'))}
+            {t('receivedSuffix', { date: shortDate(head.created_at) })}
           </p>
         </div>
       </div>
@@ -640,7 +647,7 @@ function DealerOrderCardHeader({
       {subCount > 1 && (
         <button onClick={onToggleExpand}
           className="text-[10px] font-semibold text-[#7A8C7E] mt-2 flex items-center gap-1">
-          {expanded ? '▾' : '▸'} {subCount} sub-orders
+          {expanded ? '▾' : '▸'} {t('expandSubOrders', { count: subCount })}
         </button>
       )}
     </div>
@@ -659,20 +666,21 @@ function DealerPillChunk({
   showSubHeader?: boolean
 }) {
   const router = useRouter()
+  const t = useTranslations('dealer.orders.chunk')
   return (
     <div>
       {showSubHeader && (
         <p className="px-4 pt-3 text-[10px] font-mono tracking-wide text-[#7A8C7E]">
-          Sub-order · {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+          {t('subOrderPrefix', { date: new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
         </p>
       )}
       {pill === 'pending' && (
         <button onClick={() => onOpenDetail(sub)}
           className="w-full px-4 py-3 text-left active:bg-[#F5F0E8]/60">
           <p className="text-xs text-[#7A8C7E]">
-            {sub.status === 'SENT' && 'New · tap to accept'}
-            {sub.status === 'ACCEPTED' && (sub.is_seed ? 'Accepted · tap to enter qty + price' : 'Accepted · tap to process')}
-            {sub.status === 'PROCESSING' && 'Processing · tap to continue'}
+            {sub.status === 'SENT' && t('pending.newAccept')}
+            {sub.status === 'ACCEPTED' && (sub.is_seed ? t('pending.acceptedSeed') : t('pending.acceptedRegular'))}
+            {sub.status === 'PROCESSING' && t('pending.processing')}
           </p>
         </button>
       )}
@@ -680,14 +688,14 @@ function DealerPillChunk({
         <button onClick={() => router.push('/dealer/postponed')}
           className="w-full px-4 py-3 text-left active:bg-amber-50/60">
           <p className="text-[11px] text-amber-700 font-medium">
-            ⏰ {sub.item_status_counts.postponed} postponed item{sub.item_status_counts.postponed === 1 ? '' : 's'} · tap to resolve
+            {t('postponedTap', { count: sub.item_status_counts.postponed })}
           </p>
         </button>
       )}
       {pill === 'farmer' && (
         <div className="px-4 py-3">
           <p className="text-[11px] text-amber-700 font-medium">
-            ⏳ Waiting for farmer to approve {sub.item_status_counts.sent_for_approval} item{sub.item_status_counts.sent_for_approval === 1 ? '' : 's'}
+            {t('waitingForFarmer', { count: sub.item_status_counts.sent_for_approval })}
           </p>
         </div>
       )}
@@ -715,6 +723,7 @@ function PackingChunk({
   onRemove: () => void
   busy: boolean
 }) {
+  const t = useTranslations('dealer.orders.packing')
   const shared = !!order.packing_list_shared_at
   const total = order.packing_items.reduce((s, i) => s + (i.price || 0), 0)
   const sharedAt = order.packing_list_shared_at
@@ -724,7 +733,7 @@ function PackingChunk({
     <div>
       {order.packing_code && (
         <div className="px-4 py-2 bg-emerald-600 text-white flex items-baseline justify-between">
-          <p className="text-[10px] uppercase tracking-wider opacity-75">Packing ID</p>
+          <p className="text-[10px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
           <p className="text-base font-bold font-mono tracking-widest">{order.packing_code}</p>
         </div>
       )}
@@ -734,25 +743,28 @@ function PackingChunk({
             <a href={`tel:${order.farmer_phone}`}
               onClick={e => e.stopPropagation()}
               className="text-[11px] font-semibold text-[#085041] bg-emerald-100 px-2.5 py-1 rounded-lg">
-              📞 Farmer
+              {t('callFarmer')}
             </a>
           )}
           {order.facilitator_phone && (
             <a href={`tel:${order.facilitator_phone}`}
               onClick={e => e.stopPropagation()}
               className="text-[11px] font-semibold text-[#6B3F1F] bg-slate-100 px-2.5 py-1 rounded-lg">
-              📞 Facilitator
+              {t('callFacilitator')}
             </a>
           )}
           {order.facilitator_user_id && !order.facilitator_phone && (
             <span className="text-[11px] font-semibold text-[#6B3F1F] bg-slate-100 px-2.5 py-1 rounded-lg">
-              + Facilitator
+              {t('plusFacilitator')}
             </span>
           )}
         </div>
         {sharedAt && (
           <p className="text-[11px] text-emerald-700 mt-2 font-medium">
-            ✓ Shared {sharedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} at {sharedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            {t('sharedAt', {
+              date: sharedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+              time: sharedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+            })}
           </p>
         )}
         <PickupStatus order={order} />
@@ -761,9 +773,9 @@ function PackingChunk({
         {order.packing_items.map(it => (
           <div key={it.id} className="p-3 flex items-baseline justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#6B3F1F] truncate">{it.brand_name || 'Item'}</p>
+              <p className="text-sm font-semibold text-[#6B3F1F] truncate">{it.brand_name || t('itemFallback')}</p>
               {it.manufacturer_name && (
-                <p className="text-[11px] text-[#7A8C7E] truncate">by {it.manufacturer_name}</p>
+                <p className="text-[11px] text-[#7A8C7E] truncate">{t('byManufacturer', { manufacturer: it.manufacturer_name })}</p>
               )}
               {it.given_volume != null && (
                 <p className="text-[11px] text-[#7A8C7E] mt-0.5">{it.given_volume} {it.volume_unit || ''}</p>
@@ -776,17 +788,17 @@ function PackingChunk({
         ))}
       </div>
       <div className="px-3 py-2 bg-emerald-50/40 border-t border-emerald-100 flex items-center justify-between">
-        <p className="text-[11px] text-[#7A8C7E]">Total</p>
+        <p className="text-[11px] text-[#7A8C7E]">{t('totalLabel')}</p>
         <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString('en-IN')}</p>
       </div>
       <div className="p-3 flex gap-2">
         <button onClick={onShare} disabled={busy}
           className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-60">
-          {busy ? '…' : (shared ? '↗ Share again' : '↗ Share')}
+          {busy ? '…' : (shared ? t('shareAgainCta') : t('shareCta'))}
         </button>
         <button onClick={onRemove} disabled={busy}
           className="flex-1 border border-red-200 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
-          🗑 Remove
+          {t('removeCta')}
         </button>
       </div>
     </div>
@@ -799,10 +811,11 @@ function DealerExpandedSubOrderList({
   subs: Order[]
   onOpenDetail: (o: Order) => void
 }) {
+  const t = useTranslations('dealer.orders.expanded')
   return (
     <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
       <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
-        All sub-orders ({subs.length})
+        {t('allSubOrders', { count: subs.length })}
       </p>
       <div className="space-y-2">
         {subs.map(sub => (
