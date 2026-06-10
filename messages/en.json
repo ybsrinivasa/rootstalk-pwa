@@ -1072,6 +1072,186 @@
         "yesReturn": "Yes, return to farmer"
       }
     },
+    "orderDetail": {
+      "headerTitle": "Order Details",
+      "focusHeader": "Postponed item",
+      "errors": {
+        "decline": "Could not decline. Please try again.",
+        "save": "Could not save. Please try again.",
+        "estimateUnavailable": "Estimate unavailable for this combination — enter Qty manually.",
+        "postpone": "Could not postpone the item. Please try again.",
+        "postponeWindowTight": "This item's window is too tight to postpone. {days, plural, one {1 day remains} other {# days remain}} — please mark Available or Not Available.",
+        "submit": "Could not send. Please try again."
+      },
+      "status": {
+        "orderStatusLabel": "Order status",
+        "dateRangeLabel": "Date range"
+      },
+      "acceptDecline": {
+        "title": "New order — your call",
+        "body": "Accept this order to see the items and start processing. Decline to send it back to the farmer so they can pick another dealer or facilitator.",
+        "accepting": "Accepting…",
+        "acceptCta": "✓ Accept order",
+        "declineCta": "✗ Decline order"
+      },
+      "item": {
+        "practiceFallback": "Practice",
+        "applyDates": "Apply: {from} – {to}",
+        "priceNotProvided": "Price not provided",
+        "pickBrandAndVolume": "Pick brand & volume",
+        "editDetails": "Edit details",
+        "changeDecision": "Change decision",
+        "nowAvailable": "✓ Now available",
+        "notAvailable": "✗ Not available",
+        "available": "✓ Available",
+        "later": "⏰ Later",
+        "na": "✗ N/A"
+      },
+      "form": {
+        "lockedBrandLabel": "Locked brand (pre-specified)",
+        "selectBrandPlaceholder": "Select brand…",
+        "qtyPlaceholder": "Qty *",
+        "pricePlaceholder": "₹ Price",
+        "pickBrandBeforeSaving": "Pick a brand from the list before saving.",
+        "saving": "Saving…",
+        "saveDetails": "Save details"
+      },
+      "elementGuidance": {
+        "recommendedDosage": "Recommended dosage",
+        "applicationMethod": "Application method",
+        "volumePerPlant": "Volume per plant",
+        "estimatedVolume": "Estimated volume",
+        "calculating": "Calculating…"
+      },
+      "npk": {
+        "fertigationHeader": "Fertigation NPK · per application",
+        "dosageHeader": "NPK dosage · required",
+        "doseLine": "{n} kg N · {p} kg P · {k} kg K",
+        "multiplierLine": "× {multiplier} applications — total purchase scales accordingly",
+        "mixedHeader": "Mixed fertilisers (pick one or skip)",
+        "mixedEmpty": "No Mixed fertiliser fits this dose.",
+        "mixedSummary": "{n}:{p}:{k} · approx {kg} kg",
+        "mixedTotalAffix": "{kg} kg total",
+        "brandPicked": "Brand: {name} · tap to change",
+        "pickBrand": "Pick brand",
+        "skipMixed": "Skip Mixed",
+        "straightHeader": "Straight fertilisers (remaining gap: {n} N · {p} P · {k} K)",
+        "straightOnly": "({letter}-only)",
+        "committing": "Committing…",
+        "commitCta": "Commit NPK selection"
+      },
+      "relation": {
+        "label": "Multi-step recommendation",
+        "progress": "Process each Part. {resolved} of {total} resolved",
+        "progressFailedSuffix": ", {failed} returned to farmer",
+        "partLabel": "Part {n}",
+        "allOptionsUnavailable": "All Options unavailable. Items in this Part have been returned to the farmer.",
+        "alternativeHint": "Some alternative Options will appear if no Locked-brand Option works.",
+        "optionLabel": "Option {n}",
+        "compoundSuffix": " (compound)",
+        "lockedBrandBadge": "Locked brand",
+        "checking": "Checking…",
+        "markOptionAvailable": "Mark Option Available",
+        "markNotAvailable": "Mark Not Available"
+      },
+      "sections": {
+        "relations": "Multi-step recommendations ({count})",
+        "standalone": "Standalone items ({count})",
+        "resolvePostponed": "Resolve this postponed item",
+        "consolidatedBrands": "Consolidated brands",
+        "acrossTimelines": "Across timelines",
+        "linesCount": "{count, plural, one {1 line} other {# lines}}"
+      },
+      "footer": {
+        "totalAmount": "Total amount",
+        "pricedCoverage": "{priced} of {total} priced",
+        "pendingHint": "{count, plural, one {1 item still needs a decision} other {# items still need a decision}} (Available / Later / Not available) before you can send.",
+        "allPostponed": "All items are postponed — nothing to send right now. Wait for the postponed dates, or change a decision.",
+        "sending": "Sending…",
+        "submitLabelNotify": "{count, plural, one {Notify farmer (1 returned)} other {Notify farmer (# returned)}}",
+        "submitLabelSend": "Send to farmer for approval",
+        "awaitingApproval": "Waiting for farmer approval",
+        "orderComplete": "Order Complete",
+        "resetItems": "Reset items",
+        "viewPackingList": "View Packing List"
+      },
+      "brandSheet": {
+        "title": "Select Brand",
+        "noBrandsTitle": "No brands in system yet",
+        "noBrandsHint": "Tap below to report a missing brand. The system will pick it up once added.",
+        "close": "Close"
+      },
+      "dup": {
+        "title": "Possible duplicate purchase",
+        "bodyPrefix": "Selecting this Option would result in purchasing",
+        "bodySuffix": "twice in this order.",
+        "suggestedPrefix": "Suggested alternative Option(s):",
+        "noAlternative": "No alternative Option in this Part avoids the duplicate.",
+        "continueAnyway": "Continue anyway"
+      },
+      "focusConfirm": {
+        "title": "Send to farmer for approval?",
+        "body": "You will not be able to edit this after sending — the farmer takes over the approval decision.",
+        "brandLabel": "Brand",
+        "qtyLabel": "Quantity",
+        "priceLabel": "Price",
+        "priceMissing": "Not provided",
+        "confirmCta": "Confirm & send"
+      },
+      "submitConfirm": {
+        "titleSend": "Send to farmer for approval?",
+        "titleNotify": "Notify farmer that nothing is available?",
+        "body": "You will not be able to edit this order after sending — the farmer takes over from here.",
+        "itemsReady": "Items ready",
+        "unpriced": "Unpriced",
+        "returnedLabel": "Returned (Not available)",
+        "totalLabel": "Total amount",
+        "confirmCta": "Confirm & send"
+      },
+      "declineConfirm": {
+        "title": "Decline this order?",
+        "body": "The order goes back to the farmer as a fresh draft. They'll pick another dealer or facilitator. You won't see it again.",
+        "yes": "Yes, decline"
+      },
+      "resetConfirm": {
+        "title": "Reset items?",
+        "body": "Your brand selections, volumes, prices and partial drafts for this order will be discarded so you can start over. Your acceptance of the order remains — the order stays with you.",
+        "keepWorking": "Keep working",
+        "resetting": "Resetting…",
+        "yes": "Yes, reset"
+      },
+      "npkSheet": {
+        "title": "Pick brand",
+        "groupRecommended": "Recommended Brands",
+        "groupMy": "My Brands",
+        "groupOther": "Other Brands",
+        "empty": "No brands available for this fertiliser."
+      },
+      "packingSheet": {
+        "title": "Packing List",
+        "itemFallback": "Item {n}",
+        "totalLabel": "Total"
+      },
+      "postponeSheet": {
+        "title": "Postpone this item",
+        "howManyDays": "How many days?",
+        "pickRange": "Pick 1 to {max} — the farmer needs at least one clear day to re-route after the postpone elapses.",
+        "dayUnit": "{count, plural, one {day} other {days}}",
+        "postponing": "Postponing…",
+        "postponeCta": "{count, plural, one {Postpone for 1 day} other {Postpone for # days}}"
+      },
+      "farmerContext": {
+        "farmerLabel": "Farmer",
+        "callBtn": "Call",
+        "cropLabel": "Crop",
+        "plantsLabel": "Plants",
+        "areaLabel": "Area",
+        "plantsValue": "{count, plural, one {1 plant} other {# plants}}",
+        "acresValue": "{count, plural, one {1 acre} other {# acres}}",
+        "ageYears": "{value, plural, one {1 year old} other {# years old}}",
+        "ageDays": "{value, plural, one {1 day old} other {# days old}}"
+      }
+    },
     "alertsIncoming": {
       "headerTitle": "Incoming alerts",
       "typeStartDate": "Start Date",

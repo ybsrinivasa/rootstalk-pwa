@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -187,6 +188,8 @@ const PART_STATUS_COLOUR: Record<string, string> = {
 
 export default function DealerOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
+  const t = useTranslations('dealer.orderDetail')
+  const tCommon = useTranslations('common')
   // 2026-06-03 — focus_item=<id> hides everything else and pre-opens
   // the brand form on that one item. Used by /dealer/postponed to
   // route the dealer straight into resolving one postponed item
@@ -373,7 +376,7 @@ export default function DealerOrderDetailPage() {
     try {
       await api.put(`/dealer/orders/${orderId}/decline`, {})
       router.replace('/dealer/orders')
-    } catch { alert('Could not decline. Please try again.') }
+    } catch { alert(t('errors.decline')) }
     finally {
       setDeclining(false)
       setShowDeclineConfirm(false)
@@ -479,7 +482,7 @@ export default function DealerOrderDetailPage() {
         // for this (measure, L2, method, unit) combination. Don't
         // surface the raw DATA_CONFIG_ERROR; a short hint is enough
         // for the dealer to enter Qty manually.
-        setEstimateError('Estimate unavailable for this combination — enter Qty manually.')
+        setEstimateError(t('errors.estimateUnavailable'))
       } else if (data.message) {
         setEstimateError(data.message)
       }
@@ -525,7 +528,7 @@ export default function DealerOrderDetailPage() {
       // OR a {error_code, message} object (BL-07 strict-brand errors).
       const e = err as { response?: { data?: { detail?: unknown } } }
       const detail = e.response?.data?.detail
-      let msg = 'Could not save. Please try again.'
+      let msg = t('errors.save')
       if (typeof detail === 'string') msg = detail
       else if (detail && typeof detail === 'object' && 'message' in (detail as object)) {
         msg = String((detail as { message?: unknown }).message ?? msg)
@@ -568,7 +571,7 @@ export default function DealerOrderDetailPage() {
         timeline_end: string | null
       }>(`/dealer/orders/${orderId}/items/${itemId}/postpone-window`)
       if (!data.can_postpone || data.max_days < 1) {
-        alert(`This item's window is too tight to postpone. ${data.remaining_days} day(s) remain — please mark Available or Not Available.`)
+        alert(t('errors.postponeWindowTight', { days: data.remaining_days }))
         return
       }
       setPostponeItemId(itemId)
@@ -592,7 +595,7 @@ export default function DealerOrderDetailPage() {
       if (detail && typeof detail === 'object' && detail.message) {
         alert(detail.message)
       } else {
-        alert('Could not postpone the item. Please try again.')
+        alert(t('errors.postpone'))
       }
     } finally { setPostponeBusy(false) }
   }
@@ -654,7 +657,7 @@ export default function DealerOrderDetailPage() {
     } catch (err) {
       const e = err as { response?: { data?: { detail?: unknown } } }
       const d = e.response?.data?.detail
-      let msg = 'Could not send. Please try again.'
+      let msg = t('errors.submit')
       if (typeof d === 'string') msg = d
       else if (d && typeof d === 'object' && 'message' in (d as object)) {
         msg = String((d as { message?: unknown }).message ?? msg)
@@ -878,8 +881,8 @@ export default function DealerOrderDetailPage() {
     everyAvailableHasVolume
   const submitButtonLabel =
     availableCount === 0 && notAvailableCount > 0
-      ? `Notify farmer (${notAvailableCount} returned)`
-      : 'Send to farmer for approval'
+      ? t('footer.submitLabelNotify', { count: notAvailableCount })
+      : t('footer.submitLabelSend')
 
   const showPL = ['SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED', 'COMPLETED'].includes(order.status)
 
@@ -915,7 +918,7 @@ export default function DealerOrderDetailPage() {
             </div>
             {!opts.compactMeta && (
               <p className="text-sm font-semibold text-[#6B3F1F] mt-1 truncate">
-                {item.display_name || item.common_name || 'Practice'}
+                {item.display_name || item.common_name || t('item.practiceFallback')}
               </p>
             )}
             <ItemDateRange from={item.application_date_from} to={item.application_date_to} />
@@ -931,7 +934,7 @@ export default function DealerOrderDetailPage() {
               {item.price != null ? (
                 <p className="text-base font-bold text-[#085041]">₹{item.price.toLocaleString('en-IN')}</p>
               ) : (
-                <p className="text-[10px] text-amber-700 font-medium italic">Price not provided</p>
+                <p className="text-[10px] text-amber-700 font-medium italic">{t('item.priceNotProvided')}</p>
               )}
             </div>
           )}
@@ -940,13 +943,13 @@ export default function DealerOrderDetailPage() {
         {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full bg-[#085041] text-white text-xs font-semibold py-2 rounded-lg">
-            Pick brand & volume
+            {t('item.pickBrandAndVolume')}
           </button>
         )}
         {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-            Edit details
+            {t('item.editDetails')}
           </button>
         )}
         {/* 2026-06-03 — Change decision on POSTPONED / NOT_AVAILABLE.
@@ -961,18 +964,18 @@ export default function DealerOrderDetailPage() {
         {order!.status === 'PROCESSING' && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-            Change decision
+            {t('item.changeDecision')}
           </button>
         )}
         {item.status === 'POSTPONED' && editingItem !== item.id && (
           <div className="mt-2 flex gap-2">
             <button onClick={() => openItemForm(item)}
               className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
-              ✓ Now available
+              {t('item.nowAvailable')}
             </button>
             <button onClick={() => markUnavailable(item.id)}
               className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
-              ✗ Not available
+              {t('item.notAvailable')}
             </button>
           </div>
         )}
@@ -994,7 +997,7 @@ export default function DealerOrderDetailPage() {
       <div className="mt-3 space-y-2.5 bg-[#F5F0E8] rounded-xl p-3">
         {brandOptions?.type === 'LOCKED' ? (
           <div className="bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5">
-            <p className="text-xs text-blue-500 font-medium mb-0.5">Locked brand (pre-specified)</p>
+            <p className="text-xs text-blue-500 font-medium mb-0.5">{t('form.lockedBrandLabel')}</p>
             <p className="text-sm font-bold text-blue-900">{brandOptions.locked_brand_name}</p>
           </div>
         ) : (
@@ -1007,7 +1010,7 @@ export default function DealerOrderDetailPage() {
           <button onClick={() => setShowBrandSheet(true)}
             className="w-full flex items-center justify-between border border-[#DDD0B8] rounded-lg px-3 py-2.5 bg-white text-sm text-left">
             <span className={itemEdit.brand_name ? 'text-[#6B3F1F] font-medium' : 'text-[#7A8C7E]'}>
-              {itemEdit.brand_name || 'Select brand…'}
+              {itemEdit.brand_name || t('form.selectBrandPlaceholder')}
             </span>
             <span className="text-[#7A8C7E] text-xs">▼</span>
           </button>
@@ -1055,7 +1058,7 @@ export default function DealerOrderDetailPage() {
             <div className="grid grid-cols-3 gap-2">
               <input type="number" value={itemEdit.given_volume}
                 onChange={e => setItemEdit(f => ({ ...f, given_volume: e.target.value }))}
-                placeholder="Qty *"
+                placeholder={t('form.qtyPlaceholder')}
                 className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
               <select value={itemEdit.volume_unit}
                 onChange={e => setItemEdit(f => ({ ...f, volume_unit: e.target.value }))}
@@ -1064,7 +1067,7 @@ export default function DealerOrderDetailPage() {
               </select>
               <input type="number" value={itemEdit.price}
                 onChange={e => setItemEdit(f => ({ ...f, price: e.target.value }))}
-                placeholder="₹ Price"
+                placeholder={t('form.pricePlaceholder')}
                 className="border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
             </div>
           )
@@ -1075,17 +1078,17 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
         {!itemEdit.brand_cosh_id && (
-          <p className="text-[11px] text-amber-700">Pick a brand from the list before saving.</p>
+          <p className="text-[11px] text-amber-700">{t('form.pickBrandBeforeSaving')}</p>
         )}
         <div className="flex gap-2">
           <button onClick={() => markAvailable(item.id)}
             disabled={!itemEdit.given_volume || !itemEdit.brand_cosh_id || saving}
             className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
-            {saving ? 'Saving…' : 'Save details'}
+            {saving ? t('form.saving') : t('form.saveDetails')}
           </button>
           <button onClick={() => { setEditingItem(null); setEstimate(null); setBrandOptions(null); setSaveError(null) }}
             className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
-            Cancel
+            {tCommon('cancel')}
           </button>
         </div>
       </div>
@@ -1112,14 +1115,14 @@ export default function DealerOrderDetailPage() {
       <div className="mt-3 space-y-3 bg-[#F5F0E8] rounded-xl p-3">
         <div className="bg-white rounded-lg p-3 border border-[#DDD0B8]">
           <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
-            {npkOptions.fertigation ? 'Fertigation NPK · per application' : 'NPK dosage · required'}
+            {npkOptions.fertigation ? t('npk.fertigationHeader') : t('npk.dosageHeader')}
           </p>
           <p className="text-sm font-bold text-[#6B3F1F] mt-1">
-            {dose.n} kg N · {dose.p} kg P · {dose.k} kg K
+            {t('npk.doseLine', { n: dose.n, p: dose.p, k: dose.k })}
           </p>
           {npkOptions.fertigation && (npkOptions.applications_multiplier ?? 1) > 1 && (
             <p className="text-[11px] text-[#085041] font-semibold mt-1">
-              × {npkOptions.applications_multiplier} applications — total purchase scales accordingly
+              {t('npk.multiplierLine', { multiplier: npkOptions.applications_multiplier ?? 1 })}
             </p>
           )}
         </div>
@@ -1127,10 +1130,10 @@ export default function DealerOrderDetailPage() {
         {/* Mixed fertilisers — ranked list, single-select. */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-[#6B3F1F] px-1">
-            Mixed fertilisers (pick one or skip)
+            {t('npk.mixedHeader')}
           </p>
           {npkOptions.ranked_mixed.length === 0 ? (
-            <p className="text-xs text-[#7A8C7E] italic px-2">No Mixed fertiliser fits this dose.</p>
+            <p className="text-xs text-[#7A8C7E] italic px-2">{t('npk.mixedEmpty')}</p>
           ) : npkOptions.ranked_mixed.map(m => {
             const selected = npkSelectedMixed === m.cosh_id
             const tn = npkPickedTradeNames[m.cosh_id]
@@ -1142,9 +1145,9 @@ export default function DealerOrderDetailPage() {
                     <div>
                       <p className="text-sm font-semibold text-[#6B3F1F]">{m.name}</p>
                       <p className="text-[11px] text-[#7A8C7E]">
-                        {m.n}:{m.p}:{m.k} · approx {m.kg_product} kg
+                        {t('npk.mixedSummary', { n: m.n, p: m.p, k: m.k, kg: m.kg_product })}
                         {npkOptions.fertigation && m.kg_product_total && m.kg_product_total !== m.kg_product && (
-                          <> · <span className="font-semibold text-[#085041]">{m.kg_product_total} kg total</span></>
+                          <> · <span className="font-semibold text-[#085041]">{t('npk.mixedTotalAffix', { kg: m.kg_product_total })}</span></>
                         )}
                       </p>
                     </div>
@@ -1156,12 +1159,12 @@ export default function DealerOrderDetailPage() {
                     {tn ? (
                       <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
                         className="w-full text-xs font-medium text-[#085041] bg-emerald-50 border border-[#085041]/30 rounded-lg py-1.5">
-                        Brand: {tn.trade_name} · tap to change
+                        {t('npk.brandPicked', { name: tn.trade_name })}
                       </button>
                     ) : (
                       <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
                         className="w-full text-xs font-semibold text-white bg-[#085041] rounded-lg py-2">
-                        Pick brand
+                        {t('npk.pickBrand')}
                       </button>
                     )}
                   </div>
@@ -1175,7 +1178,7 @@ export default function DealerOrderDetailPage() {
                 ? 'border-[#085041] bg-emerald-50/40 text-[#085041]'
                 : 'border-[#DDD0B8] text-[#7A8C7E]'
             }`}>
-            Skip Mixed
+            {t('npk.skipMixed')}
           </button>
         </div>
 
@@ -1183,7 +1186,7 @@ export default function DealerOrderDetailPage() {
         {npkOptions.enabled_straights.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-semibold text-[#6B3F1F] px-1">
-              Straight fertilisers (remaining gap: {gap.n} N · {gap.p} P · {gap.k} K)
+              {t('npk.straightHeader', { n: gap.n, p: gap.p, k: gap.k })}
             </p>
             {npkOptions.enabled_straights.map(s => {
               const selected = npkPickedStraights.has(s.cosh_id)
@@ -1194,7 +1197,7 @@ export default function DealerOrderDetailPage() {
                     className="w-full text-left px-3 py-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-[#6B3F1F]">
-                        {s.name} <span className="text-[11px] text-[#7A8C7E] font-normal">({s.class.replace('STRAIGHT_', '')}-only)</span>
+                        {s.name} <span className="text-[11px] text-[#7A8C7E] font-normal">{t('npk.straightOnly', { letter: s.class.replace('STRAIGHT_', '') })}</span>
                       </p>
                       <div className={`w-4 h-4 rounded ${selected ? 'bg-[#085041]' : 'border border-[#7A8C7E]'}`} />
                     </div>
@@ -1204,12 +1207,12 @@ export default function DealerOrderDetailPage() {
                       {tn ? (
                         <button onClick={() => npkOpenTradeNameSheet(s.cosh_id)}
                           className="w-full text-xs font-medium text-[#085041] bg-emerald-50 border border-[#085041]/30 rounded-lg py-1.5">
-                          Brand: {tn.trade_name} · tap to change
+                          {t('npk.brandPicked', { name: tn.trade_name })}
                         </button>
                       ) : (
                         <button onClick={() => npkOpenTradeNameSheet(s.cosh_id)}
                           className="w-full text-xs font-semibold text-white bg-[#085041] rounded-lg py-2">
-                          Pick brand
+                          {t('npk.pickBrand')}
                         </button>
                       )}
                     </div>
@@ -1223,13 +1226,13 @@ export default function DealerOrderDetailPage() {
         <div className="flex gap-2 pt-1">
           <button onClick={npkSubmit} disabled={!canSubmit || npkSubmitting}
             className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
-            {npkSubmitting ? 'Committing…' : 'Commit NPK selection'}
+            {npkSubmitting ? t('npk.committing') : t('npk.commitCta')}
           </button>
           <button onClick={() => {
             setEditingItem(null); setNpkOptions(null)
             setNpkSelectedMixed(null); setNpkPickedTradeNames({}); setNpkPickedStraights(new Set())
           }} className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
-            Cancel
+            {tCommon('cancel')}
           </button>
         </div>
       </div>
@@ -1247,11 +1250,11 @@ export default function DealerOrderDetailPage() {
         className="bg-emerald-50/40 border-l-4 border-[#085041] rounded-2xl overflow-hidden">
         <div className="px-4 py-3 border-b border-emerald-100/60">
           <p className="text-xs font-semibold text-[#085041] uppercase tracking-wider">
-            Multi-step recommendation
+            {t('relation.label')}
           </p>
           <p className="text-xs text-[#7A8C7E] mt-0.5">
-            Process each Part. {resolvedParts} of {totalParts} resolved
-            {failedParts > 0 ? `, ${failedParts} returned to farmer` : ''}.
+            {t('relation.progress', { resolved: resolvedParts, total: totalParts })}
+            {failedParts > 0 ? t('relation.progressFailedSuffix', { failed: failedParts }) : ''}.
           </p>
           {/* Step indicator */}
           <div className="flex gap-1.5 mt-2">
@@ -1277,7 +1280,7 @@ export default function DealerOrderDetailPage() {
                   }))}
                   className="w-full flex items-center justify-between px-4 py-3 text-left">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-[#6B3F1F]">Part {part.part_index}</span>
+                    <span className="text-sm font-bold text-[#6B3F1F]">{t('relation.partLabel', { n: part.part_index })}</span>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${PART_STATUS_COLOUR[part.part_status]}`}>
                       {part.part_status}
                     </span>
@@ -1289,13 +1292,13 @@ export default function DealerOrderDetailPage() {
                   <div className="px-3 pb-3 space-y-2.5">
                     {part.part_status === 'FAILED' && (
                       <div className="bg-red-50 border border-red-100 rounded-lg px-3 py-2 text-xs text-red-700">
-                        All Options unavailable. Items in this Part have been returned to the farmer.
+                        {t('relation.allOptionsUnavailable')}
                       </div>
                     )}
                     {part.options.filter(o => o.visible).map(opt => renderOption(rel.relation_id, part, opt))}
                     {part.options.some(o => !o.visible) && (
                       <p className="text-[11px] text-[#7A8C7E] italic px-1">
-                        Some alternative Options will appear if no Locked-brand Option works.
+                        {t('relation.alternativeHint')}
                       </p>
                     )}
                   </div>
@@ -1321,12 +1324,12 @@ export default function DealerOrderDetailPage() {
         <div className="px-3 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-[#6B3F1F]">
-              Option {opt.option_index}
-              {opt.is_compound ? ' (compound)' : ''}
+              {t('relation.optionLabel', { n: opt.option_index })}
+              {opt.is_compound ? t('relation.compoundSuffix') : ''}
             </span>
             {opt.has_locked_brand && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">
-                Locked brand
+                {t('relation.lockedBrandBadge')}
               </span>
             )}
             <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[opt.option_status] || 'bg-slate-100 text-[#6B3F1F]'}`}>
@@ -1344,12 +1347,12 @@ export default function DealerOrderDetailPage() {
                 onClick={() => tryPickOption(relationId, part.part_index, opt.option_index)}
                 disabled={isCommitting}
                 className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-lg disabled:opacity-50">
-                {isCommitting ? 'Checking…' : 'Mark Option Available'}
+                {isCommitting ? t('relation.checking') : t('relation.markOptionAvailable')}
               </button>
               <button
                 onClick={() => markOptionNotAvailable(relationId, part.part_index, opt.option_index)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-lg">
-                Mark Not Available
+                {t('relation.markNotAvailable')}
               </button>
             </div>
           )}
@@ -1375,7 +1378,7 @@ export default function DealerOrderDetailPage() {
                 </span>
               </div>
               <p className="text-base font-semibold text-[#6B3F1F] mt-1.5 truncate">
-                {item.display_name || item.common_name || 'Practice'}
+                {item.display_name || item.common_name || t('item.practiceFallback')}
               </p>
               <ItemDateRange from={item.application_date_from} to={item.application_date_to} />
               {item.brand_name && <p className="text-sm text-[#6B3F1F] mt-1">{item.brand_name}</p>}
@@ -1390,7 +1393,7 @@ export default function DealerOrderDetailPage() {
                 {item.price != null ? (
                   <p className="text-lg font-bold text-[#085041]">₹{item.price.toLocaleString('en-IN')}</p>
                 ) : (
-                  <p className="text-[11px] text-amber-700 font-medium italic">Price not provided</p>
+                  <p className="text-[11px] text-amber-700 font-medium italic">{t('item.priceNotProvided')}</p>
                 )}
               </div>
             )}
@@ -1400,16 +1403,16 @@ export default function DealerOrderDetailPage() {
             <div className="flex gap-2 mt-3">
               <button onClick={() => openItemForm(item)}
                 className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                ✓ Available
+                {t('item.available')}
               </button>
               <button onClick={() => openPostponePicker(item.id)}
                 disabled={postponeBusy}
                 className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                ⏰ Later
+                {t('item.later')}
               </button>
               <button onClick={() => markUnavailable(item.id)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-                ✗ N/A
+                {t('item.na')}
               </button>
             </div>
           )}
@@ -1420,13 +1423,13 @@ export default function DealerOrderDetailPage() {
           {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && editingItem !== item.id && (
             <button onClick={() => openItemForm(item)}
               className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-              Edit details
+              {t('item.editDetails')}
             </button>
           )}
           {order!.status === 'PROCESSING' && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
             <button onClick={() => openItemForm(item)}
               className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-              Change decision
+              {t('item.changeDecision')}
             </button>
           )}
           {/* POSTPONED items remain actionable regardless of order
@@ -1435,11 +1438,11 @@ export default function DealerOrderDetailPage() {
             <div className="mt-3 flex gap-2">
               <button onClick={() => openItemForm(item)}
                 className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                ✓ Now available
+                {t('item.nowAvailable')}
               </button>
               <button onClick={() => markUnavailable(item.id)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-                ✗ Not available
+                {t('item.notAvailable')}
               </button>
             </div>
           )}
@@ -1452,7 +1455,7 @@ export default function DealerOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={focusItemId ? 'Postponed item' : 'Order Details'} activeRole="DEALER"
+      <PWAHeader title={focusItemId ? t('focusHeader') : t('headerTitle')} activeRole="DEALER"
         back={focusItemId ? '/dealer/postponed' : '/dealer/orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
@@ -1471,11 +1474,11 @@ export default function DealerOrderDetailPage() {
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-[#7A8C7E]">Order status</p>
+                <p className="text-xs text-[#7A8C7E]">{t('status.orderStatusLabel')}</p>
                 <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-[#7A8C7E]">Date range</p>
+                <p className="text-xs text-[#7A8C7E]">{t('status.dateRangeLabel')}</p>
                 <p className="text-xs text-[#6B3F1F]">
                   {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
                 </p>
@@ -1491,20 +1494,18 @@ export default function DealerOrderDetailPage() {
         {!focusItemId && order.status === 'SENT' && (
           <>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
-              <p className="font-semibold mb-1">New order — your call</p>
+              <p className="font-semibold mb-1">{t('acceptDecline.title')}</p>
               <p className="text-xs">
-                Accept this order to see the items and start processing.
-                Decline to send it back to the farmer so they can pick
-                another dealer or facilitator.
+                {t('acceptDecline.body')}
               </p>
             </div>
             <button onClick={acceptOrder} disabled={accepting || declining}
               className="w-full py-4 rounded-2xl bg-[#085041] text-white font-semibold text-sm disabled:opacity-50">
-              {accepting ? 'Accepting…' : '✓ Accept order'}
+              {accepting ? t('acceptDecline.accepting') : t('acceptDecline.acceptCta')}
             </button>
             <button onClick={() => setShowDeclineConfirm(true)} disabled={accepting || declining}
               className="w-full py-3 rounded-2xl border-2 border-red-200 text-[#D4682E] font-semibold text-sm disabled:opacity-50">
-              ✗ Decline order
+              {t('acceptDecline.declineCta')}
             </button>
           </>
         )}
@@ -1519,7 +1520,7 @@ export default function DealerOrderDetailPage() {
         {!focusItemId && order.status !== 'SENT' && relations.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              Multi-step recommendations ({relations.length})
+              {t('sections.relations', { count: relations.length })}
             </p>
             {relations.map(renderRelation)}
           </div>
@@ -1538,12 +1539,12 @@ export default function DealerOrderDetailPage() {
             <div className="space-y-3">
               {!focusItemId && (
                 <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-                  Standalone items ({standaloneItems.length})
+                  {t('sections.standalone', { count: standaloneItems.length })}
                 </p>
               )}
               {focusItemId && (
                 <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-                  Resolve this postponed item
+                  {t('sections.resolvePostponed')}
                 </p>
               )}
               {visible.map(renderStandaloneItem)}
@@ -1558,9 +1559,9 @@ export default function DealerOrderDetailPage() {
           <div className="bg-emerald-50/40 border border-[#085041]/15 rounded-2xl p-4 space-y-2">
             <div className="flex items-baseline justify-between">
               <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
-                Consolidated brands
+                {t('sections.consolidatedBrands')}
               </p>
-              <p className="text-[10px] text-[#7A8C7E]">Across timelines</p>
+              <p className="text-[10px] text-[#7A8C7E]">{t('sections.acrossTimelines')}</p>
             </div>
             {(order.consolidated_brands || [])
               .filter(b => b.line_count > 1)
@@ -1568,7 +1569,7 @@ export default function DealerOrderDetailPage() {
                 <div key={b.brand_cosh_id} className="flex items-baseline justify-between gap-3 border-t border-[#085041]/10 pt-1.5 first:border-0 first:pt-0">
                   <div>
                     <p className="text-sm font-semibold text-[#6B3F1F]">{b.brand_name}</p>
-                    <p className="text-[10px] text-[#7A8C7E]">{b.line_count} lines</p>
+                    <p className="text-[10px] text-[#7A8C7E]">{t('sections.linesCount', { count: b.line_count })}</p>
                   </div>
                   <p className="text-sm font-bold text-[#085041]">
                     {b.total_volume} {b.volume_unit}
@@ -1581,9 +1582,9 @@ export default function DealerOrderDetailPage() {
         {pricedItems.length > 0 && (
           <div className="bg-white border-2 border-[#085041]/15 rounded-2xl p-4 flex items-baseline justify-between gap-3">
             <div>
-              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">Total amount</p>
+              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">{t('footer.totalAmount')}</p>
               <p className="text-[10px] text-[#7A8C7E] mt-0.5">
-                {pricedItems.length} of {availableItemCount} priced
+                {t('footer.pricedCoverage', { priced: pricedItems.length, total: availableItemCount })}
               </p>
             </div>
             <p className="text-2xl font-bold text-[#085041]">₹{totalAmount.toLocaleString('en-IN')}</p>
@@ -1595,27 +1596,25 @@ export default function DealerOrderDetailPage() {
             button only renders once everyone is decided. */}
         {order.status === 'PROCESSING' && pendingCount > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-800">
-            {pendingCount} item{pendingCount === 1 ? '' : 's'} still need a decision
-            (Available / Later / Not available) before you can send.
+            {t('footer.pendingHint', { count: pendingCount })}
           </div>
         )}
         {order.status === 'PROCESSING' && pendingCount === 0 && availableCount === 0 && notAvailableCount === 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-800">
-            All items are postponed — nothing to send right now. Wait for the
-            postponed dates, or change a decision.
+            {t('footer.allPostponed')}
           </div>
         )}
         {canSubmit && (
           <button onClick={() => setShowSubmitConfirm(true)} disabled={submitting}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-            {submitting ? 'Sending…' : `✓ ${submitButtonLabel}`}
+            {submitting ? t('footer.sending') : `✓ ${submitButtonLabel}`}
           </button>
         )}
 
         {order.status === 'SENT_FOR_APPROVAL' && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
-            <p className="text-amber-700 font-semibold text-sm">Waiting for farmer approval</p>
+            <p className="text-amber-700 font-semibold text-sm">{t('footer.awaitingApproval')}</p>
           </div>
         )}
 
@@ -1627,20 +1626,20 @@ export default function DealerOrderDetailPage() {
         {['PROCESSING', 'SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED'].includes(order.status) && (
           <button onClick={() => setShowAbortConfirm(true)}
             className="w-full py-3 rounded-2xl border-2 border-amber-300 text-amber-700 font-medium text-sm">
-            Reset items
+            {t('footer.resetItems')}
           </button>
         )}
 
         {showPL && (
           <button onClick={loadPackingList}
             className="w-full py-3.5 rounded-2xl border-2 border-[#085041] text-[#085041] font-semibold text-sm">
-            View Packing List
+            {t('footer.viewPackingList')}
           </button>
         )}
 
         {order.status === 'COMPLETED' && (
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
-            <p className="text-emerald-700 font-semibold text-sm">Order Complete</p>
+            <p className="text-emerald-700 font-semibold text-sm">{t('footer.orderComplete')}</p>
           </div>
         )}
       </div>
@@ -1651,7 +1650,7 @@ export default function DealerOrderDetailPage() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl pb-10 max-h-[80vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#DDD0B8]">
-              <p className="font-bold text-[#6B3F1F]">Select Brand</p>
+              <p className="font-bold text-[#6B3F1F]">{t('brandSheet.title')}</p>
               <button onClick={() => setShowBrandSheet(false)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             {brandOptions.groups.every(g => g.brands.length === 0) ? (
@@ -1661,13 +1660,13 @@ export default function DealerOrderDetailPage() {
               // the dealer's only path is to report the missing brand
               // so the CM can add it to Cosh.
               <div className="px-5 py-8 text-center">
-                <p className="text-[#7A8C7E] text-sm font-medium">No brands in system yet</p>
+                <p className="text-[#7A8C7E] text-sm font-medium">{t('brandSheet.noBrandsTitle')}</p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  Tap below to report a missing brand. The system will pick it up once added.
+                  {t('brandSheet.noBrandsHint')}
                 </p>
                 <button onClick={() => setShowBrandSheet(false)}
                   className="mt-4 px-4 py-2 border border-[#085041] text-[#085041] rounded-xl text-sm font-medium">
-                  Close
+                  {t('brandSheet.close')}
                 </button>
               </div>
             ) : (
@@ -1706,17 +1705,17 @@ export default function DealerOrderDetailPage() {
       {dupModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setDupModal(null)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-bold text-[#6B3F1F]">Possible duplicate purchase</p>
+            <p className="text-sm font-bold text-[#6B3F1F]">{t('dup.title')}</p>
             <p className="text-xs text-[#6B3F1F] mt-2">
-              Selecting this Option would result in purchasing
+              {t('dup.bodyPrefix')}
               {' '}
               <span className="font-semibold text-[#6B3F1F]">{dupModal.check.duplicate_input_name}</span>
               {' '}
-              twice in this order.
+              {t('dup.bodySuffix')}
             </p>
             {dupModal.check.suggested_alternatives.length > 0 ? (
               <p className="text-xs text-[#6B3F1F] mt-2">
-                Suggested alternative Option(s):
+                {t('dup.suggestedPrefix')}
                 {' '}
                 <span className="font-semibold text-[#085041]">
                   {dupModal.check.suggested_alternatives.join(', ')}
@@ -1724,18 +1723,18 @@ export default function DealerOrderDetailPage() {
               </p>
             ) : (
               <p className="text-xs text-[#7A8C7E] mt-2 italic">
-                No alternative Option in this Part avoids the duplicate.
+                {t('dup.noAlternative')}
               </p>
             )}
             <div className="flex gap-2 mt-4">
               <button onClick={() => setDupModal(null)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 onClick={() => commitSelectOption(dupModal.relationId, dupModal.partIndex, dupModal.optionIndex)}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl">
-                Continue anyway
+                {t('dup.continueAnyway')}
               </button>
             </div>
           </div>
@@ -1749,36 +1748,36 @@ export default function DealerOrderDetailPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => !saving && setShowFocusConfirm(false)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-bold text-[#6B3F1F]">Send to farmer for approval?</p>
+            <p className="text-sm font-bold text-[#6B3F1F]">{t('focusConfirm.title')}</p>
             <p className="text-xs text-amber-700 mt-1.5">
-              You will not be able to edit this after sending — the farmer takes over the approval decision.
+              {t('focusConfirm.body')}
             </p>
             <div className="mt-3 space-y-1.5 text-xs text-[#6B3F1F]">
               <div className="flex justify-between gap-3">
-                <span className="text-[#7A8C7E]">Brand</span>
+                <span className="text-[#7A8C7E]">{t('focusConfirm.brandLabel')}</span>
                 <span className="font-semibold">{itemEdit.brand_name || '—'}</span>
               </div>
               <div className="flex justify-between gap-3">
-                <span className="text-[#7A8C7E]">Quantity</span>
+                <span className="text-[#7A8C7E]">{t('focusConfirm.qtyLabel')}</span>
                 <span className="font-semibold">{itemEdit.given_volume || '—'} {itemEdit.volume_unit}</span>
               </div>
               <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
-                <span className="text-[#7A8C7E]">Price</span>
+                <span className="text-[#7A8C7E]">{t('focusConfirm.priceLabel')}</span>
                 <span className="font-bold text-[#085041]">
-                  {itemEdit.price ? `₹${parseFloat(itemEdit.price).toLocaleString('en-IN')}` : 'Not provided'}
+                  {itemEdit.price ? `₹${parseFloat(itemEdit.price).toLocaleString('en-IN')}` : t('focusConfirm.priceMissing')}
                 </span>
               </div>
             </div>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowFocusConfirm(false)} disabled={saving}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button
                 onClick={() => { setShowFocusConfirm(false); markAvailable(focusItemId, { skipFocusConfirm: true }) }}
                 disabled={saving}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {saving ? 'Sending…' : 'Confirm & send'}
+                {saving ? t('footer.sending') : t('focusConfirm.confirmCta')}
               </button>
             </div>
           </div>
@@ -1793,20 +1792,19 @@ export default function DealerOrderDetailPage() {
           onClick={() => !submitting && setShowSubmitConfirm(false)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
             <p className="text-sm font-bold text-[#6B3F1F]">
-              {availableCount === 0 ? 'Notify farmer that nothing is available?' : 'Send to farmer for approval?'}
+              {availableCount === 0 ? t('submitConfirm.titleNotify') : t('submitConfirm.titleSend')}
             </p>
             <p className="text-xs text-amber-700 mt-1.5">
-              You will not be able to edit this order after sending — the
-              farmer takes over from here.
+              {t('submitConfirm.body')}
             </p>
             <div className="mt-3 space-y-1.5 text-xs text-[#6B3F1F]">
               <div className="flex justify-between gap-3">
-                <span className="text-[#7A8C7E]">Items ready</span>
+                <span className="text-[#7A8C7E]">{t('submitConfirm.itemsReady')}</span>
                 <span className="font-semibold">{availableItemCount}</span>
               </div>
               {pricedItems.length < availableItemCount && (
                 <div className="flex justify-between gap-3">
-                  <span className="text-[#7A8C7E]">Unpriced</span>
+                  <span className="text-[#7A8C7E]">{t('submitConfirm.unpriced')}</span>
                   <span className="font-semibold text-amber-700">
                     {availableItemCount - pricedItems.length}
                   </span>
@@ -1814,12 +1812,12 @@ export default function DealerOrderDetailPage() {
               )}
               {notAvailableItemCount > 0 && (
                 <div className="flex justify-between gap-3">
-                  <span className="text-[#7A8C7E]">Returned (Not available)</span>
+                  <span className="text-[#7A8C7E]">{t('submitConfirm.returnedLabel')}</span>
                   <span className="font-semibold text-red-700">{notAvailableItemCount}</span>
                 </div>
               )}
               <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
-                <span className="text-[#7A8C7E]">Total amount</span>
+                <span className="text-[#7A8C7E]">{t('submitConfirm.totalLabel')}</span>
                 <span className="font-bold text-[#085041]">
                   ₹{totalAmount.toLocaleString('en-IN')}
                 </span>
@@ -1828,11 +1826,11 @@ export default function DealerOrderDetailPage() {
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowSubmitConfirm(false)} disabled={submitting}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={submitForApproval} disabled={submitting}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {submitting ? 'Sending…' : 'Confirm & send'}
+                {submitting ? t('footer.sending') : t('submitConfirm.confirmCta')}
               </button>
             </div>
           </div>
@@ -1847,19 +1845,18 @@ export default function DealerOrderDetailPage() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Decline this order?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('declineConfirm.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              The order goes back to the farmer as a fresh draft. They&apos;ll
-              pick another dealer or facilitator. You won&apos;t see it again.
+              {t('declineConfirm.body')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setShowDeclineConfirm(false)} disabled={declining}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={declineOrder} disabled={declining}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {declining ? '…' : 'Yes, decline'}
+                {declining ? '…' : t('declineConfirm.yes')}
               </button>
             </div>
           </div>
@@ -1873,20 +1870,18 @@ export default function DealerOrderDetailPage() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => !aborting && setShowAbortConfirm(false)}>
           <div className="bg-white max-w-sm w-full rounded-2xl p-5" onClick={e => e.stopPropagation()}>
-            <p className="text-sm font-bold text-amber-700">Reset items?</p>
+            <p className="text-sm font-bold text-amber-700">{t('resetConfirm.title')}</p>
             <p className="text-xs text-[#6B3F1F] mt-2">
-              Your brand selections, volumes, prices and partial drafts for
-              this order will be discarded so you can start over. Your
-              acceptance of the order remains — the order stays with you.
+              {t('resetConfirm.body')}
             </p>
             <div className="flex gap-2 mt-5">
               <button onClick={() => setShowAbortConfirm(false)} disabled={aborting}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Keep working
+                {t('resetConfirm.keepWorking')}
               </button>
               <button onClick={abortOrder} disabled={aborting}
                 className="flex-1 bg-amber-600 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {aborting ? 'Resetting…' : 'Yes, reset'}
+                {aborting ? t('resetConfirm.resetting') : t('resetConfirm.yes')}
               </button>
             </div>
           </div>
@@ -1901,7 +1896,7 @@ export default function DealerOrderDetailPage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setNpkTradeNameSheet(null)}>
           <div className="bg-white w-full rounded-t-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="text-sm font-bold text-[#6B3F1F]">Pick brand</p>
+              <p className="text-sm font-bold text-[#6B3F1F]">{t('npkSheet.title')}</p>
               <button onClick={() => setNpkTradeNameSheet(null)} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             <div className="overflow-y-auto p-3 space-y-3">
@@ -1909,9 +1904,9 @@ export default function DealerOrderDetailPage() {
                 ? (['group_recommended', 'group_my', 'group_other'] as const).map(key => {
                     const list = npkTradeNameGroups[key]
                     if (!list || list.length === 0) return null
-                    const label = key === 'group_recommended' ? 'Recommended Brands'
-                                : key === 'group_my' ? 'My Brands'
-                                : 'Other Brands'
+                    const label = key === 'group_recommended' ? t('npkSheet.groupRecommended')
+                                : key === 'group_my' ? t('npkSheet.groupMy')
+                                : t('npkSheet.groupOther')
                     return (
                       <div key={key} className="space-y-1.5">
                         <p className="text-[11px] font-semibold text-[#7A8C7E] uppercase tracking-wide px-1">
@@ -1927,7 +1922,7 @@ export default function DealerOrderDetailPage() {
                     )
                   })
                 : npkTradeNameList.length === 0
-                  ? <p className="text-xs text-[#7A8C7E] italic text-center py-6">No brands available for this fertiliser.</p>
+                  ? <p className="text-xs text-[#7A8C7E] italic text-center py-6">{t('npkSheet.empty')}</p>
                   : npkTradeNameList.map(tn => (
                       <button key={tn.cosh_id} onClick={() => npkPickTradeName(tn)}
                         className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-emerald-50">
@@ -1946,7 +1941,7 @@ export default function DealerOrderDetailPage() {
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="font-bold text-[#6B3F1F] text-base">Packing List</p>
+                <p className="font-bold text-[#6B3F1F] text-base">{t('packingSheet.title')}</p>
                 {packingList.farmer_name && (
                   <p className="text-xs text-[#7A8C7E]">{packingList.farmer_name} · {packingList.farmer_phone}</p>
                 )}
@@ -1957,7 +1952,7 @@ export default function DealerOrderDetailPage() {
               {packingList.items.map((item, i) => (
                 <div key={item.id} className="flex items-center justify-between py-3 border-b border-[#DDD0B8]">
                   <div>
-                    <p className="text-sm font-semibold text-[#6B3F1F]">{item.brand_name || `Item ${i + 1}`}</p>
+                    <p className="text-sm font-semibold text-[#6B3F1F]">{item.brand_name || t('packingSheet.itemFallback', { n: i + 1 })}</p>
                     <p className="text-xs text-[#7A8C7E]">{item.given_volume} {item.volume_unit}</p>
                   </div>
                   {item.price != null && <p className="text-sm font-bold text-[#6B3F1F]">₹{item.price}</p>}
@@ -1966,7 +1961,7 @@ export default function DealerOrderDetailPage() {
             </div>
             {packingList.total_amount > 0 && (
               <div className="mt-4 pt-3 border-t border-[#DDD0B8] flex items-center justify-between">
-                <p className="font-semibold text-[#6B3F1F]">Total</p>
+                <p className="font-semibold text-[#6B3F1F]">{t('packingSheet.totalLabel')}</p>
                 <p className="font-bold text-lg text-[#6B3F1F]">₹{packingList.total_amount.toFixed(2)}</p>
               </div>
             )}
@@ -1983,13 +1978,13 @@ export default function DealerOrderDetailPage() {
           <div className="bg-white rounded-t-2xl w-full" onClick={e => e.stopPropagation()}
             style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-semibold text-[#6B3F1F]">Postpone this item</p>
+              <p className="font-semibold text-[#6B3F1F]">{t('postponeSheet.title')}</p>
               <button onClick={() => !postponeBusy && setPostponeItemId(null)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             <div className="p-5">
-              <p className="text-sm text-[#7A8C7E] mb-1">How many days?</p>
+              <p className="text-sm text-[#7A8C7E] mb-1">{t('postponeSheet.howManyDays')}</p>
               <p className="text-xs text-[#7A8C7E] mb-4">
-                Pick 1 to {postponeMaxDays} — the farmer needs at least one clear day to re-route after the postpone elapses.
+                {t('postponeSheet.pickRange', { max: postponeMaxDays })}
               </p>
               <div className="flex items-center justify-center gap-3 mb-5">
                 <button onClick={() => setPostponeDays(d => Math.max(1, d - 1))}
@@ -1999,7 +1994,7 @@ export default function DealerOrderDetailPage() {
                 </button>
                 <div className="min-w-[80px] text-center">
                   <p className="text-3xl font-bold text-[#6B3F1F]">{postponeDays}</p>
-                  <p className="text-xs text-[#7A8C7E]">day{postponeDays === 1 ? '' : 's'}</p>
+                  <p className="text-xs text-[#7A8C7E]">{t('postponeSheet.dayUnit', { count: postponeDays })}</p>
                 </div>
                 <button onClick={() => setPostponeDays(d => Math.min(postponeMaxDays, d + 1))}
                   disabled={postponeDays >= postponeMaxDays || postponeBusy}
@@ -2011,7 +2006,7 @@ export default function DealerOrderDetailPage() {
                 disabled={postponeBusy}
                 className="w-full py-3 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
-                {postponeBusy ? 'Postponing…' : `Postpone for ${postponeDays} day${postponeDays === 1 ? '' : 's'}`}
+                {postponeBusy ? t('postponeSheet.postponing') : t('postponeSheet.postponeCta', { count: postponeDays })}
               </button>
             </div>
           </div>
@@ -2033,6 +2028,7 @@ export default function DealerOrderDetailPage() {
 // backend resolved a window; null otherwise (calendar timelines, no
 // crop_start_date, etc.) so we don't fall back to the order range.
 function ItemDateRange({ from, to }: { from?: string | null; to?: string | null }) {
+  const t = useTranslations('dealer.orderDetail.item')
   if (!from || !to) return null
   const fmt = (iso: string) => {
     const d = new Date(iso + 'T00:00:00')
@@ -2040,7 +2036,7 @@ function ItemDateRange({ from, to }: { from?: string | null; to?: string | null 
   }
   return (
     <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-      Apply: {fmt(from)} – {fmt(to)}
+      {t('applyDates', { from: fmt(from), to: fmt(to) })}
     </p>
   )
 }
@@ -2054,17 +2050,18 @@ function ElementGuidance({
   estimating: boolean
   estimateError?: string | null
 }) {
+  const t = useTranslations('dealer.orderDetail.elementGuidance')
   const rows: { label: string; value: string; emphasis?: boolean; italic?: boolean }[] = []
   if (block.dosage_value != null) {
     const unit = block.dosage_unit_name || block.dosage_unit_cosh_id || ''
-    rows.push({ label: 'Recommended dosage', value: `${block.dosage_value} ${unit}`.trim() })
+    rows.push({ label: t('recommendedDosage'), value: `${block.dosage_value} ${unit}`.trim() })
   }
   if (block.application_method_name) {
-    rows.push({ label: 'Application method', value: block.application_method_name })
+    rows.push({ label: t('applicationMethod'), value: block.application_method_name })
   }
   if (block.vol_per_plant_value != null) {
     const unit = block.vol_per_plant_unit_name || block.vol_per_plant_unit_cosh_id || ''
-    rows.push({ label: 'Volume per plant', value: `${block.vol_per_plant_value} ${unit}`.trim() })
+    rows.push({ label: t('volumePerPlant'), value: `${block.vol_per_plant_value} ${unit}`.trim() })
   }
   // Batch 27 — BL-06 estimated volume in the same warm-tan card so
   // the dealer reads SE guidance + computed estimate together, right
@@ -2072,11 +2069,11 @@ function ElementGuidance({
   // is in flight; the error row appears when the formula isn't yet
   // configured for this combination.
   if (estimating) {
-    rows.push({ label: 'Estimated volume', value: 'Calculating…', emphasis: true })
+    rows.push({ label: t('estimatedVolume'), value: t('calculating'), emphasis: true })
   } else if (estimate) {
-    rows.push({ label: 'Estimated volume', value: `${estimate.volume} ${estimate.unit || ''}`.trim(), emphasis: true })
+    rows.push({ label: t('estimatedVolume'), value: `${estimate.volume} ${estimate.unit || ''}`.trim(), emphasis: true })
   } else if (estimateError) {
-    rows.push({ label: 'Estimated volume', value: estimateError, italic: true })
+    rows.push({ label: t('estimatedVolume'), value: estimateError, italic: true })
   }
   if (rows.length === 0) return null
   return (
@@ -2098,25 +2095,24 @@ function ElementGuidance({
 // order. Phone is a `tel:` link for one-tap calling. Age renders as days
 // (area-wise) or years (plant-wise) per the subscription's measure.
 function FarmerContextCard({ ctx }: { ctx: FarmerContext }) {
+  const t = useTranslations('dealer.orderDetail.farmerContext')
   const measureLine = ctx.measure === 'PLANT_WISE' && ctx.number_of_plants != null
-    ? `${ctx.number_of_plants} plant${ctx.number_of_plants === 1 ? '' : 's'}`
+    ? t('plantsValue', { count: ctx.number_of_plants })
     : ctx.measure === 'AREA_WISE' && ctx.farm_area_acres != null
-      ? `${ctx.farm_area_acres} ${ctx.farm_area_acres === 1 ? 'acre' : 'acres'}`
+      ? t('acresValue', { count: ctx.farm_area_acres })
       : null
 
   const ageLine = ctx.age_value != null && ctx.age_unit
-    ? `${ctx.age_value} ${
-        ctx.age_unit === 'years'
-          ? (ctx.age_value === 1 ? 'year' : 'years')
-          : (ctx.age_value === 1 ? 'day' : 'days')
-      } old`
+    ? (ctx.age_unit === 'years'
+        ? t('ageYears', { value: ctx.age_value })
+        : t('ageDays', { value: ctx.age_value }))
     : null
 
   return (
     <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs text-[#7A8C7E]">Farmer</p>
+          <p className="text-xs text-[#7A8C7E]">{t('farmerLabel')}</p>
           <p className="font-semibold text-[#6B3F1F] truncate">{ctx.farmer_name || '—'}</p>
         </div>
         {ctx.farmer_phone && (
@@ -2125,20 +2121,20 @@ function FarmerContextCard({ ctx }: { ctx: FarmerContext }) {
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Call
+            {t('callBtn')}
           </a>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#F0E8D6]">
         <div>
-          <p className="text-xs text-[#7A8C7E]">Crop</p>
+          <p className="text-xs text-[#7A8C7E]">{t('cropLabel')}</p>
           <p className="text-sm font-medium text-[#6B3F1F] truncate">{ctx.crop_name || '—'}</p>
           {ageLine && <p className="text-xs text-[#7A8C7E] mt-0.5">{ageLine}</p>}
         </div>
         <div>
           <p className="text-xs text-[#7A8C7E]">
-            {ctx.measure === 'PLANT_WISE' ? 'Plants' : 'Area'}
+            {ctx.measure === 'PLANT_WISE' ? t('plantsLabel') : t('areaLabel')}
           </p>
           <p className="text-sm font-medium text-[#6B3F1F]">{measureLine || '—'}</p>
         </div>
