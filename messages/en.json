@@ -1252,6 +1252,164 @@
         "ageDays": "{value, plural, one {1 day old} other {# days old}}"
       }
     },
+    "profile": {
+      "headerTitle": "Shop Details",
+      "sellCategories": {
+        "seedsLabel": "Seeds",
+        "seedsNote": "Seed dealer licence required by law",
+        "seedlingsLabel": "Seedlings",
+        "seedlingsNote": "No licence required",
+        "pesticidesLabel": "Pesticides",
+        "pesticidesNote": "Pesticide licence required by law",
+        "fertilisersLabel": "Fertilisers",
+        "fertilisersNote": "Fertiliser licence required by law"
+      },
+      "uploadFailedFallback": "Upload failed. Please try again.",
+      "missing": {
+        "title": "Finish setting up your shop",
+        "body": "Complete every field below before you start receiving orders. A company will recognise your shop only once your profile is complete.",
+        "notNow": "← Not now, back to Farmer Home",
+        "shopPhoto": "Shop Photograph",
+        "shopName": "Shop Name",
+        "shopAddress": "Shop Address",
+        "shopGps": "Shop Location (GPS)",
+        "whatYouSell": "What You Sell",
+        "shopRegistration": "Shop Registration Certificate"
+      },
+      "photoCard": {
+        "title": "Shop Photograph *",
+        "hint": "A photo of your signboard or storefront. Helps farmers and facilitators recognise your shop when they visit.",
+        "uploadedAlt": "Shop",
+        "uploaded": "✓ Uploaded",
+        "takePhoto": "📷 Take Photo",
+        "uploadPicture": "📁 Upload Picture",
+        "uploading": "Uploading…"
+      },
+      "detailsCard": {
+        "title": "Shop Details",
+        "hint": "The name on your signboard and your postal address. Shown to farmers next to your photo.",
+        "shopName": "Shop Name *",
+        "shopNamePlaceholder": "Your shop name",
+        "shopAddress": "Shop Address *",
+        "shopAddressPlaceholder": "Full address"
+      },
+      "gpsCard": {
+        "title": "Shop Location *",
+        "hintPrefix": "GPS coordinates guide farmers and facilitators to your shop.",
+        "hintEmphasis": "Stand at the shop entrance",
+        "hintSuffix": "when you capture, and step outside if the accuracy looks poor.",
+        "captured": "Location captured",
+        "gettingShort": "Getting…",
+        "recapture": "Recapture",
+        "gettingFull": "Getting location…",
+        "capture": "Capture Shop GPS",
+        "viewMap": "📍 View on Map",
+        "accuracyGood": "📍 Accurate to about {metres} m. Looks good.",
+        "accuracyOk": "📍 Accurate to about {metres} m. OK, but step outside and recapture if your shop entrance is across the road.",
+        "accuracyPoor": "⚠ Accuracy is poor (about {metres} m). Please step outside and tap Recapture — a rooftop view of the sky gives a far better fix."
+      },
+      "sellCard": {
+        "title": "What Do You Sell? *",
+        "hint": "Select all that apply. Farmers' orders are routed to dealers who sell the relevant items."
+      },
+      "certCard": {
+        "title": "Shop Registration Certificate *",
+        "hint": "Proof that your shop is a registered business. Helps keep fake shops out of the network. PDF or photo.",
+        "uploadedAlt": "Registration certificate",
+        "uploaded": "✓ Uploaded",
+        "viewDocument": "View document",
+        "uploading": "Uploading…",
+        "change": "Change",
+        "upload": "Upload Certificate (PDF or photo)"
+      },
+      "uploadError": {
+        "title": "Upload failed"
+      },
+      "save": {
+        "saving": "Saving…",
+        "saved": "✓ Saved!",
+        "pending": "{count, plural, one {Save (1 field pending)} other {Save (# fields pending)}}",
+        "ready": "Save Profile"
+      }
+    },
+    "dealerships": {
+      "headerTitle": "My Dealerships",
+      "intro": "Pick the manufacturers you have a dealership contract with. The same manufacturer may appear in both tabs — you can pick them once per category. You can add and remove any time; nobody verifies these.",
+      "tabPesticide": "Pesticide",
+      "tabFertilizer": "Fertilizer",
+      "notePesticide": "Pesticides + Special Inputs (adjuvants)",
+      "noteFertilizer": "Fertilizers + manures + soil amendments + biofertilizers",
+      "selectedHeader": "Your selected ({count})",
+      "emptyPesticide": "No pesticide dealerships yet. Pick from the list below.",
+      "emptyFertilizer": "No fertilizer dealerships yet. Pick from the list below.",
+      "addHeader": "Add to your list",
+      "searchPlaceholder": "Search manufacturer…",
+      "noMatches": "No manufacturers match that search.",
+      "allInList": "Every manufacturer in this category is already in your list.",
+      "adding": "Adding…",
+      "add": "+ Add",
+      "errorAdd": "Could not add. Try again.",
+      "errorRemove": "Could not remove. Try again."
+    },
+    "seedOrders": {
+      "headerTitle": "Seed Orders",
+      "tabActive": "Active ({count})",
+      "tabCompleted": "Completed",
+      "empty": "No seed orders",
+      "seedTag": "Seed/Seedling",
+      "unknownVariety": "Unknown variety",
+      "farmerLabel": "Farmer:",
+      "farmAreaLabel": "Farm area:",
+      "farmAreaValue": "{acres} acres",
+      "qtyLabel": "Qty:",
+      "qtyValue": "{quantity} {unit}",
+      "priceSuffix": " · ₹{price}",
+      "blindAcceptHint": "New order — your call. Item details reveal after you Accept.",
+      "acceptCta": "✓ Accept",
+      "declineCta": "✗ Decline",
+      "enterQtyPrice": "Enter Quantity & Price",
+      "later": "⏰ Later",
+      "notAvailable": "✗ Not Available",
+      "form": {
+        "title": "Enter quantity and price",
+        "unitLabel": "Unit *",
+        "qtyLabel": "Quantity *",
+        "qtyPlaceholder": "Amount in {unit}",
+        "totalPriceLabel": "Total Price (₹)",
+        "totalPricePlaceholder": "Optional",
+        "sending": "Sending…",
+        "sendForApproval": "Send for Approval"
+      },
+      "units": {
+        "grams": "Grams",
+        "kilograms": "Kilograms",
+        "numbers": "Numbers"
+      },
+      "statusBanners": {
+        "awaitingApproval": "Waiting for farmer approval",
+        "purchased": "Order complete — farmer approved",
+        "postponed": "Postponed. Tap Not Available to release this order back to the farmer.",
+        "notAvailable": "Returned to the farmer to send to someone else."
+      },
+      "confirmNa": "Mark this seed order as Not Available? The farmer will be able to send it to a different dealer.",
+      "errorMarkNa": "Could not mark as Not Available. Please try again.",
+      "errorDecline": "Could not decline. Please try again.",
+      "errorPostpone": "Could not postpone. Please try again.",
+      "errorPostponeWindow": "This seed order cannot be postponed right now.",
+      "postponeSheet": {
+        "title": "Postpone this seed order",
+        "howManyDays": "How many days?",
+        "pickRange": "Pick 1 to {max}. After this window the order auto-returns to the farmer.",
+        "dayUnit": "{count, plural, one {day} other {days}}",
+        "postponing": "Postponing…",
+        "postponeCta": "{count, plural, one {Postpone for 1 day} other {Postpone for # days}}"
+      },
+      "declineSheet": {
+        "title": "Decline this seed order?",
+        "body": "The farmer will be able to send it to a different dealer. You won't see this order again.",
+        "yes": "Yes, decline"
+      }
+    },
     "alertsIncoming": {
       "headerTitle": "Incoming alerts",
       "typeStartDate": "Start Date",

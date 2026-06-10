@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -34,6 +35,8 @@ const UNITS = ['Grams', 'Kilograms', 'Numbers']
 
 export default function DealerSeedOrdersPage() {
   const router = useRouter()
+  const t = useTranslations('dealer.seedOrders')
+  const tCommon = useTranslations('common')
   const [orders, setOrders] = useState<SeedOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
@@ -84,7 +87,7 @@ export default function DealerSeedOrdersPage() {
         `/dealer/seed-orders/${id}/postpone-window`,
       )
       if (!data.can_postpone) {
-        alert('This seed order cannot be postponed right now.')
+        alert(t('errorPostponeWindow'))
         return
       }
       setPostponeId(id)
@@ -104,17 +107,17 @@ export default function DealerSeedOrdersPage() {
       load()
     } catch (err: unknown) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message || 'Could not postpone. Please try again.')
+      alert(e?.response?.data?.detail?.message || t('errorPostpone'))
     } finally { setPostponeBusy(false) }
   }
 
   async function markNotAvailable(id: string) {
-    if (!confirm("Mark this seed order as Not Available? The farmer will be able to send it to a different dealer.")) return
+    if (!confirm(t('confirmNa'))) return
     try {
       await api.put(`/dealer/seed-orders/${id}/not-available`, {})
       load()
     } catch {
-      alert('Could not mark as Not Available. Please try again.')
+      alert(t('errorMarkNa'))
     }
   }
 
@@ -132,7 +135,7 @@ export default function DealerSeedOrdersPage() {
       setConfirmDecline(null)
       load()
     } catch {
-      alert('Could not decline. Please try again.')
+      alert(t('errorDecline'))
     } finally { setDeclining(false) }
   }
 
@@ -141,13 +144,13 @@ export default function DealerSeedOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Seed Orders" activeRole="DEALER" back="/dealer/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24">
         <div className="flex bg-white border-b border-[#DDD0B8]">
-          {(['pending', 'done'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${tab === t ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-[#7A8C7E]'}`}>
-              {t === 'pending' ? `Active (${pending.length})` : 'Completed'}
+          {(['pending', 'done'] as const).map(tabKey => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
+              className={`flex-1 py-3 text-sm font-medium capitalize border-b-2 transition-colors ${tab === tabKey ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-[#7A8C7E]'}`}>
+              {tabKey === 'pending' ? t('tabActive', { count: pending.length }) : t('tabCompleted')}
             </button>
           ))}
         </div>
@@ -157,7 +160,7 @@ export default function DealerSeedOrdersPage() {
             (tab === 'pending' ? pending : done).length === 0 ? (
               <div className="text-center py-16">
                 <span className="text-4xl">🌱</span>
-                <p className="text-[#7A8C7E] text-sm mt-3">No seed orders</p>
+                <p className="text-[#7A8C7E] text-sm mt-3">{t('empty')}</p>
               </div>
             ) : (
               (tab === 'pending' ? pending : done).map(order => (
@@ -166,9 +169,9 @@ export default function DealerSeedOrdersPage() {
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div>
                         <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-semibold px-2 py-0.5 rounded-full mb-1">
-                          Seed/Seedling
+                          {t('seedTag')}
                         </span>
-                        <p className="font-bold text-[#6B3F1F]">{order.variety_name || 'Unknown variety'}</p>
+                        <p className="font-bold text-[#6B3F1F]">{order.variety_name || t('unknownVariety')}</p>
                         <p className="text-xs text-[#7A8C7E]">{cropDisplayName(order.crop_cosh_id)}</p>
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[order.status] || ''}`}>
@@ -177,11 +180,11 @@ export default function DealerSeedOrdersPage() {
                     </div>
 
                     <div className="bg-[#F5F0E8] rounded-xl p-3 text-xs text-[#6B3F1F] space-y-1">
-                      {order.farmer_name && <p><span className="text-[#7A8C7E]">Farmer: </span>{order.farmer_name}</p>}
-                      {order.farm_area_acres && <p><span className="text-[#7A8C7E]">Farm area: </span>{order.farm_area_acres} acres</p>}
+                      {order.farmer_name && <p><span className="text-[#7A8C7E]">{t('farmerLabel')} </span>{order.farmer_name}</p>}
+                      {order.farm_area_acres && <p><span className="text-[#7A8C7E]">{t('farmAreaLabel')} </span>{t('farmAreaValue', { acres: order.farm_area_acres })}</p>}
                       {order.unit && order.quantity && (
-                        <p><span className="text-[#7A8C7E]">Qty: </span>{order.quantity} {order.unit}
-                          {order.total_price ? ` · ₹${order.total_price}` : ''}
+                        <p><span className="text-[#7A8C7E]">{t('qtyLabel')} </span>{t('qtyValue', { quantity: order.quantity, unit: order.unit })}
+                          {order.total_price ? t('priceSuffix', { price: order.total_price }) : ''}
                         </p>
                       )}
                     </div>
@@ -194,16 +197,16 @@ export default function DealerSeedOrdersPage() {
                     {order.status === 'SENT' && processing !== order.id && (
                       <>
                         <p className="mt-3 text-[11px] text-[#7A8C7E]">
-                          New order — your call. Item details reveal after you Accept.
+                          {t('blindAcceptHint')}
                         </p>
                         <div className="flex gap-2 mt-2">
                           <button onClick={() => accept(order.id)}
                             className="flex-1 bg-emerald-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                            ✓ Accept
+                            {t('acceptCta')}
                           </button>
                           <button onClick={() => setConfirmDecline(order.id)}
                             className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-                            ✗ Decline
+                            {t('declineCta')}
                           </button>
                         </div>
                       </>
@@ -212,7 +215,7 @@ export default function DealerSeedOrdersPage() {
                     {order.status === 'ACCEPTED' && processing !== order.id && (
                       <button onClick={() => { setProcessing(order.id); setForm({ unit: 'Kilograms', quantity: '', total_price: '' }) }}
                         className="w-full mt-3 bg-indigo-600 text-white text-xs font-semibold py-2.5 rounded-xl">
-                        Enter Quantity & Price
+                        {t('enterQtyPrice')}
                       </button>
                     )}
 
@@ -225,12 +228,12 @@ export default function DealerSeedOrdersPage() {
                           <button onClick={() => openPostpone(order.id)}
                             disabled={postponeBusy}
                             className="flex-1 bg-amber-100 text-amber-800 text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                            ⏰ Later
+                            {t('later')}
                           </button>
                         )}
                         <button onClick={() => markNotAvailable(order.id)}
                           className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-                          ✗ Not Available
+                          {t('notAvailable')}
                         </button>
                       </div>
                     )}
@@ -238,9 +241,9 @@ export default function DealerSeedOrdersPage() {
                     {/* Processing form */}
                     {processing === order.id && (
                       <div className="mt-3 bg-[#F5F0E8] rounded-xl p-4 space-y-3">
-                        <p className="text-xs font-semibold text-[#6B3F1F]">Enter quantity and price</p>
+                        <p className="text-xs font-semibold text-[#6B3F1F]">{t('form.title')}</p>
                         <div>
-                          <label className="block text-xs text-[#7A8C7E] mb-1">Unit *</label>
+                          <label className="block text-xs text-[#7A8C7E] mb-1">{t('form.unitLabel')}</label>
                           <div className="flex gap-2">
                             {UNITS.map(u => (
                               <button key={u}
@@ -248,35 +251,35 @@ export default function DealerSeedOrdersPage() {
                                 className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
                                   form.unit === u ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                                 }`}>
-                                {u}
+                                {u === 'Grams' ? t('units.grams') : u === 'Kilograms' ? t('units.kilograms') : t('units.numbers')}
                               </button>
                             ))}
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="block text-xs text-[#7A8C7E] mb-1">Quantity *</label>
+                            <label className="block text-xs text-[#7A8C7E] mb-1">{t('form.qtyLabel')}</label>
                             <input type="number" value={form.quantity}
                               onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))}
-                              placeholder={`Amount in ${form.unit}`}
+                              placeholder={t('form.qtyPlaceholder', { unit: form.unit })}
                               className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
                           </div>
                           <div>
-                            <label className="block text-xs text-[#7A8C7E] mb-1">Total Price (₹)</label>
+                            <label className="block text-xs text-[#7A8C7E] mb-1">{t('form.totalPriceLabel')}</label>
                             <input type="number" value={form.total_price}
                               onChange={e => setForm(f => ({ ...f, total_price: e.target.value }))}
-                              placeholder="Optional"
+                              placeholder={t('form.totalPricePlaceholder')}
                               className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => submit(order.id)} disabled={submitting || !form.quantity}
                             className="flex-1 bg-indigo-600 text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
-                            {submitting ? 'Sending…' : 'Send for Approval'}
+                            {submitting ? t('form.sending') : t('form.sendForApproval')}
                           </button>
                           <button onClick={() => setProcessing(null)}
                             className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
-                            Cancel
+                            {tCommon('cancel')}
                           </button>
                         </div>
                       </div>
@@ -284,22 +287,22 @@ export default function DealerSeedOrdersPage() {
 
                     {order.status === 'SENT_FOR_APPROVAL' && (
                       <div className="mt-3 bg-amber-50 rounded-xl p-3 text-xs text-amber-700 text-center font-medium">
-                        Waiting for farmer approval
+                        {t('statusBanners.awaitingApproval')}
                       </div>
                     )}
                     {order.status === 'PURCHASED' && (
                       <div className="mt-3 bg-emerald-50 rounded-xl p-3 text-xs text-emerald-700 text-center font-medium">
-                        Order complete — farmer approved
+                        {t('statusBanners.purchased')}
                       </div>
                     )}
                     {order.status === 'POSTPONED' && (
                       <div className="mt-3 bg-amber-50 rounded-xl p-3 text-xs text-amber-800 text-center font-medium">
-                        Postponed. Tap Not Available to release this order back to the farmer.
+                        {t('statusBanners.postponed')}
                       </div>
                     )}
                     {order.status === 'NOT_AVAILABLE' && (
                       <div className="mt-3 bg-red-50 rounded-xl p-3 text-xs text-[#D4682E] text-center font-medium">
-                        Returned to the farmer to send to someone else.
+                        {t('statusBanners.notAvailable')}
                       </div>
                     )}
                   </div>
@@ -318,13 +321,13 @@ export default function DealerSeedOrdersPage() {
           <div className="bg-white rounded-t-2xl w-full" onClick={e => e.stopPropagation()}
             style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-semibold text-[#6B3F1F]">Postpone this seed order</p>
+              <p className="font-semibold text-[#6B3F1F]">{t('postponeSheet.title')}</p>
               <button onClick={() => !postponeBusy && setPostponeId(null)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             <div className="p-5">
-              <p className="text-sm text-[#7A8C7E] mb-1">How many days?</p>
+              <p className="text-sm text-[#7A8C7E] mb-1">{t('postponeSheet.howManyDays')}</p>
               <p className="text-xs text-[#7A8C7E] mb-4">
-                Pick 1 to {postponeMaxDays}. After this window the order auto-returns to the farmer.
+                {t('postponeSheet.pickRange', { max: postponeMaxDays })}
               </p>
               <div className="flex items-center justify-center gap-3 mb-5">
                 <button onClick={() => setPostponeDays(d => Math.max(1, d - 1))}
@@ -334,7 +337,7 @@ export default function DealerSeedOrdersPage() {
                 </button>
                 <div className="min-w-[80px] text-center">
                   <p className="text-3xl font-bold text-[#6B3F1F]">{postponeDays}</p>
-                  <p className="text-xs text-[#7A8C7E]">day{postponeDays === 1 ? '' : 's'}</p>
+                  <p className="text-xs text-[#7A8C7E]">{t('postponeSheet.dayUnit', { count: postponeDays })}</p>
                 </div>
                 <button onClick={() => setPostponeDays(d => Math.min(postponeMaxDays, d + 1))}
                   disabled={postponeDays >= postponeMaxDays || postponeBusy}
@@ -346,7 +349,7 @@ export default function DealerSeedOrdersPage() {
                 disabled={postponeBusy}
                 className="w-full py-3 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
-                {postponeBusy ? 'Postponing…' : `Postpone for ${postponeDays} day${postponeDays === 1 ? '' : 's'}`}
+                {postponeBusy ? t('postponeSheet.postponing') : t('postponeSheet.postponeCta', { count: postponeDays })}
               </button>
             </div>
           </div>
@@ -365,19 +368,18 @@ export default function DealerSeedOrdersPage() {
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Decline this seed order?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('declineSheet.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              The farmer will be able to send it to a different dealer.
-              You won&apos;t see this order again.
+              {t('declineSheet.body')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmDecline(null)} disabled={declining}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={() => declineOrder(confirmDecline)} disabled={declining}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {declining ? '…' : 'Yes, decline'}
+                {declining ? '…' : t('declineSheet.yes')}
               </button>
             </div>
           </div>

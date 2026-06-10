@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
@@ -12,12 +13,16 @@ import api from '@/lib/api'
 // dealer is supplying to. Seeds vs Seedlings is a real regulatory
 // split: seed dealers in India need a Seeds Control Order licence;
 // nursery / seedling traders do not.
-const SELL_CATEGORIES = [
-  { id: 'SEEDS', label: 'Seeds', note: 'Seed dealer licence required by law' },
-  { id: 'SEEDLINGS', label: 'Seedlings', note: 'No licence required' },
-  { id: 'PESTICIDES', label: 'Pesticides', note: 'Pesticide licence required by law' },
-  { id: 'FERTILISERS', label: 'Fertilisers', note: 'Fertiliser licence required by law' },
-]
+// Label + note resolved at render time via t() so they switch on
+// locale change. Keep the static `id` for backend payload + state.
+const SELL_CATEGORY_IDS = ['SEEDS', 'SEEDLINGS', 'PESTICIDES', 'FERTILISERS'] as const
+type SellCategoryId = typeof SELL_CATEGORY_IDS[number]
+const SELL_CATEGORY_KEYS: Record<SellCategoryId, { label: string; note: string }> = {
+  SEEDS: { label: 'sellCategories.seedsLabel', note: 'sellCategories.seedsNote' },
+  SEEDLINGS: { label: 'sellCategories.seedlingsLabel', note: 'sellCategories.seedlingsNote' },
+  PESTICIDES: { label: 'sellCategories.pesticidesLabel', note: 'sellCategories.pesticidesNote' },
+  FERTILISERS: { label: 'sellCategories.fertilisersLabel', note: 'sellCategories.fertilisersNote' },
+}
 
 type FormState = {
   shop_name: string
@@ -42,6 +47,7 @@ function isImageUrl(url: string): boolean {
 
 export default function DealerProfilePage() {
   const router = useRouter()
+  const t = useTranslations('dealer.profile')
   const [, setProfile] = useState<unknown>(null)
   const [form, setForm] = useState<FormState>({
     shop_name: '',
@@ -131,7 +137,7 @@ export default function DealerProfilePage() {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
       const msg = typeof detail === 'string'
         ? detail
-        : (detail as { message?: string })?.message || 'Upload failed. Please try again.'
+        : (detail as { message?: string })?.message || t('uploadFailedFallback')
       setUploadError(msg)
     } finally {
       setUploadingField(null)
@@ -175,17 +181,17 @@ export default function DealerProfilePage() {
   // verifies). Missing-field list drives both the Save button
   // disabled state and the redirect-from-home banner.
   const missingFields: string[] = []
-  if (!form.shop_photo_url.trim()) missingFields.push('Shop Photograph')
-  if (!form.shop_name.trim()) missingFields.push('Shop Name')
-  if (!form.shop_address.trim()) missingFields.push('Shop Address')
-  if (form.shop_gps_lat == null || form.shop_gps_lng == null) missingFields.push('Shop Location (GPS)')
-  if (form.sell_categories.length === 0) missingFields.push('What You Sell')
-  if (!form.shop_registration_url.trim()) missingFields.push('Shop Registration Certificate')
+  if (!form.shop_photo_url.trim()) missingFields.push(t('missing.shopPhoto'))
+  if (!form.shop_name.trim()) missingFields.push(t('missing.shopName'))
+  if (!form.shop_address.trim()) missingFields.push(t('missing.shopAddress'))
+  if (form.shop_gps_lat == null || form.shop_gps_lng == null) missingFields.push(t('missing.shopGps'))
+  if (form.sell_categories.length === 0) missingFields.push(t('missing.whatYouSell'))
+  if (!form.shop_registration_url.trim()) missingFields.push(t('missing.shopRegistration'))
   const profileIncomplete = missingFields.length > 0
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Shop Details" activeRole="DEALER"
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER"
         onRoleSwitch={() => setShowRoleDrawer(true)} back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 space-y-5 max-w-lg mx-auto">
 
@@ -198,16 +204,16 @@ export default function DealerProfilePage() {
             redirect would trap them. */}
         {profileIncomplete && (
           <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <p className="font-semibold text-amber-800 text-sm">Finish setting up your shop</p>
+            <p className="font-semibold text-amber-800 text-sm">{t('missing.title')}</p>
             <p className="text-xs text-amber-700 mt-1">
-              Complete every field below before you start receiving orders. A company will recognise your shop only once your profile is complete.
+              {t('missing.body')}
             </p>
             <ul className="mt-2 text-xs text-amber-700 list-disc list-inside">
               {missingFields.map(f => <li key={f}>{f}</li>)}
             </ul>
             <button onClick={() => router.replace('/home')}
               className="mt-3 text-xs underline text-amber-800 font-medium">
-              ← Not now, back to Farmer Home
+              {t('missing.notNow')}
             </button>
           </div>
         )}
@@ -219,9 +225,9 @@ export default function DealerProfilePage() {
             gallery can be the source. */}
         <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">Shop Photograph *</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">{t('photoCard.title')}</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
-              A photo of your signboard or storefront. Helps farmers and facilitators recognise your shop when they visit.
+              {t('photoCard.hint')}
             </p>
           </div>
           <input ref={photoCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
@@ -236,10 +242,10 @@ export default function DealerProfilePage() {
             }} />
           {form.shop_photo_url ? (
             <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
-              <img src={form.shop_photo_url} alt="Shop"
+              <img src={form.shop_photo_url} alt={t('photoCard.uploadedAlt')}
                 className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
+                <p className="text-sm font-medium text-[#085041]">{t('photoCard.uploaded')}</p>
               </div>
               <div className="flex gap-1.5 shrink-0">
                 <button onClick={() => photoCameraRef.current?.click()}
@@ -252,39 +258,39 @@ export default function DealerProfilePage() {
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => photoCameraRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
                 className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                📷 Take Photo
+                {t('photoCard.takePhoto')}
               </button>
               <button onClick={() => photoLibraryRef.current?.click()} disabled={uploadingField === 'shop_photo_url'}
                 className="py-3 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-                📁 Upload Picture
+                {t('photoCard.uploadPicture')}
               </button>
             </div>
           )}
           {uploadingField === 'shop_photo_url' && (
-            <p className="text-xs text-[#7A8C7E]">Uploading…</p>
+            <p className="text-xs text-[#7A8C7E]">{t('photoCard.uploading')}</p>
           )}
         </div>
 
         {/* 2. Shop Details — name + postal address. */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">Shop Details</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">{t('detailsCard.title')}</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
-              The name on your signboard and your postal address. Shown to farmers next to your photo.
+              {t('detailsCard.hint')}
             </p>
           </div>
           <div>
-            <label className="block text-xs text-[#7A8C7E] mb-1">Shop Name *</label>
+            <label className="block text-xs text-[#7A8C7E] mb-1">{t('detailsCard.shopName')}</label>
             <input value={form.shop_name}
               onChange={e => setForm(f => ({ ...f, shop_name: e.target.value }))}
-              placeholder="Your shop name"
+              placeholder={t('detailsCard.shopNamePlaceholder')}
               className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20" />
           </div>
           <div>
-            <label className="block text-xs text-[#7A8C7E] mb-1">Shop Address *</label>
+            <label className="block text-xs text-[#7A8C7E] mb-1">{t('detailsCard.shopAddress')}</label>
             <textarea value={form.shop_address}
               onChange={e => setForm(f => ({ ...f, shop_address: e.target.value }))}
-              rows={2} placeholder="Full address"
+              rows={2} placeholder={t('detailsCard.shopAddressPlaceholder')}
               className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20 resize-none" />
           </div>
         </div>
@@ -295,9 +301,9 @@ export default function DealerProfilePage() {
             (wifi-based indoor reading), prompt a retry from outside. */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">Shop Location *</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">{t('gpsCard.title')}</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
-              GPS coordinates guide farmers and facilitators to your shop. <span className="font-semibold">Stand at the shop entrance</span> when you capture, and step outside if the accuracy looks poor.
+              {t('gpsCard.hintPrefix')} <span className="font-semibold">{t('gpsCard.hintEmphasis')}</span> {t('gpsCard.hintSuffix')}
             </p>
           </div>
           {form.shop_gps_lat !== null && form.shop_gps_lng !== null ? (
@@ -307,11 +313,11 @@ export default function DealerProfilePage() {
                   <p className="text-xs text-[#7A8C7E] font-mono">
                     {form.shop_gps_lat.toFixed(6)}, {form.shop_gps_lng.toFixed(6)}
                   </p>
-                  <p className="text-xs text-[#085041] mt-0.5">Location captured</p>
+                  <p className="text-xs text-[#085041] mt-0.5">{t('gpsCard.captured')}</p>
                 </div>
                 <button onClick={captureShopGps} disabled={gpsLoading}
                   className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                  {gpsLoading ? 'Getting…' : 'Recapture'}
+                  {gpsLoading ? t('gpsCard.gettingShort') : t('gpsCard.recapture')}
                 </button>
               </div>
               {gpsAccuracy != null && (() => {
@@ -325,16 +331,16 @@ export default function DealerProfilePage() {
                     : 'bg-yellow-50 border-yellow-200 text-yellow-800'
                 return (
                   <div className={`text-xs border rounded-xl px-3 py-2 ${tone}`}>
-                    {good && <>📍 Accurate to about {m} m. Looks good.</>}
-                    {!good && !poor && <>📍 Accurate to about {m} m. OK, but step outside and recapture if your shop entrance is across the road.</>}
-                    {poor && <>⚠ Accuracy is poor (about {m} m). Please step outside and tap <span className="font-semibold">Recapture</span> — a rooftop view of the sky gives a far better fix.</>}
+                    {good && t('gpsCard.accuracyGood', { metres: m })}
+                    {!good && !poor && t('gpsCard.accuracyOk', { metres: m })}
+                    {poor && t('gpsCard.accuracyPoor', { metres: m })}
                   </div>
                 )
               })()}
               {mapHref && (
                 <a href={mapHref} target="_blank" rel="noopener noreferrer"
                   className="block w-full text-center py-2.5 rounded-xl border border-[#DDD0B8] text-sm font-medium text-[#085041]">
-                  📍 View on Map
+                  {t('gpsCard.viewMap')}
                 </a>
               )}
             </>
@@ -345,7 +351,7 @@ export default function DealerProfilePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
               </svg>
-              {gpsLoading ? 'Getting location…' : 'Capture Shop GPS'}
+              {gpsLoading ? t('gpsCard.gettingFull') : t('gpsCard.capture')}
             </button>
           )}
         </div>
@@ -353,24 +359,25 @@ export default function DealerProfilePage() {
         {/* 4. What Do You Sell? */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">What Do You Sell? *</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">{t('sellCard.title')}</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
-              Select all that apply. Farmers&apos; orders are routed to dealers who sell the relevant items.
+              {t('sellCard.hint')}
             </p>
           </div>
-          {SELL_CATEGORIES.map(cat => {
-            const selected = form.sell_categories.includes(cat.id)
+          {SELL_CATEGORY_IDS.map(catId => {
+            const selected = form.sell_categories.includes(catId)
+            const keys = SELL_CATEGORY_KEYS[catId]
             return (
-              <button key={cat.id}
-                onClick={() => toggleCategory(cat.id)}
+              <button key={catId}
+                onClick={() => toggleCategory(catId)}
                 className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
                   selected ? 'border-[#085041] bg-[#085041]/5' : 'border-[#DDD0B8] bg-white'
                 }`}>
                 <div>
                   <p className={`text-sm font-semibold ${selected ? 'text-[#085041]' : 'text-[#6B3F1F]'}`}>
-                    {cat.label}
+                    {t(keys.label)}
                   </p>
-                  <p className="text-xs text-[#7A8C7E] mt-0.5">{cat.note}</p>
+                  <p className="text-xs text-[#7A8C7E] mt-0.5">{t(keys.note)}</p>
                 </div>
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                   selected ? 'border-[#085041] bg-[#085041]' : 'border-[#DDD0B8]'
@@ -390,9 +397,9 @@ export default function DealerProfilePage() {
             during their own dealer-vetting process. */}
         <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3">
           <div>
-            <h2 className="font-semibold text-[#6B3F1F]">Shop Registration Certificate *</h2>
+            <h2 className="font-semibold text-[#6B3F1F]">{t('certCard.title')}</h2>
             <p className="text-xs text-[#7A8C7E] mt-0.5">
-              Proof that your shop is a registered business. Helps keep fake shops out of the network. PDF or photo.
+              {t('certCard.hint')}
             </p>
           </div>
           <input ref={certRef} type="file" accept="image/*,.pdf" className="hidden"
@@ -403,7 +410,7 @@ export default function DealerProfilePage() {
           {form.shop_registration_url ? (
             <div className="flex items-center gap-3 bg-[#F5F0E8] rounded-xl p-3">
               {isImageUrl(form.shop_registration_url) ? (
-                <img src={form.shop_registration_url} alt="Registration certificate"
+                <img src={form.shop_registration_url} alt={t('certCard.uploadedAlt')}
                   className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
               ) : (
                 <div className="w-14 h-14 rounded-lg border border-[#DDD0B8] bg-white flex items-center justify-center shrink-0">
@@ -411,26 +418,26 @@ export default function DealerProfilePage() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#085041]">✓ Uploaded</p>
+                <p className="text-sm font-medium text-[#085041]">{t('certCard.uploaded')}</p>
                 <a href={form.shop_registration_url} target="_blank" rel="noopener noreferrer"
-                  className="text-xs text-[#7A8C7E] underline truncate block">View document</a>
+                  className="text-xs text-[#7A8C7E] underline truncate block">{t('certCard.viewDocument')}</a>
               </div>
               <button onClick={() => certRef.current?.click()}
                 className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5 shrink-0">
-                {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Change'}
+                {uploadingField === 'shop_registration_url' ? t('certCard.uploading') : t('certCard.change')}
               </button>
             </div>
           ) : (
             <button onClick={() => certRef.current?.click()} disabled={uploadingField === 'shop_registration_url'}
               className="w-full py-3.5 rounded-xl border-2 border-dashed border-[#DDD0B8] text-sm text-[#7A8C7E] font-medium">
-              {uploadingField === 'shop_registration_url' ? 'Uploading…' : 'Upload Certificate (PDF or photo)'}
+              {uploadingField === 'shop_registration_url' ? t('certCard.uploading') : t('certCard.upload')}
             </button>
           )}
         </div>
 
         {uploadError && (
           <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
-            <p className="font-semibold">Upload failed</p>
+            <p className="font-semibold">{t('uploadError.title')}</p>
             <p className="text-xs mt-1">{uploadError}</p>
           </div>
         )}
@@ -438,7 +445,7 @@ export default function DealerProfilePage() {
         <button onClick={save} disabled={saving || profileIncomplete}
           className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-40 transition-opacity"
           style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-          {saving ? 'Saving…' : saved ? '✓ Saved!' : profileIncomplete ? `Save (${missingFields.length} field${missingFields.length === 1 ? '' : 's'} pending)` : 'Save Profile'}
+          {saving ? t('save.saving') : saved ? t('save.saved') : profileIncomplete ? t('save.pending', { count: missingFields.length }) : t('save.ready')}
         </button>
       </div>
 
