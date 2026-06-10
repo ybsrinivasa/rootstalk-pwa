@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -32,6 +33,7 @@ const COLOUR = '#085041'
 export default function DealerPaymentsPage() {
   const router = useRouter()
   const user = getUser()
+  const t = useTranslations('dealer.payments')
   const [requests, setRequests] = useState<PaymentRequest[]>([])
   const [loading, setLoading] = useState(true)
   const [paying, setPaying] = useState<string | null>(null)
@@ -57,7 +59,7 @@ export default function DealerPaymentsPage() {
         // rootsTALK.in provides on behalf of the farmer — not paying
         // the company whose advisory it is.
         name: 'rootsTALK.in',
-        description: 'Advisory subscription on behalf of farmer · paid to rootsTALK.in',
+        description: t('razorpayDescription'),
         order_id: order.razorpay_order_id,
         prefill: { name: user?.name || '', contact: user?.phone || '' },
         theme: { color: COLOUR },
@@ -65,13 +67,13 @@ export default function DealerPaymentsPage() {
           try {
             await api.post(`/dealer/payment-requests/${req.id}/verify`, response)
             load()
-          } catch { setError('Payment verification failed.') }
+          } catch { setError(t('errorVerify')) }
         },
       }
       new window.Razorpay(options).open()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Could not initiate payment.')
+      setError(msg || t('errorInit'))
     } finally { setPaying(null) }
   }
 
@@ -90,7 +92,7 @@ export default function DealerPaymentsPage() {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Farmer Payments" activeRole="DEALER" back="/dealer/home" />
+        <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
         <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
           <div className="mt-4 space-y-3">
             {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
@@ -99,17 +101,15 @@ export default function DealerPaymentsPage() {
             ) : pending.length === 0 && done.length === 0 ? (
               <div className="text-center py-16">
                 <span className="text-4xl">💳</span>
-                <p className="text-[#7A8C7E] text-sm mt-3">No payment requests yet</p>
+                <p className="text-[#7A8C7E] text-sm mt-3">{t('empty')}</p>
               </div>
             ) : (
               <>
                 {pending.length > 0 && (
                   <>
-                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Pending ({pending.length})</p>
+                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">{t('pendingHeader', { count: pending.length })}</p>
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
-                      You pay to <strong>rootsTALK.in</strong> for the software infrastructure
-                      that powers the farmer&apos;s advisory. It is <em>not</em> paid to the company
-                      whose advisory the farmer subscribed to.
+                      {t('attributionPrefix')} <strong>rootsTALK.in</strong> {t('attributionMiddle')} <em>{t('attributionNot')}</em> {t('attributionSuffix')}
                     </div>
                     {pending.map(req => {
                       const cropPackage = [req.crop_name, req.package_name].filter(Boolean).join(' · ')
@@ -119,7 +119,7 @@ export default function DealerPaymentsPage() {
                           <div className="flex items-start justify-between mb-3 gap-3">
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-[#6B3F1F] text-sm truncate">
-                                {req.farmer_name || 'Farmer'}
+                                {req.farmer_name || t('farmerFallback')}
                               </p>
                               {cropPackage && (
                                 <p className="text-[12px] text-[#7A8C7E] truncate">{cropPackage}</p>
@@ -137,8 +137,8 @@ export default function DealerPaymentsPage() {
                               {typeof req.hours_remaining === 'number' && (
                                 <p className={`text-[11px] font-medium mt-1 ${hoursLow ? 'text-[#B85C00]' : 'text-[#7A8C7E]'}`}>
                                   {req.hours_remaining === 0
-                                    ? 'Expiring soon'
-                                    : `${req.hours_remaining}h remaining`}
+                                    ? t('expiringSoon')
+                                    : t('hoursRemaining', { hours: req.hours_remaining })}
                                 </p>
                               )}
                             </div>
@@ -147,11 +147,11 @@ export default function DealerPaymentsPage() {
                             <button onClick={() => openPayment(req)} disabled={paying === req.id}
                               className="flex-1 py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
                               style={{ background: `linear-gradient(135deg, #054a3a, ${COLOUR})` }}>
-                              {paying === req.id ? 'Opening…' : `Pay ₹${Number(req.amount).toFixed(0)}`}
+                              {paying === req.id ? t('opening') : t('payAmount', { amount: Number(req.amount).toFixed(0) })}
                             </button>
                             <button onClick={() => decline(req.id)}
                               className="px-5 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
-                              Decline
+                              {t('decline')}
                             </button>
                           </div>
                         </div>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
@@ -13,6 +14,7 @@ const COLOUR = '#085041'
 export default function DealerHomePage() {
   const router = useRouter()
   const user = getUser()
+  const t = useTranslations('dealer.home')
   const [pendingCount, setPendingCount] = useState(0)
   const [postponedCount, setPostponedCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
@@ -105,11 +107,11 @@ export default function DealerHomePage() {
       <div className="pt-20 pb-24 px-4 space-y-4 max-w-lg mx-auto">
         {/* Greeting */}
         <div>
-          <p className="text-xl font-bold text-[#6B3F1F]">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
+          <p className="text-xl font-bold text-[#6B3F1F]">{t('greetingMorning')}{user?.name ? t('greetingNameSuffix', { name: user.name.split(' ')[0] }) : ''}</p>
           <p className="text-[#7A8C7E] text-sm mt-0.5">
             {notOnboarded
-              ? 'Awaiting onboarding'
-              : pendingCount > 0 ? `${pendingCount} order${pendingCount > 1 ? 's' : ''} waiting` : 'No pending orders'}
+              ? t('awaitingOnboarding')
+              : pendingCount > 0 ? t('ordersWaiting', { count: pendingCount }) : t('noPendingOrders')}
           </p>
         </div>
 
@@ -119,21 +121,18 @@ export default function DealerHomePage() {
             screens so they can finish setup while waiting. */}
         {notOnboarded && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <p className="text-base font-bold text-amber-900 mb-2">Ask a Field Manager to onboard you</p>
+            <p className="text-base font-bold text-amber-900 mb-2">{t('onboardingTitle')}</p>
             <p className="text-sm text-amber-800 leading-relaxed">
-              You&apos;ve set up your shop profile — well done. To start receiving farmer orders, you need to be
-              onboarded by at least one RootsTalk company. Share your registered phone number with a Field
-              Manager from any company you sell for. Once any one of them adds you, your tiles below will start
-              showing live activity.
+              {t('onboardingBody')}
             </p>
             <div className="mt-4 flex gap-2">
               <button onClick={() => router.push('/dealer/profile')}
                 className="flex-1 py-2.5 rounded-xl border border-amber-300 bg-white text-sm font-semibold text-amber-900">
-                Review profile
+                {t('reviewProfile')}
               </button>
               <button onClick={() => router.push('/dealer/dealerships')}
                 className="flex-1 py-2.5 rounded-xl border border-amber-300 bg-white text-sm font-semibold text-amber-900">
-                My dealerships
+                {t('myDealershipsBtn')}
               </button>
             </div>
           </div>
@@ -145,13 +144,13 @@ export default function DealerHomePage() {
           style={{ background: `linear-gradient(135deg, #054a3a, ${COLOUR})` }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-80">Pending Orders</p>
+              <p className="text-sm opacity-80">{t('pendingOrders')}</p>
               <p className="text-4xl font-bold mt-1">{loading ? '—' : pendingCount}</p>
             </div>
             <span className="text-5xl opacity-30">📦</span>
           </div>
           {pendingCount > 0 && (
-            <p className="text-xs opacity-70 mt-2">Tap to process →</p>
+            <p className="text-xs opacity-70 mt-2">{t('tapToProcess')}</p>
           )}
         </button>
 
@@ -166,12 +165,12 @@ export default function DealerHomePage() {
             style={{ background: 'linear-gradient(135deg, #b45309, #d97706)' }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm opacity-80">Postponed items</p>
+                <p className="text-sm opacity-80">{t('postponedItems')}</p>
                 <p className="text-4xl font-bold mt-1">{postponedCount}</p>
               </div>
               <span className="text-5xl opacity-30">⏰</span>
             </div>
-            <p className="text-xs opacity-70 mt-2">Tap to resolve →</p>
+            <p className="text-xs opacity-70 mt-2">{t('tapToResolve')}</p>
           </button>
         )}
 
@@ -180,8 +179,8 @@ export default function DealerHomePage() {
           <button onClick={() => router.push('/dealer/payments')}
             className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between active:scale-98 transition-transform">
             <div>
-              <p className="font-semibold text-amber-800">Payment Requests</p>
-              <p className="text-xs text-amber-600 mt-0.5">{paymentCount} farmer{paymentCount > 1 ? 's' : ''} waiting for you to pay</p>
+              <p className="font-semibold text-amber-800">{t('paymentRequests')}</p>
+              <p className="text-xs text-amber-600 mt-0.5">{t('farmersWaiting', { count: paymentCount })}</p>
             </div>
             <span className="bg-amber-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">
               {paymentCount}
@@ -197,40 +196,40 @@ export default function DealerHomePage() {
           <button onClick={() => router.push('/dealer/promoted-farmers')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">👨‍🌾</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">My Farmers</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${promotedCount} promoted`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.myFarmers')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tiles.promotedCount', { count: promotedCount })}</p>
           </button>
           <button onClick={() => router.push('/dealer/dealerships')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🏭</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">My Dealerships</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${dealershipCount} manufacturer${dealershipCount === 1 ? '' : 's'}`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.myDealerships')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tiles.manufacturerCount', { count: dealershipCount })}</p>
           </button>
           <button onClick={() => router.push('/dealer/payments')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">💳</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Payments</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${paymentCount} pending`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.payments')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tiles.pendingCount', { count: paymentCount })}</p>
           </button>
           <button onClick={() => router.push('/dealer/seed-orders')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🌱</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Seed Orders</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${seedPendingCount} active`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.seedOrders')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tiles.activeCount', { count: seedPendingCount })}</p>
           </button>
           <button onClick={() => router.push('/dealer/profile')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <svg className="w-6 h-6 text-[#085041]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"/>
             </svg>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Shop Details</p>
-            <p className="text-xs text-[#7A8C7E]">What you sell</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.shopDetails')}</p>
+            <p className="text-xs text-[#7A8C7E]">{t('tiles.whatYouSell')}</p>
           </button>
           <button onClick={() => router.push('/dealer/alerts-incoming')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🔔</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Alerts I receive</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${alertCount} unread`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.alertsIncoming')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tiles.unreadCount', { count: alertCount })}</p>
           </button>
         </div>
       </div>

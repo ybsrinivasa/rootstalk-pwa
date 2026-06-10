@@ -902,6 +902,70 @@
       "errorOtpInvalid": "Invalid or expired OTP."
     }
   },
+  "dealer": {
+    "home": {
+      "greetingMorning": "Good morning",
+      "greetingNameSuffix": ", {name}",
+      "awaitingOnboarding": "Awaiting onboarding",
+      "ordersWaiting": "{count, plural, one {1 order waiting} other {# orders waiting}}",
+      "noPendingOrders": "No pending orders",
+      "onboardingTitle": "Ask a Field Manager to onboard you",
+      "onboardingBody": "You've set up your shop profile — well done. To start receiving farmer orders, you need to be onboarded by at least one RootsTalk company. Share your registered phone number with a Field Manager from any company you sell for. Once any one of them adds you, your tiles below will start showing live activity.",
+      "reviewProfile": "Review profile",
+      "myDealershipsBtn": "My dealerships",
+      "pendingOrders": "Pending Orders",
+      "tapToProcess": "Tap to process →",
+      "postponedItems": "Postponed items",
+      "tapToResolve": "Tap to resolve →",
+      "paymentRequests": "Payment Requests",
+      "farmersWaiting": "{count, plural, one {1 farmer waiting for you to pay} other {# farmers waiting for you to pay}}",
+      "tiles": {
+        "myFarmers": "My Farmers",
+        "promotedCount": "{count} promoted",
+        "myDealerships": "My Dealerships",
+        "manufacturerCount": "{count, plural, one {1 manufacturer} other {# manufacturers}}",
+        "payments": "Payments",
+        "pendingCount": "{count} pending",
+        "seedOrders": "Seed Orders",
+        "activeCount": "{count} active",
+        "shopDetails": "Shop Details",
+        "whatYouSell": "What you sell",
+        "alertsIncoming": "Alerts I receive",
+        "unreadCount": "{count} unread"
+      }
+    },
+    "payments": {
+      "headerTitle": "Farmer Payments",
+      "errorVerify": "Payment verification failed.",
+      "errorInit": "Could not initiate payment.",
+      "empty": "No payment requests yet",
+      "pendingHeader": "Pending ({count})",
+      "attributionPrefix": "You pay to",
+      "attributionMiddle": "for the software infrastructure that powers the farmer's advisory. It is",
+      "attributionNot": "not",
+      "attributionSuffix": "paid to the company whose advisory the farmer subscribed to.",
+      "farmerFallback": "Farmer",
+      "expiringSoon": "Expiring soon",
+      "hoursRemaining": "{hours}h remaining",
+      "opening": "Opening…",
+      "payAmount": "Pay ₹{amount}",
+      "decline": "Decline",
+      "razorpayDescription": "Advisory subscription on behalf of farmer · paid to rootsTALK.in"
+    },
+    "alertsIncoming": {
+      "headerTitle": "Incoming alerts",
+      "typeStartDate": "Start Date",
+      "typeInput": "Input",
+      "alertTypeBadge": "{type} alert",
+      "errorLoad": "Could not load. Pull to retry.",
+      "emptyTitle": "No incoming alerts",
+      "emptyBody": "Alerts addressed to you appear here. They vanish as soon as the farmer marks the task complete on their end.",
+      "countAndHint": "{count, plural, one {1 pending alert. Tap the phone number to call the farmer.} other {# pending alerts. Tap the phone number to call the farmer.}}",
+      "unnamedFarmer": "Unnamed farmer",
+      "cropLabel": "Crop:",
+      "callBtn": "📞 Call {phone}"
+    }
+  },
   "mySubscriptions": {
     "headerTitle": "My Subscriptions",
     "backToHome": "← Back to home",
