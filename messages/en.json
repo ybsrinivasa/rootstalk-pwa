@@ -447,6 +447,128 @@
     }
   },
   "orders": {
+    "review": {
+      "headerTitle": "Order Details",
+      "statusLabel": "Status",
+      "dateLabel": "Date",
+      "statusFarmer": {
+        "dealerProcessing": "Dealer processing",
+        "delayed": "Delayed",
+        "notAvailable": "Not available — action needed",
+        "readyForApproval": "Ready for your approval",
+        "purchased": "Purchased",
+        "rejectedByYou": "Rejected by you",
+        "notRequired": "Not required",
+        "skipped": "Skipped",
+        "removed": "Removed"
+      },
+      "errors": {
+        "sendFailed": "Could not send the order. Please try again.",
+        "deleteFailed": "Could not delete the order. Please try again.",
+        "cancelFirst": "Cancel the order first.",
+        "cancelFailed": "Could not cancel the order. Please try again.",
+        "dealerCurrentlyViewing": "The dealer is reviewing this order right now. Try again in a minute.",
+        "approveFailed": "Could not approve. Please try again.",
+        "receiptFailed": "Could not confirm receipt. Please try again."
+      },
+      "confirm": {
+        "deleteCancelledOrder": "Delete this cancelled order from your list? Your items are safe in the draft.",
+        "cancelOrder": "Cancel this order? Your items will be saved in a new draft so you can re-send them.",
+        "removeItem": "Remove this item from the order?"
+      },
+      "alerts": {
+        "cancelledNoticeOne": "Cancelled. 1 item has been saved in a new draft — pick a new dealer or facilitator to send to.",
+        "cancelledNoticeMany": "Cancelled. {count} items have been saved in a new draft — pick a new dealer or facilitator to send to."
+      },
+      "cta": {
+        "rerouteReturned": "{count, plural, one {Send 1 returned item to a different dealer} other {Send # returned items to a different dealer}}",
+        "approveAll": "{count, plural, one {✓ Approve all (1 item)} other {✓ Approve all (# items)}}",
+        "remove": "🗑 Remove",
+        "cancelOrder": "Cancel Order",
+        "deleteCancelledOrder": "Delete Cancelled Order",
+        "pickRecipient": "Pick a recipient →"
+      },
+      "facilitatorOwned": {
+        "returnedHandling": "{count, plural, one {1 returned item · your facilitator is handling} other {# returned items · your facilitator is handling}}",
+        "facilitatorWillForward": "Your facilitator will forward these to another dealer or hand them back to you. No action needed from you."
+      },
+      "approvalSection": {
+        "title": "Awaiting your approval ({count})",
+        "batchRound": "Batch {current} of {total}",
+        "brandPending": "Brand pending",
+        "byManufacturer": "by {manufacturer}",
+        "acrossTimelines": "{count, plural, one {across 1 timeline} other {across # timelines}}",
+        "priceNotProvided": "Price not provided"
+      },
+      "postponedSection": {
+        "title": "Postponed by dealer ({count})",
+        "itemFallback": "Item",
+        "dealerRevisitBy": "Dealer will revisit by {date}",
+        "cancelDontWait": "Cancel — don't want to wait"
+      },
+      "returnedSection": {
+        "title": "Returned ({count})",
+        "hintFacilitatorOwned": "These items couldn't be fulfilled. Your facilitator is handling them — they'll forward to another dealer or hand them back to you.",
+        "hintFarmerActs": "These items can't be fulfilled. Send the whole returned batch to a different dealer with the button above, or leave them for now.",
+        "itemFallback": "Item",
+        "deletedFromApproval": "Deleted from approval",
+        "notAvailableAtDealer": "Not available at dealer"
+      },
+      "approvedSection": {
+        "title": "Approved ({count})",
+        "itemFallback": "Item"
+      },
+      "draft": {
+        "title": "This is a draft",
+        "body": "These items were saved when you cancelled the original order. Pick a new dealer or facilitator and send them on their way."
+      },
+      "picker": {
+        "titleForward": "Forward to",
+        "titleSend": "Send to",
+        "brandLockedTitle": "Brand-locked order",
+        "tabDealers": "Dealers ({count})",
+        "tabFacilitators": "Facilitators ({count})",
+        "emptyDealers": "No dealers found nearby.",
+        "emptyFacilitators": "No facilitators found nearby.",
+        "promoterBadge": "Promoter",
+        "sending": "Sending…",
+        "sendBtn": "Send",
+        "distanceKm": "{km} km away"
+      },
+      "confirmDelete": {
+        "title": "Delete this item?",
+        "bodyPrefix": "",
+        "bodySuffix": "will be moved to your Returned list. You can send it to another dealer from there.",
+        "itemFallback": "Item",
+        "cancelBtn": "Cancel",
+        "yesDelete": "Yes, delete"
+      },
+      "confirmCancelPostponed": {
+        "title": "Cancel postponed item?",
+        "bodySuffix": "will move to your Returned list. You can send it to another dealer from there.",
+        "itemFallback": "Item",
+        "keepWaiting": "Keep waiting",
+        "yesCancel": "Yes, cancel"
+      },
+      "rerouteNudge": {
+        "title": "Send returned items to another dealer",
+        "bodyPrefix": "You have",
+        "bodyMiddle": "still with the current dealer. Do you want to cancel them and send everything together to a new dealer, or leave them with the current dealer in case they deliver later?",
+        "postponedCount": "{count, plural, one {1 postponed item} other {# postponed items}}",
+        "bundleCta": "Cancel postponed & send everything ({count} items)",
+        "keepCta": "Keep postponed with current dealer · send only returned ({count})"
+      },
+      "receiveBanner": {
+        "receivedOnAt": "✓ Received on {date} at {time}",
+        "facilitatorHandedOff": "Your facilitator has picked these items up. Tap below once they reach you.",
+        "dealerHandover": "Tap when you have the items in hand. Please cross-check the Packing ID with what the dealer shared.",
+        "ctaReceived": "✓ I have received the items",
+        "confirmTitle": "Confirm receipt?",
+        "confirmBody": "By confirming, you tell the dealer you have the items in hand. They will mark the order as completed. Only do this when the items are physically with you.",
+        "packingIdLabel": "Packing ID:",
+        "yesIHaveThem": "Yes, I have them"
+      }
+    },
     "cropOrders": {
       "headerTitle": "Orders",
       "tabs": {

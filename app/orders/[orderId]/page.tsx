@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -83,6 +84,8 @@ const STATUS_FARMER: Record<string, string> = {
 export default function FarmerOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
+  const t = useTranslations('orders.review')
+  const tCommon = useTranslations('common')
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [rerouting, setRerouting] = useState<string | null>(null)
@@ -215,13 +218,13 @@ export default function FarmerOrderDetailPage() {
       if (detail && typeof detail === 'object' && detail.message) {
         alert(detail.message)
       } else {
-        alert('Could not send the order. Please try again.')
+        alert(t('errors.sendFailed'))
       }
     } finally { setSending(null) }
   }
 
   async function deleteCancelledOrder() {
-    if (!confirm('Delete this cancelled order from your list? Your items are safe in the draft.')) return
+    if (!confirm(t('confirm.deleteCancelledOrder'))) return
     try {
       await api.delete(`/farmer/orders/${orderId}`)
       router.replace('/orders')
@@ -229,15 +232,15 @@ export default function FarmerOrderDetailPage() {
       const e = err as { response?: { data?: { detail?: { code?: string; message?: string } } } }
       const detail = e?.response?.data?.detail
       if (detail && typeof detail === 'object' && detail.code === 'must_cancel_first') {
-        alert(detail.message || 'Cancel the order first.')
+        alert(detail.message || t('errors.cancelFirst'))
       } else {
-        alert('Could not delete the order. Please try again.')
+        alert(t('errors.deleteFailed'))
       }
     }
   }
 
   async function cancelOrder() {
-    if (!confirm('Cancel this order? Your items will be saved in a new draft so you can re-send them.')) return
+    if (!confirm(t('confirm.cancelOrder'))) return
     try {
       // Orders V2 Batch 3: cancel migrates items to a fresh DRAFT
       // and returns its id. We route the farmer to the draft so
@@ -252,7 +255,7 @@ export default function FarmerOrderDetailPage() {
       const draftId = data?.new_draft_order_id
       const count = data?.migrated_item_count ?? 0
       if (draftId && count > 0) {
-        alert(`Cancelled. ${count} item${count === 1 ? ' has' : 's have'} been saved in a new draft — pick a new dealer or facilitator to send to.`)
+        alert(count === 1 ? t('alerts.cancelledNoticeOne') : t('alerts.cancelledNoticeMany', { count }))
         router.replace(`/orders/${draftId}`)
       } else {
         router.replace('/orders')
@@ -261,9 +264,9 @@ export default function FarmerOrderDetailPage() {
       const e = err as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } } } }
       const detail = e?.response?.data?.detail
       if (e?.response?.status === 409 && detail && typeof detail === 'object' && detail.code === 'dealer_currently_viewing') {
-        alert(detail.message || 'The dealer is reviewing this order right now. Try again in a minute.')
+        alert(detail.message || t('errors.dealerCurrentlyViewing'))
       } else {
-        alert('Could not cancel the order. Please try again.')
+        alert(t('errors.cancelFailed'))
       }
     }
   }
@@ -280,7 +283,7 @@ export default function FarmerOrderDetailPage() {
         router.replace('/orders')
       }
     } catch {
-      alert('Could not approve. Please try again.')
+      alert(t('errors.approveFailed'))
     }
   }
 
@@ -311,7 +314,7 @@ export default function FarmerOrderDetailPage() {
   }
 
   async function removeItem(itemId: string) {
-    if (!confirm('Remove this item from the order?')) return
+    if (!confirm(t('confirm.removeItem'))) return
     await api.delete(`/farmer/orders/${orderId}/items/${itemId}`)
     load()
   }
@@ -362,7 +365,7 @@ export default function FarmerOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Order Details" activeRole="FARMER"
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER"
         back={order.subscription_id ? `/crop-detail/${order.subscription_id}/orders?tab=manage` : '/orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
@@ -370,11 +373,11 @@ export default function FarmerOrderDetailPage() {
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-[#7A8C7E]">Status</p>
+              <p className="text-xs text-[#7A8C7E]">{t('statusLabel')}</p>
               <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-[#7A8C7E]">Date</p>
+              <p className="text-xs text-[#7A8C7E]">{t('dateLabel')}</p>
               <p className="text-xs text-[#6B3F1F]">
                 {new Date(order.date_from).toLocaleDateString()} — {new Date(order.date_to).toLocaleDateString()}
               </p>
@@ -394,7 +397,7 @@ export default function FarmerOrderDetailPage() {
           <button onClick={startReroute}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
             style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
-            Send {reroutableItems.length} returned item{reroutableItems.length === 1 ? '' : 's'} to a different dealer
+            {t('cta.rerouteReturned', { count: reroutableItems.length })}
           </button>
         )}
 
@@ -406,10 +409,10 @@ export default function FarmerOrderDetailPage() {
           && !['CANCELLED', 'EXPIRED'].includes(order.status) && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
             <p className="text-sm text-amber-900 font-medium">
-              {reroutableItems.length} returned item{reroutableItems.length === 1 ? '' : 's'} · your facilitator is handling
+              {t('facilitatorOwned.returnedHandling', { count: reroutableItems.length })}
             </p>
             <p className="text-xs text-amber-700 mt-1">
-              Your facilitator will forward these to another dealer or hand them back to you. No action needed from you.
+              {t('facilitatorOwned.facilitatorWillForward')}
             </p>
           </div>
         )}
@@ -424,14 +427,17 @@ export default function FarmerOrderDetailPage() {
           <section className="space-y-2">
             <div className="flex items-baseline justify-between gap-2 px-1">
               <p className="text-sm font-semibold text-[#6B3F1F]">
-                Awaiting your approval ({order.approval_items!.length})
+                {t('approvalSection.title', { count: order.approval_items!.length })}
               </p>
               {/* 2026-06-05 — Round-queue indicator. When the dealer has
                   resolved a postpone while an earlier batch is still
                   being decided, the second batch waits behind. */}
               {(order.approval_rounds_pending ?? 0) > 1 && (
                 <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full">
-                  Batch {order.approval_round_current ?? 1} of {order.approval_rounds_pending}
+                  {t('approvalSection.batchRound', {
+                    current: order.approval_round_current ?? 1,
+                    total: order.approval_rounds_pending ?? 0,
+                  })}
                 </span>
               )}
             </div>
@@ -439,16 +445,16 @@ export default function FarmerOrderDetailPage() {
               <div key={row.id} className="bg-white rounded-2xl border border-purple-200 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || 'Brand pending'}</p>
+                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || t('approvalSection.brandPending')}</p>
                     {row.manufacturer_name && (
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">by {row.manufacturer_name}</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">{t('approvalSection.byManufacturer', { manufacturer: row.manufacturer_name })}</p>
                     )}
                     <p className="text-sm text-[#6B3F1F] mt-1.5">
                       {row.given_volume ?? '—'} {row.volume_unit ?? ''}
                     </p>
                     {row.merged_timeline_count && row.merged_timeline_count > 1 && (
                       <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-                        across {row.merged_timeline_count} timelines
+                        {t('approvalSection.acrossTimelines', { count: row.merged_timeline_count })}
                       </p>
                     )}
                   </div>
@@ -456,7 +462,7 @@ export default function FarmerOrderDetailPage() {
                     {row.price != null ? (
                       <p className="text-lg font-bold text-[#085041]">₹{row.price.toLocaleString('en-IN')}</p>
                     ) : (
-                      <p className="text-[11px] text-amber-700 italic">Price not provided</p>
+                      <p className="text-[11px] text-amber-700 italic">{t('approvalSection.priceNotProvided')}</p>
                     )}
                   </div>
                 </div>
@@ -470,14 +476,14 @@ export default function FarmerOrderDetailPage() {
                     row + brand + price right here. */}
                 <button onClick={() => setConfirmDelete(row)}
                   className="w-full mt-3 bg-red-50 border border-red-200 text-[#D4682E] text-xs font-semibold py-2 rounded-xl">
-                  🗑 Remove
+                  {t('cta.remove')}
                 </button>
               </div>
             ))}
             <button onClick={approveAll}
               className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
               style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
-              ✓ Approve all ({order.approval_items!.length} item{order.approval_items!.length === 1 ? '' : 's'})
+              {t('cta.approveAll', { count: order.approval_items!.length })}
             </button>
           </section>
         )}
@@ -485,23 +491,23 @@ export default function FarmerOrderDetailPage() {
         {(order.postponed_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
             <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              Postponed by dealer ({order.postponed_items!.length})
+              {t('postponedSection.title', { count: order.postponed_items!.length })}
             </p>
             {order.postponed_items!.map(row => (
               <div key={row.id} className="bg-white rounded-2xl border border-amber-200 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || row.practice_name || 'Item'}</p>
+                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || row.practice_name || t('postponedSection.itemFallback')}</p>
                     {row.postponed_until && (
                       <p className="text-xs text-amber-700 mt-1">
-                        Dealer will revisit by {new Date(row.postponed_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        {t('postponedSection.dealerRevisitBy', { date: new Date(row.postponed_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
                       </p>
                     )}
                   </div>
                 </div>
                 <button onClick={() => setConfirmCancelPostponed(row)}
                   className="mt-3 w-full bg-red-50 border border-red-200 text-[#D4682E] text-xs font-semibold py-2 rounded-xl">
-                  Cancel — don't want to wait
+                  {t('postponedSection.cancelDontWait')}
                 </button>
               </div>
             ))}
@@ -515,20 +521,20 @@ export default function FarmerOrderDetailPage() {
         {!approvalPending && (order.returned_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
             <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              Returned ({order.returned_items!.length})
+              {t('returnedSection.title', { count: order.returned_items!.length })}
             </p>
             <p className="text-[11px] text-[#7A8C7E] px-1 -mt-1">
               {facilitatorOwns
-                ? "These items couldn't be fulfilled. Your facilitator is handling them — they'll forward to another dealer or hand them back to you."
-                : "These items can't be fulfilled. Send the whole returned batch to a different dealer with the button above, or leave them for now."}
+                ? t('returnedSection.hintFacilitatorOwned')
+                : t('returnedSection.hintFarmerActs')}
             </p>
             {order.returned_items!.map(row => (
               <div key={row.id} className="bg-white rounded-2xl border border-red-200 shadow-sm p-4">
                 <p className="font-semibold text-[#6B3F1F] truncate">
-                  {row.brand_name || row.practice_name || 'Item'}
+                  {row.brand_name || row.practice_name || t('returnedSection.itemFallback')}
                 </p>
                 <p className="text-xs text-[#D4682E] mt-1">
-                  {row.status === 'REJECTED' ? 'Deleted from approval' : 'Not available at dealer'}
+                  {row.status === 'REJECTED' ? t('returnedSection.deletedFromApproval') : t('returnedSection.notAvailableAtDealer')}
                 </p>
               </div>
             ))}
@@ -539,7 +545,7 @@ export default function FarmerOrderDetailPage() {
           <section className="space-y-2">
             <div className="flex items-baseline justify-between px-1">
               <p className="text-sm font-semibold text-[#6B3F1F]">
-                Approved ({order.approved_items!.length})
+                {t('approvedSection.title', { count: order.approved_items!.length })}
               </p>
               {order.packing_code && (
                 <span className="text-[10px] font-mono tracking-widest bg-emerald-600 text-white px-2 py-0.5 rounded-full">
@@ -552,9 +558,9 @@ export default function FarmerOrderDetailPage() {
               <div key={row.id} className="bg-white rounded-2xl border border-emerald-200 shadow-sm p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || 'Item'}</p>
+                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || t('approvedSection.itemFallback')}</p>
                     {row.manufacturer_name && (
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">by {row.manufacturer_name}</p>
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">{t('approvalSection.byManufacturer', { manufacturer: row.manufacturer_name })}</p>
                     )}
                     <p className="text-sm text-emerald-700 mt-1.5">
                       {row.given_volume ?? '—'} {row.volume_unit ?? ''}
@@ -574,16 +580,15 @@ export default function FarmerOrderDetailPage() {
         {isDraft && (
           <>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
-              <p className="font-semibold mb-1">This is a draft</p>
+              <p className="font-semibold mb-1">{t('draft.title')}</p>
               <p>
-                These items were saved when you cancelled the original order.
-                Pick a new dealer or facilitator and send them on their way.
+                {t('draft.body')}
               </p>
             </div>
             <button onClick={openPicker}
               className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
               style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
-              Pick a recipient →
+              {t('cta.pickRecipient')}
             </button>
           </>
         )}
@@ -592,7 +597,7 @@ export default function FarmerOrderDetailPage() {
         {canCancel && (
           <button onClick={cancelOrder}
             className="w-full py-3 rounded-2xl border-2 border-red-200 text-[#D4682E] font-semibold text-sm">
-            Cancel Order
+            {t('cta.cancelOrder')}
           </button>
         )}
 
@@ -603,7 +608,7 @@ export default function FarmerOrderDetailPage() {
         {canDeleteHusk && (
           <button onClick={deleteCancelledOrder}
             className="w-full py-3 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold text-sm">
-            Delete Cancelled Order
+            {t('cta.deleteCancelledOrder')}
           </button>
         )}
       </div>
@@ -616,26 +621,26 @@ export default function FarmerOrderDetailPage() {
           <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}
             style={{ paddingBottom: 'max(1.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-semibold text-[#6B3F1F]">{rerouteIncludePostponed !== null ? 'Forward to' : 'Send to'}</p>
+              <p className="font-semibold text-[#6B3F1F]">{rerouteIncludePostponed !== null ? t('picker.titleForward') : t('picker.titleSend')}</p>
               <button onClick={() => !sending && closePicker()} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             {lockedBrandExplainer && (
               <div className="mx-4 mt-3 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed">
-                <p className="font-semibold mb-0.5">Brand-locked order</p>
+                <p className="font-semibold mb-0.5">{t('picker.brandLockedTitle')}</p>
                 <p>{lockedBrandExplainer}</p>
               </div>
             )}
             <div className="flex border-b border-[#DDD0B8]">
-              {(['dealers', 'facilitators'] as const).map(t => {
+              {(['dealers', 'facilitators'] as const).map(tabKey => {
                 // Hide the facilitators tab entirely for locked-brand
                 // orders — they're not an eligible path. Keep both
                 // tabs present otherwise so an empty list still has
                 // its own pane and "0" reads naturally.
-                if (t === 'facilitators' && lockedBrandExplainer) return null
+                if (tabKey === 'facilitators' && lockedBrandExplainer) return null
                 return (
-                  <button key={t} onClick={() => setPickerTab(t)}
-                    className={`flex-1 py-3 text-sm font-medium ${pickerTab === t ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
-                    {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
+                  <button key={tabKey} onClick={() => setPickerTab(tabKey)}
+                    className={`flex-1 py-3 text-sm font-medium ${pickerTab === tabKey ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
+                    {tabKey === 'dealers' ? t('picker.tabDealers', { count: dealers.length }) : t('picker.tabFacilitators', { count: facilitators.length })}
                   </button>
                 )
               })}
@@ -645,7 +650,7 @@ export default function FarmerOrderDetailPage() {
                 [1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)
               ) : (pickerTab === 'dealers' ? dealers : facilitators).length === 0 ? (
                 <div className="text-center py-10 text-sm text-[#7A8C7E]">
-                  No {pickerTab} found nearby.
+                  {pickerTab === 'dealers' ? t('picker.emptyDealers') : t('picker.emptyFacilitators')}
                 </div>
               ) : (
                 (pickerTab === 'dealers' ? dealers : facilitators).map(r => {
@@ -656,14 +661,14 @@ export default function FarmerOrderDetailPage() {
                       <div className="min-w-0 mr-3">
                         <p className="font-semibold text-[#6B3F1F] text-sm truncate">{r.name}</p>
                         {isDealer && r.shop_name && <p className="text-xs text-[#7A8C7E] truncate">{r.shop_name}</p>}
-                        {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{r.distance_km} km away</p>}
-                        {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">Promoter</span>}
+                        {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{t('picker.distanceKm', { km: r.distance_km })}</p>}
+                        {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">{t('picker.promoterBadge')}</span>}
                       </div>
                       <button onClick={() => sendToRecipient(r, isDealer)}
                         disabled={!!sending}
                         className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
                         style={{ background: '#3A7D44' }}>
-                        {busy ? 'Sending…' : 'Send'}
+                        {busy ? t('picker.sending') : t('picker.sendBtn')}
                       </button>
                     </div>
                   )
@@ -679,18 +684,18 @@ export default function FarmerOrderDetailPage() {
       {confirmDelete && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmDelete(null)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Delete this item?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('confirmDelete.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-1.5">
-              <strong className="text-[#6B3F1F]">{confirmDelete.brand_name || 'Item'}</strong> will be moved to your Returned list. You can send it to another dealer from there.
+              <strong className="text-[#6B3F1F]">{confirmDelete.brand_name || t('confirmDelete.itemFallback')}</strong> {t('confirmDelete.bodySuffix')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmDelete(null)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={() => rejectRow(confirmDelete)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl">
-                Yes, delete
+                {t('confirmDelete.yesDelete')}
               </button>
             </div>
           </div>
@@ -700,18 +705,18 @@ export default function FarmerOrderDetailPage() {
       {confirmCancelPostponed && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmCancelPostponed(null)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Cancel postponed item?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('confirmCancelPostponed.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-1.5">
-              <strong className="text-[#6B3F1F]">{confirmCancelPostponed.brand_name || confirmCancelPostponed.practice_name || 'Item'}</strong> will move to your Returned list. You can send it to another dealer from there.
+              <strong className="text-[#6B3F1F]">{confirmCancelPostponed.brand_name || confirmCancelPostponed.practice_name || t('confirmCancelPostponed.itemFallback')}</strong> {t('confirmCancelPostponed.bodySuffix')}
             </p>
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirmCancelPostponed(null)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                Keep waiting
+                {t('confirmCancelPostponed.keepWaiting')}
               </button>
               <button onClick={() => cancelPostponedRow(confirmCancelPostponed)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl">
-                Yes, cancel
+                {t('confirmCancelPostponed.yesCancel')}
               </button>
             </div>
           </div>
@@ -724,25 +729,23 @@ export default function FarmerOrderDetailPage() {
       {rerouteNudge && order && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setRerouteNudge(false)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Send returned items to another dealer</p>
+            <p className="font-bold text-[#6B3F1F]">{t('rerouteNudge.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
-              You have <strong className="text-[#6B3F1F]">{order.postponed_items?.length ?? 0} postponed item{(order.postponed_items?.length ?? 0) === 1 ? '' : 's'}</strong> still
-              with the current dealer. Do you want to cancel them and send everything together to a new dealer,
-              or leave them with the current dealer in case they deliver later?
+              {t('rerouteNudge.bodyPrefix')} <strong className="text-[#6B3F1F]">{t('rerouteNudge.postponedCount', { count: order.postponed_items?.length ?? 0 })}</strong> {t('rerouteNudge.bodyMiddle')}
             </p>
             <div className="space-y-2 mt-4">
               <button onClick={() => doReroute(true)}
                 className="w-full py-3 rounded-xl text-white text-sm font-semibold"
                 style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
-                Cancel postponed & send everything ({(order.returned_items?.length ?? 0) + (order.postponed_items?.length ?? 0)} items)
+                {t('rerouteNudge.bundleCta', { count: (order.returned_items?.length ?? 0) + (order.postponed_items?.length ?? 0) })}
               </button>
               <button onClick={() => doReroute(false)}
                 className="w-full py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-                Keep postponed with current dealer · send only returned ({order.returned_items?.length ?? 0})
+                {t('rerouteNudge.keepCta', { count: order.returned_items?.length ?? 0 })}
               </button>
               <button onClick={() => setRerouteNudge(false)}
                 className="w-full py-2 text-[#7A8C7E] text-sm">
-                Cancel
+                {tCommon('cancel')}
               </button>
             </div>
           </div>
@@ -765,6 +768,9 @@ function ReceiveBanner({
   order: Order
   onReceived: () => void
 }) {
+  const t = useTranslations('orders.review.receiveBanner')
+  const tReview = useTranslations('orders.review')
+  const tCommon = useTranslations('common')
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -774,15 +780,18 @@ function ReceiveBanner({
       await api.put(`/farmer/orders/${order.id}/packing-list/mark-received`, {})
       setConfirm(false)
       onReceived()
-    } catch { alert('Could not confirm receipt. Please try again.') }
+    } catch { alert(tReview('errors.receiptFailed')) }
     finally { setBusy(false) }
   }
 
   if (order.packing_farmer_received_at) {
-    const t = new Date(order.packing_farmer_received_at)
+    const stamp = new Date(order.packing_farmer_received_at)
     return (
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-800">
-        ✓ Received on {t.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} at {t.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+        {t('receivedOnAt', {
+          date: stamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+          time: stamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        })}
       </div>
     )
   }
@@ -795,18 +804,16 @@ function ReceiveBanner({
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-3">
         {facilitatorPickedUp ? (
           <p className="text-xs text-amber-800 mb-2">
-            Your facilitator has picked these items up.
-            Tap below once they reach you.
+            {t('facilitatorHandedOff')}
           </p>
         ) : (
           <p className="text-xs text-amber-800 mb-2">
-            Tap when you have the items in hand. Please cross-check the Packing ID
-            with what the dealer shared.
+            {t('dealerHandover')}
           </p>
         )}
         <button onClick={() => setConfirm(true)}
           className="w-full bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl">
-          ✓ I have received the items
+          {t('ctaReceived')}
         </button>
       </div>
 
@@ -815,25 +822,23 @@ function ReceiveBanner({
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">Confirm receipt?</p>
+            <p className="font-bold text-[#6B3F1F]">{t('confirmTitle')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              By confirming, you tell the dealer you have the items in hand.
-              They will mark the order as completed. Only do this when the
-              items are physically with you.
+              {t('confirmBody')}
             </p>
             {order.packing_code && (
               <p className="text-xs text-[#6B3F1F] mt-2">
-                Packing ID: <strong className="font-mono tracking-widest">{order.packing_code}</strong>
+                {t('packingIdLabel')} <strong className="font-mono tracking-widest">{order.packing_code}</strong>
               </p>
             )}
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirm(false)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={markReceived} disabled={busy}
                 className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy ? '…' : 'Yes, I have them'}
+                {busy ? '…' : t('yesIHaveThem')}
               </button>
             </div>
           </div>
