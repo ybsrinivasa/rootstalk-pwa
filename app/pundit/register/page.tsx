@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 
@@ -27,6 +28,7 @@ const COLOUR = '#3C3489'
 
 export default function PunditRegisterPage() {
   const router = useRouter()
+  const t = useTranslations('pundit.register')
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -88,7 +90,7 @@ export default function PunditRegisterPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     if (!form.declaration_accepted) {
-      setError('You must accept the declaration to register.')
+      setError(t('errorDeclaration'))
       return
     }
     setSubmitting(true); setError('')
@@ -118,7 +120,7 @@ export default function PunditRegisterPage() {
       router.replace('/pundit/home')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: { message?: string } | string } } })?.response?.data?.detail
-      const text = typeof msg === 'string' ? msg : (msg?.message || 'Registration failed.')
+      const text = typeof msg === 'string' ? msg : (msg?.message || t('errorDefault'))
       setError(text)
     } finally { setSubmitting(false) }
   }
@@ -149,7 +151,7 @@ export default function PunditRegisterPage() {
           )
         })}
         {items.length === 0 && (
-          <p className="text-xs text-[#7A8C7E] italic">Loading…</p>
+          <p className="text-xs text-[#7A8C7E] italic">{t('chipsLoading')}</p>
         )}
       </div>
     )
@@ -167,7 +169,7 @@ export default function PunditRegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Register as FarmPundit" activeRole="FARMER" back />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back />
       <div className="pt-16 pb-20 px-4">
         <div className="flex items-center gap-2 mt-4 mb-6 justify-center">
           {[1,2,3,4].map(n => (
@@ -183,43 +185,43 @@ export default function PunditRegisterPage() {
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-[#6B3F1F]">Professional Profile</h2>
-                <p className="text-[#7A8C7E] text-sm mt-0.5">Tell farmers about your qualifications</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">{t('step1.title')}</h2>
+                <p className="text-[#7A8C7E] text-sm mt-0.5">{t('step1.subtitle')}</p>
               </div>
               <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Email</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('step1.emailLabel')}</label>
                   <input type="email" value={form.email}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                    required placeholder="your@email.com"
+                    required placeholder={t('step1.emailPlaceholder')}
                     className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Education</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('step1.educationLabel')}</label>
                   <select value={form.education_cosh_id}
                     onChange={e => setForm(f => ({ ...f, education_cosh_id: e.target.value }))}
                     required className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none">
-                    <option value="">Select…</option>
+                    <option value="">{t('step1.selectPlaceholder')}</option>
                     {options.pundit_education.map(o => <option key={o.cosh_id} value={o.cosh_id}>{o.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Years of Experience</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('step1.experienceLabel')}</label>
                   <select value={form.experience_cosh_id}
                     onChange={e => setForm(f => ({ ...f, experience_cosh_id: e.target.value }))}
                     required className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none">
-                    <option value="">Select…</option>
+                    <option value="">{t('step1.selectPlaceholder')}</option>
                     {options.pundit_experience.map(o => <option key={o.cosh_id} value={o.cosh_id}>{o.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">Farming Methods (select all that apply)</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">{t('step1.farmingMethodsLabel')}</p>
                   <Chips items={options.pundit_farming_methods}
                     picked={form.farming_methods}
                     onToggle={v => toggleMulti('farming_methods', v)} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">Cultivation Types (select all that apply)</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">{t('step1.cultivationTypesLabel')}</p>
                   <Chips items={options.pundit_cultivation_types}
                     picked={form.cultivation_types}
                     onToggle={v => toggleMulti('cultivation_types', v)} />
@@ -227,29 +229,29 @@ export default function PunditRegisterPage() {
 
                 {/* Employment branch */}
                 <div className="border-t border-[#DDD0B8] pt-4">
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">Are you working for any organisation?</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">{t('step1.employedTitle')}</p>
                   <div className="flex gap-3 mb-3">
                     <label className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-[#DDD0B8] cursor-pointer"
                       style={form.is_employed_by_organization === true ? { borderColor: COLOUR, background: `${COLOUR}11` } : {}}>
                       <input type="radio" name="employed" checked={form.is_employed_by_organization === true}
                         onChange={() => setForm(f => ({ ...f, is_employed_by_organization: true, non_employed_kind: '' }))} />
-                      <span className="text-sm text-[#6B3F1F]">Yes</span>
+                      <span className="text-sm text-[#6B3F1F]">{t('step1.yes')}</span>
                     </label>
                     <label className="flex-1 flex items-center gap-2 p-3 rounded-xl border border-[#DDD0B8] cursor-pointer"
                       style={form.is_employed_by_organization === false ? { borderColor: COLOUR, background: `${COLOUR}11` } : {}}>
                       <input type="radio" name="employed" checked={form.is_employed_by_organization === false}
                         onChange={() => setForm(f => ({ ...f, is_employed_by_organization: false, organisation_type_cosh_id: '' }))} />
-                      <span className="text-sm text-[#6B3F1F]">No</span>
+                      <span className="text-sm text-[#6B3F1F]">{t('step1.no')}</span>
                     </label>
                   </div>
 
                   {form.is_employed_by_organization === true && (
                     <div>
-                      <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Organisation Type</label>
+                      <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('step1.organisationTypeLabel')}</label>
                       <select value={form.organisation_type_cosh_id}
                         onChange={e => setForm(f => ({ ...f, organisation_type_cosh_id: e.target.value }))}
                         required className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none">
-                        <option value="">Select…</option>
+                        <option value="">{t('step1.selectPlaceholder')}</option>
                         {options.pundit_organization_types.map(o => <option key={o.cosh_id} value={o.cosh_id}>{o.name}</option>)}
                       </select>
                     </div>
@@ -257,11 +259,11 @@ export default function PunditRegisterPage() {
 
                   {form.is_employed_by_organization === false && (
                     <div>
-                      <p className="block text-sm font-medium text-[#6B3F1F] mb-1.5">If you wish, tell us more</p>
+                      <p className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('step1.nonEmployedTitle')}</p>
                       <div className="space-y-2">
                         {[
-                          { value: 'RETIRED', label: 'I have retired from service' },
-                          { value: 'EXPERIENCED_FARMER', label: 'I am an experienced farmer' },
+                          { value: 'RETIRED', label: t('step1.nonEmployedRetired') },
+                          { value: 'EXPERIENCED_FARMER', label: t('step1.nonEmployedExperiencedFarmer') },
                         ].map(o => (
                           <label key={o.value}
                             className="flex items-center gap-3 p-2.5 rounded-xl border border-[#DDD0B8] cursor-pointer"
@@ -280,7 +282,7 @@ export default function PunditRegisterPage() {
               <button type="button" onClick={() => setStep(2)} disabled={!step1Ready}
                 className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-50"
                 style={{ background: COLOUR }}>
-                Next →
+                {t('step1.nextCta')}
               </button>
             </div>
           )}
@@ -289,18 +291,18 @@ export default function PunditRegisterPage() {
           {step === 2 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-[#6B3F1F]">Expertise & Crops</h2>
-                <p className="text-[#7A8C7E] text-sm">What are you expert in?</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">{t('step2.title')}</h2>
+                <p className="text-[#7A8C7E] text-sm">{t('step2.subtitle')}</p>
               </div>
               <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">Domain Expertise</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">{t('step2.domainExpertiseLabel')}</p>
                   <Chips items={options.pundit_domain_expertise}
                     picked={form.expertise_domains}
                     onToggle={v => toggleMulti('expertise_domains', v)} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">Crop Groups of Interest</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">{t('step2.cropGroupsLabel')}</p>
                   <Chips items={options.pundit_crop_groups}
                     picked={form.crop_groups}
                     onToggle={v => toggleMulti('crop_groups', v)} />
@@ -308,11 +310,11 @@ export default function PunditRegisterPage() {
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(1)}
-                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">← Back</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">{t('step2.backCta')}</button>
                 <button type="button" onClick={() => setStep(3)}
                   disabled={form.expertise_domains.length === 0 || form.crop_groups.length === 0}
                   className="flex-1 text-white font-semibold py-3.5 rounded-2xl disabled:opacity-50"
-                  style={{ background: COLOUR }}>Next →</button>
+                  style={{ background: COLOUR }}>{t('step2.nextCta')}</button>
               </div>
             </div>
           )}
@@ -321,18 +323,18 @@ export default function PunditRegisterPage() {
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-[#6B3F1F]">Languages & Preferred States</h2>
-                <p className="text-[#7A8C7E] text-sm">Where and how do you communicate?</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">{t('step3.title')}</h2>
+                <p className="text-[#7A8C7E] text-sm">{t('step3.subtitle')}</p>
               </div>
               <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4">
                 <div>
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">Languages you are conversant in</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-2">{t('step3.languagesLabel')}</p>
                   <Chips items={options.pundit_languages}
                     picked={form.languages}
                     onToggle={v => toggleMulti('languages', v)} />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">Preferred States (where you can support farmers)</p>
+                  <p className="text-sm font-medium text-[#6B3F1F] mb-3">{t('step3.preferredStatesLabel')}</p>
                   {form.support_areas.map((area, idx) => {
                     const otherPicks = new Set(
                       form.support_areas
@@ -351,7 +353,7 @@ export default function PunditRegisterPage() {
                             return { ...f, support_areas: areas }
                           })}
                           className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none bg-white">
-                          <option value="">Select state…</option>
+                          <option value="">{t('step3.selectStatePlaceholder')}</option>
                           {opts.map(s => (
                             <option key={s.cosh_id} value={s.cosh_id}>{s.name}</option>
                           ))}
@@ -362,7 +364,7 @@ export default function PunditRegisterPage() {
                               ...f, support_areas: f.support_areas.filter((_, i) => i !== idx),
                             }))}
                             className="text-[#7A8C7E] text-xl px-2"
-                            aria-label="Remove this state">
+                            aria-label={t('step3.removeStateAria')}>
                             ×
                           </button>
                         )}
@@ -376,17 +378,17 @@ export default function PunditRegisterPage() {
                       form.support_areas.length >= states.length
                     }
                     className="text-xs font-medium disabled:opacity-40" style={{ color: COLOUR }}>
-                    + Add another state
+                    {t('step3.addStateCta')}
                   </button>
                 </div>
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(2)}
-                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">← Back</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">{t('step3.backCta')}</button>
                 <button type="button" onClick={() => setStep(4)}
                   disabled={form.languages.length === 0 || !form.support_areas[0]?.state_cosh_id}
                   className="flex-1 text-white font-semibold py-3.5 rounded-2xl disabled:opacity-50"
-                  style={{ background: COLOUR }}>Next →</button>
+                  style={{ background: COLOUR }}>{t('step3.nextCta')}</button>
               </div>
             </div>
           )}
@@ -395,33 +397,33 @@ export default function PunditRegisterPage() {
           {step === 4 && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-[#6B3F1F]">Declaration</h2>
-                <p className="text-[#7A8C7E] text-sm">Almost done</p>
+                <h2 className="text-lg font-bold text-[#6B3F1F]">{t('step4.title')}</h2>
+                <p className="text-[#7A8C7E] text-sm">{t('step4.subtitle')}</p>
               </div>
               <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] space-y-4 text-sm text-[#6B3F1F] leading-relaxed">
-                <p>By registering as a FarmPundit on RootsTalk, I declare that:</p>
+                <p>{t('step4.intro')}</p>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li>All information provided is accurate and truthful</li>
-                  <li>I have the qualifications and experience claimed in my profile</li>
-                  <li>I will respond to assigned queries within the 7-day window to the best of my ability</li>
-                  <li>I will provide advice that is in the best interest of farmers</li>
-                  <li>I will not use this platform for commercial promotion of specific brands unless disclosed</li>
+                  <li>{t('step4.bullet1')}</li>
+                  <li>{t('step4.bullet2')}</li>
+                  <li>{t('step4.bullet3')}</li>
+                  <li>{t('step4.bullet4')}</li>
+                  <li>{t('step4.bullet5')}</li>
                 </ul>
                 <label className="flex items-start gap-3 pt-2 cursor-pointer">
                   <input type="checkbox" checked={form.declaration_accepted}
                     onChange={e => setForm(f => ({ ...f, declaration_accepted: e.target.checked }))}
                     className="w-5 h-5 rounded mt-0.5" />
-                  <span className="font-medium text-[#6B3F1F]">I accept and agree to the above declaration</span>
+                  <span className="font-medium text-[#6B3F1F]">{t('step4.agree')}</span>
                 </label>
               </div>
               {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => setStep(3)}
-                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">← Back</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3.5 rounded-2xl text-sm">{t('step4.backCta')}</button>
                 <button type="submit" disabled={!form.declaration_accepted || submitting}
                   className="flex-1 text-white font-semibold py-3.5 rounded-2xl disabled:opacity-50"
                   style={{ background: COLOUR }}>
-                  {submitting ? 'Registering…' : 'Complete Registration'}
+                  {submitting ? t('step4.submitBusy') : t('step4.submitIdle')}
                 </button>
               </div>
             </div>
