@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -52,25 +53,24 @@ const STATUS_COLOUR: Record<string, string> = {
   REROUTED:          'bg-stone-100 text-[#7A8C7E]',
 }
 
-const STATUS_FARMER: Record<string, string> = {
-  DRAFT: 'Draft — pick a recipient',
-  SENT: 'Sent — waiting for dealer',
-  ACCEPTED: 'Dealer processing',
-  AVAILABLE: 'Dealer processing',
-  POSTPONED: 'Delayed',
-  NOT_AVAILABLE: 'Returned — action needed',
-  SENT_FOR_APPROVAL: 'Ready for your approval',
-  PURCHASED: 'Purchased',
-  REJECTED: 'Rejected by you',
-  CANCELLED: 'Cancelled',
-  REROUTED: 'Re-routed',
-}
+const STATUS_KEYS: readonly string[] = [
+  'DRAFT', 'SENT', 'ACCEPTED', 'AVAILABLE', 'POSTPONED', 'NOT_AVAILABLE',
+  'SENT_FOR_APPROVAL', 'PURCHASED', 'REJECTED', 'CANCELLED', 'REROUTED',
+]
 
 export default function FarmerSeedOrdersPage() {
   const router = useRouter()
+  const t = useTranslations('seedOrders')
   const [orders, setOrders] = useState<SeedOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'active' | 'history'>('active')
+
+  function statusCopy(status: string): string {
+    if (STATUS_KEYS.includes(status)) {
+      return t(`status.${status}` as 'status.DRAFT')
+    }
+    return status.replace(/_/g, ' ')
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -89,13 +89,15 @@ export default function FarmerSeedOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Seed Orders" activeRole="FARMER" back="/orders" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/orders" />
       <div className="pt-16 pb-24">
         <div className="flex bg-white border-b border-[#DDD0B8]">
-          {(['active', 'history'] as const).map(t => (
-            <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${tab === t ? 'border-green-700 text-green-800' : 'border-transparent text-[#7A8C7E]'}`}>
-              {t === 'active' ? `Active${active.length ? ` (${active.length})` : ''}` : 'History'}
+          {(['active', 'history'] as const).map(tabKey => (
+            <button key={tabKey} onClick={() => setTab(tabKey)}
+              className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${tab === tabKey ? 'border-green-700 text-green-800' : 'border-transparent text-[#7A8C7E]'}`}>
+              {tabKey === 'active'
+                ? (active.length ? t('tabActiveCount', { count: active.length }) : t('tabActive'))
+                : t('tabHistory')}
             </button>
           ))}
         </div>
@@ -107,7 +109,7 @@ export default function FarmerSeedOrdersPage() {
             <div className="text-center py-16">
               <span className="text-4xl">🌱</span>
               <p className="text-[#7A8C7E] text-sm mt-3">
-                {tab === 'active' ? 'No active seed orders' : 'No seed-order history yet'}
+                {tab === 'active' ? t('emptyActive') : t('emptyHistory')}
               </p>
             </div>
           ) : (
@@ -117,7 +119,7 @@ export default function FarmerSeedOrdersPage() {
                 className="w-full text-left bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="min-w-0">
-                    <p className="font-semibold text-[#6B3F1F] truncate">{order.variety_name || 'Unknown variety'}</p>
+                    <p className="font-semibold text-[#6B3F1F] truncate">{order.variety_name || t('unknownVariety')}</p>
                     {/* Phase 1 (2026-06-02) — crop name comes from the
                         package via backend (preferred over the in-PWA
                         cropDisplayName lookup which can fall behind). */}
@@ -127,14 +129,14 @@ export default function FarmerSeedOrdersPage() {
                     </p>
                   </div>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[order.status] || 'bg-slate-100'}`}>
-                    {STATUS_FARMER[order.status] || order.status.replace(/_/g, ' ')}
+                    {statusCopy(order.status)}
                   </span>
                 </div>
                 {(order.crop_start_date || order.planting_year) && (
                   <p className="text-[11px] text-[#7A8C7E]">
                     {order.crop_start_date
-                      ? `Sown ${new Date(order.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
-                      : `Planted ${order.planting_year}`}
+                      ? t('sownOn', { date: new Date(order.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })
+                      : t('plantedIn', { year: order.planting_year ?? 0 })}
                   </p>
                 )}
                 {order.unit && order.quantity != null && (
@@ -168,11 +170,12 @@ function SeedRecipientLine({
   phone?: string | null
   role?: 'DEALER' | 'FACILITATOR' | null
 }) {
+  const t = useTranslations('seedOrders')
   if (!name && !shopName && !phone) return null
   const primary = role === 'DEALER' ? (shopName || name) : (name || shopName)
   const secondary = role === 'DEALER'
-    ? (name && shopName && name !== shopName ? `${name} (Dealer)` : 'Dealer')
-    : 'Facilitator'
+    ? (name && shopName && name !== shopName ? t('dealerWithName', { name }) : t('dealerLabel'))
+    : t('facilitatorLabel')
   return (
     <div className="mt-2 pt-2 border-t border-[#F0E5D0] flex items-center justify-between gap-2">
       <div className="min-w-0">

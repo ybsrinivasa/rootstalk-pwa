@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -39,21 +40,23 @@ interface Recipient {
   is_promoter?: boolean
 }
 
-const STATUS_FARMER: Record<string, { copy: string; tone: string }> = {
-  DRAFT:             { copy: 'Draft — pick a recipient',  tone: 'bg-stone-100 text-[#7A8C7E]' },
-  SENT:              { copy: 'Sent — waiting for dealer', tone: 'bg-purple-100 text-purple-700' },
-  ACCEPTED:          { copy: 'Dealer processing',         tone: 'bg-blue-100 text-blue-700' },
-  AVAILABLE:         { copy: 'Dealer processing',         tone: 'bg-blue-100 text-blue-700' },
-  POSTPONED:         { copy: 'Delayed',                   tone: 'bg-amber-100 text-amber-800' },
-  NOT_AVAILABLE:     { copy: 'Returned — action needed',  tone: 'bg-red-100 text-[#D4682E]' },
-  SENT_FOR_APPROVAL: { copy: 'Ready for your approval',   tone: 'bg-amber-100 text-amber-700' },
-  PURCHASED:         { copy: 'Purchased',                 tone: 'bg-emerald-100 text-emerald-700' },
-  REJECTED:          { copy: 'Rejected by you',           tone: 'bg-rose-100 text-rose-600' },
-  CANCELLED:         { copy: 'Cancelled',                 tone: 'bg-stone-100 text-[#7A8C7E]' },
-  REROUTED:          { copy: 'Re-routed',                 tone: 'bg-stone-100 text-[#7A8C7E]' },
+const STATUS_TONE: Record<string, string> = {
+  DRAFT:             'bg-stone-100 text-[#7A8C7E]',
+  SENT:              'bg-purple-100 text-purple-700',
+  ACCEPTED:          'bg-blue-100 text-blue-700',
+  AVAILABLE:         'bg-blue-100 text-blue-700',
+  POSTPONED:         'bg-amber-100 text-amber-800',
+  NOT_AVAILABLE:     'bg-red-100 text-[#D4682E]',
+  SENT_FOR_APPROVAL: 'bg-amber-100 text-amber-700',
+  PURCHASED:         'bg-emerald-100 text-emerald-700',
+  REJECTED:          'bg-rose-100 text-rose-600',
+  CANCELLED:         'bg-stone-100 text-[#7A8C7E]',
+  REROUTED:          'bg-stone-100 text-[#7A8C7E]',
 }
 
 export default function FarmerSeedOrderDetailPage() {
+  const t = useTranslations('seedOrders')
+  const tDetail = useTranslations('seedOrders.detail')
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
   const [order, setOrder] = useState<SeedOrder | null>(null)
@@ -85,7 +88,7 @@ export default function FarmerSeedOrderDetailPage() {
 
   async function cancelOrder() {
     if (!order) return
-    if (!confirm('Cancel this seed order? Your variety + quantity will be saved in a new draft so you can re-send.')) return
+    if (!confirm(tDetail('confirmCancel'))) return
     setBusy(true)
     try {
       const { data } = await api.put<{ status: string; new_draft_seed_order_id?: string }>(
@@ -93,25 +96,25 @@ export default function FarmerSeedOrderDetailPage() {
       )
       const draftId = data?.new_draft_seed_order_id
       if (draftId) {
-        alert('Cancelled. Pick a new dealer or facilitator on the next screen.')
+        alert(tDetail('cancelledToast'))
         router.replace(`/seed-orders/${draftId}`)
       } else {
         router.replace('/seed-orders')
       }
     } catch {
-      alert('Could not cancel. Please try again.')
+      alert(tDetail('errorCancel'))
     } finally { setBusy(false) }
   }
 
   async function deleteHusk() {
     if (!order) return
-    if (!confirm('Delete this cancelled seed order from your list?')) return
+    if (!confirm(tDetail('confirmDelete'))) return
     setBusy(true)
     try {
       await api.delete(`/farmer/seed-orders/${order.id}`)
       router.replace('/seed-orders')
     } catch {
-      alert('Could not delete. Please try again.')
+      alert(tDetail('errorDelete'))
     } finally { setBusy(false) }
   }
 
@@ -122,19 +125,19 @@ export default function FarmerSeedOrderDetailPage() {
       await api.put(`/farmer/seed-orders/${order.id}/approve`, {})
       load()
     } catch {
-      alert('Could not approve. Please try again.')
+      alert(tDetail('errorApprove'))
     } finally { setBusy(false) }
   }
 
   async function rejectOrder() {
     if (!order) return
-    if (!confirm('Reject the dealer\'s quantity and price?')) return
+    if (!confirm(tDetail('confirmReject'))) return
     setBusy(true)
     try {
       await api.put(`/farmer/seed-orders/${order.id}/reject`, {})
       load()
     } catch {
-      alert('Could not reject. Please try again.')
+      alert(tDetail('errorReject'))
     } finally { setBusy(false) }
   }
 
@@ -164,7 +167,7 @@ export default function FarmerSeedOrderDetailPage() {
       load()
     } catch (err: unknown) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message || 'Could not send. Please try again.')
+      alert(e?.response?.data?.detail?.message || tDetail('errorSend'))
     } finally { setSending(null) }
   }
 
@@ -179,22 +182,29 @@ export default function FarmerSeedOrderDetailPage() {
   const isCancelled = order.status === 'CANCELLED'
   const canCancel = !['DRAFT', 'CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED'].includes(order.status)
   const canApprove = order.status === 'SENT_FOR_APPROVAL'
-  const tone = STATUS_FARMER[order.status] ?? { copy: order.status, tone: 'bg-slate-100' }
+  const statusKeys: readonly string[] = [
+    'DRAFT', 'SENT', 'ACCEPTED', 'AVAILABLE', 'POSTPONED', 'NOT_AVAILABLE',
+    'SENT_FOR_APPROVAL', 'PURCHASED', 'REJECTED', 'CANCELLED', 'REROUTED',
+  ]
+  const statusCopy = statusKeys.includes(order.status)
+    ? t(`status.${order.status}` as 'status.DRAFT')
+    : order.status
+  const toneClass = STATUS_TONE[order.status] || 'bg-slate-100'
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Seed Order" activeRole="FARMER"
+      <PWAHeader title={tDetail('headerTitle')} activeRole="FARMER"
         back={order.subscription_id ? `/crop-detail/${order.subscription_id}/orders?tab=manage` : '/seed-orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="font-bold text-[#6B3F1F] truncate">{order.variety_name || 'Unknown variety'}</p>
+              <p className="font-bold text-[#6B3F1F] truncate">{order.variety_name || t('unknownVariety')}</p>
               <p className="text-xs text-[#7A8C7E]">{cropDisplayName(order.crop_cosh_id)}</p>
             </div>
-            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${tone.tone}`}>
-              {tone.copy}
+            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${toneClass}`}>
+              {statusCopy}
             </span>
           </div>
           {order.unit && order.quantity != null && (
@@ -208,22 +218,22 @@ export default function FarmerSeedOrderDetailPage() {
         {/* Dealer-submitted qty/price awaiting farmer approval */}
         {canApprove && order.unit && order.quantity != null && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-amber-900 mb-2">Dealer has submitted</p>
+            <p className="text-sm font-semibold text-amber-900 mb-2">{tDetail('dealerSubmittedTitle')}</p>
             <div className="space-y-1 text-sm text-[#6B3F1F]">
-              <p><span className="text-[#7A8C7E]">Quantity: </span>{order.quantity} {order.unit}</p>
+              <p><span className="text-[#7A8C7E]">{tDetail('quantityLabel')}</span>{order.quantity} {order.unit}</p>
               {order.total_price != null && (
-                <p><span className="text-[#7A8C7E]">Price: </span>₹{order.total_price}</p>
+                <p><span className="text-[#7A8C7E]">{tDetail('priceLabel')}</span>₹{order.total_price}</p>
               )}
             </div>
             <div className="flex gap-2 mt-3">
               <button onClick={approveOrder} disabled={busy}
                 className="flex-1 py-3 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
                 style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
-                ✓ Approve
+                {tDetail('approveCta')}
               </button>
               <button onClick={rejectOrder} disabled={busy}
                 className="px-5 py-3 rounded-2xl bg-red-100 text-[#D4682E] font-semibold text-sm">
-                ✗ Reject
+                {tDetail('rejectCta')}
               </button>
             </div>
           </div>
@@ -233,13 +243,13 @@ export default function FarmerSeedOrderDetailPage() {
         {isDraft && (
           <>
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
-              <p className="font-semibold mb-1">This is a draft</p>
-              <p>This variety + quantity was saved when you cancelled the previous order. Pick a new dealer or facilitator and send.</p>
+              <p className="font-semibold mb-1">{tDetail('draftTitle')}</p>
+              <p>{tDetail('draftBody')}</p>
             </div>
             <button onClick={openPicker}
               className="w-full py-4 rounded-2xl text-white font-semibold text-sm"
               style={{ background: 'linear-gradient(135deg, #3A7D44, #22773a)' }}>
-              Pick a recipient →
+              {tDetail('pickRecipientCta')}
             </button>
           </>
         )}
@@ -247,14 +257,14 @@ export default function FarmerSeedOrderDetailPage() {
         {/* POSTPONED — explainer + cancel CTA below */}
         {order.status === 'POSTPONED' && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900 leading-relaxed">
-            The dealer has delayed this seed order. It will auto-return to you when the window expires; you can also cancel below to send it to someone else right now.
+            {tDetail('postponedBody')}
           </div>
         )}
 
         {/* NOT_AVAILABLE — explainer + cancel CTA below */}
         {order.status === 'NOT_AVAILABLE' && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-800 leading-relaxed">
-            The dealer can&apos;t fulfil this seed order. Cancel below to send it to a different dealer or facilitator.
+            {tDetail('notAvailableBody')}
           </div>
         )}
 
@@ -262,7 +272,7 @@ export default function FarmerSeedOrderDetailPage() {
         {canCancel && (
           <button onClick={cancelOrder} disabled={busy}
             className="w-full py-3 rounded-2xl border-2 border-red-200 text-[#D4682E] font-semibold text-sm disabled:opacity-50">
-            Cancel Order
+            {tDetail('cancelOrderCta')}
           </button>
         )}
 
@@ -270,7 +280,7 @@ export default function FarmerSeedOrderDetailPage() {
         {isCancelled && (
           <button onClick={deleteHusk} disabled={busy}
             className="w-full py-3 rounded-2xl border-2 border-slate-200 text-slate-600 font-semibold text-sm disabled:opacity-50">
-            Delete Cancelled Order
+            {tDetail('deleteOrderCta')}
           </button>
         )}
       </div>
@@ -281,14 +291,16 @@ export default function FarmerSeedOrderDetailPage() {
           <div className="bg-white rounded-t-2xl w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}
             style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-semibold text-[#6B3F1F]">Send to</p>
+              <p className="font-semibold text-[#6B3F1F]">{tDetail('pickerTitle')}</p>
               <button onClick={() => !sending && setPickerOpen(false)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             <div className="flex border-b border-[#DDD0B8]">
-              {(['dealers', 'facilitators'] as const).map(t => (
-                <button key={t} onClick={() => setPickerTab(t)}
-                  className={`flex-1 py-3 text-sm font-medium ${pickerTab === t ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
-                  {t === 'dealers' ? `Dealers (${dealers.length})` : `Facilitators (${facilitators.length})`}
+              {(['dealers', 'facilitators'] as const).map(tabKey => (
+                <button key={tabKey} onClick={() => setPickerTab(tabKey)}
+                  className={`flex-1 py-3 text-sm font-medium ${pickerTab === tabKey ? 'text-[#6B3F1F] border-b-2 border-[#3A7D44]' : 'text-[#7A8C7E]'}`}>
+                  {tabKey === 'dealers'
+                    ? tDetail('pickerTabDealers', { count: dealers.length })
+                    : tDetail('pickerTabFacilitators', { count: facilitators.length })}
                 </button>
               ))}
             </div>
@@ -297,7 +309,7 @@ export default function FarmerSeedOrderDetailPage() {
                 [1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)
               ) : (pickerTab === 'dealers' ? dealers : facilitators).length === 0 ? (
                 <div className="text-center py-10 text-sm text-[#7A8C7E]">
-                  No {pickerTab} found nearby.
+                  {pickerTab === 'dealers' ? tDetail('emptyDealers') : tDetail('emptyFacilitators')}
                 </div>
               ) : (
                 (pickerTab === 'dealers' ? dealers : facilitators).map(r => {
@@ -308,14 +320,14 @@ export default function FarmerSeedOrderDetailPage() {
                       <div className="min-w-0 mr-3">
                         <p className="font-semibold text-[#6B3F1F] text-sm truncate">{r.name}</p>
                         {isDealer && r.shop_name && <p className="text-xs text-[#7A8C7E] truncate">{r.shop_name}</p>}
-                        {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{r.distance_km} km away</p>}
-                        {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">Promoter</span>}
+                        {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{tDetail('kmAway', { km: r.distance_km })}</p>}
+                        {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">{tDetail('promoterBadge')}</span>}
                       </div>
                       <button onClick={() => sendToRecipient(r, isDealer)}
                         disabled={!!sending}
                         className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
                         style={{ background: '#3A7D44' }}>
-                        {busy ? 'Sending…' : 'Send'}
+                        {busy ? tDetail('sendingCta') : tDetail('sendCta')}
                       </button>
                     </div>
                   )

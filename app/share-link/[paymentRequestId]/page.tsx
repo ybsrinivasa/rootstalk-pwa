@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -23,6 +24,7 @@ interface PaymentRequest {
 const COLOUR = '#3A7D44'
 
 export default function ShareLinkPage() {
+  const t = useTranslations('shareLink')
   const router = useRouter()
   const { paymentRequestId } = useParams<{ paymentRequestId: string }>()
 
@@ -52,7 +54,7 @@ export default function ShareLinkPage() {
       })
       .catch(err => {
         const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-        setError(detail || 'Could not load payment link.')
+        setError(detail || t('errorLoad'))
       })
       .finally(() => setLoading(false))
   }, [paymentRequestId, router])
@@ -76,13 +78,13 @@ export default function ShareLinkPage() {
 
   function shareWhatsApp() {
     if (!req?.short_url) return
-    const text = `Please pay ₹${Number(req.amount).toFixed(0)} for my crop advisory subscription on RootsTalk. Pay here: ${req.short_url}`
+    const text = t('whatsappMessage', { amount: Number(req.amount).toFixed(0), url: req.short_url })
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
   }
 
   function shareSMS() {
     if (!req?.short_url) return
-    const text = `Please pay ₹${Number(req.amount).toFixed(0)} for my RootsTalk subscription: ${req.short_url}`
+    const text = t('smsMessage', { amount: Number(req.amount).toFixed(0), url: req.short_url })
     window.location.href = `sms:?body=${encodeURIComponent(text)}`
   }
 
@@ -91,8 +93,8 @@ export default function ShareLinkPage() {
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          title: 'Pay for my RootsTalk subscription',
-          text: `Please pay ₹${Number(req.amount).toFixed(0)} for my crop advisory.`,
+          title: t('nativeTitle'),
+          text: t('nativeText', { amount: Number(req.amount).toFixed(0) }),
           url: req.short_url,
         })
       } catch { /* user cancelled */ }
@@ -104,14 +106,14 @@ export default function ShareLinkPage() {
 
   async function cancelLink() {
     if (!req) return
-    if (!confirm('Cancel this payment link? The QR will stop working immediately. You can generate a new one or pay yourself.')) return
+    if (!confirm(t('confirmCancel'))) return
     setCancelling(true)
     try {
       await api.delete(`/farmer/subscriptions/${req.subscription_id}/delegate-payment`)
       router.replace('/home')
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      alert(detail || 'Could not cancel.')
+      alert(detail || t('errorCancel'))
       setCancelling(false)
     }
   }
@@ -121,7 +123,7 @@ export default function ShareLinkPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Share payment link" activeRole="FARMER" back="/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20 px-4 max-w-md mx-auto">
         {loading ? (
           <div className="h-72 bg-white rounded-2xl animate-pulse mt-4" />
@@ -131,50 +133,50 @@ export default function ShareLinkPage() {
             <button onClick={() => router.replace('/home')}
               className="mt-4 w-full py-3 rounded-2xl text-white font-semibold text-sm"
               style={{ background: COLOUR }}>
-              Back to Home
+              {t('backToHome')}
             </button>
           </div>
         ) : req?.status === 'PAID' ? (
           // Came back after someone paid.
           <div className="bg-white rounded-2xl border border-[#DDD0B8] p-6 mt-6 text-center">
             <span className="text-5xl">✅</span>
-            <h2 className="font-bold text-xl mt-3" style={{ color: COLOUR }}>Payment received</h2>
+            <h2 className="font-bold text-xl mt-3" style={{ color: COLOUR }}>{t('paidTitle')}</h2>
             <p className="text-sm text-[#7A8C7E] mt-2">
               {req.paid_by_vpa
-                ? <>Paid by <span className="font-mono">{req.paid_by_vpa}</span></>
-                : 'Your subscription is now active.'}
+                ? <>{t('paidByPrefix')}<span className="font-mono">{req.paid_by_vpa}</span></>
+                : t('paidGenericBody')}
             </p>
             <button onClick={() => router.replace('/home')}
               className="mt-5 w-full py-3.5 rounded-2xl text-white font-semibold text-sm"
               style={{ background: COLOUR }}>
-              Open my advisory →
+              {t('openAdvisory')}
             </button>
           </div>
         ) : req?.status !== 'PENDING' ? (
           <div className="bg-white rounded-2xl border border-[#DDD0B8] p-6 mt-6 text-center">
             <span className="text-4xl">🚫</span>
-            <h2 className="font-bold text-lg text-[#6B3F1F] mt-3">Link no longer active</h2>
+            <h2 className="font-bold text-lg text-[#6B3F1F] mt-3">{t('inactiveTitle')}</h2>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              This payment link is {req?.status?.toLowerCase()}. You can generate a new one or pay yourself.
+              {t('inactiveBody', { status: req?.status?.toLowerCase() || '' })}
             </p>
             <button onClick={() => router.replace('/home')}
               className="mt-5 w-full py-3 rounded-2xl text-white font-semibold text-sm"
               style={{ background: COLOUR }}>
-              Back to Home
+              {t('backToHome')}
             </button>
           </div>
         ) : (
           <>
             {/* Heading + context */}
             <div className="mt-4 text-center">
-              <h2 className="font-bold text-xl text-[#6B3F1F]">Share this with anyone</h2>
+              <h2 className="font-bold text-xl text-[#6B3F1F]">{t('heading')}</h2>
               {titleContext && (
                 <p className="text-xs text-[#7A8C7E] mt-1">{titleContext}</p>
               )}
               <p className={`text-xs font-medium mt-2 ${hoursLow ? 'text-[#B85C00]' : 'text-[#7A8C7E]'}`}>
                 {req!.hours_remaining === 0
-                  ? 'Expiring soon'
-                  : `Link active for ${req!.hours_remaining} more hour${req!.hours_remaining === 1 ? '' : 's'}`}
+                  ? t('expiringSoon')
+                  : t('activeFor', { count: req!.hours_remaining })}
               </p>
             </div>
 
@@ -182,17 +184,17 @@ export default function ShareLinkPage() {
             <div className="bg-white rounded-3xl border border-[#DDD0B8] shadow-sm p-6 mt-4 flex flex-col items-center">
               {qrDataUrl ? (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={qrDataUrl} alt="Payment QR" width={280} height={280}
+                <img src={qrDataUrl} alt={t('qrAlt')} width={280} height={280}
                   className="rounded-xl"
                   style={{ imageRendering: 'pixelated' }} />
               ) : (
                 <div className="w-[280px] h-[280px] bg-slate-100 rounded-xl flex items-center justify-center text-[#7A8C7E] text-xs">
-                  Generating QR…
+                  {t('generating')}
                 </div>
               )}
               <p className="text-2xl font-bold text-[#6B3F1F] mt-4">₹{Number(req!.amount).toFixed(0)}</p>
               <p className="text-xs text-[#7A8C7E] mt-1">
-                Any UPI app — PhonePe, Google Pay, Paytm, BHIM, banks
+                {t('qrFooter')}
               </p>
             </div>
 
@@ -202,7 +204,7 @@ export default function ShareLinkPage() {
               <button onClick={copyLink}
                 className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap"
                 style={{ background: copied ? '#D4F4DD' : '#F5F0E8', color: COLOUR }}>
-                {copied ? '✓ Copied' : 'Copy'}
+                {copied ? t('copied') : t('copy')}
               </button>
             </div>
 
@@ -210,35 +212,35 @@ export default function ShareLinkPage() {
             <div className="grid grid-cols-3 gap-2 mt-3">
               <button onClick={shareWhatsApp}
                 className="py-3 rounded-2xl bg-white border border-[#DDD0B8] text-xs font-medium text-[#6B3F1F] flex flex-col items-center gap-1">
-                <span className="text-xl">💬</span>WhatsApp
+                <span className="text-xl">💬</span>{t('shareWhatsapp')}
               </button>
               <button onClick={shareSMS}
                 className="py-3 rounded-2xl bg-white border border-[#DDD0B8] text-xs font-medium text-[#6B3F1F] flex flex-col items-center gap-1">
-                <span className="text-xl">✉️</span>SMS
+                <span className="text-xl">✉️</span>{t('shareSms')}
               </button>
               <button onClick={shareNative}
                 className="py-3 rounded-2xl bg-white border border-[#DDD0B8] text-xs font-medium text-[#6B3F1F] flex flex-col items-center gap-1">
-                <span className="text-xl">↗</span>More
+                <span className="text-xl">↗</span>{t('shareMore')}
               </button>
             </div>
 
             {/* How it works */}
             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-4">
-              <p className="text-xs font-semibold text-emerald-900 mb-2">How this works</p>
+              <p className="text-xs font-semibold text-emerald-900 mb-2">{t('howTitle')}</p>
               <ol className="text-xs text-emerald-900 space-y-1 list-decimal list-inside">
-                <li>Share the QR or link with anyone — a relative in the city, a friend, anyone.</li>
-                <li>They scan and pay ₹{Number(req!.amount).toFixed(0)} via any UPI app.</li>
-                <li>Your subscription activates within seconds. You&apos;ll be notified.</li>
+                <li>{t('howStep1')}</li>
+                <li>{t('howStep2', { amount: Number(req!.amount).toFixed(0) })}</li>
+                <li>{t('howStep3')}</li>
               </ol>
             </div>
 
             <button onClick={cancelLink} disabled={cancelling}
               className="w-full mt-4 py-3 rounded-2xl text-[#7A8C7E] text-sm border border-[#DDD0B8] disabled:opacity-50">
-              {cancelling ? 'Cancelling…' : 'Cancel this link'}
+              {cancelling ? t('cancellingCta') : t('cancelCta')}
             </button>
             <button onClick={() => router.replace('/home')}
               className="w-full mt-2 py-3 rounded-2xl text-[#7A8C7E] text-sm">
-              Back to Home
+              {t('backToHome')}
             </button>
           </>
         )}
