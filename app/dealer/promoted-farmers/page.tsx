@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -16,6 +17,7 @@ const COLOUR = '#085041'
 
 export default function DealerPromotedFarmersPage() {
   const router = useRouter()
+  const t = useTranslations('dealer.promotedFarmers')
   const [farmers, setFarmers] = useState<PromotedFarmer[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -28,13 +30,13 @@ export default function DealerPromotedFarmersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Promoted Farmers" activeRole="DEALER" back="/dealer/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4 mb-3 flex justify-end">
           <button onClick={() => router.push('/dealer/promoter-assign')}
             className="text-sm font-semibold px-4 py-2.5 rounded-xl text-white"
             style={{ background: '#085041' }}>
-            + Assign advisory
+            {t('assignCta')}
           </button>
         </div>
         {loading ? (
@@ -44,8 +46,8 @@ export default function DealerPromotedFarmersPage() {
         ) : farmers.length === 0 ? (
           <div className="mt-8 text-center py-16">
             <span className="text-4xl">👨‍🌾</span>
-            <p className="text-[#7A8C7E] font-medium mt-3">No promoted farmers yet</p>
-            <p className="text-xs text-[#7A8C7E] mt-1">Farmers you sponsor will appear here</p>
+            <p className="text-[#7A8C7E] font-medium mt-3">{t('emptyTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">{t('emptyHint')}</p>
           </div>
         ) : (
           <div className="mt-4 space-y-3">
@@ -55,7 +57,7 @@ export default function DealerPromotedFarmersPage() {
                 className="w-full bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left active:scale-98 transition-transform">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-[#6B3F1F]">{f.farmer_name || 'Unknown farmer'}</p>
+                    <p className="font-semibold text-[#6B3F1F]">{f.farmer_name || t('unknownFarmer')}</p>
                     <p className="text-xs text-[#7A8C7E] mt-0.5">{f.farmer_phone}</p>
                     {f.reference_number && (
                       <p className="text-xs font-mono text-[#7A8C7E] mt-0.5">{f.reference_number}</p>

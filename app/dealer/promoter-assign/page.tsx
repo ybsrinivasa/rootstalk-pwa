@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -66,6 +67,8 @@ function ProgressBar({ stage }: { stage: Stage }) {
 
 export default function DealerPromoterAssignPage() {
   const router = useRouter()
+  const t = useTranslations('dealer.promoterAssign')
+  const tCommon = useTranslations('common')
   const [stage, setStage] = useState<Stage>('gate')
   const [allocations, setAllocations] = useState<AllocationRow[] | null>(null)
   const [allocationsError, setAllocationsError] = useState<string | null>(null)
@@ -97,10 +100,10 @@ export default function DealerPromoterAssignPage() {
       setAllocations(data)
       setAllocationsError(null)
     } catch {
-      setAllocationsError('Could not load your kitties. Pull to retry.')
+      setAllocationsError(t('errors.kittiesLoad'))
       setAllocations([])
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -120,7 +123,7 @@ export default function DealerPromoterAssignPage() {
   const selectedRow = (allocations || []).find(a => a.client_id === selectedClientId) || null
 
   async function verifyPhone() {
-    if (phone.length < 10) { setError('Enter a valid 10-digit number'); return }
+    if (phone.length < 10) { setError(t('errors.phoneInvalid')); return }
     setError('')
     setLoading(true)
     try {
@@ -134,12 +137,12 @@ export default function DealerPromoterAssignPage() {
       setStage('confirm_farmer')
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
-      setError(err?.response?.data?.detail || 'This number is not registered in RootsTalk. Ask the farmer to register first.')
+      setError(err?.response?.data?.detail || t('errors.phoneNotRegistered'))
     } finally { setLoading(false) }
   }
 
   async function continueToCrops() {
-    if (!district) { setError('Please pick the district where the farmland is'); return }
+    if (!district) { setError(t('errors.districtRequired')); return }
     setError('')
     setLoading(true)
     try {
@@ -149,7 +152,7 @@ export default function DealerPromoterAssignPage() {
       setCrops(data)
       setStage('crop')
     } catch {
-      setError('Could not load crops. Pick a different district or try again.')
+      setError(t('errors.cropsLoad'))
     } finally { setLoading(false) }
   }
 
@@ -171,7 +174,7 @@ export default function DealerPromoterAssignPage() {
         setStage('guided')
       }
     } catch {
-      setError('Could not start guided flow.')
+      setError(t('errors.guidedStart'))
     } finally { setLoading(false) }
   }
 
@@ -191,7 +194,7 @@ export default function DealerPromoterAssignPage() {
         setStage('confirm')
       }
     } catch {
-      setError('Error fetching next step.')
+      setError(t('errors.guidedNext'))
     } finally { setLoading(false) }
   }
 
@@ -224,7 +227,7 @@ export default function DealerPromoterAssignPage() {
       const detail = err?.response?.data?.detail
       const msg = typeof detail === 'string'
         ? detail
-        : detail?.message || 'Could not send request. Please try again.'
+        : detail?.message || t('errors.sendRequest')
       setError(msg)
     } finally { setLoading(false) }
   }
@@ -234,7 +237,7 @@ export default function DealerPromoterAssignPage() {
   if (stage === 'gate') {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Assign Advisory" activeRole="DEALER" back="/dealer/home" />
+        <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
         <div className="pt-16 px-4 max-w-lg mx-auto">
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
@@ -249,24 +252,23 @@ export default function DealerPromoterAssignPage() {
   if (allocationsError || spendable.length === 0) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Assign Advisory" activeRole="DEALER" back="/dealer/home" />
+        <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
         <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
           <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <p className="text-base font-bold text-amber-900 mb-2">No subscriptions available</p>
+            <p className="text-base font-bold text-amber-900 mb-2">{t('noSubsTitle')}</p>
             <p className="text-sm text-amber-800 leading-relaxed">
-              {allocationsError ||
-                'None of the companies that have onboarded you have allocated subscriptions to your kitty yet. Ask a company admin to allocate units before you assign advisories to farmers.'}
+              {allocationsError || t('noSubsBody')}
             </p>
           </div>
           <button
             onClick={refreshAllocations}
             className="mt-4 w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
-            ↻ Refresh
+            {t('refresh')}
           </button>
           <button
             onClick={() => router.push('/dealer/promoter-assign/pending')}
             className="mt-3 w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
-            View pending sent →
+            {t('viewPendingSent')}
           </button>
         </div>
       </div>
@@ -275,7 +277,7 @@ export default function DealerPromoterAssignPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Assign Advisory" activeRole="DEALER" back="/dealer/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
           {/* Active-company chip — pinned across every stage past
@@ -285,13 +287,13 @@ export default function DealerPromoterAssignPage() {
             <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-full bg-emerald-50 border border-emerald-200">
               <span className="text-xs text-emerald-800 truncate">
                 <span className="font-semibold">{selectedRow.units_balance.toLocaleString('en-IN')}</span>{' '}
-                left for{' '}
+                {t('kittyChipPrefix')}{' '}
                 <span className="font-semibold">{selectedRow.client_name}</span>
               </span>
               <button
                 onClick={() => router.push('/dealer/promoter-assign/pending')}
                 className="text-xs font-semibold text-emerald-900 underline underline-offset-2 shrink-0 ml-2">
-                Pending sent
+                {t('kittyChipLink')}
               </button>
             </div>
           )}
@@ -301,10 +303,9 @@ export default function DealerPromoterAssignPage() {
           {/* ── STAGE: company ── */}
           {stage === 'company' && (
             <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Which company&apos;s advisory?</p>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">{t('company.title')}</p>
               <p className="text-sm text-[#7A8C7E] mb-5">
-                Pick the company you want to assign this farmer a subscription for. Only companies with units in your
-                kitty are shown.
+                {t('company.subtitle')}
               </p>
               <div className="space-y-2 mb-5">
                 {spendable.map(a => (
@@ -315,10 +316,7 @@ export default function DealerPromoterAssignPage() {
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-[#6B3F1F] truncate">{a.client_name}</p>
                       <p className="text-xs text-[#7A8C7E] mt-0.5">
-                        <span className="font-medium text-[#085041]">
-                          {a.units_balance.toLocaleString('en-IN')}
-                        </span>{' '}
-                        subscription{a.units_balance === 1 ? '' : 's'} left
+                        {t('company.subsLeft', { count: a.units_balance })}
                       </p>
                     </div>
                     <span className="text-[#7A8C7E] text-sm" aria-hidden>›</span>
@@ -328,7 +326,7 @@ export default function DealerPromoterAssignPage() {
               <button
                 onClick={() => router.push('/dealer/promoter-assign/pending')}
                 className="w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
-                Pending sent →
+                {t('company.pendingSentCta')}
               </button>
             </div>
           )}
@@ -336,8 +334,8 @@ export default function DealerPromoterAssignPage() {
           {/* ── STAGE: phone ── */}
           {stage === 'phone' && (
             <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Enter farmer&apos;s number</p>
-              <p className="text-sm text-[#7A8C7E] mb-5">The farmer must be registered in rootsTALK.in</p>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">{t('phone.title')}</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">{t('phone.subtitle')}</p>
               <div className="flex items-center border border-[#DDD0B8] rounded-xl overflow-hidden bg-white">
                 <span className="px-4 py-3.5 text-sm text-[#7A8C7E] bg-[#F5F0E8] border-r border-[#DDD0B8] shrink-0">+91</span>
                 <input
@@ -345,7 +343,7 @@ export default function DealerPromoterAssignPage() {
                   value={phone}
                   onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setError('') }}
                   onKeyDown={e => e.key === 'Enter' && verifyPhone()}
-                  placeholder="10-digit mobile number"
+                  placeholder={t('phone.placeholder')}
                   className="flex-1 px-4 py-3.5 text-sm focus:outline-none"
                 />
               </div>
@@ -355,10 +353,10 @@ export default function DealerPromoterAssignPage() {
                 disabled={loading || phone.length < 10}
                 className="mt-4 w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
                 style={{ background: COLOUR }}>
-                {loading ? 'Checking…' : 'Verify →'}
+                {loading ? t('phone.checking') : t('phone.verifyCta')}
               </button>
               <button onClick={() => setStage('company')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
-                ← Change company
+                {t('phone.changeCompany')}
               </button>
             </div>
           )}
@@ -380,19 +378,19 @@ export default function DealerPromoterAssignPage() {
 
             return (
               <div>
-                <p className="text-xl font-bold text-[#6B3F1F] mb-1">Farmer found</p>
-                <p className="text-sm text-[#7A8C7E] mb-5">Confirm where the farmland is before picking the crop</p>
+                <p className="text-xl font-bold text-[#6B3F1F] mb-1">{t('confirmFarmer.title')}</p>
+                <p className="text-sm text-[#7A8C7E] mb-5">{t('confirmFarmer.subtitle')}</p>
 
                 <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-5">
-                  <p className="font-semibold text-[#6B3F1F]">{farmer.name || 'Unnamed farmer'}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{farmer.name || t('confirmFarmer.unnamedFarmer')}</p>
                   <p className="text-sm text-[#7A8C7E] mt-0.5">+91{phone}</p>
                 </div>
 
-                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">Farmland location</p>
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">{t('confirmFarmer.locationLabel')}</p>
                 {!coshLocations && (
                   <div className="flex items-center gap-3 text-[#7A8C7E] text-sm mb-3">
                     <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin"/>
-                    Loading states and districts…
+                    {t('confirmFarmer.loadingLocations')}
                   </div>
                 )}
 
@@ -400,14 +398,14 @@ export default function DealerPromoterAssignPage() {
                   <div className="mb-4 px-4 py-3 rounded-2xl border border-[#085041]/30 bg-[#085041]/10 flex items-start gap-3">
                     <span className="text-lg leading-none mt-0.5">📍</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] uppercase tracking-wide font-semibold text-[#085041]">Farmland district</p>
+                      <p className="text-[11px] uppercase tracking-wide font-semibold text-[#085041]">{t('confirmFarmer.savedLabel')}</p>
                       <p className="text-[#6B3F1F] font-semibold text-[15px] mt-0.5">
                         {districtName} <span className="text-[#7A8C7E] font-normal">· {stateName || '—'}</span>
                       </p>
                     </div>
                     <button onClick={() => { setEditingLocation(true); setStateSearch(''); setDistrictSearch('') }}
                       className="text-[12px] text-[#085041] underline shrink-0">
-                      Change
+                      {tCommon('change')}
                     </button>
                   </div>
                 )}
@@ -415,27 +413,27 @@ export default function DealerPromoterAssignPage() {
                 {coshLocations && (!hasResolvedLocation || editingLocation) && (
                   <div className="space-y-3 mb-4">
                     <div>
-                      <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">State</label>
+                      <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{t('confirmFarmer.stateLabel')}</label>
                       {stateId ? (
                         <div className="flex items-center gap-2">
                           <span className="bg-[#085041]/10 text-[#085041] text-sm font-medium px-3 py-1.5 rounded-full">
-                            {stateName || '(unnamed)'}
+                            {stateName || t('confirmFarmer.unnamed')}
                           </span>
                           <button onClick={() => {
                               setStateId(''); setStateSearch('')
                               setDistrict(''); setDistrictSearch('')
                             }}
-                            className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                            className="text-[11px] text-[#7A8C7E] underline">{tCommon('change')}</button>
                         </div>
                       ) : (
                         <>
                           <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
-                            placeholder="Search state…"
+                            placeholder={t('confirmFarmer.searchState')}
                             className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"/>
                           {stateSearch && (
                             <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                               {filteredStates.length === 0
-                                ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No states found</p>
+                                ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{t('confirmFarmer.noStates')}</p>
                                 : filteredStates.map(s => (
                                   <button key={s.cosh_id}
                                     onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
@@ -452,24 +450,24 @@ export default function DealerPromoterAssignPage() {
 
                     {stateId && (
                       <div>
-                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">District</label>
+                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{t('confirmFarmer.districtLabel')}</label>
                         {district ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#085041]/10 text-[#085041] text-sm font-medium px-3 py-1.5 rounded-full">
-                              {districtName || '(unnamed)'}
+                              {districtName || t('confirmFarmer.unnamed')}
                             </span>
                             <button onClick={() => { setDistrict(''); setDistrictSearch('') }}
-                              className="text-[11px] text-[#7A8C7E] underline">Change</button>
+                              className="text-[11px] text-[#7A8C7E] underline">{tCommon('change')}</button>
                           </div>
                         ) : (
                           <>
                             <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
-                              placeholder="Search district…"
+                              placeholder={t('confirmFarmer.searchDistrict')}
                               className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"/>
                             {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
                               <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                                 {filteredDistricts.length === 0
-                                  ? <p className="text-[#7A8C7E] text-sm px-4 py-3">No districts found</p>
+                                  ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{t('confirmFarmer.noDistricts')}</p>
                                   : filteredDistricts.map(d => (
                                     <button key={d.cosh_id}
                                       onClick={() => {
@@ -496,10 +494,10 @@ export default function DealerPromoterAssignPage() {
                   disabled={loading || !district}
                   className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
                   style={{ background: COLOUR }}>
-                  {loading ? 'Loading crops…' : 'Continue →'}
+                  {loading ? t('confirmFarmer.loadingCrops') : t('confirmFarmer.continueCta')}
                 </button>
                 <button onClick={() => setStage('phone')} className="mt-3 w-full text-center text-sm text-[#7A8C7E]">
-                  ← Back
+                  {t('confirmFarmer.back')}
                 </button>
               </div>
             )
@@ -512,13 +510,13 @@ export default function DealerPromoterAssignPage() {
             const districtLabel = districtRow?.name || district
             return (
             <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Select crop</p>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">{t('crop.title')}</p>
               <p className="text-sm text-[#7A8C7E] mb-5">
-                Crops available for {selectedRow?.client_name} in {districtLabel}
+                {t('crop.subtitle', { company: selectedRow?.client_name || '', district: districtLabel })}
               </p>
               {crops.length === 0 ? (
                 <p className="text-[#7A8C7E] text-sm py-6 text-center">
-                  No crops available in this district for {selectedRow?.client_name}.
+                  {t('crop.empty', { company: selectedRow?.client_name || '' })}
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -539,7 +537,7 @@ export default function DealerPromoterAssignPage() {
                 </div>
               )}
               <button onClick={() => setStage('confirm_farmer')} className="mt-4 w-full text-center text-sm text-[#7A8C7E]">
-                ← Back
+                {t('crop.back')}
               </button>
             </div>
             )
@@ -549,10 +547,10 @@ export default function DealerPromoterAssignPage() {
           {stage === 'guided' && guidedStep && !guidedStep.done && (
             <div>
               <p className="text-xl font-bold text-[#6B3F1F] mb-1">
-                {guidedStep.parameter?.name || 'Select option'}
+                {guidedStep.parameter?.name || t('guided.fallbackTitle')}
               </p>
               <p className="text-sm text-[#7A8C7E] mb-2">
-                {guidedStep.remaining_count} package{(guidedStep.remaining_count || 0) > 1 ? 's' : ''} remaining
+                {t('guided.remaining', { count: guidedStep.remaining_count || 0 })}
               </p>
 
               {answerHistory.length > 0 && (
@@ -588,7 +586,7 @@ export default function DealerPromoterAssignPage() {
                   onClick={startOver}
                   disabled={loading}
                   className="mt-5 w-full py-3 rounded-2xl text-[#7A8C7E] text-sm disabled:opacity-50">
-                  ↺ Start over
+                  {t('guided.startOver')}
                 </button>
               )}
             </div>
@@ -597,30 +595,30 @@ export default function DealerPromoterAssignPage() {
           {/* ── STAGE: confirm ── */}
           {stage === 'confirm' && (
             <div>
-              <p className="text-xl font-bold text-[#6B3F1F] mb-1">Confirm assignment</p>
-              <p className="text-sm text-[#7A8C7E] mb-5">Review before sending</p>
+              <p className="text-xl font-bold text-[#6B3F1F] mb-1">{t('confirm.title')}</p>
+              <p className="text-sm text-[#7A8C7E] mb-5">{t('confirm.subtitle')}</p>
 
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-3 mb-5">
                 <div>
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Farmer</p>
-                  <p className="font-semibold text-[#6B3F1F]">{farmer?.name || 'Farmer'}</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">{t('confirm.farmerLabel')}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{farmer?.name || t('confirm.farmerFallback')}</p>
                   <p className="text-sm text-[#7A8C7E]">+91{phone}</p>
                 </div>
                 <div className="border-t border-[#DDD0B8] pt-3">
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Company</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">{t('confirm.companyLabel')}</p>
                   <p className="font-semibold text-[#6B3F1F]">{selectedRow?.client_name}</p>
                 </div>
                 <div className="border-t border-[#DDD0B8] pt-3">
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Crop</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">{t('confirm.cropLabel')}</p>
                   <p className="font-semibold text-[#6B3F1F]">{formatCropName(selectedCrop)}</p>
                 </div>
                 <div className="border-t border-[#DDD0B8] pt-3">
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">Advisory Package</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">{t('confirm.packageLabel')}</p>
                   <p className="font-semibold text-[#6B3F1F]">{resolvedPackageName}</p>
                 </div>
                 {answerHistory.length > 0 && (
                   <div className="border-t border-[#DDD0B8] pt-3">
-                    <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Your selections</p>
+                    <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">{t('confirm.selectionsLabel')}</p>
                     <div className="flex flex-wrap gap-2">
                       {answerHistory.map((a, i) => (
                         <span key={i} className="text-xs bg-slate-100 text-[#6B3F1F] px-2 py-1 rounded-full">
@@ -638,13 +636,13 @@ export default function DealerPromoterAssignPage() {
                 disabled={loading}
                 className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-40"
                 style={{ background: COLOUR }}>
-                {loading ? 'Sending…' : 'Send advisory request →'}
+                {loading ? t('confirm.sending') : t('confirm.sendRequest')}
               </button>
               <button
                 onClick={startOver}
                 disabled={loading}
                 className="mt-3 w-full text-center text-sm text-[#7A8C7E] disabled:opacity-50">
-                ↺ Start over
+                {t('confirm.startOver')}
               </button>
             </div>
           )}
@@ -653,23 +651,22 @@ export default function DealerPromoterAssignPage() {
           {stage === 'done' && (
             <div className="fixed inset-0 flex flex-col items-center justify-center px-8"
               style={{ background: COLOUR }}>
-              <p className="text-4xl font-bold text-white mb-4">Request sent!</p>
+              <p className="text-4xl font-bold text-white mb-4">{t('done.title')}</p>
               <p className="text-white/80 text-center text-base leading-relaxed mb-8">
-                <span className="font-semibold text-white">{farmer?.name || 'The farmer'}</span> will receive a
-                notification to approve the advisory. You can withdraw the offer from the &ldquo;Pending sent&rdquo; list
-                until they respond.
+                <span className="font-semibold text-white">{farmer?.name || t('done.fallbackName')}</span>{' '}
+                {t('done.bodySuffix')}
               </p>
               <div className="space-y-3 w-full max-w-xs">
                 <button
                   onClick={() => router.push('/dealer/promoter-assign/pending')}
                   className="w-full py-3.5 px-8 rounded-2xl bg-white font-semibold"
                   style={{ color: COLOUR }}>
-                  View pending sent →
+                  {t('done.viewPendingSent')}
                 </button>
                 <button
                   onClick={() => router.push('/dealer/promoted-farmers')}
                   className="w-full py-3 text-white text-sm underline underline-offset-2">
-                  Back to my promoted farmers
+                  {t('done.backToFarmers')}
                 </button>
               </div>
             </div>

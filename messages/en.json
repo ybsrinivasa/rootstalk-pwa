@@ -1410,6 +1410,144 @@
         "yes": "Yes, decline"
       }
     },
+    "promoterAssign": {
+      "headerTitle": "Assign Advisory",
+      "errors": {
+        "kittiesLoad": "Could not load your kitties. Pull to retry.",
+        "phoneInvalid": "Enter a valid 10-digit number",
+        "phoneNotRegistered": "This number is not registered in RootsTalk. Ask the farmer to register first.",
+        "districtRequired": "Please pick the district where the farmland is",
+        "cropsLoad": "Could not load crops. Pick a different district or try again.",
+        "guidedStart": "Could not start guided flow.",
+        "guidedNext": "Error fetching next step.",
+        "sendRequest": "Could not send request. Please try again."
+      },
+      "noSubsTitle": "No subscriptions available",
+      "noSubsBody": "None of the companies that have onboarded you have allocated subscriptions to your kitty yet. Ask a company admin to allocate units before you assign advisories to farmers.",
+      "refresh": "↻ Refresh",
+      "viewPendingSent": "View pending sent →",
+      "kittyChipPrefix": "left for",
+      "kittyChipLink": "Pending sent",
+      "company": {
+        "title": "Which company's advisory?",
+        "subtitle": "Pick the company you want to assign this farmer a subscription for. Only companies with units in your kitty are shown.",
+        "subsLeft": "{count, plural, one {1 subscription left} other {# subscriptions left}}",
+        "pendingSentCta": "Pending sent →"
+      },
+      "phone": {
+        "title": "Enter farmer's number",
+        "subtitle": "The farmer must be registered in rootsTALK.in",
+        "placeholder": "10-digit mobile number",
+        "checking": "Checking…",
+        "verifyCta": "Verify →",
+        "changeCompany": "← Change company"
+      },
+      "confirmFarmer": {
+        "title": "Farmer found",
+        "subtitle": "Confirm where the farmland is before picking the crop",
+        "unnamedFarmer": "Unnamed farmer",
+        "locationLabel": "Farmland location",
+        "loadingLocations": "Loading states and districts…",
+        "savedLabel": "Farmland district",
+        "stateLabel": "State",
+        "districtLabel": "District",
+        "searchState": "Search state…",
+        "searchDistrict": "Search district…",
+        "noStates": "No states found",
+        "noDistricts": "No districts found",
+        "unnamed": "(unnamed)",
+        "loadingCrops": "Loading crops…",
+        "continueCta": "Continue →",
+        "back": "← Back"
+      },
+      "crop": {
+        "title": "Select crop",
+        "subtitle": "Crops available for {company} in {district}",
+        "empty": "No crops available in this district for {company}.",
+        "back": "← Back"
+      },
+      "guided": {
+        "fallbackTitle": "Select option",
+        "remaining": "{count, plural, one {1 package remaining} other {# packages remaining}}",
+        "startOver": "↺ Start over"
+      },
+      "confirm": {
+        "title": "Confirm assignment",
+        "subtitle": "Review before sending",
+        "farmerLabel": "Farmer",
+        "farmerFallback": "Farmer",
+        "companyLabel": "Company",
+        "cropLabel": "Crop",
+        "packageLabel": "Advisory Package",
+        "selectionsLabel": "Your selections",
+        "sending": "Sending…",
+        "sendRequest": "Send advisory request →",
+        "startOver": "↺ Start over"
+      },
+      "done": {
+        "title": "Request sent!",
+        "bodyPrefix": "",
+        "bodySuffix": "will receive a notification to approve the advisory. You can withdraw the offer from the “Pending sent” list until they respond.",
+        "fallbackName": "The farmer",
+        "viewPendingSent": "View pending sent →",
+        "backToFarmers": "Back to my promoted farmers"
+      }
+    },
+    "pendingSent": {
+      "headerTitle": "Pending sent",
+      "errorLoad": "Could not load pending assignments. Pull to retry.",
+      "errorWithdraw": "Could not withdraw. The farmer may have already responded.",
+      "confirmWithdraw": "Withdraw the advisory offer to {name}? The subscription unit will go back to your kitty.",
+      "fallbackName": "this farmer",
+      "emptyTitle": "No pending offers",
+      "emptyBody": "Everything you sent has been responded to. New offers will show up here while they're waiting on the farmer's approval.",
+      "assignCta": "Assign a new advisory →",
+      "countAndHint": "{count, plural, one {1 offer awaiting farmer approval. They auto-expire 72h after you sent them.} other {# offers awaiting farmer approval. They auto-expire 72h after you sent them.}}",
+      "unnamedFarmer": "Unnamed farmer",
+      "expiringSoon": "Expiring soon",
+      "minLeft": "{count} min left",
+      "hoursLeft": "{hours} h left",
+      "daysLeft": "{count} d left",
+      "cropLabel": "Crop:",
+      "packageLabel": "Package:",
+      "withdrawing": "Withdrawing…",
+      "withdrawCta": "Withdraw offer",
+      "backToAssign": "← Back to assign advisory"
+    },
+    "promotedFarmers": {
+      "headerTitle": "My Promoted Farmers",
+      "assignCta": "+ Assign advisory",
+      "emptyTitle": "No promoted farmers yet",
+      "emptyHint": "Farmers you sponsor will appear here",
+      "unknownFarmer": "Unknown farmer",
+      "detail": {
+        "headerTitle": "Farmer advisory",
+        "errorTitleWaiting": "Waiting on the farmer",
+        "errorTitlePending": "Awaiting farmer approval",
+        "errorTitleNotAvailable": "Not available",
+        "errorBodyNoAdvisory": "The farmer hasn't set the crop's start date yet. Advisory will appear here once they do.",
+        "errorBodyPending": "The farmer hasn't accepted this offer yet. Advisory becomes visible after they approve.",
+        "errorBodyUnknown": "Could not load advisory for this assignment.",
+        "errorNotFound": "Assignment not found.",
+        "errorLoad": "Could not load the advisory.",
+        "readOnlyHint": "Read-only view. The farmer is the one acting on this advisory.",
+        "dayHeader": "Day {day} · {count, plural, one {1 active timeline} other {# active timelines}}",
+        "noneToday": "Nothing is due in the farmer's advisory window today.",
+        "noPracticeToday": "No practice due today on this timeline.",
+        "l0": {
+          "input": "Apply Input",
+          "nonInput": "Crop Activity",
+          "instruction": "Advisory",
+          "media": "Reference"
+        },
+        "todayLabel": "Today",
+        "noSpecificInstructions": "No specific instructions.",
+        "farmerPurchased": "✓ Farmer has purchased",
+        "purchasePending": "Purchase pending",
+        "frequencyEvery": "{count, plural, one {Every 1 day} other {Every # days}}",
+        "frequencyNotDueToday": " · not due today"
+      }
+    },
     "alertsIncoming": {
       "headerTitle": "Incoming alerts",
       "typeStartDate": "Start Date",

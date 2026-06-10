@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -22,16 +23,23 @@ interface PendingAssignment {
   hours_remaining: number
 }
 
-function formatHoursRemaining(h: number): { text: string; amber: boolean } {
-  if (h <= 0) return { text: 'Expiring soon', amber: true }
-  if (h < 1) return { text: `${Math.ceil(h * 60)} min left`, amber: true }
-  if (h < 6) return { text: `${h.toFixed(1)} h left`, amber: true }
-  if (h < 24) return { text: `${Math.floor(h)} h left`, amber: false }
-  return { text: `${Math.floor(h / 24)} d left`, amber: false }
+type RemainingChip =
+  | { kind: 'expiringSoon'; amber: true }
+  | { kind: 'minLeft'; count: number; amber: true }
+  | { kind: 'hoursLeft'; hours: string; amber: boolean }
+  | { kind: 'daysLeft'; count: number; amber: false }
+
+function remainingChip(h: number): RemainingChip {
+  if (h <= 0) return { kind: 'expiringSoon', amber: true }
+  if (h < 1) return { kind: 'minLeft', count: Math.ceil(h * 60), amber: true }
+  if (h < 6) return { kind: 'hoursLeft', hours: h.toFixed(1), amber: true }
+  if (h < 24) return { kind: 'hoursLeft', hours: String(Math.floor(h)), amber: false }
+  return { kind: 'daysLeft', count: Math.floor(h / 24), amber: false }
 }
 
 export default function DealerPendingSentPage() {
   const router = useRouter()
+  const t = useTranslations('dealer.pendingSent')
   const [rows, setRows] = useState<PendingAssignment[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
@@ -42,10 +50,10 @@ export default function DealerPendingSentPage() {
       setRows(data)
       setError(null)
     } catch {
-      setError('Could not load pending assignments. Pull to retry.')
+      setError(t('errorLoad'))
       setRows([])
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -59,10 +67,8 @@ export default function DealerPendingSentPage() {
   }, [refresh])
 
   async function cancel(assignmentId: string, farmerName: string | null) {
-    const name = farmerName || 'this farmer'
-    if (!window.confirm(
-      `Withdraw the advisory offer to ${name}? The subscription unit will go back to your kitty.`
-    )) return
+    const name = farmerName || t('fallbackName')
+    if (!window.confirm(t('confirmWithdraw', { name }))) return
     setCancellingId(assignmentId)
     try {
       await api.delete(`/promoter/assignments/${assignmentId}`)
@@ -73,7 +79,7 @@ export default function DealerPendingSentPage() {
       const detail = err?.response?.data?.detail
       const msg = typeof detail === 'string'
         ? detail
-        : detail?.message || 'Could not withdraw. The farmer may have already responded.'
+        : detail?.message || t('errorWithdraw')
       window.alert(msg)
       refresh()
     } finally {
@@ -83,7 +89,7 @@ export default function DealerPendingSentPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Pending sent" activeRole="DEALER" back="/dealer/promoter-assign" />
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/promoter-assign" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
           {error && (
@@ -100,16 +106,15 @@ export default function DealerPendingSentPage() {
 
           {rows !== null && rows.length === 0 && (
             <div className="mt-6 rounded-2xl border border-[#DDD0B8] bg-white p-6 text-center">
-              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">No pending offers</p>
+              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">{t('emptyTitle')}</p>
               <p className="text-xs text-[#7A8C7E]">
-                Everything you sent has been responded to. New offers will show up here while they&apos;re waiting on
-                the farmer&apos;s approval.
+                {t('emptyBody')}
               </p>
               <button
                 onClick={() => router.push('/dealer/promoter-assign')}
                 className="mt-5 w-full py-3 rounded-2xl text-white font-semibold"
                 style={{ background: COLOUR }}>
-                Assign a new advisory →
+                {t('assignCta')}
               </button>
             </div>
           )}
@@ -117,19 +122,23 @@ export default function DealerPendingSentPage() {
           {rows !== null && rows.length > 0 && (
             <>
               <p className="text-xs text-[#7A8C7E] mb-3">
-                {rows.length} offer{rows.length === 1 ? '' : 's'} awaiting farmer approval. They auto-expire 72h after
-                you sent them.
+                {t('countAndHint', { count: rows.length })}
               </p>
               <div className="space-y-3">
                 {rows.map(r => {
-                  const hr = formatHoursRemaining(r.hours_remaining)
+                  const hr = remainingChip(r.hours_remaining)
+                  const chipText
+                    = hr.kind === 'expiringSoon' ? t('expiringSoon')
+                    : hr.kind === 'minLeft' ? t('minLeft', { count: hr.count })
+                    : hr.kind === 'hoursLeft' ? t('hoursLeft', { hours: hr.hours })
+                    : t('daysLeft', { count: hr.count })
                   return (
                     <div key={r.assignment_id}
                       className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-semibold text-[#6B3F1F] truncate">
-                            {r.farmer_name || 'Unnamed farmer'}
+                            {r.farmer_name || t('unnamedFarmer')}
                           </p>
                           {r.farmer_phone && (
                             <a href={`tel:${r.farmer_phone}`}
@@ -143,18 +152,18 @@ export default function DealerPendingSentPage() {
                             ? 'bg-amber-50 border border-amber-200 text-amber-900'
                             : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
                         }`}>
-                          {hr.text}
+                          {chipText}
                         </span>
                       </div>
                       <div className="mt-3 text-xs text-[#7A8C7E] space-y-0.5">
                         <p>
-                          Crop:{' '}
+                          {t('cropLabel')}{' '}
                           <span className="text-[#6B3F1F] font-medium">
                             {cropDisplayName(r.crop_cosh_id)}
                           </span>
                         </p>
                         <p>
-                          Package:{' '}
+                          {t('packageLabel')}{' '}
                           <span className="text-[#6B3F1F] font-medium">{r.package_name}</span>
                         </p>
                       </div>
@@ -162,7 +171,7 @@ export default function DealerPendingSentPage() {
                         onClick={() => cancel(r.assignment_id, r.farmer_name)}
                         disabled={cancellingId === r.assignment_id}
                         className="mt-3 w-full py-2.5 rounded-xl border border-[#D4682E] text-[#D4682E] text-sm font-semibold disabled:opacity-50">
-                        {cancellingId === r.assignment_id ? 'Withdrawing…' : 'Withdraw offer'}
+                        {cancellingId === r.assignment_id ? t('withdrawing') : t('withdrawCta')}
                       </button>
                     </div>
                   )
@@ -172,7 +181,7 @@ export default function DealerPendingSentPage() {
               <button
                 onClick={() => router.push('/dealer/promoter-assign')}
                 className="mt-6 w-full py-3 rounded-2xl border border-[#DDD0B8] bg-white text-sm font-semibold text-[#6B3F1F]">
-                ← Back to assign advisory
+                {t('backToAssign')}
               </button>
             </>
           )}
