@@ -1562,6 +1562,58 @@
       "callBtn": "📞 Call {phone}"
     }
   },
+  "facilitator": {
+    "home": {
+      "greetingPrefix": "Good morning",
+      "ordersToProcess": "{count, plural, one {1 order to process} other {# orders to process}}",
+      "noPendingOrders": "No pending orders",
+      "pendingOrdersTile": "Pending Orders",
+      "tapToProcess": "Tap to process →",
+      "paymentRequestsTitle": "Payment Requests",
+      "paymentRequestsBody": "{count, plural, one {1 farmer subscription request} other {# farmer subscription requests}}",
+      "tileMyFarmers": "My Farmers",
+      "tileMyFarmersHint": "{count} promoted",
+      "tilePayments": "Payments",
+      "tilePaymentsHint": "{count} pending",
+      "tileServiceProfile": "Service Profile",
+      "tileServiceProfileHint": "My declaration",
+      "tileAlerts": "Alerts I receive",
+      "tileAlertsHint": "{count} unread"
+    },
+    "alertsIncoming": {
+      "headerTitle": "Incoming alerts",
+      "typeStartDate": "Start Date",
+      "typeInput": "Input",
+      "alertTypeBadge": "{type} alert",
+      "errorLoad": "Could not load. Pull to retry.",
+      "emptyTitle": "No incoming alerts",
+      "emptyBody": "Alerts addressed to you appear here. They vanish as soon as the farmer marks the task complete on their end.",
+      "countAndHint": "{count, plural, one {1 pending alert. Tap the phone number to call the farmer.} other {# pending alerts. Tap the phone number to call the farmer.}}",
+      "unnamedFarmer": "Unnamed farmer",
+      "cropLabel": "Crop:",
+      "callBtn": "📞 Call {phone}"
+    },
+    "payments": {
+      "headerTitle": "Farmer Payments",
+      "errorVerify": "Payment verification failed.",
+      "errorInitiate": "Could not initiate payment.",
+      "razorpayName": "rootsTALK.in",
+      "razorpayDescription": "Advisory subscription on behalf of farmer · paid to rootsTALK.in",
+      "loadingSkeleton": "",
+      "emptyTitle": "No payment requests yet",
+      "pendingHeader": "Pending ({count})",
+      "attributionPrefix": "You pay to ",
+      "attributionMiddle": " for the software infrastructure that powers the farmer’s advisory. It is ",
+      "attributionEm": "not",
+      "attributionSuffix": " paid to the company whose advisory the farmer subscribed to.",
+      "farmerFallback": "Farmer",
+      "expiringSoon": "Expiring soon",
+      "hoursRemaining": "{hours}h remaining",
+      "opening": "Opening…",
+      "payCta": "Pay ₹{amount}",
+      "decline": "Decline"
+    }
+  },
   "mySubscriptions": {
     "headerTitle": "My Subscriptions",
     "backToHome": "← Back to home",

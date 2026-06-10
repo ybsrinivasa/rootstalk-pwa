@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
@@ -12,6 +13,7 @@ const COLOUR = '#7D4E00'
 
 export default function FacilitatorHomePage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.home')
   const user = getUser()
   const [pendingCount, setPendingCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
@@ -57,9 +59,9 @@ export default function FacilitatorHomePage() {
 
       <div className="pt-20 pb-24 px-4 space-y-4 max-w-lg mx-auto">
         <div>
-          <p className="text-xl font-bold text-[#6B3F1F]">Good morning{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
+          <p className="text-xl font-bold text-[#6B3F1F]">{t('greetingPrefix')}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}</p>
           <p className="text-[#7A8C7E] text-sm mt-0.5">
-            {pendingCount > 0 ? `${pendingCount} order${pendingCount > 1 ? 's' : ''} to process` : 'No pending orders'}
+            {pendingCount > 0 ? t('ordersToProcess', { count: pendingCount }) : t('noPendingOrders')}
           </p>
         </div>
 
@@ -69,12 +71,12 @@ export default function FacilitatorHomePage() {
           style={{ background: `linear-gradient(135deg, #5a3800, ${COLOUR})` }}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm opacity-80">Pending Orders</p>
+              <p className="text-sm opacity-80">{t('pendingOrdersTile')}</p>
               <p className="text-4xl font-bold mt-1">{loading ? '—' : pendingCount}</p>
             </div>
             <span className="text-5xl opacity-30">🌾</span>
           </div>
-          {pendingCount > 0 && <p className="text-xs opacity-70 mt-2">Tap to process →</p>}
+          {pendingCount > 0 && <p className="text-xs opacity-70 mt-2">{t('tapToProcess')}</p>}
         </button>
 
         {/* Payment requests badge */}
@@ -82,8 +84,8 @@ export default function FacilitatorHomePage() {
           <button onClick={() => router.push('/facilitator/payments')}
             className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between">
             <div>
-              <p className="font-semibold text-amber-800">Payment Requests</p>
-              <p className="text-xs text-amber-600 mt-0.5">{paymentCount} farmer subscription request{paymentCount > 1 ? 's' : ''}</p>
+              <p className="font-semibold text-amber-800">{t('paymentRequestsTitle')}</p>
+              <p className="text-xs text-amber-600 mt-0.5">{t('paymentRequestsBody', { count: paymentCount })}</p>
             </div>
             <span className="bg-amber-500 text-white text-sm font-bold w-7 h-7 rounded-full flex items-center justify-center">
               {paymentCount}
@@ -96,28 +98,28 @@ export default function FacilitatorHomePage() {
           <button onClick={() => router.push('/facilitator/promoted-farmers')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">👨‍🌾</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">My Farmers</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${promotedCount} promoted`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileMyFarmers')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tileMyFarmersHint', { count: promotedCount })}</p>
           </button>
           <button onClick={() => router.push('/facilitator/payments')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">💳</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Payments</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${paymentCount} pending`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tilePayments')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tilePaymentsHint', { count: paymentCount })}</p>
           </button>
           <button onClick={() => router.push('/facilitator/profile')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <svg className="w-6 h-6 text-[#7D4E00]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z"/>
             </svg>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Service Profile</p>
-            <p className="text-xs text-[#7A8C7E]">My declaration</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileServiceProfile')}</p>
+            <p className="text-xs text-[#7A8C7E]">{t('tileServiceProfileHint')}</p>
           </button>
           <button onClick={() => router.push('/facilitator/alerts-incoming')}
             className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="text-2xl">🔔</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">Alerts I receive</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : `${alertCount} unread`}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileAlerts')}</p>
+            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tileAlertsHint', { count: alertCount })}</p>
           </button>
         </div>
       </div>

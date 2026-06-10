@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -22,10 +23,6 @@ interface IncomingAlert {
   crop_name: string | null
 }
 
-function alertTypeLabel(t: IncomingAlert['alert_type']): string {
-  return t === 'START_DATE' ? 'Start Date' : 'Input'
-}
-
 function formatSentAt(iso: string): string {
   const d = new Date(iso)
   const now = new Date()
@@ -38,6 +35,7 @@ function formatSentAt(iso: string): string {
 
 export default function FacilitatorAlertsIncomingPage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.alertsIncoming')
   const [rows, setRows] = useState<IncomingAlert[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -47,10 +45,10 @@ export default function FacilitatorAlertsIncomingPage() {
       setRows(data)
       setError(null)
     } catch {
-      setError('Could not load. Pull to retry.')
+      setError(t('errorLoad'))
       setRows([])
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -65,7 +63,7 @@ export default function FacilitatorAlertsIncomingPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Incoming alerts" activeRole="FACILITATOR" back="/facilitator/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-4">
           {error && (
@@ -82,9 +80,9 @@ export default function FacilitatorAlertsIncomingPage() {
 
           {rows !== null && rows.length === 0 && (
             <div className="mt-6 rounded-2xl border border-[#DDD0B8] bg-white p-6 text-center">
-              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">No incoming alerts</p>
+              <p className="text-sm font-semibold text-[#6B3F1F] mb-2">{t('emptyTitle')}</p>
               <p className="text-xs text-[#7A8C7E] leading-relaxed">
-                Alerts addressed to you appear here. They vanish as soon as the farmer marks the task complete on their end.
+                {t('emptyBody')}
               </p>
             </div>
           )}
@@ -92,7 +90,7 @@ export default function FacilitatorAlertsIncomingPage() {
           {rows !== null && rows.length > 0 && (
             <>
               <p className="text-xs text-[#7A8C7E] mb-3">
-                {rows.length} pending alert{rows.length === 1 ? '' : 's'}. Tap the phone number to call the farmer.
+                {t('countAndHint', { count: rows.length })}
               </p>
               <div className="space-y-3">
                 {rows.map(r => (
@@ -105,15 +103,15 @@ export default function FacilitatorAlertsIncomingPage() {
                           ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                           : 'bg-[#7D4E00]/10 text-[#7D4E00] border border-[#7D4E00]/30'
                       }`}>
-                        {alertTypeLabel(r.alert_type)} alert
+                        {t('alertTypeBadge', { type: r.alert_type === 'START_DATE' ? t('typeStartDate') : t('typeInput') })}
                       </span>
                       <span className="text-[11px] text-[#7A8C7E]">{formatSentAt(r.sent_at)}</span>
                     </div>
                     <p className="font-semibold text-[#6B3F1F] truncate">
-                      {r.farmer_name || 'Unnamed farmer'}
+                      {r.farmer_name || t('unnamedFarmer')}
                     </p>
                     <p className="text-xs text-[#7A8C7E] mt-0.5">
-                      Crop:{' '}
+                      {t('cropLabel')}{' '}
                       <span className="text-[#6B3F1F] font-medium">
                         {r.crop_name || cropDisplayName(r.crop_cosh_id || '')}
                       </span>
@@ -122,7 +120,7 @@ export default function FacilitatorAlertsIncomingPage() {
                       <a href={`tel:${r.farmer_phone}`}
                         className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full"
                         style={{ background: '#fff', color: COLOUR, border: `1.5px solid ${COLOUR}66` }}>
-                        📞 Call {r.farmer_phone}
+                        {t('callBtn', { phone: r.farmer_phone })}
                       </a>
                     )}
                   </div>

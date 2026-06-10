@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -31,6 +32,7 @@ const COLOUR = '#7D4E00'
 
 export default function FacilitatorPaymentsPage() {
   const router = useRouter()
+  const t = useTranslations('facilitator.payments')
   const user = getUser()
   const [requests, setRequests] = useState<PaymentRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,8 +58,8 @@ export default function FacilitatorPaymentsPage() {
         // Attribution: facilitator pays for the software infrastructure
         // rootsTALK.in provides on behalf of the farmer — not paying
         // the company whose advisory it is.
-        name: 'rootsTALK.in',
-        description: 'Advisory subscription on behalf of farmer · paid to rootsTALK.in',
+        name: t('razorpayName'),
+        description: t('razorpayDescription'),
         order_id: order.razorpay_order_id,
         prefill: { name: user?.name || '', contact: user?.phone || '' },
         theme: { color: COLOUR },
@@ -65,13 +67,13 @@ export default function FacilitatorPaymentsPage() {
           try {
             await api.post(`/dealer/payment-requests/${req.id}/verify`, response)
             load()
-          } catch { setError('Payment verification failed.') }
+          } catch { setError(t('errorVerify')) }
         },
       }
       new window.Razorpay(options).open()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Could not initiate payment.')
+      setError(msg || t('errorInitiate'))
     } finally { setPaying(null) }
   }
 
@@ -90,7 +92,7 @@ export default function FacilitatorPaymentsPage() {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Farmer Payments" activeRole="FACILITATOR" back="/facilitator/home" />
+        <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/home" />
         <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
           <div className="mt-4 space-y-3">
             {error && <p className="text-sm text-[#D4682E] bg-red-50 px-4 py-2 rounded-xl">{error}</p>}
@@ -99,17 +101,15 @@ export default function FacilitatorPaymentsPage() {
             ) : pending.length === 0 && done.length === 0 ? (
               <div className="text-center py-16">
                 <span className="text-4xl">💳</span>
-                <p className="text-[#7A8C7E] text-sm mt-3">No payment requests yet</p>
+                <p className="text-[#7A8C7E] text-sm mt-3">{t('emptyTitle')}</p>
               </div>
             ) : (
               <>
                 {pending.length > 0 && (
                   <>
-                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Pending ({pending.length})</p>
+                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">{t('pendingHeader', { count: pending.length })}</p>
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
-                      You pay to <strong>rootsTALK.in</strong> for the software infrastructure
-                      that powers the farmer&apos;s advisory. It is <em>not</em> paid to the company
-                      whose advisory the farmer subscribed to.
+                      {t('attributionPrefix')}<strong>{t('razorpayName')}</strong>{t('attributionMiddle')}<em>{t('attributionEm')}</em>{t('attributionSuffix')}
                     </div>
                     {pending.map(req => {
                       const cropPackage = [req.crop_name, req.package_name].filter(Boolean).join(' · ')
@@ -120,7 +120,7 @@ export default function FacilitatorPaymentsPage() {
                           <div className="flex items-start justify-between mb-3 gap-3">
                             <div className="flex-1 min-w-0">
                               <p className="font-semibold text-[#6B3F1F] text-sm truncate">
-                                {req.farmer_name || 'Farmer'}
+                                {req.farmer_name || t('farmerFallback')}
                               </p>
                               {cropPackage && (
                                 <p className="text-[12px] text-[#7A8C7E] truncate">{cropPackage}</p>
@@ -138,8 +138,8 @@ export default function FacilitatorPaymentsPage() {
                               {typeof req.hours_remaining === 'number' && (
                                 <p className={`text-[11px] font-medium mt-1 ${hoursLow ? 'text-[#B85C00]' : 'text-[#7A8C7E]'}`}>
                                   {req.hours_remaining === 0
-                                    ? 'Expiring soon'
-                                    : `${req.hours_remaining}h remaining`}
+                                    ? t('expiringSoon')
+                                    : t('hoursRemaining', { hours: req.hours_remaining })}
                                 </p>
                               )}
                             </div>
@@ -148,11 +148,11 @@ export default function FacilitatorPaymentsPage() {
                             <button onClick={() => openPayment(req)} disabled={paying === req.id}
                               className="flex-1 py-3 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
                               style={{ background: `linear-gradient(135deg, #5a3800, ${COLOUR})` }}>
-                              {paying === req.id ? 'Opening…' : `Pay ₹${Number(req.amount).toFixed(0)}`}
+                              {paying === req.id ? t('opening') : t('payCta', { amount: Number(req.amount).toFixed(0) })}
                             </button>
                             <button onClick={() => decline(req.id)}
                               className="px-5 py-3 rounded-xl border border-[#DDD0B8] text-[#7A8C7E] text-sm">
-                              Decline
+                              {t('decline')}
                             </button>
                           </div>
                         </div>
