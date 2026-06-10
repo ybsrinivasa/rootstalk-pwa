@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, FormEvent } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -95,6 +96,7 @@ const SEVERITY_COLOUR: Record<string, string> = {
 }
 
 export default function PunditQueryDetailPage() {
+  const t = useTranslations('pundit.queryDetail')
   const { queryId } = useParams<{ queryId: string }>()
   const router = useRouter()
   const [query, setQuery] = useState<QueryDetail | null>(null)
@@ -150,7 +152,7 @@ export default function PunditQueryDetailPage() {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
       const msg = typeof detail === 'string'
         ? detail
-        : (detail as { message?: string } | undefined)?.message || 'Upload failed. Please try again.'
+        : (detail as { message?: string } | undefined)?.message || t('errors.uploadFailed')
       setRespondError(msg)
     } finally { setUploadingResponse(null) }
   }
@@ -268,9 +270,7 @@ export default function PunditQueryDetailPage() {
     e.preventDefault()
     const hasStructured = !!respondForm.problem_cosh_id || !!respondForm.standard_response_id
     if (!respondForm.text && !hasStructured) {
-      setRespondError(
-        'Pick a Crop Health problem, a standard answer, or write a free-form text response. The structured options merge into the farmer\'s advisory; free-form text is a fallback only.',
-      )
+      setRespondError(t('errors.respondMissing'))
       return
     }
     setResponding(true); setRespondError('')
@@ -294,7 +294,7 @@ export default function PunditQueryDetailPage() {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
       const msg = typeof detail === 'string'
         ? detail
-        : (detail as { message?: string } | undefined)?.message || 'Failed to submit response.'
+        : (detail as { message?: string } | undefined)?.message || t('errors.submitResponse')
       setRespondError(msg)
     } finally { setResponding(false) }
   }
@@ -308,7 +308,7 @@ export default function PunditQueryDetailPage() {
       load()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setForwardError(msg || 'Failed to forward query.')
+      setForwardError(msg || t('errors.forward'))
     } finally { setForwarding(false) }
   }
 
@@ -321,7 +321,7 @@ export default function PunditQueryDetailPage() {
       load()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setReturnError(msg || 'Failed to return query.')
+      setReturnError(msg || t('errors.return'))
     } finally { setReturning(false) }
   }
 
@@ -334,7 +334,7 @@ export default function PunditQueryDetailPage() {
       load()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setRejectError(msg || 'Failed to reject query.')
+      setRejectError(msg || t('errors.reject'))
     } finally { setRejecting(false) }
   }
 
@@ -348,15 +348,15 @@ export default function PunditQueryDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Query" activeRole="FARM_PUNDIT" back="/pundit/queries" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARM_PUNDIT" back="/pundit/queries" />
       <div className="pt-16 pb-28 px-4 space-y-4">
         {/* Farmer card — name + tap-to-call phone + address.
             Pundit's first action is often a call; the phone is a
             `tel:` link so a single tap dials. */}
         {query.farmer && (
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">Farmer</p>
-            <p className="font-semibold text-[#6B3F1F]">{query.farmer.name || '—'}</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">{t('farmerLabel')}</p>
+            <p className="font-semibold text-[#6B3F1F]">{query.farmer.name || t('missing')}</p>
             {query.farmer.phone && (
               <a href={`tel:${query.farmer.phone}`}
                 className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
@@ -381,23 +381,24 @@ export default function PunditQueryDetailPage() {
 
         {/* Crop card — resolved name + computed age. */}
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
-          <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">Crop</p>
+          <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">{t('cropLabel')}</p>
           <p className="font-semibold text-[#6B3F1F]">
             {cropDisplayName(query.crop_cosh_id, query.crop_name)}
           </p>
           {query.computed_crop_age && (
             <p className="text-sm text-[#6B3F1F] mt-1">
-              <span className="text-xs text-[#7A8C7E]">Age · </span>
-              {query.computed_crop_age.is_minimum ? '> ' : ''}{query.computed_crop_age.value} {query.computed_crop_age.unit}
+              <span className="text-xs text-[#7A8C7E]">{t('cropAgePrefix')}</span>
+              {query.computed_crop_age.is_minimum ? t('cropAgeMinPrefix') : ''}{query.computed_crop_age.value}{' '}
+              {query.computed_crop_age.unit === 'years' ? t('ageYears') : t('ageDays')}
               <span className="text-xs text-[#7A8C7E] ml-1">
                 {query.computed_crop_age.source === 'PLANTING_YEAR'
-                  ? 'from planting year'
-                  : 'from start date'}
+                  ? t('ageFromPlantingYear')
+                  : t('ageFromStartDate')}
               </span>
             </p>
           )}
           {query.crop_age && (
-            <p className="text-xs text-[#7A8C7E] mt-1">Farmer noted: {query.crop_age}</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">{t('farmerNotedAge', { age: query.crop_age })}</p>
           )}
         </div>
 
@@ -405,7 +406,7 @@ export default function PunditQueryDetailPage() {
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-0.5">Nature of Query</p>
+              <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-0.5">{t('natureOfQuery')}</p>
               <p className="font-semibold text-[#6B3F1F] leading-snug">
                 {query.query_type_name || query.title}
               </p>
@@ -424,7 +425,7 @@ export default function PunditQueryDetailPage() {
                   ≥2 days left → slate  (fresh) */}
             {isActive && (
               <div className={`text-xs font-semibold px-2 py-1 rounded-xl ${query.days_remaining <= 0 ? 'bg-red-100 text-red-700' : query.days_remaining <= 1 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                {query.days_remaining}d left
+                {t('daysLeft', { count: query.days_remaining })}
               </div>
             )}
           </div>
@@ -433,7 +434,7 @@ export default function PunditQueryDetailPage() {
         {/* Description card — only when the farmer wrote one. */}
         {query.description && (
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">Description</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">{t('descriptionLabel')}</p>
             <p className="text-sm text-[#6B3F1F] leading-relaxed">{query.description}</p>
           </div>
         )}
@@ -443,7 +444,7 @@ export default function PunditQueryDetailPage() {
             uses the browser's native <audio> controls. */}
         {query.media.length > 0 && (
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] space-y-3">
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Attachments</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">{t('attachmentsLabel')}</p>
             {(() => {
               const photos = query.media.filter(m => m.media_type === 'IMAGE')
               const audios = query.media.filter(m => m.media_type === 'AUDIO')
@@ -455,7 +456,7 @@ export default function PunditQueryDetailPage() {
                       {photos.map((p, i) => (
                         <button key={i} type="button" onClick={() => setZoomedPhoto(p.url)}
                           className="block">
-                          <img src={p.url} alt={`Photo ${i + 1}`}
+                          <img src={p.url} alt={t('photoAlt', { n: i + 1 })}
                             className="w-full h-32 object-cover rounded-xl border border-[#DDD0B8]" />
                         </button>
                       ))}
@@ -463,7 +464,7 @@ export default function PunditQueryDetailPage() {
                   )}
                   {audios.length > 0 && audios.map((a, i) => (
                     <div key={i} className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2">
-                      <p className="text-xs text-[#7A8C7E] mb-1">🎙 Voice note from farmer</p>
+                      <p className="text-xs text-[#7A8C7E] mb-1">{t('voiceNoteFarmer')}</p>
                       <audio src={a.url} controls className="w-full" />
                     </div>
                   ))}
@@ -481,7 +482,7 @@ export default function PunditQueryDetailPage() {
         {/* Remarks chain */}
         {query.remarks.length > 0 && (
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-3">Query History</p>
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-3">{t('historyTitle')}</p>
             <div className="space-y-3">
               {query.remarks.map((r, i) => (
                 <div key={i} className="flex gap-3">
@@ -500,23 +501,23 @@ export default function PunditQueryDetailPage() {
         {/* Response */}
         {query.response && (
           <div className="bg-green-50 rounded-2xl p-4 border border-green-200 space-y-3">
-            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">Response</p>
+            <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">{t('responseTitle')}</p>
             {query.response.problem_cosh_id && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
                 <p className="text-xs text-blue-700">
-                  🔬 Crop health problem identified: <strong>{query.response.problem_name || query.response.problem_cosh_id}</strong>
-                  <br />CHA recommendations have been added to the farmer&apos;s advisory.
+                  {t('problemIdentifiedPrefix')} <strong>{query.response.problem_name || query.response.problem_cosh_id}</strong>
+                  <br />{t('problemIdentifiedSuffix')}
                 </p>
               </div>
             )}
             {query.response.standard_response_id && (
               <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
                 <p className="text-xs text-indigo-700">
-                  🌾 Standard answer picked
+                  {t('standardAnswerPrefix')}
                   {query.response.standard_response_question && (
                     <>: <strong>{query.response.standard_response_question}</strong></>
                   )}
-                  <br />The curated Q&amp;A advisory has merged into the farmer&apos;s plan.
+                  <br />{t('standardAnswerSuffix')}
                 </p>
               </div>
             )}
@@ -533,7 +534,7 @@ export default function PunditQueryDetailPage() {
                     <div className="grid grid-cols-2 gap-2">
                       {photos.map((p, i) => (
                         <button key={i} type="button" onClick={() => setZoomedPhoto(p.url)} className="block">
-                          <img src={p.url} alt={`Response photo ${i + 1}`}
+                          <img src={p.url} alt={t('responsePhotoAlt', { n: i + 1 })}
                             className="w-full h-28 object-cover rounded-xl border border-green-200" />
                         </button>
                       ))}
@@ -541,7 +542,7 @@ export default function PunditQueryDetailPage() {
                   )}
                   {audios.map((a, i) => (
                     <div key={i} className="bg-white border border-green-200 rounded-xl px-3 py-2">
-                      <p className="text-xs text-green-700 mb-1">🎙 Expert&apos;s voice note</p>
+                      <p className="text-xs text-green-700 mb-1">{t('voiceNoteExpert')}</p>
                       <audio src={a.url} controls className="w-full" />
                     </div>
                   ))}
@@ -564,22 +565,22 @@ export default function PunditQueryDetailPage() {
           <button onClick={openRespond}
             className="w-full py-3 rounded-2xl text-white font-semibold text-sm"
             style={{ background: `linear-gradient(135deg, #2d2570, ${COLOUR})` }}>
-            ✓ Respond to Query
+            {t('actionRespond')}
           </button>
           <div className="flex gap-2">
             <button onClick={openForward}
               className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-              → Forward
+              {t('actionForward')}
             </button>
             {query.status !== 'NEW' && (
               <button onClick={() => setShowReturn(true)}
                 className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-                ← Return
+                {t('actionReturn')}
               </button>
             )}
             <button onClick={() => setShowReject(true)}
               className="flex-1 py-2.5 rounded-xl border border-red-100 text-[#D4682E] text-sm font-medium">
-              ✗ Reject
+              {t('actionReject')}
             </button>
           </div>
         </div>
@@ -590,8 +591,8 @@ export default function PunditQueryDetailPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-5 border-b border-[#DDD0B8]">
-              <h2 className="font-bold text-[#6B3F1F]">Respond to Query</h2>
-              <p className="text-[#7A8C7E] text-xs mt-0.5">2-day window closes on response. Farmer is notified immediately.</p>
+              <h2 className="font-bold text-[#6B3F1F]">{t('respond.title')}</h2>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">{t('respond.subtitle')}</p>
             </div>
             <form onSubmit={handleRespond} className="p-5 space-y-4 pb-8">
               {/* Three structured response paths per the UCAT model.
@@ -603,34 +604,34 @@ export default function PunditQueryDetailPage() {
               {/* Path 1: Identify a Crop Health problem (CHA pipe) */}
               <div>
                 <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
-                  Crop Health Problem
+                  {t('respond.problemLabel')}
                   {respondForm.standard_response_id && (
-                    <span className="ml-2 text-xs text-[#7A8C7E] font-normal">(disabled — standard answer picked)</span>
+                    <span className="ml-2 text-xs text-[#7A8C7E] font-normal">{t('respond.problemDisabledHint')}</span>
                   )}
                 </label>
                 <select value={respondForm.problem_cosh_id}
                   onChange={e => setRespondForm(f => ({ ...f, problem_cosh_id: e.target.value }))}
                   disabled={!!respondForm.standard_response_id}
                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none disabled:bg-[#F5F0E8] disabled:text-[#7A8C7E]">
-                  <option value="">Select a Crop Health problem…</option>
+                  <option value="">{t('respond.problemSelectPlaceholder')}</option>
                   {cropProblems.map(p => (
                     <option key={p.cosh_id} value={p.cosh_id}>{p.name}</option>
                   ))}
                 </select>
                 <p className="text-xs text-[#7A8C7E] mt-1">
-                  Picking a problem here delivers CHA recommendations to the farmer's advisory.
+                  {t('respond.problemHelp')}
                 </p>
               </div>
 
               {/* Path 2: Pick a Standard Q&A answer (Q&A pipe) */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-[#6B3F1F]">Standard Answer</label>
+                  <label className="block text-sm font-medium text-[#6B3F1F]">{t('respond.stdLabel')}</label>
                   {!respondForm.standard_response_id && !respondForm.problem_cosh_id && (
                     <button type="button" onClick={openStdPicker}
                       className="text-xs font-medium px-2.5 py-1 rounded-lg text-white"
                       style={{ background: COLOUR }}>
-                      Pick from library
+                      {t('respond.pickFromLibrary')}
                     </button>
                   )}
                 </div>
@@ -638,10 +639,10 @@ export default function PunditQueryDetailPage() {
                   <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2">
                     <span className="text-indigo-700 text-sm">🌾</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">Q&amp;A picked</p>
+                      <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">{t('respond.stdPickedBadge')}</p>
                       <p className="text-sm text-[#6B3F1F] leading-snug">{respondForm.standard_response_question}</p>
                       <p className="text-xs text-[#7A8C7E] mt-0.5">
-                        On send, the curated advisory merges into the farmer&apos;s plan automatically.
+                        {t('respond.stdPickedFooter')}
                       </p>
                     </div>
                     <button type="button" onClick={clearStdPick}
@@ -650,8 +651,8 @@ export default function PunditQueryDetailPage() {
                 ) : (
                   <p className="text-xs text-[#7A8C7E]">
                     {respondForm.problem_cosh_id
-                      ? 'Disabled — Crop Health problem entered above.'
-                      : 'Search the company\'s curated Q&A library and pick the closest matching question.'}
+                      ? t('respond.stdDisabledHint')
+                      : t('respond.stdBrowseHint')}
                   </p>
                 )}
               </div>
@@ -660,16 +661,16 @@ export default function PunditQueryDetailPage() {
               <div>
                 <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
                   {respondForm.problem_cosh_id || respondForm.standard_response_id
-                    ? 'Additional guidance (optional)'
-                    : 'Free-form response'}
+                    ? t('respond.textLabelOptional')
+                    : t('respond.textLabelMain')}
                 </label>
                 <textarea value={respondForm.text}
                   onChange={e => setRespondForm(f => ({ ...f, text: e.target.value }))}
                   rows={5}
                   placeholder={
                     respondForm.problem_cosh_id || respondForm.standard_response_id
-                      ? 'Optional notes the farmer sees on the Query Response page.'
-                      : 'Use this only if no problem or standard answer applies. Free-form text reaches the farmer but does not merge into the advisory or drive purchases.'
+                      ? t('respond.textPlaceholderOptional')
+                      : t('respond.textPlaceholderMain')
                   }
                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
@@ -679,22 +680,22 @@ export default function PunditQueryDetailPage() {
                   response card renders whatever is present. */}
               <div>
                 <p className="text-sm font-medium text-[#6B3F1F] mb-1.5">
-                  Photos <span className="text-xs text-[#7A8C7E] font-normal">(optional, up to {MAX_RESPONSE_PHOTOS})</span>
+                  {t('respond.photosLabel')} <span className="text-xs text-[#7A8C7E] font-normal">{t('respond.photosCount', { max: MAX_RESPONSE_PHOTOS })}</span>
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {respondForm.photos.map((url, idx) => (
                     <div key={idx} className="relative">
-                      <img src={url} alt={`Response photo ${idx + 1}`}
+                      <img src={url} alt={t('respond.responsePhotoAlt', { n: idx + 1 })}
                         className="w-full h-24 object-cover rounded-xl border border-[#DDD0B8]" />
                       <button type="button"
                         onClick={() => setRespondForm(f => ({ ...f, photos: f.photos.filter((_, i) => i !== idx) }))}
                         className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 text-white text-xs leading-none flex items-center justify-center"
-                        aria-label="Remove">×</button>
+                        aria-label={t('respond.removeAria')}>×</button>
                     </div>
                   ))}
                   {respondForm.photos.length < MAX_RESPONSE_PHOTOS && (
                     <label className="h-24 border-2 border-dashed border-[#DDD0B8] rounded-xl flex items-center justify-center cursor-pointer text-xs text-[#7A8C7E] hover:bg-[#F5F0E8]">
-                      {uploadingResponse === 'photo' ? 'Uploading…' : '+ Add photo'}
+                      {uploadingResponse === 'photo' ? t('respond.uploadingPhoto') : t('respond.addPhotoIdle')}
                       <input type="file" accept="image/*" className="hidden"
                         onChange={e => {
                           const f = e.target.files?.[0]
@@ -708,21 +709,21 @@ export default function PunditQueryDetailPage() {
 
               <div>
                 <p className="text-sm font-medium text-[#6B3F1F] mb-1.5">
-                  Voice note <span className="text-xs text-[#7A8C7E] font-normal">(optional)</span>
+                  {t('respond.voiceNoteLabel')} <span className="text-xs text-[#7A8C7E] font-normal">{t('respond.optional')}</span>
                 </p>
                 {respondForm.audio ? (
                   <div className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2 space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-[#6B3F1F]">🎙 Voice note attached — play to confirm</span>
+                      <span className="text-xs text-[#6B3F1F]">{t('respond.voiceNoteAttached')}</span>
                       <button type="button"
                         onClick={() => setRespondForm(f => ({ ...f, audio: null }))}
-                        className="text-xs text-[#D4682E] font-medium">Remove</button>
+                        className="text-xs text-[#D4682E] font-medium">{t('respond.remove')}</button>
                     </div>
                     <audio src={respondForm.audio} controls className="w-full" />
                   </div>
                 ) : (
                   <label className="block w-full py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-center text-xs text-[#7A8C7E] cursor-pointer hover:bg-[#F5F0E8]">
-                    {uploadingResponse === 'audio' ? 'Uploading…' : '🎙 Add a voice note'}
+                    {uploadingResponse === 'audio' ? t('respond.uploadingAudio') : t('respond.voiceNoteIdle')}
                     <input type="file" accept="audio/*" className="hidden"
                       onChange={e => {
                         const f = e.target.files?.[0]
@@ -735,22 +736,22 @@ export default function PunditQueryDetailPage() {
 
               <div>
                 <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
-                  Hyperlink <span className="text-xs text-[#7A8C7E] font-normal">(optional)</span>
+                  {t('respond.hyperlinkLabel')} <span className="text-xs text-[#7A8C7E] font-normal">{t('respond.optional')}</span>
                 </label>
                 <input type="url" value={respondForm.hyperlink}
                   onChange={e => setRespondForm(f => ({ ...f, hyperlink: e.target.value }))}
-                  placeholder="https://example.com/reference"
+                  placeholder={t('respond.hyperlinkPlaceholder')}
                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
               </div>
 
               {respondError && <p className="text-sm text-[#D4682E]">{respondError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowRespond(false); setRespondError('') }}
-                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">{t('respond.cancel')}</button>
                 <button type="submit" disabled={responding}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: COLOUR }}>
-                  {responding ? 'Sending…' : 'Send Response'}
+                  {responding ? t('respond.sendBusy') : t('respond.sendIdle')}
                 </button>
               </div>
             </form>
@@ -763,19 +764,19 @@ export default function PunditQueryDetailPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full">
             <div className="p-5 border-b border-[#DDD0B8]">
-              <h2 className="font-bold text-[#6B3F1F]">Forward Query</h2>
-              <p className="text-[#7A8C7E] text-xs mt-0.5">2-day clock does not reset. Mandatory comments required.</p>
+              <h2 className="font-bold text-[#6B3F1F]">{t('forward.title')}</h2>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">{t('forward.subtitle')}</p>
             </div>
             <form onSubmit={handleForward} className="p-5 space-y-4 pb-8 max-h-[75vh] overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium text-[#6B3F1F] mb-2">
-                  Pick a colleague at this company
+                  {t('forward.pickColleague')}
                 </label>
                 {forwardCandidatesLoading ? (
                   <div className="h-16 bg-[#F5F0E8] rounded-xl animate-pulse" />
                 ) : forwardCandidates.length === 0 ? (
                   <p className="text-xs text-[#7A8C7E] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-3">
-                    No other FarmPundits are onboarded at this company. You can&apos;t forward this query.
+                    {t('forward.noColleagues')}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -787,16 +788,16 @@ export default function PunditQueryDetailPage() {
                           className={`w-full text-left rounded-xl border px-3 py-2.5 transition-colors ${picked ? 'border-[#3C3489] bg-[#3C3489]/5' : 'border-[#DDD0B8] hover:bg-[#F5F0E8]'}`}>
                           <div className="flex items-start gap-2">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-[#6B3F1F]">{c.name || '—'}</p>
+                              <p className="text-sm font-semibold text-[#6B3F1F]">{c.name || t('missing')}</p>
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${c.role === 'PRIMARY' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-[#6B3F1F]'}`}>
-                                  {c.role === 'PRIMARY' ? 'Primary' : 'Panel'}
+                                  {c.role === 'PRIMARY' ? t('forward.rolePrimary') : t('forward.rolePanel')}
                                 </span>
                                 {c.phone && (
                                   <span className="text-xs font-mono text-[#7A8C7E]">{c.phone}</span>
                                 )}
                                 {!c.phone && (
-                                  <span className="text-[10px] text-[#7A8C7E] italic">Phone hidden</span>
+                                  <span className="text-[10px] text-[#7A8C7E] italic">{t('forward.phoneHidden')}</span>
                                 )}
                               </div>
                             </div>
@@ -811,21 +812,21 @@ export default function PunditQueryDetailPage() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Remarks (mandatory)</label>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('forward.remarksLabel')}</label>
                 <textarea value={forwardForm.remarks}
                   onChange={e => setForwardForm(f => ({ ...f, remarks: e.target.value }))}
-                  required rows={3} placeholder="Why are you forwarding? What context should the recipient know?"
+                  required rows={3} placeholder={t('forward.remarksPlaceholder')}
                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
               {forwardError && <p className="text-sm text-[#D4682E]">{forwardError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowForward(false); setForwardError('') }}
-                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">{t('forward.cancel')}</button>
                 <button type="submit"
                   disabled={forwarding || !forwardForm.to_pundit_id || !forwardForm.remarks}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: COLOUR }}>
-                  {forwarding ? 'Forwarding…' : 'Forward'}
+                  {forwarding ? t('forward.forwardBusy') : t('forward.forwardIdle')}
                 </button>
               </div>
             </form>
@@ -838,23 +839,23 @@ export default function PunditQueryDetailPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full">
             <div className="p-5 border-b border-[#DDD0B8]">
-              <h2 className="font-bold text-[#6B3F1F]">Return Query</h2>
+              <h2 className="font-bold text-[#6B3F1F]">{t('return.title')}</h2>
             </div>
             <form onSubmit={handleReturn} className="p-5 space-y-4 pb-8">
               <div>
-                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Remarks (mandatory)</label>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('return.remarksLabel')}</label>
                 <textarea value={returnRemarks} onChange={e => setReturnRemarks(e.target.value)}
-                  required rows={3} placeholder="Why are you returning? What do you need?"
+                  required rows={3} placeholder={t('return.remarksPlaceholder')}
                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
               {returnError && <p className="text-sm text-[#D4682E]">{returnError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowReturn(false); setReturnError('') }}
-                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">{t('return.cancel')}</button>
                 <button type="submit" disabled={returning}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: '#b45309' }}>
-                  {returning ? 'Returning…' : 'Return Query'}
+                  {returning ? t('return.returnBusy') : t('return.returnIdle')}
                 </button>
               </div>
             </form>
@@ -867,24 +868,24 @@ export default function PunditQueryDetailPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full">
             <div className="p-5 border-b border-[#DDD0B8]">
-              <h2 className="font-bold text-[#6B3F1F]">Reject Query</h2>
-              <p className="text-[#7A8C7E] text-xs mt-0.5">This is a terminal action. The query cannot be reopened.</p>
+              <h2 className="font-bold text-[#6B3F1F]">{t('reject.title')}</h2>
+              <p className="text-[#7A8C7E] text-xs mt-0.5">{t('reject.subtitle')}</p>
             </div>
             <form onSubmit={handleReject} className="p-5 space-y-4 pb-8">
               <div>
-                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">Reason (mandatory)</label>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('reject.reasonLabel')}</label>
                 <textarea value={rejectRemarks} onChange={e => setRejectRemarks(e.target.value)}
-                  required rows={3} placeholder="Why are you rejecting this query?"
+                  required rows={3} placeholder={t('reject.reasonPlaceholder')}
                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none resize-none" />
               </div>
               {rejectError && <p className="text-sm text-[#D4682E]">{rejectError}</p>}
               <div className="flex gap-3">
                 <button type="button" onClick={() => { setShowReject(false); setRejectError('') }}
-                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">Cancel</button>
+                  className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] font-medium py-3 rounded-2xl text-sm">{t('reject.cancel')}</button>
                 <button type="submit" disabled={rejecting}
                   className="flex-1 text-white font-semibold py-3 rounded-2xl text-sm disabled:opacity-50"
                   style={{ background: '#dc2626' }}>
-                  {rejecting ? 'Rejecting…' : 'Reject Query'}
+                  {rejecting ? t('reject.rejectBusy') : t('reject.rejectIdle')}
                 </button>
               </div>
             </form>
@@ -898,8 +899,8 @@ export default function PunditQueryDetailPage() {
           onClick={() => setZoomedPhoto(null)}>
           <button onClick={() => setZoomedPhoto(null)}
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/15 text-white text-2xl flex items-center justify-center"
-            aria-label="Close photo">×</button>
-          <img src={zoomedPhoto} alt="Photograph"
+            aria-label={t('closePhotoAria')}>×</button>
+          <img src={zoomedPhoto} alt={t('photographAlt')}
             className="max-w-full max-h-full object-contain"
             onClick={e => e.stopPropagation()} />
         </div>
@@ -910,7 +911,7 @@ export default function PunditQueryDetailPage() {
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40">
           <div className="bg-white rounded-t-3xl w-full max-h-[80vh] flex flex-col">
             <div className="p-5 border-b border-[#DDD0B8] flex items-center justify-between">
-              <h2 className="font-bold text-[#6B3F1F]">Standard Responses</h2>
+              <h2 className="font-bold text-[#6B3F1F]">{t('stdPicker.title')}</h2>
               <button onClick={() => { setShowStdPicker(false); setStdSearch(''); setStdResults([]) }}
                 className="w-7 h-7 flex items-center justify-center text-[#7A8C7E] text-xl">×</button>
             </div>
@@ -918,7 +919,7 @@ export default function PunditQueryDetailPage() {
               <input
                 value={stdSearch}
                 onChange={e => onStdSearchChange(e.target.value)}
-                placeholder="Search responses…"
+                placeholder={t('stdPicker.searchPlaceholder')}
                 autoFocus
                 className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#3C3489]"
               />
@@ -927,14 +928,14 @@ export default function PunditQueryDetailPage() {
               {stdLoading ? (
                 <div className="h-12 bg-[#F5F0E8] rounded-xl animate-pulse mt-3" />
               ) : stdResults.length === 0 && stdSearch.length > 0 ? (
-                <p className="text-[#7A8C7E] text-sm text-center py-8">No results for &ldquo;{stdSearch}&rdquo;</p>
+                <p className="text-[#7A8C7E] text-sm text-center py-8">{t('stdPicker.noResults', { query: stdSearch })}</p>
               ) : stdResults.length === 0 ? (
                 <p className="text-[#7A8C7E] text-sm text-center py-8">
-                  Type to search the curated Q&amp;A library, or browse all entries.
+                  {t('stdPicker.browseHint')}
                 </p>
               ) : (
                 <div className="space-y-2 mt-3">
-                  <p className="text-xs text-[#7A8C7E]">{stdResults.length} result{stdResults.length === 1 ? '' : 's'}</p>
+                  <p className="text-xs text-[#7A8C7E]">{t('stdPicker.resultsCount', { count: stdResults.length })}</p>
                   {stdResults.map(r => (
                     <button key={r.id} onClick={() => pickStdResponse(r)}
                       className="w-full bg-white border border-[#DDD0B8] rounded-xl p-4 text-left hover:border-[#3C3489] transition-colors active:scale-[0.99]">
@@ -946,7 +947,7 @@ export default function PunditQueryDetailPage() {
                           </span>
                         ) : (
                           <span className="text-xs bg-slate-100 text-[#7A8C7E] px-2 py-0.5 rounded-full">
-                            Crop-agnostic
+                            {t('stdPicker.cropAgnostic')}
                           </span>
                         )}
                       </div>
