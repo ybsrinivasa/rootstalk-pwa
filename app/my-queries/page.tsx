@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -35,6 +36,7 @@ const STATUS_COLOUR: Record<string, string> = {
 
 export default function FarmerQueriesPage() {
   const router = useRouter()
+  const t = useTranslations('farmerQueries')
   const [queries, setQueries] = useState<QueryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedQuery, setExpandedQuery] = useState<string | null>(null)
@@ -62,28 +64,28 @@ export default function FarmerQueriesPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Expert Queries" activeRole="FARMER" back="/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20 px-4">
         <button
           onClick={() => router.replace('/home')}
           className="mt-4 mb-2 flex items-center gap-1 text-sm"
           style={{ color: '#7A8C7E' }}>
-          ← Back to home
+          {t('backToHome')}
         </button>
         {loading ? (
           <div className="mt-4 h-20 bg-white rounded-2xl animate-pulse" />
         ) : queries.length === 0 ? (
           <div className="mt-4 text-center py-16">
             <span className="text-4xl">💬</span>
-            <p className="text-[#6B3F1F] font-medium mt-3">No expert queries yet</p>
-            <p className="text-[#7A8C7E] text-sm mt-1">Ask an expert from any active advisory</p>
+            <p className="text-[#6B3F1F] font-medium mt-3">{t('empty')}</p>
+            <p className="text-[#7A8C7E] text-sm mt-1">{t('emptyHint')}</p>
           </div>
         ) : (
           <div className="mt-4 space-y-4">
             {/* Pending */}
             {pending.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">Awaiting Response ({pending.length})</p>
+                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">{t('awaitingResponse', { count: pending.length })}</p>
                 <div className="space-y-2">
                   {pending.map(q => (
                     <div key={q.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
@@ -112,7 +114,7 @@ export default function FarmerQueriesPage() {
             {/* Responded */}
             {responded.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">Responded ({responded.length})</p>
+                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">{t('responded', { count: responded.length })}</p>
                 <div className="space-y-2">
                   {responded.map(q => (
                     <div key={q.id} className="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
@@ -120,7 +122,7 @@ export default function FarmerQueriesPage() {
                         onClick={() => toggleQuery(q.id)}>
                         <div className="flex-1">
                           <p className="font-medium text-[#6B3F1F] text-sm">{q.title}</p>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">RESPONDED</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">{t('respondedBadge')}</span>
                         </div>
                         <svg className={`w-4 h-4 text-[#7A8C7E] transition-transform mt-1 ${expandedQuery === q.id ? 'rotate-180' : ''}`}
                           fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,15 +139,15 @@ export default function FarmerQueriesPage() {
                           <div className="border-t border-green-100 px-4 pb-4 pt-3 space-y-3">
                             {resp.has_cha_recommendation && (
                               <div className="bg-blue-50 border border-blue-200 rounded-xl px-3 py-2">
-                                <p className="text-xs text-blue-700 font-medium">🔬 Crop Health Advisory Added</p>
+                                <p className="text-xs text-blue-700 font-medium">{t('chaAddedTitle')}</p>
                                 <p className="text-xs text-blue-600 mt-0.5">
-                                  Treatment recommendations for <strong>{resp.problem_name || resp.problem_cosh_id}</strong> have been added to your advisory timeline.
+                                  {t('chaAddedBodyPrefix')} <strong>{resp.problem_name || resp.problem_cosh_id}</strong> {t('chaAddedBodySuffix')}
                                 </p>
                               </div>
                             )}
                             {resp.text && (
                               <div>
-                                <p className="text-xs font-medium text-[#7A8C7E] mb-1">Expert&apos;s Advice:</p>
+                                <p className="text-xs font-medium text-[#7A8C7E] mb-1">{t('expertAdvice')}</p>
                                 <p className="text-sm text-[#6B3F1F] leading-relaxed">{resp.text}</p>
                               </div>
                             )}
@@ -153,7 +155,7 @@ export default function FarmerQueriesPage() {
                               <div className="grid grid-cols-2 gap-2">
                                 {photos.map((p, i) => (
                                   <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className="block">
-                                    <img src={p.url} alt={`Expert photo ${i + 1}`}
+                                    <img src={p.url} alt={t('expertPhotoAlt', { index: i + 1 })}
                                       className="w-full h-28 object-cover rounded-xl border border-[#DDD0B8]" />
                                   </a>
                                 ))}
@@ -161,7 +163,7 @@ export default function FarmerQueriesPage() {
                             )}
                             {audios.map((a, i) => (
                               <div key={i} className="bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2">
-                                <p className="text-xs text-[#7A8C7E] mb-1">🎙 Expert&apos;s voice note</p>
+                                <p className="text-xs text-[#7A8C7E] mb-1">{t('expertVoiceNote')}</p>
                                 <audio src={a.url} controls className="w-full" />
                               </div>
                             ))}
@@ -186,7 +188,7 @@ export default function FarmerQueriesPage() {
             {/* Closed */}
             {closed.length > 0 && (
               <div>
-                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">Closed</p>
+                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">{t('closed')}</p>
                 <div className="space-y-2">
                   {closed.map(q => (
                     <div key={q.id} className="bg-white rounded-2xl border border-[#DDD0B8] opacity-70">

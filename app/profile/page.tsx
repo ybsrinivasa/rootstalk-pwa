@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser, getActiveRoles, logout, refreshUser, type PWAUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -18,6 +19,8 @@ type CoshLocations = {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const t = useTranslations('farmerProfile')
+  const tCommon = useTranslations('common')
   // User comes from localStorage initially (no flash of empty state)
   // and is refreshed on mount. After every save we re-fetch /auth/me
   // so the page reflects what's in the DB, not what was cached at
@@ -207,7 +210,7 @@ export default function ProfilePage() {
       setDeleteStep('otp')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setDeleteError(msg || 'Could not send OTP. Please try again.')
+      setDeleteError(msg || t('deleteAccount.errorOtpSend'))
     } finally {
       setDeleteBusy(false)
     }
@@ -223,7 +226,7 @@ export default function ProfilePage() {
       router.replace('/')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setDeleteError(msg || 'Invalid or expired OTP.')
+      setDeleteError(msg || t('deleteAccount.errorOtpInvalid'))
       setDeleteBusy(false)
     }
   }
@@ -251,7 +254,7 @@ export default function ProfilePage() {
       const fresh = await refreshUser()
       if (fresh) setUser(fresh)
     } catch {
-      setPhotoError("Couldn't upload that photo. Try a different one.")
+      setPhotoError(t('photoUploadError'))
     } finally {
       setUploadingPhoto(false)
       // reset so the same file can be re-selected
@@ -265,7 +268,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="My Profile" activeRole="FARMER" back="/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-20 px-4">
 
         {/* ── Hero user card ── */}
@@ -275,7 +278,7 @@ export default function ProfilePage() {
                 falls back to first-initial chip when no photo set. */}
             <label className="relative shrink-0 cursor-pointer">
               {user?.photo_url ? (
-                <img src={user.photo_url} alt={user.name || 'Profile'}
+                <img src={user.photo_url} alt={user.name || t('profileFallback')}
                   className="w-14 h-14 rounded-full object-cover border border-[#DDD0B8]" />
               ) : (
                 <div className="w-14 h-14 rounded-full flex items-center justify-center text-white text-xl font-bold"
@@ -310,25 +313,25 @@ export default function ProfilePage() {
                   />
                   <button onClick={saveName} disabled={savingName}
                     className="text-xs text-white bg-[#3A7D44] rounded-lg px-3 py-1.5 font-medium disabled:opacity-50 shrink-0">
-                    {savingName ? '…' : 'Save'}
+                    {savingName ? '…' : tCommon('save')}
                   </button>
                   <button onClick={() => { setEditingName(false); setNameValue(user?.name || '') }}
                     className="text-xs text-[#7A8C7E] rounded-lg px-2 py-1.5 shrink-0">
-                    Cancel
+                    {tCommon('cancel')}
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <p className="font-semibold text-[#6B3F1F] truncate">{user?.name || 'No name set'}</p>
+                  <p className="font-semibold text-[#6B3F1F] truncate">{user?.name || t('noNameSet')}</p>
                   <button onClick={() => { setEditingName(true); setNameValue(user?.name || '') }}
                     className="text-xs text-[#7A8C7E] underline shrink-0">
-                    Edit
+                    {t('edit')}
                   </button>
                 </div>
               )}
               <p className="text-[#7A8C7E] text-sm mt-0.5">{user?.phone}</p>
               <p className="text-[#7A8C7E] text-xs mt-0.5">
-                {locationLabel || 'Location not set'}
+                {locationLabel || t('locationNotSet')}
               </p>
             </div>
           </div>
@@ -355,11 +358,11 @@ export default function ProfilePage() {
               return (
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">Location</p>
+                    <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">{t('location.label')}</p>
                     {!editingLocation && (
                       <button onClick={openEditLocation}
                         className="text-xs text-[#7A8C7E] underline">
-                        Edit
+                        {t('edit')}
                       </button>
                     )}
                   </div>
@@ -367,29 +370,29 @@ export default function ProfilePage() {
                     <div className="space-y-3">
                       {/* State */}
                       <div>
-                        <p className="text-[11px] text-[#7A8C7E] mb-1">State</p>
+                        <p className="text-[11px] text-[#7A8C7E] mb-1">{t('location.state')}</p>
                         {stateId ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-xs font-medium px-2.5 py-1 rounded-full">
-                              {stateName || '(unnamed)'}
+                              {stateName || t('location.unnamed')}
                             </span>
                             <button onClick={() => {
                                 setStateId(''); setStateName(''); setStateSearch('')
                                 setDistrictId(''); setDistrictName(''); setDistrictSearch('')
                               }}
                               className="text-[11px] text-[#7A8C7E] underline">
-                              Change
+                              {tCommon('change')}
                             </button>
                           </div>
                         ) : (
                           <>
                             <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
-                              placeholder="Search state…"
+                              placeholder={t('location.searchState')}
                               className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-100" />
                             {stateSearch && (
                               <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-36 overflow-y-auto bg-white">
                                 {filteredStates.length === 0
-                                  ? <p className="text-[#7A8C7E] text-xs px-3 py-2">No states found</p>
+                                  ? <p className="text-[#7A8C7E] text-xs px-3 py-2">{t('location.noStates')}</p>
                                   : filteredStates.map(s => (
                                     <button key={s.cosh_id}
                                       onClick={() => {
@@ -410,28 +413,28 @@ export default function ProfilePage() {
                       {/* District — only meaningful after state is picked */}
                       {stateId && (
                         <div>
-                          <p className="text-[11px] text-[#7A8C7E] mb-1">District</p>
+                          <p className="text-[11px] text-[#7A8C7E] mb-1">{t('location.district')}</p>
                           {districtId ? (
                             <div className="flex items-center gap-2">
                               <span className="bg-[#3A7D44]/10 text-[#3A7D44] text-xs font-medium px-2.5 py-1 rounded-full">
-                                {districtName || '(unnamed)'}
+                                {districtName || t('location.unnamed')}
                               </span>
                               <button onClick={() => {
                                   setDistrictId(''); setDistrictName(''); setDistrictSearch('')
                                 }}
                                 className="text-[11px] text-[#7A8C7E] underline">
-                                Change
+                                {tCommon('change')}
                               </button>
                             </div>
                           ) : (
                             <>
                               <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
-                                placeholder="Search district…"
+                                placeholder={t('location.searchDistrict')}
                                 className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-100" />
                               {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
                                 <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-36 overflow-y-auto bg-white">
                                   {filteredDistricts.length === 0
-                                    ? <p className="text-[#7A8C7E] text-xs px-3 py-2">No districts found</p>
+                                    ? <p className="text-[#7A8C7E] text-xs px-3 py-2">{t('location.noDistricts')}</p>
                                     : filteredDistricts.map(d => (
                                       <button key={d.cosh_id}
                                         onClick={() => {
@@ -452,9 +455,9 @@ export default function ProfilePage() {
 
                       {/* Sub-district / village — free text */}
                       <div>
-                        <p className="text-[11px] text-[#7A8C7E] mb-1">Sub-district / Village <span className="text-[#DDD0B8]">(optional)</span></p>
+                        <p className="text-[11px] text-[#7A8C7E] mb-1">{t('location.subDistrict')} <span className="text-[#DDD0B8]">{t('location.optional')}</span></p>
                         <input value={subDistrictValue} onChange={e => setSubDistrictValue(e.target.value)}
-                          placeholder="e.g. Gubbi taluk"
+                          placeholder={t('location.subDistrictPlaceholder')}
                           className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-100" />
                       </div>
 
@@ -462,11 +465,11 @@ export default function ProfilePage() {
                         <button onClick={saveLocation} disabled={savingLocation || !stateId || !districtId}
                           className="flex-1 py-2 text-white text-xs font-medium rounded-xl disabled:opacity-50"
                           style={{ background: '#3A7D44' }}>
-                          {savingLocation ? 'Saving…' : 'Save'}
+                          {savingLocation ? t('location.saving') : tCommon('save')}
                         </button>
                         <button onClick={() => setEditingLocation(false)}
                           className="px-4 py-2 text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-xl">
-                          Cancel
+                          {tCommon('cancel')}
                         </button>
                       </div>
                     </div>
@@ -488,24 +491,24 @@ export default function ProfilePage() {
               const hasGps = displayLat !== null && displayLng !== null
               return (
                 <div>
-                  <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">GPS Location</p>
+                  <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-2">{t('gps.label')}</p>
                   {hasGps ? (
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-xs text-[#7A8C7E] font-mono">{displayLat!.toFixed(6)}, {displayLng!.toFixed(6)}</p>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className="text-xs text-[#3A7D44]">Captured</span>
+                          <span className="text-xs text-[#3A7D44]">{t('gps.captured')}</span>
                           <a
                             href={`https://www.google.com/maps?q=${displayLat},${displayLng}`}
                             target="_blank" rel="noopener noreferrer"
                             className="text-xs text-[#3A7D44] underline">
-                            View on Map ↗
+                            {t('gps.viewMap')}
                           </a>
                         </div>
                       </div>
                       <button onClick={captureGps} disabled={gpsLoading}
                         className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5 shrink-0">
-                        {gpsLoading ? 'Getting…' : 'Recapture'}
+                        {gpsLoading ? t('gps.gettingShort') : t('gps.recapture')}
                       </button>
                     </div>
                   ) : (
@@ -515,7 +518,7 @@ export default function ProfilePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"/>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"/>
                       </svg>
-                      {gpsLoading ? 'Getting location…' : 'Capture GPS Location'}
+                      {gpsLoading ? t('gps.gettingFull') : t('gps.captureCta')}
                     </button>
                   )}
                 </div>
@@ -534,25 +537,25 @@ export default function ProfilePage() {
         {(() => {
           const setupCtas: { key: string; label: string; href: string; tagline: string }[] = []
           if (!isDealer) setupCtas.push({
-            key: 'DEALER', label: 'Open my Shop',
+            key: 'DEALER', label: t('roles.dealer.label'),
             href: '/become-dealer',
-            tagline: 'Sell inputs to nearby farmers through RootsTalk.',
+            tagline: t('roles.dealer.tagline'),
           })
           if (!isFacilitator) setupCtas.push({
-            key: 'FACILITATOR', label: 'Help as Facilitator',
+            key: 'FACILITATOR', label: t('roles.facilitator.label'),
             href: '/become-facilitator',
-            tagline: 'Earn by promoting subscriptions in your village.',
+            tagline: t('roles.facilitator.tagline'),
           })
           if (!isFarmPundit) setupCtas.push({
-            key: 'FARM_PUNDIT', label: 'Become an Expert',
+            key: 'FARM_PUNDIT', label: t('roles.pundit.label'),
             href: '/pundit/register',
-            tagline: 'Answer farmer questions in your area of expertise.',
+            tagline: t('roles.pundit.tagline'),
           })
           if (!setupCtas.length) return null
           return (
             <div className="mt-5">
               <p className="text-xs font-semibold uppercase tracking-wide mb-3 px-1"
-                style={{ color: '#7A8C7E' }}>Take on a new role</p>
+                style={{ color: '#7A8C7E' }}>{t('roles.sectionHeader')}</p>
               <div className="space-y-3">
                 {setupCtas.map(c => (
                   <button key={c.key} onClick={() => router.push(c.href)}
@@ -571,21 +574,21 @@ export default function ProfilePage() {
 
         {/* ── PREFERENCES ── */}
         <div className="mt-5">
-          <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-3 px-1">Preferences</p>
+          <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-3 px-1">{t('prefs.sectionHeader')}</p>
           <div className="space-y-3">
 
             {/* Language */}
             <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-0.5">Language</p>
+                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-0.5">{t('prefs.languageLabel')}</p>
                   <p className="text-sm text-[#6B3F1F] font-medium">
                     {languages.find(l => l.language_code === currentLang)?.language_name_native || currentLang.toUpperCase()}
                   </p>
                 </div>
                 <button onClick={() => setShowLangSheet(true)}
                   className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                  Change
+                  {t('prefs.change')}
                 </button>
               </div>
             </div>
@@ -597,13 +600,13 @@ export default function ProfilePage() {
                 no longer reaching the alerts task. */}
             {subscriptions.length > 0 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">Alert Preferences</p>
+                <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">{t('prefs.alertsLabel')}</p>
                 <p className="text-sm text-[#6B3F1F]">
-                  Set who else gets alerts on each crop&apos;s page — open the crop and tap the alert recipient sheet.
+                  {t('prefs.alertsBody')}
                 </p>
                 <button onClick={() => router.push('/home')}
                   className="mt-3 text-xs font-semibold text-[#7D4E00] underline">
-                  Open my crops →
+                  {t('prefs.openMyCrops')}
                 </button>
               </div>
             )}
@@ -620,7 +623,7 @@ export default function ProfilePage() {
         <div className="mt-16 pt-6 border-t border-[#DDD0B8]">
           <button onClick={() => { setDeleteStep('confirm'); setDeleteError('') }}
             className="w-full text-center text-xs text-[#7A8C7E] hover:text-[#7A8C7E] py-2">
-            Delete my account
+            {t('deleteAccount.trigger')}
           </button>
         </div>
       </div>
@@ -632,7 +635,7 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowLangSheet(false)}>
           <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto pb-6" onClick={e => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-medium text-[#6B3F1F] text-sm">Select language</p>
+              <p className="font-medium text-[#6B3F1F] text-sm">{t('language.selectorTitle')}</p>
               <button onClick={() => setShowLangSheet(false)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             {languages.map(l => (
@@ -653,14 +656,14 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setDeleteStep('idle')}>
           <div className="bg-white rounded-t-3xl w-full pb-10 px-5 pt-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-[#6B3F1F] text-base">Delete your account?</h3>
+              <h3 className="font-semibold text-[#6B3F1F] text-base">{t('deleteAccount.confirmTitle')}</h3>
               <button onClick={() => setDeleteStep('idle')} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             <div className="space-y-2 mb-6">
               {[
-                'Your active advisories will be cancelled',
-                'Your data will be anonymised within 30 days',
-                'This cannot be undone',
+                t('deleteAccount.bullets.advisoriesCancelled'),
+                t('deleteAccount.bullets.anonymisedIn30'),
+                t('deleteAccount.bullets.cannotUndo'),
               ].map(item => (
                 <div key={item} className="flex items-start gap-2">
                   <span className="text-[#D4682E] mt-0.5">•</span>
@@ -672,12 +675,12 @@ export default function ProfilePage() {
             <div className="flex gap-3">
               <button onClick={() => setDeleteStep('idle')}
                 className="flex-1 py-3 border border-[#DDD0B8] rounded-2xl text-sm text-[#6B3F1F] font-medium">
-                Cancel
+                {tCommon('cancel')}
               </button>
               <button onClick={requestDeleteOtp} disabled={deleteBusy}
                 className="flex-1 py-3 rounded-2xl text-sm text-white font-medium disabled:opacity-50"
                 style={{ background: '#dc2626' }}>
-                {deleteBusy ? 'Sending…' : 'Send verification code'}
+                {deleteBusy ? t('deleteAccount.sending') : t('deleteAccount.sendVerifyCode')}
               </button>
             </div>
           </div>
@@ -689,13 +692,13 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setDeleteStep('idle')}>
           <div className="bg-white rounded-t-3xl w-full pb-10 px-5 pt-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-5">
-              <h3 className="font-semibold text-[#6B3F1F] text-base">Confirm deletion</h3>
+              <h3 className="font-semibold text-[#6B3F1F] text-base">{t('deleteAccount.otpTitle')}</h3>
               <button onClick={() => setDeleteStep('idle')} className="text-[#7A8C7E] text-xl">×</button>
             </div>
-            <p className="text-sm text-[#7A8C7E] mb-4">Enter the 6-digit code sent to your phone to confirm account deletion.</p>
+            <p className="text-sm text-[#7A8C7E] mb-4">{t('deleteAccount.otpBody')}</p>
             {deleteDevOtp && (
               <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 mb-4">
-                <p className="text-amber-700 text-xs font-medium">Dev code: <strong>{deleteDevOtp}</strong></p>
+                <p className="text-amber-700 text-xs font-medium">{t('deleteAccount.devCode')} <strong>{deleteDevOtp}</strong></p>
               </div>
             )}
             <input
@@ -712,7 +715,7 @@ export default function ProfilePage() {
             <button onClick={confirmDelete} disabled={deleteBusy || deleteOtp.length < 6}
               className="w-full py-3.5 rounded-2xl text-white text-sm font-medium disabled:opacity-40"
               style={{ background: '#dc2626' }}>
-              {deleteBusy ? 'Deleting…' : 'Confirm deletion →'}
+              {deleteBusy ? t('deleteAccount.deleting') : t('deleteAccount.confirmCta')}
             </button>
           </div>
         </div>
