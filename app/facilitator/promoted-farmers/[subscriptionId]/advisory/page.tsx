@@ -85,27 +85,26 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
-// 2026-06-12 — Brand / manufacturer / formulation / AI concentration
-// elements describe the SE's recommended PRODUCT (dealer-facing guidance,
-// not for the farmer). The promoter who assigned the package shouldn't
-// see these either — and per the same conversation, the application /
-// dosage / volume-per-plant / instructions block is also hidden from
-// the promoter because the promoter doesn't need the farmer's
-// post-purchase application detail.
+// 2026-06-12 — SE recommendations (brand, manufacturer, formulation,
+// AI concentration) describe the SE's recommended PRODUCT and are
+// dealer-facing only. Hidden ALWAYS — pre and post purchase, on every
+// surface that views the farmer's advisory.
 //
-// Mirror of FARMER_HIDDEN_ELEMENT_TYPES + POST_PURCHASE_ONLY_ELEMENT_TYPES
-// in app/advisory/[subscriptionId]/page.tsx — flattened into a single set
-// here because this surface never shows a purchased-block, so the
-// distinction is moot.
-const PROMOTER_HIDDEN_ELEMENT_TYPES = new Set<string>([
-  // SE recommendations — dealer-facing, never for promoter / farmer
+// Mirror of FARMER_HIDDEN_ELEMENT_TYPES in app/advisory/[subscriptionId]/page.tsx.
+const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'COMMON_NAME',
   'BRAND_NAME',
   'MANUFACTURER',
   'FORMULATION',
   'FORMULATION_AI_CONC',
   'AI_CONCENTRATION',
-  // Post-purchase application detail — farmer-only
+])
+
+// 2026-06-12 — Post-purchase-only fields: hidden until the practice is
+// purchased. Once purchased, the farmer needs application detail to
+// actually apply the input. The promoter sees what the farmer sees, so
+// the same gate runs here — on is_purchased per practice.
+const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
   'APPLICATION_METHOD',
   'DOSAGE',
   'VOLUME_PER_PLANT',
@@ -114,11 +113,19 @@ const PROMOTER_HIDDEN_ELEMENT_TYPES = new Set<string>([
 
 // Fold a *_UNIT row onto its preceding value-bearing element. Matches
 // the farmer-side rule: never render "Dosage Unit: ml" as its own row.
-function renderElements(elements: ElementRow[]): { label: string; value: string }[] {
+//
+// `isPurchased` gates the post-purchase-only fields so the promoter
+// sees exactly what the farmer sees on the same practice — nothing
+// extra pre-purchase, application detail post-purchase.
+function renderElements(
+  elements: ElementRow[],
+  isPurchased: boolean,
+): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
-    const type = e.element_type
-    if (PROMOTER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
+    const type = (e.element_type || '').toUpperCase()
+    if (FARMER_HIDDEN_ELEMENT_TYPES.has(type)) continue
+    if (!isPurchased && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(type)) continue
     const valueStr = (e.value ?? '').toString()
     if (!valueStr) continue
     if (type.endsWith('_UNIT')) {
@@ -267,7 +274,7 @@ export default function FacilitatorAdvisoryViewPage() {
                       {t('noPracticeToday')}
                     </p>
                   ) : tl.practices.map(p => {
-                    const rows = renderElements(p.elements)
+                    const rows = renderElements(p.elements, !!p.is_purchased)
                     const l0Key = L0_LABEL_KEY[p.l0_type]
                     const l0Label = l0Key === 'input' ? t('l0.input')
                       : l0Key === 'nonInput' ? t('l0.nonInput')

@@ -81,37 +81,42 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
-// 2026-06-12 — Hide SE-recommended product elements AND the
-// post-purchase application detail from the dealer-as-promoter's view of
-// the farmer's advisory.
+// 2026-06-12 — Same surfacing rules as the farmer's advisory view:
+//   - FARMER_HIDDEN_ELEMENT_TYPES: hidden always
+//   - POST_PURCHASE_ONLY_ELEMENT_TYPES: hidden until is_purchased is true
 //
 // This page is "dealer-as-promoter viewing the farmer they sponsor" —
-// they're not the selling dealer here, they're tracking the farmer
-// they've onboarded. Same rule as the facilitator-promoter mirror: SE
-// recommendations are dealer-facing and the post-purchase application
-// detail (how to apply / how much / volume per plant / instructions) is
-// farmer-only. The promoter doesn't need either.
+// the dealer here is the promoter, not the selling dealer. The
+// promoter sees what the farmer sees: nothing extra pre-purchase,
+// application detail once purchased.
 //
-// Mirror of PROMOTER_HIDDEN_ELEMENT_TYPES in
-// app/facilitator/promoted-farmers/[subscriptionId]/advisory/page.tsx.
-const PROMOTER_HIDDEN_ELEMENT_TYPES = new Set<string>([
+// Mirror of FARMER_HIDDEN_ELEMENT_TYPES / POST_PURCHASE_ONLY_ELEMENT_TYPES
+// in app/advisory/[subscriptionId]/page.tsx.
+const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'COMMON_NAME',
   'BRAND_NAME',
   'MANUFACTURER',
   'FORMULATION',
   'FORMULATION_AI_CONC',
   'AI_CONCENTRATION',
+])
+
+const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
   'APPLICATION_METHOD',
   'DOSAGE',
   'VOLUME_PER_PLANT',
   'INSTRUCTIONS',
 ])
 
-function renderElements(elements: ElementRow[]): { label: string; value: string }[] {
+function renderElements(
+  elements: ElementRow[],
+  isPurchased: boolean,
+): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
-    const type = e.element_type
-    if (PROMOTER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
+    const type = (e.element_type || '').toUpperCase()
+    if (FARMER_HIDDEN_ELEMENT_TYPES.has(type)) continue
+    if (!isPurchased && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(type)) continue
     const valueStr = (e.value ?? '').toString()
     if (!valueStr) continue
     if (type.endsWith('_UNIT')) {
@@ -252,7 +257,7 @@ export default function DealerFarmerAdvisoryPage() {
                       {t('noPracticeToday')}
                     </p>
                   ) : tl.practices.map(p => {
-                    const rows = renderElements(p.elements)
+                    const rows = renderElements(p.elements, !!p.is_purchased)
                     const l0Key = L0_LABEL_KEY[p.l0_type]
                     const l0Label = l0Key === 'input' ? t('l0.input')
                       : l0Key === 'nonInput' ? t('l0.nonInput')
