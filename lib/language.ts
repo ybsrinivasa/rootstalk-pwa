@@ -2,7 +2,7 @@
 // instant access before auth completes. Persistence is three-layered:
 //   1. localStorage — client-side reads (synchronous, no network).
 //   2. Cookie       — server-side reads via i18n/request.ts.
-//   3. users.language_code via PUT /me/profile — durable across devices.
+//   3. users.language_code via PUT /auth/me/profile — durable across devices.
 //
 // The cookie + localStorage are written immediately on language change;
 // the backend PATCH is fire-and-forget when the user is authenticated.
@@ -40,7 +40,7 @@ export async function changeLanguage(code: string): Promise<void> {
   if (typeof window === "undefined") return;
   if (!localStorage.getItem("rt_pwa_token")) return;
   try {
-    await api.put("/me/profile", { language_code: code });
+    await api.put("/auth/me/profile", { language_code: code });
   } catch {
     // Backend persistence is best-effort. Client state already updated.
   }
