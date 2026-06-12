@@ -96,6 +96,31 @@ function humanizeType(s: string | null): string {
   if (!s) return ''
   return s.toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 }
+
+// 2026-06-12 — Elements that describe the SE's recommended PRODUCT
+// (brand, manufacturer, formulation, AI concentration). The SE's pick
+// is guidance for the *dealer* to source — when the dealer can't get
+// the exact product, they substitute, and the farmer's actual purchase
+// renders in PurchasedSummary. Showing the SE's recommendation alongside
+// the actual purchase on the same card confuses the farmer ("which one
+// did I buy?"). The SE forces a specific brand via Brand-Lock when it
+// matters; absent that lock, the recommendation isn't farmer-facing.
+//
+// Filtered for ALL farmer / pundit / facilitator viewing of farmer's
+// advisory. The dealer's own order view (different file) still shows
+// these — the dealer needs them to source.
+//
+// Same rule mirrored in:
+//   - app/facilitator/promoted-farmers/[subscriptionId]/advisory/page.tsx
+//   - app/dealer/promoted-farmers/[subscriptionId]/page.tsx
+const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  'COMMON_NAME',          // SE authoring jargon, never useful to the farmer
+  'BRAND_NAME',           // dealer-facing recommendation
+  'MANUFACTURER',         // dealer-facing recommendation
+  'FORMULATION',          // describes recommended product, not purchased
+  'FORMULATION_AI_CONC',  // combined formulation + AI concentration
+  'AI_CONCENTRATION',     // describes recommended product, not purchased
+])
 // Cosh refs and unit IDs sometimes arrive as bare UUIDs (backend
 // hasn't joined them to a friendly name yet). Strip them in the
 // UI — showing "(d79cfced-8de1-…)" to a farmer is worse than
@@ -877,13 +902,13 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
       {detailsVisible && expanded && (
         <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
           {mergeUnitElements(practice.elements)
-            // 2026-06-06 — Strip Common Name (SE authoring jargon,
-            // never useful to the farmer). When the PurchasedSummary
-            // block is showing, also strip Application Method +
-            // Dosage so they don't appear twice on the same card.
+            // Strip SE recommendations that are dealer-facing only (see
+            // FARMER_HIDDEN_ELEMENT_TYPES comment). When the
+            // PurchasedSummary block is showing, also strip Application
+            // Method + Dosage so they don't appear twice on the same card.
             .filter(el => {
               const t = (el.element_type || '').toUpperCase()
-              if (t === 'COMMON_NAME') return false
+              if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
               const summaryShown = fulf?.status === 'APPROVED' && !!fulf.brand_name
               if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
               return true
@@ -916,7 +941,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
         const visibleEls = mergeUnitElements(practice.elements)
           .filter(el => {
             const t = (el.element_type || '').toUpperCase()
-            if (t === 'COMMON_NAME') return false
+            if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
             if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
             return true
           })

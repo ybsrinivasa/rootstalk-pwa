@@ -85,12 +85,28 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
+// 2026-06-12 — Brand / manufacturer / formulation / AI concentration
+// elements describe the SE's recommended PRODUCT, which is guidance for
+// the dealer (substitute when not in stock). Showing it on the farmer's
+// view — including this facilitator-viewing-farmer mirror — confuses the
+// farmer when the dealer substituted. Mirror of FARMER_HIDDEN_ELEMENT_TYPES
+// in app/advisory/[subscriptionId]/page.tsx.
+const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  'COMMON_NAME',
+  'BRAND_NAME',
+  'MANUFACTURER',
+  'FORMULATION',
+  'FORMULATION_AI_CONC',
+  'AI_CONCENTRATION',
+])
+
 // Fold a *_UNIT row onto its preceding value-bearing element. Matches
 // the farmer-side rule: never render "Dosage Unit: ml" as its own row.
 function renderElements(elements: ElementRow[]): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
     const type = e.element_type
+    if (FARMER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
     const valueStr = (e.value ?? '').toString()
     if (!valueStr) continue
     if (type.endsWith('_UNIT')) {

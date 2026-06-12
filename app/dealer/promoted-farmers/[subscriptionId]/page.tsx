@@ -81,10 +81,25 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
+// 2026-06-12 — Hide SE-recommended product elements from the dealer's
+// view of the farmer's advisory. This page is "dealer-as-promoter
+// viewing the farmer they're sponsoring" — same lens as the farmer
+// themselves, not the dealer's own order workflow. Mirror of
+// FARMER_HIDDEN_ELEMENT_TYPES in app/advisory/[subscriptionId]/page.tsx.
+const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  'COMMON_NAME',
+  'BRAND_NAME',
+  'MANUFACTURER',
+  'FORMULATION',
+  'FORMULATION_AI_CONC',
+  'AI_CONCENTRATION',
+])
+
 function renderElements(elements: ElementRow[]): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
     const type = e.element_type
+    if (FARMER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
     const valueStr = (e.value ?? '').toString()
     if (!valueStr) continue
     if (type.endsWith('_UNIT')) {
