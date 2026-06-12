@@ -26,6 +26,16 @@ interface Practice {
   is_purchased?: boolean
   frequency_days?: number | null
   is_frequency_due_today?: boolean
+  // 2026-06-12 — Surfaces the dealer-delivered brand + manufacturer so
+  // the promoter can speak to the farmer about what they actually have.
+  // Populated by the today-advisory kernel when the latest order item
+  // for this practice is APPROVED (brand visible to farmer ↔ visible
+  // to promoter).
+  fulfilment?: {
+    status?: string | null
+    brand_name?: string | null
+    manufacturer_name?: string | null
+  } | null
 }
 
 interface TimelineItem {
@@ -274,6 +284,21 @@ export default function DealerFarmerAdvisoryPage() {
                           {p.l2_type && <span className="opacity-80"> · {humanize(p.l2_type)}</span>}
                         </div>
                         <div className="p-3 text-sm">
+                          {/* 2026-06-12 — When the farmer has purchased
+                              this input, surface the brand + manufacturer
+                              the dealer actually delivered. Promoter
+                              needs this to speak to the farmer about
+                              their actual product ("use this, use
+                              that"). Matches the farmer's
+                              PurchasedSummary block on /advisory. */}
+                          {p.fulfilment?.status === 'APPROVED' && p.fulfilment?.brand_name && (
+                            <div className="-mx-3 -mt-3 mb-3 px-3 py-2 border-b border-emerald-100 bg-emerald-50/40">
+                              <p className="text-sm font-bold text-emerald-900 truncate">{p.fulfilment.brand_name}</p>
+                              {p.fulfilment.manufacturer_name && (
+                                <p className="text-[11px] text-emerald-800">by {p.fulfilment.manufacturer_name}</p>
+                              )}
+                            </div>
+                          )}
                           {rows.length === 0 ? (
                             <p className="text-[#7A8C7E] text-xs">{t('noSpecificInstructions')}</p>
                           ) : (
