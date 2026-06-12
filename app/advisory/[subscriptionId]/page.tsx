@@ -106,7 +106,7 @@ function humanizeType(s: string | null): string {
 // did I buy?"). The SE forces a specific brand via Brand-Lock when it
 // matters; absent that lock, the recommendation isn't farmer-facing.
 //
-// Filtered for ALL farmer / pundit / facilitator viewing of farmer's
+// Filtered ALWAYS — pre and post purchase, on every view of the farmer's
 // advisory. The dealer's own order view (different file) still shows
 // these — the dealer needs them to source.
 //
@@ -120,6 +120,23 @@ const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'FORMULATION',          // describes recommended product, not purchased
   'FORMULATION_AI_CONC',  // combined formulation + AI concentration
   'AI_CONCENTRATION',     // describes recommended product, not purchased
+])
+
+// 2026-06-12 — How to apply / how much / over what cadence is only
+// useful AFTER the farmer has purchased the input. Pre-purchase the
+// card is just a heads-up that an input is recommended; the precise
+// instructions land once the dealer has marked the item Available and
+// the farmer has approved. Hidden pre-purchase across all surfaces.
+//
+// Post-purchase, APPLICATION_METHOD and DOSAGE move into the
+// PurchasedSummary block (alongside brand + manufacturer). VOLUME_PER_PLANT
+// and INSTRUCTIONS remain in the bullet list so the farmer can see them
+// without expanding to the order detail page.
+const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
+  'APPLICATION_METHOD',
+  'DOSAGE',
+  'VOLUME_PER_PLANT',
+  'INSTRUCTIONS',
 ])
 // Cosh refs and unit IDs sometimes arrive as bare UUIDs (backend
 // hasn't joined them to a friendly name yet). Strip them in the
@@ -159,16 +176,19 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
 // items — the farmer shouldn't have to expand to see what they
 // bought.
 function PurchasedSummary({
-  brand, manufacturer, elements, givenVolume, volumeUnit,
+  brand, manufacturer, elements,
 }: {
   brand: string
   manufacturer: string | null
   elements: Element[]
-  givenVolume: number | null
-  volumeUnit: string | null
 }) {
   // Pull application method + dosage from the SE elements; merged
   // so the dosage + unit appear on one line.
+  //
+  // 2026-06-12 — Dropped the `givenVolume + volumeUnit` chip that used
+  // to render next to the brand. The actual purchased volume is already
+  // surfaced on the Purchased Items list — duplicating it on the
+  // advisory card was noise.
   const merged = mergeUnitElements(elements)
   const appMethod = merged.find(e => (e.element_type || '').toUpperCase() === 'APPLICATION_METHOD')
   const dosage = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
@@ -177,12 +197,7 @@ function PurchasedSummary({
     : (dosage?.trailing_unit || '')
   return (
     <div className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-3 space-y-1">
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
-        {givenVolume != null && volumeUnit && (
-          <p className="text-xs font-semibold text-emerald-800 shrink-0">{givenVolume} {volumeUnit}</p>
-        )}
-      </div>
+      <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
       {manufacturer && (
         <p className="text-xs text-emerald-800">by {manufacturer}</p>
       )}
@@ -894,8 +909,6 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
           elements={practice.elements}
-          givenVolume={fulf.given_volume}
-          volumeUnit={fulf.volume_unit}
         />
       )}
 
@@ -903,13 +916,16 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
         <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
           {mergeUnitElements(practice.elements)
             // Strip SE recommendations that are dealer-facing only (see
-            // FARMER_HIDDEN_ELEMENT_TYPES comment). When the
-            // PurchasedSummary block is showing, also strip Application
-            // Method + Dosage so they don't appear twice on the same card.
+            // FARMER_HIDDEN_ELEMENT_TYPES). The post-purchase block
+            // (APPLICATION_METHOD, DOSAGE, VOLUME_PER_PLANT, INSTRUCTIONS)
+            // is hidden pre-purchase. Post-purchase, APPLICATION_METHOD
+            // and DOSAGE move into PurchasedSummary so they're suppressed
+            // from the bullet list to avoid duplication.
             .filter(el => {
               const t = (el.element_type || '').toUpperCase()
               if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
               const summaryShown = fulf?.status === 'APPROVED' && !!fulf.brand_name
+              if (!summaryShown && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(t)) return false
               if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
               return true
             })
@@ -942,6 +958,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           .filter(el => {
             const t = (el.element_type || '').toUpperCase()
             if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
+            if (!summaryShown && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(t)) return false
             if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
             return true
           })

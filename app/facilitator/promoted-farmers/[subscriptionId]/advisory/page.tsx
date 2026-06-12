@@ -86,18 +86,30 @@ function isUuid(s: string): boolean {
 }
 
 // 2026-06-12 — Brand / manufacturer / formulation / AI concentration
-// elements describe the SE's recommended PRODUCT, which is guidance for
-// the dealer (substitute when not in stock). Showing it on the farmer's
-// view — including this facilitator-viewing-farmer mirror — confuses the
-// farmer when the dealer substituted. Mirror of FARMER_HIDDEN_ELEMENT_TYPES
-// in app/advisory/[subscriptionId]/page.tsx.
-const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
+// elements describe the SE's recommended PRODUCT (dealer-facing guidance,
+// not for the farmer). The promoter who assigned the package shouldn't
+// see these either — and per the same conversation, the application /
+// dosage / volume-per-plant / instructions block is also hidden from
+// the promoter because the promoter doesn't need the farmer's
+// post-purchase application detail.
+//
+// Mirror of FARMER_HIDDEN_ELEMENT_TYPES + POST_PURCHASE_ONLY_ELEMENT_TYPES
+// in app/advisory/[subscriptionId]/page.tsx — flattened into a single set
+// here because this surface never shows a purchased-block, so the
+// distinction is moot.
+const PROMOTER_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  // SE recommendations — dealer-facing, never for promoter / farmer
   'COMMON_NAME',
   'BRAND_NAME',
   'MANUFACTURER',
   'FORMULATION',
   'FORMULATION_AI_CONC',
   'AI_CONCENTRATION',
+  // Post-purchase application detail — farmer-only
+  'APPLICATION_METHOD',
+  'DOSAGE',
+  'VOLUME_PER_PLANT',
+  'INSTRUCTIONS',
 ])
 
 // Fold a *_UNIT row onto its preceding value-bearing element. Matches
@@ -106,7 +118,7 @@ function renderElements(elements: ElementRow[]): { label: string; value: string 
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
     const type = e.element_type
-    if (FARMER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
+    if (PROMOTER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
     const valueStr = (e.value ?? '').toString()
     if (!valueStr) continue
     if (type.endsWith('_UNIT')) {

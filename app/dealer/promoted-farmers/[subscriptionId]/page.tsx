@@ -81,25 +81,37 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
-// 2026-06-12 — Hide SE-recommended product elements from the dealer's
-// view of the farmer's advisory. This page is "dealer-as-promoter
-// viewing the farmer they're sponsoring" — same lens as the farmer
-// themselves, not the dealer's own order workflow. Mirror of
-// FARMER_HIDDEN_ELEMENT_TYPES in app/advisory/[subscriptionId]/page.tsx.
-const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
+// 2026-06-12 — Hide SE-recommended product elements AND the
+// post-purchase application detail from the dealer-as-promoter's view of
+// the farmer's advisory.
+//
+// This page is "dealer-as-promoter viewing the farmer they sponsor" —
+// they're not the selling dealer here, they're tracking the farmer
+// they've onboarded. Same rule as the facilitator-promoter mirror: SE
+// recommendations are dealer-facing and the post-purchase application
+// detail (how to apply / how much / volume per plant / instructions) is
+// farmer-only. The promoter doesn't need either.
+//
+// Mirror of PROMOTER_HIDDEN_ELEMENT_TYPES in
+// app/facilitator/promoted-farmers/[subscriptionId]/advisory/page.tsx.
+const PROMOTER_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'COMMON_NAME',
   'BRAND_NAME',
   'MANUFACTURER',
   'FORMULATION',
   'FORMULATION_AI_CONC',
   'AI_CONCENTRATION',
+  'APPLICATION_METHOD',
+  'DOSAGE',
+  'VOLUME_PER_PLANT',
+  'INSTRUCTIONS',
 ])
 
 function renderElements(elements: ElementRow[]): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
     const type = e.element_type
-    if (FARMER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
+    if (PROMOTER_HIDDEN_ELEMENT_TYPES.has((type || '').toUpperCase())) continue
     const valueStr = (e.value ?? '').toString()
     if (!valueStr) continue
     if (type.endsWith('_UNIT')) {
