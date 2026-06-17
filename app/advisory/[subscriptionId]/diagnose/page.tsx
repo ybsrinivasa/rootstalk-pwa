@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import ClientCropChip from '@/components/ClientCropChip'
@@ -35,8 +36,26 @@ interface ImageAnalysis {
 const COLOUR = '#3A7D44'
 
 export default function DiagnosisPage() {
+  const t = useTranslations('diagnose')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
+
+  // Build the Yes/No question text from localised slot fields.
+  // Backend ships pre-resolved plant_part_name / symptom_name /
+  // sub_part_name / sub_symptom_name; this picks the right ICU
+  // template based on which slots are populated.
+  const buildQuestionText = (q: Question | null): string => {
+    if (!q) return ''
+    if (q.question_type === 'CONFIRMATION') return t('confirming.subtitle')
+    const part = q.plant_part_name || ''
+    const symptom = q.symptom_name || ''
+    const subPart = q.sub_part_name || ''
+    const subSymptom = q.sub_symptom_name || ''
+    if (subPart && subSymptom) return t('questioning.templateBoth', { part, subPart, subSymptom })
+    if (subSymptom) return t('questioning.templateSubSymptom', { part, symptom, subSymptom })
+    if (subPart) return t('questioning.templateSubPart', { part, symptom, subPart })
+    return t('questioning.templateBasic', { part, symptom })
+  }
 
   const [stage, setStage] = useState<'select_stage' | 'select_method' | 'ai_capture' | 'ai_needs_expert' | 'select_part' | 'questioning' | 'confirming' | 'diagnosed' | 'outside_list' | 'know_problem' | 'aborted'>('select_stage')
   const [stages, setStages] = useState<CropStage[]>([])
@@ -465,7 +484,7 @@ export default function DiagnosisPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Diagnose Crop Problem" activeRole="FARMER" back={`/advisory/${subscriptionId}`} />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={`/advisory/${subscriptionId}`} />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>
@@ -475,14 +494,14 @@ export default function DiagnosisPage() {
         {stage === 'select_stage' && (
           <div className="mt-4 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-[#6B3F1F]">What stage is your crop in?</h2>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">{t('stagePicker.title')}</h2>
               <p className="text-[#7A8C7E] text-sm mt-0.5">
-                Picking the right stage narrows the diagnosis to problems that are typical at this point in the season.
+                {t('stagePicker.body')}
               </p>
             </div>
             {stages.length === 0 ? (
               <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
-                <p className="text-[#7A8C7E] text-sm">Loading stages…</p>
+                <p className="text-[#7A8C7E] text-sm">{t('stagePicker.loading')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-3">
@@ -497,7 +516,7 @@ export default function DiagnosisPage() {
             )}
             <button onClick={() => router.back()}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
-              Cancel
+              {t('stagePicker.cancel')}
             </button>
           </div>
         )}
@@ -506,11 +525,11 @@ export default function DiagnosisPage() {
         {stage === 'select_method' && (
           <div className="mt-4 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-[#6B3F1F]">How would you like to diagnose?</h2>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">{t('methodPicker.title')}</h2>
               <p className="text-[#7A8C7E] text-sm mt-0.5">
-                {selectedStage ? `Crop stage: ${selectedStage.name}. ` : ''}
-                You can answer simple Yes / No questions yourself, or let
-                AI take a look at photos you upload.
+                {selectedStage
+                  ? t('methodPicker.bodyWithStage', { stage: selectedStage.name })
+                  : t('methodPicker.bodyNoStage')}
               </p>
             </div>
             <button onClick={chooseSelfDiagnose}
@@ -520,12 +539,11 @@ export default function DiagnosisPage() {
                 <span className="text-3xl">🧑‍🌾</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-semibold text-[#6B3F1F]">Diagnose yourself</p>
-                    <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Recommended</span>
+                    <p className="font-semibold text-[#6B3F1F]">{t('methodPicker.selfTitle')}</p>
+                    <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">{t('methodPicker.recommended')}</span>
                   </div>
                   <p className="text-xs text-[#7A8C7E] mt-1">
-                    Answer a few Yes / No questions with help from reference photos.
-                    More accurate when the symptom is clear to you.
+                    {t('methodPicker.selfBody')}
                   </p>
                 </div>
               </div>
@@ -535,17 +553,16 @@ export default function DiagnosisPage() {
               <div className="flex items-start gap-3">
                 <span className="text-3xl">🤖</span>
                 <div className="flex-1">
-                  <p className="font-semibold text-[#6B3F1F]">Ask AI to diagnose</p>
+                  <p className="font-semibold text-[#6B3F1F]">{t('methodPicker.aiTitle')}</p>
                   <p className="text-xs text-[#7A8C7E] mt-1">
-                    Upload one or more photos and let AI suggest the most likely problem.
-                    If AI is unsure, it will refer you to a FarmPundit expert.
+                    {t('methodPicker.aiBody')}
                   </p>
                 </div>
               </div>
             </button>
             <button onClick={() => { setSelectedStage(null); setStage('select_stage') }}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
-              ← Back to stage
+              {t('methodPicker.backToStage')}
             </button>
           </div>
         )}
@@ -554,10 +571,11 @@ export default function DiagnosisPage() {
         {stage === 'ai_capture' && (
           <div className="mt-4 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-[#6B3F1F]">Take or upload photos</h2>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">{t('aiCapture.title')}</h2>
               <p className="text-[#7A8C7E] text-sm mt-0.5">
-                {selectedStage ? `Crop stage: ${selectedStage.name}. ` : ''}
-                Add 1–5 clear photos showing the affected parts. Multiple angles help AI judge better.
+                {selectedStage
+                  ? t('aiCapture.bodyWithStage', { stage: selectedStage.name })
+                  : t('aiCapture.bodyNoStage')}
               </p>
             </div>
             <input
@@ -573,8 +591,8 @@ export default function DiagnosisPage() {
               <button onClick={() => aiFileInputRef.current?.click()}
                 className="w-full bg-white rounded-2xl py-12 border-2 border-dashed border-[#DDD0B8] text-[#6B3F1F]">
                 <span className="text-4xl block">📸</span>
-                <p className="mt-2 text-sm font-medium">Take or pick a photo</p>
-                <p className="text-xs text-[#7A8C7E] mt-1">Tap to add</p>
+                <p className="mt-2 text-sm font-medium">{t('aiCapture.takePhoto')}</p>
+                <p className="text-xs text-[#7A8C7E] mt-1">{t('aiCapture.tapToAdd')}</p>
               </button>
             ) : (
               <div className="space-y-3">
@@ -585,20 +603,20 @@ export default function DiagnosisPage() {
                       <img src={img.preview} alt="Uploaded" className="w-full h-full object-cover" />
                       <button onClick={() => removeAiImage(idx)}
                         className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/70 text-white text-xs"
-                        aria-label="Remove photo">×</button>
+                        aria-label={t('questioning.removePhotoAria')}>×</button>
                     </div>
                   ))}
                 </div>
                 {aiImages.length < 5 && (
                   <button onClick={() => aiFileInputRef.current?.click()}
                     className="w-full py-2.5 rounded-xl border border-dashed border-[#DDD0B8] text-[#6B3F1F] text-sm">
-                    📸 Add another ({aiImages.length}/5)
+                    {t('aiCapture.addAnother', { current: aiImages.length })}
                   </button>
                 )}
                 <button onClick={submitAiDiagnosis} disabled={aiSubmitting}
                   className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-60"
                   style={{ background: COLOUR }}>
-                  {aiSubmitting ? '🤖 AI is looking at your photos…' : '🤖 Diagnose with AI'}
+                  {aiSubmitting ? t('aiCapture.aiLooking') : t('aiCapture.diagnoseWithAi')}
                 </button>
                 {aiError && <p className="text-sm text-red-600 text-center">{aiError}</p>}
               </div>
@@ -606,7 +624,7 @@ export default function DiagnosisPage() {
             <button onClick={() => { setAiImages([]); setStage('select_method') }}
               disabled={aiSubmitting}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm disabled:opacity-50">
-              ← Back
+              {t('aiCapture.back')}
             </button>
           </div>
         )}
@@ -615,24 +633,23 @@ export default function DiagnosisPage() {
         {stage === 'ai_needs_expert' && (
           <div className="mt-4 space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-              <p className="text-base font-semibold text-amber-900">AI is not sure about this one</p>
+              <p className="text-base font-semibold text-amber-900">{t('aiNeedsExpert.title')}</p>
               <p className="text-sm text-amber-800 mt-2">
-                {imageAnalysis?.description
-                  || "The photos didn't match a problem the AI is confident about for this crop and stage. A FarmPundit expert will give you a more reliable answer."}
+                {imageAnalysis?.description || t('aiNeedsExpert.bodyFallback')}
               </p>
             </div>
             <button onClick={() => goToAskExpert()}
               className="w-full py-4 rounded-2xl text-white font-semibold"
               style={{ background: COLOUR }}>
-              👨‍🌾 Ask Expert →
+              {t('aiNeedsExpert.askExpert')}
             </button>
             <button onClick={() => { setImageAnalysis(null); setStage('ai_capture') }}
               className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
-              📸 Try different photos
+              {t('aiNeedsExpert.tryDifferent')}
             </button>
             <button onClick={() => { setImageAnalysis(null); setStage('select_method') }}
               className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
-              🧑‍🌾 Switch to guided diagnosis
+              {t('aiNeedsExpert.switchGuided')}
             </button>
           </div>
         )}
@@ -641,20 +658,20 @@ export default function DiagnosisPage() {
         {stage === 'select_part' && (
           <div className="mt-4 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-[#6B3F1F]">Which part of the plant is affected?</h2>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">{t('partPicker.title')}</h2>
               <p className="text-[#7A8C7E] text-sm mt-0.5">
                 {selectedStage
-                  ? `Stage: ${selectedStage.name} — select the part where you see the problem`
-                  : 'Select the part where you see the problem'}
+                  ? t('partPicker.bodyWithStage', { stage: selectedStage.name })
+                  : t('partPicker.bodyNoStage')}
               </p>
             </div>
             {parts.length === 0 ? (
               <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
-                <p className="text-[#7A8C7E] text-sm">No diagnostic data available for this crop yet.</p>
+                <p className="text-[#7A8C7E] text-sm">{t('partPicker.noData')}</p>
                 <button onClick={() => goToAskExpert()}
                   className="mt-4 text-white font-semibold px-5 py-2.5 rounded-xl text-sm"
                   style={{ background: COLOUR }}>
-                  Ask an Expert Instead →
+                  {t('partPicker.askExpertInstead')}
                 </button>
               </div>
             ) : (
@@ -676,7 +693,7 @@ export default function DiagnosisPage() {
                 }
               }}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
-              {stages.length > 0 ? '← Back' : 'Cancel'}
+              {stages.length > 0 ? t('partPicker.back') : t('stagePicker.cancel')}
             </button>
           </div>
         )}
@@ -689,7 +706,7 @@ export default function DiagnosisPage() {
               <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                 <div className="h-full rounded-full" style={{ background: COLOUR, width: `${Math.max(10, 100 - remainingCount * 10)}%` }} />
               </div>
-              <span className="text-xs text-[#7A8C7E]">{remainingCount} possible</span>
+              <span className="text-xs text-[#7A8C7E]">{t('questioning.possibleCount', { count: remainingCount })}</span>
             </div>
 
             {/* Question card */}
@@ -698,12 +715,12 @@ export default function DiagnosisPage() {
                 <span className="text-5xl">{getPartEmoji(currentQuestion.plant_part_name)}</span>
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <p className="text-xl font-bold text-[#6B3F1F] leading-tight">
-                    {currentQuestion.display_text}
+                    {buildQuestionText(currentQuestion)}
                   </p>
                   <button
                     type="button"
                     onClick={openExplain}
-                    aria-label="Explain this question"
+                    aria-label={t('questioning.explainAria')}
                     className="shrink-0 w-7 h-7 rounded-full border border-[#DDD0B8] text-[#7A8C7E] text-xs font-semibold active:scale-95 transition-transform">
                     ⓘ
                   </button>
@@ -730,7 +747,7 @@ export default function DiagnosisPage() {
               ) : refImages.length > 0 ? (
                 <div className="mb-4">
                   <p className="text-[11px] uppercase tracking-wide font-semibold text-[#7A8C7E] mb-2">
-                    Compare with these examples
+                    {t('questioning.compareExamples')}
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {refImages.slice(0, 2).map(img => (
@@ -754,25 +771,25 @@ export default function DiagnosisPage() {
                     {refImages.length > 2 ? (
                       <button type="button" onClick={() => setGalleryOpen(true)}
                         className="text-xs font-medium text-blue-600 underline underline-offset-2">
-                        See {refImages.length - 2} more example{refImages.length - 2 === 1 ? '' : 's'}
+                        {t('questioning.seeMore', { count: refImages.length - 2 })}
                       </button>
                     ) : <span />}
                     <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
                       target="_blank" rel="noopener noreferrer"
                       className="text-[11px] text-[#7A8C7E] underline underline-offset-2">
-                      Search Google
+                      {t('questioning.searchGoogle')}
                     </a>
                   </div>
                 </div>
               ) : (
                 <div className="mb-4 text-center">
                   <p className="text-xs text-[#7A8C7E]">
-                    No curated examples for this exact symptom yet.
+                    {t('questioning.noCuratedExamples')}
                   </p>
                   <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
                     target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 underline underline-offset-2">
-                    🔍 Search Google Images
+                    {t('questioning.searchGoogleImages')}
                   </a>
                 </div>
               )}
@@ -781,12 +798,12 @@ export default function DiagnosisPage() {
               <div className="flex gap-3 mt-2">
                 <button onClick={() => answer('NO')} disabled={answering}
                   className="flex-1 py-4 rounded-2xl border-2 border-red-200 bg-red-50 text-red-700 font-bold text-lg disabled:opacity-50 active:scale-95 transition-transform">
-                  ✗ No
+                  {t('questioning.no')}
                 </button>
                 <button onClick={() => answer('YES')} disabled={answering}
                   className="flex-1 py-4 rounded-2xl border-2 text-white font-bold text-lg disabled:opacity-50 active:scale-95 transition-transform"
                   style={{ borderColor: COLOUR, background: COLOUR }}>
-                  ✓ Yes
+                  {t('questioning.yes')}
                 </button>
               </div>
 
@@ -806,7 +823,7 @@ export default function DiagnosisPage() {
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex-1 h-px bg-[#DDD0B8]" />
                   <p className="text-[11px] uppercase tracking-wider text-[#7A8C7E] font-semibold">
-                    Not sure?
+                    {t('questioning.notSure')}
                   </p>
                   <div className="flex-1 h-px bg-[#DDD0B8]" />
                 </div>
@@ -815,15 +832,15 @@ export default function DiagnosisPage() {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={analyzingImage}
                     className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50 active:scale-95 transition-transform">
-                    {analyzingImage ? '🔄 Analysing…' : '📸 Ask AI'}
+                    {analyzingImage ? t('questioning.analysing') : t('questioning.askAi')}
                   </button>
                   <button onClick={dontKnow}
                     disabled={!hasPrimaryExpert}
-                    title={hasPrimaryExpert ? undefined : "No Primary expert at this company yet"}
+                    title={hasPrimaryExpert ? undefined : t('questioning.noExpertTooltip')}
                     className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium active:scale-95 transition-transform disabled:opacity-50 disabled:active:scale-100">
-                    👨‍🌾 Ask Expert
+                    {t('questioning.askExpert')}
                     {!hasPrimaryExpert && (
-                      <span className="block text-[10px] text-[#7A8C7E] mt-0.5">No expert yet</span>
+                      <span className="block text-[10px] text-[#7A8C7E] mt-0.5">{t('questioning.noExpertYet')}</span>
                     )}
                   </button>
                 </div>
@@ -836,19 +853,19 @@ export default function DiagnosisPage() {
             {imageAnalysis && (
               <div className={`rounded-2xl p-4 border ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-50 border-green-200' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 'bg-[#F5F0E8] border-[#DDD0B8]'}`}>
                 <p className="text-[11px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
-                  📸 AI Analysis
+                  {t('questioning.aiAnalysisLabel')}
                 </p>
                 <p className="text-sm font-semibold text-[#6B3F1F]">{imageAnalysis.problem_name}</p>
                 <p className="text-xs text-[#7A8C7E] mt-0.5">{imageAnalysis.description}</p>
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-2 inline-block ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                  {imageAnalysis.confidence} confidence
+                  {imageAnalysis.confidence === 'HIGH' ? t('questioning.confidenceHigh') : imageAnalysis.confidence === 'MEDIUM' ? t('questioning.confidenceMedium') : t('questioning.confidenceLow')}
                 </span>
                 {imageAnalysis.problem_cosh_id && imageAnalysis.confidence !== 'LOW' && (
                   <button
                     onClick={useImageDiagnosis}
                     className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                     style={{ background: COLOUR }}>
-                    ✓ Use this diagnosis
+                    {t('questioning.useThisDiagnosis')}
                   </button>
                 )}
               </div>
@@ -860,10 +877,10 @@ export default function DiagnosisPage() {
                 so it reads as a complete choice. */}
             <button onClick={knowProblem}
               className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-              🔍 I Know the Problem
+              {t('questioning.iKnowProblem')}
             </button>
 
-            <p className="text-center text-xs text-[#DDD0B8]">{questionHistory.length + 1} questions answered</p>
+            <p className="text-center text-xs text-[#DDD0B8]">{t('questioning.questionsAnswered', { count: questionHistory.length + 1 })}</p>
           </div>
         )}
 
@@ -879,7 +896,7 @@ export default function DiagnosisPage() {
               className="bg-white w-full max-w-md rounded-t-3xl p-5 shadow-xl">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">🤖</span>
-                <p className="text-sm font-semibold text-[#6B3F1F]">How to check this symptom</p>
+                <p className="text-sm font-semibold text-[#6B3F1F]">{t('questioning.explainTitle')}</p>
               </div>
               {explainLoading ? (
                 <div className="py-4 flex justify-center">
@@ -892,7 +909,7 @@ export default function DiagnosisPage() {
                 onClick={() => setExplainOpen(false)}
                 className="mt-4 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                 style={{ background: COLOUR }}>
-                Got it
+                {t('questioning.explainGotIt')}
               </button>
             </div>
           </div>
@@ -902,11 +919,11 @@ export default function DiagnosisPage() {
         {stage === 'know_problem' && (
           <div className="mt-4 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-[#6B3F1F]">Select the Problem</h2>
-              <p className="text-[#7A8C7E] text-sm mt-0.5">Choose the problem you have identified</p>
+              <h2 className="text-lg font-bold text-[#6B3F1F]">{t('knowProblem.title')}</h2>
+              <p className="text-[#7A8C7E] text-sm mt-0.5">{t('knowProblem.body')}</p>
             </div>
             {problems.length === 0 ? (
-              <div className="text-center py-8 text-[#7A8C7E] text-sm">No problems found for this plant part</div>
+              <div className="text-center py-8 text-[#7A8C7E] text-sm">{t('knowProblem.noProblems')}</div>
             ) : (
               <div className="space-y-2">
                 {problems.map(p => (
@@ -923,7 +940,7 @@ export default function DiagnosisPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block px-4 pb-3 text-xs text-blue-600 underline underline-offset-2">
-                      🔍 See images
+                      {t('knowProblem.seeImages')}
                     </a>
                   </div>
                 ))}
@@ -931,7 +948,7 @@ export default function DiagnosisPage() {
             )}
             <button onClick={() => setStage('questioning')}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
-              ← Back to Questions
+              {t('knowProblem.back')}
             </button>
           </div>
         )}
@@ -946,16 +963,16 @@ export default function DiagnosisPage() {
             <div className="bg-white rounded-3xl p-6 border border-[#DDD0B8] shadow-sm">
               <div className="text-center">
                 <span className="text-5xl">🤔</span>
-                <h2 className="text-xl font-bold text-[#6B3F1F] mt-4">Looks like the problem is…</h2>
+                <h2 className="text-xl font-bold text-[#6B3F1F] mt-4">{t('confirming.title')}</h2>
                 {diagnosis ? (
                   <p className="text-2xl font-bold mt-3" style={{ color: COLOUR }}>
                     {diagnosis.name}
                   </p>
                 ) : (
-                  <p className="text-[#6B3F1F] mt-3">a problem we can identify</p>
+                  <p className="text-[#6B3F1F] mt-3">{t('confirming.fallbackName')}</p>
                 )}
                 <p className="text-[#7A8C7E] text-sm mt-3">
-                  Does this match what you&apos;re seeing on the crop?
+                  {t('confirming.subtitle')}
                 </p>
               </div>
 
@@ -964,7 +981,7 @@ export default function DiagnosisPage() {
                 <div className="mt-5 bg-green-50 border border-green-200 rounded-2xl px-4 py-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm">🤖</span>
-                    <p className="text-xs font-semibold text-green-800">What this means for your crop</p>
+                    <p className="text-xs font-semibold text-green-800">{t('confirming.claudeLabel')}</p>
                   </div>
                   <p className="text-sm text-green-900 leading-relaxed">{diagnosis.claude_description}</p>
                 </div>
@@ -979,19 +996,19 @@ export default function DiagnosisPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-center mt-4 text-sm text-blue-600 underline underline-offset-2">
-                  🔍 See images of {diagnosis.name}
+                  {t('confirming.seeImages', { name: diagnosis.name })}
                 </a>
               )}
 
               <div className="flex gap-3 mt-5">
                 <button onClick={() => confirmAnswer('NO')} disabled={answering}
                   className="flex-1 py-4 rounded-2xl border-2 border-red-200 bg-red-50 text-red-700 font-bold text-lg disabled:opacity-50 active:scale-95 transition-transform">
-                  ✗ Not this
+                  {t('confirming.notThis')}
                 </button>
                 <button onClick={() => confirmAnswer('YES')} disabled={answering}
                   className="flex-1 py-4 rounded-2xl border-2 text-white font-bold text-lg disabled:opacity-50 active:scale-95 transition-transform"
                   style={{ borderColor: COLOUR, background: COLOUR }}>
-                  ✓ Yes, this matches
+                  {t('confirming.yesMatches')}
                 </button>
               </div>
             </div>
@@ -1006,18 +1023,17 @@ export default function DiagnosisPage() {
           <div className="mt-4 space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-center">
               <span className="text-5xl">🤷</span>
-              <h2 className="text-xl font-bold text-amber-900 mt-4">Not in our list</h2>
+              <h2 className="text-xl font-bold text-amber-900 mt-4">{t('outsideList.title')}</h2>
               <p className="text-sm text-amber-800 mt-3 leading-relaxed">
-                The problem you&apos;re facing doesn&apos;t seem to be in the RootsTalk catalogue
-                for this crop and stage. A FarmPundit expert can look at it directly.
+                {t('outsideList.body')}
               </p>
             </div>
             <button onClick={() => goToAskExpert()}
               disabled={!hasPrimaryExpert}
-              title={hasPrimaryExpert ? undefined : "No Primary expert at this company yet"}
+              title={hasPrimaryExpert ? undefined : t('questioning.noExpertTooltip')}
               className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-50"
               style={{ background: COLOUR }}>
-              👨‍🌾 Ask Expert →
+              {t('outsideList.askExpert')}
             </button>
             <button onClick={() => {
                 setSelectedPart(null); setDiagnosis(null); setCurrentQuestion(null)
@@ -1026,7 +1042,7 @@ export default function DiagnosisPage() {
                 else setStage('select_part')
               }}
               className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
-              ← Try a different part or stage
+              {t('outsideList.tryDifferent')}
             </button>
           </div>
         )}
@@ -1037,7 +1053,7 @@ export default function DiagnosisPage() {
             <div className="bg-white rounded-3xl p-6 border border-[#DDD0B8] shadow-sm">
               <div className="text-center">
                 <span className="text-5xl">🔬</span>
-                <h2 className="text-xl font-bold text-[#6B3F1F] mt-4">Problem Identified</h2>
+                <h2 className="text-xl font-bold text-[#6B3F1F] mt-4">{t('diagnosed.title')}</h2>
                 {diagnosis ? (
                   <>
                     <p className="text-2xl font-bold mt-3" style={{ color: COLOUR }}>
@@ -1052,11 +1068,11 @@ export default function DiagnosisPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 mt-2 text-xs text-blue-600 underline underline-offset-2">
-                      🔍 See images of {diagnosis.name}
+                      {t('diagnosed.seeImages', { name: diagnosis.name })}
                     </a>
                   </>
                 ) : (
-                  <p className="text-[#6B3F1F] mt-3">Problem recorded</p>
+                  <p className="text-[#6B3F1F] mt-3">{t('diagnosed.fallback')}</p>
                 )}
               </div>
 
@@ -1065,7 +1081,7 @@ export default function DiagnosisPage() {
                 <div className="mt-5 bg-green-50 border border-green-200 rounded-2xl px-4 py-4">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm">🤖</span>
-                    <p className="text-xs font-semibold text-green-800">What this means for your crop</p>
+                    <p className="text-xs font-semibold text-green-800">{t('diagnosed.claudeLabel')}</p>
                   </div>
                   <p className="text-sm text-green-900 leading-relaxed">{diagnosis.claude_description}</p>
                 </div>
@@ -1073,9 +1089,9 @@ export default function DiagnosisPage() {
 
               {committedToAdvisory && (
                 <div className="mt-4 bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
-                  <p className="text-sm font-semibold text-blue-800">Added to your advisory ✓</p>
+                  <p className="text-sm font-semibold text-blue-800">{t('diagnosed.addedTitle')}</p>
                   <p className="text-xs text-blue-600 mt-1">
-                    Treatment recommendations for this problem are now part of your advisory timeline.
+                    {t('diagnosed.addedBody')}
                   </p>
                 </div>
               )}
@@ -1086,14 +1102,14 @@ export default function DiagnosisPage() {
                 <button onClick={commitToAdvisory} disabled={committing}
                   className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-60"
                   style={{ background: COLOUR }}>
-                  {committing ? 'Adding…' : '➕ Add Treatment Recommendations to the Advisory'}
+                  {committing ? t('diagnosed.adding') : t('diagnosed.addTreatments')}
                 </button>
                 {commitError && (
                   <p className="text-xs text-red-600 text-center">{commitError}</p>
                 )}
                 <button onClick={() => goToAskExpert()}
                   className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
-                  Also ask a FarmPundit expert
+                  {t('diagnosed.alsoAskExpert')}
                 </button>
               </div>
             ) : (
@@ -1101,11 +1117,11 @@ export default function DiagnosisPage() {
                 <button onClick={() => router.push(`/advisory/${subscriptionId}`)}
                   className="w-full py-4 rounded-2xl text-white font-semibold"
                   style={{ background: COLOUR }}>
-                  Go to Advisory →
+                  {t('diagnosed.goToAdvisory')}
                 </button>
                 <button onClick={() => router.push(`/crop-detail/${subscriptionId}`)}
                   className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-                  Go to Crop Dashboard
+                  {t('diagnosed.goToDashboard')}
                 </button>
               </div>
             )}

@@ -32,6 +32,118 @@
     "pickup": "Pickup",
     "dashboard": "Dashboard"
   },
+  "diagnose": {
+    "headerTitle": "Diagnose Crop Problem",
+    "stagePicker": {
+      "title": "What stage is your crop in?",
+      "body": "Picking the right stage narrows the diagnosis to problems that are typical at this point in the season.",
+      "loading": "Loading stages…",
+      "cancel": "Cancel"
+    },
+    "methodPicker": {
+      "title": "How would you like to diagnose?",
+      "bodyWithStage": "Crop stage: {stage}. You can answer simple Yes / No questions yourself, or let AI take a look at photos you upload.",
+      "bodyNoStage": "You can answer simple Yes / No questions yourself, or let AI take a look at photos you upload.",
+      "selfTitle": "Diagnose yourself",
+      "selfBody": "Answer a few Yes / No questions with help from reference photos. More accurate when the symptom is clear to you.",
+      "aiTitle": "Ask AI to diagnose",
+      "aiBody": "Upload one or more photos and let AI suggest the most likely problem. If AI is unsure, it will refer you to a FarmPundit expert.",
+      "recommended": "Recommended",
+      "backToStage": "← Back to stage"
+    },
+    "partPicker": {
+      "title": "Which part of the plant is affected?",
+      "bodyWithStage": "Stage: {stage} — select the part where you see the problem",
+      "bodyNoStage": "Select the part where you see the problem",
+      "noData": "No diagnostic data available for this crop yet.",
+      "askExpertInstead": "Ask an Expert Instead →",
+      "back": "← Back"
+    },
+    "questioning": {
+      "possibleCount": "{count, plural, one {1 possible} other {# possible}}",
+      "templateBasic": "Do you see {symptom} on the {part}?",
+      "templateSubPart": "Is the {symptom} on the {subPart} of the {part}?",
+      "templateSubSymptom": "Do the {symptom} on the {part} look like: {subSymptom}?",
+      "templateBoth": "Is there {subSymptom} on the {subPart} of the {part}?",
+      "compareExamples": "Compare with these examples",
+      "seeMore": "{count, plural, one {See 1 more example} other {See # more examples}}",
+      "searchGoogle": "Search Google",
+      "noCuratedExamples": "No curated examples for this exact symptom yet.",
+      "searchGoogleImages": "🔍 Search Google Images",
+      "no": "✗ No",
+      "yes": "✓ Yes",
+      "notSure": "Not sure?",
+      "analysing": "🔄 Analysing…",
+      "askAi": "📷 Ask AI",
+      "askExpert": "👨‍🌾 Ask Expert",
+      "noExpertYet": "No expert yet",
+      "noExpertTooltip": "No Primary expert at this company yet",
+      "aiAnalysisLabel": "📷 AI Analysis",
+      "confidenceHigh": "HIGH confidence",
+      "confidenceMedium": "MEDIUM confidence",
+      "confidenceLow": "LOW confidence",
+      "useThisDiagnosis": "✓ Use this diagnosis",
+      "iKnowProblem": "🔍 I Know the Problem",
+      "questionsAnswered": "{count, plural, one {1 question answered} other {# questions answered}}",
+      "explainTitle": "How to check this symptom",
+      "explainGotIt": "Got it",
+      "explainAria": "Explain this question",
+      "removePhotoAria": "Remove photo"
+    },
+    "confirming": {
+      "title": "Looks like the problem is…",
+      "fallbackName": "a problem we can identify",
+      "subtitle": "Does this match what you're seeing on the crop?",
+      "claudeLabel": "What this means for your crop",
+      "seeImages": "🔍 See images of {name}",
+      "notThis": "✗ Not this",
+      "yesMatches": "✓ Yes, this matches"
+    },
+    "aiCapture": {
+      "title": "Take or upload photos",
+      "bodyWithStage": "Crop stage: {stage}. Add 1–5 clear photos showing the affected parts. Multiple angles help AI judge better.",
+      "bodyNoStage": "Add 1–5 clear photos showing the affected parts. Multiple angles help AI judge better.",
+      "takePhoto": "Take or pick a photo",
+      "tapToAdd": "Tap to add",
+      "addAnother": "📷 Add another ({current}/5)",
+      "aiLooking": "🤖 AI is looking at your photos…",
+      "diagnoseWithAi": "🤖 Diagnose with AI",
+      "back": "← Back"
+    },
+    "aiNeedsExpert": {
+      "title": "AI is not sure about this one",
+      "bodyFallback": "The photos didn't match a problem the AI is confident about for this crop and stage. A FarmPundit expert will give you a more reliable answer.",
+      "tryDifferent": "📷 Try different photos",
+      "switchGuided": "🧑‍🌾 Switch to guided diagnosis",
+      "askExpert": "👨‍🌾 Ask Expert →"
+    },
+    "knowProblem": {
+      "title": "Select the Problem",
+      "body": "Choose the problem you have identified",
+      "noProblems": "No problems found for this plant part",
+      "seeImages": "🔍 See images",
+      "back": "← Back to Questions"
+    },
+    "outsideList": {
+      "title": "Not in our list",
+      "body": "The problem you're facing doesn't seem to be in the RootsTalk catalogue for this crop and stage. A FarmPundit expert can look at it directly.",
+      "askExpert": "👨‍🌾 Ask Expert →",
+      "tryDifferent": "← Try a different part or stage"
+    },
+    "diagnosed": {
+      "title": "Problem Identified",
+      "fallback": "Problem recorded",
+      "seeImages": "🔍 See images of {name}",
+      "claudeLabel": "What this means for your crop",
+      "addedTitle": "Added to your advisory ✓",
+      "addedBody": "Treatment recommendations for this problem are now part of your advisory timeline.",
+      "adding": "Adding…",
+      "addTreatments": "➕ Add Treatment Recommendations to the Advisory",
+      "alsoAskExpert": "Also ask a FarmPundit expert",
+      "goToAdvisory": "Go to Advisory →",
+      "goToDashboard": "Go to Crop Dashboard"
+    }
+  },
   "practice": {
     "label": {
       "today": "Today",
