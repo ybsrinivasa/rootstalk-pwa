@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -32,6 +32,7 @@ export default function MySubscriptionsPage() {
   const router = useRouter()
   const t = useTranslations('mySubscriptions')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [brandings, setBrandings] = useState<Record<string, Branding>>({})
   const [discover, setDiscover] = useState<DiscoverPackage[]>([])
@@ -129,7 +130,7 @@ export default function MySubscriptionsPage() {
                           )}
                           <p className="text-xs text-[#7A8C7E]">
                             {sub.crop_start_date
-                              ? t('startedOn', { date: new Date(sub.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })
+                              ? t('startedOn', { date: new Date(sub.crop_start_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })
                               : t('awaitingStartDate')}
                           </p>
                           <div className="flex gap-2 mt-3">

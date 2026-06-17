@@ -1303,6 +1303,7 @@ type SubOrder =
 
 function SubscriptionOrders({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
+  const locale = useLocale()
   const [orders, setOrders] = useState<SubOrder[] | null>(null)
 
   useEffect(() => {
@@ -1347,7 +1348,7 @@ function SubscriptionOrders({ subscriptionId }: { subscriptionId: string }) {
                   </span>
                 </div>
                 <span className="text-[10px] text-[#7A8C7E]">
-                  {new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                  {new Date(o.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                 </span>
               </div>
               {o.kind === 'SEED' ? (
@@ -1362,9 +1363,9 @@ function SubscriptionOrders({ subscriptionId }: { subscriptionId: string }) {
               ) : (
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm text-[#6B3F1F]">
-                    {new Date(o.date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    {new Date(o.date_from).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                     {' — '}
-                    {new Date(o.date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    {new Date(o.date_to).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                   </p>
                   {o.item_count !== undefined && o.item_count > 0 && (
                     <span className="text-xs text-[#7A8C7E] shrink-0">

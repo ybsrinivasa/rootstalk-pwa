@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -67,6 +67,7 @@ export default function FacilitatorPromoterAssignPage() {
   const router = useRouter()
   const t = useTranslations('facilitator.promoterAssign')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [stage, setStage] = useState<Stage>('gate')
   const [kitty, setKitty] = useState<KittyInfo | null>(null)
   const [kittyError, setKittyError] = useState<string | null>(null)
@@ -297,7 +298,7 @@ export default function FacilitatorPromoterAssignPage() {
           {kitty && stage !== 'done' && (
             <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-full bg-emerald-50 border border-emerald-200">
               <span className="text-xs text-emerald-800">
-                <span className="font-semibold">{kitty.units_balance.toLocaleString('en-IN')}</span>{' '}
+                <span className="font-semibold">{kitty.units_balance.toLocaleString(locale)}</span>{' '}
                 {t('kittyChipMiddle', { count: kitty.units_balance })}{' '}
                 <span className="font-semibold">{kitty.client_display_name}</span>
               </span>

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -69,6 +69,7 @@ export default function DealerPromoterAssignPage() {
   const router = useRouter()
   const t = useTranslations('dealer.promoterAssign')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [stage, setStage] = useState<Stage>('gate')
   const [allocations, setAllocations] = useState<AllocationRow[] | null>(null)
   const [allocationsError, setAllocationsError] = useState<string | null>(null)
@@ -282,7 +283,7 @@ export default function DealerPromoterAssignPage() {
           {selectedRow && stage !== 'company' && stage !== 'done' && (
             <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-full bg-emerald-50 border border-emerald-200">
               <span className="text-xs text-emerald-800 truncate">
-                <span className="font-semibold">{selectedRow.units_balance.toLocaleString('en-IN')}</span>{' '}
+                <span className="font-semibold">{selectedRow.units_balance.toLocaleString(locale)}</span>{' '}
                 {t('kittyChipPrefix')}{' '}
                 <span className="font-semibold">{selectedRow.client_name}</span>
               </span>

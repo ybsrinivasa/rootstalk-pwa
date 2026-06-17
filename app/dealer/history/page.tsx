@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -130,6 +130,7 @@ function adaptSeedOrder(s: SeedOrderRaw): DealerOrder {
 export default function DealerHistoryPage() {
   const router = useRouter()
   const t = useTranslations('dealer.history')
+  const locale = useLocale()
   const [orders, setOrders] = useState<DealerOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('completed')
@@ -240,7 +241,7 @@ export default function DealerHistoryPage() {
                               ? (sub.variety_name || t('seedFallback'))
                               : (sub.category?.toLowerCase() || t('categoryFallback'))}
                             {' · '}
-                            {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}
                           </p>
                           {tab === 'completed' && !sub.is_seed && (
                             <p className="text-[10px] text-[#7A8C7E]">

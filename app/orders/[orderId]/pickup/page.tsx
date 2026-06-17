@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -44,6 +44,7 @@ export default function FarmerPickupPage() {
   const t = useTranslations('orders.pickup')
   const tCommon = useTranslations('common')
   const tOrdersCommon = useTranslations('orders.common')
+  const locale = useLocale()
   const [order, setOrder] = useState<OrderForPickup | null>(null)
   const [loading, setLoading] = useState(true)
   const [confirm, setConfirm] = useState(false)
@@ -125,14 +126,14 @@ export default function FarmerPickupPage() {
                     )}
                   </div>
                   {it.price != null && (
-                    <p className="text-base font-bold text-[#085041] shrink-0">₹{it.price.toLocaleString('en-IN')}</p>
+                    <p className="text-base font-bold text-[#085041] shrink-0">₹{it.price.toLocaleString(locale)}</p>
                   )}
                 </div>
               ))}
             </div>
             <div className="px-4 py-2 bg-emerald-50/40 border-t border-emerald-100 flex items-center justify-between">
               <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider">{t('totalLabel')}</p>
-              <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString('en-IN')}</p>
+              <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString(locale)}</p>
             </div>
           </div>
         )}
@@ -143,8 +144,8 @@ export default function FarmerPickupPage() {
         {already ? (
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-3 text-sm text-emerald-800 text-center font-medium">
             {t('confirmedReceipt', {
-              date: new Date(order.packing_farmer_received_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
-              time: new Date(order.packing_farmer_received_at!).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+              date: new Date(order.packing_farmer_received_at!).toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+              time: new Date(order.packing_farmer_received_at!).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
             })}
           </div>
         ) : (

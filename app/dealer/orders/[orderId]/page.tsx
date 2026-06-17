@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -190,6 +190,7 @@ export default function DealerOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const t = useTranslations('dealer.orderDetail')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   // 2026-06-03 — focus_item=<id> hides everything else and pre-opens
   // the brand form on that one item. Used by /dealer/postponed to
   // route the dealer straight into resolving one postponed item
@@ -932,7 +933,7 @@ export default function DealerOrderDetailPage() {
           {showPriceColumn && (
             <div className="text-right shrink-0">
               {item.price != null ? (
-                <p className="text-base font-bold text-[#085041]">₹{item.price.toLocaleString('en-IN')}</p>
+                <p className="text-base font-bold text-[#085041]">₹{item.price.toLocaleString(locale)}</p>
               ) : (
                 <p className="text-[10px] text-amber-700 font-medium italic">{t('item.priceNotProvided')}</p>
               )}
@@ -1391,7 +1392,7 @@ export default function DealerOrderDetailPage() {
             {showPriceColumn && (
               <div className="text-right shrink-0">
                 {item.price != null ? (
-                  <p className="text-lg font-bold text-[#085041]">₹{item.price.toLocaleString('en-IN')}</p>
+                  <p className="text-lg font-bold text-[#085041]">₹{item.price.toLocaleString(locale)}</p>
                 ) : (
                   <p className="text-[11px] text-amber-700 font-medium italic">{t('item.priceNotProvided')}</p>
                 )}
@@ -1587,7 +1588,7 @@ export default function DealerOrderDetailPage() {
                 {t('footer.pricedCoverage', { priced: pricedItems.length, total: availableItemCount })}
               </p>
             </div>
-            <p className="text-2xl font-bold text-[#085041]">₹{totalAmount.toLocaleString('en-IN')}</p>
+            <p className="text-2xl font-bold text-[#085041]">₹{totalAmount.toLocaleString(locale)}</p>
           </div>
         )}
 
@@ -1764,7 +1765,7 @@ export default function DealerOrderDetailPage() {
               <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
                 <span className="text-[#7A8C7E]">{t('focusConfirm.priceLabel')}</span>
                 <span className="font-bold text-[#085041]">
-                  {itemEdit.price ? `₹${parseFloat(itemEdit.price).toLocaleString('en-IN')}` : t('focusConfirm.priceMissing')}
+                  {itemEdit.price ? `₹${parseFloat(itemEdit.price).toLocaleString(locale)}` : t('focusConfirm.priceMissing')}
                 </span>
               </div>
             </div>
@@ -1819,7 +1820,7 @@ export default function DealerOrderDetailPage() {
               <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
                 <span className="text-[#7A8C7E]">{t('submitConfirm.totalLabel')}</span>
                 <span className="font-bold text-[#085041]">
-                  ₹{totalAmount.toLocaleString('en-IN')}
+                  ₹{totalAmount.toLocaleString(locale)}
                 </span>
               </div>
             </div>
@@ -2029,10 +2030,11 @@ export default function DealerOrderDetailPage() {
 // crop_start_date, etc.) so we don't fall back to the order range.
 function ItemDateRange({ from, to }: { from?: string | null; to?: string | null }) {
   const t = useTranslations('dealer.orderDetail.item')
+  const locale = useLocale()
   if (!from || !to) return null
   const fmt = (iso: string) => {
     const d = new Date(iso + 'T00:00:00')
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+    return d.toLocaleDateString(locale, { day: '2-digit', month: 'short' })
   }
   return (
     <p className="text-[11px] text-[#7A8C7E] mt-0.5">

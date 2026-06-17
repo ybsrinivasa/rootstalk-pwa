@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -59,15 +59,16 @@ function initials(name: string | null): string {
   return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
 }
 
-function shortDate(iso: string | null): string {
+function shortDate(iso: string | null, locale: string): string {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+  return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
 }
 
 export default function DealerPostponedPage() {
   const router = useRouter()
   const t = useTranslations('dealer.postponed')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [items, setItems] = useState<PostponedItem[] | null>(null)
   const [confirmNA, setConfirmNA] = useState<PostponedItem | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
@@ -187,12 +188,12 @@ export default function DealerPostponedPage() {
                       )}
                       {g.category && g.order_received_at && ' · '}
                       {g.order_received_at && (
-                        <>{t('receivedShort', { date: shortDate(g.order_received_at) })}</>
+                        <>{t('receivedShort', { date: shortDate(g.order_received_at, locale) })}</>
                       )}
                     </p>
                     {g.date_from && g.date_to && (
                       <p className="text-[11px] text-[#7A8C7E]">
-                        {t('orderRange', { from: shortDate(g.date_from), to: shortDate(g.date_to) })}
+                        {t('orderRange', { from: shortDate(g.date_from, locale), to: shortDate(g.date_to, locale) })}
                       </p>
                     )}
                   </div>

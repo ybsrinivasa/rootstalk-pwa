@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -86,6 +86,7 @@ export default function FarmerOrderDetailPage() {
   const router = useRouter()
   const t = useTranslations('orders.review')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
   const [rerouting, setRerouting] = useState<string | null>(null)
@@ -460,7 +461,7 @@ export default function FarmerOrderDetailPage() {
                   </div>
                   <div className="text-right shrink-0">
                     {row.price != null ? (
-                      <p className="text-lg font-bold text-[#085041]">₹{row.price.toLocaleString('en-IN')}</p>
+                      <p className="text-lg font-bold text-[#085041]">₹{row.price.toLocaleString(locale)}</p>
                     ) : (
                       <p className="text-[11px] text-amber-700 italic">{t('approvalSection.priceNotProvided')}</p>
                     )}
@@ -500,7 +501,7 @@ export default function FarmerOrderDetailPage() {
                     <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || row.practice_name || t('postponedSection.itemFallback')}</p>
                     {row.postponed_until && (
                       <p className="text-xs text-amber-700 mt-1">
-                        {t('postponedSection.dealerRevisitBy', { date: new Date(row.postponed_until).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
+                        {t('postponedSection.dealerRevisitBy', { date: new Date(row.postponed_until).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
                       </p>
                     )}
                   </div>
@@ -567,7 +568,7 @@ export default function FarmerOrderDetailPage() {
                     </p>
                   </div>
                   {row.price != null && (
-                    <p className="text-lg font-bold text-[#085041]">₹{row.price.toLocaleString('en-IN')}</p>
+                    <p className="text-lg font-bold text-[#085041]">₹{row.price.toLocaleString(locale)}</p>
                   )}
                 </div>
               </div>
@@ -771,6 +772,7 @@ function ReceiveBanner({
   const t = useTranslations('orders.review.receiveBanner')
   const tReview = useTranslations('orders.review')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -789,8 +791,8 @@ function ReceiveBanner({
     return (
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-800">
         {t('receivedOnAt', {
-          date: stamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
-          time: stamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          date: stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+          time: stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
         })}
       </div>
     )

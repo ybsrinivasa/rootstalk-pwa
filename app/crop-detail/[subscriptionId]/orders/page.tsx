@@ -18,7 +18,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import ClientCropChip from '@/components/ClientCropChip'
@@ -860,6 +860,7 @@ function OrderCardHeader({
   orderId: string
 }) {
   const t = useTranslations('orders.cropOrders.orderHeader')
+  const locale = useLocale()
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
       <div className="flex items-center justify-between gap-2 mb-1">
@@ -869,7 +870,7 @@ function OrderCardHeader({
           </span>
         </div>
         <span className="text-[10px] text-[#7A8C7E]">
-          {head?.created_at && new Date(head.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+          {head?.created_at && new Date(head.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
         </span>
       </div>
       <p className="text-[10px] font-mono tracking-wide text-[#3A7D44]">
@@ -881,8 +882,8 @@ function OrderCardHeader({
         <p className="text-sm text-[#6B3F1F] mt-1">
           {head?.date_from && head?.date_to ? (
             <>
-              {new Date(head.date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} —
-              {' '}{new Date(head.date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+              {new Date(head.date_from).toLocaleDateString(locale, { day: '2-digit', month: 'short' })} —
+              {' '}{new Date(head.date_to).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
             </>
           ) : null}
         </p>
@@ -908,11 +909,12 @@ function FarmerPillChunk({
 }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.chunk')
+  const locale = useLocale()
   return (
     <div className="px-4 py-3 space-y-2">
       {showSubHeader && (
         <p className="text-[10px] font-mono tracking-wide text-[#7A8C7E]">
-          {t('subOrderPrefix')} {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+          {t('subOrderPrefix')} {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
         </p>
       )}
       <RecipientLine
@@ -1121,6 +1123,7 @@ function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.expanded')
   const tOrdersCommon = useTranslations('orders.common')
+  const locale = useLocale()
   return (
     <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
       <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
@@ -1136,7 +1139,7 @@ function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
                 {sub.recipient_shop_name || sub.recipient_name || t('noRecipient')}
               </p>
               <p className="text-[10px] text-[#7A8C7E]">
-                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                 {sub.item_count !== undefined && sub.item_count > 0 && (
                   <> · {tOrdersCommon('itemsCount', { count: sub.item_count })}</>
                 )}
@@ -1171,6 +1174,7 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.received')
   const tChunk = useTranslations('orders.cropOrders.chunk')
+  const locale = useLocale()
   const [items, setItems] = useState<PurchasedItem[] | null>(null)
   const [seeds, setSeeds] = useState<SeedPurchased[] | null>(null)
   // 2026-06-09 (restored) — "Ready to pick up" strip on top of the
@@ -1258,7 +1262,7 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
             )}
           </div>
           <p className="text-[11px] text-[#7A8C7E] mt-1">
-            {t('purchasedOn', { date: new Date(s.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
+            {t('purchasedOn', { date: new Date(s.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
           </p>
           <RecipientLine
             name={s.recipient_name}
@@ -1285,8 +1289,8 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
             {(it.application_date_from && it.application_date_to) && (
               <p className="text-[11px] text-[#7A8C7E] mt-1">
                 {t('applyDates', {
-                  from: new Date(it.application_date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
-                  to: new Date(it.application_date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
+                  from: new Date(it.application_date_from).toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+                  to: new Date(it.application_date_to).toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
                 })}
                 {it.merged_timeline_count && it.merged_timeline_count > 1 && (
                   <span className="ml-1 text-[#7A8C7E]">{t('acrossTimelines', { count: it.merged_timeline_count })}</span>
@@ -1298,7 +1302,7 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
             )}
             {it.received_at && (
               <p className="text-[11px] text-[#7A8C7E] mt-1">
-                {t('receivedOn', { date: new Date(it.received_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
+                {t('receivedOn', { date: new Date(it.received_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
               </p>
             )}
           </div>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -60,6 +61,7 @@ type ClientInfo = { display_name: string }
 
 export default function OrdersPage() {
   const router = useRouter()
+  const locale = useLocale()
   const [tab, setTab] = useState<'active' | 'history' | 'purchased'>('active')
   const [orders, setOrders] = useState<Order[]>([])
   const [purchased, setPurchased] = useState<PurchasedItem[]>([])
@@ -213,7 +215,7 @@ export default function OrdersPage() {
                   else if (dTo < today) badge = { label: 'Window passed', cls: 'bg-stone-100 text-[#7A8C7E] border-[#DDD0B8]' }
                   else badge = { label: 'Apply now', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
                 }
-                const fmt = (d: Date) => d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+                const fmt = (d: Date) => d.toLocaleDateString(locale, { day: '2-digit', month: 'short' })
                 const isPreSowing = item.timeline_from_type === 'DBS'
                 const applyText = (dFrom && dTo)
                   ? `Apply: ${isPreSowing ? '(Pre-sowing) ' : ''}${fmt(dFrom)} – ${fmt(dTo)}`
@@ -246,7 +248,7 @@ export default function OrdersPage() {
                         )}
                       </div>
                     </div>
-                    <p className="text-xs text-[#DDD0B8] mt-2">{new Date(item.created_at).toLocaleDateString('en-IN')}</p>
+                    <p className="text-xs text-[#DDD0B8] mt-2">{new Date(item.created_at).toLocaleDateString(locale)}</p>
                   </div>
                 )
               })
@@ -267,7 +269,7 @@ export default function OrdersPage() {
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[order.status] || 'bg-stone-100 text-[#7A8C7E]'}`}>
                       {order.status.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-xs text-[#7A8C7E]">{new Date(order.created_at).toLocaleDateString('en-IN')}</span>
+                    <span className="text-xs text-[#7A8C7E]">{new Date(order.created_at).toLocaleDateString(locale)}</span>
                   </div>
                   {/* Phase 1 (2026-06-02) — package-anchor header.
                       Crop and company go first because they're how a
@@ -284,7 +286,7 @@ export default function OrdersPage() {
                       {(order.crop_start_date || order.planting_year) && (
                         <p className="text-[11px] text-[#7A8C7E] mt-0.5">
                           {order.crop_start_date
-                            ? `Sown ${new Date(order.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}`
+                            ? `Sown ${new Date(order.crop_start_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}`
                             : `Planted ${order.planting_year}`}
                           {order.category && ` · ${order.category.toLowerCase()}`}
                         </p>
@@ -293,7 +295,7 @@ export default function OrdersPage() {
                   )}
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm text-[#6B3F1F]">
-                      {new Date(order.date_from).toLocaleDateString('en-IN')} — {new Date(order.date_to).toLocaleDateString('en-IN')}
+                      {new Date(order.date_from).toLocaleDateString(locale)} — {new Date(order.date_to).toLocaleDateString(locale)}
                     </p>
                     {order.item_count !== undefined && order.item_count > 0 && (
                       <span className="text-xs text-[#7A8C7E] shrink-0">

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import api from '@/lib/api'
 
 interface ParameterOption {
@@ -23,13 +24,14 @@ interface CropRecord {
   parameters_options: ParameterOption[]
 }
 
-function formatDate(iso: string | null): string {
+function formatDate(iso: string | null, locale: string): string {
   if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export default function CropPublicPage() {
   const { referenceNumber } = useParams<{ referenceNumber: string }>()
+  const locale = useLocale()
   const [record, setRecord] = useState<CropRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -110,8 +112,8 @@ export default function CropPublicPage() {
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Crop</p>
           {fieldRow('Crop', record.crop_name)}
           {fieldRow('Company', record.company)}
-          {fieldRow('Start date', formatDate(record.crop_start_date))}
-          {fieldRow('Closure date', formatDate(record.crop_closure_date))}
+          {fieldRow('Start date', formatDate(record.crop_start_date, locale))}
+          {fieldRow('Closure date', formatDate(record.crop_closure_date, locale))}
         </div>
 
         {/* Parameters-Options */}

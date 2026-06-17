@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -86,6 +86,7 @@ export default function FarmerOrderHistoryPage() {
   const router = useRouter()
   const t = useTranslations('orders.history')
   const tOrdersCommon = useTranslations('orders.common')
+  const locale = useLocale()
   const [orders, setOrders] = useState<SubOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('completed')
@@ -166,7 +167,7 @@ export default function FarmerOrderHistoryPage() {
                         {head?.kind === 'SEED' ? t('kindSeed') : (head?.category?.toLowerCase() || t('kindOrderFallback'))}
                       </span>
                       <span className="text-[10px] text-[#7A8C7E]">
-                        {head?.created_at && new Date(head.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {head?.created_at && new Date(head.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}
                       </span>
                     </div>
                     <p className="text-[10px] font-mono tracking-wide text-[#3A7D44]">
@@ -177,8 +178,8 @@ export default function FarmerOrderHistoryPage() {
                     ) : (
                       head?.date_from && head?.date_to && (
                         <p className="text-sm text-[#6B3F1F] mt-1">
-                          {new Date(head.date_from).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} —
-                          {' '}{new Date(head.date_to).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                          {new Date(head.date_from).toLocaleDateString(locale, { day: '2-digit', month: 'short' })} —
+                          {' '}{new Date(head.date_to).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                         </p>
                       )
                     )}
@@ -192,7 +193,7 @@ export default function FarmerOrderHistoryPage() {
                             {sub.recipient_shop_name || sub.recipient_name || t('noRecipient')}
                           </p>
                           <p className="text-[10px] text-[#7A8C7E]">
-                            {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}
                             {sub.item_count !== undefined && sub.item_count > 0 && (
                               <> · {tOrdersCommon('itemsCount', { count: sub.item_count })}</>
                             )}

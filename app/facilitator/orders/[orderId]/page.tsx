@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -401,6 +401,7 @@ function FacilitatorPickupBanner({
   onPickedUp: () => void
 }) {
   const t = useTranslations('facilitator.orderDetail.pickupBanner')
+  const locale = useLocale()
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -427,8 +428,8 @@ function FacilitatorPickupBanner({
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
         {t('youPickedUp', {
-          date: ts.toLocaleDateString("en-IN", { day: "2-digit", month: "short" }),
-          time: ts.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+          date: ts.toLocaleDateString(locale, { day: "2-digit", month: "short" }),
+          time: ts.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
         })}
       </div>
     )

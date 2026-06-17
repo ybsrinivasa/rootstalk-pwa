@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -104,9 +104,9 @@ function initials(name: string | null): string {
   return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
 }
 
-function shortDate(iso: string | null): string {
+function shortDate(iso: string | null, locale: string): string {
   if (!iso) return ''
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+  return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
 }
 
 // Per-pill membership rules. An order can appear in multiple pills
@@ -206,6 +206,7 @@ function DealerOrdersInner() {
   const searchParams = useSearchParams()
   const t = useTranslations('dealer.orders')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const initialPill = (searchParams.get('pill') as Pill) || 'pending'
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
@@ -291,7 +292,7 @@ function DealerOrdersInner() {
 
   function buildShareText(o: Order): string {
     // Structured for legibility on WhatsApp / SMS.
-    const orderDate = new Date(o.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    const orderDate = new Date(o.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
     const lines: string[] = []
     lines.push(t('share.header'))
     if (o.packing_code) lines.push(t('share.packingIdLine', { code: o.packing_code }))
@@ -322,7 +323,7 @@ function DealerOrdersInner() {
       if (it.price) total += it.price
     }
     lines.push('')
-    lines.push(t('share.totalLine', { amount: total.toLocaleString('en-IN') }))
+    lines.push(t('share.totalLine', { amount: total.toLocaleString(locale) }))
     return lines.join('\n')
   }
 
@@ -457,9 +458,9 @@ function DealerOrdersInner() {
                 <span>
                   {' '}{t('reshare.bodyAt')}{' '}
                   <strong>
-                    {new Date(confirmReshare.packing_list_shared_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(confirmReshare.packing_list_shared_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                     {' '}{t('reshare.bodyOn')}{' '}
-                    {new Date(confirmReshare.packing_list_shared_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                    {new Date(confirmReshare.packing_list_shared_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                   </strong>
                 </span>
               )}{t('reshare.bodySuffix')}
@@ -509,21 +510,22 @@ function DealerOrdersInner() {
 
 function PickupStatus({ order }: { order: Order }) {
   const t = useTranslations('dealer.orders.pickup')
+  const locale = useLocale()
   if (order.packing_farmer_received_at) {
     const stamp = new Date(order.packing_farmer_received_at)
     return (
       <p className="text-[11px] text-emerald-700 mt-1 font-semibold">
         {t('receivedByFarmer', {
-          date: stamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
-          time: stamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+          date: stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+          time: stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
         })}
       </p>
     )
   }
   if (order.packing_picked_up_at) {
     const stamp = new Date(order.packing_picked_up_at)
-    const date = stamp.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
-    const time = stamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+    const date = stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' })
+    const time = stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
     let line: string
     if (order.packing_picked_up_by_role === 'FACILITATOR') {
       line = order.packing_picked_up_by_name
@@ -607,6 +609,7 @@ function DealerOrderCardHeader({
   orderId: string
 }) {
   const t = useTranslations('dealer.orders.cardHeader')
+  const locale = useLocale()
   if (!head) return null
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
@@ -637,7 +640,7 @@ function DealerOrderCardHeader({
             {head.is_seed
               ? t('seedCategory')
               : (head.category?.toLowerCase() || t('categoryFallback'))}
-            {t('receivedSuffix', { date: shortDate(head.created_at) })}
+            {t('receivedSuffix', { date: shortDate(head.created_at, locale) })}
           </p>
         </div>
       </div>
@@ -667,11 +670,12 @@ function DealerPillChunk({
 }) {
   const router = useRouter()
   const t = useTranslations('dealer.orders.chunk')
+  const locale = useLocale()
   return (
     <div>
       {showSubHeader && (
         <p className="px-4 pt-3 text-[10px] font-mono tracking-wide text-[#7A8C7E]">
-          {t('subOrderPrefix', { date: new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
+          {t('subOrderPrefix', { date: new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
         </p>
       )}
       {pill === 'pending' && (
@@ -724,6 +728,7 @@ function PackingChunk({
   busy: boolean
 }) {
   const t = useTranslations('dealer.orders.packing')
+  const locale = useLocale()
   const shared = !!order.packing_list_shared_at
   const total = order.packing_items.reduce((s, i) => s + (i.price || 0), 0)
   const sharedAt = order.packing_list_shared_at
@@ -762,8 +767,8 @@ function PackingChunk({
         {sharedAt && (
           <p className="text-[11px] text-emerald-700 mt-2 font-medium">
             {t('sharedAt', {
-              date: sharedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }),
-              time: sharedAt.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+              date: sharedAt.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+              time: sharedAt.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
             })}
           </p>
         )}
@@ -782,14 +787,14 @@ function PackingChunk({
               )}
             </div>
             {it.price != null && (
-              <p className="text-sm font-bold text-[#085041] shrink-0">₹{it.price.toLocaleString('en-IN')}</p>
+              <p className="text-sm font-bold text-[#085041] shrink-0">₹{it.price.toLocaleString(locale)}</p>
             )}
           </div>
         ))}
       </div>
       <div className="px-3 py-2 bg-emerald-50/40 border-t border-emerald-100 flex items-center justify-between">
         <p className="text-[11px] text-[#7A8C7E]">{t('totalLabel')}</p>
-        <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString('en-IN')}</p>
+        <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString(locale)}</p>
       </div>
       <div className="p-3 flex gap-2">
         <button onClick={onShare} disabled={busy}
@@ -812,6 +817,7 @@ function DealerExpandedSubOrderList({
   onOpenDetail: (o: Order) => void
 }) {
   const t = useTranslations('dealer.orders.expanded')
+  const locale = useLocale()
   return (
     <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
       <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
@@ -823,7 +829,7 @@ function DealerExpandedSubOrderList({
             className="w-full text-left flex items-center justify-between gap-2 bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
             <div className="min-w-0">
               <p className="text-[10px] text-[#7A8C7E]">
-                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
               </p>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 bg-slate-100 text-[#7A8C7E]">

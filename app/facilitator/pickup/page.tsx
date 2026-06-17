@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -200,6 +200,7 @@ function PickupCard({
   busy: boolean
 }) {
   const t = useTranslations('facilitator.pickup')
+  const locale = useLocale()
   const pickedUp = !!pickup.picked_up_at
   const mapsHref = (pickup.dealer_shop_gps_lat != null && pickup.dealer_shop_gps_lng != null)
     ? `https://maps.google.com/?q=${pickup.dealer_shop_gps_lat},${pickup.dealer_shop_gps_lng}`
@@ -220,7 +221,7 @@ function PickupCard({
         <div className="px-4 py-2 bg-amber-50 border-b border-amber-100">
           <p className="text-[11px] text-amber-800 font-medium">
             {pickup.picked_up_at
-              ? t('pickedUpOn', { date: new Date(pickup.picked_up_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })
+              ? t('pickedUpOn', { date: new Date(pickup.picked_up_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })
               : t('pickedUpNoDate')}
           </p>
         </div>
@@ -270,14 +271,14 @@ function PickupCard({
               )}
             </div>
             {it.price != null && (
-              <p className="text-sm font-bold text-[#085041] shrink-0">₹{it.price.toLocaleString('en-IN')}</p>
+              <p className="text-sm font-bold text-[#085041] shrink-0">₹{it.price.toLocaleString(locale)}</p>
             )}
           </div>
         ))}
       </div>
       <div className="px-4 py-2 bg-emerald-50/40 border-t border-emerald-100 flex items-center justify-between">
         <p className="text-[11px] text-[#7A8C7E]">{t('totalLabel')}</p>
-        <p className="text-sm font-bold text-[#085041]">₹{pickup.total_amount.toLocaleString('en-IN')}</p>
+        <p className="text-sm font-bold text-[#085041]">₹{pickup.total_amount.toLocaleString(locale)}</p>
       </div>
 
       {/* Handoff-to: farmer block */}

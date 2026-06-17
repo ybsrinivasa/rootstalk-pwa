@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import ClientCropChip from '@/components/ClientCropChip'
@@ -15,6 +16,7 @@ interface MissedTimeline {
 export default function MissedItemsPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
+  const locale = useLocale()
   const [timelines, setTimelines] = useState<MissedTimeline[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -69,7 +71,7 @@ export default function MissedItemsPage() {
                     </p>
                     {tl.window_end && (
                       <p className="text-xs text-amber-500">
-                        · Expired {new Date(tl.window_end).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        · Expired {new Date(tl.window_end).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                       </p>
                     )}
                   </div>

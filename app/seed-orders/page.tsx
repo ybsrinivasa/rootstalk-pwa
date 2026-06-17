@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -61,6 +61,7 @@ const STATUS_KEYS: readonly string[] = [
 export default function FarmerSeedOrdersPage() {
   const router = useRouter()
   const t = useTranslations('seedOrders')
+  const locale = useLocale()
   const [orders, setOrders] = useState<SeedOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<'active' | 'history'>('active')
@@ -135,7 +136,7 @@ export default function FarmerSeedOrdersPage() {
                 {(order.crop_start_date || order.planting_year) && (
                   <p className="text-[11px] text-[#7A8C7E]">
                     {order.crop_start_date
-                      ? t('sownOn', { date: new Date(order.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })
+                      ? t('sownOn', { date: new Date(order.crop_start_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })
                       : t('plantedIn', { year: order.planting_year ?? 0 })}
                   </p>
                 )}

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -239,6 +239,7 @@ function SubCard({
   onUnsubscribe: () => void
 }) {
   const t = useTranslations('farmerHistory')
+  const locale = useLocale()
   const colour = sub.client_primary_colour || '#3A7D44'
   // 2026-06-06 — Only SELF-subscribed packages can be self-unsubscribed.
   // Promoter-assigned ones must be cancelled by the company.
@@ -261,7 +262,7 @@ function SubCard({
         )}
         <p className="text-[11px] text-[#7A8C7E] mt-0.5">
           {sub.crop_start_date
-            ? t('startedOn', { date: new Date(sub.crop_start_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })
+            ? t('startedOn', { date: new Date(sub.crop_start_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })
             : t('startNotSet')}
         </p>
       </div>

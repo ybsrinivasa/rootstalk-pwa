@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -71,13 +71,13 @@ const L0_BG: Record<string, string> = {
   INSTRUCTION: '#B58A4A',
   MEDIA: '#A85F76',
 }
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+function fmtDate(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
 }
-function timelineDateLabel(from: string | null, to: string | null, todayLabel: string): string {
+function timelineDateLabel(from: string | null, to: string | null, locale: string, todayLabel: string): string {
   if (!from && !to) return todayLabel
-  if (from && to && from !== to) return `${fmtDate(from)} – ${fmtDate(to)}`
-  return fmtDate((to || from)!)
+  if (from && to && from !== to) return `${fmtDate(from, locale)} – ${fmtDate(to, locale)}`
+  return fmtDate((to || from)!, locale)
 }
 function humanize(s: string | null): string {
   if (!s) return ''
@@ -149,6 +149,7 @@ export default function FacilitatorAdvisoryViewPage() {
   const router = useRouter()
   const t = useTranslations('facilitator.promotedFarmers.detail')
   const tEl = useTranslations('practice.element')
+  const locale = useLocale()
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanize(et)
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [day, setDay] = useState<AdvisoryDay | null>(null)
@@ -267,7 +268,7 @@ export default function FacilitatorAdvisoryViewPage() {
                       <p className="font-semibold text-[#6B3F1F] truncate">{tl.name}</p>
                     </div>
                     <span className="text-xs text-[#7A8C7E] shrink-0">
-                      {timelineDateLabel(tl.from_date, tl.to_date, t('todayLabel'))}
+                      {timelineDateLabel(tl.from_date, tl.to_date, locale, t('todayLabel'))}
                     </span>
                   </div>
                 </div>

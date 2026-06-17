@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -519,11 +519,12 @@ function PillChunk({
   showSubHeader?: boolean
 }) {
   const t = useTranslations('facilitator.orders')
+  const locale = useLocale()
   return (
     <div className="px-4 py-3 space-y-2">
       {showSubHeader && (
         <p className="text-[10px] font-mono tracking-wide text-[#7A8C7E]">
-          {t('subOrderHeader', { date: new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) })}
+          {t('subOrderHeader', { date: new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
         </p>
       )}
       {pill === 'pending' && sub.status === 'SENT' && (
@@ -670,6 +671,7 @@ function ExpandedSubOrderList({
   onOpenDetail: (id: string) => void
 }) {
   const t = useTranslations('facilitator.orders')
+  const locale = useLocale()
   return (
     <div className="bg-[#F5F0E8]/50 px-4 py-3 border-t border-[#F0E5D0]">
       <p className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider mb-2">
@@ -684,7 +686,7 @@ function ExpandedSubOrderList({
                 {sub.dealer_shop_name || sub.dealer_name || t('noDealerAssigned')}
               </p>
               <p className="text-[10px] text-[#7A8C7E]">
-                {new Date(sub.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                 {' '}{t('itemCountInline', { count: sub.item_count })}
               </p>
             </div>

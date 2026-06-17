@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
@@ -76,6 +76,7 @@ export default function CropDetailPage() {
   const router = useRouter()
   const t = useTranslations('crop')
   const tCommon = useTranslations('common')
+  const locale = useLocale()
   const [sub, setSub] = useState<SubscriptionDetail | null>(null)
   const [branding, setBranding] = useState<Branding | null>(null)
   const [preStart, setPreStart] = useState<PreStartInput[]>([])
@@ -557,7 +558,7 @@ export default function CropDetailPage() {
                   {sub.farm_area_acres ?? '—'} {t('area.unitAcres')}
                 </p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  {t('area.lockedNote', { date: new Date(sub.farm_area_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })}
+                  {t('area.lockedNote', { date: new Date(sub.farm_area_confirmed_at!).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
                 </p>
               </div>
             )}
@@ -577,7 +578,7 @@ export default function CropDetailPage() {
                       : sub.planting_year}
                 </p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  {t('plants.lockedNote', { date: new Date(sub.plant_count_confirmed_at!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })}
+                  {t('plants.lockedNote', { date: new Date(sub.plant_count_confirmed_at!).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
                 </p>
               </div>
             ) : (
@@ -677,7 +678,7 @@ export default function CropDetailPage() {
               <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-[#7A8C7E]">{t('startDate.label')}</p>
-                  <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   {editable && daysLeft !== null && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
                       {t('startDate.editWindow', { days: daysLeft })}
@@ -685,7 +686,7 @@ export default function CropDetailPage() {
                   )}
                   {!editable && lockedAt && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
-                      {t('startDate.lockedNote', { date: lockedAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) })}
+                      {t('startDate.lockedNote', { date: lockedAt.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
                     </p>
                   )}
                 </div>
