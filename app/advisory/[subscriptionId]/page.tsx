@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -186,6 +187,7 @@ function PurchasedSummary({
   // to render next to the brand. The actual purchased volume is already
   // surfaced on the Purchased Items list — duplicating it on the
   // advisory card was noise.
+  const tEl = useTranslations('practice.element')
   const merged = mergeUnitElements(elements)
   const appMethod = merged.find(e => (e.element_type || '').toUpperCase() === 'APPLICATION_METHOD')
   const dosage = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
@@ -201,13 +203,13 @@ function PurchasedSummary({
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-emerald-900 pt-1">
         {appMethod && (appMethod.value || appMethod.cosh_ref) && (
           <p>
-            <span className="text-emerald-700">Application:</span>{' '}
+            <span className="text-emerald-700">{tEl.has('APPLICATION_METHOD') ? tEl('APPLICATION_METHOD') : 'Application Method'}:</span>{' '}
             <span className="font-medium">{appMethod.value || appMethod.cosh_ref}</span>
           </p>
         )}
         {dosage && (dosage.value || dosage.cosh_ref) && (
           <p>
-            <span className="text-emerald-700">Dosage:</span>{' '}
+            <span className="text-emerald-700">{tEl.has('DOSAGE') ? tEl('DOSAGE') : 'Dosage'}:</span>{' '}
             <span className="font-medium">
               {dosage.value || dosage.cosh_ref}{dosageUnit ? ` ${dosageUnit}` : ''}
             </span>
@@ -817,6 +819,8 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
 }) {
   const [expanded, setExpanded] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const tEl = useTranslations('practice.element')
+  const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
@@ -936,7 +940,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
               <div key={i} className="flex items-start gap-2 text-sm">
                 <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
                 <div>
-                  <span className="text-[#6B3F1F] font-medium">{humanizeType(el.element_type)}</span>
+                  <span className="text-[#6B3F1F] font-medium">{elementLabel((el.element_type || '').toUpperCase())}</span>
                   {el.value
                     ? <span className="text-[#6B3F1F] ml-1">: {el.value}{inlineUnit ? ` ${inlineUnit}` : ''}</span>
                     : showRef

@@ -122,6 +122,7 @@ const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
 function renderElements(
   elements: ElementRow[],
   isPurchased: boolean,
+  elementLabel: (et: string) => string,
 ): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
@@ -136,7 +137,7 @@ function renderElements(
       if (prev) prev.value = `${prev.value} ${valueStr}`
       continue
     }
-    const label = humanize(type)
+    const label = elementLabel(type)
     const value = isUuid(valueStr) ? '' : valueStr
     if (!value) continue
     out.push({ label, value })
@@ -147,6 +148,8 @@ function renderElements(
 export default function FacilitatorAdvisoryViewPage() {
   const router = useRouter()
   const t = useTranslations('facilitator.promotedFarmers.detail')
+  const tEl = useTranslations('practice.element')
+  const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanize(et)
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [day, setDay] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -276,7 +279,7 @@ export default function FacilitatorAdvisoryViewPage() {
                       {t('noPracticeToday')}
                     </p>
                   ) : tl.practices.map(p => {
-                    const rows = renderElements(p.elements, !!p.is_purchased)
+                    const rows = renderElements(p.elements, !!p.is_purchased, elementLabel)
                     const l2Label = p.l2_name_loc || (p.l2_type ? humanize(p.l2_type) : null)
                     return (
                       <div key={p.id}
