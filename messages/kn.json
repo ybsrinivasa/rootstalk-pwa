@@ -33,6 +33,20 @@
     "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್"
   },
   "practice": {
+    "label": {
+      "today": "ಇಂದು",
+      "reference": "ಉಲ್ಲೇಖ",
+      "day": "ದಿನ"
+    },
+    "status": {
+      "PENDING": "ಡೀಲರ್ ಸಿದ್ಧಪಡಿಸುತ್ತಿದ್ದಾರೆ",
+      "AVAILABLE": "ಡೀಲರ್ ಸಿದ್ಧಪಡಿಸುತ್ತಿದ್ದಾರೆ",
+      "SENT_FOR_APPROVAL": "ಅನುಮೋದನೆಗೆ ಸಿದ್ಧ",
+      "APPROVED": "ಖರೀದಿಸಲಾಗಿದೆ",
+      "POSTPONED": "ಮುಂದೂಡಲಾಗಿದೆ",
+      "NOT_AVAILABLE": "ಮರಳಿ ಬಂದಿದೆ — ಕ್ರಮ ಬೇಕು",
+      "REJECTED": "ತಿರಸ್ಕರಿಸಲಾಗಿದೆ"
+    },
     "element": {
       "APPLICATION_METHOD": "ಬಳಕೆಯ ವಿಧಾನ",
       "BED_HEIGHT": "ಮಡಿ ಎತ್ತರ",

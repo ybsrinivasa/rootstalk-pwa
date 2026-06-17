@@ -33,6 +33,20 @@
     "dashboard": "Dashboard"
   },
   "practice": {
+    "label": {
+      "today": "Today",
+      "reference": "Reference",
+      "day": "Day"
+    },
+    "status": {
+      "PENDING": "Dealer processing",
+      "AVAILABLE": "Dealer processing",
+      "SENT_FOR_APPROVAL": "Ready for approval",
+      "APPROVED": "Purchased",
+      "POSTPONED": "Postponed",
+      "NOT_AVAILABLE": "Returned — needs action",
+      "REJECTED": "Rejected"
+    },
     "element": {
       "APPLICATION_METHOD": "Application Method",
       "BED_HEIGHT": "Bed Height",

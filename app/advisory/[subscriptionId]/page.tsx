@@ -195,21 +195,21 @@ function PurchasedSummary({
     ? dosage.unit_cosh_id
     : (dosage?.trailing_unit || '')
   return (
-    <div className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-3 space-y-1">
-      <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
+    <div className="border-t border-[#DDD0B8] px-4 py-3 space-y-1">
+      <p className="text-base font-bold text-[#6B3F1F] truncate">{brand}</p>
       {manufacturer && (
-        <p className="text-xs text-emerald-800">by {manufacturer}</p>
+        <p className="text-xs text-[#7A8C7E]">by {manufacturer}</p>
       )}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-emerald-900 pt-1">
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#6B3F1F] pt-1">
         {appMethod && (appMethod.value || appMethod.cosh_ref) && (
           <p>
-            <span className="text-emerald-700">{tEl.has('APPLICATION_METHOD') ? tEl('APPLICATION_METHOD') : 'Application Method'}:</span>{' '}
+            <span className="text-[#7A8C7E]">{tEl.has('APPLICATION_METHOD') ? tEl('APPLICATION_METHOD') : 'Application Method'}:</span>{' '}
             <span className="font-medium">{appMethod.value || appMethod.cosh_ref}</span>
           </p>
         )}
         {dosage && (dosage.value || dosage.cosh_ref) && (
           <p>
-            <span className="text-emerald-700">{tEl.has('DOSAGE') ? tEl('DOSAGE') : 'Dosage'}:</span>{' '}
+            <span className="text-[#7A8C7E]">{tEl.has('DOSAGE') ? tEl('DOSAGE') : 'Dosage'}:</span>{' '}
             <span className="font-medium">
               {dosage.value || dosage.cosh_ref}{dosageUnit ? ` ${dosageUnit}` : ''}
             </span>
@@ -294,6 +294,7 @@ function groupTimelinePractices(practices: Practice[]): PracticeRow[] {
 
 export default function AdvisoryPage() {
   const router = useRouter()
+  const tLabel = useTranslations('practice.label')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
@@ -448,13 +449,13 @@ export default function AdvisoryPage() {
             {/* Day counter */}
             <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] flex items-center justify-between">
               <div>
-                <p className="text-xs text-[#7A8C7E]">Today</p>
+                <p className="text-xs text-[#7A8C7E]">{tLabel('today')}</p>
                 <p className="font-bold text-[#6B3F1F]">
-                  Day {advisory.day_offset >= 0 ? `+${advisory.day_offset}` : advisory.day_offset}
+                  {tLabel('day')} {advisory.day_offset}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-[#7A8C7E]">Reference</p>
+                <p className="text-xs text-[#7A8C7E]">{tLabel('reference')}</p>
                 <p className="text-xs font-mono text-[#6B3F1F]">{advisory.reference_number || '—'}</p>
               </div>
             </div>
@@ -800,15 +801,16 @@ function BundleOrderSheet({
   )
 }
 
-// Orders V2 Batch 11 — palette + copy for the tappable status chip.
-const FULFILMENT_TONE: Record<string, { bg: string; fg: string; copy: string }> = {
-  PENDING:             { bg: '#fef3c7', fg: '#92400e', copy: 'Dealer processing' },
-  AVAILABLE:           { bg: '#dbeafe', fg: '#1e40af', copy: 'Dealer processing' },
-  SENT_FOR_APPROVAL:   { bg: '#ede9fe', fg: '#5b21b6', copy: 'Ready for approval' },
-  APPROVED:            { bg: '#d1fae5', fg: '#065f46', copy: 'Purchased' },
-  POSTPONED:           { bg: '#fed7aa', fg: '#9a3412', copy: 'Postponed' },
-  NOT_AVAILABLE:       { bg: '#fee2e2', fg: '#991b1b', copy: 'Returned — needs action' },
-  REJECTED:            { bg: '#fce7f3', fg: '#9d174d', copy: 'Rejected' },
+// Orders V2 Batch 11 — palette for the tappable status chip.
+// Copy lives in `practice.status.*` i18n namespace per status enum.
+const FULFILMENT_TONE: Record<string, { bg: string; fg: string }> = {
+  PENDING:             { bg: '#fef3c7', fg: '#92400e' },
+  AVAILABLE:           { bg: '#dbeafe', fg: '#1e40af' },
+  SENT_FOR_APPROVAL:   { bg: '#ede9fe', fg: '#5b21b6' },
+  APPROVED:            { bg: '#d1fae5', fg: '#065f46' },
+  POSTPONED:           { bg: '#fed7aa', fg: '#9a3412' },
+  NOT_AVAILABLE:       { bg: '#fee2e2', fg: '#991b1b' },
+  REJECTED:            { bg: '#fce7f3', fg: '#9d174d' },
 }
 
 function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
@@ -817,14 +819,17 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   isOrdering: boolean
   ordered: boolean
 }) {
-  const [expanded, setExpanded] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const tEl = useTranslations('practice.element')
+  const tStatus = useTranslations('practice.status')
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
   const tone = fulf ? FULFILMENT_TONE[fulf.status] : null
+  const statusCopy = fulf
+    ? (tStatus.has(fulf.status) ? tStatus(fulf.status) : fulf.status)
+    : ''
   // INPUT details (brand, dose, formulation) are hidden until the
   // farmer purchases — the dealer picks the actual product, and
   // resolved details surface on the order page after fulfilment.
@@ -839,10 +844,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-      <div
-        className={`flex items-center gap-3 px-4 py-3.5${detailsVisible ? ' cursor-pointer' : ''}`}
-        onClick={detailsVisible ? () => setExpanded(e => !e) : undefined}
-      >
+      <div className="flex items-center gap-3 px-4 py-3.5">
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
         <div className="flex-1 min-w-0">
           {(practice.is_special_input
@@ -874,7 +876,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
               onClick={e => { e.stopPropagation(); setSheetOpen(true) }}
               className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl"
               style={{ background: tone.bg, color: tone.fg }}>
-              {tone.copy}{fulf.status === 'POSTPONED' && fulf.postpone_days_remaining != null
+              {statusCopy}{fulf.status === 'POSTPONED' && fulf.postpone_days_remaining != null
                 ? ` · ${fulf.postpone_days_remaining}d` : ''}
             </button>
           ) : (
@@ -883,7 +885,9 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
               disabled={isOrdering || ordered || practice.is_purchased === true}
               className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
               style={{ background: (ordered || practice.is_purchased) ? '#16a34a' : '#3A7D44' }}>
-              {practice.is_purchased ? '✓ Purchased' : ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
+              {practice.is_purchased
+                ? `✓ ${tStatus.has('APPROVED') ? tStatus('APPROVED') : 'Purchased'}`
+                : ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
             </button>
           )
         )}
@@ -896,7 +900,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
       {sheetOpen && fulf && tone && (
         <FulfilmentSheet
           fulfilment={fulf}
-          chipCopy={tone.copy}
+          chipCopy={statusCopy}
           onClose={() => setSheetOpen(false)}
         />
       )}
@@ -914,47 +918,10 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
         />
       )}
 
-      {detailsVisible && expanded && (
-        <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
-          {mergeUnitElements(practice.elements)
-            // Strip SE recommendations that are dealer-facing only (see
-            // FARMER_HIDDEN_ELEMENT_TYPES). The post-purchase block
-            // (APPLICATION_METHOD, DOSAGE, VOLUME_PER_PLANT, INSTRUCTIONS)
-            // is hidden pre-purchase. Post-purchase, APPLICATION_METHOD
-            // and DOSAGE move into PurchasedSummary so they're suppressed
-            // from the bullet list to avoid duplication.
-            .filter(el => {
-              const t = (el.element_type || '').toUpperCase()
-              if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
-              const summaryShown = fulf?.status === 'APPROVED' && !!fulf.brand_name
-              if (!summaryShown && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(t)) return false
-              if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
-              return true
-            })
-            .map((el, i) => {
-            const showRef = el.cosh_ref && !isUuid(el.cosh_ref)
-            const inlineUnit =
-              (el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : '')
-              || el.trailing_unit || ''
-            return (
-              <div key={i} className="flex items-start gap-2 text-sm">
-                <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
-                <div>
-                  <span className="text-[#6B3F1F] font-medium">{elementLabel((el.element_type || '').toUpperCase())}</span>
-                  {el.value
-                    ? <span className="text-[#6B3F1F] ml-1">: {el.value}{inlineUnit ? ` ${inlineUnit}` : ''}</span>
-                    : showRef
-                      ? <span className="text-[#6B3F1F] ml-1">: {el.cosh_ref}</span>
-                      : inlineUnit
-                        ? <span className="text-[#6B3F1F] ml-1">: {inlineUnit}</span>
-                        : null}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
       {detailsVisible && (() => {
+        // Strip SE recommendations that are dealer-facing only and
+        // collapse post-purchase APPLICATION_METHOD + DOSAGE into
+        // PurchasedSummary to avoid duplication.
         const summaryShown = fulf?.status === 'APPROVED' && !!fulf.brand_name
         const visibleEls = mergeUnitElements(practice.elements)
           .filter(el => {
@@ -966,8 +933,28 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           })
         if (visibleEls.length === 0) return null
         return (
-          <div className="px-4 pb-2 text-xs text-[#7A8C7E] cursor-pointer" onClick={() => setExpanded(e => !e)}>
-            {expanded ? '▲ Hide details' : `▼ ${visibleEls.length} detail${visibleEls.length > 1 ? 's' : ''}`}
+          <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
+            {visibleEls.map((el, i) => {
+              const showRef = el.cosh_ref && !isUuid(el.cosh_ref)
+              const inlineUnit =
+                (el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : '')
+                || el.trailing_unit || ''
+              return (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
+                  <div>
+                    <span className="text-[#6B3F1F] font-medium">{elementLabel((el.element_type || '').toUpperCase())}</span>
+                    {el.value
+                      ? <span className="text-[#6B3F1F] ml-1">: {el.value}{inlineUnit ? ` ${inlineUnit}` : ''}</span>
+                      : showRef
+                        ? <span className="text-[#6B3F1F] ml-1">: {el.cosh_ref}</span>
+                        : inlineUnit
+                          ? <span className="text-[#6B3F1F] ml-1">: {inlineUnit}</span>
+                          : null}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )
       })()}

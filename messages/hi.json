@@ -33,6 +33,20 @@
     "dashboard": "डैशबोर्ड"
   },
   "practice": {
+    "label": {
+      "today": "आज",
+      "reference": "संदर्भ",
+      "day": "दिन"
+    },
+    "status": {
+      "PENDING": "डीलर तैयार कर रहा है",
+      "AVAILABLE": "डीलर तैयार कर रहा है",
+      "SENT_FOR_APPROVAL": "स्वीकृति के लिए तैयार",
+      "APPROVED": "खरीदा गया",
+      "POSTPONED": "स्थगित",
+      "NOT_AVAILABLE": "वापस आया — कार्रवाई चाहिए",
+      "REJECTED": "अस्वीकृत"
+    },
     "element": {
       "APPLICATION_METHOD": "प्रयोग विधि",
       "BED_HEIGHT": "क्यारी ऊँचाई",
