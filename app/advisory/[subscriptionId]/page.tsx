@@ -195,21 +195,21 @@ function PurchasedSummary({
     ? dosage.unit_cosh_id
     : (dosage?.trailing_unit || '')
   return (
-    <div className="border-t border-[#DDD0B8] px-4 py-3 space-y-1">
-      <p className="text-base font-bold text-[#6B3F1F] truncate">{brand}</p>
+    <div className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-3 space-y-1">
+      <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
       {manufacturer && (
-        <p className="text-xs text-[#7A8C7E]">by {manufacturer}</p>
+        <p className="text-xs text-emerald-800">by {manufacturer}</p>
       )}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-[#6B3F1F] pt-1">
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-emerald-900 pt-1">
         {appMethod && (appMethod.value || appMethod.cosh_ref) && (
           <p>
-            <span className="text-[#7A8C7E]">{tEl.has('APPLICATION_METHOD') ? tEl('APPLICATION_METHOD') : 'Application Method'}:</span>{' '}
+            <span className="text-emerald-700">{tEl.has('APPLICATION_METHOD') ? tEl('APPLICATION_METHOD') : 'Application Method'}:</span>{' '}
             <span className="font-medium">{appMethod.value || appMethod.cosh_ref}</span>
           </p>
         )}
         {dosage && (dosage.value || dosage.cosh_ref) && (
           <p>
-            <span className="text-[#7A8C7E]">{tEl.has('DOSAGE') ? tEl('DOSAGE') : 'Dosage'}:</span>{' '}
+            <span className="text-emerald-700">{tEl.has('DOSAGE') ? tEl('DOSAGE') : 'Dosage'}:</span>{' '}
             <span className="font-medium">
               {dosage.value || dosage.cosh_ref}{dosageUnit ? ` ${dosageUnit}` : ''}
             </span>
