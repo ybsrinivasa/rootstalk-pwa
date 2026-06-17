@@ -47,6 +47,10 @@
       "NOT_AVAILABLE": "Returned — needs action",
       "REJECTED": "Rejected"
     },
+    "action": {
+      "order": "Order",
+      "ordered": "✓ Ordered"
+    },
     "element": {
       "APPLICATION_METHOD": "Application Method",
       "BED_HEIGHT": "Bed Height",

@@ -47,6 +47,10 @@
       "NOT_AVAILABLE": "वापस आया — कार्रवाई चाहिए",
       "REJECTED": "अस्वीकृत"
     },
+    "action": {
+      "order": "ऑर्डर करें",
+      "ordered": "✓ ऑर्डर किया गया"
+    },
     "element": {
       "APPLICATION_METHOD": "प्रयोग विधि",
       "BED_HEIGHT": "क्यारी ऊँचाई",

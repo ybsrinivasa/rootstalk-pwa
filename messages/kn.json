@@ -47,6 +47,10 @@
       "NOT_AVAILABLE": "ಮರಳಿ ಬಂದಿದೆ — ಕ್ರಮ ಬೇಕು",
       "REJECTED": "ತಿರಸ್ಕರಿಸಲಾಗಿದೆ"
     },
+    "action": {
+      "order": "ಆದೇಶಿಸಿ",
+      "ordered": "✓ ಆದೇಶಿಸಲಾಗಿದೆ"
+    },
     "element": {
       "APPLICATION_METHOD": "ಬಳಕೆಯ ವಿಧಾನ",
       "BED_HEIGHT": "ಮಡಿ ಎತ್ತರ",

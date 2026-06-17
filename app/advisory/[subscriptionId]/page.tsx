@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -82,13 +82,13 @@ const L0_BG: Record<string, string> = {
 }
 // Farmer-facing helpers — never expose raw enum slugs or
 // timeline names; surface the actual date window instead.
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+function fmtDate(iso: string, locale: string): string {
+  return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
 }
-function timelineDateLabel(from: string | null, to: string | null): string {
-  if (!from && !to) return 'Today'
-  if (from && to && from !== to) return `${fmtDate(from)} – ${fmtDate(to)}`
-  return fmtDate((to || from)!)
+function timelineDateLabel(from: string | null, to: string | null, locale: string, todayLabel: string): string {
+  if (!from && !to) return todayLabel
+  if (from && to && from !== to) return `${fmtDate(from, locale)} – ${fmtDate(to, locale)}`
+  return fmtDate((to || from)!, locale)
 }
 function humanizeType(s: string | null): string {
   if (!s) return ''
@@ -295,6 +295,7 @@ function groupTimelinePractices(practices: Practice[]): PracticeRow[] {
 export default function AdvisoryPage() {
   const router = useRouter()
   const tLabel = useTranslations('practice.label')
+  const locale = useLocale()
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
   const [subscription, setSubscription] = useState<Subscription | null>(null)
@@ -477,7 +478,7 @@ export default function AdvisoryPage() {
                   <>
                     <p className="text-[#7A8C7E] text-sm mt-2">Your next advisory window opens on</p>
                     <p className="text-[#6B3F1F] font-semibold text-base mt-1">
-                      {new Date(nextDate.next_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {new Date(nextDate.next_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                     {nextDate.days_until !== undefined && (
                       <p className="text-[#7A8C7E] text-xs mt-1">
@@ -528,7 +529,7 @@ export default function AdvisoryPage() {
                         <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded">🌾 Pundit</span>
                       )}
                       <p className="text-xs font-semibold text-[#6B3F1F] tracking-wide">
-                        {timelineDateLabel(tl.from_date, tl.to_date)}
+                        {timelineDateLabel(tl.from_date, tl.to_date, locale, tLabel('today'))}
                       </p>
                     </div>
                     <div className="h-px flex-1 bg-slate-200" />
@@ -822,6 +823,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
   const [sheetOpen, setSheetOpen] = useState(false)
   const tEl = useTranslations('practice.element')
   const tStatus = useTranslations('practice.status')
+  const tAction = useTranslations('practice.action')
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
@@ -887,7 +889,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
               style={{ background: (ordered || practice.is_purchased) ? '#16a34a' : '#3A7D44' }}>
               {practice.is_purchased
                 ? `✓ ${tStatus.has('APPROVED') ? tStatus('APPROVED') : 'Purchased'}`
-                : ordered ? '✓ Ordered' : isOrdering ? '…' : 'Order'}
+                : ordered ? tAction('ordered') : isOrdering ? '…' : tAction('order')}
             </button>
           )
         )}
@@ -975,6 +977,7 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
   // don't need rework — the parent just ignores it.
   onOrder: (practiceIds: string[]) => void
 }) {
+  const tAction = useTranslations('practice.action')
   if (parts.length === 0) return null
 
   // Single Part with single Option AND-group: paired card with "Order both together"
@@ -1036,8 +1039,8 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
             const isCompound = opt.practices.length > 1
             const isChoice = part.options.length > 1
             const buttonLabel = isCompound
-              ? (isAnyOrdered ? '✓ Ordered' : isOrderingAny ? '…' : 'Order this option')
-              : (isAnyOrdered ? '✓ Ordered' : isOrderingAny ? '…' : 'Order')
+              ? (isAnyOrdered ? tAction('ordered') : isOrderingAny ? '…' : tAction('order'))
+              : (isAnyOrdered ? tAction('ordered') : isOrderingAny ? '…' : tAction('order'))
 
             return (
               <div key={opt.option}>
