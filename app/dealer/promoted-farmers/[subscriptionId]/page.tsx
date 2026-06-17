@@ -21,6 +21,7 @@ interface Practice {
   l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
   l1_type: string | null
   l2_type: string | null
+  l2_name_loc?: string | null
   display_order: number
   elements: ElementRow[]
   is_purchased?: boolean
@@ -145,6 +146,7 @@ function renderElements(
 export default function DealerFarmerAdvisoryPage() {
   const router = useRouter()
   const t = useTranslations('dealer.promotedFarmers.detail')
+  const tL1 = useTranslations('practice.l1')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [day, setDay] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -274,14 +276,18 @@ export default function DealerFarmerAdvisoryPage() {
                       : l0Key === 'instruction' ? t('l0.instruction')
                       : l0Key === 'media' ? t('l0.media')
                       : p.l0_type
+                    const l1Label = p.l1_type
+                      ? (tL1.has(p.l1_type) ? tL1(p.l1_type) : humanize(p.l1_type))
+                      : null
+                    const l2Label = p.l2_name_loc || (p.l2_type ? humanize(p.l2_type) : null)
                     return (
                       <div key={p.id}
                         className="rounded-xl border border-[#DDD0B8] overflow-hidden">
                         <div className="px-3 py-2 text-white text-[11px] font-semibold uppercase tracking-wide"
                           style={{ background: L0_BG[p.l0_type] || '#7A8C7E' }}>
                           {l0Label}
-                          {p.l1_type && <span className="opacity-80"> · {humanize(p.l1_type)}</span>}
-                          {p.l2_type && <span className="opacity-80"> · {humanize(p.l2_type)}</span>}
+                          {l1Label && <span className="opacity-80"> · {l1Label}</span>}
+                          {l2Label && <span className="opacity-80"> · {l2Label}</span>}
                         </div>
                         <div className="p-3 text-sm">
                           {/* 2026-06-12 — When the farmer has purchased

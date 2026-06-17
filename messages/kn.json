@@ -32,6 +32,32 @@
     "pickup": "ಪಿಕಪ್",
     "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್"
   },
+  "practice": {
+    "l0": {
+      "INPUT": "ಒಳಸುರಿ ಬಳಸಿ",
+      "NON_INPUT": "ಬೆಳೆ ಚಟುವಟಿಕೆ",
+      "INSTRUCTION": "ಸಲಹೆ",
+      "MEDIA": "ಉಲ್ಲೇಖ"
+    },
+    "l1": {
+      "PESTICIDE": "ಕೀಟನಾಶಕ",
+      "SPECIAL_INPUT": "ವಿಶೇಷ ಒಳಸುರಿ",
+      "FERTILIZER": "ಗೊಬ್ಬರ",
+      "SPACING": "ಅಂತರ",
+      "SEED_TREATMENT": "ಬೀಜೋಪಚಾರ",
+      "SOWING_METHOD": "ಬಿತ್ತನೆ ವಿಧಾನ",
+      "PLANTING_MATERIAL": "ನಾಟಿ ಸಾಮಗ್ರಿ",
+      "PLANTING_SYSTEM": "ನಾಟಿ ಪದ್ಧತಿ",
+      "ITKS": "ಪಾರಂಪರಿಕ ಜ್ಞಾನ",
+      "IRRIGATION": "ನೀರಾವರಿ",
+      "WEED_MANAGEMENT": "ಕಳೆ ನಿರ್ವಹಣೆ",
+      "CULTURAL": "ಬೆಳೆ ಪಾಲನೆ",
+      "HARVESTING": "ಕೊಯ್ಲು",
+      "POST_HARVEST": "ಕಟಾವಿನ ನಂತರ",
+      "GENERAL": "ಸಾಮಾನ್ಯ",
+      "MEDIA": "ಮಾಧ್ಯಮ"
+    }
+  },
   "role": {
     "farmer": "ರೈತ",
     "dealer": "ನನ್ನ ಅಂಗಡಿ",

@@ -32,6 +32,32 @@
     "pickup": "उठाना",
     "dashboard": "डैशबोर्ड"
   },
+  "practice": {
+    "l0": {
+      "INPUT": "इनपुट लागू करें",
+      "NON_INPUT": "फसल गतिविधि",
+      "INSTRUCTION": "सलाह",
+      "MEDIA": "संदर्भ"
+    },
+    "l1": {
+      "PESTICIDE": "कीटनाशक",
+      "SPECIAL_INPUT": "विशेष इनपुट",
+      "FERTILIZER": "उर्वरक",
+      "SPACING": "अंतराल",
+      "SEED_TREATMENT": "बीज उपचार",
+      "SOWING_METHOD": "बुवाई विधि",
+      "PLANTING_MATERIAL": "रोपण सामग्री",
+      "PLANTING_SYSTEM": "रोपण पद्धति",
+      "ITKS": "पारंपरिक ज्ञान",
+      "IRRIGATION": "सिंचाई",
+      "WEED_MANAGEMENT": "खरपतवार प्रबंधन",
+      "CULTURAL": "फसल देखभाल",
+      "HARVESTING": "कटाई",
+      "POST_HARVEST": "कटाई के बाद",
+      "GENERAL": "सामान्य",
+      "MEDIA": "मीडिया"
+    }
+  },
   "role": {
     "farmer": "किसान",
     "dealer": "मेरी दुकान",

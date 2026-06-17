@@ -32,6 +32,32 @@
     "pickup": "Pickup",
     "dashboard": "Dashboard"
   },
+  "practice": {
+    "l0": {
+      "INPUT": "Apply Input",
+      "NON_INPUT": "Crop Activity",
+      "INSTRUCTION": "Advisory",
+      "MEDIA": "Reference"
+    },
+    "l1": {
+      "PESTICIDE": "Pesticide",
+      "SPECIAL_INPUT": "Special Input",
+      "FERTILIZER": "Fertilizer",
+      "SPACING": "Spacing",
+      "SEED_TREATMENT": "Seed Treatment",
+      "SOWING_METHOD": "Sowing Method",
+      "PLANTING_MATERIAL": "Planting Material",
+      "PLANTING_SYSTEM": "Planting System",
+      "ITKS": "Traditional Knowledge",
+      "IRRIGATION": "Irrigation",
+      "WEED_MANAGEMENT": "Weed Management",
+      "CULTURAL": "Crop Care",
+      "HARVESTING": "Harvesting",
+      "POST_HARVEST": "Post Harvest",
+      "GENERAL": "General",
+      "MEDIA": "Media"
+    }
+  },
   "role": {
     "farmer": "Farmer",
     "dealer": "My Shop",

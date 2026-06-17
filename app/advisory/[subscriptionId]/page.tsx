@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -30,7 +31,8 @@ interface Fulfilment {
 }
 interface Practice {
   id: string; l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
-  l1_type: string | null; l2_type: string | null; display_order: number
+  l1_type: string | null; l2_type: string | null
+  l2_name_loc?: string | null; display_order: number
   is_special_input: boolean; elements: Element[]
   relation_id?: string | null
   relation_role?: string | null    // PART_n__OPT_m__POS_p
@@ -78,10 +80,6 @@ const L0_BG: Record<string, string> = {
   INSTRUCTION: '#B58A4A', // warm muted gold
   MEDIA: '#A85F76',       // dusty rose
 }
-const L0_LABEL: Record<string, string> = {
-  INPUT: 'Apply Input', NON_INPUT: 'Crop Activity', INSTRUCTION: 'Advisory', MEDIA: 'Reference',
-}
-
 // Farmer-facing helpers — never expose raw enum slugs or
 // timeline names; surface the actual date window instead.
 function fmtDate(iso: string): string {
@@ -820,8 +818,14 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
 }) {
   const [expanded, setExpanded] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const tL0 = useTranslations('practice.l0')
+  const tL1 = useTranslations('practice.l1')
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
-  const label = L0_LABEL[practice.l0_type] || practice.l0_type
+  const label = tL0.has(practice.l0_type) ? tL0(practice.l0_type) : practice.l0_type
+  const l1Label = practice.l1_type
+    ? (tL1.has(practice.l1_type) ? tL1(practice.l1_type) : humanizeType(practice.l1_type))
+    : ''
+  const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
   const tone = fulf ? FULFILMENT_TONE[fulf.status] : null
   // INPUT details (brand, dose, formulation) are hidden until the
@@ -860,7 +864,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
             )}
           </div>
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
-            {[humanizeType(practice.l1_type), humanizeType(practice.l2_type)].filter(Boolean).join(' — ') || 'General Advisory'}
+            {[l1Label, l2Label].filter(Boolean).join(' — ') || 'General Advisory'}
           </p>
         </div>
         {practice.l0_type === 'INPUT' && (
@@ -1107,8 +1111,14 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
 
 // Compact in-group practice row (used inside a paired AND-group card)
 function InnerPracticeRow({ practice }: { practice: Practice }) {
+  const tL0 = useTranslations('practice.l0')
+  const tL1 = useTranslations('practice.l1')
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
-  const label = L0_LABEL[practice.l0_type] || practice.l0_type
+  const label = tL0.has(practice.l0_type) ? tL0(practice.l0_type) : practice.l0_type
+  const l1Label = practice.l1_type
+    ? (tL1.has(practice.l1_type) ? tL1(practice.l1_type) : humanizeType(practice.l1_type))
+    : ''
+  const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   return (
     <div className="px-4 py-3">
       <div className="flex items-center gap-2 flex-wrap mb-0.5">
@@ -1124,7 +1134,7 @@ function InnerPracticeRow({ practice }: { practice: Practice }) {
         )}
       </div>
       <p className="text-sm font-medium text-[#6B3F1F]">
-        {[humanizeType(practice.l1_type), humanizeType(practice.l2_type)].filter(Boolean).join(' — ') || 'General Advisory'}
+        {[l1Label, l2Label].filter(Boolean).join(' — ') || 'General Advisory'}
       </p>
     </div>
   )
