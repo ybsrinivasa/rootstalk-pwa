@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -818,13 +817,7 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
 }) {
   const [expanded, setExpanded] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const tL0 = useTranslations('practice.l0')
-  const tL1 = useTranslations('practice.l1')
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
-  const label = tL0.has(practice.l0_type) ? tL0(practice.l0_type) : practice.l0_type
-  const l1Label = practice.l1_type
-    ? (tL1.has(practice.l1_type) ? tL1(practice.l1_type) : humanizeType(practice.l1_type))
-    : ''
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
   const tone = fulf ? FULFILMENT_TONE[fulf.status] : null
@@ -848,23 +841,24 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
       >
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
-              style={{ background: colour }}>{label}</span>
-            {practice.is_special_input && (
-              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
-            )}
-            {practice.frequency_days != null && practice.frequency_days > 0 && (
-              <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
-                </svg>
-                {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
-              </span>
-            )}
-          </div>
+          {(practice.is_special_input
+            || (practice.frequency_days != null && practice.frequency_days > 0)) && (
+            <div className="flex items-center gap-2 flex-wrap">
+              {practice.is_special_input && (
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
+              )}
+              {practice.frequency_days != null && practice.frequency_days > 0 && (
+                <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                  </svg>
+                  {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
+                </span>
+              )}
+            </div>
+          )}
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
-            {[l1Label, l2Label].filter(Boolean).join(' — ') || 'General Advisory'}
+            {l2Label || 'General Advisory'}
           </p>
         </div>
         {practice.l0_type === 'INPUT' && (
@@ -1111,30 +1105,24 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
 
 // Compact in-group practice row (used inside a paired AND-group card)
 function InnerPracticeRow({ practice }: { practice: Practice }) {
-  const tL0 = useTranslations('practice.l0')
-  const tL1 = useTranslations('practice.l1')
-  const colour = L0_BG[practice.l0_type] || '#3A7D44'
-  const label = tL0.has(practice.l0_type) ? tL0(practice.l0_type) : practice.l0_type
-  const l1Label = practice.l1_type
-    ? (tL1.has(practice.l1_type) ? tL1(practice.l1_type) : humanizeType(practice.l1_type))
-    : ''
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   return (
     <div className="px-4 py-3">
-      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-        <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-white"
-          style={{ background: colour }}>{label}</span>
-        {practice.is_special_input && (
-          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
-        )}
-        {practice.frequency_days != null && practice.frequency_days > 0 && (
-          <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
-            {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
-          </span>
-        )}
-      </div>
+      {(practice.is_special_input
+        || (practice.frequency_days != null && practice.frequency_days > 0)) && (
+        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+          {practice.is_special_input && (
+            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
+          )}
+          {practice.frequency_days != null && practice.frequency_days > 0 && (
+            <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+              {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
+            </span>
+          )}
+        </div>
+      )}
       <p className="text-sm font-medium text-[#6B3F1F]">
-        {[l1Label, l2Label].filter(Boolean).join(' — ') || 'General Advisory'}
+        {l2Label || 'General Advisory'}
       </p>
     </div>
   )

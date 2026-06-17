@@ -69,13 +69,6 @@ const L0_BG: Record<string, string> = {
   INSTRUCTION: '#B58A4A',
   MEDIA: '#A85F76',
 }
-const L0_LABEL_KEY: Record<string, string> = {
-  INPUT: 'input',
-  NON_INPUT: 'nonInput',
-  INSTRUCTION: 'instruction',
-  MEDIA: 'media',
-}
-
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
 }
@@ -146,7 +139,6 @@ function renderElements(
 export default function DealerFarmerAdvisoryPage() {
   const router = useRouter()
   const t = useTranslations('dealer.promotedFarmers.detail')
-  const tL1 = useTranslations('practice.l1')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [day, setDay] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -270,24 +262,13 @@ export default function DealerFarmerAdvisoryPage() {
                     </p>
                   ) : tl.practices.map(p => {
                     const rows = renderElements(p.elements, !!p.is_purchased)
-                    const l0Key = L0_LABEL_KEY[p.l0_type]
-                    const l0Label = l0Key === 'input' ? t('l0.input')
-                      : l0Key === 'nonInput' ? t('l0.nonInput')
-                      : l0Key === 'instruction' ? t('l0.instruction')
-                      : l0Key === 'media' ? t('l0.media')
-                      : p.l0_type
-                    const l1Label = p.l1_type
-                      ? (tL1.has(p.l1_type) ? tL1(p.l1_type) : humanize(p.l1_type))
-                      : null
                     const l2Label = p.l2_name_loc || (p.l2_type ? humanize(p.l2_type) : null)
                     return (
                       <div key={p.id}
                         className="rounded-xl border border-[#DDD0B8] overflow-hidden">
                         <div className="px-3 py-2 text-white text-[11px] font-semibold uppercase tracking-wide"
                           style={{ background: L0_BG[p.l0_type] || '#7A8C7E' }}>
-                          {l0Label}
-                          {l1Label && <span className="opacity-80"> · {l1Label}</span>}
-                          {l2Label && <span className="opacity-80"> · {l2Label}</span>}
+                          {l2Label}
                         </div>
                         <div className="p-3 text-sm">
                           {/* 2026-06-12 — When the farmer has purchased
