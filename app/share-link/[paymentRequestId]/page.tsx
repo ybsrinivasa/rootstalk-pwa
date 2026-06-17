@@ -119,7 +119,7 @@ export default function ShareLinkPage() {
   }
 
   const hoursLow = req && req.hours_remaining <= 6
-  const titleContext = [req?.crop_name, req?.package_name].filter(Boolean).join(' · ')
+  const titleContext = req?.crop_name || ''
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">

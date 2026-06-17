@@ -210,7 +210,7 @@ export default function HistoryPage() {
             <p className="font-bold text-[#6B3F1F]">{t('confirmUnsub.title')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
               {t('confirmUnsub.bodyPrefix')}{' '}
-              <strong className="text-[#6B3F1F]">{confirmUnsub.crop_name || confirmUnsub.package_name || t('thisCropFallback')}</strong>{' '}
+              <strong className="text-[#6B3F1F]">{confirmUnsub.crop_name || t('thisCropFallback')}</strong>{' '}
               {t('confirmUnsub.bodyMiddle')} <strong className="text-[#6B3F1F]">{confirmUnsub.client_display_name}</strong>{t('confirmUnsub.bodySuffix')}
             </p>
             <div className="flex gap-2 mt-4">
@@ -254,7 +254,7 @@ function SubCard({
       </div>
       <div className="px-4 pt-3">
         <p className="text-base font-bold text-[#6B3F1F]">
-          {sub.crop_name || sub.package_name || t('crop')}
+          {sub.crop_name || t('crop')}
         </p>
         {sub.reference_number && (
           <p className="text-[11px] font-mono text-[#7A8C7E] mt-0.5">{sub.reference_number}</p>

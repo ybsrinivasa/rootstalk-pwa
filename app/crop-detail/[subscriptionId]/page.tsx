@@ -460,9 +460,6 @@ export default function CropDetailPage() {
             <p className="text-white font-bold text-sm truncate">
               {cropDisplayName(sub.crop_cosh_id, sub.crop_name)}
             </p>
-            {sub.package_name && sub.package_name.toLowerCase() !== cropDisplayName(sub.crop_cosh_id, sub.crop_name).toLowerCase() && (
-              <p className="text-white text-[11px] opacity-70 truncate">{sub.package_name}</p>
-            )}
           </div>
           {sub.reference_number && (
             <p className="text-white text-xs opacity-60 font-mono shrink-0">{sub.reference_number}</p>

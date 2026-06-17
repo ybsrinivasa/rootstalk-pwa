@@ -157,12 +157,6 @@ export default function BrandedSpacePage() {
             const hasStartDate = !!sub.crop_start_date
             const cropLabel = cropDisplayName(sub.crop_cosh_id, sub.crop_name)
             // Two PoPs of the same crop coexist (Multi-PoP, e.g.
-            // "Chilli Package 1" vs "Chilli Package 2"); show the
-            // SE-authored package name as a subtitle so the farmer
-            // can tell them apart. Skip when name == crop (single
-            // PoP, redundant).
-            const showPackageSub =
-              !!sub.package_name && sub.package_name.toLowerCase() !== cropLabel.toLowerCase()
             return (
               <button key={sub.id}
                 onClick={() => router.push(`/crop-detail/${sub.id}`)}
@@ -170,9 +164,6 @@ export default function BrandedSpacePage() {
                 style={{ width: 'calc(100% - 2rem)' }}>
                 <div className="min-w-0">
                   <p className="text-[#6B3F1F] font-semibold text-[15px]">{cropLabel}</p>
-                  {showPackageSub && (
-                    <p className="text-[#7A8C7E] text-xs mt-0.5 truncate">{sub.package_name}</p>
-                  )}
                   {sub.reference_number && (
                     <p className="text-[#7A8C7E] text-[11px] mt-0.5 font-mono">{sub.reference_number}</p>
                   )}

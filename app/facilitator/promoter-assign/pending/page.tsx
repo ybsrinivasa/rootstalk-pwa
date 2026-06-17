@@ -164,10 +164,6 @@ export default function PendingSentPage() {
                             {cropDisplayName(r.crop_cosh_id)}
                           </span>
                         </p>
-                        <p>
-                          {t('packageLabel')}{' '}
-                          <span className="text-[#6B3F1F] font-medium">{r.package_name}</span>
-                        </p>
                       </div>
                       <button
                         onClick={() => cancel(r.assignment_id, r.farmer_name)}

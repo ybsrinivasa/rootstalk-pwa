@@ -236,7 +236,6 @@ export default function FacilitatorAdvisoryViewPage() {
           <p className="text-lg font-bold text-[#6B3F1F]">
             {cropDisplayName(day.crop_cosh_id)}
           </p>
-          <p className="text-sm text-[#7A8C7E] mt-0.5">{day.package_name}</p>
           {day.reference_number && (
             <p className="text-xs font-mono text-[#7A8C7E] mt-1">{day.reference_number}</p>
           )}

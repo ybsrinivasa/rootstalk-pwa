@@ -144,7 +144,6 @@ function SubscribeFlow() {
   // so the Confirm card can show the SE's authored label and
   // optional description, not just the crop name. Both come from
   // guided-step's `package` payload.
-  const [packageName, setPackageName] = useState('')
   const [packageDescription, setPackageDescription] = useState<string | null>(null)
   const [guidedStep, setGuidedStep] = useState<GuidedStep | null>(null)
   const [guidedQuestionIndex, setGuidedQuestionIndex] = useState(0)
@@ -238,7 +237,6 @@ function SubscribeFlow() {
         setSubscription({ id: sub.id })
         setClientId(sub.client_id)
         setPackageId(sub.package_id)
-        setPackageName(sub.package_name || '')
         setCropName(sub.crop_name || '')
         setStage('payment')
       } catch {
@@ -293,7 +291,6 @@ function SubscribeFlow() {
       setGuidedStep(data)
       if (data.done && data.package) {
         setPackageId(data.package.id)
-        setPackageName(data.package.name)
         setPackageDescription(data.package.description)
         setStage('confirm')
       } else if (data.error) {
@@ -319,7 +316,6 @@ function SubscribeFlow() {
       setGuidedStep(data)
       if (data.done && data.package) {
         setPackageId(data.package.id)
-        setPackageName(data.package.name)
         setPackageDescription(data.package.description)
         setStage('confirm')
       } else if (data.error) {
@@ -512,7 +508,6 @@ function SubscribeFlow() {
       setGuidedStep(null)
       setGuidedQuestionIndex(0)
       setPackageId('')
-      setPackageName('')
       setPackageDescription(null)
       setStage('company')
     }
@@ -927,15 +922,9 @@ function SubscribeFlow() {
                     <div className="rounded-2xl overflow-hidden border border-[#DDD0B8] mb-5">
                       <CompanyLogo company={company} />
                       <div className="p-4">
-                        {/* Package label — SE-authored. Crop label
-                            stays as a subtle sub-line so the user
-                            still sees the crop context. */}
                         <p className="font-semibold text-[#6B3F1F] text-base">
-                          {packageName || t('confirm.fallbackPackageName', { crop: cropDisplay })}
+                          {cropDisplay}
                         </p>
-                        {packageName && (
-                          <p className="text-xs text-[#7A8C7E] mt-0.5 mb-2">{cropDisplay}</p>
-                        )}
                         {packageDescription && (
                           <p className="text-sm text-[#6B3F1F] mt-2 mb-3 leading-relaxed"
                             style={{ whiteSpace: 'pre-wrap' }}>

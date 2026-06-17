@@ -84,7 +84,6 @@ export default function FacilitatorPromoterAssignPage() {
   const [answers, setAnswers] = useState('')
   const [guidedStep, setGuidedStep] = useState<GuidedStep | null>(null)
   const [resolvedPackageId, setResolvedPackageId] = useState('')
-  const [resolvedPackageName, setResolvedPackageName] = useState('')
   const [answerHistory, setAnswerHistory] = useState<{ param: string; varName: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -178,7 +177,6 @@ export default function FacilitatorPromoterAssignPage() {
       setGuidedStep(data)
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
-        setResolvedPackageName(data.package.name)
         setStage('confirm')
       } else {
         setStage('guided')
@@ -200,7 +198,6 @@ export default function FacilitatorPromoterAssignPage() {
       setGuidedStep(data)
       if (data.done && data.package) {
         setResolvedPackageId(data.package.id)
-        setResolvedPackageName(data.package.name)
         setStage('confirm')
       }
     } catch {
@@ -212,7 +209,6 @@ export default function FacilitatorPromoterAssignPage() {
     if (!selectedCrop) return
     setError('')
     setResolvedPackageId('')
-    setResolvedPackageName('')
     await selectCrop(selectedCrop)
   }
 
@@ -600,10 +596,6 @@ export default function FacilitatorPromoterAssignPage() {
                 <div className="border-t border-[#DDD0B8] pt-3">
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">{t('confirm.cropLabel')}</p>
                   <p className="font-semibold text-[#6B3F1F]">{formatCropName(selectedCrop)}</p>
-                </div>
-                <div className="border-t border-[#DDD0B8] pt-3">
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">{t('confirm.packageLabel')}</p>
-                  <p className="font-semibold text-[#6B3F1F]">{resolvedPackageName}</p>
                 </div>
                 {answerHistory.length > 0 && (
                   <div className="border-t border-[#DDD0B8] pt-3">

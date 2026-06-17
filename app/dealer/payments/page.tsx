@@ -112,7 +112,7 @@ export default function DealerPaymentsPage() {
                       {t('attributionPrefix')} <strong>rootsTALK.in</strong> {t('attributionMiddle')} <em>{t('attributionNot')}</em> {t('attributionSuffix')}
                     </div>
                     {pending.map(req => {
-                      const cropPackage = [req.crop_name, req.package_name].filter(Boolean).join(' · ')
+                      const cropPackage = req.crop_name || ''
                       const hoursLow = typeof req.hours_remaining === 'number' && req.hours_remaining <= 6
                       return (
                         <div key={req.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">

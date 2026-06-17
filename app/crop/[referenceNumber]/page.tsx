@@ -114,22 +114,6 @@ export default function CropPublicPage() {
           {fieldRow('Closure date', formatDate(record.crop_closure_date))}
         </div>
 
-        {/* Package */}
-        {(record.package_name || record.package_id) && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Advisory Package</p>
-            {fieldRow('Package', record.package_name)}
-            {record.package_id && (
-              <div className="flex items-start justify-between py-2.5 border-b border-gray-100 last:border-0">
-                <p className="text-sm text-gray-500 w-2/5">Package ID</p>
-                <p className="text-[11px] font-mono text-gray-700 text-right w-3/5 break-all">
-                  {record.package_id}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Parameters-Options */}
         {record.parameters_options.length > 0 && (
           <div className="bg-white rounded-2xl border border-gray-100 p-5">

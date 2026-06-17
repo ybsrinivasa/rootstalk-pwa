@@ -413,7 +413,7 @@ export default function AdvisoryPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={advisory?.package_name || 'Advisory'} activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
+      <PWAHeader title="Advisory" activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
       <div className="pt-16 pb-24">
         <ClientCropChip subscriptionId={subscriptionId} />
 
