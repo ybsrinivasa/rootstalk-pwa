@@ -655,6 +655,35 @@
       "payMyself": "Pay myself instead"
     }
   },
+  "seedVarieties": {
+    "selectVarietyTitle": "Select a Variety",
+    "browseHelp": "Browse and select one variety for your crop. Tap a card to see full details. You can only select one variety per season.",
+    "emptyTitle": "No varieties available yet",
+    "emptyBody": "Your company has not added seed varieties for this crop",
+    "tapToZoom": "Tap to zoom",
+    "aboutVariety": "About this variety",
+    "technicalDetails": "Technical Details (DUS)",
+    "back": "Back",
+    "selectThisVariety": "Select this variety",
+    "confirmTitle": "Confirm Selection",
+    "confirmBody": "You are selecting <strong>{name}</strong> for your crop.",
+    "confirmWarning": "This cannot be changed once you place the order.",
+    "confirmNext": "Next, you will choose the dealer or facilitator who fulfils this seed order.",
+    "cancel": "Cancel",
+    "chooseRecipient": "Choose Recipient",
+    "recipientTitle": "Select Who Will Fulfil",
+    "sendingOrderFor": "Sending order for <strong>{name}</strong>",
+    "nearbyDealers": "Nearby Dealers",
+    "nearbyFacilitators": "Nearby Facilitators",
+    "yourPromoter": "Your Promoter",
+    "kmAway": "{distance} km away",
+    "call": "📞 Call",
+    "sendOrder": "Send Order",
+    "noRecipientTitle": "No dealer or facilitator nearby",
+    "noRecipientBody": "Ask your company to onboard a seed dealer or facilitator in your area.",
+    "noRecipientBack": "Back",
+    "unknown": "Unknown"
+  },
   "orders": {
     "review": {
       "headerTitle": "Order Details",

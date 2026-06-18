@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -34,6 +35,7 @@ interface Recipient {
 export default function SeedVarietiesPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
+  const t = useTranslations('seedVarieties')
   const [varieties, setVarieties] = useState<Variety[]>([])
   const [selected, setSelected] = useState<Variety | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -111,6 +113,7 @@ export default function SeedVarietiesPage() {
               activeIndex={activePhoto}
               onActiveChange={setActivePhoto}
               onOpen={i => setLightboxAt(i)}
+              tapToZoomLabel={t('tapToZoom')}
             />
           ) : (
             <div className="w-full h-40 bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
@@ -126,7 +129,7 @@ export default function SeedVarietiesPage() {
 
             {selected.description_points.length > 0 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">About this variety</p>
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">{t('aboutVariety')}</p>
                 <ul className="space-y-1.5">
                   {selected.description_points.map((pt, i) => (
                     <li key={i} className="flex items-start gap-2 text-sm text-[#6B3F1F]">
@@ -141,7 +144,7 @@ export default function SeedVarietiesPage() {
               <div>
                 <button onClick={() => setShowDUS(!showDUS)}
                   className="w-full flex items-center justify-between bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                  <span className="text-sm font-semibold text-[#6B3F1F]">Technical Details (DUS)</span>
+                  <span className="text-sm font-semibold text-[#6B3F1F]">{t('technicalDetails')}</span>
                   <span className="text-[#7A8C7E]">{showDUS ? '▲' : '▼'}</span>
                 </button>
                 {showDUS && (
@@ -185,12 +188,12 @@ export default function SeedVarietiesPage() {
             <div className="flex gap-3">
               <button onClick={() => setSelected(null)}
                 className="flex-1 py-3.5 rounded-2xl border-2 border-[#DDD0B8] text-[#6B3F1F] font-semibold text-sm">
-                ← Back
+                ← {t('back')}
               </button>
               <button onClick={() => setConfirming(true)}
                 className="flex-1 py-3.5 rounded-2xl text-white font-semibold text-sm"
                 style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-                Select this variety
+                {t('selectThisVariety')}
               </button>
             </div>
           </div>
@@ -219,26 +222,29 @@ export default function SeedVarietiesPage() {
             <span className="text-3xl">🌾</span>
           </div>
           <div>
-            <h2 className="font-bold text-[#6B3F1F] text-lg">Confirm Selection</h2>
+            <h2 className="font-bold text-[#6B3F1F] text-lg">{t('confirmTitle')}</h2>
             <p className="text-[#7A8C7E] text-sm mt-1">
-              You are selecting <strong className="text-[#6B3F1F]">{selected.name}</strong> for your crop.
+              {t.rich('confirmBody', {
+                name: selected.name,
+                strong: chunks => <strong className="text-[#6B3F1F]">{chunks}</strong>,
+              })}
             </p>
             <p className="text-amber-600 text-xs mt-2 font-medium">
-              This cannot be changed once you place the order.
+              {t('confirmWarning')}
             </p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              Next, you will choose the dealer or facilitator who fulfils this seed order.
+              {t('confirmNext')}
             </p>
           </div>
           <div className="flex gap-3">
             <button onClick={() => setConfirming(false)}
               className="flex-1 py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-              Cancel
+              {t('cancel')}
             </button>
             <button onClick={openPicker}
               className="flex-1 py-3 rounded-xl text-white font-semibold text-sm"
               style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-              Choose Recipient
+              {t('chooseRecipient')}
             </button>
           </div>
         </div>
@@ -250,13 +256,16 @@ export default function SeedVarietiesPage() {
     const noOne = !pickerLoading && dealers.length === 0 && facilitators.length === 0
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title="Select Who Will Fulfil" activeRole="FARMER"
+        <PWAHeader title={t('recipientTitle')} activeRole="FARMER"
           back={`/crop-detail/${subscriptionId}/orders`} />
         <div className="pt-20 pb-24 px-4 max-w-lg mx-auto">
           <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-4">
             <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">SEED</span>
             <p className="text-sm text-[#6B3F1F] mt-2">
-              Sending order for <strong>{selected.name}</strong>
+              {t.rich('sendingOrderFor', {
+                name: selected.name,
+                strong: chunks => <strong>{chunks}</strong>,
+              })}
             </p>
           </div>
           {pickerLoading && (
@@ -266,22 +275,22 @@ export default function SeedVarietiesPage() {
           )}
           {!pickerLoading && dealers.length > 0 && (
             <>
-              <p className="text-xs uppercase tracking-wide text-[#7A8C7E] font-semibold mt-2 mb-2">Nearby Dealers</p>
+              <p className="text-xs uppercase tracking-wide text-[#7A8C7E] font-semibold mt-2 mb-2">{t('nearbyDealers')}</p>
               <div className="space-y-3 mb-4">
                 {dealers.map(p => (
                   <RecipientCard key={p.user_id} person={p} isDealer
-                    placing={placing} onSend={() => sendOrder(p, true)} />
+                    placing={placing} onSend={() => sendOrder(p, true)} t={t} />
                 ))}
               </div>
             </>
           )}
           {!pickerLoading && facilitators.length > 0 && (
             <>
-              <p className="text-xs uppercase tracking-wide text-[#7A8C7E] font-semibold mt-2 mb-2">Nearby Facilitators</p>
+              <p className="text-xs uppercase tracking-wide text-[#7A8C7E] font-semibold mt-2 mb-2">{t('nearbyFacilitators')}</p>
               <div className="space-y-3">
                 {facilitators.map(p => (
                   <RecipientCard key={p.user_id} person={p} isDealer={false}
-                    placing={placing} onSend={() => sendOrder(p, false)} />
+                    placing={placing} onSend={() => sendOrder(p, false)} t={t} />
                 ))}
               </div>
             </>
@@ -289,13 +298,13 @@ export default function SeedVarietiesPage() {
           {noOne && (
             <div className="bg-white rounded-2xl border border-[#DDD0B8] p-6 text-center">
               <p className="text-3xl mb-2">🤷</p>
-              <p className="text-sm text-[#6B3F1F] font-medium">No dealer or facilitator nearby</p>
+              <p className="text-sm text-[#6B3F1F] font-medium">{t('noRecipientTitle')}</p>
               <p className="text-xs text-[#7A8C7E] mt-1">
-                Ask your company to onboard a seed dealer or facilitator in your area.
+                {t('noRecipientBody')}
               </p>
               <button onClick={() => { setPickingRecipient(false); setConfirming(true) }}
                 className="mt-4 text-sm text-[#085041] font-medium underline">
-                Back
+                {t('noRecipientBack')}
               </button>
             </div>
           )}
@@ -306,17 +315,16 @@ export default function SeedVarietiesPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Select a Variety" activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
+      <PWAHeader title={t('selectVarietyTitle')} activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <p className="text-xs text-[#7A8C7E] mt-4 mb-4 leading-relaxed">
-          Browse and select one variety for your crop. Tap a card to see full details.
-          You can only select one variety per season.
+          {t('browseHelp')}
         </p>
         {varieties.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-4xl mb-3">🌱</p>
-            <p className="text-[#7A8C7E] font-medium">No varieties available yet</p>
-            <p className="text-xs text-[#7A8C7E] mt-1">Your company has not added seed varieties for this crop</p>
+            <p className="text-[#7A8C7E] font-medium">{t('emptyTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-1">{t('emptyBody')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -357,11 +365,12 @@ export default function SeedVarietiesPage() {
 // currently snapped in view.
 
 function RecipientCard({
-  person, isDealer, placing, onSend,
+  person, isDealer, placing, onSend, t,
 }: {
   person: Recipient; isDealer: boolean
   placing: string | null
   onSend: () => void
+  t: ReturnType<typeof useTranslations>
 }) {
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
@@ -369,16 +378,16 @@ function RecipientCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             <p className="font-bold text-[#6B3F1F]">
-              {(isDealer ? person.shop_name : null) || person.name || 'Unknown'}
+              {(isDealer ? person.shop_name : null) || person.name || t('unknown')}
             </p>
             {person.is_promoter && (
-              <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">Your Promoter</span>
+              <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">{t('yourPromoter')}</span>
             )}
           </div>
           {isDealer && person.name && person.shop_name && (
             <p className="text-xs text-[#7A8C7E]">{person.name}</p>
           )}
-          <p className="text-xs text-[#7A8C7E] mt-0.5">{person.distance_km} km away</p>
+          <p className="text-xs text-[#7A8C7E] mt-0.5">{t('kmAway', { distance: person.distance_km })}</p>
           {isDealer && person.shop_address && (
             <p className="text-xs text-[#7A8C7E] truncate">{person.shop_address}</p>
           )}
@@ -387,13 +396,13 @@ function RecipientCard({
           {person.phone && (
             <a href={`tel:${person.phone}`}
               className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
-              📞 Call
+              {t('call')}
             </a>
           )}
           <button onClick={onSend} disabled={placing === person.user_id}
             className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
             style={{ background: '#3A7D44' }}>
-            {placing === person.user_id ? '…' : 'Send Order'}
+            {placing === person.user_id ? '…' : t('sendOrder')}
           </button>
         </div>
       </div>
@@ -402,12 +411,13 @@ function RecipientCard({
 }
 
 function PhotoCarousel({
-  photos, alt, activeIndex, onActiveChange, onOpen,
+  photos, alt, activeIndex, onActiveChange, onOpen, tapToZoomLabel,
 }: {
   photos: string[]; alt: string
   activeIndex: number
   onActiveChange: (i: number) => void
   onOpen: (i: number) => void
+  tapToZoomLabel: string
 }) {
   return (
     <div className="relative bg-black">
@@ -437,7 +447,7 @@ function PhotoCarousel({
         </div>
       )}
       <div className="absolute top-3 right-3 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full backdrop-blur-sm pointer-events-none">
-        Tap to zoom
+        {tapToZoomLabel}
       </div>
     </div>
   )

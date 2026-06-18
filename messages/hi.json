@@ -655,6 +655,35 @@
       "payMyself": "मैं खुद भुगतान करूँगी"
     }
   },
+  "seedVarieties": {
+    "selectVarietyTitle": "किस्म चुनें",
+    "browseHelp": "अपनी फसल के लिए एक किस्म देखें और चुनें। पूरी जानकारी के लिए कार्ड पर टैप करें। हर मौसम में सिर्फ़ एक किस्म चुन सकते हैं।",
+    "emptyTitle": "अभी कोई किस्म उपलब्ध नहीं",
+    "emptyBody": "आपकी कंपनी ने इस फसल के लिए बीज की किस्में नहीं जोड़ी हैं",
+    "tapToZoom": "बड़ा करने के लिए टैप करें",
+    "aboutVariety": "इस किस्म के बारे में",
+    "technicalDetails": "तकनीकी जानकारी (DUS)",
+    "back": "वापस",
+    "selectThisVariety": "यह किस्म चुनें",
+    "confirmTitle": "चयन की पुष्टि करें",
+    "confirmBody": "आप अपनी फसल के लिए <strong>{name}</strong> चुन रहे हैं।",
+    "confirmWarning": "ऑर्डर देने के बाद यह बदला नहीं जा सकता।",
+    "confirmNext": "आगे, आप वह डीलर या सुविधाकर्ता चुनेंगे जो यह बीज ऑर्डर पूरा करेगा।",
+    "cancel": "रद्द करें",
+    "chooseRecipient": "प्राप्तकर्ता चुनें",
+    "recipientTitle": "पूरा करने वाले को चुनें",
+    "sendingOrderFor": "<strong>{name}</strong> के लिए ऑर्डर भेज रहे हैं",
+    "nearbyDealers": "पास के डीलर",
+    "nearbyFacilitators": "पास के सुविधाकर्ता",
+    "yourPromoter": "आपका प्रोमोटर",
+    "kmAway": "{distance} किमी दूर",
+    "call": "📞 कॉल",
+    "sendOrder": "ऑर्डर भेजें",
+    "noRecipientTitle": "पास में कोई डीलर या सुविधाकर्ता नहीं",
+    "noRecipientBody": "अपने क्षेत्र में बीज डीलर या सुविधाकर्ता जोड़ने के लिए अपनी कंपनी से कहें।",
+    "noRecipientBack": "वापस",
+    "unknown": "अज्ञात"
+  },
   "orders": {
     "review": {
       "headerTitle": "ऑर्डर का विवरण",

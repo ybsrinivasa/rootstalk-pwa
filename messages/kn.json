@@ -655,6 +655,35 @@
       "payMyself": "ಬದಲಿಗೆ ನಾನೇ ಪಾವತಿಸಿ."
     }
   },
+  "seedVarieties": {
+    "selectVarietyTitle": "ತಳಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
+    "browseHelp": "ನಿಮ್ಮ ಬೆಳೆಗೆ ಒಂದು ತಳಿಯನ್ನು ನೋಡಿ ಆಯ್ಕೆ ಮಾಡಿ. ಪೂರ್ಣ ವಿವರಗಳಿಗೆ ಕಾರ್ಡ್ ಮೇಲೆ ಒತ್ತಿ. ಪ್ರತಿ ಋತುವಿಗೆ ಒಂದೇ ತಳಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಬಹುದು.",
+    "emptyTitle": "ಇನ್ನೂ ತಳಿಗಳು ಲಭ್ಯವಿಲ್ಲ",
+    "emptyBody": "ನಿಮ್ಮ ಕಂಪನಿ ಈ ಬೆಳೆಗೆ ಬೀಜದ ತಳಿಗಳನ್ನು ಸೇರಿಸಿಲ್ಲ",
+    "tapToZoom": "ದೊಡ್ಡದು ಮಾಡಲು ಒತ್ತಿ",
+    "aboutVariety": "ಈ ತಳಿಯ ಬಗ್ಗೆ",
+    "technicalDetails": "ತಾಂತ್ರಿಕ ವಿವರಗಳು (DUS)",
+    "back": "ಹಿಂದೆ",
+    "selectThisVariety": "ಈ ತಳಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
+    "confirmTitle": "ಆಯ್ಕೆಯನ್ನು ಖಚಿತಪಡಿಸಿ",
+    "confirmBody": "ನಿಮ್ಮ ಬೆಳೆಗೆ <strong>{name}</strong> ತಳಿಯನ್ನು ಆಯ್ಕೆ ಮಾಡುತ್ತಿದ್ದೀರಿ.",
+    "confirmWarning": "ಆದೇಶ ನೀಡಿದ ನಂತರ ಇದನ್ನು ಬದಲಾಯಿಸಲು ಆಗದು.",
+    "confirmNext": "ಮುಂದೆ, ಈ ಬೀಜದ ಆದೇಶವನ್ನು ಪೂರೈಸುವ ಡೀಲರ್ ಅಥವಾ ಸಹಾಯಕರನ್ನು ಆಯ್ಕೆ ಮಾಡುವಿರಿ.",
+    "cancel": "ರದ್ದು",
+    "chooseRecipient": "ಸ್ವೀಕರಿಸುವವರನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
+    "recipientTitle": "ಪೂರೈಸುವವರನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
+    "sendingOrderFor": "<strong>{name}</strong> ಗಾಗಿ ಆದೇಶ ಕಳುಹಿಸುತ್ತಿದ್ದೀರಿ",
+    "nearbyDealers": "ಹತ್ತಿರದ ಡೀಲರ್‌ಗಳು",
+    "nearbyFacilitators": "ಹತ್ತಿರದ ಸಹಾಯಕರು",
+    "yourPromoter": "ನಿಮ್ಮ ಪ್ರೋಮೋಟರ್",
+    "kmAway": "{distance} ಕಿ.ಮೀ ದೂರ",
+    "call": "📞 ಕರೆ",
+    "sendOrder": "ಆದೇಶ ಕಳುಹಿಸಿ",
+    "noRecipientTitle": "ಹತ್ತಿರದಲ್ಲಿ ಡೀಲರ್ ಅಥವಾ ಸಹಾಯಕರು ಇಲ್ಲ",
+    "noRecipientBody": "ನಿಮ್ಮ ಪ್ರದೇಶದಲ್ಲಿ ಬೀಜದ ಡೀಲರ್ ಅಥವಾ ಸಹಾಯಕರನ್ನು ಸೇರಿಸಲು ನಿಮ್ಮ ಕಂಪನಿಯನ್ನು ಕೇಳಿ.",
+    "noRecipientBack": "ಹಿಂದೆ",
+    "unknown": "ಗೊತ್ತಿಲ್ಲ"
+  },
   "orders": {
     "review": {
       "headerTitle": "ಆದೇಶದ ವಿವರಗಳು",
