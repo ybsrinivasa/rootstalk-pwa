@@ -1888,7 +1888,9 @@
       "tileServiceProfile": "Service Profile",
       "tileServiceProfileHint": "My declaration",
       "tileAlerts": "Alerts I receive",
-      "tileAlertsHint": "{count} unread"
+      "tileAlertsHint": "{count} unread",
+      "tileSeedOrders": "Seed orders",
+      "tileSeedOrdersHint": "{count, plural, =0 {none waiting} one {1 waiting} other {# waiting}}"
     },
     "alertsIncoming": {
       "headerTitle": "Incoming alerts",
@@ -2207,6 +2209,36 @@
         "purchasePending": "Purchase pending",
         "frequencyEvery": "{count, plural, one {Every 1 day} other {Every # days}}",
         "frequencyNotDueToday": " · not due today"
+      }
+    },
+    "seedOrders": {
+      "headerTitle": "Seed Orders",
+      "tabPending": "Pending",
+      "tabDone": "Done",
+      "empty": "No seed orders",
+      "seedTag": "Seed/Seedling",
+      "farmerLabel": "Farmer:",
+      "farmAreaLabel": "Farm area:",
+      "farmAreaValue": "{acres} acres",
+      "accept": "Accept",
+      "reject": "Reject",
+      "confirmReject": "Reject this seed order and return it to the farmer?",
+      "forwardToDealer": "Forward to Dealer →",
+      "errors": {
+        "acceptFailed": "Could not accept the order. Please try again.",
+        "rejectFailed": "Could not reject the order. Please try again."
+      },
+      "forward": {
+        "headerTitle": "Forward to Dealer",
+        "helpText": "Pick a seed dealer onboarded by the seed company. Only onboarded dealers are shown.",
+        "noDealersTitle": "No eligible dealer nearby",
+        "noDealersBody": "The seed company has no dealer onboarded near you. Ask the company to onboard a dealer in your area, or reject the order so the farmer can route it elsewhere.",
+        "kmAway": "{distance} km away",
+        "forward": "Forward",
+        "errors": {
+          "brandLock": "This dealer is not onboarded by the seed company. Seed varieties are brand-locked — the order can only go to an onboarded dealer.",
+          "forwardFailed": "Could not forward the order. Please try again."
+        }
       }
     }
   },

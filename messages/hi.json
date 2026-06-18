@@ -1888,7 +1888,9 @@
       "tileServiceProfile": "सेवा प्रोफ़ाइल",
       "tileServiceProfileHint": "मेरी घोषणा",
       "tileAlerts": "मुझे प्राप्त होने वाली चेतावनियाँ",
-      "tileAlertsHint": "{count} अपठित"
+      "tileAlertsHint": "{count} अपठित",
+      "tileSeedOrders": "बीज ऑर्डर",
+      "tileSeedOrdersHint": "{count, plural, =0 {कोई लंबित नहीं} one {1 लंबित} other {# लंबित}}"
     },
     "alertsIncoming": {
       "headerTitle": "आने वाली चेतावनियाँ",
@@ -2207,6 +2209,36 @@
         "purchasePending": "खरीद प्रक्रिया लंबित है",
         "frequencyEvery": "{count, plural, one {हर 1 दिन} other {हर # दिन}}",
         "frequencyNotDueToday": " आज देय नहीं है"
+      }
+    },
+    "seedOrders": {
+      "headerTitle": "बीज ऑर्डर",
+      "tabPending": "लंबित",
+      "tabDone": "पूरे",
+      "empty": "कोई बीज ऑर्डर नहीं",
+      "seedTag": "बीज/पौधे",
+      "farmerLabel": "किसान:",
+      "farmAreaLabel": "कृषि क्षेत्र:",
+      "farmAreaValue": "{acres} एकड़",
+      "accept": "स्वीकार करें",
+      "reject": "अस्वीकार करें",
+      "confirmReject": "इस बीज ऑर्डर को अस्वीकार कर किसान को वापस भेजें?",
+      "forwardToDealer": "डीलर को भेजें →",
+      "errors": {
+        "acceptFailed": "ऑर्डर स्वीकार नहीं हो सका. कृपया फिर से कोशिश करें.",
+        "rejectFailed": "ऑर्डर अस्वीकार नहीं हो सका. कृपया फिर से कोशिश करें."
+      },
+      "forward": {
+        "headerTitle": "डीलर को भेजें",
+        "helpText": "बीज कंपनी से जुड़े डीलर को चुनें. केवल जुड़े डीलर ही यहाँ दिखते हैं.",
+        "noDealersTitle": "पास में योग्य डीलर नहीं",
+        "noDealersBody": "बीज कंपनी का कोई डीलर आपके क्षेत्र से जुड़ा नहीं है. कंपनी से डीलर जोड़ने को कहें, या ऑर्डर अस्वीकार करें ताकि किसान दूसरा रास्ता चुन सके.",
+        "kmAway": "{distance} किमी दूर",
+        "forward": "भेजें",
+        "errors": {
+          "brandLock": "यह डीलर बीज कंपनी से नहीं जुड़ा है. बीज की किस्में ब्रांड-लॉक होती हैं — ऑर्डर केवल जुड़े डीलर को भेजा जा सकता है.",
+          "forwardFailed": "ऑर्डर नहीं भेजा जा सका. कृपया फिर से कोशिश करें."
+        }
       }
     }
   },
