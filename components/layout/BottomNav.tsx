@@ -19,12 +19,14 @@ const PickupIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentCol
 // Label key resolves to nav.<key> in messages/<lang>.json at render time.
 const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType }[]> = {
   FARMER: [
+    // 2026-06-18 — Queries removed from bottom nav. The pooled
+    // /my-queries view dropped crop context per row and confused
+    // multi-crop farmers ("which crop did this reply belong to?").
+    // The per-sub Queries tile on every Crop Detail page covers
+    // 95% of the use case; /my-queries route stays alive in case
+    // we reintroduce the global view with per-row crop chips.
     { href: '/home',        key: 'home',    Icon: HomeIcon },
     { href: '/orders',      key: 'orders',  Icon: BoxIcon },
-    // Farmer's view of submitted Ask-Expert queries + the Pundits'
-    // responses. Without this tab the only path to /my-queries was
-    // a wrongly-routed button on the post-submit success page.
-    { href: '/my-queries',  key: 'queries', Icon: QueriesIcon },
     { href: '/history',     key: 'history', Icon: HistoryIcon },
     { href: '/profile',     key: 'profile', Icon: ProfileIcon },
   ],
