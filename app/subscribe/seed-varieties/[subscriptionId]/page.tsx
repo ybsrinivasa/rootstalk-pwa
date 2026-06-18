@@ -12,9 +12,9 @@ import { cropDisplayName } from '@/lib/crop-name'
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 
 interface DusCharacterRow {
-  part_cosh_id?: string; part_name_en?: string
-  character_cosh_id?: string; character_name_en?: string
-  descriptor_cosh_id?: string; descriptor_name_en?: string
+  part_cosh_id?: string; part_name_en?: string; part_name?: string
+  character_cosh_id?: string; character_name_en?: string; character_name?: string
+  descriptor_cosh_id?: string; descriptor_name_en?: string; descriptor_name?: string
 }
 interface Variety {
   id: string; name: string; crop_cosh_id: string; variety_type: string
@@ -159,9 +159,9 @@ export default function SeedVarietiesPage() {
                       const rows = selected.dus_characters || []
                       const grouped: Record<string, Record<string, string[]>> = {}
                       for (const r of rows) {
-                        const part = r.part_name_en || '—'
-                        const char = r.character_name_en || '—'
-                        const desc = r.descriptor_name_en || ''
+                        const part = r.part_name || r.part_name_en || '—'
+                        const char = r.character_name || r.character_name_en || '—'
+                        const desc = r.descriptor_name || r.descriptor_name_en || ''
                         grouped[part] = grouped[part] || {}
                         grouped[part][char] = grouped[part][char] || []
                         if (desc) grouped[part][char].push(desc)
