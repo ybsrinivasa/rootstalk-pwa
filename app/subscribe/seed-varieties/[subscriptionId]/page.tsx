@@ -53,6 +53,7 @@ export default function SeedVarietiesPage() {
   const [facilitators, setFacilitators] = useState<Recipient[]>([])
   const [pickerLoading, setPickerLoading] = useState(false)
   const [placing, setPlacing] = useState<string | null>(null)
+  const [sendError, setSendError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -62,12 +63,19 @@ export default function SeedVarietiesPage() {
   }, [subscriptionId])
 
   async function openPicker() {
+    if (!selected) return
     setConfirming(false)
     setPickingRecipient(true)
     setPickerLoading(true)
+    setSendError(null)
     try {
+      // Seed varieties are brand-locked. Pass `variety_id` so the
+      // backend filters dealers down to those onboarded by the
+      // variety's owning client (Point 3a, 2026-06-18). Facilitators
+      // stay unfiltered — the brand-lock only kicks in on the
+      // eventual facilitator→dealer hop.
       const [d, f] = await Promise.allSettled([
-        api.get<Recipient[]>(`/farmer/subscriptions/${subscriptionId}/nearby-dealers?order_type=SEED`),
+        api.get<Recipient[]>(`/farmer/subscriptions/${subscriptionId}/nearby-dealers?order_type=SEED&variety_id=${encodeURIComponent(selected.id)}`),
         api.get<Recipient[]>(`/farmer/subscriptions/${subscriptionId}/nearby-facilitators`),
       ])
       setDealers(d.status === 'fulfilled' ? d.value.data : [])
@@ -78,6 +86,7 @@ export default function SeedVarietiesPage() {
   async function sendOrder(recipient: Recipient, isDealer: boolean) {
     if (!selected) return
     setPlacing(recipient.user_id)
+    setSendError(null)
     try {
       await api.post('/farmer/seed-orders', {
         subscription_id: subscriptionId,
@@ -87,7 +96,21 @@ export default function SeedVarietiesPage() {
           : { facilitator_user_id: recipient.user_id }),
       })
       router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
-    } catch { setPlacing(null) }
+    } catch (e: unknown) {
+      // Server-side brand-lock guard returns 409 with code
+      // `locked_brand_requires_onboarded_dealer`. The picker should
+      // have hidden non-onboarded dealers already, so the only path
+      // here is a stale list / direct API call — but surface a
+      // friendly hint either way.
+      const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
+      const detail = err.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.code === 'locked_brand_requires_onboarded_dealer') {
+        setSendError(t('brandLockDealer'))
+      } else {
+        setSendError(t('sendOrderFailed'))
+      }
+      setPlacing(null)
+    }
   }
 
   if (loading) return (
@@ -268,6 +291,11 @@ export default function SeedVarietiesPage() {
               })}
             </p>
           </div>
+          {sendError && (
+            <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <p className="text-xs text-red-700">{sendError}</p>
+            </div>
+          )}
           {pickerLoading && (
             <div className="flex justify-center py-12">
               <div className="w-6 h-6 border-2 border-[#085041] border-t-transparent rounded-full animate-spin" />

@@ -691,7 +691,9 @@
     "noRecipientTitle": "No dealer or facilitator nearby",
     "noRecipientBody": "Ask your company to onboard a seed dealer or facilitator in your area.",
     "noRecipientBack": "Back",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "brandLockDealer": "Seed varieties are brand-locked. This dealer is not onboarded by the seed company, so the order cannot be sent to them. Pick a dealer onboarded by the company, or send the order to a facilitator.",
+    "sendOrderFailed": "Could not send the order. Please try again."
   },
   "orders": {
     "review": {
