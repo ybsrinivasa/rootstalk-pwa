@@ -433,6 +433,7 @@
       "setShort": "Set",
       "label": "Start date",
       "editWindow": "{days, plural, =0 {You can change this for one more day.} one {You can change this for # more day.} other {You can change this for # more days.}}",
+      "editWindowUntil": "You can change this until {date}.",
       "lockedNote": "Locked on {date}.",
       "changeBtn": "change",
       "updateCta": "Update"

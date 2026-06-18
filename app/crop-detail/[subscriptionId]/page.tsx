@@ -662,26 +662,31 @@ export default function CropDetailPage() {
           // 15-day edit window from first_set_at. Server enforces the
           // same rule (409 if expired). Legacy rows with no
           // first_set_at are grandfathered as still editable.
+          // User feedback 2026-06-18: surface the ABSOLUTE last
+          // editable date instead of a moving days-left countdown,
+          // because the deadline is fixed relative to today's first
+          // set and doesn't move.
           const firstSet = sub.crop_start_date_first_set_at ? new Date(sub.crop_start_date_first_set_at) : null
-          let daysLeft: number | null = null
+          let editableUntil: Date | null = null
           let lockedAt: Date | null = null
+          let editable = true
           if (firstSet) {
             const firstSetMid = new Date(firstSet); firstSetMid.setHours(0, 0, 0, 0)
             const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0)
             const elapsed = Math.floor((todayMid.getTime() - firstSetMid.getTime()) / 86400000)
-            daysLeft = 15 - elapsed
+            editable = elapsed <= 15
+            editableUntil = new Date(firstSetMid.getTime() + 15 * 86400000)
             lockedAt = new Date(firstSetMid.getTime() + 16 * 86400000)
           }
-          const editable = daysLeft === null || daysLeft >= 0
           return (
             <>
               <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-[#7A8C7E]">{t('startDate.label')}</p>
                   <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                  {editable && daysLeft !== null && (
+                  {editable && editableUntil && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
-                      {t('startDate.editWindow', { days: daysLeft })}
+                      {t('startDate.editWindowUntil', { date: editableUntil.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
                     </p>
                   )}
                   {!editable && lockedAt && (
