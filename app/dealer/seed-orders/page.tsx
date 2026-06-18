@@ -144,8 +144,13 @@ export default function DealerSeedOrdersPage() {
     } finally { setDeclining(false) }
   }
 
-  const pending = orders.filter(o => !['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED'].includes(o.status))
-  const done = orders.filter(o => ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED'].includes(o.status))
+  // NOT_AVAILABLE bounces the order back to the farmer for re-route
+  // — the dealer has no further work on it (2026-06-18 fix). Group
+  // it with the terminal statuses so the Active tab only carries
+  // cards the dealer can still act on.
+  const DEALER_DONE_STATUSES = ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED', 'NOT_AVAILABLE']
+  const pending = orders.filter(o => !DEALER_DONE_STATUSES.includes(o.status))
+  const done = orders.filter(o => DEALER_DONE_STATUSES.includes(o.status))
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
