@@ -9,6 +9,11 @@ import { cropDisplayName } from '@/lib/crop-name'
 
 interface SeedOrder {
   id: string; status: string; variety_name: string | null; crop_cosh_id: string | null
+  // Backend hides variety_name pre-accept so a non-onboarded dealer
+  // can't fish for brand-locked variety names. Flag lets us render
+  // the "🔒 accept to view" hint instead of the unknown-variety
+  // fallback.
+  variety_name_hidden?: boolean
   farmer_name: string | null; farm_area_acres: number | null
   unit: string | null; quantity: number | null; total_price: number | null
   created_at: string
@@ -171,7 +176,12 @@ export default function DealerSeedOrdersPage() {
                         <span className="inline-block bg-indigo-50 text-indigo-600 text-xs font-semibold px-2 py-0.5 rounded-full mb-1">
                           {t('seedTag')}
                         </span>
-                        <p className="font-bold text-[#6B3F1F]">{order.variety_name || t('unknownVariety')}</p>
+                        <p className="font-bold text-[#6B3F1F]">
+                          {order.variety_name
+                            || (order.variety_name_hidden
+                                  ? t('varietyHiddenUntilAccept')
+                                  : t('unknownVariety'))}
+                        </p>
                         <p className="text-xs text-[#7A8C7E]">{cropDisplayName(order.crop_cosh_id)}</p>
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[order.status] || ''}`}>

@@ -1667,6 +1667,7 @@
       "empty": "ಯಾವುದೇ ಬೀಜ ಆರ್ಡರ್‌ಗಳಿಲ್ಲ",
       "seedTag": "ಬೀಜ/ಸಸಿ",
       "unknownVariety": "ಅಪರಿಚಿತ ವೈವಿಧ್ಯ",
+      "varietyHiddenUntilAccept": "🔒 ತಳಿ ಮರೆಮಾಡಲಾಗಿದೆ — ನೋಡಲು ಸ್ವೀಕರಿಸಿ",
       "farmerLabel": "ರೈತ:",
       "farmAreaLabel": "ಕೃಷಿ ಪ್ರದೇಶ:",
       "farmAreaValue": "{acres} ಎಕರೆಗಳು",

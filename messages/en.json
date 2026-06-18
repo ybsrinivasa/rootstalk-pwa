@@ -1667,6 +1667,7 @@
       "empty": "No seed orders",
       "seedTag": "Seed/Seedling",
       "unknownVariety": "Unknown variety",
+      "varietyHiddenUntilAccept": "🔒 Variety hidden — accept to view",
       "farmerLabel": "Farmer:",
       "farmAreaLabel": "Farm area:",
       "farmAreaValue": "{acres} acres",

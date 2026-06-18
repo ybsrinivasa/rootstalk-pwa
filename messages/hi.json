@@ -1667,6 +1667,7 @@
       "empty": "बीज के ऑर्डर स्वीकार नहीं किए जाते।",
       "seedTag": "बीज/पौधे",
       "unknownVariety": "अज्ञात किस्म",
+      "varietyHiddenUntilAccept": "🔒 किस्म छिपी है — देखने के लिए स्वीकार करें",
       "farmerLabel": "किसान:",
       "farmAreaLabel": "कृषि क्षेत्र:",
       "farmAreaValue": "{acres}",
