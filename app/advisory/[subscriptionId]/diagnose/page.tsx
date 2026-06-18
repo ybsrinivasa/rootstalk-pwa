@@ -32,6 +32,15 @@ interface ImageAnalysis {
   confidence: 'HIGH' | 'MEDIUM' | 'LOW'
   description: string; symptoms_observed: string[]
 }
+// In-loop AI decision support — Claude is asked specifically whether
+// the current question's symptom is present in the photo. Used by the
+// Ask AI button inside the dichotomous Yes/No loop. The verdict is a
+// hint; the farmer still chooses Yes / No themselves.
+interface SymptomCheck {
+  verdict: 'YES' | 'NO' | 'UNCERTAIN'
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW'
+  reasoning: string
+}
 
 const COLOUR = '#3A7D44'
 
@@ -83,9 +92,13 @@ export default function DiagnosisPage() {
   const [answering, setAnswering] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // Claude image analysis
+  // Claude image analysis (the upper-tier AI-direct-diagnose path —
+  // distinct from the in-loop Ask AI verdict below).
   const [analyzingImage, setAnalyzingImage] = useState(false)
   const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysis | null>(null)
+  // In-loop Ask AI verdict — answers the current Yes/No question, does
+  // NOT advance the diagnose flow on its own.
+  const [symptomCheck, setSymptomCheck] = useState<SymptomCheck | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Question history for back navigation feel
@@ -312,7 +325,8 @@ export default function DiagnosisPage() {
         answer: choice,
       })
       setQuestionHistory(h => [...h, prev])
-      setExplainText(null)  // each question gets a fresh explanation
+      setExplainText(null)   // each question gets a fresh explanation
+      setSymptomCheck(null)  // and a fresh AI verdict
       applyStepStatus(data)
     } finally { setAnswering(false) }
   }
@@ -336,9 +350,9 @@ export default function DiagnosisPage() {
 
   async function handleImageCapture(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
-    if (!file || !cropCoshId || !selectedPart) return
+    if (!file || !cropCoshId || !currentQuestion) return
     setAnalyzingImage(true)
-    setImageAnalysis(null)
+    setSymptomCheck(null)
     try {
       // Convert to base64
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -347,32 +361,25 @@ export default function DiagnosisPage() {
         reader.onerror = reject
         reader.readAsDataURL(file)
       })
-      const { data } = await api.post<{ analysis: ImageAnalysis; note: string }>('/diagnosis/image-analysis', {
-        image_base64: base64,
-        media_type: file.type || 'image/jpeg',
-        crop_cosh_id: cropCoshId,
-        crop_name: cropCoshId.replace(/_/g, ' '),
-        plant_part_cosh_id: selectedPart,
-        plant_part_name: selectedPart.replace(/_/g, ' '),
-      })
-      setImageAnalysis(data.analysis)
-    } catch { setImageAnalysis(null) }
+      // In-loop AI is asked specifically about the CURRENT question's
+      // symptom, not the broader problem. Result is a YES/NO hint the
+      // farmer uses to choose their own answer — the loop does not
+      // auto-advance from this reply.
+      const { data } = await api.post<{ check: SymptomCheck }>(
+        '/diagnosis/image-check-symptom',
+        {
+          image_base64: base64,
+          media_type: file.type || 'image/jpeg',
+          crop_cosh_id: cropCoshId,
+          plant_part_cosh_id: currentQuestion.plant_part_cosh_id,
+          symptom_cosh_id: currentQuestion.symptom_cosh_id,
+          sub_part_cosh_id: currentQuestion.sub_part_cosh_id,
+          sub_symptom_cosh_id: currentQuestion.sub_symptom_cosh_id,
+        },
+      )
+      setSymptomCheck(data.check)
+    } catch { setSymptomCheck(null) }
     finally { setAnalyzingImage(false) }
-  }
-
-  async function useImageDiagnosis() {
-    if (!imageAnalysis?.problem_cosh_id || !sessionId) return
-    await api.post(`/diagnosis/${sessionId}/abort`, {
-      reason: 'KNOW_PROBLEM',
-      problem_cosh_id: imageAnalysis.problem_cosh_id,
-    })
-    // Get problem info
-    const { data } = await api.post<DiagnosisStep>(`/diagnosis/${sessionId}/abort`, {
-      reason: 'KNOW_PROBLEM',
-      problem_cosh_id: imageAnalysis.problem_cosh_id,
-    })
-    setDiagnosis(data.problem_info || null)
-    setStage('diagnosed')
   }
 
   async function dontKnow() {
@@ -847,27 +854,32 @@ export default function DiagnosisPage() {
               </div>
             </div>
 
-            {/* Claude analysis result — appears under the card when
-                a photo has been analysed. Stays out of the way until
-                there is something to show. */}
-            {imageAnalysis && (
-              <div className={`rounded-2xl p-4 border ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-50 border-green-200' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-50 border-amber-200' : 'bg-[#F5F0E8] border-[#DDD0B8]'}`}>
+            {/* In-loop AI verdict — Claude was asked specifically
+                whether the current question's symptom is present in
+                the farmer's photo. We render the verdict as a hint;
+                the farmer picks Yes / No themselves above. No
+                "use this" button — that would short-circuit the
+                farmer's own decision, which is exactly the regression
+                user flagged 2026-06-18. */}
+            {symptomCheck && (
+              <div className={`rounded-2xl p-4 border ${symptomCheck.verdict === 'YES' ? 'bg-green-50 border-green-200' : symptomCheck.verdict === 'NO' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
                 <p className="text-[11px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
-                  {t('questioning.aiAnalysisLabel')}
+                  {t('questioning.aiHintLabel')}
                 </p>
-                <p className="text-sm font-semibold text-[#6B3F1F]">{imageAnalysis.problem_name}</p>
-                <p className="text-xs text-[#7A8C7E] mt-0.5">{imageAnalysis.description}</p>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-2 inline-block ${imageAnalysis.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : imageAnalysis.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                  {imageAnalysis.confidence === 'HIGH' ? t('questioning.confidenceHigh') : imageAnalysis.confidence === 'MEDIUM' ? t('questioning.confidenceMedium') : t('questioning.confidenceLow')}
-                </span>
-                {imageAnalysis.problem_cosh_id && imageAnalysis.confidence !== 'LOW' && (
-                  <button
-                    onClick={useImageDiagnosis}
-                    className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
-                    style={{ background: COLOUR }}>
-                    {t('questioning.useThisDiagnosis')}
-                  </button>
+                <p className="text-sm font-semibold text-[#6B3F1F]">
+                  {symptomCheck.verdict === 'YES'
+                    ? t('questioning.aiVerdictYes')
+                    : symptomCheck.verdict === 'NO'
+                      ? t('questioning.aiVerdictNo')
+                      : t('questioning.aiVerdictUncertain')}
+                </p>
+                {symptomCheck.reasoning && (
+                  <p className="text-xs text-[#6B3F1F] mt-1.5 leading-relaxed">{symptomCheck.reasoning}</p>
                 )}
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-2 inline-block ${symptomCheck.confidence === 'HIGH' ? 'bg-green-100 text-green-700' : symptomCheck.confidence === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
+                  {symptomCheck.confidence === 'HIGH' ? t('questioning.confidenceHigh') : symptomCheck.confidence === 'MEDIUM' ? t('questioning.confidenceMedium') : t('questioning.confidenceLow')}
+                </span>
+                <p className="text-xs text-[#7A8C7E] mt-2">{t('questioning.aiDecideYourself')}</p>
               </div>
             )}
 
