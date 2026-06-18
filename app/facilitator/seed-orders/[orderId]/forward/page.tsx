@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
 import api from '@/lib/api'
 
 interface Dealer {
@@ -23,6 +24,11 @@ export default function FacilitatorSeedForwardPage() {
   const [loading, setLoading] = useState(true)
   const [placing, setPlacing] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Phone-entry parity with the farmer-side and regular-orders
+  // facilitator pickers. Always brand-locked on the seed path.
+  const [customPhone, setCustomPhone] = useState('')
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookup, setLookup] = useState<RecipientLookupResult | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -31,6 +37,45 @@ export default function FacilitatorSeedForwardPage() {
       .catch(() => setDealers([]))
       .finally(() => setLoading(false))
   }, [orderId, router])
+
+  useEffect(() => {
+    const digits = customPhone.replace(/\D/g, '')
+    if (digits.length < 10) { setLookup(null); setLookupLoading(false); return }
+    setLookupLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await api.get<RecipientLookupResult>(
+          `/facilitator/seed-orders/${orderId}/lookup-dealer?phone=${encodeURIComponent('+91' + digits.slice(-10))}`,
+        )
+        setLookup(data)
+      } catch {
+        setLookup(null)
+      } finally {
+        setLookupLoading(false)
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [customPhone, orderId])
+
+  async function routeToLookup() {
+    if (!lookup?.user_id) return
+    setPlacing(lookup.user_id); setError(null)
+    try {
+      await api.put(`/facilitator/seed-orders/${orderId}/route-to-dealer`, {
+        dealer_user_id: lookup.user_id,
+      })
+      router.replace('/facilitator/seed-orders')
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
+      const detail = err.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.code === 'locked_brand_requires_onboarded_dealer') {
+        setError(t('errors.brandLock'))
+      } else {
+        setError(t('errors.forwardFailed'))
+      }
+      setPlacing(null)
+    }
+  }
 
   async function routeTo(dealer: Dealer) {
     setPlacing(dealer.user_id); setError(null)
@@ -67,6 +112,30 @@ export default function FacilitatorSeedForwardPage() {
             <p className="text-xs text-red-700">{error}</p>
           </div>
         )}
+
+        {/* Phone-entry — first option above the curated nearby
+            list. The backend lookup applies the seed-flow's
+            always-brand-locked rule. */}
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-4">
+          <p className="text-xs font-semibold text-[#7A8C7E] mb-2">{t('phoneEntryLabel')}</p>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[#7A8C7E] px-2 py-2 bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl">+91</span>
+            <input value={customPhone} onChange={e => setCustomPhone(e.target.value)}
+              placeholder={t('phoneEntryPlaceholder')}
+              type="tel" inputMode="numeric"
+              className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#085041]" />
+          </div>
+          {lookupLoading && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-[#7A8C7E]">
+              <div className="w-3 h-3 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+              {t('phoneChecking')}
+            </div>
+          )}
+          {lookup && !lookupLoading && (
+            <RecipientLookupCard lookup={lookup}
+              placing={placing} onSend={routeToLookup} t={t} />
+          )}
+        </div>
 
         {loading && (
           <div className="flex justify-center py-12">

@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
 import api from '@/lib/api'
 
 interface OrderDetail {
@@ -48,6 +49,13 @@ export default function FacilitatorOrderDetailPage() {
   const [farmer, setFarmer] = useState<User | null>(null)
   const [dealer, setDealer] = useState<User | null>(null)
   const [packingShared, setPackingShared] = useState(false)
+  // 2026-06-18 — phone-entry parity with the farmer-side picker.
+  // Same debounce + LookupCard shape used everywhere a recipient
+  // is chosen by phone.
+  const [customPhone, setCustomPhone] = useState('')
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookup, setLookup] = useState<RecipientLookupResult | null>(null)
+  const [forwardError, setForwardError] = useState<string | null>(null)
 
   const load = async () => {
     try {
@@ -65,21 +73,69 @@ export default function FacilitatorOrderDetailPage() {
     load()
   }, [orderId])
 
+  // Phone-entry debounced lookup. Only active when the bottom
+  // sheet is open so we don't waste lookups when the input is
+  // hidden.
+  useEffect(() => {
+    if (!showDealerSelect) return
+    const digits = customPhone.replace(/\D/g, '')
+    if (digits.length < 10) { setLookup(null); setLookupLoading(false); return }
+    setLookupLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await api.get<RecipientLookupResult>(
+          `/facilitator/orders/${orderId}/lookup-dealer?phone=${encodeURIComponent('+91' + digits.slice(-10))}`,
+        )
+        setLookup(data)
+      } catch {
+        setLookup(null)
+      } finally {
+        setLookupLoading(false)
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [customPhone, showDealerSelect, orderId])
+
   async function openDealerSelect() {
     setShowDealerSelect(true)
     setLoadingDealers(true)
+    setForwardError(null)
+    setCustomPhone('')
+    setLookup(null)
     try {
-      const { data } = await api.get<NearbyDealer[]>('/facilitator/nearby-dealers')
+      // Pass order_id so the backend filters dealers by brand-lock.
+      // Without this the facilitator was seeing the full
+      // onboarded-dealer pool, and only got a 409 at forward time
+      // if they picked a non-onboarded one. Mirrors the farmer's
+      // brand-lock-aware picker (Point 3a parity, 2026-06-18).
+      const { data } = await api.get<NearbyDealer[]>(
+        `/facilitator/nearby-dealers?order_id=${encodeURIComponent(orderId)}`,
+      )
       setNearbyDealers(data)
     } finally { setLoadingDealers(false) }
   }
 
   async function forwardToDealer(dealerUserId: string) {
     setForwarding(true)
+    setForwardError(null)
     try {
       await api.put(`/facilitator/orders/${orderId}/route-to-dealer`, { dealer_user_id: dealerUserId })
       setShowDealerSelect(false)
       load()
+    } catch (e: unknown) {
+      // FastAPI detail can be string or {code, message}. Normalise.
+      const err = e as { response?: { data?: { detail?: string | { code?: string; message?: string } } } }
+      const detail = err.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.code === 'locked_brand_requires_onboarded_dealer') {
+        setForwardError(t('brandLockForward'))
+      } else {
+        const msg =
+          typeof detail === 'string'
+            ? detail
+            : (detail && typeof detail === 'object' && detail.message)
+              || t('errorForward')
+        setForwardError(msg)
+      }
     } finally { setForwarding(false) }
   }
 
@@ -300,6 +356,36 @@ export default function FacilitatorOrderDetailPage() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#DDD0B8]">
               <p className="font-bold text-[#6B3F1F]">{t('dealerSelectTitle')}</p>
               <button onClick={() => setShowDealerSelect(false)} className="text-[#7A8C7E] text-xl">✕</button>
+            </div>
+            {/* Phone-entry block — first option above the nearby
+                list. Mirrors the farmer-side picker. */}
+            <div className="px-5 py-4 border-b border-[#DDD0B8]">
+              <p className="text-xs font-semibold text-[#7A8C7E] mb-2">{t('phoneEntryLabel')}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#7A8C7E] px-2 py-2 bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl">+91</span>
+                <input value={customPhone} onChange={e => setCustomPhone(e.target.value)}
+                  placeholder={t('phoneEntryPlaceholder')}
+                  type="tel" inputMode="numeric"
+                  className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#7D4E00]" />
+              </div>
+              {lookupLoading && (
+                <div className="mt-2 flex items-center gap-2 text-xs text-[#7A8C7E]">
+                  <div className="w-3 h-3 border-2 border-[#DDD0B8] border-t-[#7D4E00] rounded-full animate-spin" />
+                  {t('phoneChecking')}
+                </div>
+              )}
+              {lookup && !lookupLoading && lookup.user_id && (
+                <RecipientLookupCard lookup={lookup}
+                  placing={forwarding ? lookup.user_id : null}
+                  onSend={() => lookup.user_id && forwardToDealer(lookup.user_id)} t={t} />
+              )}
+              {lookup && !lookupLoading && !lookup.user_id && (
+                <RecipientLookupCard lookup={lookup}
+                  placing={null} onSend={() => {}} t={t} />
+              )}
+              {forwardError && (
+                <p className="mt-2 text-xs text-red-700">{forwardError}</p>
+              )}
             </div>
             {loadingDealers ? (
               <div className="p-8 text-center">
