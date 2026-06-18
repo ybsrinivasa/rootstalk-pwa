@@ -185,8 +185,20 @@ export default function OrderingScreenPage() {
       // not the global pool (fix 2026-06-02 per user report).
       router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string } } }
-      setErrorMsg(err.response?.data?.detail || tOrdersCommon('errors.sendOrderFailed'))
+      // FastAPI's HTTPException uses two detail shapes: a plain
+      // string for legacy raises and a {code, message} object for
+      // newer structured errors. Passing the object straight to
+      // setErrorMsg used to crash React with "Objects are not valid
+      // as a React child" — which Next then masked as Page Not
+      // Found (user report 2026-06-18). Normalise both shapes here.
+      const err = e as { response?: { data?: { detail?: string | { code?: string; message?: string } } } }
+      const detail = err.response?.data?.detail
+      const msg =
+        typeof detail === 'string'
+          ? detail
+          : (detail && typeof detail === 'object' && detail.message)
+            || tOrdersCommon('errors.sendOrderFailed')
+      setErrorMsg(msg)
       setPlacing(null)
     }
   }
