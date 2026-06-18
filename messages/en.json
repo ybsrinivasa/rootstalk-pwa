@@ -1039,7 +1039,12 @@
     "chaAddedBodySuffix": "have been added to your advisory timeline.",
     "expertAdvice": "Expert's Advice:",
     "expertPhotoAlt": "Expert photo {index}",
-    "expertVoiceNote": "🎙 Expert's voice note"
+    "expertVoiceNote": "🎙 Expert's voice note",
+    "yourPhotos": "Your photos",
+    "yourVoiceNote": "🎙 Your voice note",
+    "askedOn": "Asked on {date}",
+    "awaitingReply": "An expert will respond shortly.",
+    "closedNoResponse": "Closed without a response."
   },
   "farmerProfile": {
     "headerTitle": "My Profile",

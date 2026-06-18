@@ -1039,7 +1039,12 @@
     "chaAddedBodySuffix": "ನಿಮ್ಮ ಸಲಹಾ ಟೈಮ್‌ಲೈನ್‌ಗೆ ಸೇರಿಸಲಾಗಿದೆ.",
     "expertAdvice": "ತಜ್ಞರ ಸಲಹೆ:",
     "expertPhotoAlt": "ತಜ್ಞರ ಫೋಟೋ {index}",
-    "expertVoiceNote": "🎙 ತಜ್ಞರ ಧ್ವನಿ ಟಿಪ್ಪಣಿ"
+    "expertVoiceNote": "🎙 ತಜ್ಞರ ಧ್ವನಿ ಟಿಪ್ಪಣಿ",
+    "yourPhotos": "ನಿಮ್ಮ ಚಿತ್ರಗಳು",
+    "yourVoiceNote": "🎙 ನಿಮ್ಮ ಧ್ವನಿ ಟಿಪ್ಪಣಿ",
+    "askedOn": "{date} ರಂದು ಕೇಳಲಾಗಿದೆ",
+    "awaitingReply": "ತಜ್ಞರು ಶೀಘ್ರದಲ್ಲೇ ಉತ್ತರಿಸುತ್ತಾರೆ.",
+    "closedNoResponse": "ಪ್ರತಿಕ್ರಿಯೆಯಿಲ್ಲದೆ ಮುಚ್ಚಲಾಗಿದೆ."
   },
   "farmerProfile": {
     "headerTitle": "ನನ್ನ ಪ್ರೊಫೈಲ್",

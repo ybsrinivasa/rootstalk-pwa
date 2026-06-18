@@ -1039,7 +1039,12 @@
     "chaAddedBodySuffix": "आपकी परामर्श समयरेखा में इन्हें जोड़ दिया गया है।",
     "expertAdvice": "विशेषज्ञ की सलाह:",
     "expertPhotoAlt": "विशेषज्ञ फोटो {index}",
-    "expertVoiceNote": "🎙 विशेषज्ञ का वॉइस नोट"
+    "expertVoiceNote": "🎙 विशेषज्ञ का वॉइस नोट",
+    "yourPhotos": "आपकी तस्वीरें",
+    "yourVoiceNote": "🎙 आपका वॉइस नोट",
+    "askedOn": "{date} को पूछा",
+    "awaitingReply": "विशेषज्ञ शीघ्र ही उत्तर देंगे।",
+    "closedNoResponse": "बिना प्रतिक्रिया के बंद।"
   },
   "farmerProfile": {
     "headerTitle": "मेरी प्रोफाइल",
