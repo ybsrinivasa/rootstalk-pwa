@@ -81,6 +81,7 @@ export default function CropDetailPage() {
   const [branding, setBranding] = useState<Branding | null>(null)
   const [preStart, setPreStart] = useState<PreStartInput[]>([])
   const [missedCount, setMissedCount] = useState(0)
+  const [pendingQueriesCount, setPendingQueriesCount] = useState(0)
   const [alertPrefs, setAlertPrefs] = useState<AlertPrefs | null>(null)
   const [expertSetting, setExpertSetting] = useState<ExpertSetting | null>(null)
   const [seedAvail, setSeedAvail] = useState<SeedAvail>({ has_varieties: false, count: 0 })
@@ -168,13 +169,14 @@ export default function CropDetailPage() {
         setDiagnosisEligibility({ eligible: true })
       }
 
-      const [brandRes, preStartRes, missedRes, alertsRes, expertRes, seedRes] = await Promise.allSettled([
+      const [brandRes, preStartRes, missedRes, alertsRes, expertRes, seedRes, queriesRes] = await Promise.allSettled([
         api.get<Branding>(`/client/${found.client_id}/info`),
         api.get<PreStartInput[]>(`/farmer/subscriptions/${subscriptionId}/pre-start-inputs`),
         api.get<{ count: number } | { timeline_id: string }[]>(`/farmer/subscriptions/${subscriptionId}/missed-items`),
         api.get<AlertPrefs>(`/farmer/subscriptions/${subscriptionId}/alert-preferences`),
         api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`),
         api.get<SeedAvail>(`/farmer/subscriptions/${subscriptionId}/seed-availability`),
+        api.get<Array<{ status: string }>>(`/farmer/queries?subscription_id=${subscriptionId}`),
       ])
 
       if (brandRes.status === 'fulfilled') setBranding(brandRes.value.data)
@@ -188,6 +190,12 @@ export default function CropDetailPage() {
       }
       if (expertRes.status === 'fulfilled') setExpertSetting(expertRes.value.data)
       if (seedRes.status === 'fulfilled') setSeedAvail(seedRes.value.data)
+      if (queriesRes.status === 'fulfilled') {
+        const pending = queriesRes.value.data.filter(q =>
+          !['RESPONDED', 'REJECTED', 'EXPIRED'].includes(q.status)
+        )
+        setPendingQueriesCount(pending.length)
+      }
     } finally { setLoading(false) }
   }
 
@@ -752,17 +760,13 @@ export default function CropDetailPage() {
           </button>
 
           <button
-            onClick={() => {
-              if (!sub.client_has_primary_expert) {
-                showToast(t('toast.noPrimaryExpert'))
-                return
-              }
-              router.push(`/ask-expert/${subscriptionId}`)
-            }}
-            disabled={!sub.client_has_primary_expert}
-            className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95 disabled:opacity-50 disabled:active:scale-100">
+            onClick={() => router.push(`/crop-detail/${subscriptionId}/queries`)}
+            className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95 relative">
             <span className="text-3xl block mb-2">🎓</span>
-            <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.askExpertTitle')}</p>
+            <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.queriesTitle')}</p>
+            {sub.client_has_primary_expert && pendingQueriesCount > 0 && (
+              <p className="text-xs text-[#7A8C7E] mt-0.5">{t('tiles.queriesPending', { count: pendingQueriesCount })}</p>
+            )}
             {!sub.client_has_primary_expert && (
               <p className="text-xs text-[#7A8C7E] mt-0.5">{t('tiles.noExpertYet')}</p>
             )}
