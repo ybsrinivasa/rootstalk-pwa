@@ -156,7 +156,11 @@
       "inDays": "{count, plural, one {in 1 day} other {in # days}}",
       "allDone": "You have completed all advisory practices for this season.",
       "checkBack": "Check back tomorrow.",
-      "quickCheck": "Quick check before today's advice"
+      "quickCheck": "Quick check before today's advice",
+      "coveredElsewhere": "Management plans for this problem are already lined up in your advisory and will handle it effectively.",
+      "noPlansYet": "No specific management practices have been prescribed for this problem yet. We will check again tomorrow.",
+      "askAgainTomorrow": "We will ask you this question again tomorrow.",
+      "youAnsweredQuestion": "You answered <strong>{answer}</strong> to: “{question}”"
     },
     "status": {
       "PENDING": "Dealer processing",

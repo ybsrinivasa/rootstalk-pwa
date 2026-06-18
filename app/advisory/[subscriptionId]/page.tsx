@@ -61,6 +61,10 @@ interface TimelineItem {
   // freshly-triggered timelines to the top of the list.
   problem_name?: string
   triggered_at?: string
+  // Count of practices BL-03 dedup stripped from this timeline. Lets
+  // us tell the farmer WHY a CHA card is empty — covered elsewhere
+  // vs no plans yet.
+  suppressed_count?: number
 }
 interface AdvisoryDay {
   subscription_id: string; client_id: string; package_id: string; package_name: string
@@ -614,17 +618,25 @@ export default function AdvisoryPage() {
                     })}
                     {tl.practices.length === 0 && !tl.blank_path_questions?.length && (
                       <div className="bg-[#F5F0E8] rounded-xl px-4 py-3 text-center">
-                        <p className="text-xs text-[#7A8C7E]">We will check this with you again tomorrow.</p>
+                        <p className="text-xs text-[#7A8C7E]">
+                          {(tl.suppressed_count ?? 0) > 0
+                            ? tEmpty('coveredElsewhere')
+                            : tEmpty('noPlansYet')}
+                        </p>
                       </div>
                     )}
                     {/* Per spec §6.4: question-specific warm message after blank-path answer */}
                     {tl.blank_path_questions?.map(bp => (
                       <div key={bp.question_id} className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-2">
                         <p className="text-xs text-amber-700 font-medium">
-                          You answered <span className="font-bold">{bp.farmer_answer}</span> to: &ldquo;{bp.question_text}&rdquo;
+                          {tEmpty.rich('youAnsweredQuestion', {
+                            answer: bp.farmer_answer,
+                            question: bp.question_text,
+                            strong: chunks => <span className="font-bold">{chunks}</span>,
+                          })}
                         </p>
                         <p className="text-xs text-amber-600 mt-1">
-                          We will ask you this question again tomorrow.
+                          {tEmpty('askAgainTomorrow')}
                         </p>
                       </div>
                     ))}
