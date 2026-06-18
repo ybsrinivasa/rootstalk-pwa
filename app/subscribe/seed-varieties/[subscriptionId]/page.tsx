@@ -32,6 +32,24 @@ interface Recipient {
   shop_name?: string | null; shop_address?: string | null
 }
 
+// Result of /farmer/seed-orders/lookup-recipient (Points 1 + 2,
+// 2026-06-18). Backend returns 200 with structured payload so we
+// can render every case as a friendly card.
+interface LookupResult {
+  found: boolean
+  user_id?: string
+  name?: string | null
+  phone?: string | null
+  photo_url?: string | null
+  role?: 'DEALER' | 'FACILITATOR' | null
+  state_name?: string | null
+  district_name?: string | null
+  is_active?: boolean
+  client_name?: string | null
+  can_receive?: boolean
+  reason: string  // ok | phone_not_registered | self | not_dealer_or_facilitator | dealer_not_onboarded
+}
+
 export default function SeedVarietiesPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
@@ -54,6 +72,11 @@ export default function SeedVarietiesPage() {
   const [pickerLoading, setPickerLoading] = useState(false)
   const [placing, setPlacing] = useState<string | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
+  // Phone-entry path (Points 1+2). The lookup debounces on input;
+  // result drives a card below the input. Empty string clears.
+  const [phoneInput, setPhoneInput] = useState('')
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookup, setLookup] = useState<LookupResult | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -61,6 +84,55 @@ export default function SeedVarietiesPage() {
       .then(r => setVarieties(r.data))
       .finally(() => setLoading(false))
   }, [subscriptionId])
+
+  // Debounced recipient lookup. Fires once the input has >=10
+  // digits (Indian phone). Clears on empty / under-10. Result
+  // includes brand-lock verdict from the backend so we never have
+  // to duplicate the rule in the UI.
+  useEffect(() => {
+    if (!selected) { setLookup(null); return }
+    const digits = phoneInput.replace(/\D/g, '')
+    if (digits.length < 10) { setLookup(null); setLookupLoading(false); return }
+    setLookupLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await api.get<LookupResult>(
+          `/farmer/seed-orders/lookup-recipient?phone=${encodeURIComponent('+91' + digits.slice(-10))}&variety_id=${encodeURIComponent(selected.id)}`,
+        )
+        setLookup(data)
+      } catch {
+        setLookup(null)
+      } finally {
+        setLookupLoading(false)
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [phoneInput, selected])
+
+  async function sendOrderFromLookup() {
+    if (!selected || !lookup?.found || !lookup.user_id || !lookup.can_receive || !lookup.role) return
+    setPlacing(lookup.user_id)
+    setSendError(null)
+    try {
+      await api.post('/farmer/seed-orders', {
+        subscription_id: subscriptionId,
+        variety_id: selected.id,
+        ...(lookup.role === 'DEALER'
+          ? { dealer_user_id: lookup.user_id }
+          : { facilitator_user_id: lookup.user_id }),
+      })
+      router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
+      const detail = err.response?.data?.detail
+      if (detail && typeof detail === 'object' && detail.code === 'locked_brand_requires_onboarded_dealer') {
+        setSendError(t('brandLockDealer'))
+      } else {
+        setSendError(t('sendOrderFailed'))
+      }
+      setPlacing(null)
+    }
+  }
 
   async function openPicker() {
     if (!selected) return
@@ -296,6 +368,31 @@ export default function SeedVarietiesPage() {
               <p className="text-xs text-red-700">{sendError}</p>
             </div>
           )}
+
+          {/* Phone-entry — primary path the farmer asked for
+              2026-06-18 (Points 1+2). Below this block, the nearby
+              dealers / facilitators lists stay as curated options. */}
+          <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-4">
+            <p className="text-xs font-semibold text-[#7A8C7E] mb-2">{t('phoneEntryLabel')}</p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#7A8C7E] px-2 py-2 bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl">+91</span>
+              <input value={phoneInput} onChange={e => setPhoneInput(e.target.value)}
+                placeholder={t('phoneEntryPlaceholder')}
+                type="tel" inputMode="numeric"
+                className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#085041]" />
+            </div>
+            {lookupLoading && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-[#7A8C7E]">
+                <div className="w-3 h-3 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+                {t('phoneChecking')}
+              </div>
+            )}
+            {lookup && !lookupLoading && (
+              <LookupCard lookup={lookup} selected={selected}
+                placing={placing} onSend={sendOrderFromLookup} t={t} />
+            )}
+          </div>
+
           {pickerLoading && (
             <div className="flex justify-center py-12">
               <div className="w-6 h-6 border-2 border-[#085041] border-t-transparent rounded-full animate-spin" />
@@ -391,6 +488,122 @@ export default function SeedVarietiesPage() {
 // photos without any JS gesture handling. Tap any photo to open the
 // pinch-zoom lightbox. Dot indicators sync to whichever photo is
 // currently snapped in view.
+
+// ── Phone-entry result card ─────────────────────────────────────────────────
+//
+// Renders the four lookup outcomes against the user's spec
+// (2026-06-18 audit, Points 1+2):
+//   - phone_not_registered: red, "not on RootsTalk"
+//   - self: amber, "cannot send to yourself"
+//   - not_dealer_or_facilitator: amber, "not a dealer or facilitator"
+//   - dealer_not_onboarded: amber, name + role + reason referencing
+//                          the seed company by name
+//   - ok: green, person card with role badge + state/district +
+//         Send Order CTA
+//
+// Photo / state / district come from the backend resolver so we
+// don't have to thread Cosh translations through the PWA.
+
+function LookupCard({
+  lookup, selected, placing, onSend, t,
+}: {
+  lookup: {
+    found: boolean
+    user_id?: string
+    name?: string | null
+    phone?: string | null
+    photo_url?: string | null
+    role?: 'DEALER' | 'FACILITATOR' | null
+    state_name?: string | null
+    district_name?: string | null
+    is_active?: boolean
+    client_name?: string | null
+    can_receive?: boolean
+    reason: string
+  }
+  selected: Variety
+  placing: string | null
+  onSend: () => void
+  t: ReturnType<typeof useTranslations>
+}) {
+  if (!lookup.found) {
+    return (
+      <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
+        <p className="text-xs text-red-700">{t('lookup.notRegistered')}</p>
+      </div>
+    )
+  }
+  if (lookup.reason === 'self') {
+    return (
+      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+        <p className="text-xs text-amber-800">{t('lookup.self')}</p>
+      </div>
+    )
+  }
+  if (lookup.reason === 'not_dealer_or_facilitator') {
+    return (
+      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+        <p className="text-sm text-[#6B3F1F] font-medium">{lookup.name || lookup.phone}</p>
+        <p className="text-xs text-amber-800 mt-1">{t('lookup.notDealerOrFacilitator')}</p>
+      </div>
+    )
+  }
+  if (lookup.reason === 'dealer_not_onboarded') {
+    return (
+      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-start gap-3">
+        {lookup.photo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={lookup.photo_url} alt=""
+            className="w-12 h-12 rounded-full object-cover shrink-0 border border-[#DDD0B8]" />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-[#F5F0E8] flex items-center justify-center shrink-0">
+            <span className="text-xl">🧑‍🌾</span>
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="text-sm text-[#6B3F1F] font-semibold">{lookup.name || lookup.phone}</p>
+          <p className="text-xs text-[#7A8C7E]">{t('lookup.roleDealer')}</p>
+          {(lookup.state_name || lookup.district_name) && (
+            <p className="text-xs text-[#7A8C7E]">{[lookup.district_name, lookup.state_name].filter(Boolean).join(', ')}</p>
+          )}
+          <p className="text-xs text-amber-800 mt-1.5">
+            {t('lookup.dealerNotOnboarded', { client: lookup.client_name || t('lookup.seedCompanyFallback') })}
+          </p>
+        </div>
+      </div>
+    )
+  }
+  // ok — eligible recipient
+  return (
+    <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3">
+      <div className="flex items-start gap-3">
+        {lookup.photo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={lookup.photo_url} alt=""
+            className="w-12 h-12 rounded-full object-cover shrink-0 border border-[#DDD0B8]" />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0">
+            <span className="text-xl">🧑‍🌾</span>
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-[#6B3F1F] font-bold">{lookup.name || lookup.phone}</p>
+          <p className="text-xs text-[#7A8C7E]">
+            {lookup.role === 'DEALER' ? t('lookup.roleDealer') : t('lookup.roleFacilitator')}
+          </p>
+          {(lookup.state_name || lookup.district_name) && (
+            <p className="text-xs text-[#7A8C7E]">{[lookup.district_name, lookup.state_name].filter(Boolean).join(', ')}</p>
+          )}
+        </div>
+      </div>
+      <button onClick={onSend} disabled={placing === lookup.user_id}
+        className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
+        style={{ background: '#3A7D44' }}>
+        {placing === lookup.user_id ? '…' : t('sendOrder')}
+      </button>
+    </div>
+  )
+}
 
 function RecipientCard({
   person, isDealer, placing, onSend, t,

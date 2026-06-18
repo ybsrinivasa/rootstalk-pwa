@@ -693,7 +693,19 @@
     "noRecipientBack": "Back",
     "unknown": "Unknown",
     "brandLockDealer": "Seed varieties are brand-locked. This dealer is not onboarded by the seed company, so the order cannot be sent to them. Pick a dealer onboarded by the company, or send the order to a facilitator.",
-    "sendOrderFailed": "Could not send the order. Please try again."
+    "sendOrderFailed": "Could not send the order. Please try again.",
+    "phoneEntryLabel": "Enter a dealer or facilitator's phone number",
+    "phoneEntryPlaceholder": "10-digit mobile number",
+    "phoneChecking": "Checking…",
+    "lookup": {
+      "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+      "self": "You cannot send the order to yourself. Enter someone else's number.",
+      "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk. Ask them to register via 'Become a Dealer' or 'Become a Facilitator' first.",
+      "dealerNotOnboarded": "Seed varieties are brand-locked. This dealer is not onboarded by {client}, so the seed order cannot be sent to them. Send to a facilitator or pick a different dealer.",
+      "roleDealer": "Dealer",
+      "roleFacilitator": "Facilitator",
+      "seedCompanyFallback": "the seed company"
+    }
   },
   "orders": {
     "review": {
