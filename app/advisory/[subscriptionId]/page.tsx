@@ -64,6 +64,7 @@ interface TimelineItem {
 }
 interface AdvisoryDay {
   subscription_id: string; client_id: string; package_id: string; package_name: string
+  package_type?: 'ANNUAL' | 'PERENNIAL' | string | null
   crop_cosh_id: string; crop_start_date: string | null; day_offset: number
   reference_number: string | null; timelines: TimelineItem[]
 }
@@ -448,12 +449,18 @@ export default function AdvisoryPage() {
         {/* Active advisory */}
         {hasStartDate && advisory && (
           <div className="px-4 mt-4 space-y-8">
-            {/* Day counter */}
+            {/* Day counter. Annual packages anchor to crop_start_date
+                so "Day N" (days after sowing) is the right label. Perennial
+                packages are calendar-driven (timelines fire by day-of-year,
+                not by elapsed days from sowing) — "Day +N" would be
+                meaningless, so we show today's date instead. */}
             <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] flex items-center justify-between">
               <div>
                 <p className="text-xs text-[#7A8C7E]">{tLabel('today')}</p>
                 <p className="font-bold text-[#6B3F1F]">
-                  {tLabel('day')} {advisory.day_offset}
+                  {advisory.package_type === 'PERENNIAL'
+                    ? new Date().toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+                    : `${tLabel('day')} ${advisory.day_offset}`}
                 </p>
               </div>
               <div className="text-right">
