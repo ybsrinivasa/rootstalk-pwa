@@ -4,7 +4,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
-import PhoneVerify from '@/components/PhoneVerify'
+import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
 import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
@@ -43,6 +43,11 @@ export default function OrderingScreenPage() {
   const [loading, setLoading] = useState(true)
   const [placing, setPlacing] = useState<string | null>(null)
   const [customPhone, setCustomPhone] = useState('')
+  // Phone-entry lookup (2026-06-18 parity with seed-orders picker).
+  // Reuses the shared backend lookup endpoint shape via
+  // RecipientLookupCard.
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookup, setLookup] = useState<RecipientLookupResult | null>(null)
   const [sub, setSub] = useState<Subscription | null>(null)
   // Orders V2 Batch 9 — locked-brand awareness on the new-order
   // picker. Server returns a banner string if any of the bundled
@@ -89,6 +94,48 @@ export default function OrderingScreenPage() {
         if (eligibleRes.value.data.has_locked_brand) setTab('dealers')
       }
     } finally { setLoading(false) }
+  }
+
+  // Debounced lookup against the new backend endpoint. Same shape
+  // as the seed-orders lookup so RecipientLookupCard renders all
+  // five verdicts identically. The backend computes has_locked_brand
+  // from practice_ids, so the brand-lock rule only fires when the
+  // bundle actually contains a brand-locked practice.
+  useEffect(() => {
+    const digits = customPhone.replace(/\D/g, '')
+    if (digits.length < 10) { setLookup(null); setLookupLoading(false); return }
+    setLookupLoading(true)
+    const timer = setTimeout(async () => {
+      try {
+        const pidsParam = practiceIds.length ? `&practice_ids=${encodeURIComponent(practiceIds.join(','))}` : ''
+        const { data } = await api.get<RecipientLookupResult>(
+          `/farmer/subscriptions/${subscriptionId}/lookup-recipient`
+            + `?phone=${encodeURIComponent('+91' + digits.slice(-10))}`
+            + `&category=${encodeURIComponent(orderType)}${pidsParam}`,
+        )
+        setLookup(data)
+      } catch {
+        setLookup(null)
+      } finally {
+        setLookupLoading(false)
+      }
+    }, 350)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customPhone, subscriptionId, orderType])
+
+  function startSendOrderFromLookup() {
+    if (!lookup?.found || !lookup.user_id || !lookup.can_receive || !lookup.role) return
+    // Build a synthetic Person so the existing acreage-confirm /
+    // send pipeline stays the single source of truth for the POST.
+    const person: Person = {
+      user_id: lookup.user_id,
+      name: lookup.name ?? null,
+      phone: lookup.phone ?? null,
+      distance_km: 0,
+      is_promoter: false,
+    }
+    startSendOrder(person, lookup.role === 'DEALER')
   }
 
   function startSendOrder(person: Person, isDealer: boolean) {
@@ -264,22 +311,33 @@ export default function OrderingScreenPage() {
           )}
         </div>
 
-        {/* Custom phone entry */}
+        {/* Phone-entry — primary path the farmer asked for
+            2026-06-18. Mirrors the seed-orders picker design via
+            the shared RecipientLookupCard. Brand-lock kicks in only
+            when at least one of `practice_ids` is on a
+            `Practice.is_brand_locked=True` row — the backend
+            computes that server-side and returns a
+            `dealer_not_onboarded` verdict the card renders. */}
         {!loading && (
           <div className="mt-4 bg-white rounded-2xl border border-[#DDD0B8] p-4">
             <p className="text-xs font-semibold text-[#7A8C7E] mb-2">{t('customPhoneLabel')}</p>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-[#7A8C7E] px-2 py-2 bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl">+91</span>
               <input value={customPhone} onChange={e => setCustomPhone(e.target.value)}
                 placeholder={t('customPhonePlaceholder')}
-                type="tel"
-                className="flex-1 border border-[#DDD0B8] rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
-              <button
-                onClick={() => customPhone.trim() && alert(t('customSoon'))}
-                className="px-4 py-2 rounded-xl text-white text-sm font-semibold bg-slate-400">
-                {t('sendBtn')}
-              </button>
+                type="tel" inputMode="numeric"
+                className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]" />
             </div>
-            <PhoneVerify phone={customPhone} />
+            {lookupLoading && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-[#7A8C7E]">
+                <div className="w-3 h-3 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin" />
+                {t('phoneChecking')}
+              </div>
+            )}
+            {lookup && !lookupLoading && (
+              <RecipientLookupCard lookup={lookup}
+                placing={placing} onSend={startSendOrderFromLookup} t={t} />
+            )}
           </div>
         )}
       </div>

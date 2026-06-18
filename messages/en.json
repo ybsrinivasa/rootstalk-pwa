@@ -704,7 +704,7 @@
       "dealerNotOnboarded": "Seed varieties are brand-locked. This dealer is not onboarded by {client}, so the seed order cannot be sent to them. Send to a facilitator or pick a different dealer.",
       "roleDealer": "Dealer",
       "roleFacilitator": "Facilitator",
-      "seedCompanyFallback": "the seed company"
+      "companyFallback": "the seed company"
     }
   },
   "orders": {
@@ -1013,10 +1013,21 @@
       "emptyFacilitators": "No facilitators found nearby",
       "tryPhoneHint": "Try entering a phone number below",
       "sendOrderBtn": "Send Order",
-      "customPhoneLabel": "Or enter a phone number",
-      "customPhonePlaceholder": "+91 XXXXX XXXXX",
+      "customPhoneLabel": "Or enter a dealer or facilitator's phone number",
+      "customPhonePlaceholder": "10-digit mobile number",
+      "phoneChecking": "Checking…",
+      "sendOrder": "Send Order",
       "sendBtn": "Send",
       "customSoon": "Custom phone routing coming soon",
+      "lookup": {
+        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+        "self": "You cannot send the order to yourself. Enter someone else's number.",
+        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk. Ask them to register via 'Become a Dealer' or 'Become a Facilitator' first.",
+        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}, so the order cannot be sent to them. Send to a facilitator or pick a different dealer.",
+        "roleDealer": "Dealer",
+        "roleFacilitator": "Facilitator",
+        "companyFallback": "the company"
+      },
       "confirmAreaTitle": "Confirm your farm area",
       "areaInputPlaceholder": "0.00",
       "areaUnit": "acres",

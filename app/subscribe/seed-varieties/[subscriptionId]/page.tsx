@@ -10,6 +10,7 @@ import { cropDisplayName } from '@/lib/crop-name'
 // `touch-action: pinch-zoom` for scoped containers; browser only
 // pinch-zooms the viewport).
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
+import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
 
 interface DusCharacterRow {
   part_cosh_id?: string; part_name_en?: string; part_name?: string
@@ -32,23 +33,9 @@ interface Recipient {
   shop_name?: string | null; shop_address?: string | null
 }
 
-// Result of /farmer/seed-orders/lookup-recipient (Points 1 + 2,
-// 2026-06-18). Backend returns 200 with structured payload so we
-// can render every case as a friendly card.
-interface LookupResult {
-  found: boolean
-  user_id?: string
-  name?: string | null
-  phone?: string | null
-  photo_url?: string | null
-  role?: 'DEALER' | 'FACILITATOR' | null
-  state_name?: string | null
-  district_name?: string | null
-  is_active?: boolean
-  client_name?: string | null
-  can_receive?: boolean
-  reason: string  // ok | phone_not_registered | self | not_dealer_or_facilitator | dealer_not_onboarded
-}
+// Result type re-exported from the shared component so the seed
+// flow + the pesticide/fertiliser flow share one shape.
+type LookupResult = RecipientLookupResult
 
 export default function SeedVarietiesPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -388,7 +375,7 @@ export default function SeedVarietiesPage() {
               </div>
             )}
             {lookup && !lookupLoading && (
-              <LookupCard lookup={lookup} selected={selected}
+              <RecipientLookupCard lookup={lookup}
                 placing={placing} onSend={sendOrderFromLookup} t={t} />
             )}
           </div>
@@ -488,122 +475,6 @@ export default function SeedVarietiesPage() {
 // photos without any JS gesture handling. Tap any photo to open the
 // pinch-zoom lightbox. Dot indicators sync to whichever photo is
 // currently snapped in view.
-
-// ── Phone-entry result card ─────────────────────────────────────────────────
-//
-// Renders the four lookup outcomes against the user's spec
-// (2026-06-18 audit, Points 1+2):
-//   - phone_not_registered: red, "not on RootsTalk"
-//   - self: amber, "cannot send to yourself"
-//   - not_dealer_or_facilitator: amber, "not a dealer or facilitator"
-//   - dealer_not_onboarded: amber, name + role + reason referencing
-//                          the seed company by name
-//   - ok: green, person card with role badge + state/district +
-//         Send Order CTA
-//
-// Photo / state / district come from the backend resolver so we
-// don't have to thread Cosh translations through the PWA.
-
-function LookupCard({
-  lookup, selected, placing, onSend, t,
-}: {
-  lookup: {
-    found: boolean
-    user_id?: string
-    name?: string | null
-    phone?: string | null
-    photo_url?: string | null
-    role?: 'DEALER' | 'FACILITATOR' | null
-    state_name?: string | null
-    district_name?: string | null
-    is_active?: boolean
-    client_name?: string | null
-    can_receive?: boolean
-    reason: string
-  }
-  selected: Variety
-  placing: string | null
-  onSend: () => void
-  t: ReturnType<typeof useTranslations>
-}) {
-  if (!lookup.found) {
-    return (
-      <div className="mt-3 bg-red-50 border border-red-200 rounded-xl px-3 py-2.5">
-        <p className="text-xs text-red-700">{t('lookup.notRegistered')}</p>
-      </div>
-    )
-  }
-  if (lookup.reason === 'self') {
-    return (
-      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-        <p className="text-xs text-amber-800">{t('lookup.self')}</p>
-      </div>
-    )
-  }
-  if (lookup.reason === 'not_dealer_or_facilitator') {
-    return (
-      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
-        <p className="text-sm text-[#6B3F1F] font-medium">{lookup.name || lookup.phone}</p>
-        <p className="text-xs text-amber-800 mt-1">{t('lookup.notDealerOrFacilitator')}</p>
-      </div>
-    )
-  }
-  if (lookup.reason === 'dealer_not_onboarded') {
-    return (
-      <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-start gap-3">
-        {lookup.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={lookup.photo_url} alt=""
-            className="w-12 h-12 rounded-full object-cover shrink-0 border border-[#DDD0B8]" />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-[#F5F0E8] flex items-center justify-center shrink-0">
-            <span className="text-xl">🧑‍🌾</span>
-          </div>
-        )}
-        <div className="min-w-0">
-          <p className="text-sm text-[#6B3F1F] font-semibold">{lookup.name || lookup.phone}</p>
-          <p className="text-xs text-[#7A8C7E]">{t('lookup.roleDealer')}</p>
-          {(lookup.state_name || lookup.district_name) && (
-            <p className="text-xs text-[#7A8C7E]">{[lookup.district_name, lookup.state_name].filter(Boolean).join(', ')}</p>
-          )}
-          <p className="text-xs text-amber-800 mt-1.5">
-            {t('lookup.dealerNotOnboarded', { client: lookup.client_name || t('lookup.seedCompanyFallback') })}
-          </p>
-        </div>
-      </div>
-    )
-  }
-  // ok — eligible recipient
-  return (
-    <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3">
-      <div className="flex items-start gap-3">
-        {lookup.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={lookup.photo_url} alt=""
-            className="w-12 h-12 rounded-full object-cover shrink-0 border border-[#DDD0B8]" />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0">
-            <span className="text-xl">🧑‍🌾</span>
-          </div>
-        )}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-[#6B3F1F] font-bold">{lookup.name || lookup.phone}</p>
-          <p className="text-xs text-[#7A8C7E]">
-            {lookup.role === 'DEALER' ? t('lookup.roleDealer') : t('lookup.roleFacilitator')}
-          </p>
-          {(lookup.state_name || lookup.district_name) && (
-            <p className="text-xs text-[#7A8C7E]">{[lookup.district_name, lookup.state_name].filter(Boolean).join(', ')}</p>
-          )}
-        </div>
-      </div>
-      <button onClick={onSend} disabled={placing === lookup.user_id}
-        className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
-        style={{ background: '#3A7D44' }}>
-        {placing === lookup.user_id ? '…' : t('sendOrder')}
-      </button>
-    </div>
-  )
-}
 
 function RecipientCard({
   person, isDealer, placing, onSend, t,
