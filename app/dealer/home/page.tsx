@@ -52,7 +52,12 @@ export default function DealerHomePage() {
       // filter for both feeds (COMPLETED / CANCELLED / EXPIRED for
       // inputs; PURCHASED / CANCELLED / REJECTED / REROUTED for
       // seeds — the seed lifecycle's terminal equivalents).
-      const SEED_TERMINAL = ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED']
+      // 2026-06-18 — NOT_AVAILABLE means the dealer bounced the seed
+      // order back to the farmer; no further work on this side. Must
+      // match the filter on `app/dealer/seed-orders/page.tsx` so the
+      // tile count agrees with the Active tab the dealer sees when
+      // they tap in.
+      const SEED_TERMINAL = ['PURCHASED', 'CANCELLED', 'REJECTED', 'REROUTED', 'NOT_AVAILABLE']
       const INPUT_TERMINAL = ['COMPLETED', 'CANCELLED', 'EXPIRED']
       let regularPending = 0
       let seedPending = 0
