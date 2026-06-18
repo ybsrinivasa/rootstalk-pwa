@@ -150,6 +150,14 @@
       "reference": "Reference",
       "day": "Day"
     },
+    "empty": {
+      "noAdviceToday": "No advice for today",
+      "nextWindow": "Your next advisory window opens on",
+      "inDays": "{count, plural, one {in 1 day} other {in # days}}",
+      "allDone": "You have completed all advisory practices for this season.",
+      "checkBack": "Check back tomorrow.",
+      "quickCheck": "Quick check before today's advice"
+    },
     "status": {
       "PENDING": "Dealer processing",
       "AVAILABLE": "Dealer processing",

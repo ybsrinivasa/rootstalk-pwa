@@ -295,6 +295,7 @@ function groupTimelinePractices(practices: Practice[]): PracticeRow[] {
 export default function AdvisoryPage() {
   const router = useRouter()
   const tLabel = useTranslations('practice.label')
+  const tEmpty = useTranslations('practice.empty')
   const locale = useLocale()
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
@@ -473,23 +474,23 @@ export default function AdvisoryPage() {
                 <svg className="w-12 h-12 mx-auto text-[#DDD0B8]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"/>
                 </svg>
-                <p className="text-[#6B3F1F] font-semibold mt-3">No advice for today</p>
+                <p className="text-[#6B3F1F] font-semibold mt-3">{tEmpty('noAdviceToday')}</p>
                 {nextDate?.next_date ? (
                   <>
-                    <p className="text-[#7A8C7E] text-sm mt-2">Your next advisory window opens on</p>
+                    <p className="text-[#7A8C7E] text-sm mt-2">{tEmpty('nextWindow')}</p>
                     <p className="text-[#6B3F1F] font-semibold text-base mt-1">
                       {new Date(nextDate.next_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}
                     </p>
                     {nextDate.days_until !== undefined && (
                       <p className="text-[#7A8C7E] text-xs mt-1">
-                        in {nextDate.days_until} day{nextDate.days_until !== 1 ? 's' : ''}
+                        {tEmpty('inDays', { count: nextDate.days_until })}
                       </p>
                     )}
                   </>
                 ) : nextDate?.reason === 'no_more_practices' ? (
-                  <p className="text-[#7A8C7E] text-sm mt-2">You have completed all advisory practices for this season.</p>
+                  <p className="text-[#7A8C7E] text-sm mt-2">{tEmpty('allDone')}</p>
                 ) : (
-                  <p className="text-[#7A8C7E] text-sm mt-2">Check back tomorrow.</p>
+                  <p className="text-[#7A8C7E] text-sm mt-2">{tEmpty('checkBack')}</p>
                 )}
               </div>
             )}
@@ -548,7 +549,7 @@ export default function AdvisoryPage() {
                 {/* BL-02: Show conditional question BEFORE practices */}
                 {tl.has_pending_question && tl.pending_conditional_question ? (
                   <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-3">
-                    <p className="text-xs font-semibold text-amber-700 mb-2 uppercase tracking-wide">Quick check before today's advice</p>
+                    <p className="text-xs font-semibold text-amber-700 mb-2 uppercase tracking-wide">{tEmpty('quickCheck')}</p>
                     <p className="font-medium text-[#6B3F1F] text-sm leading-relaxed mb-4">
                       {tl.pending_conditional_question.question_text}
                     </p>
