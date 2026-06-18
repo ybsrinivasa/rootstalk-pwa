@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
 interface QueryItem {
@@ -206,7 +207,10 @@ export default function SubscriptionQueriesPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={t('subHeaderTitle')} activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
-      <div className="pt-16 pb-20 px-4 max-w-lg mx-auto">
+      <div className="pt-16">
+        <ClientCropChip subscriptionId={subscriptionId} />
+      </div>
+      <div className="pb-20 px-4 max-w-lg mx-auto">
         <button
           onClick={() => router.push(`/crop-detail/${subscriptionId}`)}
           className="mt-4 mb-3 flex items-center gap-1 text-sm"
