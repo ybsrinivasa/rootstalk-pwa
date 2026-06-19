@@ -5,11 +5,15 @@ import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import api from '@/lib/api'
 
 interface OrderDetail {
   id: string; status: string; farmer_user_id: string; client_id: string
   dealer_user_id: string | null; facilitator_user_id: string | null
+  // 2026-06-19 — `category` drives the confirm-forward sheet's
+  // inputType label.
+  category?: string | null
   date_from: string; date_to: string
   items: { id: string; practice_id: string; status: string; brand_name: string | null
            given_volume: number | null; volume_unit: string | null; price: number | null }[]
@@ -35,6 +39,7 @@ const COLOUR = '#7D4E00'
 
 export default function FacilitatorOrderDetailPage() {
   const t = useTranslations('facilitator.orderDetail')
+  const tOrdersCommon = useTranslations('orders.common')
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
   const [order, setOrder] = useState<OrderDetail | null>(null)
@@ -115,9 +120,19 @@ export default function FacilitatorOrderDetailPage() {
     } finally { setLoadingDealers(false) }
   }
 
+  // 2026-06-19 — Confirm-before-forward. Tap on a dealer row (picker
+  // or lookup) stashes the pending forward; ConfirmSendOrderSheet
+  // asks "Do you wish to send the {inputType} Order to {dealer}?";
+  // confirm fires forwardToDealer.
+  const [pendingForward, setPendingForward] = useState<{ dealer: { user_id: string; name?: string | null; shop_name?: string | null } } | null>(null)
+  function requestForward(dealer: { user_id: string; name?: string | null; shop_name?: string | null }) {
+    setPendingForward({ dealer })
+  }
+
   async function forwardToDealer(dealerUserId: string) {
     setForwarding(true)
     setForwardError(null)
+    setPendingForward(null)
     try {
       await api.put(`/facilitator/orders/${orderId}/route-to-dealer`, { dealer_user_id: dealerUserId })
       setShowDealerSelect(false)
@@ -377,7 +392,7 @@ export default function FacilitatorOrderDetailPage() {
               {lookup && !lookupLoading && lookup.user_id && (
                 <RecipientLookupCard lookup={lookup}
                   placing={forwarding ? lookup.user_id : null}
-                  onSend={() => lookup.user_id && forwardToDealer(lookup.user_id)} t={t} />
+                  onSend={() => lookup.user_id && requestForward({ user_id: lookup.user_id, name: lookup.name, shop_name: null })} t={t} />
               )}
               {lookup && !lookupLoading && !lookup.user_id && (
                 <RecipientLookupCard lookup={lookup}
@@ -418,7 +433,7 @@ export default function FacilitatorOrderDetailPage() {
                             {t('callBtn')}
                           </a>
                         )}
-                        <button onClick={() => forwardToDealer(d.user_id)} disabled={forwarding}
+                        <button onClick={() => requestForward(d)} disabled={forwarding}
                           className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
                           style={{ background: COLOUR }}>
                           {forwarding ? '…' : t('forwardBtn')}
@@ -471,6 +486,24 @@ export default function FacilitatorOrderDetailPage() {
           </div>
         </div>
       )}
+      <ConfirmSendOrderSheet
+        open={!!pendingForward}
+        inputType={tOrdersCommon(
+          order?.category === 'PESTICIDE' ? 'inputType.pesticide'
+          : order?.category === 'FERTILIZER' || order?.category === 'FERTILISER' ? 'inputType.fertilizer'
+          : 'inputType.fallback'
+        )}
+        recipient={recipientLabel(
+          true,
+          pendingForward?.dealer ?? null,
+          tOrdersCommon('unknownRecipient'),
+        )}
+        busy={forwarding}
+        onCancel={() => setPendingForward(null)}
+        onConfirm={() => {
+          if (pendingForward) forwardToDealer(pendingForward.dealer.user_id)
+        }}
+      />
     </div>
   )
 }

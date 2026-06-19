@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import api from '@/lib/api'
 
 // 2026-06-07 — Order-ID-grouped active feed.
@@ -27,6 +28,8 @@ interface Order {
   id: string
   status: string
   reference_number: string | null
+  // 2026-06-19 — Drives the confirm-forward sheet's inputType label.
+  category?: string | null
   farmer_user_id: string
   client_id: string
   dealer_user_id: string | null
@@ -120,6 +123,7 @@ function initials(name: string | null | undefined): string {
 export default function FacilitatorOrdersPage() {
   const router = useRouter()
   const t = useTranslations('facilitator.orders')
+  const tOrdersCommon = useTranslations('orders.common')
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
@@ -170,9 +174,18 @@ export default function FacilitatorOrdersPage() {
     } catch { setNearbyDealers([]) }
     finally { setLoadingDealers(false) }
   }
+  // 2026-06-19 — Confirm-before-reroute. Tap on a dealer row stashes
+  // pendingReroute; the sheet asks "Do you wish to send the
+  // {inputType} Order to {dealer}?"; confirm fires rerouteToDealer.
+  const [pendingReroute, setPendingReroute] = useState<NearbyDealer | null>(null)
+  function requestRerouteToDealer(dealer: NearbyDealer) {
+    setPendingReroute(dealer)
+  }
+
   async function rerouteToDealer(dealerUserId: string) {
     if (!rerouteOrderId) return
     setRerouting(true)
+    setPendingReroute(null)
     try {
       await api.post(`/facilitator/orders/${rerouteOrderId}/reroute-returned`, {
         dealer_user_id: dealerUserId,
@@ -376,7 +389,7 @@ export default function FacilitatorOrdersPage() {
                             {t('callBtn')}
                           </a>
                         )}
-                        <button onClick={() => rerouteToDealer(d.user_id)} disabled={rerouting}
+                        <button onClick={() => requestRerouteToDealer(d)} disabled={rerouting}
                           className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
                           style={{ background: COLOUR }}>
                           {rerouting ? '…' : t('forwardBtn')}
@@ -391,6 +404,27 @@ export default function FacilitatorOrdersPage() {
         </div>
       )}
 
+      <ConfirmSendOrderSheet
+        open={!!pendingReroute}
+        inputType={tOrdersCommon(
+          (() => {
+            const cat = orders.find(o => o.id === rerouteOrderId)?.category
+            return cat === 'PESTICIDE' ? 'inputType.pesticide'
+              : cat === 'FERTILIZER' || cat === 'FERTILISER' ? 'inputType.fertilizer'
+              : 'inputType.fallback'
+          })()
+        )}
+        recipient={recipientLabel(
+          true,
+          pendingReroute,
+          tOrdersCommon('unknownRecipient'),
+        )}
+        busy={rerouting}
+        onCancel={() => setPendingReroute(null)}
+        onConfirm={() => {
+          if (pendingReroute) rerouteToDealer(pendingReroute.user_id)
+        }}
+      />
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
     </div>
   )

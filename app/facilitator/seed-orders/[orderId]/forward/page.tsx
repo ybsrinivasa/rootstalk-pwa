@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import api from '@/lib/api'
 
 interface Dealer {
@@ -20,6 +21,7 @@ export default function FacilitatorSeedForwardPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
   const t = useTranslations('facilitator.seedOrders.forward')
+  const tOrdersCommon = useTranslations('orders.common')
   const [dealers, setDealers] = useState<Dealer[]>([])
   const [loading, setLoading] = useState(true)
   const [placing, setPlacing] = useState<string | null>(null)
@@ -57,9 +59,23 @@ export default function FacilitatorSeedForwardPage() {
     return () => clearTimeout(timer)
   }, [customPhone, orderId])
 
+  // 2026-06-19 — Confirm-before-forward. Two flavours of pending —
+  // synthetic dealer (lookup) and existing Dealer row (picker). Both
+  // flow through the same mounted sheet.
+  const [pendingLookup, setPendingLookup] = useState(false)
+  const [pendingPicker, setPendingPicker] = useState<Dealer | null>(null)
+
+  function requestRouteToLookup() {
+    if (!lookup?.user_id) return
+    setPendingLookup(true)
+  }
+  function requestRouteTo(dealer: Dealer) {
+    setPendingPicker(dealer)
+  }
+
   async function routeToLookup() {
     if (!lookup?.user_id) return
-    setPlacing(lookup.user_id); setError(null)
+    setPlacing(lookup.user_id); setError(null); setPendingLookup(false)
     try {
       await api.put(`/facilitator/seed-orders/${orderId}/route-to-dealer`, {
         dealer_user_id: lookup.user_id,
@@ -78,7 +94,7 @@ export default function FacilitatorSeedForwardPage() {
   }
 
   async function routeTo(dealer: Dealer) {
-    setPlacing(dealer.user_id); setError(null)
+    setPlacing(dealer.user_id); setError(null); setPendingPicker(null)
     try {
       await api.put(`/facilitator/seed-orders/${orderId}/route-to-dealer`, {
         dealer_user_id: dealer.user_id,
@@ -133,7 +149,7 @@ export default function FacilitatorSeedForwardPage() {
           )}
           {lookup && !lookupLoading && (
             <RecipientLookupCard lookup={lookup}
-              placing={placing} onSend={routeToLookup} t={t} />
+              placing={placing} onSend={requestRouteToLookup} t={t} />
           )}
         </div>
 
@@ -173,7 +189,7 @@ export default function FacilitatorSeedForwardPage() {
                         📞
                       </a>
                     )}
-                    <button onClick={() => routeTo(d)} disabled={placing === d.user_id}
+                    <button onClick={() => requestRouteTo(d)} disabled={placing === d.user_id}
                       className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
                       style={{ background: '#085041' }}>
                       {placing === d.user_id ? '…' : t('forward')}
@@ -185,6 +201,21 @@ export default function FacilitatorSeedForwardPage() {
           </div>
         )}
       </div>
+      <ConfirmSendOrderSheet
+        open={pendingLookup || !!pendingPicker}
+        inputType={tOrdersCommon('inputType.seed')}
+        recipient={
+          pendingLookup
+            ? recipientLabel(true, lookup ? { name: lookup.name, shop_name: null } : null, tOrdersCommon('unknownRecipient'))
+            : recipientLabel(true, pendingPicker, tOrdersCommon('unknownRecipient'))
+        }
+        busy={!!placing}
+        onCancel={() => { setPendingLookup(false); setPendingPicker(null) }}
+        onConfirm={() => {
+          if (pendingLookup) void routeToLookup()
+          else if (pendingPicker) void routeTo(pendingPicker)
+        }}
+      />
     </div>
   )
 }
