@@ -36,11 +36,23 @@ function _legacyFormatCropName(coshId: string): string {
     .join(' ')
 }
 
+// 2026-06-19 — Per-sub attention bucket (matches the Crop dashboard
+// shape). Drives the per-crop attention badge on this Company view.
+interface AttentionBucket {
+  subscription_id: string
+  client_id: string
+  total: number
+}
+interface DashboardAttention {
+  by_subscription?: Record<string, AttentionBucket>
+}
+
 export default function BrandedSpacePage() {
   const { clientId } = useParams<{ clientId: string }>()
   const router = useRouter()
   const [branding, setBranding] = useState<ClientInfo | null>(null)
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
+  const [attention, setAttention] = useState<Record<string, AttentionBucket>>({})
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -50,11 +62,15 @@ export default function BrandedSpacePage() {
 
   async function load() {
     try {
-      const [infoRes, subsRes] = await Promise.allSettled([
+      const [infoRes, subsRes, attentionRes] = await Promise.allSettled([
         api.get<ClientInfo>(`/client/${clientId}/info`),
         api.get<Subscription[]>('/farmer/my-subscriptions'),
+        api.get<DashboardAttention>('/farmer/dashboard/attention'),
       ])
       if (infoRes.status === 'fulfilled') setBranding(infoRes.value.data)
+      if (attentionRes.status === 'fulfilled' && attentionRes.value.data.by_subscription) {
+        setAttention(attentionRes.value.data.by_subscription)
+      }
       if (subsRes.status === 'fulfilled') {
         // Only ACTIVE subs are real "crops the farmer is being
         // advised on". CANCELLED / WAITLISTED / LAPSED rows
@@ -153,15 +169,27 @@ export default function BrandedSpacePage() {
             <p className="text-[#7A8C7E] text-sm">No crops found for this company.</p>
           </div>
         ) : (
-          subscriptions.map(sub => {
+          // 2026-06-19 — Sort crops by descending attention count so
+          // the farmer's eye lands on what needs action first. Ties
+          // fall back to natural array order (i.e. backend order).
+          [...subscriptions]
+            .sort((a, b) =>
+              (attention[b.id]?.total ?? 0) - (attention[a.id]?.total ?? 0)
+            )
+            .map(sub => {
             const hasStartDate = !!sub.crop_start_date
             const cropLabel = cropDisplayName(sub.crop_cosh_id, sub.crop_name)
-            // Two PoPs of the same crop coexist (Multi-PoP, e.g.
+            const attentionCount = attention[sub.id]?.total ?? 0
             return (
               <button key={sub.id}
                 onClick={() => router.push(`/crop-detail/${sub.id}`)}
-                className="w-full bg-white border border-[#DDD0B8] rounded-2xl mx-4 mb-3 px-4 py-4 flex items-center justify-between active:scale-[0.98] transition-transform text-left"
+                className="w-full bg-white border border-[#DDD0B8] rounded-2xl mx-4 mb-3 px-4 py-4 flex items-center justify-between active:scale-[0.98] transition-transform text-left relative"
                 style={{ width: 'calc(100% - 2rem)' }}>
+                {attentionCount > 0 && (
+                  <span className="absolute top-2 right-3 text-base font-bold text-[#085041]">
+                    {attentionCount}
+                  </span>
+                )}
                 <div className="min-w-0">
                   <p className="text-[#6B3F1F] font-semibold text-[15px]">{cropLabel}</p>
                   {sub.reference_number && (
@@ -172,7 +200,7 @@ export default function BrandedSpacePage() {
                   hasStartDate
                     ? 'bg-green-50 text-green-700 border border-green-200'
                     : 'bg-amber-50 text-amber-700 border border-amber-200'
-                }`}>
+                } ${attentionCount > 0 ? 'mt-4' : ''}`}>
                   {hasStartDate ? 'Active' : 'Set start date'}
                 </span>
               </button>

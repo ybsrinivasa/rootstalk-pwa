@@ -49,6 +49,13 @@ interface PendingAssignment {
   created_at: string
 }
 
+// 2026-06-19 — Per-company attention rollup. Drives the corner-
+// number badge on each company card + the company sort order.
+interface DashboardAttention {
+  by_company?: Array<{ client_id: string; total: number; subscription_ids: string[] }>
+  grand_total?: number
+}
+
 function SeedlingIllustration() {
   return (
     <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
@@ -67,6 +74,7 @@ export default function HomePage() {
   const tCommon = useTranslations('common')
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [clientInfos, setClientInfos] = useState<Record<string, ClientInfo>>({})
+  const [attentionByClient, setAttentionByClient] = useState<Record<string, number>>({})
   const [pendingAssignments, setPendingAssignments] = useState<PendingAssignment[]>([])
   const [assignmentClientInfos, setAssignmentClientInfos] = useState<Record<string, ClientInfo>>({})
   const [loading, setLoading] = useState(true)
@@ -118,10 +126,22 @@ export default function HomePage() {
 
   async function load() {
     try {
-      const [subsResult, pendingResult] = await Promise.allSettled([
+      // 2026-06-19 — Attention rollup fetched alongside subs. Drives
+      // the per-company card badge + sort order (highest-attention
+      // company first).
+      const [subsResult, pendingResult, attentionResult] = await Promise.allSettled([
         api.get<Subscription[]>('/farmer/my-subscriptions'),
         api.get<PendingAssignment[]>('/farmer/assignments/pending'),
+        api.get<DashboardAttention>('/farmer/dashboard/attention'),
       ])
+      if (attentionResult.status === 'fulfilled') {
+        const data = attentionResult.value.data
+        const byClient: Record<string, number> = {}
+        for (const c of data.by_company || []) {
+          byClient[c.client_id] = c.total
+        }
+        setAttentionByClient(byClient)
+      }
 
       let subs: Subscription[] = []
       if (subsResult.status === 'fulfilled') {
@@ -420,18 +440,30 @@ export default function HomePage() {
                  affordance to subscribe to a second crop / second
                  company. */
               <div className="space-y-3">
-                {uniqueClientIds.map(clientId => {
+                {/* 2026-06-19 — Sort companies by descending attention
+                    so the most-action-needed company tops the list. */}
+                {[...uniqueClientIds]
+                  .sort((a, b) =>
+                    (attentionByClient[b] ?? 0) - (attentionByClient[a] ?? 0)
+                  )
+                  .map(clientId => {
                   const subs = grouped[clientId]
                   const info = clientInfos[clientId]
                   const colour = info?.primary_colour || C.primary
                   const needsStartDate = subs.some(s => !s.crop_start_date)
                   const initials = (info?.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                  const attentionCount = attentionByClient[clientId] ?? 0
 
                   return (
                     <button key={clientId}
                       onClick={() => router.push(`/home/${clientId}`)}
-                      className="w-full rounded-2xl overflow-hidden shadow-sm text-left active:scale-[0.98] transition-transform"
+                      className="w-full rounded-2xl overflow-hidden shadow-sm text-left active:scale-[0.98] transition-transform relative"
                       style={{ background: C.cardBg, border: `1px solid ${C.divider}` }}>
+                      {attentionCount > 0 && (
+                        <span className="absolute top-2 right-3 text-base font-bold text-white z-10">
+                          {attentionCount}
+                        </span>
+                      )}
 
                       {/* Branded header — keeps the client's brand
                           colour. RootsTalk Crop Green only as the
