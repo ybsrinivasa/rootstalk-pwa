@@ -71,6 +71,30 @@ interface SeedAvail { has_varieties: boolean; count: number }
 // bigha they convert before typing. V2 may introduce server-side
 // conversion at the boundary.
 
+// 2026-06-19 — Per-subscription attention bucket returned by
+// /farmer/dashboard/attention. Drives the corner-number badges on
+// the Advisory + Orders tiles. Queries badge stays on its own
+// dedicated count (pendingQueriesCount).
+interface AttentionBucket {
+  subscription_id: string
+  client_id: string
+  advisory_unmarked: number
+  orders_awaiting_approval: number
+  orders_returned: number
+  orders_pickup_ready: number
+  seeds_awaiting_approval: number
+  seeds_returned: number
+  seeds_pickup_ready: number
+  queries_responded: number
+  payments_pending: number
+  total: number
+}
+interface DashboardAttention {
+  by_subscription?: Record<string, AttentionBucket>
+  by_company?: Array<{ client_id: string; total: number; subscription_ids: string[] }>
+  grand_total?: number
+}
+
 export default function CropDetailPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
@@ -82,6 +106,7 @@ export default function CropDetailPage() {
   const [preStart, setPreStart] = useState<PreStartInput[]>([])
   const [missedCount, setMissedCount] = useState(0)
   const [pendingQueriesCount, setPendingQueriesCount] = useState(0)
+  const [attention, setAttention] = useState<AttentionBucket | null>(null)
   const [alertPrefs, setAlertPrefs] = useState<AlertPrefs | null>(null)
   const [expertSetting, setExpertSetting] = useState<ExpertSetting | null>(null)
   const [seedAvail, setSeedAvail] = useState<SeedAvail>({ has_varieties: false, count: 0 })
@@ -169,7 +194,7 @@ export default function CropDetailPage() {
         setDiagnosisEligibility({ eligible: true })
       }
 
-      const [brandRes, preStartRes, missedRes, alertsRes, expertRes, seedRes, queriesRes] = await Promise.allSettled([
+      const [brandRes, preStartRes, missedRes, alertsRes, expertRes, seedRes, queriesRes, attentionRes] = await Promise.allSettled([
         api.get<Branding>(`/client/${found.client_id}/info`),
         api.get<PreStartInput[]>(`/farmer/subscriptions/${subscriptionId}/pre-start-inputs`),
         api.get<{ count: number } | { timeline_id: string }[]>(`/farmer/subscriptions/${subscriptionId}/missed-items`),
@@ -177,6 +202,8 @@ export default function CropDetailPage() {
         api.get<ExpertSetting>(`/farmer/subscriptions/${subscriptionId}/expert-setting`),
         api.get<SeedAvail>(`/farmer/subscriptions/${subscriptionId}/seed-availability`),
         api.get<Array<{ status: string }>>(`/farmer/queries?subscription_id=${subscriptionId}`),
+        // 2026-06-19 — Per-sub attention buckets that drive the tile badges.
+        api.get<DashboardAttention>(`/farmer/dashboard/attention`),
       ])
 
       if (brandRes.status === 'fulfilled') setBranding(brandRes.value.data)
@@ -195,6 +222,10 @@ export default function CropDetailPage() {
           !['RESPONDED', 'REJECTED', 'EXPIRED'].includes(q.status)
         )
         setPendingQueriesCount(pending.length)
+      }
+      if (attentionRes.status === 'fulfilled') {
+        const bucket = attentionRes.value.data.by_subscription?.[subscriptionId]
+        if (bucket) setAttention(bucket)
       }
     } finally { setLoading(false) }
   }
@@ -744,7 +775,8 @@ export default function CropDetailPage() {
         <div className="grid grid-cols-2 gap-3 mt-6">
           <button
             onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowNeedDateSheet('advisory')}
-            className={`rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-[#DDD0B8] active:scale-95' : 'bg-stone-100 border-[#DDD0B8] opacity-60'}`}>
+            className={`relative rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-[#DDD0B8] active:scale-95' : 'bg-stone-100 border-[#DDD0B8] opacity-60'}`}>
+            <AttentionBadge count={attention?.advisory_unmarked ?? 0} />
             <span className="text-3xl block mb-2">🌿</span>
             <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.advisoryTitle')}</p>
             {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">{t('tiles.setDateFirst')}</p>}
@@ -775,6 +807,7 @@ export default function CropDetailPage() {
           <button
             onClick={() => router.push(`/crop-detail/${subscriptionId}/queries`)}
             className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95 relative">
+            <AttentionBadge count={pendingQueriesCount} />
             <span className="text-3xl block mb-2">🎓</span>
             <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.queriesTitle')}</p>
             {sub.client_has_primary_expert && pendingQueriesCount > 0 && (
@@ -791,7 +824,17 @@ export default function CropDetailPage() {
               though specific accordions may gate themselves). */}
           <button
             onClick={() => router.push(`/crop-detail/${subscriptionId}/orders`)}
-            className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
+            className="relative bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
+            <AttentionBadge
+              count={
+                (attention?.orders_awaiting_approval ?? 0)
+                + (attention?.orders_returned ?? 0)
+                + (attention?.orders_pickup_ready ?? 0)
+                + (attention?.seeds_awaiting_approval ?? 0)
+                + (attention?.seeds_returned ?? 0)
+                + (attention?.seeds_pickup_ready ?? 0)
+              }
+            />
             <span className="text-3xl block mb-2">📦</span>
             <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.ordersTitle')}</p>
           </button>
@@ -1249,5 +1292,23 @@ export default function CropDetailPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// 2026-06-19 — Corner-number attention badge. Renders absolute on
+// the top-right of any tile button. Two-tier: plain emerald number
+// for routine attention, with a small red dot prefixing it when
+// `urgent` is true (reserved for time-sensitive signals; not yet
+// wired — keeping the prop for the next round). Zero count → no
+// render so quiet tiles stay quiet.
+function AttentionBadge({ count, urgent = false }: { count: number; urgent?: boolean }) {
+  if (!count || count <= 0) return null
+  return (
+    <span className="absolute top-2 right-3 flex items-center gap-1">
+      {urgent && (
+        <span className="inline-block w-1.5 h-1.5 bg-red-600 rounded-full" />
+      )}
+      <span className="text-base font-bold text-[#085041]">{count}</span>
+    </span>
   )
 }
