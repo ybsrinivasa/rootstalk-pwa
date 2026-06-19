@@ -4,6 +4,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
 import {
   type DraftEntry, readDraftMap, writeDraftMap, clearDraftForOrder,
@@ -108,6 +109,8 @@ interface RelationGroup {
 interface FarmerContext {
   farmer_name: string | null
   farmer_phone: string | null
+  // 2026-06-19 — tap-to-enlarge avatar.
+  farmer_photo_url: string | null
   crop_name: string | null
   measure: 'PLANT_WISE' | 'AREA_WISE' | null
   age_value: number | null
@@ -115,10 +118,22 @@ interface FarmerContext {
   farm_area_acres: number | null
   number_of_plants: number | null
 }
+// 2026-06-19 — Mirrors FarmerContext so the dealer can call +
+// visually identify the facilitator who routed the order. Null on
+// orders that came directly from the farmer.
+interface FacilitatorContext {
+  facilitator_user_id: string
+  facilitator_name: string | null
+  facilitator_phone: string | null
+  facilitator_photo_url: string | null
+}
 interface Order {
   id: string; status: string; farmer_user_id: string; client_id: string
+  // 2026-06-19 — Human-readable Order ID surfaced on the detail header.
+  reference_number?: string | null
   date_from: string; date_to: string; created_at: string
   farmer_context?: FarmerContext
+  facilitator_context?: FacilitatorContext | null
   items: OrderItem[]
   relations?: RelationGroup[]
   standalone_items?: OrderItem[]
@@ -1467,7 +1482,20 @@ export default function DealerOrderDetailPage() {
             dealer needs the crop name + farmer + acres/plants to
             decide on the resolving postponed item. The "hide
             distractions" gate from before stripped too much. */}
+        {/* 2026-06-19 — Human-readable Order ID at the top so the
+            dealer can confirm the order over phone with the farmer
+            or facilitator before doing anything else. */}
+        {order.reference_number && (
+          <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] mt-4 flex items-center justify-between gap-3">
+            <p className="text-xs text-[#7A8C7E]">{t('orderIdLabel')}</p>
+            <p className="font-mono text-sm font-semibold text-[#085041] tracking-wide">{order.reference_number}</p>
+          </div>
+        )}
+
         {order.farmer_context && <FarmerContextCard ctx={order.farmer_context} />}
+        {order.facilitator_context && (
+          <FacilitatorContextCard ctx={order.facilitator_context} />
+        )}
 
         {/* Header card — skipped in focus mode so the screen stays
             clean on a single postponed-item resolve. */}
@@ -2112,8 +2140,10 @@ function FarmerContextCard({ ctx }: { ctx: FarmerContext }) {
 
   return (
     <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4 space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+      <div className="flex items-start gap-3">
+        {/* 2026-06-19 — tap-to-enlarge avatar (WhatsApp-style). */}
+        <AvatarLightbox photoUrl={ctx.farmer_photo_url} name={ctx.farmer_name} size={56} />
+        <div className="flex-1 min-w-0">
           <p className="text-xs text-[#7A8C7E]">{t('farmerLabel')}</p>
           <p className="font-semibold text-[#6B3F1F] truncate">{ctx.farmer_name || '—'}</p>
         </div>
@@ -2140,6 +2170,35 @@ function FarmerContextCard({ ctx }: { ctx: FarmerContext }) {
           </p>
           <p className="text-sm font-medium text-[#6B3F1F]">{measureLine || '—'}</p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// 2026-06-19 — Facilitator identity confirm. Only renders on orders
+// routed via a facilitator. Same shape as the farmer card minus the
+// crop/area block (facilitator isn't the producer; the farmer is).
+function FacilitatorContextCard({ ctx }: { ctx: FacilitatorContext }) {
+  const t = useTranslations('dealer.orderDetail.facilitatorContext')
+  return (
+    <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] space-y-3">
+      <div className="flex items-start gap-3">
+        <AvatarLightbox photoUrl={ctx.facilitator_photo_url} name={ctx.facilitator_name} size={56}
+          ringColor="#DDD0B8" bgColor="rgba(125, 78, 0, 0.1)" textColor="#7D4E00" />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-[#7A8C7E]">{t('facilitatorLabel')}</p>
+          <p className="font-semibold text-[#6B3F1F] truncate">{ctx.facilitator_name || '—'}</p>
+          <p className="text-[10px] text-[#7A8C7E] mt-0.5">{t('routedViaHint')}</p>
+        </div>
+        {ctx.facilitator_phone && (
+          <a href={`tel:${ctx.facilitator_phone}`}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-semibold">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {t('callBtn')}
+          </a>
+        )}
       </div>
     </div>
   )

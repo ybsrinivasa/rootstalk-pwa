@@ -1338,7 +1338,10 @@
         "seedCategory": "ಬೀಜ / ಸಸಿ",
         "categoryFallback": "ಆದೇಶ",
         "receivedSuffix": " · ಸ್ವೀಕರಿಸಲಾಗಿದೆ {date}",
-        "expandSubOrders": "{count, plural, one {1 ಉಪ-ಆದೇಶ} other {# ಉಪ-ಆರ್ಡರ್‌ಗಳು}}"
+        "expandSubOrders": "{count, plural, one {1 ಉಪ-ಆದೇಶ} other {# ಉಪ-ಆರ್ಡರ್‌ಗಳು}}",
+        "viaFacilitatorLabel": "ಸಹಾಯಕರ ಮೂಲಕ",
+        "unknownFacilitator": "ಅಪರಿಚಿತ ಸಹಾಯಕ",
+        "callBtn": "📞 ಕರೆ"
       },
       "chunk": {
         "subOrderPrefix": "ಉಪ-ಆದೇಶ · {date}",
@@ -1407,6 +1410,12 @@
     "orderDetail": {
       "headerTitle": "ಆದೇಶದ ವಿವರಗಳು",
       "focusHeader": "ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂ",
+      "orderIdLabel": "ಆದೇಶ ಸಂಖ್ಯೆ",
+      "facilitatorContext": {
+        "facilitatorLabel": "ಸಹಾಯಕ",
+        "callBtn": "ಕರೆ",
+        "routedViaHint": "ಈ ಆದೇಶವನ್ನು ನಿಮಗೆ ಕಳುಹಿಸಿದ್ದಾರೆ"
+      },
       "errors": {
         "decline": "ನಿರಾಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
         "save": "ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",

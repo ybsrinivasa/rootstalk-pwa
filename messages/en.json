@@ -1338,7 +1338,10 @@
         "seedCategory": "Seed / Seedling",
         "categoryFallback": "order",
         "receivedSuffix": " · Received {date}",
-        "expandSubOrders": "{count, plural, one {1 sub-order} other {# sub-orders}}"
+        "expandSubOrders": "{count, plural, one {1 sub-order} other {# sub-orders}}",
+        "viaFacilitatorLabel": "Via facilitator",
+        "unknownFacilitator": "Unknown facilitator",
+        "callBtn": "📞 Call"
       },
       "chunk": {
         "subOrderPrefix": "Sub-order · {date}",
@@ -1407,6 +1410,12 @@
     "orderDetail": {
       "headerTitle": "Order Details",
       "focusHeader": "Postponed item",
+      "orderIdLabel": "Order ID",
+      "facilitatorContext": {
+        "facilitatorLabel": "Facilitator",
+        "callBtn": "Call",
+        "routedViaHint": "Routed this order to you"
+      },
       "errors": {
         "decline": "Could not decline. Please try again.",
         "save": "Could not save. Please try again.",

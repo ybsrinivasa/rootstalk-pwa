@@ -1338,7 +1338,10 @@
         "seedCategory": "बीज / पौधा",
         "categoryFallback": "आदेश",
         "receivedSuffix": " · प्राप्त {date}",
-        "expandSubOrders": "{count, plural, one {1 उप-आदेश} other {# उप-आदेश}}"
+        "expandSubOrders": "{count, plural, one {1 उप-आदेश} other {# उप-आदेश}}",
+        "viaFacilitatorLabel": "सुविधाकर्ता के ज़रिए",
+        "unknownFacilitator": "अज्ञात सुविधाकर्ता",
+        "callBtn": "📞 कॉल"
       },
       "chunk": {
         "subOrderPrefix": "उप-आदेश · {date}",
@@ -1407,6 +1410,12 @@
     "orderDetail": {
       "headerTitle": "ऑर्डर का विवरण",
       "focusHeader": "स्थगित मद",
+      "orderIdLabel": "ऑर्डर आईडी",
+      "facilitatorContext": {
+        "facilitatorLabel": "सुविधाकर्ता",
+        "callBtn": "कॉल",
+        "routedViaHint": "इस ऑर्डर को आप तक भेजा है"
+      },
       "errors": {
         "decline": "अस्वीकार नहीं किया जा सका। कृपया पुनः प्रयास करें।",
         "save": "सहेजा नहीं जा सका। कृपया पुनः प्रयास करें।",

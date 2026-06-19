@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
 
 // 2026-06-05 — Dealer orders feed restructured by ACTION pill rather
@@ -47,6 +48,9 @@ interface Order {
   facilitator_user_id: string | null
   facilitator_name: string | null
   facilitator_phone: string | null
+  // 2026-06-19 — Photo so the dealer can visually identify the
+  // facilitator who routed the order. Tap-to-enlarge on render.
+  facilitator_photo_url: string | null
   client_id: string
   client_name: string | null
   category: string | null
@@ -167,6 +171,7 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
     facilitator_user_id: null,
     facilitator_name: null,
     facilitator_phone: null,
+    facilitator_photo_url: null,
     client_id: s.client_id,
     client_name: s.client_name,
     category: s.category || 'SEED',
@@ -614,14 +619,9 @@ function DealerOrderCardHeader({
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
       <div className="flex items-start gap-3">
-        {head.farmer_photo_url ? (
-          <img src={head.farmer_photo_url} alt={head.farmer_name || t('farmerAlt')}
-            className="w-10 h-10 rounded-full object-cover border border-[#DDD0B8] shrink-0" />
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-[#085041]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
-            <span className="text-xs font-bold text-[#085041]">{initials(head.farmer_name)}</span>
-          </div>
-        )}
+        {/* 2026-06-19 — Farmer avatar opens to fullscreen on tap so
+            the dealer can confirm who they're talking to. */}
+        <AvatarLightbox photoUrl={head.farmer_photo_url} name={head.farmer_name} size={44} />
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2">
             <p className="font-semibold text-[#6B3F1F] truncate">
@@ -644,6 +644,32 @@ function DealerOrderCardHeader({
           </p>
         </div>
       </div>
+      {/* 2026-06-19 — Facilitator strip — only when the order was
+          routed via a facilitator. Same tap-to-enlarge + call link
+          as the farmer chunk. */}
+      {(head.facilitator_user_id || head.facilitator_name) && (
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#F0E8D6]">
+          <AvatarLightbox
+            photoUrl={head.facilitator_photo_url}
+            name={head.facilitator_name}
+            size={32}
+            bgColor="rgba(125, 78, 0, 0.1)"
+            textColor="#7D4E00" />
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wide">{t('viaFacilitatorLabel')}</p>
+            <p className="text-xs font-medium text-[#6B3F1F] truncate">
+              {head.facilitator_name || t('unknownFacilitator')}
+            </p>
+          </div>
+          {head.facilitator_phone && (
+            <a href={`tel:${head.facilitator_phone}`}
+              onClick={(e) => e.stopPropagation()}
+              className="shrink-0 text-[10px] bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg font-semibold">
+              {t('callBtn')}
+            </a>
+          )}
+        </div>
+      )}
       <p className="text-[10px] font-mono tracking-wide text-[#085041] mt-2">
         {orderId}
       </p>
