@@ -398,7 +398,12 @@ function DealerOrdersInner() {
             small right-aligned secondary link below, so it's still
             reachable but doesn't crowd the primary filters. */}
         <div className="px-4 pt-3 relative">
-          <div className="flex flex-wrap gap-2 pr-20">
+          {/* 2026-06-19 — No right-side gutter on the pill wrapper:
+              we want the natural wrap (Pending / Postponed / With
+              Farmer on row 1, Packing alone on row 2). History lives
+              on row 2's right via absolute position — safe because
+              Packing leaves plenty of empty space on that row. */}
+          <div className="flex flex-wrap gap-2">
             {PILLS.map(p => {
               const active = pill === p
               const n = counts[p]
@@ -421,10 +426,9 @@ function DealerOrdersInner() {
               )
             })}
           </div>
-          {/* History sits at the right of the second pill row
-              (aligned with Packing). `pr-20` on the pill wrapper
-              above reserves the right gutter so the second-row pills
-              never collide with it. */}
+          {/* History sits on row 2 (aligned with Packing) at the
+              right edge. Row 2 holds only Packing, so collision is
+              not a concern. */}
           <button onClick={() => router.push('/dealer/history')}
             className="absolute top-[53px] right-4 text-xs font-semibold text-[#7A8C7E] active:text-[#085041]">
             {t('historyChip')} →
