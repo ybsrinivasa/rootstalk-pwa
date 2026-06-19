@@ -132,8 +132,10 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       case 'farmer':
         return o.status === 'SENT_FOR_APPROVAL'
       case 'packing':
-        // Seeds don't have a packing-list surface yet.
-        return false
+        // 2026-06-19 — Seed order's hand-over step. After farmer
+        // approval the order parks at READY_FOR_PICKUP; the dealer
+        // packs the seed and marks it handed over from this pill.
+        return o.status === 'READY_FOR_PICKUP'
     }
   }
   const c = o.item_status_counts
@@ -753,15 +755,26 @@ function DealerPillChunk({
       {pill === 'farmer' && (
         <div className="px-4 py-3">
           <p className="text-[11px] text-amber-700 font-medium">
-            {t('waitingForFarmer', { count: sub.item_status_counts.sent_for_approval })}
+            {sub.is_seed
+              ? t('waitingForFarmerSeed')
+              : t('waitingForFarmer', { count: sub.item_status_counts.sent_for_approval })}
           </p>
         </div>
       )}
       {pill === 'packing' && (
-        <PackingChunk order={sub}
-          onShare={() => onShare(sub)}
-          onRemove={() => onRemove(sub)}
-          busy={busy === sub.id} />
+        sub.is_seed ? (
+          <button onClick={() => router.push('/dealer/seed-orders')}
+            className="w-full px-4 py-3 text-left active:bg-purple-50/60">
+            <p className="text-[11px] text-purple-800 font-medium">
+              {t('packingSeedTap')}
+            </p>
+          </button>
+        ) : (
+          <PackingChunk order={sub}
+            onShare={() => onShare(sub)}
+            onRemove={() => onRemove(sub)}
+            busy={busy === sub.id} />
+        )
       )}
     </div>
   )

@@ -48,6 +48,7 @@ const STATUS_TONE: Record<string, string> = {
   POSTPONED:         'bg-amber-100 text-amber-800',
   NOT_AVAILABLE:     'bg-red-100 text-[#D4682E]',
   SENT_FOR_APPROVAL: 'bg-amber-100 text-amber-700',
+  READY_FOR_PICKUP:  'bg-purple-100 text-purple-700',
   PURCHASED:         'bg-emerald-100 text-emerald-700',
   REJECTED:          'bg-rose-100 text-rose-600',
   CANCELLED:         'bg-stone-100 text-[#7A8C7E]',
@@ -180,11 +181,14 @@ export default function FarmerSeedOrderDetailPage() {
 
   const isDraft = order.status === 'DRAFT'
   const isCancelled = order.status === 'CANCELLED'
-  const canCancel = !['DRAFT', 'CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED'].includes(order.status)
+  // 2026-06-19 — READY_FOR_PICKUP joins the cancel-blocked set.
+  // Once approved the commercial transaction is committed; the
+  // dealer's hand-over endpoint is the only way out.
+  const canCancel = !['DRAFT', 'CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'READY_FOR_PICKUP'].includes(order.status)
   const canApprove = order.status === 'SENT_FOR_APPROVAL'
   const statusKeys: readonly string[] = [
     'DRAFT', 'SENT', 'ACCEPTED', 'AVAILABLE', 'POSTPONED', 'NOT_AVAILABLE',
-    'SENT_FOR_APPROVAL', 'PURCHASED', 'REJECTED', 'CANCELLED', 'REROUTED',
+    'SENT_FOR_APPROVAL', 'READY_FOR_PICKUP', 'PURCHASED', 'REJECTED', 'CANCELLED', 'REROUTED',
   ]
   const statusCopy = statusKeys.includes(order.status)
     ? t(`status.${order.status}` as 'status.DRAFT')

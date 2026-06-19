@@ -1356,7 +1356,9 @@
           "processing": "Processing · tap to continue"
         },
         "postponedTap": "{count, plural, one {⏰ 1 postponed item · tap to resolve} other {⏰ # postponed items · tap to resolve}}",
-        "waitingForFarmer": "{count, plural, one {⏳ Waiting for farmer to approve 1 item} other {⏳ Waiting for farmer to approve # items}}"
+        "waitingForFarmer": "{count, plural, one {⏳ Waiting for farmer to approve 1 item} other {⏳ Waiting for farmer to approve # items}}",
+        "waitingForFarmerSeed": "⏳ Waiting for farmer to approve",
+        "packingSeedTap": "📦 Pack the seed · tap to hand over to farmer"
       },
       "packing": {
         "packingIdLabel": "Packing ID",
@@ -1733,10 +1735,14 @@
       },
       "statusBanners": {
         "awaitingApproval": "Waiting for farmer approval",
-        "purchased": "Order complete — farmer approved",
+        "readyForPickup": "Farmer approved. Pack the seed and hand it over.",
+        "purchased": "Order complete — handed over to the farmer",
         "postponed": "Postponed. Tap Not Available to release this order back to the farmer.",
         "notAvailable": "Returned to the farmer to send to someone else."
       },
+      "handoverCta": "Mark as handed over",
+      "confirmHandover": "Confirm the seed packet has been handed over to the farmer? This closes the order.",
+      "errorHandover": "Could not mark as handed over. Please try again.",
       "confirmNa": "Mark this seed order as Not Available? The farmer will be able to send it to a different dealer.",
       "errorMarkNa": "Could not mark as Not Available. Please try again.",
       "errorDecline": "Could not decline. Please try again.",
@@ -2610,6 +2616,7 @@
       "POSTPONED": "Delayed",
       "NOT_AVAILABLE": "Returned — action needed",
       "SENT_FOR_APPROVAL": "Ready for your approval",
+      "READY_FOR_PICKUP": "Approved — awaiting handover from dealer",
       "PURCHASED": "Purchased",
       "REJECTED": "Rejected by you",
       "CANCELLED": "Cancelled",

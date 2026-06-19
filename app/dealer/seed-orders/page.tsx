@@ -33,6 +33,7 @@ const STATUS_COLOUR: Record<string, string> = {
   POSTPONED: 'bg-amber-100 text-amber-800',
   NOT_AVAILABLE: 'bg-red-100 text-[#D4682E]',
   SENT_FOR_APPROVAL: 'bg-amber-100 text-amber-700',
+  READY_FOR_PICKUP: 'bg-purple-100 text-purple-700',
   PURCHASED: 'bg-emerald-100 text-emerald-700',
   REROUTED: 'bg-slate-100 text-[#7A8C7E]',
   CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
@@ -117,6 +118,19 @@ export default function DealerSeedOrdersPage() {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
       alert(e?.response?.data?.detail?.message || t('errorPostpone'))
     } finally { setPostponeBusy(false) }
+  }
+
+  // 2026-06-19 — Hand-over completes the seed flow. Farmer-approval
+  // parks the order at READY_FOR_PICKUP (purple chip); this action
+  // moves it to PURCHASED (terminal).
+  async function handover(id: string) {
+    if (!confirm(t('confirmHandover'))) return
+    try {
+      await api.put(`/dealer/seed-orders/${id}/handover`, {})
+      load()
+    } catch {
+      alert(t('errorHandover'))
+    }
   }
 
   async function markNotAvailable(id: string) {
@@ -307,6 +321,20 @@ export default function DealerSeedOrdersPage() {
                       <div className="mt-3 bg-amber-50 rounded-xl p-3 text-xs text-amber-700 text-center font-medium">
                         {t('statusBanners.awaitingApproval')}
                       </div>
+                    )}
+                    {/* 2026-06-19 — Farmer-approval lands here.
+                        Dealer's action is to physically hand over
+                        the seed packet and confirm via the button. */}
+                    {order.status === 'READY_FOR_PICKUP' && (
+                      <>
+                        <div className="mt-3 bg-purple-50 rounded-xl p-3 text-xs text-purple-800 text-center font-medium">
+                          {t('statusBanners.readyForPickup')}
+                        </div>
+                        <button onClick={() => handover(order.id)}
+                          className="w-full mt-2 bg-purple-600 text-white text-xs font-semibold py-2.5 rounded-xl">
+                          {t('handoverCta')}
+                        </button>
+                      </>
                     )}
                     {order.status === 'PURCHASED' && (
                       <div className="mt-3 bg-emerald-50 rounded-xl p-3 text-xs text-emerald-700 text-center font-medium">
