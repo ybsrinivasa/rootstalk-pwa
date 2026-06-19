@@ -1253,16 +1253,22 @@
       "farmersWaiting": "{count, plural, one {1 farmer waiting for you to pay} other {# farmers waiting for you to pay}}",
       "tiles": {
         "myFarmers": "My Farmers",
+        "myFarmersSubtitle": "Promoted",
         "promotedCount": "{count} promoted",
         "myDealerships": "My Dealerships",
+        "myDealershipsSubtitle": "Manufacturers",
         "manufacturerCount": "{count, plural, one {1 manufacturer} other {# manufacturers}}",
         "payments": "Payments",
+        "paymentsSubtitle": "Pending",
         "pendingCount": "{count} pending",
         "seedOrders": "Seed Orders",
         "activeCount": "{count} active",
+        "packing": "Packing",
+        "packingSubtitle": "Ready to hand over",
         "shopDetails": "Shop Details",
         "whatYouSell": "What you sell",
         "alertsIncoming": "Alerts I receive",
+        "alertsSubtitle": "Unread",
         "unreadCount": "{count} unread"
       }
     },

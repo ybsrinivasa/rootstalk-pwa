@@ -391,11 +391,14 @@ function DealerOrdersInner() {
 
         {/* Pill row — 2026-06-09: count promoted to filled-circle
             badge so task-load reads at a glance (parity with Farmer
-            + Facilitator). History chip routes to terminal sub-orders
-            (Completed / Cancelled), mirroring the placement on
-            /facilitator/orders + /crop-detail/[id]/orders Manage tab. */}
-        <div className="px-4 pt-3 flex items-center gap-2">
-          <div className="flex gap-2 overflow-x-auto flex-1">
+            + Facilitator).
+            2026-06-19 — Pills now wrap (flex-wrap) instead of
+            horizontal-scrolling so all four are plainly visible on a
+            phone-width column. History moves off the same row to a
+            small right-aligned secondary link below, so it's still
+            reachable but doesn't crowd the primary filters. */}
+        <div className="px-4 pt-3">
+          <div className="flex flex-wrap gap-2">
             {PILLS.map(p => {
               const active = pill === p
               const n = counts[p]
@@ -418,10 +421,12 @@ function DealerOrdersInner() {
               )
             })}
           </div>
-          <button onClick={() => router.push('/dealer/history')}
-            className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
-            {t('historyChip')}
-          </button>
+          <div className="mt-2 flex justify-end">
+            <button onClick={() => router.push('/dealer/history')}
+              className="text-xs font-semibold text-[#7A8C7E] active:text-[#085041]">
+              {t('historyChip')} →
+            </button>
+          </div>
         </div>
 
         <div className="px-4 mt-4 space-y-3">

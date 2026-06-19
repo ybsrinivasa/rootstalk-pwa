@@ -347,7 +347,7 @@
       },
       "linkChip": "🔗 ચુકવણી લિંક",
       "expiringSoon": "ટૂંક સમયમાં સમાપ્ત થઈ રહ્યું છે",
-      "hoursRemaining": "{hours} કલાક બાકી",
+      "hoursRemaining": "{hours} કલાક બાકી છે",
       "completeCta": "ચુકવણી પૂર્ણ કરો →",
       "cancelSub": "આ સબ્સ્ક્રિપ્શન રદ કરો",
       "shareLinkCta": "QR બતાવો અને શેર કરો →",
@@ -506,7 +506,7 @@
       "confirmAreaBody": "આ ઇનપુટ્સ માટેના વોલ્યુમની ગણતરી આના આધારે કરવામાં આવે છે. તમે વાવેતર વખતે તેને ફરી એકવાર સુધારી શકો છો.",
       "orderDbsPesticides": "DBS જંતુનાશકોનો ઓર્ડર આપો",
       "orderDbsFertilisers": "DBS ખાતરોનો ઓર્ડર આપો",
-      "updateAreaLabel": "કામચલાઉ ક્ષેત્ર અપડેટ કરો:",
+      "updateAreaLabel": "અપડેટ કામચલાઉ ક્ષેત્ર:",
       "currentAreaPrefix": "હાલનો સંભવિત વિસ્તાર:",
       "willUseForVolume": "આપણે આનો ઉપયોગ વોલ્યુમ માટે કરીશું. તમે વાવેતર કરતી વખતે ફરી એકવાર સુધારો કરી શકો છો.",
       "areaPrefix": "વિસ્તાર:",
@@ -755,7 +755,7 @@
       },
       "approvalSection": {
         "title": "તમારી મંજૂરીની રાહ જોઈ રહ્યા છીએ ( {count} )",
-        "batchRound": "{total} માંથી બેચ {current} }",
+        "batchRound": "કુલ {current} {total}",
         "brandPending": "બ્રાન્ડ બાકી છે",
         "byManufacturer": "{manufacturer} દ્વારા",
         "acrossTimelines": "{count, plural, one {૧ સમયરેખા પર} other {# સમયરેખામાં}}",
@@ -892,7 +892,7 @@
         "kindSeed": "બીજ",
         "kindFallback": "ઓર્ડર",
         "seedFallback": "બીજ ક્રમ",
-        "expandSubs": "{count, plural, one {1 સબ-ઓર્ડર} other {# પેટા-ઓર્ડર}}"
+        "expandSubs": "{count, plural, one {1 પેટા-ક્રમ} other {# પેટા-ઓર્ડર}}"
       },
       "chunk": {
         "subOrderPrefix": "સબ-ઓર્ડર ·",
@@ -1265,16 +1265,22 @@
       "farmersWaiting": "{count, plural, one {1 ખેડૂત તમારા પૈસા ચૂકવવાની રાહ જોઈ રહ્યો છે} other {# ખેડૂતો તમારા પૈસા ચૂકવવાની રાહ જોઈ રહ્યા છે}}",
       "tiles": {
         "myFarmers": "મારા ખેડૂતો",
+        "myFarmersSubtitle": "બઢતી",
         "promotedCount": "{count} બઢતી આપવામાં આવી",
         "myDealerships": "મારી ડીલરશીપ્સ",
+        "myDealershipsSubtitle": "ઉત્પાદકો",
         "manufacturerCount": "{count, plural, one {1 ઉત્પાદક} other {# ઉત્પાદકો}}",
         "payments": "ચુકવણીઓ",
+        "paymentsSubtitle": "બાકી",
         "pendingCount": "{count} બાકી છે",
         "seedOrders": "બીજ ઓર્ડર",
         "activeCount": "{count} સક્રિય",
+        "packing": "પેકિંગ",
+        "packingSubtitle": "સોંપવા માટે તૈયાર",
         "shopDetails": "દુકાનની વિગતો",
         "whatYouSell": "તમે શું વેચો છો",
         "alertsIncoming": "મને મળતી ચેતવણીઓ",
+        "alertsSubtitle": "વાંચ્યા વગરનું",
         "unreadCount": "{count} વાંચ્યા વગરના"
       }
     },
@@ -1290,7 +1296,7 @@
       "attributionSuffix": "ખેડૂતે જેની સલાહ લીધી હતી તે કંપનીને ચૂકવણી કરી.",
       "farmerFallback": "ખેડૂત",
       "expiringSoon": "ટૂંક સમયમાં સમાપ્ત થઈ રહ્યું છે",
-      "hoursRemaining": "{hours} કલાક બાકી",
+      "hoursRemaining": "{hours} કલાક બાકી છે",
       "opening": "ખુલી રહ્યું છે...",
       "payAmount": "₹ {amount} ચૂકવો",
       "decline": "નકારો",
@@ -1324,7 +1330,7 @@
         "copiedToClipboard": "ક્લિપબોર્ડ પર કોપી કર્યું — તમારા મેસેન્જરમાં પેસ્ટ કરો."
       },
       "reshare": {
-        "title": "ફરીથી શેર કરીએ?",
+        "title": "ફરી શેર કરીએ?",
         "bodyPrefix": "આ પેકિંગ સૂચિ પહેલાથી જ શેર કરવામાં આવી હતી.",
         "bodyAt": "ખાતે",
         "bodyOn": "ચાલુ",
@@ -1350,14 +1356,14 @@
         "seedCategory": "બીજ / રોપા",
         "categoryFallback": "ઓર્ડર",
         "receivedSuffix": " · પ્રાપ્ત {date}",
-        "expandSubOrders": "{count, plural, one {1 સબ-ઓર્ડર} other {# પેટા-ઓર્ડર}}",
+        "expandSubOrders": "{count, plural, one {1 પેટા-ક્રમ} other {# પેટા-ઓર્ડર}}",
         "viaFacilitatorLabel": "ફેસિલિટેટર દ્વારા",
         "unknownFacilitator": "અજાણ્યો સુવિધા આપનાર",
         "callBtn": "કૉલ કરો",
         "farmerRoleLabel": "ખેડૂત",
         "facilitatorRoleLabel": "ફેસિલિટેટર દ્વારા રૂટ કરાયેલ",
         "callFarmerAria": "ખેડૂતને કૉલ કરો",
-        "callFacilitatorAria": "કૉલ ફેસિલિટેટર"
+        "callFacilitatorAria": "ફેસિલિટેટરને કૉલ કરો"
       },
       "chunk": {
         "subOrderPrefix": "સબ-ઓર્ડર · {date}",
@@ -1693,7 +1699,7 @@
     },
     "dealerships": {
       "headerTitle": "મારી ડીલરશીપ્સ",
-      "intro": "તમારી સાથે ડીલરશીપ કરાર હોય તેવા ઉત્પાદકોને પસંદ કરો. બંને ટેબમાં એક જ ઉત્પાદક દેખાઈ શકે છે - તમે તેમને દરેક શ્રેણીમાં એક વાર પસંદ કરી શકો છો. તમે ગમે ત્યારે ઉમેરી અને દૂર કરી શકો છો; કોઈ આની ચકાસણી કરતું નથી.",
+      "intro": "તમારી સાથે ડીલરશીપ કરાર હોય તેવા ઉત્પાદકો પસંદ કરો. બંને ટેબમાં એક જ ઉત્પાદક દેખાઈ શકે છે - તમે તેમને દરેક શ્રેણીમાં એક વાર પસંદ કરી શકો છો. તમે ગમે ત્યારે ઉમેરી અને દૂર કરી શકો છો; કોઈ આની ચકાસણી કરતું નથી.",
       "tabPesticide": "જંતુનાશક",
       "tabFertilizer": "ખાતર",
       "notePesticide": "જંતુનાશકો + ખાસ ઇનપુટ્સ (સહાયકો)",
@@ -1974,7 +1980,7 @@
       "attributionSuffix": " ખેડૂતે જેની સલાહ લીધી હતી તે કંપનીને ચૂકવણી કરી.",
       "farmerFallback": "ખેડૂત",
       "expiringSoon": "ટૂંક સમયમાં સમાપ્ત થઈ રહ્યું છે",
-      "hoursRemaining": "{hours} કલાક બાકી",
+      "hoursRemaining": "{hours} કલાક બાકી છે",
       "opening": "ખુલી રહ્યું છે...",
       "payCta": "₹ {amount} ચૂકવો",
       "decline": "નકારો"
@@ -2334,7 +2340,7 @@
       "statPending": "બાકી",
       "statReturned": "પરત કર્યું",
       "privacyTitle": "કંપની શોધમાંથી છુપાયેલ ફોન નંબર",
-      "privacyHidden": "છુપાયેલ — કંપનીઓ તમને ફોન દ્વારા શોધી શકતી નથી",
+      "privacyHidden": "છુપાયેલ - કંપનીઓ તમને ફોન દ્વારા શોધી શકતી નથી",
       "privacyVisible": "દૃશ્યમાન — કંપનીઓ તમને ફોન દ્વારા શોધી શકે છે",
       "tileCredentials": "નિષ્ણાત ઓળખપત્રો",
       "tileCredentialsHint": "મારી પ્રોફાઇલ જુઓ",
@@ -2362,7 +2368,7 @@
       "emptyPending": "કોઈ બાકી ક્વેરી નથી",
       "emptyReturned": "કોઈ પરત કરેલી ક્વેરી નથી",
       "emptyHistory": "કોઈ ઇતિહાસ ક્વેરી નથી",
-      "daysRemaining": "{count} દિવસ બાકી",
+      "daysRemaining": "{count} d બાકી",
       "forwardedTo": "{name} ને ફોરવર્ડ કર્યું"
     },
     "invitations": {
@@ -2390,7 +2396,7 @@
       "phoneHiddenSuffix": "· છુપાયેલ",
       "emailLabel": "ઇમેઇલ",
       "phonePrivacyTitle": "ફોન ગોપનીયતા",
-      "phonePrivacyHidden": "છુપાયેલ — કંપનીઓ તમને ફોન દ્વારા શોધી શકતી નથી",
+      "phonePrivacyHidden": "છુપાયેલ - કંપનીઓ તમને ફોન દ્વારા શોધી શકતી નથી",
       "phonePrivacyVisible": "દૃશ્યમાન — કંપનીઓ તમને ફોન દ્વારા શોધી શકે છે",
       "educationLabel": "શિક્ષણ",
       "experienceLabel": "વર્ષોનો અનુભવ",
@@ -2546,7 +2552,7 @@
       "forward": {
         "title": "ક્વેરી ફોરવર્ડ કરો",
         "subtitle": "2-દિવસનો સમય રીસેટ થતો નથી. ફરજિયાત ટિપ્પણીઓ જરૂરી છે.",
-        "pickColleague": "આ કંપનીમાં કોઈ સાથીદાર પસંદ કરો",
+        "pickColleague": "આ કંપનીમાં એક સાથીદાર પસંદ કરો",
         "noColleagues": "આ કંપનીમાં અન્ય કોઈ ફાર્મપંડિત્સ સામેલ નથી. તમે આ ક્વેરી ફોરવર્ડ કરી શકતા નથી.",
         "rolePrimary": "પ્રાથમિક",
         "rolePanel": "પેનલ",
