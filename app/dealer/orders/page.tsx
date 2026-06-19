@@ -397,8 +397,8 @@ function DealerOrdersInner() {
             phone-width column. History moves off the same row to a
             small right-aligned secondary link below, so it's still
             reachable but doesn't crowd the primary filters. */}
-        <div className="px-4 pt-3">
-          <div className="flex flex-wrap gap-2">
+        <div className="px-4 pt-3 relative">
+          <div className="flex flex-wrap gap-2 pr-20">
             {PILLS.map(p => {
               const active = pill === p
               const n = counts[p]
@@ -421,12 +421,14 @@ function DealerOrdersInner() {
               )
             })}
           </div>
-          <div className="mt-2 flex justify-end">
-            <button onClick={() => router.push('/dealer/history')}
-              className="text-xs font-semibold text-[#7A8C7E] active:text-[#085041]">
-              {t('historyChip')} →
-            </button>
-          </div>
+          {/* History sits at the top-right corner of the pill block,
+              vertically centered on the first pill row. `pr-20` on the
+              pill wrapper above reserves the right gutter so a pill
+              never collides with it. */}
+          <button onClick={() => router.push('/dealer/history')}
+            className="absolute top-[15px] right-4 text-xs font-semibold text-[#7A8C7E] active:text-[#085041]">
+            {t('historyChip')} →
+          </button>
         </div>
 
         <div className="px-4 mt-4 space-y-3">
