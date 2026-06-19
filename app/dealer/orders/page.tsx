@@ -421,12 +421,12 @@ function DealerOrdersInner() {
               )
             })}
           </div>
-          {/* History sits at the top-right corner of the pill block,
-              vertically centered on the first pill row. `pr-20` on the
-              pill wrapper above reserves the right gutter so a pill
-              never collides with it. */}
+          {/* History sits at the right of the second pill row
+              (aligned with Packing). `pr-20` on the pill wrapper
+              above reserves the right gutter so the second-row pills
+              never collide with it. */}
           <button onClick={() => router.push('/dealer/history')}
-            className="absolute top-[15px] right-4 text-xs font-semibold text-[#7A8C7E] active:text-[#085041]">
+            className="absolute top-[53px] right-4 text-xs font-semibold text-[#7A8C7E] active:text-[#085041]">
             {t('historyChip')} →
           </button>
         </div>
