@@ -309,10 +309,23 @@ export default function CropDetailPage() {
         farm_area_acres: needsAreaInBody ? parseFloat(orderSheetArea) : s.farm_area_acres,
         area_unit: needsAreaInBody ? 'acres' : s.area_unit,
       } : s)
-      setOrderSuccess({ order_id: res.data.order_id, item_count: res.data.item_count })
+      // 2026-06-19 — Backend now lands the buy-all-dbs order as
+      // DRAFT (no recipient at create). Route directly to the
+      // order page so the farmer hits the existing DRAFT picker
+      // (brand-lock-aware) instead of seeing a SENT order go
+      // nowhere.
+      closeOrderSheet()
+      router.push(`/orders/${res.data.order_id}`)
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { detail?: string } } }
-      showToast(err.response?.data?.detail || t('toast.orderFailed'))
+      // FastAPI detail can be string or {code, message}. Normalise.
+      const err = e as { response?: { data?: { detail?: string | { code?: string; message?: string } } } }
+      const detail = err.response?.data?.detail
+      const msg =
+        typeof detail === 'string'
+          ? detail
+          : (detail && typeof detail === 'object' && detail.message)
+            || t('toast.orderFailed')
+      showToast(msg)
     } finally { setOrderBusy(false) }
   }
 
