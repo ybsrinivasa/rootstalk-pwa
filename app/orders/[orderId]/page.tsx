@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import api from '@/lib/api'
 
 interface OrderItem {
@@ -86,6 +87,7 @@ export default function FarmerOrderDetailPage() {
   const router = useRouter()
   const t = useTranslations('orders.review')
   const tCommon = useTranslations('common')
+  const tOrdersCommon = useTranslations('orders.common')
   const locale = useLocale()
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
@@ -189,8 +191,18 @@ export default function FarmerOrderDetailPage() {
     setRerouteIncludePostponed(null)
   }
 
+  // 2026-06-19 — Tap on a recipient row stashes the pending send;
+  // ConfirmSendOrderSheet at the bottom of the page shows the
+  // "Do you wish to send the {inputType} Order to {recipient}?"
+  // confirmation; tap confirm → sendToRecipient.
+  const [pendingSend, setPendingSend] = useState<{ r: Recipient; isDealer: boolean } | null>(null)
+  function requestSend(r: Recipient, isDealer: boolean) {
+    setPendingSend({ r, isDealer })
+  }
+
   async function sendToRecipient(r: Recipient, isDealer: boolean) {
     setSending(r.user_id)
+    setPendingSend(null)
     try {
       const payload = isDealer
         ? { dealer_user_id: r.user_id }
@@ -665,7 +677,7 @@ export default function FarmerOrderDetailPage() {
                         {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{t('picker.distanceKm', { km: r.distance_km })}</p>}
                         {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">{t('picker.promoterBadge')}</span>}
                       </div>
-                      <button onClick={() => sendToRecipient(r, isDealer)}
+                      <button onClick={() => requestSend(r, isDealer)}
                         disabled={!!sending}
                         className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
                         style={{ background: '#3A7D44' }}>
@@ -752,6 +764,24 @@ export default function FarmerOrderDetailPage() {
           </div>
         </div>
       )}
+      <ConfirmSendOrderSheet
+        open={!!pendingSend}
+        inputType={tOrdersCommon(
+          order?.category === 'PESTICIDE' ? 'inputType.pesticide'
+          : order?.category === 'FERTILIZER' || order?.category === 'FERTILISER' ? 'inputType.fertilizer'
+          : 'inputType.fallback'
+        )}
+        recipient={recipientLabel(
+          pendingSend?.isDealer ?? false,
+          pendingSend?.r ?? null,
+          tOrdersCommon('unknownRecipient'),
+        )}
+        busy={!!sending}
+        onCancel={() => setPendingSend(null)}
+        onConfirm={() => {
+          if (pendingSend) sendToRecipient(pendingSend.r, pendingSend.isDealer)
+        }}
+      />
     </div>
   )
 }

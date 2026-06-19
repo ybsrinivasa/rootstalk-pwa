@@ -6,6 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 
 // Orders V2 Batch 14 — farmer-side seed order detail. Same
 // affordances as the pesticide/fertiliser detail
@@ -58,6 +59,7 @@ const STATUS_TONE: Record<string, string> = {
 export default function FarmerSeedOrderDetailPage() {
   const t = useTranslations('seedOrders')
   const tDetail = useTranslations('seedOrders.detail')
+  const tCommon = useTranslations('orders.common')
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
   const [order, setOrder] = useState<SeedOrder | null>(null)
@@ -180,6 +182,16 @@ export default function FarmerSeedOrderDetailPage() {
     } finally { setPickerLoading(false) }
   }
 
+  // 2026-06-19 — Picker → ConfirmSendOrderSheet → actual send. The
+  // tap on a recipient row stashes the pending send; the sheet shows
+  // "Do you wish to send the Seed/Seedling Order to {recipient}?";
+  // confirm fires sendToRecipient.
+  const [pendingSend, setPendingSend] = useState<{ r: Recipient; isDealer: boolean } | null>(null)
+  function requestSend(r: Recipient, isDealer: boolean) {
+    if (!order) return
+    setPendingSend({ r, isDealer })
+  }
+
   async function sendToRecipient(r: Recipient, isDealer: boolean) {
     if (!order) return
     setSending(r.user_id)
@@ -188,6 +200,7 @@ export default function FarmerSeedOrderDetailPage() {
         ? { dealer_user_id: r.user_id }
         : { facilitator_user_id: r.user_id }
       await api.put(`/farmer/seed-orders/${order.id}/send`, payload)
+      setPendingSend(null)
       setPickerOpen(false)
       load()
     } catch (err: unknown) {
@@ -351,7 +364,7 @@ export default function FarmerSeedOrderDetailPage() {
                         {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{tDetail('kmAway', { km: r.distance_km })}</p>}
                         {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">{tDetail('promoterBadge')}</span>}
                       </div>
-                      <button onClick={() => sendToRecipient(r, isDealer)}
+                      <button onClick={() => requestSend(r, isDealer)}
                         disabled={!!sending}
                         className="shrink-0 px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
                         style={{ background: '#3A7D44' }}>
@@ -365,6 +378,20 @@ export default function FarmerSeedOrderDetailPage() {
           </div>
         </div>
       )}
+      <ConfirmSendOrderSheet
+        open={!!pendingSend}
+        inputType={tCommon('inputType.seed')}
+        recipient={recipientLabel(
+          pendingSend?.isDealer ?? false,
+          pendingSend?.r ?? null,
+          tCommon('unknownRecipient'),
+        )}
+        busy={!!sending}
+        onCancel={() => setPendingSend(null)}
+        onConfirm={() => {
+          if (pendingSend) sendToRecipient(pendingSend.r, pendingSend.isDealer)
+        }}
+      />
     </div>
   )
 }

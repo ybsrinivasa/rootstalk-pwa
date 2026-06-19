@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import api from '@/lib/api'
 
 // 2026-06-06 — Focused forward-the-returned-items surface. Routes from
@@ -86,9 +87,19 @@ export default function FarmerForwardPage() {
     }).finally(() => setLoading(false))
   }, [orderId, router])
 
+  // 2026-06-19 — Confirm-before-send wrapper. Tap on a recipient
+  // stashes the pending forward; the sheet asks "Do you wish to
+  // send the {inputType} Order to {recipient}?"; confirm fires pick.
+  const [pendingForward, setPendingForward] = useState<{ r: Recipient; isDealer: boolean } | null>(null)
+  function requestForward(r: Recipient, isDealer: boolean) {
+    if (!order || includePostponed === null) return
+    setPendingForward({ r, isDealer })
+  }
+
   async function pick(r: Recipient, isDealer: boolean) {
     if (!order || includePostponed === null) return
     setSending(r.user_id)
+    setPendingForward(null)
     try {
       const { data } = await api.post<{ new_draft_order_id: string }>(
         `/farmer/orders/${order.id}/reroute-returned`,
@@ -170,7 +181,7 @@ export default function FarmerForwardPage() {
             </div>
           ) : (
             (tab === 'dealers' ? dealers : facilitators).map(r => (
-              <button key={r.user_id} onClick={() => pick(r, tab === 'dealers')}
+              <button key={r.user_id} onClick={() => requestForward(r, tab === 'dealers')}
                 disabled={sending !== null || includePostponed === null}
                 className="w-full bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4 text-left active:scale-[0.99] transition-transform disabled:opacity-60">
                 <div className="flex items-start justify-between gap-3">
@@ -233,6 +244,24 @@ export default function FarmerForwardPage() {
           </div>
         </div>
       )}
+      <ConfirmSendOrderSheet
+        open={!!pendingForward}
+        inputType={tOrdersCommon(
+          recipients?.category === 'PESTICIDE' ? 'inputType.pesticide'
+          : recipients?.category === 'FERTILIZER' || recipients?.category === 'FERTILISER' ? 'inputType.fertilizer'
+          : 'inputType.fallback'
+        )}
+        recipient={recipientLabel(
+          pendingForward?.isDealer ?? false,
+          pendingForward?.r ?? null,
+          tOrdersCommon('unknownRecipient'),
+        )}
+        busy={!!sending}
+        onCancel={() => setPendingForward(null)}
+        onConfirm={() => {
+          if (pendingForward) pick(pendingForward.r, pendingForward.isDealer)
+        }}
+      />
     </div>
   )
 }

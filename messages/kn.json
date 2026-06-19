@@ -76,7 +76,7 @@
       "analysing": "🔄 ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...",
       "askAi": "📷 AI ಕೇಳಿ",
       "askExpert": "👨‍🌾 ತಜ್ಞರನ್ನು ಕೇಳಿ",
-      "noExpertYet": "ಇನ್ನೂ ತಜ್ಞರಿಲ್ಲ",
+      "noExpertYet": "ಇನ್ನೂ ತಜ್ಞರಿಲ್ಲ.",
       "noExpertTooltip": "ಈ ಕಂಪನಿಯಲ್ಲಿ ಇನ್ನೂ ಪ್ರಾಥಮಿಕ ತಜ್ಞರಿಲ್ಲ.",
       "aiAnalysisLabel": "📷 AI ವಿಶ್ಲೇಷಣೆ",
       "confidenceHigh": "ಹೆಚ್ಚಿನ ವಿಶ್ವಾಸ",
@@ -261,7 +261,7 @@
     "tagline": "ನಿಮ್ಮ ಕೃಷಿ ಸಲಹಾ ಜಾಲ - ಭಾರತದಾದ್ಯಂತ ರೈತರು, ತಜ್ಞರು ಮತ್ತು ಕಂಪನಿಗಳನ್ನು ಸಂಪರ್ಕಿಸುತ್ತದೆ.",
     "byOrg": "ನೇಯ್ಟಿರಿ ಐವಾಫಾರ್ಮ್ ಅಗ್ರಿಟೆಕ್ ಅವರಿಂದ",
     "visitEywaFarm": "eywa.farm ಗೆ ಭೇಟಿ ನೀಡಿ",
-    "companyFull": "ನೇಯ್ತಿರಿ ಐವಾಫಾರ್ಮ್ ಅಗ್ರಿಟೆಕ್ ಪ್ರೈವೇಟ್ ಲಿಮಿಟೆಡ್"
+    "companyFull": "ನೇಯ್ಟಿರಿ ಐವಾಫಾರ್ಮ್ ಅಗ್ರಿಟೆಕ್ ಪ್ರೈವೇಟ್ ಲಿಮಿಟೆಡ್"
   },
   "language": {
     "selectorTitle": "ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆರಿಸಿ",
@@ -456,7 +456,7 @@
       "ordersTitle": "ಆದೇಶಗಳು",
       "setDateFirst": "ಮೊದಲು ದಿನಾಂಕ ನಿಗದಿಪಡಿಸಿ",
       "notAvailable": "ಲಭ್ಯವಿಲ್ಲ",
-      "noExpertYet": "ಇನ್ನೂ ತಜ್ಞರಿಲ್ಲ"
+      "noExpertYet": "ಇನ್ನೂ ತಜ್ಞರಿಲ್ಲ."
     },
     "missedItems": {
       "label": "{count, plural, one {1 ತಪ್ಪಿದ ಐಟಂ — ಅಪ್ಲಿಕೇಶನ್ ವಿಂಡೋ ಮುಗಿದಿದೆ} other {# ಕಾಣೆಯಾದ ಐಟಂಗಳು — ಅಪ್ಲಿಕೇಶನ್ ವಿಂಡೋ ಮುಗಿದಿದೆ}}",
@@ -789,7 +789,7 @@
         "brandLockedTitle": "ಬ್ರ್ಯಾಂಡ್-ಲಾಕ್ ಮಾಡಿದ ಆರ್ಡರ್",
         "tabDealers": "ವಿತರಕರು ( {count} )",
         "tabFacilitators": "ಸಹಾಯಕರು ( {count} )",
-        "emptyDealers": "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ಡೀಲರ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
+        "emptyDealers": "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ವ್ಯಾಪಾರಿಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
         "emptyFacilitators": "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ಸಹಾಯಕರು ಕಂಡುಬಂದಿಲ್ಲ.",
         "promoterBadge": "ಪ್ರವರ್ತಕ",
         "sending": "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...",
@@ -960,6 +960,18 @@
         "forwardFailed": "ಫಾರ್ವರ್ಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
         "receiptFailed": "ರಶೀದಿಯನ್ನು ಖಚಿತಪಡಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
         "sendOrderFailed": "ಆದೇಶವನ್ನು ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ."
+      },
+      "confirmSend": {
+        "title": "ಕಳುಹಿಸುವುದನ್ನು ದೃಢೀಕರಿಸಿ",
+        "body": "ನೀವು {inputType} ಆರ್ಡರ್ ಅನ್ನು {recipient} ಗೆ ಕಳುಹಿಸಲು ಬಯಸುವಿರಾ?",
+        "cancel": "ರದ್ದುಮಾಡಿ",
+        "confirm": "ಹೌದು, ಕಳುಹಿಸಿ"
+      },
+      "inputType": {
+        "seed": "ಬೀಜ/ಸಸಿ",
+        "pesticide": "ಕೀಟನಾಶಕ",
+        "fertilizer": "ಗೊಬ್ಬರ",
+        "fallback": "ಇನ್ಪುಟ್"
       }
     },
     "forward": {
@@ -1009,7 +1021,7 @@
         "fertiliser": "ಗೊಬ್ಬರ",
         "seed": "ಬೀಜ"
       },
-      "itemsToOrder": "{count, plural, one {ಆರ್ಡರ್ ಮಾಡಲು 1 ಐಟಂ ಇದೆ} other {# ಆರ್ಡರ್ ಮಾಡಲು ಐಟಂಗಳು}}",
+      "itemsToOrder": "{count, plural, one {ಆರ್ಡರ್ ಮಾಡಲು 1 ಐಟಂ ಇದೆ} other {ಆರ್ಡರ್ ಮಾಡಲು # ವಸ್ತುಗಳು}}",
       "brandLockedTitle": "ಬ್ರ್ಯಾಂಡ್-ಲಾಕ್ ಮಾಡಿದ ಆರ್ಡರ್",
       "tabDealers": "ವಿತರಕರು ( {count} )",
       "tabFacilitators": "ಸಹಾಯಕರು ( {count} )",
@@ -2716,7 +2728,7 @@
       "pickerTitle": "ಕಳುಹಿಸಿ",
       "pickerTabDealers": "ವಿತರಕರು ( {count} )",
       "pickerTabFacilitators": "ಸಹಾಯಕರು ( {count} )",
-      "emptyDealers": "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ಡೀಲರ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
+      "emptyDealers": "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ವ್ಯಾಪಾರಿಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
       "emptyFacilitators": "ಹತ್ತಿರದಲ್ಲಿ ಯಾವುದೇ ಸಹಾಯಕರು ಕಂಡುಬಂದಿಲ್ಲ.",
       "kmAway": "{km} ಕಿಮೀ ದೂರ",
       "promoterBadge": "ಪ್ರವರ್ತಕ",

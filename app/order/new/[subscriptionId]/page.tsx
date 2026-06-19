@@ -6,6 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
 import ClientCropChip from '@/components/ClientCropChip'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import api from '@/lib/api'
 
 interface Person {
@@ -135,7 +136,21 @@ export default function OrderingScreenPage() {
       distance_km: 0,
       is_promoter: false,
     }
-    startSendOrder(person, lookup.role === 'DEALER')
+    requestSendOrder(person, lookup.role === 'DEALER')
+  }
+
+  // 2026-06-19 — Universal confirm-before-send. The user has to
+  // acknowledge "Do you wish to send the {inputType} Order to
+  // {recipient}?" before the existing area-confirm / executeSendOrder
+  // chain fires. Stays in state until the sheet is dismissed.
+  const [pendingSendOrder, setPendingSendOrder] = useState<{ person: Person; isDealer: boolean } | null>(null)
+
+  function requestSendOrder(person: Person, isDealer: boolean) {
+    if (practiceIds.length === 0) {
+      router.replace(`/crop-detail/${subscriptionId}/orders?tab=manage`)
+      return
+    }
+    setPendingSendOrder({ person, isDealer })
   }
 
   function startSendOrder(person: Person, isDealer: boolean) {
@@ -249,7 +264,7 @@ export default function OrderingScreenPage() {
                 {tOrdersCommon('callBtn')}
               </a>
             )}
-            <button onClick={() => startSendOrder(person, isDealer)}
+            <button onClick={() => requestSendOrder(person, isDealer)}
               disabled={placing === person.user_id}
               className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
               style={{ background: '#3A7D44' }}>
@@ -411,6 +426,29 @@ export default function OrderingScreenPage() {
           </div>
         </div>
       )}
+      <ConfirmSendOrderSheet
+        open={!!pendingSendOrder}
+        inputType={tOrdersCommon(
+          orderType === 'PESTICIDE' ? 'inputType.pesticide'
+          : orderType === 'FERTILISER' || orderType === 'FERTILIZER' ? 'inputType.fertilizer'
+          : orderType === 'SEED' ? 'inputType.seed'
+          : 'inputType.fallback'
+        )}
+        recipient={recipientLabel(
+          pendingSendOrder?.isDealer ?? false,
+          pendingSendOrder?.person ?? null,
+          tOrdersCommon('unknownRecipient'),
+        )}
+        busy={placing != null}
+        onCancel={() => setPendingSendOrder(null)}
+        onConfirm={() => {
+          if (pendingSendOrder) {
+            const { person, isDealer } = pendingSendOrder
+            setPendingSendOrder(null)
+            startSendOrder(person, isDealer)
+          }
+        }}
+      />
     </div>
   )
 }

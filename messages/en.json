@@ -960,6 +960,18 @@
         "forwardFailed": "Could not forward. Please try again.",
         "receiptFailed": "Could not confirm receipt. Please try again.",
         "sendOrderFailed": "Could not send order"
+      },
+      "confirmSend": {
+        "title": "Confirm send",
+        "body": "Do you wish to send the {inputType} Order to {recipient}?",
+        "cancel": "Cancel",
+        "confirm": "Yes, send"
+      },
+      "inputType": {
+        "seed": "Seed/Seedling",
+        "pesticide": "Pesticide",
+        "fertilizer": "Fertilizer",
+        "fallback": "Input"
       }
     },
     "forward": {

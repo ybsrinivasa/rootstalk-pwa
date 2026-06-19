@@ -11,6 +11,7 @@ import { cropDisplayName } from '@/lib/crop-name'
 // pinch-zooms the viewport).
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
+import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 
 interface DusCharacterRow {
   part_cosh_id?: string; part_name_en?: string; part_name?: string
@@ -41,6 +42,7 @@ export default function SeedVarietiesPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
   const t = useTranslations('seedVarieties')
+  const tOrdersCommon = useTranslations('orders.common')
   const [varieties, setVarieties] = useState<Variety[]>([])
   const [selected, setSelected] = useState<Variety | null>(null)
   const [confirming, setConfirming] = useState(false)
@@ -96,10 +98,23 @@ export default function SeedVarietiesPage() {
     return () => clearTimeout(timer)
   }, [phoneInput, selected])
 
+  // 2026-06-19 — Confirm-before-send. Two flavours of pending state
+  // — one for lookup (synthetic recipient), one for picker (existing
+  // Recipient row). Both flow through the same ConfirmSendOrderSheet
+  // mounted at the bottom of the page.
+  const [pendingLookupSend, setPendingLookupSend] = useState(false)
+  const [pendingPickerSend, setPendingPickerSend] = useState<{ recipient: Recipient; isDealer: boolean } | null>(null)
+
+  function requestSendOrderFromLookup() {
+    if (!selected || !lookup?.found || !lookup.user_id || !lookup.can_receive || !lookup.role) return
+    setPendingLookupSend(true)
+  }
+
   async function sendOrderFromLookup() {
     if (!selected || !lookup?.found || !lookup.user_id || !lookup.can_receive || !lookup.role) return
     setPlacing(lookup.user_id)
     setSendError(null)
+    setPendingLookupSend(false)
     try {
       await api.post('/farmer/seed-orders', {
         subscription_id: subscriptionId,
@@ -142,10 +157,16 @@ export default function SeedVarietiesPage() {
     } finally { setPickerLoading(false) }
   }
 
+  function requestSendOrder(recipient: Recipient, isDealer: boolean) {
+    if (!selected) return
+    setPendingPickerSend({ recipient, isDealer })
+  }
+
   async function sendOrder(recipient: Recipient, isDealer: boolean) {
     if (!selected) return
     setPlacing(recipient.user_id)
     setSendError(null)
+    setPendingPickerSend(null)
     try {
       await api.post('/farmer/seed-orders', {
         subscription_id: subscriptionId,
@@ -376,7 +397,7 @@ export default function SeedVarietiesPage() {
             )}
             {lookup && !lookupLoading && (
               <RecipientLookupCard lookup={lookup}
-                placing={placing} onSend={sendOrderFromLookup} t={t} />
+                placing={placing} onSend={requestSendOrderFromLookup} t={t} />
             )}
           </div>
 
@@ -391,7 +412,7 @@ export default function SeedVarietiesPage() {
               <div className="space-y-3 mb-4">
                 {dealers.map(p => (
                   <RecipientCard key={p.user_id} person={p} isDealer
-                    placing={placing} onSend={() => sendOrder(p, true)} t={t} />
+                    placing={placing} onSend={() => requestSendOrder(p, true)} t={t} />
                 ))}
               </div>
             </>
@@ -402,7 +423,7 @@ export default function SeedVarietiesPage() {
               <div className="space-y-3">
                 {facilitators.map(p => (
                   <RecipientCard key={p.user_id} person={p} isDealer={false}
-                    placing={placing} onSend={() => sendOrder(p, false)} t={t} />
+                    placing={placing} onSend={() => requestSendOrder(p, false)} t={t} />
                 ))}
               </div>
             </>
@@ -464,6 +485,25 @@ export default function SeedVarietiesPage() {
           </div>
         )}
       </div>
+      <ConfirmSendOrderSheet
+        open={pendingLookupSend || !!pendingPickerSend}
+        inputType={tOrdersCommon('inputType.seed')}
+        recipient={
+          pendingLookupSend
+            ? recipientLabel(lookup?.role === 'DEALER', lookup ?? null, tOrdersCommon('unknownRecipient'))
+            : recipientLabel(
+                pendingPickerSend?.isDealer ?? false,
+                pendingPickerSend?.recipient ?? null,
+                tOrdersCommon('unknownRecipient'),
+              )
+        }
+        busy={!!placing}
+        onCancel={() => { setPendingLookupSend(false); setPendingPickerSend(null) }}
+        onConfirm={() => {
+          if (pendingLookupSend) void sendOrderFromLookup()
+          else if (pendingPickerSend) void sendOrder(pendingPickerSend.recipient, pendingPickerSend.isDealer)
+        }}
+      />
     </div>
   )
 }
