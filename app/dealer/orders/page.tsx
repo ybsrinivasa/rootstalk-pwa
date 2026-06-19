@@ -384,6 +384,21 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
+  // 2026-06-19 — Inline handover for seed orders in the Packing pill.
+  // Pre-fix the seed card linked to /dealer/seed-orders which mixed
+  // packing-needed orders with new accept-needed ones; the focused
+  // Packing pill was the right surface to keep them on.
+  async function handoverSeed(o: Order) {
+    if (!confirm(t('packing.confirmHandoverSeed'))) return
+    setBusy(o.id)
+    try {
+      await api.put(`/dealer/seed-orders/${o.id}/handover`, {})
+      await load()
+    } catch {
+      alert(t('packing.errorHandoverSeed'))
+    } finally { setBusy(null) }
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
@@ -458,6 +473,7 @@ function DealerOrdersInner() {
                 onShare={onSharePressed}
                 onRemove={(o) => setConfirmRemove(o)}
                 onOpenDetail={(o) => router.push(o.is_seed ? '/dealer/seed-orders' : `/dealer/orders/${o.id}`)}
+                onHandoverSeed={handoverSeed}
                 busy={busy}
               />
             ))
@@ -576,7 +592,7 @@ function PickupStatus({ order }: { order: Order }) {
 // micro-header.
 function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onShare, onRemove, onOpenDetail, busy,
+  onShare, onRemove, onOpenDetail, onHandoverSeed, busy,
 }: {
   orderId: string
   subs: Order[]
@@ -587,6 +603,7 @@ function DealerOrderIdCard({
   onShare: (o: Order) => void
   onRemove: (o: Order) => void
   onOpenDetail: (o: Order) => void
+  onHandoverSeed: (o: Order) => void
   busy: string | null
 }) {
   const head = subs[0]
@@ -605,11 +622,13 @@ function DealerOrderIdCard({
           ? matching.map(sub => (
               <DealerPillChunk key={sub.id} sub={sub} pill={pill}
                 onShare={onShare} onRemove={onRemove} onOpenDetail={onOpenDetail}
+                onHandoverSeed={onHandoverSeed}
                 busy={busy} showSubHeader />
             ))
           : matching.length === 1 && (
               <DealerPillChunk sub={matching[0]} pill={pill}
                 onShare={onShare} onRemove={onRemove} onOpenDetail={onOpenDetail}
+                onHandoverSeed={onHandoverSeed}
                 busy={busy} />
             )
         }
@@ -725,13 +744,14 @@ function DealerOrderCardHeader({
 }
 
 function DealerPillChunk({
-  sub, pill, onShare, onRemove, onOpenDetail, busy, showSubHeader,
+  sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed, busy, showSubHeader,
 }: {
   sub: Order
   pill: Pill
   onShare: (o: Order) => void
   onRemove: (o: Order) => void
   onOpenDetail: (o: Order) => void
+  onHandoverSeed: (o: Order) => void
   busy: string | null
   showSubHeader?: boolean
 }) {
@@ -774,12 +794,21 @@ function DealerPillChunk({
       )}
       {pill === 'packing' && (
         sub.is_seed ? (
-          <button onClick={() => router.push('/dealer/seed-orders')}
-            className="w-full px-4 py-3 text-left active:bg-purple-50/60">
-            <p className="text-[11px] text-purple-800 font-medium">
-              {t('packingSeedTap')}
+          // 2026-06-19 — Inline seed handover. Pre-fix this tile linked
+          // to /dealer/seed-orders which dumped the dealer onto the
+          // unfiltered Active tab (mix of accept-needed + handover-
+          // needed). Acting in-place keeps the focused Packing pill
+          // intact.
+          <div className="px-4 py-3 space-y-2">
+            <p className="text-[11px] text-purple-800 font-medium text-center">
+              {t('packingSeedBanner')}
             </p>
-          </button>
+            <button onClick={() => onHandoverSeed(sub)}
+              disabled={busy === sub.id}
+              className="w-full bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold py-2.5 rounded-xl">
+              {busy === sub.id ? t('packingSeedBusy') : t('packingSeedHandoverCta')}
+            </button>
+          </div>
         ) : (
           <PackingChunk order={sub}
             onShare={() => onShare(sub)}

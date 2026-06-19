@@ -1364,7 +1364,9 @@
         "postponedTap": "{count, plural, one {⏰ 1 postponed item · tap to resolve} other {⏰ # postponed items · tap to resolve}}",
         "waitingForFarmer": "{count, plural, one {⏳ Waiting for farmer to approve 1 item} other {⏳ Waiting for farmer to approve # items}}",
         "waitingForFarmerSeed": "⏳ Waiting for farmer to approve",
-        "packingSeedTap": "📦 Pack the seed · tap to hand over to farmer"
+        "packingSeedBanner": "📦 Farmer approved. Pack the seed and hand it over.",
+        "packingSeedHandoverCta": "Mark as handed over",
+        "packingSeedBusy": "Saving…"
       },
       "packing": {
         "packingIdLabel": "Packing ID",
@@ -1377,7 +1379,9 @@
         "totalLabel": "Total",
         "shareCta": "↗ Share",
         "shareAgainCta": "↗ Share again",
-        "removeCta": "🗑 Remove"
+        "removeCta": "🗑 Remove",
+        "confirmHandoverSeed": "Confirm the seed packet has been handed over to the farmer? This closes the order.",
+        "errorHandoverSeed": "Could not mark as handed over. Please try again."
       },
       "expanded": {
         "allSubOrders": "All sub-orders ({count})"
