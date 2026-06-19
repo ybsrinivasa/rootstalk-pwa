@@ -77,7 +77,10 @@ export default function FarmerSeedOrderDetailPage() {
       const { data } = await api.get<SeedOrder>(`/farmer/seed-orders/${orderId}`)
       setOrder(data)
     } catch {
-      router.replace('/seed-orders')
+      // 2026-06-19 — /seed-orders flat list page retired; bounce
+      // to the bottom-nav Orders picker so the farmer always lands
+      // in a maintained surface.
+      router.replace('/orders')
     } finally { setLoading(false) }
   }
 
@@ -98,9 +101,18 @@ export default function FarmerSeedOrderDetailPage() {
       const draftId = data?.new_draft_seed_order_id
       if (draftId) {
         alert(tDetail('cancelledToast'))
+        // The new DRAFT keeps the per-id detail surface alive (the
+        // draft-recipient picker lives there).
         router.replace(`/seed-orders/${draftId}`)
       } else {
-        router.replace('/seed-orders')
+        // 2026-06-19 — /seed-orders flat list page retired; bounce
+        // back to the per-crop Manage tab where the cancel husk is
+        // visible.
+        router.replace(
+          order.subscription_id
+            ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
+            : '/orders'
+        )
       }
     } catch {
       alert(tDetail('errorCancel'))
@@ -113,7 +125,11 @@ export default function FarmerSeedOrderDetailPage() {
     setBusy(true)
     try {
       await api.delete(`/farmer/seed-orders/${order.id}`)
-      router.replace('/seed-orders')
+      router.replace(
+        order.subscription_id
+          ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
+          : '/orders'
+      )
     } catch {
       alert(tDetail('errorDelete'))
     } finally { setBusy(false) }
@@ -206,7 +222,7 @@ export default function FarmerSeedOrderDetailPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={tDetail('headerTitle')} activeRole="FARMER"
-        back={order.subscription_id ? `/crop-detail/${order.subscription_id}/orders?tab=manage` : '/seed-orders'} />
+        back={order.subscription_id ? `/crop-detail/${order.subscription_id}/orders?tab=manage` : '/orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">

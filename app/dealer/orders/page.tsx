@@ -228,6 +228,17 @@ function DealerOrdersInner() {
   const [confirmReshare, setConfirmReshare] = useState<Order | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
+  // 2026-06-19 — Seed inline-action state (migrated from
+  // /dealer/seed-orders). Postpone + decline bottom sheets live at
+  // page level so they sit above the BottomNav with the right
+  // safe-area padding.
+  const [postponeSeedId, setPostponeSeedId] = useState<string | null>(null)
+  const [postponeMaxDays, setPostponeMaxDays] = useState(0)
+  const [postponeDays, setPostponeDays] = useState(1)
+  const [postponeBusy, setPostponeBusy] = useState(false)
+  const [confirmDeclineSeedId, setConfirmDeclineSeedId] = useState<string | null>(null)
+  const [decliningSeed, setDecliningSeed] = useState(false)
+
   async function load() {
     setLoading(true)
     try {
@@ -399,6 +410,89 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
+  // 2026-06-19 — Seed accept (SENT → ACCEPTED), inlined from the
+  // retired /dealer/seed-orders page. After accept the card stays in
+  // the Pending pill and re-renders with the qty/price form.
+  async function acceptSeed(id: string) {
+    setBusy(id)
+    try {
+      await api.put(`/dealer/seed-orders/${id}/accept`, {})
+      await load()
+    } finally { setBusy(null) }
+  }
+
+  // Seed send-for-approval. Lands the dealer on the With Farmer pill
+  // so they see the seed sitting alongside any regular orders awaiting
+  // farmer approval.
+  async function submitSeed(id: string, form: { unit: string; quantity: string; total_price: string }) {
+    if (!form.quantity) return
+    setBusy(id)
+    try {
+      await api.put(`/dealer/seed-orders/${id}/submit-for-approval`, {
+        unit: form.unit,
+        quantity: parseFloat(form.quantity),
+        total_price: form.total_price ? parseFloat(form.total_price) : null,
+      })
+      setPill('farmer')
+      await load()
+    } finally { setBusy(null) }
+  }
+
+  async function markNotAvailableSeed(id: string) {
+    if (!confirm(t('seedPending.confirmNa'))) return
+    setBusy(id)
+    try {
+      await api.put(`/dealer/seed-orders/${id}/not-available`, {})
+      await load()
+    } catch {
+      alert(t('seedPending.errorMarkNa'))
+    } finally { setBusy(null) }
+  }
+
+  async function openPostponeSeed(id: string) {
+    setPostponeBusy(true)
+    try {
+      const { data } = await api.get<{ max_days: number; can_postpone: boolean }>(
+        `/dealer/seed-orders/${id}/postpone-window`,
+      )
+      if (!data.can_postpone) {
+        alert(t('seedPending.errorPostponeWindow'))
+        return
+      }
+      setPostponeSeedId(id)
+      setPostponeMaxDays(data.max_days)
+      setPostponeDays(1)
+    } finally { setPostponeBusy(false) }
+  }
+
+  async function confirmPostponeSeed() {
+    if (!postponeSeedId) return
+    setPostponeBusy(true)
+    try {
+      await api.put(`/dealer/seed-orders/${postponeSeedId}/postpone`, {
+        days: postponeDays,
+      })
+      setPostponeSeedId(null)
+      await load()
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: { message?: string } | string } } }
+      const detail = e?.response?.data?.detail
+      const msg = typeof detail === 'string' ? detail : detail?.message
+      alert(msg || t('seedPending.errorPostpone'))
+    } finally { setPostponeBusy(false) }
+  }
+
+  async function declineSeed(id: string) {
+    setDecliningSeed(true)
+    try {
+      await api.put(`/dealer/seed-orders/${id}/not-available`, {})
+      setConfirmDeclineSeedId(null)
+      await load()
+    } catch {
+      alert(t('seedPending.errorDecline'))
+    } finally { setDecliningSeed(false) }
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
@@ -472,8 +566,20 @@ function DealerOrdersInner() {
                 onToggleExpand={() => setExpandedGroup(expandedGroup === key ? null : key)}
                 onShare={onSharePressed}
                 onRemove={(o) => setConfirmRemove(o)}
-                onOpenDetail={(o) => router.push(o.is_seed ? '/dealer/seed-orders' : `/dealer/orders/${o.id}`)}
+                // 2026-06-19 — Seed open-detail is a no-op now that all
+                // seed actions live inline on the unified feed. Regular
+                // orders still route to their detail page for the rich
+                // per-item review surface.
+                onOpenDetail={(o) => {
+                  if (o.is_seed) return
+                  router.push(`/dealer/orders/${o.id}`)
+                }}
                 onHandoverSeed={handoverSeed}
+                onAcceptSeed={acceptSeed}
+                onConfirmDeclineSeed={(id) => setConfirmDeclineSeedId(id)}
+                onSubmitSeed={submitSeed}
+                onOpenPostponeSeed={openPostponeSeed}
+                onMarkNotAvailableSeed={markNotAvailableSeed}
                 busy={busy}
               />
             ))
@@ -539,6 +645,69 @@ function DealerOrdersInner() {
         </div>
       )}
 
+      {/* 2026-06-19 — Seed postpone bottom sheet, migrated from
+          the retired /dealer/seed-orders page. Reuses the same shape
+          as the regular-order postpone sheet on /dealer/orders/[id]. */}
+      {postponeSeedId && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => !postponeBusy && setPostponeSeedId(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
+              <p className="font-semibold text-[#6B3F1F]">{t('seedPending.postponeSheet.title')}</p>
+              <button onClick={() => !postponeBusy && setPostponeSeedId(null)} className="text-[#7A8C7E] text-xl">×</button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-[#7A8C7E] mb-1">{t('seedPending.postponeSheet.howManyDays')}</p>
+              <p className="text-xs text-[#7A8C7E] mb-4">
+                {t('seedPending.postponeSheet.pickRange', { max: postponeMaxDays })}
+              </p>
+              <div className="flex items-center justify-center gap-3 mb-5">
+                <button onClick={() => setPostponeDays(d => Math.max(1, d - 1))}
+                  disabled={postponeDays <= 1 || postponeBusy}
+                  className="w-12 h-12 rounded-full border border-[#DDD0B8] text-[#6B3F1F] text-xl font-bold disabled:opacity-30">−</button>
+                <div className="min-w-[80px] text-center">
+                  <p className="text-3xl font-bold text-[#6B3F1F]">{postponeDays}</p>
+                  <p className="text-xs text-[#7A8C7E]">{t('seedPending.postponeSheet.dayUnit', { count: postponeDays })}</p>
+                </div>
+                <button onClick={() => setPostponeDays(d => Math.min(postponeMaxDays, d + 1))}
+                  disabled={postponeDays >= postponeMaxDays || postponeBusy}
+                  className="w-12 h-12 rounded-full border border-[#DDD0B8] text-[#6B3F1F] text-xl font-bold disabled:opacity-30">+</button>
+              </div>
+              <button onClick={confirmPostponeSeed} disabled={postponeBusy}
+                className="w-full py-3 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
+                style={{ background: 'linear-gradient(135deg, #d97706, #b45309)' }}>
+                {postponeBusy ? t('seedPending.postponeSheet.postponing') : t('seedPending.postponeSheet.postponeCta', { count: postponeDays })}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Decline-confirm sheet for SENT seed orders */}
+      {confirmDeclineSeedId && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => !decliningSeed && setConfirmDeclineSeedId(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">{t('seedPending.declineSheet.title')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">{t('seedPending.declineSheet.body')}</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmDeclineSeedId(null)} disabled={decliningSeed}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                {tCommon('cancel')}
+              </button>
+              <button onClick={() => declineSeed(confirmDeclineSeedId)} disabled={decliningSeed}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {decliningSeed ? '…' : t('seedPending.declineSheet.yes')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <BottomNav color="#085041" activeRole="DEALER" />
     </div>
   )
@@ -592,7 +761,10 @@ function PickupStatus({ order }: { order: Order }) {
 // micro-header.
 function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onShare, onRemove, onOpenDetail, onHandoverSeed, busy,
+  onShare, onRemove, onOpenDetail, onHandoverSeed,
+  onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
+  onOpenPostponeSeed, onMarkNotAvailableSeed,
+  busy,
 }: {
   orderId: string
   subs: Order[]
@@ -604,6 +776,11 @@ function DealerOrderIdCard({
   onRemove: (o: Order) => void
   onOpenDetail: (o: Order) => void
   onHandoverSeed: (o: Order) => void
+  onAcceptSeed: (id: string) => void
+  onConfirmDeclineSeed: (id: string) => void
+  onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
+  onOpenPostponeSeed: (id: string) => void
+  onMarkNotAvailableSeed: (id: string) => void
   busy: string | null
 }) {
   const head = subs[0]
@@ -623,12 +800,22 @@ function DealerOrderIdCard({
               <DealerPillChunk key={sub.id} sub={sub} pill={pill}
                 onShare={onShare} onRemove={onRemove} onOpenDetail={onOpenDetail}
                 onHandoverSeed={onHandoverSeed}
+                onAcceptSeed={onAcceptSeed}
+                onConfirmDeclineSeed={onConfirmDeclineSeed}
+                onSubmitSeed={onSubmitSeed}
+                onOpenPostponeSeed={onOpenPostponeSeed}
+                onMarkNotAvailableSeed={onMarkNotAvailableSeed}
                 busy={busy} showSubHeader />
             ))
           : matching.length === 1 && (
               <DealerPillChunk sub={matching[0]} pill={pill}
                 onShare={onShare} onRemove={onRemove} onOpenDetail={onOpenDetail}
                 onHandoverSeed={onHandoverSeed}
+                onAcceptSeed={onAcceptSeed}
+                onConfirmDeclineSeed={onConfirmDeclineSeed}
+                onSubmitSeed={onSubmitSeed}
+                onOpenPostponeSeed={onOpenPostponeSeed}
+                onMarkNotAvailableSeed={onMarkNotAvailableSeed}
                 busy={busy} />
             )
         }
@@ -744,7 +931,10 @@ function DealerOrderCardHeader({
 }
 
 function DealerPillChunk({
-  sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed, busy, showSubHeader,
+  sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
+  onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
+  onOpenPostponeSeed, onMarkNotAvailableSeed,
+  busy, showSubHeader,
 }: {
   sub: Order
   pill: Pill
@@ -752,6 +942,11 @@ function DealerPillChunk({
   onRemove: (o: Order) => void
   onOpenDetail: (o: Order) => void
   onHandoverSeed: (o: Order) => void
+  onAcceptSeed: (id: string) => void
+  onConfirmDeclineSeed: (id: string) => void
+  onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
+  onOpenPostponeSeed: (id: string) => void
+  onMarkNotAvailableSeed: (id: string) => void
   busy: string | null
   showSubHeader?: boolean
 }) {
@@ -766,22 +961,52 @@ function DealerPillChunk({
         </p>
       )}
       {pill === 'pending' && (
-        <button onClick={() => onOpenDetail(sub)}
-          className="w-full px-4 py-3 text-left active:bg-[#F5F0E8]/60">
-          <p className="text-xs text-[#7A8C7E]">
-            {sub.status === 'SENT' && t('pending.newAccept')}
-            {sub.status === 'ACCEPTED' && (sub.is_seed ? t('pending.acceptedSeed') : t('pending.acceptedRegular'))}
-            {sub.status === 'PROCESSING' && t('pending.processing')}
-          </p>
-        </button>
+        sub.is_seed ? (
+          // 2026-06-19 — Inline seed accept + qty/price form. Migrated
+          // from the retired /dealer/seed-orders page. SENT shows
+          // Accept + Decline; ACCEPTED reveals the qty/price form +
+          // Postpone + Not Available secondary actions.
+          <SeedPendingChunk sub={sub}
+            busy={busy === sub.id}
+            onAccept={() => onAcceptSeed(sub.id)}
+            onDecline={() => onConfirmDeclineSeed(sub.id)}
+            onSubmit={(form) => onSubmitSeed(sub.id, form)}
+            onPostpone={() => onOpenPostponeSeed(sub.id)}
+            onMarkNa={() => onMarkNotAvailableSeed(sub.id)} />
+        ) : (
+          <button onClick={() => onOpenDetail(sub)}
+            className="w-full px-4 py-3 text-left active:bg-[#F5F0E8]/60">
+            <p className="text-xs text-[#7A8C7E]">
+              {sub.status === 'SENT' && t('pending.newAccept')}
+              {sub.status === 'ACCEPTED' && t('pending.acceptedRegular')}
+              {sub.status === 'PROCESSING' && t('pending.processing')}
+            </p>
+          </button>
+        )
       )}
       {pill === 'postponed' && (
-        <button onClick={() => router.push('/dealer/postponed')}
-          className="w-full px-4 py-3 text-left active:bg-amber-50/60">
-          <p className="text-[11px] text-amber-700 font-medium">
-            {t('postponedTap', { count: sub.item_status_counts.postponed })}
-          </p>
-        </button>
+        sub.is_seed ? (
+          // POSTPONED seed — single inline action: Not Available.
+          // (Lifting the postpone-bottom-sheet from the legacy page;
+          // seed has no qty/price decision to revisit here.)
+          <div className="px-4 py-3 space-y-2">
+            <p className="text-[11px] text-amber-800 font-medium">
+              {t('seedPending.postponedHint')}
+            </p>
+            <button onClick={() => onMarkNotAvailableSeed(sub.id)}
+              disabled={busy === sub.id}
+              className="w-full bg-red-100 disabled:opacity-50 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+              {t('seedPending.notAvailableCta')}
+            </button>
+          </div>
+        ) : (
+          <button onClick={() => router.push('/dealer/postponed')}
+            className="w-full px-4 py-3 text-left active:bg-amber-50/60">
+            <p className="text-[11px] text-amber-700 font-medium">
+              {t('postponedTap', { count: sub.item_status_counts.postponed })}
+            </p>
+          </button>
+        )
       )}
       {pill === 'farmer' && (
         <div className="px-4 py-3">
@@ -815,6 +1040,110 @@ function DealerPillChunk({
             onRemove={() => onRemove(sub)}
             busy={busy === sub.id} />
         )
+      )}
+    </div>
+  )
+}
+
+// 2026-06-19 — Inline seed Pending-pill chunk, migrated from the
+// retired /dealer/seed-orders page. SENT shows blind Accept/Decline;
+// ACCEPTED reveals the qty/price form + Postpone + Not Available
+// secondary actions. Form state lives locally so the parent doesn't
+// own per-row form keys.
+const SEED_UNITS = ['Grams', 'Kilograms', 'Numbers']
+function SeedPendingChunk({
+  sub, busy, onAccept, onDecline, onSubmit, onPostpone, onMarkNa,
+}: {
+  sub: Order
+  busy: boolean
+  onAccept: () => void
+  onDecline: () => void
+  onSubmit: (form: { unit: string; quantity: string; total_price: string }) => void
+  onPostpone: () => void
+  onMarkNa: () => void
+}) {
+  const t = useTranslations('dealer.orders.seedPending')
+  const tCommon = useTranslations('common')
+  const [showForm, setShowForm] = useState(false)
+  const [form, setForm] = useState({ unit: 'Kilograms', quantity: '', total_price: '' })
+  return (
+    <div className="px-4 py-3 space-y-2">
+      {sub.status === 'SENT' && !showForm && (
+        <>
+          <p className="text-[11px] text-[#7A8C7E]">{t('blindAcceptHint')}</p>
+          <div className="flex gap-2">
+            <button onClick={onAccept} disabled={busy}
+              className="flex-1 bg-emerald-600 disabled:opacity-50 text-white text-xs font-semibold py-2.5 rounded-xl">
+              {t('acceptCta')}
+            </button>
+            <button onClick={onDecline} disabled={busy}
+              className="flex-1 bg-red-100 disabled:opacity-50 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+              {t('declineCta')}
+            </button>
+          </div>
+        </>
+      )}
+      {sub.status === 'ACCEPTED' && !showForm && (
+        <>
+          <button onClick={() => { setShowForm(true); setForm({ unit: 'Kilograms', quantity: '', total_price: '' }) }}
+            className="w-full bg-indigo-600 text-white text-xs font-semibold py-2.5 rounded-xl">
+            {t('enterQtyPrice')}
+          </button>
+          <div className="flex gap-2">
+            <button onClick={onPostpone} disabled={busy}
+              className="flex-1 bg-amber-100 disabled:opacity-50 text-amber-800 text-xs font-semibold py-2.5 rounded-xl">
+              {t('laterCta')}
+            </button>
+            <button onClick={onMarkNa} disabled={busy}
+              className="flex-1 bg-red-100 disabled:opacity-50 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+              {t('notAvailableCta')}
+            </button>
+          </div>
+        </>
+      )}
+      {showForm && (
+        <div className="bg-[#F5F0E8] rounded-xl p-4 space-y-3">
+          <p className="text-xs font-semibold text-[#6B3F1F]">{t('form.title')}</p>
+          <div>
+            <label className="block text-xs text-[#7A8C7E] mb-1">{t('form.unitLabel')}</label>
+            <div className="flex gap-2">
+              {SEED_UNITS.map(u => (
+                <button key={u} onClick={() => setForm(f => ({ ...f, unit: u }))}
+                  className={`flex-1 py-2 text-xs font-medium rounded-lg border transition-colors ${
+                    form.unit === u ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
+                  }`}>
+                  {u === 'Grams' ? t('units.grams') : u === 'Kilograms' ? t('units.kilograms') : t('units.numbers')}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs text-[#7A8C7E] mb-1">{t('form.qtyLabel')}</label>
+              <input type="number" value={form.quantity}
+                onChange={e => setForm(f => ({ ...f, quantity: e.target.value }))}
+                placeholder={t('form.qtyPlaceholder', { unit: form.unit })}
+                className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs text-[#7A8C7E] mb-1">{t('form.priceLabel')}</label>
+              <input type="number" value={form.total_price}
+                onChange={e => setForm(f => ({ ...f, total_price: e.target.value }))}
+                placeholder={t('form.pricePlaceholder')}
+                className="w-full border border-[#DDD0B8] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => onSubmit(form)} disabled={busy || !form.quantity}
+              className="flex-1 bg-indigo-600 text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
+              {busy ? t('form.sending') : t('form.sendForApproval')}
+            </button>
+            <button onClick={() => setShowForm(false)}
+              className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
+              {tCommon('cancel')}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

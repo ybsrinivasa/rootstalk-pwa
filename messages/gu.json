@@ -97,7 +97,7 @@
     },
     "confirming": {
       "title": "એવું લાગે છે કે સમસ્યા એ છે કે...",
-      "fallbackName": "આપણે ઓળખી શકીએ તેવી સમસ્યા",
+      "fallbackName": "એક સમસ્યા જેને આપણે ઓળખી શકીએ છીએ",
       "subtitle": "શું આ પાક પર તમે જે જોઈ રહ્યા છો તેની સાથે મેળ ખાય છે?",
       "claudeLabel": "તમારા પાક માટે આનો શું અર્થ થાય છે?",
       "seeImages": "🔍 {name} ની છબીઓ જુઓ",
@@ -137,7 +137,7 @@
     },
     "diagnosed": {
       "title": "સમસ્યા ઓળખાઈ",
-      "fallback": "સમસ્યા રેકોર્ડ કરી",
+      "fallback": "સમસ્યા નોંધાઈ",
       "seeImages": "🔍 {name} ની છબીઓ જુઓ",
       "claudeLabel": "તમારા પાક માટે આનો શું અર્થ થાય છે?",
       "addedTitle": "તમારી સલાહકારમાં ઉમેર્યું ✓",
@@ -347,7 +347,7 @@
       },
       "linkChip": "🔗 ચુકવણી લિંક",
       "expiringSoon": "ટૂંક સમયમાં સમાપ્ત થઈ રહ્યું છે",
-      "hoursRemaining": "{hours} કલાક બાકી",
+      "hoursRemaining": "{hours} કલાક બાકી છે",
       "completeCta": "ચુકવણી પૂર્ણ કરો →",
       "cancelSub": "આ સબ્સ્ક્રિપ્શન રદ કરો",
       "shareLinkCta": "QR બતાવો અને શેર કરો →",
@@ -1300,7 +1300,7 @@
       "attributionSuffix": "ખેડૂતે જેની સલાહ લીધી હતી તે કંપનીને ચૂકવણી કરી.",
       "farmerFallback": "ખેડૂત",
       "expiringSoon": "ટૂંક સમયમાં સમાપ્ત થઈ રહ્યું છે",
-      "hoursRemaining": "{hours} કલાક બાકી",
+      "hoursRemaining": "{hours} કલાક બાકી છે",
       "opening": "ખુલી રહ્યું છે...",
       "payAmount": "₹ {amount} ચૂકવો",
       "decline": "નકારો",
@@ -1334,7 +1334,7 @@
         "copiedToClipboard": "ક્લિપબોર્ડ પર કોપી કર્યું — તમારા મેસેન્જરમાં પેસ્ટ કરો."
       },
       "reshare": {
-        "title": "ફરીથી શેર કરીએ?",
+        "title": "ફરી શેર કરીએ?",
         "bodyPrefix": "આ પેકિંગ સૂચિ પહેલાથી જ શેર કરવામાં આવી હતી.",
         "bodyAt": "ખાતે",
         "bodyOn": "ચાલુ",
@@ -1367,7 +1367,7 @@
         "farmerRoleLabel": "ખેડૂત",
         "facilitatorRoleLabel": "ફેસિલિટેટર દ્વારા રૂટ કરાયેલ",
         "callFarmerAria": "ખેડૂતને કૉલ કરો",
-        "callFacilitatorAria": "ફેસિલિટેટરને કૉલ કરો"
+        "callFacilitatorAria": "કૉલ ફેસિલિટેટર"
       },
       "chunk": {
         "subOrderPrefix": "સબ-ઓર્ડર · {date}",
@@ -1398,6 +1398,48 @@
         "removeCta": "🗑 દૂર કરો",
         "confirmHandoverSeed": "ખેડૂતને બીજનું પેકેટ સોંપવામાં આવ્યું છે તેની ખાતરી કરો? આનાથી ઓર્ડર બંધ થાય છે.",
         "errorHandoverSeed": "સોંપેલ તરીકે ચિહ્નિત કરી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો."
+      },
+      "seedPending": {
+        "blindAcceptHint": "નવો ઓર્ડર - તમારો કૉલ. તમે સ્વીકારો પછી વિવિધ વિગતો જાહેર થશે.",
+        "acceptCta": "✓ સ્વીકારો",
+        "declineCta": "✗ નકારો",
+        "enterQtyPrice": "જથ્થો + કિંમત દાખલ કરો → મંજૂરી માટે મોકલો",
+        "laterCta": "પછીથી",
+        "notAvailableCta": "ઉપલબ્ધ નથી",
+        "postponedHint": "મુલતવી રાખ્યું. ખેડૂતને આ ઓર્ડર પાછો આપવા માટે ઉપલબ્ધ નથી પર ટૅપ કરો.",
+        "confirmNa": "આ બીજ ઓર્ડર ઉપલબ્ધ નથી તરીકે ચિહ્નિત કરો છો? ખેડૂત તેને બીજા ડીલરને મોકલી શકશે.",
+        "errorMarkNa": "ઉપલબ્ધ નથી તરીકે ચિહ્નિત કરી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+        "errorPostpone": "મુલતવી રાખી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+        "errorPostponeWindow": "આ બીજ ઓર્ડર હમણાં મુલતવી રાખી શકાતો નથી.",
+        "errorDecline": "નકારી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+        "form": {
+          "title": "ખેડૂતની મંજૂરી માટે આ ઓર્ડર મોકલો.",
+          "unitLabel": "એકમ",
+          "qtyLabel": "જથ્થો",
+          "qtyPlaceholder": "{unit} માં જથ્થો",
+          "priceLabel": "કિંમત",
+          "pricePlaceholder": "દા.ત. ૧૫૦૦",
+          "sending": "મોકલી રહ્યું છે...",
+          "sendForApproval": "મંજૂરી માટે મોકલો"
+        },
+        "units": {
+          "grams": "ગ્રામ",
+          "kilograms": "કિલોગ્રામ",
+          "numbers": "સંખ્યાઓ"
+        },
+        "postponeSheet": {
+          "title": "આ સીડ ઓર્ડર મુલતવી રાખો",
+          "howManyDays": "કેટલા દિવસ?",
+          "pickRange": "1 થી {max} સુધી પસંદ કરો. આ વિન્ડો પછી ઓર્ડર આપમેળે ખેડૂતને પરત આવે છે.",
+          "dayUnit": "{count, plural, one {દિવસ} other {દિવસો}}",
+          "postponing": "મુલતવી રાખી રહ્યા છીએ...",
+          "postponeCta": "મુલતવી રાખો {count, plural, one {૧ દિવસ} other {# દિવસ}}"
+        },
+        "declineSheet": {
+          "title": "આ બીજ ઓર્ડર નકારીએ?",
+          "body": "ખેડૂત તેને ઉપલબ્ધ ન હોવાનું જોશે અને તેને બીજા ડીલરને મોકલી શકે છે.",
+          "yes": "હા, નકારો"
+        }
       },
       "expanded": {
         "allSubOrders": "બધા પેટા-ક્રમો ( {count} )"
@@ -1988,7 +2030,7 @@
       "attributionSuffix": " ખેડૂતે જેની સલાહ લીધી હતી તે કંપનીને ચૂકવણી કરી.",
       "farmerFallback": "ખેડૂત",
       "expiringSoon": "ટૂંક સમયમાં સમાપ્ત થઈ રહ્યું છે",
-      "hoursRemaining": "{hours} કલાક બાકી",
+      "hoursRemaining": "{hours} કલાક બાકી છે",
       "opening": "ખુલી રહ્યું છે...",
       "payCta": "₹ {amount} ચૂકવો",
       "decline": "નકારો"
@@ -2175,7 +2217,7 @@
       },
       "deliveryListTitle": "ડિલિવરી યાદી",
       "shareDeliveryList": "ડિલિવરી સૂચિ શેર કરો ↗",
-      "shared": "✓ શેર કરેલ — હવે તમે ડિલિવરી થઈ ગઈ તરીકે ચિહ્નિત કરી શકો છો",
+      "shared": "✓ શેર કરેલ — હવે તમે ડિલિવરીને થઈ ગયું તરીકે ચિહ્નિત કરી શકો છો",
       "itemPositional": "વસ્તુ {n}",
       "totalRow": "કુલ",
       "pickupBanner": {
@@ -2376,7 +2418,7 @@
       "emptyPending": "કોઈ બાકી ક્વેરી નથી",
       "emptyReturned": "કોઈ પરત કરેલી ક્વેરી નથી",
       "emptyHistory": "કોઈ ઇતિહાસ ક્વેરી નથી",
-      "daysRemaining": "{count} દિવસ બાકી",
+      "daysRemaining": "{count} d બાકી",
       "forwardedTo": "{name} ને ફોરવર્ડ કર્યું"
     },
     "invitations": {

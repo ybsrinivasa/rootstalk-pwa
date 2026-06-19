@@ -1387,6 +1387,48 @@
         "confirmHandoverSeed": "Confirm the seed packet has been handed over to the farmer? This closes the order.",
         "errorHandoverSeed": "Could not mark as handed over. Please try again."
       },
+      "seedPending": {
+        "blindAcceptHint": "New order — your call. Variety details reveal after you Accept.",
+        "acceptCta": "✓ Accept",
+        "declineCta": "✗ Decline",
+        "enterQtyPrice": "Enter qty + price → send for approval",
+        "laterCta": "Later",
+        "notAvailableCta": "Not Available",
+        "postponedHint": "Postponed. Tap Not Available to release this order back to the farmer.",
+        "confirmNa": "Mark this seed order as Not Available? The farmer will be able to send it to a different dealer.",
+        "errorMarkNa": "Could not mark as Not Available. Please try again.",
+        "errorPostpone": "Could not postpone. Please try again.",
+        "errorPostponeWindow": "This seed order cannot be postponed right now.",
+        "errorDecline": "Could not decline. Please try again.",
+        "form": {
+          "title": "Send this order for the farmer's approval",
+          "unitLabel": "Unit",
+          "qtyLabel": "Quantity",
+          "qtyPlaceholder": "Quantity in {unit}",
+          "priceLabel": "Price",
+          "pricePlaceholder": "e.g. 1500",
+          "sending": "Sending…",
+          "sendForApproval": "Send for approval"
+        },
+        "units": {
+          "grams": "Grams",
+          "kilograms": "Kilograms",
+          "numbers": "Numbers"
+        },
+        "postponeSheet": {
+          "title": "Postpone this seed order",
+          "howManyDays": "How many days?",
+          "pickRange": "Pick 1 to {max}. After this window the order auto-returns to the farmer.",
+          "dayUnit": "{count, plural, one {day} other {days}}",
+          "postponing": "Postponing…",
+          "postponeCta": "Postpone for {count, plural, one {1 day} other {# days}}"
+        },
+        "declineSheet": {
+          "title": "Decline this seed order?",
+          "body": "The farmer will see it as not available and can send it to a different dealer.",
+          "yes": "Yes, decline"
+        }
+      },
       "expanded": {
         "allSubOrders": "All sub-orders ({count})"
       }
