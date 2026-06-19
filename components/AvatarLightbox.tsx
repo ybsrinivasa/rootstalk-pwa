@@ -79,23 +79,27 @@ export default function AvatarLightbox({
       </button>
 
       {open && (
-        <div className="fixed inset-0 bg-black z-50 flex flex-col"
+        // WhatsApp-style centered preview. Semi-transparent backdrop
+        // (not full black) so the user knows they're still on the
+        // dealer screen; tap-outside dismisses. Inner card is rounded
+        // and sized to a comfortable preview (~85vw × 80vh max) so
+        // portrait photos don't go edge-to-edge.
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
           onClick={() => setOpen(false)}>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setOpen(false) }}
-            className="absolute top-3 right-3 z-20 text-white bg-white/10 backdrop-blur-sm rounded-full w-10 h-10 flex items-center justify-center text-xl"
-            aria-label="Close">
-            ✕
-          </button>
-
-          {name && (
-            <div className="absolute top-3 left-3 z-20 text-white text-sm font-semibold bg-black/30 backdrop-blur-sm rounded-full px-3 py-1.5 max-w-[60%] truncate">
-              {name}
-            </div>
-          )}
-
-          <div onClick={(e) => e.stopPropagation()} className="flex-1 flex items-center justify-center">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative bg-white rounded-2xl shadow-2xl overflow-hidden"
+            style={{
+              maxWidth: 'min(90vw, 480px)',
+              maxHeight: '80vh',
+            }}>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute top-2 right-2 z-10 text-white bg-black/40 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center text-base"
+              aria-label="Close">
+              ✕
+            </button>
             <TransformWrapper
               minScale={1} maxScale={5} initialScale={1}
               centerOnInit
@@ -104,16 +108,28 @@ export default function AvatarLightbox({
               pinch={{ step: 5 }}
               panning={{ velocityDisabled: true }}>
               <TransformComponent
-                wrapperStyle={{ width: '100%', height: '100%' }}
-                contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                wrapperStyle={{ width: 'auto', maxWidth: 'min(90vw, 480px)', maxHeight: '70vh' }}
+                contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photoUrl}
                   alt={name || ''}
-                  className="max-w-full max-h-full object-contain select-none"
+                  className="select-none block"
+                  style={{
+                    maxWidth: 'min(90vw, 480px)',
+                    maxHeight: '70vh',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain',
+                  }}
                   draggable={false} />
               </TransformComponent>
             </TransformWrapper>
+            {name && (
+              <div className="px-4 py-2.5 bg-white border-t border-[#DDD0B8]">
+                <p className="text-sm font-semibold text-[#6B3F1F] truncate">{name}</p>
+              </div>
+            )}
           </div>
         </div>
       )}
