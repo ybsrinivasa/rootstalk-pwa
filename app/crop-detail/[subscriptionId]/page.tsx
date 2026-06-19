@@ -965,7 +965,7 @@ export default function CropDetailPage() {
                     className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold"
                   >{t('orderSheet.close')}</button>
                   <button
-                    onClick={() => router.push(`/orders/${orderSuccess.order_id}`)}
+                    onClick={() => router.push(`/crop-detail/${subscriptionId}/orders?tab=manage`)}
                     className="py-3 rounded-xl text-white text-sm font-semibold"
                     style={{ background: colour }}
                   >{t('orderSheet.takeMe')}</button>

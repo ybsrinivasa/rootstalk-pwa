@@ -499,9 +499,9 @@
     },
     "orderSheet": {
       "successTitle": "Order created",
-      "successBody": "{count, plural, one {1 item added to a single order. You can pick a dealer on the order screen.} other {# items added to a single order. You can pick a dealer on the order screen.}}",
+      "successBody": "{count, plural, one {1 item added to your order. Open Manage to track or update it.} other {# items added to your order. Open Manage to track or update it.}}",
       "close": "Close",
-      "takeMe": "Take me to order",
+      "takeMe": "Open Manage →",
       "confirmAreaTitle": "Confirm your tentative area",
       "confirmAreaBody": "Volumes for these inputs are calculated on this. You can revise it once more at planting.",
       "orderDbsPesticides": "Order DBS pesticides",
