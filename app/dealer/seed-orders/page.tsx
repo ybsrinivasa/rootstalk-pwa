@@ -79,7 +79,11 @@ export default function DealerSeedOrdersPage() {
       })
       setProcessing(null)
       setForm({ unit: 'Kilograms', quantity: '', total_price: '' })
-      load()
+      // 2026-06-19 — Send-for-approval moves the seed into the With
+      // Farmer pill on the unified Orders surface. Land the dealer
+      // there directly instead of leaving them on this legacy Active
+      // tab so the workflow loops back into the canonical view.
+      router.push('/dealer/orders?pill=farmer')
     } finally { setSubmitting(false) }
   }
 
