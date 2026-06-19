@@ -489,8 +489,12 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
       case 'returned':
         return o.status === 'NOT_AVAILABLE'
       case 'pickup':
-        // Seeds don't have a separate physical-pickup step.
-        return false
+        // 2026-06-19 — Seeds now have a physical-pickup step.
+        // Farmer-approve lands the order at READY_FOR_PICKUP; the
+        // Pickup pill surfaces it with an inline "I've picked up
+        // the seed" button. Either farmer or dealer (via /handover)
+        // closes the order — whichever taps first wins.
+        return o.status === 'READY_FOR_PICKUP'
     }
   }
 
@@ -516,9 +520,15 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
 function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.manage')
+  const search = useSearchParams()
   const [orders, setOrders] = useState<SubOrder[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
-  const [pill, setPill] = useState<Pill>('approval')
+  // 2026-06-19 — Pill is URL-controllable via ?pill=, mirroring the
+  // pattern on /dealer/orders. Lets handlers from other pages
+  // (seed approve, mark-received redirects) land the farmer on
+  // the right pill without an extra tap.
+  const initialPill = (search.get('pill') as Pill) || 'approval'
+  const [pill, setPill] = useState<Pill>(initialPill)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
   async function load() {
@@ -597,10 +607,27 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     try {
       if (kind === 'SEED') {
         await api.put(`/farmer/seed-orders/${orderId}/approve`, {})
+        // 2026-06-19 — Seed-approve moves the order into the Pickup
+        // pill where the farmer's mark-received button lives. Hop the
+        // pill so the next CTA is visible without a fresh tap.
+        setPill('pickup')
       } else {
         await api.put(`/farmer/orders/${orderId}/items/approve-all`, {})
       }
       await load()
+    } finally { setBusy(null) }
+  }
+
+  // 2026-06-19 — Farmer confirms physical pickup of a seed order.
+  // Either-actor-wins: dealer's /handover does the same transition
+  // (READY_FOR_PICKUP → PURCHASED); whichever side taps first wins.
+  async function markReceivedSeed(orderId: string) {
+    setBusy(orderId)
+    try {
+      await api.put(`/farmer/seed-orders/${orderId}/mark-received`, {})
+      await load()
+    } catch {
+      alert(t('errorMarkReceivedSeed'))
     } finally { setBusy(null) }
   }
 
@@ -747,6 +774,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
           onCancel={(id, kind) => cancel(id, kind)}
           onDelete={(id, kind) => deleteOrder(id, kind)}
           onForwardReturned={rerouteReturned}
+          onMarkReceivedSeed={markReceivedSeed}
           busy={busy}
         />
       ))}
@@ -758,7 +786,7 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
 
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onCancel, onDelete, onForwardReturned, busy,
+  onCancel, onDelete, onForwardReturned, onMarkReceivedSeed, busy,
 }: {
   orderId: string
   subs: SubOrder[]
@@ -769,6 +797,7 @@ function OrderIdCard({
   onCancel: (id: string, kind: 'REGULAR' | 'SEED') => void
   onDelete: (id: string, kind: 'REGULAR' | 'SEED') => void
   onForwardReturned: (id: string) => void
+  onMarkReceivedSeed: (id: string) => void
   busy: string | null
 }) {
   const t = useTranslations('orders.cropOrders.manage')
@@ -811,12 +840,15 @@ function OrderIdCard({
         {renderRows
           ? matching.map(sub => (
               <FarmerPillChunk key={sub.id} sub={sub} pill={pill}
-                onForwardReturned={onForwardReturned} busy={busy}
-                showSubHeader />
+                onForwardReturned={onForwardReturned}
+                onMarkReceivedSeed={onMarkReceivedSeed}
+                busy={busy} showSubHeader />
             ))
           : matching.length === 1 && (
               <FarmerPillChunk sub={matching[0]} pill={pill}
-                onForwardReturned={onForwardReturned} busy={busy} />
+                onForwardReturned={onForwardReturned}
+                onMarkReceivedSeed={onMarkReceivedSeed}
+                busy={busy} />
             )
         }
       </div>
@@ -899,11 +931,12 @@ function OrderCardHeader({
 }
 
 function FarmerPillChunk({
-  sub, pill, onForwardReturned, busy, showSubHeader,
+  sub, pill, onForwardReturned, onMarkReceivedSeed, busy, showSubHeader,
 }: {
   sub: SubOrder
   pill: Pill
   onForwardReturned: (id: string) => void
+  onMarkReceivedSeed: (id: string) => void
   busy: string | null
   showSubHeader?: boolean
 }) {
@@ -928,10 +961,42 @@ function FarmerPillChunk({
       {pill === 'returned' && (
         <ReturnedChunk sub={sub} onForwardReturned={onForwardReturned} busy={busy} />
       )}
-      {pill === 'pickup' && <PickupChunk sub={sub} />}
+      {pill === 'pickup' && (
+        sub.kind === 'SEED' ? (
+          <SeedPickupChunk sub={sub} onMarkReceived={onMarkReceivedSeed} busy={busy} />
+        ) : (
+          <PickupChunk sub={sub} />
+        )
+      )}
       {(pill === 'routed' || pill === 'approval') && (
         <PostponedStrip sub={sub} pill={pill} />
       )}
+    </div>
+  )
+}
+
+// 2026-06-19 — Farmer-side seed pickup confirmation. Mirrors the
+// dealer's inline handover chunk on /dealer/orders Packing pill:
+// banner + single CTA, no surface hop. Either-actor-wins semantics
+// against /dealer/seed-orders/{id}/handover.
+function SeedPickupChunk({
+  sub, onMarkReceived, busy,
+}: {
+  sub: SubOrder
+  onMarkReceived: (id: string) => void
+  busy: string | null
+}) {
+  const t = useTranslations('orders.cropOrders.chunk')
+  return (
+    <div className="bg-emerald-50 rounded-xl p-3 space-y-2">
+      <p className="text-xs text-emerald-900 text-center font-medium">
+        {t('seedPickupBanner')}
+      </p>
+      <button onClick={() => onMarkReceived(sub.id)}
+        disabled={busy === sub.id}
+        className="w-full bg-emerald-600 disabled:bg-emerald-300 text-white text-xs font-semibold py-2.5 rounded-xl">
+        {busy === sub.id ? t('seedPickupBusy') : t('seedPickupCta')}
+      </button>
     </div>
   )
 }

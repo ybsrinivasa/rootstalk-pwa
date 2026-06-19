@@ -124,7 +124,15 @@ export default function FarmerSeedOrderDetailPage() {
     setBusy(true)
     try {
       await api.put(`/farmer/seed-orders/${order.id}/approve`, {})
-      load()
+      // 2026-06-19 — Bounce back to Manage Pickup pill so the farmer
+      // sees the seed under "I've picked up the seed" alongside any
+      // regular orders awaiting pickup. Pre-fix the farmer was left
+      // on the legacy seed-order detail page with no clear next step.
+      if (order.subscription_id) {
+        router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage&pill=pickup`)
+      } else {
+        load()
+      }
     } catch {
       alert(tDetail('errorApprove'))
     } finally { setBusy(false) }

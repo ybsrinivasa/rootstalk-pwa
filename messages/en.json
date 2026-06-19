@@ -874,6 +874,7 @@
         "confirmDeleteDraft": "Delete this draft permanently? The items will be gone.",
         "confirmDeleteCancelled": "Delete this cancelled order permanently?",
         "emptyAwaiting": "No orders are awaiting action right now.",
+        "errorMarkReceivedSeed": "Could not mark as picked up. Please try again.",
         "pill": {
           "routed": "Routed",
           "approval": "For Approval",
@@ -914,7 +915,10 @@
         "pickupItemCount": "{count, plural, one {1 item} other {# items}}",
         "fromName": "from {name}",
         "fromConnector": "from",
-        "confirmCta": "Confirm →"
+        "confirmCta": "Confirm →",
+        "seedPickupBanner": "Your seed is ready. Pick it up from the dealer.",
+        "seedPickupCta": "I've picked up the seed",
+        "seedPickupBusy": "Saving…"
       },
       "expanded": {
         "allSubOrders": "All sub-orders ({count})",
