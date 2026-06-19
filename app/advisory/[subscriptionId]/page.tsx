@@ -41,6 +41,9 @@ interface Practice {
   is_frequency_due_today?: boolean
   is_purchased?: boolean
   fulfilment?: Fulfilment | null
+  // 2026-06-19 — per-occurrence acknowledgement state
+  ack_status?: 'ACTIVE' | 'MARKED'
+  occurrence_date?: string  // ISO date
 }
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
@@ -50,6 +53,9 @@ interface BlankPathQuestion {
 }
 interface TimelineItem {
   id: string; name: string; source: string   // CCA | CHA | QA
+  // 2026-06-19 — Stable identifier for the per-occurrence
+  // practice-acknowledgement key. Survives publishes.
+  lineage_id?: string
   from_date: string; to_date: string; day_number: number
   practices: Practice[]
   pending_conditional_question?: PendingConditionalQuestion
@@ -594,6 +600,9 @@ export default function AdvisoryPage() {
                             onOrder={() => orderPractice(p, tl)}
                             isOrdering={orderingPractice === p.id}
                             ordered={orderSuccess === p.id}
+                            subscriptionId={subscriptionId}
+                            timelineLineageId={tl.lineage_id}
+                            onAckChanged={load}
                           />
                         )
                       }
@@ -613,6 +622,9 @@ export default function AdvisoryPage() {
                             const first = row.parts?.[0]?.options?.[0]?.practices?.[0]
                             if (first) orderPractice(first, tl)
                           }}
+                          subscriptionId={subscriptionId}
+                          timelineLineageId={tl.lineage_id}
+                          onAckChanged={load}
                         />
                       )
                     })}
@@ -834,11 +846,17 @@ const FULFILMENT_TONE: Record<string, { bg: string; fg: string }> = {
   REJECTED:            { bg: '#fce7f3', fg: '#9d174d' },
 }
 
-function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
+function PracticeCard({
+  practice, onOrder, isOrdering, ordered,
+  subscriptionId, timelineLineageId, onAckChanged,
+}: {
   practice: Practice
   onOrder: () => void
   isOrdering: boolean
   ordered: boolean
+  subscriptionId: string
+  timelineLineageId: string | undefined
+  onAckChanged: () => void
 }) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const tEl = useTranslations('practice.element')
@@ -980,12 +998,130 @@ function PracticeCard({ practice, onOrder, isOrdering, ordered }: {
           </div>
         )
       })()}
+      <PracticeAckFooter
+        practice={practice}
+        subscriptionId={subscriptionId}
+        timelineLineageId={timelineLineageId}
+        onAckChanged={onAckChanged}
+      />
     </div>
   )
 }
 
+// 2026-06-19 — "I've done this" tick + delete button.
+// Gating rules (locked):
+//   - INPUT practices: tick only renders post-purchase (is_purchased).
+//   - Non-INPUT (NON_INPUT / INSTRUCTION / MEDIA): tick always renders.
+// Visual: grey circle with check icon when ACTIVE; emerald-filled
+// circle when MARKED, with a small red Delete button beside it.
+// First-time hide gets a one-shot confirmation sheet (the user's
+// only friction — once acknowledged, subsequent hides are instant).
+function PracticeAckFooter({
+  practice, subscriptionId, timelineLineageId, onAckChanged,
+}: {
+  practice: Practice
+  subscriptionId: string
+  timelineLineageId: string | undefined
+  onAckChanged: () => void
+}) {
+  const tAck = useTranslations('practice.ack')
+  const [busy, setBusy] = useState(false)
+  const [confirmHide, setConfirmHide] = useState(false)
+  const ackable =
+    practice.l0_type !== 'INPUT' || practice.is_purchased === true
+  if (!ackable) return null
+  if (!timelineLineageId || !practice.occurrence_date) return null
+
+  async function call(action: 'mark' | 'unmark' | 'hide') {
+    setBusy(true)
+    try {
+      await api.post(`/farmer/practice-ack/${action}`, {
+        subscription_id: subscriptionId,
+        timeline_lineage_id: timelineLineageId,
+        practice_id: practice.id,
+        occurrence_date: practice.occurrence_date,
+      })
+      onAckChanged()
+    } catch { /* leave state as-is; PWA will refresh on next focus */ }
+    finally { setBusy(false) }
+  }
+
+  async function onHideTap() {
+    const seenKey = 'rt_practice_hide_seen'
+    if (typeof window !== 'undefined' && !window.localStorage.getItem(seenKey)) {
+      setConfirmHide(true)
+      return
+    }
+    await call('hide')
+  }
+
+  const marked = practice.ack_status === 'MARKED'
+  return (
+    <>
+      <div className="border-t border-[#DDD0B8] px-4 py-2.5 flex items-center justify-between gap-3">
+        <button
+          onClick={() => call(marked ? 'unmark' : 'mark')}
+          disabled={busy}
+          className="flex items-center gap-2 text-xs font-medium disabled:opacity-50">
+          <span
+            className={`inline-flex items-center justify-center w-6 h-6 rounded-full border ${
+              marked
+                ? 'bg-emerald-600 border-emerald-700 text-white'
+                : 'bg-[#F5F0E8] border-[#DDD0B8] text-[#7A8C7E]'
+            }`}>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </span>
+          <span className={marked ? 'text-emerald-700' : 'text-[#6B3F1F]'}>
+            {marked ? tAck('done') : tAck('mark')}
+          </span>
+        </button>
+        {marked && (
+          <button
+            onClick={onHideTap}
+            disabled={busy}
+            className="text-xs font-semibold text-[#D4682E] disabled:opacity-50">
+            {tAck('delete')}
+          </button>
+        )}
+      </div>
+      {confirmHide && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => !busy && setConfirmHide(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">{tAck('confirmTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">{tAck('confirmBody')}</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmHide(false)} disabled={busy}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                {tAck('confirmCancel')}
+              </button>
+              <button onClick={async () => {
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem('rt_practice_hide_seen', '1')
+                }
+                setConfirmHide(false)
+                await call('hide')
+              }} disabled={busy}
+                className="flex-1 bg-[#D4682E] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {busy ? '…' : tAck('confirmYes')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
 // ── Practice Relations: AND/OR group renderer ───────────────────────────────
-function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, onOrder }: {
+function RelationGroup({
+  relationType, parts, orderingPractice, orderSuccess, onOrder,
+  subscriptionId, timelineLineageId, onAckChanged,
+}: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
   orderingPractice: string | null
@@ -996,6 +1132,9 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
   // in the signature for backward shape so the internal callers
   // don't need rework — the parent just ignores it.
   onOrder: (practiceIds: string[]) => void
+  subscriptionId: string
+  timelineLineageId: string | undefined
+  onAckChanged: () => void
 }) {
   const tAction = useTranslations('practice.action')
   if (parts.length === 0) return null
@@ -1103,6 +1242,9 @@ function RelationGroup({ relationType, parts, orderingPractice, orderSuccess, on
                     onOrder={() => onOrder(ids)}
                     isOrdering={isOrderingAny}
                     ordered={isAnyOrdered}
+                    subscriptionId={subscriptionId}
+                    timelineLineageId={timelineLineageId}
+                    onAckChanged={onAckChanged}
                   />
                 )}
               </div>

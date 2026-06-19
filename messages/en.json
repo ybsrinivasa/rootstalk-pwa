@@ -180,6 +180,15 @@
       "order": "Order",
       "ordered": "✓ Ordered"
     },
+    "ack": {
+      "mark": "I've done this",
+      "done": "Done",
+      "delete": "Delete",
+      "confirmTitle": "Remove this from your list?",
+      "confirmBody": "You won't be able to bring it back. We'll just hide it for you.",
+      "confirmCancel": "Keep it",
+      "confirmYes": "Yes, remove"
+    },
     "element": {
       "APPLICATION_METHOD": "Application Method",
       "BED_HEIGHT": "Bed Height",
