@@ -1341,7 +1341,11 @@
         "expandSubOrders": "{count, plural, one {1 उप-आदेश} other {# उप-आदेश}}",
         "viaFacilitatorLabel": "सुविधाकर्ता के ज़रिए",
         "unknownFacilitator": "अज्ञात सुविधाकर्ता",
-        "callBtn": "📞 कॉल"
+        "callBtn": "कॉल",
+        "farmerRoleLabel": "किसान",
+        "facilitatorRoleLabel": "सुविधाकर्ता के ज़रिए",
+        "callFarmerAria": "किसान को कॉल करें",
+        "callFacilitatorAria": "सुविधाकर्ता को कॉल करें"
       },
       "chunk": {
         "subOrderPrefix": "उप-आदेश · {date}",

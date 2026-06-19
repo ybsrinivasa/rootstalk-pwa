@@ -81,6 +81,8 @@ interface Order {
 interface SeedOrderRaw {
   id: string
   status: string
+  // 2026-06-19 — Backend now generates RT-YY-NNNNNN for seed orders too.
+  reference_number?: string | null
   category: string | null
   variety_name: string | null
   crop_cosh_id: string | null
@@ -158,10 +160,10 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
   return {
     id: s.id,
     status: s.status,
-    // Seed orders don't carry an Order ID in V1 (Batch 1 covers
-    // app/modules/orders only). When seed-order parity ships, this
-    // will surface like the regular ID.
-    reference_number: null,
+    // 2026-06-19 — Seed orders now carry the same RT-YY-NNNNNN ID
+    // as regular orders. Old rows backfilled in migration
+    // `c4a91e07f3d6`; new rows generated at create.
+    reference_number: s.reference_number ?? null,
     farmer_user_id: s.farmer_user_id,
     farmer_name: s.farmer_name,
     farmer_phone: s.farmer_phone,
@@ -618,45 +620,73 @@ function DealerOrderCardHeader({
   if (!head) return null
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
+      {/* 2026-06-19 — Order ID first, full-width and prominent.
+          Previously this lived as a tiny mono line at the bottom;
+          now it leads the card so the dealer can confirm it over
+          phone before reading anything else. */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <p className="font-mono text-xs font-semibold text-[#085041] tracking-wide truncate">
+          {orderId}
+        </p>
+        {head.is_seed ? (
+          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
+            {t('seedTag')}
+          </span>
+        ) : (
+          head.category && (
+            <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider shrink-0">
+              {head.category.toLowerCase()}
+            </span>
+          )
+        )}
+      </div>
+
+      {/* 2026-06-19 — Explicit role label so the dealer knows whose
+          name they're looking at. Two patterns share this shape: the
+          direct farmer→dealer order (this block alone) and the
+          facilitator-routed order (this block + the facilitator
+          strip below). */}
       <div className="flex items-start gap-3">
-        {/* 2026-06-19 — Farmer avatar opens to fullscreen on tap so
-            the dealer can confirm who they're talking to. */}
         <AvatarLightbox photoUrl={head.farmer_photo_url} name={head.farmer_name} size={44} />
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2">
-            <p className="font-semibold text-[#6B3F1F] truncate">
-              {head.farmer_name || t('unknownFarmer')}
-            </p>
-            {head.is_seed && (
-              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
-                {t('seedTag')}
-              </span>
-            )}
-          </div>
+          <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wide font-semibold">{t('farmerRoleLabel')}</p>
+          <p className="font-semibold text-[#6B3F1F] truncate">
+            {head.farmer_name || t('unknownFarmer')}
+          </p>
           {head.client_name && (
             <p className="text-xs text-[#7A8C7E] truncate">{head.client_name}</p>
           )}
           <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-            {head.is_seed
-              ? t('seedCategory')
-              : (head.category?.toLowerCase() || t('categoryFallback'))}
+            {head.is_seed ? t('seedCategory') : (head.category?.toLowerCase() || t('categoryFallback'))}
             {t('receivedSuffix', { date: shortDate(head.created_at, locale) })}
           </p>
         </div>
+        {head.farmer_phone && (
+          <a href={`tel:${head.farmer_phone}`}
+            onClick={(e) => e.stopPropagation()}
+            aria-label={t('callFarmerAria')}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-semibold">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {t('callBtn')}
+          </a>
+        )}
       </div>
-      {/* 2026-06-19 — Facilitator strip — only when the order was
-          routed via a facilitator. Same tap-to-enlarge + call link
-          as the farmer chunk. */}
+
+      {/* Facilitator strip — only on facilitator-routed orders. Same
+          explicit role label so the dealer immediately knows the
+          relationship. */}
       {(head.facilitator_user_id || head.facilitator_name) && (
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#F0E8D6]">
+        <div className="flex items-start gap-2 mt-2 pt-2 border-t border-[#F0E8D6]">
           <AvatarLightbox
             photoUrl={head.facilitator_photo_url}
             name={head.facilitator_name}
-            size={32}
+            size={36}
             bgColor="rgba(125, 78, 0, 0.1)"
             textColor="#7D4E00" />
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wide">{t('viaFacilitatorLabel')}</p>
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wide font-semibold">{t('facilitatorRoleLabel')}</p>
             <p className="text-xs font-medium text-[#6B3F1F] truncate">
               {head.facilitator_name || t('unknownFacilitator')}
             </p>
@@ -664,15 +694,13 @@ function DealerOrderCardHeader({
           {head.facilitator_phone && (
             <a href={`tel:${head.facilitator_phone}`}
               onClick={(e) => e.stopPropagation()}
-              className="shrink-0 text-[10px] bg-emerald-100 text-emerald-800 px-2 py-1 rounded-lg font-semibold">
+              aria-label={t('callFacilitatorAria')}
+              className="shrink-0 text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1.5 rounded-lg font-semibold">
               {t('callBtn')}
             </a>
           )}
         </div>
       )}
-      <p className="text-[10px] font-mono tracking-wide text-[#085041] mt-2">
-        {orderId}
-      </p>
       {subCount > 1 && (
         <button onClick={onToggleExpand}
           className="text-[10px] font-semibold text-[#7A8C7E] mt-2 flex items-center gap-1">

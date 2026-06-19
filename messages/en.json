@@ -1341,7 +1341,11 @@
         "expandSubOrders": "{count, plural, one {1 sub-order} other {# sub-orders}}",
         "viaFacilitatorLabel": "Via facilitator",
         "unknownFacilitator": "Unknown facilitator",
-        "callBtn": "📞 Call"
+        "callBtn": "Call",
+        "farmerRoleLabel": "Farmer",
+        "facilitatorRoleLabel": "Routed by Facilitator",
+        "callFarmerAria": "Call farmer",
+        "callFacilitatorAria": "Call facilitator"
       },
       "chunk": {
         "subOrderPrefix": "Sub-order · {date}",

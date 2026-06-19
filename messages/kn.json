@@ -1341,7 +1341,11 @@
         "expandSubOrders": "{count, plural, one {1 ಉಪ-ಆದೇಶ} other {# ಉಪ-ಆರ್ಡರ್‌ಗಳು}}",
         "viaFacilitatorLabel": "ಸಹಾಯಕರ ಮೂಲಕ",
         "unknownFacilitator": "ಅಪರಿಚಿತ ಸಹಾಯಕ",
-        "callBtn": "📞 ಕರೆ"
+        "callBtn": "ಕರೆ",
+        "farmerRoleLabel": "ರೈತ",
+        "facilitatorRoleLabel": "ಸಹಾಯಕರ ಮೂಲಕ",
+        "callFarmerAria": "ರೈತರಿಗೆ ಕರೆ ಮಾಡಿ",
+        "callFacilitatorAria": "ಸಹಾಯಕರಿಗೆ ಕರೆ ಮಾಡಿ"
       },
       "chunk": {
         "subOrderPrefix": "ಉಪ-ಆದೇಶ · {date}",
