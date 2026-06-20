@@ -70,6 +70,12 @@ const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned'
 }
 
 function subBelongsTo(o: Order, pill: Pill): boolean {
+  // 2026-06-20 — Defence-in-depth: terminal statuses never on active
+  // pills regardless of backend payload. Matches the farmer + dealer
+  // guards added 2026-06-20.
+  if (['CANCELLED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
+    return false
+  }
   const c = o.item_status_counts
   switch (pill) {
     case 'pending':

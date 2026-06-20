@@ -120,6 +120,13 @@ function shortDate(iso: string | null, locale: string): string {
 // + some Postponed (Postponed) — because the dealer's next action
 // depends on which bucket they're focusing on.
 function subBelongsTo(o: Order, pill: Pill): boolean {
+  // 2026-06-20 — Defence-in-depth: terminal statuses must never
+  // appear on any active pill regardless of what the backend ships.
+  // EXPIRED is the one most likely to leak (orders whose window
+  // lapsed but the cleanup pass hasn't run).
+  if (['CANCELLED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
+    return false
+  }
   // 2026-06-06 — Seed orders use the SeedOrderStatus enum directly
   // (no per-item counts) since each seed order has one item by
   // definition. Membership is keyed off o.status alone.

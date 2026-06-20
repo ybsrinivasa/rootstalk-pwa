@@ -475,7 +475,10 @@ const PILLS: readonly Pill[] = ['routed', 'approval', 'returned', 'pickup'] as c
 function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   // Terminal sub-orders never show in active pills — they belong
   // to History (separate surface, Batch 3).
-  if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED'].includes(o.status)) {
+  // 2026-06-20 — EXPIRED added: an order whose window lapsed without
+  // farmer-receipt is terminal too. Pre-fix it leaked into Routed and
+  // its tap-target crashed (user report).
+  if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(o.status)) {
     return false
   }
 
@@ -1184,6 +1187,14 @@ function PickupChunk({ sub }: { sub: SubOrder }) {
   )
 }
 
+// 2026-06-20 — Terminal sub-orders (EXPIRED, CANCELLED, REJECTED,
+// REROUTED) shown in the expanded lineage list for context, but their
+// row isn't tappable — the order detail page assumes a live order and
+// crashes on terminal statuses. Live rows still tap through.
+const TERMINAL_SUB_STATUSES = new Set([
+  'EXPIRED', 'CANCELLED', 'REJECTED', 'REROUTED', 'PURCHASED', 'COMPLETED',
+])
+
 function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.expanded')
@@ -1195,26 +1206,42 @@ function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
         {t('allSubOrders', { count: subs.length })}
       </p>
       <div className="space-y-2">
-        {subs.map(sub => (
-          <button key={sub.id}
-            onClick={() => router.push(sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}`)}
-            className="w-full text-left flex items-center justify-between gap-2 bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
-            <div className="min-w-0">
-              <p className="text-xs text-[#6B3F1F] truncate">
-                {sub.recipient_shop_name || sub.recipient_name || t('noRecipient')}
-              </p>
-              <p className="text-[10px] text-[#7A8C7E]">
-                {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
-                {sub.item_count !== undefined && sub.item_count > 0 && (
-                  <> · {tOrdersCommon('itemsCount', { count: sub.item_count })}</>
-                )}
-              </p>
-            </div>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
-              {sub.status.replace(/_/g, ' ')}
-            </span>
-          </button>
-        ))}
+        {subs.map(sub => {
+          const terminal = TERMINAL_SUB_STATUSES.has(sub.status)
+          const body = (
+            <>
+              <div className="min-w-0">
+                <p className="text-xs text-[#6B3F1F] truncate">
+                  {sub.recipient_shop_name || sub.recipient_name || t('noRecipient')}
+                </p>
+                <p className="text-[10px] text-[#7A8C7E]">
+                  {new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
+                  {sub.item_count !== undefined && sub.item_count > 0 && (
+                    <> · {tOrdersCommon('itemsCount', { count: sub.item_count })}</>
+                  )}
+                </p>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0 ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
+                {sub.status.replace(/_/g, ' ')}
+              </span>
+            </>
+          )
+          if (terminal) {
+            return (
+              <div key={sub.id}
+                className="w-full flex items-center justify-between gap-2 bg-white/60 border border-[#DDD0B8] rounded-lg px-3 py-2 opacity-70">
+                {body}
+              </div>
+            )
+          }
+          return (
+            <button key={sub.id}
+              onClick={() => router.push(sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}`)}
+              className="w-full text-left flex items-center justify-between gap-2 bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
+              {body}
+            </button>
+          )
+        })}
       </div>
     </div>
   )
