@@ -73,8 +73,10 @@ interface SeedAvail { has_varieties: boolean; count: number }
 
 // 2026-06-19 — Per-subscription attention bucket returned by
 // /farmer/dashboard/attention. Drives the corner-number badges on
-// the Advisory + Orders tiles. Queries badge stays on its own
-// dedicated count (pendingQueriesCount).
+// the Advisory, Orders, Queries tiles.
+// 2026-06-20 — queries_responded now wired backend-side (RESPONDED-
+// only count); payments_pending dropped (subscription-pending has
+// its own first-class surface on /home).
 interface AttentionBucket {
   subscription_id: string
   client_id: string
@@ -86,7 +88,6 @@ interface AttentionBucket {
   seeds_returned: number
   seeds_pickup_ready: number
   queries_responded: number
-  payments_pending: number
   total: number
 }
 interface DashboardAttention {
@@ -807,11 +808,15 @@ export default function CropDetailPage() {
           <button
             onClick={() => router.push(`/crop-detail/${subscriptionId}/queries`)}
             className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95 relative">
-            <AttentionBadge count={pendingQueriesCount} />
+            {/* 2026-06-20 — Badge now reads RESPONDED-only from the
+                aggregator so it aligns with the "farmer is next actor"
+                rule. The subtitle below uses the same source so the
+                farmer reads one consistent number. */}
+            <AttentionBadge count={attention?.queries_responded ?? 0} />
             <span className="text-3xl block mb-2">🎓</span>
             <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.queriesTitle')}</p>
-            {sub.client_has_primary_expert && pendingQueriesCount > 0 && (
-              <p className="text-xs text-[#7A8C7E] mt-0.5">{t('tiles.queriesPending', { count: pendingQueriesCount })}</p>
+            {sub.client_has_primary_expert && (attention?.queries_responded ?? 0) > 0 && (
+              <p className="text-xs text-[#7A8C7E] mt-0.5">{t('tiles.queriesResponded', { count: attention?.queries_responded ?? 0 })}</p>
             )}
             {!sub.client_has_primary_expert && (
               <p className="text-xs text-[#7A8C7E] mt-0.5">{t('tiles.noExpertYet')}</p>

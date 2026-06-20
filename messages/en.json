@@ -462,6 +462,7 @@
       "askExpertTitle": "Ask Expert",
       "queriesTitle": "Queries",
       "queriesPending": "{count, plural, one {1 waiting} other {# waiting}}",
+      "queriesResponded": "{count, plural, one {1 response to read} other {# responses to read}}",
       "ordersTitle": "Orders",
       "setDateFirst": "Set date first",
       "notAvailable": "Not available",
