@@ -56,6 +56,7 @@ export default function FarmerForwardPage() {
   // is set so we don't fire the chained POSTs without a clear answer.
   const [includePostponed, setIncludePostponed] = useState<boolean | null>(null)
   const [sending, setSending] = useState<string | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const backHref = order?.subscription_id
     ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
@@ -84,6 +85,21 @@ export default function FarmerForwardPage() {
         setIncludePostponed(false)
       }
       if (r.data.has_locked_brand) setTab('dealers')
+    }).catch((e: unknown) => {
+      // 2026-06-20 — Without this catch the Promise.all rejection
+      // left order + recipients both null, page hung on the loading
+      // skeleton, user saw a blank screen. Reachable when the
+      // upstream Manage tab still shows a "Send to another dealer"
+      // CTA on an EXPIRED order (item archived) or a terminal-state
+      // lineage. Surface the error so the farmer can navigate back.
+      const err = e as { response?: { data?: { detail?: string | { message?: string } } } }
+      const detail = err.response?.data?.detail
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : (detail && typeof detail === 'object' && detail.message)
+            || t('errorLoad')
+      )
     }).finally(() => setLoading(false))
   }, [orderId, router])
 
@@ -118,12 +134,52 @@ export default function FarmerForwardPage() {
     }
   }
 
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
+        <div className="pt-16 px-4 mt-4 max-w-lg mx-auto">
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
+            <p className="text-3xl mb-2">📦</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mb-1">{t('errorTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mb-4">{loadError}</p>
+            <button onClick={() => router.replace(backHref)}
+              className="w-full py-2.5 rounded-xl bg-[#3A7D44] text-white text-sm font-semibold">
+              {t('backToManage')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   if (loading || !order || !recipients) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
         <PWAHeader title={t('headerTitle')} activeRole="FARMER" back />
         <div className="pt-16 px-4 mt-4">
           <div className="h-28 bg-white/60 rounded-2xl animate-pulse" />
+        </div>
+      </div>
+    )
+  }
+  // 2026-06-20 — Order loaded but has nothing to forward (e.g. all
+  // items archived by timeline-expiry sweep before the farmer tapped
+  // the Manage tab CTA). Show a friendly empty state instead of
+  // rendering the picker with "0 ready to forward."
+  if ((order.returned_items?.length || 0) + (order.postponed_items?.length || 0) === 0) {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8]">
+        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
+        <div className="pt-16 px-4 mt-4 max-w-lg mx-auto">
+          <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
+            <p className="text-3xl mb-2">📦</p>
+            <p className="text-sm font-semibold text-[#6B3F1F] mb-1">{t('emptyTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mb-4">{t('emptyBody')}</p>
+            <button onClick={() => router.replace(backHref)}
+              className="w-full py-2.5 rounded-xl bg-[#3A7D44] text-white text-sm font-semibold">
+              {t('backToManage')}
+            </button>
+          </div>
         </div>
       </div>
     )
