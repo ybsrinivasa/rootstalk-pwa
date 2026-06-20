@@ -712,11 +712,13 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
 
   return (
     <div className="p-4 space-y-3">
-      {/* Pill row + History chip. Active pills filter the live
-          queue; the History chip (right edge, scoped to the same
-          subscription) opens the terminal sub-orders surface. */}
-      <div className="flex items-center gap-2">
-        <div className="flex gap-2 overflow-x-auto flex-1">
+      {/* Pill row + History link. Mirrors the dealer-orders feed
+          layout (2026-06-19): pills wrap naturally (no horizontal
+          scroll), History sits absolute at row-2 right, aligned
+          with the wrapped pill — emerging behind the 4-pill row's
+          empty slot. */}
+      <div className="relative">
+        <div className="flex flex-wrap gap-2">
           {PILLS.map(p => {
             const active = pill === p
             const n = counts[p]
@@ -743,9 +745,13 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
             )
           })}
         </div>
+        {/* History — absolute at row-2 right (mirrors the dealer
+            feed). Row 2 typically holds the 4th pill alone on a
+            phone-width column, leaving generous empty space to the
+            right where History sits. */}
         <button onClick={() => router.push(`/crop-detail/${subscriptionId}/orders/history`)}
-          className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
-          {t('historyChip')}
+          className="absolute top-[40px] right-0 text-xs font-semibold text-[#7A8C7E] active:text-[#3A7D44]">
+          📁 {t('historyChip')} →
         </button>
       </div>
 
