@@ -255,24 +255,12 @@ export default function FarmerOrderDetailPage() {
   async function cancelOrder() {
     if (!confirm(t('confirm.cancelOrder'))) return
     try {
-      // Orders V2 Batch 3: cancel migrates items to a fresh DRAFT
-      // and returns its id. We route the farmer to the draft so
-      // they can pick a new recipient. If migration produced no
-      // items (e.g. the order had none to migrate), fall back to
-      // the orders list.
-      const { data } = await api.put<{
-        status: string
-        new_draft_order_id?: string
-        migrated_item_count?: number
-      }>(`/farmer/orders/${orderId}/cancel`, {})
-      const draftId = data?.new_draft_order_id
-      const count = data?.migrated_item_count ?? 0
-      if (draftId && count > 0) {
-        alert(count === 1 ? t('alerts.cancelledNoticeOne') : t('alerts.cancelledNoticeMany', { count }))
-        router.replace(`/orders/${draftId}`)
-      } else {
-        router.replace('/orders')
-      }
+      // 2026-06-20 — Cancel is now a clean terminal action; non-
+      // received items get released (status REROUTED) so the next
+      // advisory pull surfaces them in a fresh order. No DRAFT
+      // continuation is created, so we just go back to the feed.
+      await api.put(`/farmer/orders/${orderId}/cancel`, {})
+      router.replace('/orders')
     } catch (err: unknown) {
       const e = err as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } } } }
       const detail = e?.response?.data?.detail
