@@ -51,8 +51,15 @@ interface PendingAssignment {
 
 // 2026-06-19 — Per-company attention rollup. Drives the corner-
 // number badge on each company card + the company sort order.
+// 2026-06-20 — `urgency` carries RED/YELLOW dot for time-sensitive
+// signals; rolls up to the highest urgency among the company's subs.
 interface DashboardAttention {
-  by_company?: Array<{ client_id: string; total: number; subscription_ids: string[] }>
+  by_company?: Array<{
+    client_id: string
+    total: number
+    subscription_ids: string[]
+    urgency?: 'RED' | 'YELLOW' | null
+  }>
   grand_total?: number
 }
 
@@ -75,6 +82,7 @@ export default function HomePage() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [clientInfos, setClientInfos] = useState<Record<string, ClientInfo>>({})
   const [attentionByClient, setAttentionByClient] = useState<Record<string, number>>({})
+  const [urgencyByClient, setUrgencyByClient] = useState<Record<string, 'RED' | 'YELLOW' | null>>({})
   const [pendingAssignments, setPendingAssignments] = useState<PendingAssignment[]>([])
   const [assignmentClientInfos, setAssignmentClientInfos] = useState<Record<string, ClientInfo>>({})
   const [loading, setLoading] = useState(true)
@@ -137,10 +145,13 @@ export default function HomePage() {
       if (attentionResult.status === 'fulfilled') {
         const data = attentionResult.value.data
         const byClient: Record<string, number> = {}
+        const urgencyMap: Record<string, 'RED' | 'YELLOW' | null> = {}
         for (const c of data.by_company || []) {
           byClient[c.client_id] = c.total
+          urgencyMap[c.client_id] = c.urgency ?? null
         }
         setAttentionByClient(byClient)
+        setUrgencyByClient(urgencyMap)
       }
 
       let subs: Subscription[] = []
@@ -453,15 +464,26 @@ export default function HomePage() {
                   const needsStartDate = subs.some(s => !s.crop_start_date)
                   const initials = (info?.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
                   const attentionCount = attentionByClient[clientId] ?? 0
+                  const urgency = urgencyByClient[clientId] ?? null
 
                   return (
                     <button key={clientId}
                       onClick={() => router.push(`/home/${clientId}`)}
                       className="w-full rounded-2xl overflow-hidden shadow-sm text-left active:scale-[0.98] transition-transform relative"
                       style={{ background: C.cardBg, border: `1px solid ${C.divider}` }}>
-                      {attentionCount > 0 && (
-                        <span className="absolute top-2 right-3 text-base font-bold text-white z-10">
-                          {attentionCount}
+                      {(attentionCount > 0 || urgency) && (
+                        <span className="absolute top-2 right-3 flex items-center gap-1 z-10">
+                          {urgency === 'RED' && (
+                            <span className="inline-block w-2 h-2 bg-red-500 rounded-full ring-1 ring-white/30" />
+                          )}
+                          {urgency === 'YELLOW' && (
+                            <span className="inline-block w-2 h-2 bg-amber-300 rounded-full ring-1 ring-white/30" />
+                          )}
+                          {attentionCount > 0 && (
+                            <span className="text-base font-bold text-white">
+                              {attentionCount}
+                            </span>
+                          )}
                         </span>
                       )}
 

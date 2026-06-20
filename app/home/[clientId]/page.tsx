@@ -38,10 +38,12 @@ function _legacyFormatCropName(coshId: string): string {
 
 // 2026-06-19 — Per-sub attention bucket (matches the Crop dashboard
 // shape). Drives the per-crop attention badge on this Company view.
+// 2026-06-20 — urgency tier added (RED last-day / YELLOW penultimate).
 interface AttentionBucket {
   subscription_id: string
   client_id: string
   total: number
+  urgency?: 'RED' | 'YELLOW' | null
 }
 interface DashboardAttention {
   by_subscription?: Record<string, AttentionBucket>
@@ -180,14 +182,25 @@ export default function BrandedSpacePage() {
             const hasStartDate = !!sub.crop_start_date
             const cropLabel = cropDisplayName(sub.crop_cosh_id, sub.crop_name)
             const attentionCount = attention[sub.id]?.total ?? 0
+            const urgency = attention[sub.id]?.urgency ?? null
             return (
               <button key={sub.id}
                 onClick={() => router.push(`/crop-detail/${sub.id}`)}
                 className="w-full bg-white border border-[#DDD0B8] rounded-2xl mx-4 mb-3 px-4 py-4 flex items-center justify-between active:scale-[0.98] transition-transform text-left relative"
                 style={{ width: 'calc(100% - 2rem)' }}>
-                {attentionCount > 0 && (
-                  <span className="absolute top-2 right-3 text-base font-bold text-[#085041]">
-                    {attentionCount}
+                {(attentionCount > 0 || urgency) && (
+                  <span className="absolute top-2 right-3 flex items-center gap-1">
+                    {urgency === 'RED' && (
+                      <span className="inline-block w-2 h-2 bg-red-600 rounded-full" />
+                    )}
+                    {urgency === 'YELLOW' && (
+                      <span className="inline-block w-2 h-2 bg-amber-400 rounded-full" />
+                    )}
+                    {attentionCount > 0 && (
+                      <span className="text-base font-bold text-[#085041]">
+                        {attentionCount}
+                      </span>
+                    )}
                   </span>
                 )}
                 <div className="min-w-0">

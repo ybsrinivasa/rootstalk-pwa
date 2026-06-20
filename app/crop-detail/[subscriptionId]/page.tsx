@@ -74,9 +74,9 @@ interface SeedAvail { has_varieties: boolean; count: number }
 // 2026-06-19 — Per-subscription attention bucket returned by
 // /farmer/dashboard/attention. Drives the corner-number badges on
 // the Advisory, Orders, Queries tiles.
-// 2026-06-20 — queries_responded now wired backend-side (RESPONDED-
-// only count); payments_pending dropped (subscription-pending has
-// its own first-class surface on /home).
+// 2026-06-20 — queries_responded wired (RESPONDED-only + viewed_at
+// filter); payments_pending dropped; urgency tier added (RED for
+// last-day, YELLOW for penultimate, null otherwise).
 interface AttentionBucket {
   subscription_id: string
   client_id: string
@@ -88,6 +88,7 @@ interface AttentionBucket {
   seeds_returned: number
   seeds_pickup_ready: number
   queries_responded: number
+  urgency?: 'RED' | 'YELLOW' | null
   total: number
 }
 interface DashboardAttention {
@@ -777,7 +778,9 @@ export default function CropDetailPage() {
           <button
             onClick={() => hasStartDate ? router.push(`/advisory/${subscriptionId}`) : setShowNeedDateSheet('advisory')}
             className={`relative rounded-2xl p-4 text-center border shadow-sm transition-all ${hasStartDate ? 'bg-white border-[#DDD0B8] active:scale-95' : 'bg-stone-100 border-[#DDD0B8] opacity-60'}`}>
-            <AttentionBadge count={attention?.advisory_unmarked ?? 0} />
+            <AttentionBadge
+              count={attention?.advisory_unmarked ?? 0}
+              urgency={attention?.urgency ?? null} />
             <span className="text-3xl block mb-2">🌿</span>
             <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.advisoryTitle')}</p>
             {!hasStartDate && <p className="text-xs text-amber-600 mt-0.5">{t('tiles.setDateFirst')}</p>}
@@ -1301,19 +1304,31 @@ export default function CropDetailPage() {
 }
 
 // 2026-06-19 — Corner-number attention badge. Renders absolute on
-// the top-right of any tile button. Two-tier: plain emerald number
-// for routine attention, with a small red dot prefixing it when
-// `urgent` is true (reserved for time-sensitive signals; not yet
-// wired — keeping the prop for the next round). Zero count → no
-// render so quiet tiles stay quiet.
-function AttentionBadge({ count, urgent = false }: { count: number; urgent?: boolean }) {
-  if (!count || count <= 0) return null
+// the top-right of any tile button. Number is plain emerald (no
+// background, no fill). Prefixed with a small dot when `urgency` is
+// set:
+//   RED    = last day to act (an advisory timeline ends today)
+//   YELLOW = penultimate day (timeline ends tomorrow)
+//   null   = no urgency dot
+// Zero count + no urgency → no render so quiet tiles stay quiet.
+function AttentionBadge({
+  count, urgency = null,
+}: {
+  count: number
+  urgency?: 'RED' | 'YELLOW' | null
+}) {
+  if ((!count || count <= 0) && !urgency) return null
   return (
     <span className="absolute top-2 right-3 flex items-center gap-1">
-      {urgent && (
-        <span className="inline-block w-1.5 h-1.5 bg-red-600 rounded-full" />
+      {urgency === 'RED' && (
+        <span className="inline-block w-2 h-2 bg-red-600 rounded-full" />
       )}
-      <span className="text-base font-bold text-[#085041]">{count}</span>
+      {urgency === 'YELLOW' && (
+        <span className="inline-block w-2 h-2 bg-amber-400 rounded-full" />
+      )}
+      {count > 0 && (
+        <span className="text-base font-bold text-[#085041]">{count}</span>
+      )}
     </span>
   )
 }
