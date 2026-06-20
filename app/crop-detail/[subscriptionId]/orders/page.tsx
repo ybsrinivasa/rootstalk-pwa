@@ -901,26 +901,39 @@ function OrderCardHeader({
   orderId: string
 }) {
   const t = useTranslations('orders.cropOrders.orderHeader')
+  const tRecipient = useTranslations('orders.cropOrders.recipient')
   const locale = useLocale()
+  // 2026-06-20 — Order ID promoted from text-[10px] font-mono to the
+  // same prominence the dealer's card gives it (text-xs font-semibold
+  // mono, emerald). Order ID is the primary cross-role identifier;
+  // farmer / dealer / facilitator all confirm it over the phone.
+  // Recipient block (name + role) follows so the farmer immediately
+  // sees who's currently processing without expanding the chunk.
+  const recipientName = head?.recipient_role === 'DEALER'
+    ? (head?.recipient_shop_name || head?.recipient_name)
+    : (head?.recipient_name || head?.recipient_shop_name)
+  const recipientRoleLabel = head?.recipient_role === 'FACILITATOR'
+    ? tRecipient('facilitatorLabel')
+    : tRecipient('dealerLabel')
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
       <div className="flex items-center justify-between gap-2 mb-1">
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <p className="text-xs font-mono font-semibold text-[#3A7D44] tracking-wide truncate">
+          {orderId}
+        </p>
+        <div className="flex items-center gap-2 shrink-0">
           <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
             {head?.kind === 'SEED' ? t('kindSeed') : (head?.category?.toLowerCase() || t('kindFallback'))}
           </span>
+          <span className="text-[10px] text-[#7A8C7E]">
+            {head?.created_at && new Date(head.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
+          </span>
         </div>
-        <span className="text-[10px] text-[#7A8C7E]">
-          {head?.created_at && new Date(head.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
-        </span>
       </div>
-      <p className="text-[10px] font-mono tracking-wide text-[#3A7D44]">
-        {orderId}
-      </p>
       {head?.kind === 'SEED' ? (
-        <p className="text-sm text-[#6B3F1F] truncate mt-1">{head.variety_name || t('seedFallback')}</p>
+        <p className="text-sm text-[#6B3F1F] truncate mt-0.5">{head.variety_name || t('seedFallback')}</p>
       ) : (
-        <p className="text-sm text-[#6B3F1F] mt-1">
+        <p className="text-sm text-[#6B3F1F] mt-0.5">
           {head?.date_from && head?.date_to ? (
             <>
               {new Date(head.date_from).toLocaleDateString(locale, { day: '2-digit', month: 'short' })} —
@@ -928,6 +941,28 @@ function OrderCardHeader({
             </>
           ) : null}
         </p>
+      )}
+      {/* Recipient line — name + role inline, phone tap-call on the
+          right. Renders whenever the order has a recipient set; the
+          fallback "—" appears when the recipient fields are null
+          (data anomaly) so the farmer still sees the slot. */}
+      {(recipientName || head?.recipient_phone) && (
+        <div className="mt-1.5 flex items-center justify-between gap-2">
+          <p className="text-[11px] text-[#6B3F1F] truncate">
+            <span className="text-[#7A8C7E]">{tRecipient('routedToPrefix')} </span>
+            <span className="font-semibold">{recipientName || '—'}</span>
+            {recipientName && (
+              <span className="text-[#7A8C7E]"> · {recipientRoleLabel}</span>
+            )}
+          </p>
+          {head?.recipient_phone && (
+            <a href={`tel:${head.recipient_phone}`}
+              onClick={e => e.stopPropagation()}
+              className="text-[10px] font-semibold text-[#3A7D44] px-2 py-0.5 rounded-lg bg-emerald-50 shrink-0">
+              📞
+            </a>
+          )}
+        </div>
       )}
       {subCount > 1 && (
         <button onClick={onToggleExpand}
