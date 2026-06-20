@@ -669,7 +669,10 @@ export default function DealerOrderDetailPage() {
     try {
       await api.put(`/dealer/orders/${orderId}/submit-for-approval`, {})
       setShowSubmitConfirm(false)
-      load()
+      // Dealer is done with this order — bounce back to /dealer/orders on
+      // the Pending pill so the now-Returned-to-Farmer order disappears
+      // from view and the feed shows what's actually still pending.
+      router.push('/dealer/orders?pill=pending')
     } catch (err) {
       const e = err as { response?: { data?: { detail?: unknown } } }
       const d = e.response?.data?.detail
@@ -899,8 +902,6 @@ export default function DealerOrderDetailPage() {
     availableCount === 0 && notAvailableCount > 0
       ? t('footer.submitLabelNotify', { count: notAvailableCount })
       : t('footer.submitLabelSend')
-
-  const showPL = ['SENT_FOR_APPROVAL', 'PARTIALLY_APPROVED', 'COMPLETED'].includes(order.status)
 
   // Batch 27 — Total amount footer. `price` is the line-item total
   // the dealer entered for the given volume (e.g., "2 kg · ₹500"
@@ -1659,18 +1660,6 @@ export default function DealerOrderDetailPage() {
           </button>
         )}
 
-        {showPL && (
-          <button onClick={loadPackingList}
-            className="w-full py-3.5 rounded-2xl border-2 border-[#085041] text-[#085041] font-semibold text-sm">
-            {t('footer.viewPackingList')}
-          </button>
-        )}
-
-        {order.status === 'COMPLETED' && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
-            <p className="text-emerald-700 font-semibold text-sm">{t('footer.orderComplete')}</p>
-          </div>
-        )}
       </div>
 
       {/* Brand selection bottom sheet */}
