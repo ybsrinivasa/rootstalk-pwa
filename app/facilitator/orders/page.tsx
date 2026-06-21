@@ -50,6 +50,7 @@ interface Order {
   dealer_shop_gps_lng?: number | null
   crop_name?: string | null
   subscription_id?: string | null
+  client_name?: string | null
   packing_code?: string | null
   packing_list_shared_at?: string | null
   packing_picked_up_at?: string | null
@@ -295,41 +296,45 @@ export default function FacilitatorOrdersPage() {
       <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-20">
 
-        {/* Pill row + History chip */}
-        <div className="px-4 pt-3 flex items-center gap-2">
-          <div className="flex gap-2 overflow-x-auto flex-1">
-            {(Object.keys(PILL_LABEL_KEY) as Pill[]).map(p => {
-              const active = pill === p
-              const n = counts[p]
-              return (
-                <button key={p} onClick={() => setPill(p)}
-                  className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-                    active
-                      ? 'bg-[#7D4E00] text-white border-[#7D4E00]'
-                      : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
-                  }`}>
-                  <span>{t(PILL_LABEL_KEY[p])}</span>
-                  {/* 2026-06-09 — Count badge: filled circle so the
-                      task-load reads at a glance. Tinted for the
-                      active pill (white on COLOUR), the role accent
-                      for inactive pills. Zero is shown muted so the
-                      eye skips it. */}
-                  <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
-                    active
-                      ? 'bg-white/25 text-white'
-                      : n === 0
-                        ? 'bg-stone-100 text-[#7A8C7E]'
-                        : 'bg-[#7D4E00]/15 text-[#7D4E00]'
-                  }`}>{n}</span>
-                </button>
-              )
-            })}
+        {/* Pill row + History link. 2026-06-21 — Mirrors the dealer
+            feed + farmer Manage tab layout: pills wrap naturally (no
+            horizontal scroll, no off-screen pills), History sits
+            absolute at row-2 right, aligned with the wrapped pill
+            row's empty slot. */}
+        <div className="px-4 pt-3">
+          <div className="relative">
+            <div className="flex flex-wrap gap-2">
+              {(Object.keys(PILL_LABEL_KEY) as Pill[]).map(p => {
+                const active = pill === p
+                const n = counts[p]
+                return (
+                  <button key={p} onClick={() => setPill(p)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                      active
+                        ? 'bg-[#7D4E00] text-white border-[#7D4E00]'
+                        : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
+                    }`}>
+                    <span>{t(PILL_LABEL_KEY[p])}</span>
+                    <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                      active
+                        ? 'bg-white/25 text-white'
+                        : n === 0
+                          ? 'bg-stone-100 text-[#7A8C7E]'
+                          : 'bg-[#7D4E00]/15 text-[#7D4E00]'
+                    }`}>{n}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {/* History — absolute at row-2 right (mirrors the dealer
+                feed + farmer Manage). Row 2 typically holds the 5th
+                pill alone on a phone-width column, leaving generous
+                empty space to the right where History sits. */}
+            <button onClick={() => router.push('/facilitator/history')}
+              className="absolute top-[40px] right-0 text-xs font-semibold text-[#7A8C7E] active:text-[#7D4E00]">
+              {t('history')}
+            </button>
           </div>
-          {/* History chip — Completed + Cancelled live elsewhere */}
-          <button onClick={() => router.push('/facilitator/history')}
-            className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap bg-white text-[#7A8C7E] border-[#DDD0B8]">
-            {t('history')}
-          </button>
         </div>
 
         <div className="px-4 mt-4 space-y-3 max-w-lg mx-auto">
@@ -564,8 +569,12 @@ function CardHeader({
               </a>
             )}
           </div>
-          {head?.crop_name && (
-            <p className="text-xs text-[#7A8C7E] truncate">{head.crop_name}</p>
+          {(head?.crop_name || head?.client_name) && (
+            <p className="text-xs text-[#7A8C7E] truncate">
+              {head.crop_name && head.client_name
+                ? `${head.crop_name} · ${head.client_name}`
+                : head.crop_name || head.client_name}
+            </p>
           )}
           <p className="text-[10px] font-mono tracking-wide text-[#7D4E00] mt-0.5">
             {orderId}
