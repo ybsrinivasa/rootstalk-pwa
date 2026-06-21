@@ -546,9 +546,16 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
     // farmer can still reach their review page and reroute.
     setOrders((data.orders || []).filter(o => {
       if (o.status === 'PURCHASED') return false
+      // 2026-06-21 — COMPLETED is now non-terminal for the Pickup
+      // pill (order goes COMPLETED on farmer's last approval, even
+      // though pickup + receipt-confirmation are still pending). Keep
+      // the order visible while pickup_ready_count > 0 so it shows
+      // on the Pickup pill — same pattern as the dealer's /dealer/orders
+      // Packing-pill alignment fix.
       if (o.status === 'COMPLETED' &&
           !(o.returned_count || 0) &&
-          !(o.postponed_count || 0)) return false
+          !(o.postponed_count || 0) &&
+          !(o.pickup_ready_count || 0)) return false
       return true
     }))
   }
