@@ -170,7 +170,14 @@ export default function FacilitatorOrdersPage() {
     setActing(id)
     try {
       await api.put(`/facilitator/orders/${id}/accept`, {})
-      router.push(`/facilitator/orders/${id}`)
+      // 2026-06-21 — Stay on the Pending pill after accept. The
+      // ACCEPTED order remains in Pending (status ACCEPTED + no
+      // dealer = "pick a dealer") and renders inline with a
+      // "Pick Dealer →" CTA that takes the facilitator to the
+      // detail page only when they're actually ready to forward.
+      // Pre-fix: router.push to detail page surfaced a "Forward
+      // to Dealer" screen that felt like a dead-end legacy view.
+      load()
     } finally { setActing(null) }
   }
 
