@@ -834,16 +834,37 @@ function BundleOrderSheet({
   )
 }
 
-// Orders V2 Batch 11 — palette for the tappable status chip.
-// Copy lives in `practice.status.*` i18n namespace per status enum.
-const FULFILMENT_TONE: Record<string, { bg: string; fg: string }> = {
-  PENDING:             { bg: '#fef3c7', fg: '#92400e' },
-  AVAILABLE:           { bg: '#dbeafe', fg: '#1e40af' },
-  SENT_FOR_APPROVAL:   { bg: '#ede9fe', fg: '#5b21b6' },
-  APPROVED:            { bg: '#d1fae5', fg: '#065f46' },
-  POSTPONED:           { bg: '#fed7aa', fg: '#9a3412' },
-  NOT_AVAILABLE:       { bg: '#fee2e2', fg: '#991b1b' },
-  REJECTED:            { bg: '#fce7f3', fg: '#9d174d' },
+// 2026-06-21 — Advisory status chip now maps onto the Manage tab's
+// four pills (Routed / For Approval / Returned / Ready for pickup) so
+// the farmer sees the same vocabulary on both surfaces. The chip is a
+// shortcut to the corresponding Manage pill — tap routes directly to
+// /crop-detail/{sub}/orders?tab=manage&pill=…
+type ManagePill = 'routed' | 'approval' | 'returned' | 'pickup'
+
+const MANAGE_PILL_TONE: Record<ManagePill, { bg: string; fg: string }> = {
+  routed:   { bg: '#dbeafe', fg: '#1e40af' },  // blue
+  approval: { bg: '#ede9fe', fg: '#5b21b6' },  // purple
+  returned: { bg: '#fee2e2', fg: '#991b1b' },  // red
+  pickup:   { bg: '#d1fae5', fg: '#065f46' },  // emerald
+}
+
+// Returns the pill a fulfilment maps to, or null when the item is
+// terminal-received (chip drops off — nothing left for the farmer to do).
+function fulfilmentToPill(f: Fulfilment): ManagePill | null {
+  if (f.farmer_received_at) return null
+  switch (f.status) {
+    case 'PENDING':
+    case 'AVAILABLE':
+    case 'POSTPONED':
+      return 'routed'
+    case 'SENT_FOR_APPROVAL':
+      return 'approval'
+    case 'NOT_AVAILABLE':
+    case 'REJECTED':
+      return 'returned'
+    case 'APPROVED':
+      return 'pickup'
+  }
 }
 
 function PracticeCard({
@@ -858,29 +879,31 @@ function PracticeCard({
   timelineLineageId: string | undefined
   onAckChanged: () => void
 }) {
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const router = useRouter()
   const tEl = useTranslations('practice.element')
-  const tStatus = useTranslations('practice.status')
+  const tPill = useTranslations('orders.cropOrders.manage.pill')
   const tAction = useTranslations('practice.action')
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
-  const tone = fulf ? FULFILMENT_TONE[fulf.status] : null
-  const statusCopy = fulf
-    ? (tStatus.has(fulf.status) ? tStatus(fulf.status) : fulf.status)
-    : ''
-  // INPUT details (brand, dose, formulation) are hidden until the
-  // farmer purchases — the dealer picks the actual product, and
-  // resolved details surface on the order page after fulfilment.
-  // Backend marks practice.is_purchased=true once any OrderItem
-  // for it is APPROVED (same threshold BL-03 uses). NON_INPUT /
-  // INSTRUCTION / MEDIA are not purchased — their details are the
-  // advisory, always shown. UUID-safe via isUuid() in render.
+  // 2026-06-21 — Status chip now reuses the Manage tab's 4 pill names
+  // (Routed / For Approval / Returned / Ready for pickup). Tapping the
+  // chip navigates to the matching pill on Manage instead of opening a
+  // bottom sheet — keeps the farmer in one mental model.
+  const pillName = fulf ? fulfilmentToPill(fulf) : null
+  const pillTone = pillName ? MANAGE_PILL_TONE[pillName] : null
+  // 2026-06-21 — INPUT details (brand, dose, formulation etc.) stay
+  // hidden until the farmer has actually picked up the item. The risk
+  // is otherwise that someone else sees the queued purchase and tries
+  // to claim it at the dealer's shop before the rightful farmer gets
+  // there. Once farmer_received_at is stamped, the transaction is
+  // sealed and details can surface.
   const isPurchasable = practice.l0_type === 'INPUT'
+  const pickedUp = !!fulf?.farmer_received_at
   const detailsVisible =
     practice.elements.length > 0 &&
-    (!isPurchasable || practice.is_purchased === true)
+    (!isPurchasable || pickedUp)
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
@@ -908,49 +931,48 @@ function PracticeCard({
           </p>
         </div>
         {practice.l0_type === 'INPUT' && (
-          // Status chip when the practice has a live OrderItem;
-          // Order button otherwise. The chip is tappable — opens a
-          // small detail sheet with the right info per status.
-          fulf && tone ? (
+          // 2026-06-21 — Status chip (Manage pill name) when the
+          // practice has a live OrderItem and isn't yet picked up;
+          // Order button when there's nothing in flight. The chip
+          // navigates directly to the matching Manage pill — no
+          // intermediate bottom-sheet. Once the item is picked up
+          // (pillName === null), the chip drops entirely and the
+          // practice card just renders its details (per detailsVisible).
+          pillName && pillTone ? (
             <button
-              onClick={e => { e.stopPropagation(); setSheetOpen(true) }}
+              onClick={e => {
+                e.stopPropagation()
+                router.push(`/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`)
+              }}
               className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl"
-              style={{ background: tone.bg, color: tone.fg }}>
-              {statusCopy}{fulf.status === 'POSTPONED' && fulf.postpone_days_remaining != null
+              style={{ background: pillTone.bg, color: pillTone.fg }}>
+              {tPill(pillName)}
+              {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
                 ? ` · ${fulf.postpone_days_remaining}d` : ''}
             </button>
-          ) : (
+          ) : !fulf && !practice.is_purchased ? (
             <button
-              onClick={e => { e.stopPropagation(); if (!practice.is_purchased) onOrder() }}
-              disabled={isOrdering || ordered || practice.is_purchased === true}
+              onClick={e => { e.stopPropagation(); onOrder() }}
+              disabled={isOrdering || ordered}
               className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
-              style={{ background: (ordered || practice.is_purchased) ? '#16a34a' : '#3A7D44' }}>
-              {practice.is_purchased
-                ? `✓ ${tStatus.has('APPROVED') ? tStatus('APPROVED') : 'Purchased'}`
-                : ordered ? tAction('ordered') : isOrdering ? '…' : tAction('order')}
+              style={{ background: ordered ? '#16a34a' : '#3A7D44' }}>
+              {ordered ? tAction('ordered') : isOrdering ? '…' : tAction('order')}
             </button>
-          )
+          ) : null
+          // Purchased + already-picked-up cases render no badge — the
+          // PurchasedSummary block below carries the brand details.
         )}
       </div>
-
-      {/* Batch 11 — fulfilment detail sheet. What's shown depends on
-          the item's status; the action button always navigates the
-          farmer to /orders/{id} where the full per-item actions
-          (re-route, postpone, accept brand & price) already live. */}
-      {sheetOpen && fulf && tone && (
-        <FulfilmentSheet
-          fulfilment={fulf}
-          chipCopy={statusCopy}
-          onClose={() => setSheetOpen(false)}
-        />
-      )}
 
       {/* 2026-06-06 — Post-purchase brand summary on the card itself.
           What the farmer most needs to see — brand + manufacturer +
           how to apply — is visible without expanding. Common Name
           (the SE authoring vocabulary) is intentionally NOT shown
-          here; it's filtered out of the details below too. */}
-      {fulf?.status === 'APPROVED' && fulf.brand_name && (
+          here; it's filtered out of the details below too.
+          2026-06-21 — Gated on pickedUp (farmer_received_at) too:
+          before pickup we hide brand identity to avoid third-party
+          interception of the queued purchase at the dealer's shop. */}
+      {pickedUp && fulf?.brand_name && (
         <PurchasedSummary
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
@@ -962,7 +984,7 @@ function PracticeCard({
         // Strip SE recommendations that are dealer-facing only and
         // collapse post-purchase APPLICATION_METHOD + DOSAGE into
         // PurchasedSummary to avoid duplication.
-        const summaryShown = fulf?.status === 'APPROVED' && !!fulf.brand_name
+        const summaryShown = pickedUp && !!fulf?.brand_name
         const visibleEls = mergeUnitElements(practice.elements)
           .filter(el => {
             const t = (el.element_type || '').toUpperCase()
@@ -1280,124 +1302,6 @@ function InnerPracticeRow({ practice }: { practice: Practice }) {
       <p className="text-sm font-medium text-[#6B3F1F]">
         {l2Label || 'General Advisory'}
       </p>
-    </div>
-  )
-}
-
-// Orders V2 Batch 11 — drill-down sheet that opens from the status
-// chip on each INPUT card. The copy/CTA per status mirrors the
-// 2026-05-31 narrative: brand/price hidden until APPROVED;
-// Returned points to the bundled-reroute CTA on the order page;
-// Postponed shows remaining days.
-function FulfilmentSheet({
-  fulfilment, chipCopy, onClose,
-}: {
-  fulfilment: Fulfilment
-  chipCopy: string
-  onClose: () => void
-}) {
-  const router = useRouter()
-  const goToOrder = () => {
-    onClose()
-    router.push(`/orders/${fulfilment.order_id}`)
-  }
-
-  const tone = FULFILMENT_TONE[fulfilment.status]
-  const isReturned = fulfilment.status === 'NOT_AVAILABLE' || fulfilment.status === 'REJECTED'
-
-  return (
-    <div className="fixed inset-0 z-[60] bg-black/40 flex items-end" onClick={onClose}>
-      <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto"
-        onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: tone.bg, color: tone.fg }}>
-            {chipCopy}
-          </span>
-          <button onClick={onClose} className="text-[#7A8C7E] text-xl leading-none">×</button>
-        </div>
-
-        {fulfilment.status === 'APPROVED' && (
-          <div className="space-y-2">
-            {fulfilment.brand_name && (
-              <div>
-                <p className="text-xs text-[#7A8C7E]">Brand</p>
-                <p className="font-semibold text-[#6B3F1F]">{fulfilment.brand_name}</p>
-              </div>
-            )}
-            {fulfilment.given_volume != null && (
-              <div>
-                <p className="text-xs text-[#7A8C7E]">Quantity</p>
-                <p className="text-[#6B3F1F]">{fulfilment.given_volume} {fulfilment.volume_unit}</p>
-              </div>
-            )}
-            {fulfilment.price != null && (
-              <div>
-                <p className="text-xs text-[#7A8C7E]">Price</p>
-                <p className="text-[#6B3F1F]">₹{fulfilment.price}</p>
-              </div>
-            )}
-            {/* 2026-06-06 — Highest-intent moment to confirm pickup:
-                the farmer is reading dosage instructions, almost
-                certainly holding the bottle. One tap closes the loop. */}
-            {!fulfilment.farmer_received_at && (
-              <button
-                onClick={() => { window.location.href = `/orders/${fulfilment.order_id}/pickup` }}
-                className="w-full mt-1 px-3 py-2 bg-emerald-50 border border-emerald-200 rounded-lg text-left active:bg-emerald-100/60">
-                <p className="text-xs font-semibold text-emerald-800">📦 Tap to confirm pickup</p>
-                <p className="text-[11px] text-emerald-700 mt-0.5">
-                  These items haven&apos;t been marked as picked up yet.
-                  {fulfilment.packing_code && <> Packing ID: <span className="font-mono tracking-widest">{fulfilment.packing_code}</span></>}
-                </p>
-              </button>
-            )}
-          </div>
-        )}
-
-        {fulfilment.status === 'POSTPONED' && (
-          <div className="space-y-1.5">
-            <p className="text-sm text-[#6B3F1F]">
-              The dealer has delayed this item. It will be back in their list automatically.
-            </p>
-            {fulfilment.postpone_days_remaining != null && (
-              <p className="text-xs text-[#7A8C7E]">
-                {fulfilment.postpone_days_remaining} day{fulfilment.postpone_days_remaining === 1 ? '' : 's'} remaining before it auto-returns to you.
-              </p>
-            )}
-          </div>
-        )}
-
-        {isReturned && (
-          <div className="space-y-1.5">
-            <p className="text-sm text-[#6B3F1F]">
-              {fulfilment.status === 'NOT_AVAILABLE'
-                ? "The dealer couldn't fulfil this item. Send it to a different dealer or facilitator."
-                : "You rejected the dealer's brand and price. Send it to a different dealer or facilitator."}
-            </p>
-            <p className="text-xs text-[#7A8C7E]">
-              Use the &quot;Send returned items&quot; button on the order page — it bundles every returned item from this order in one go.
-            </p>
-          </div>
-        )}
-
-        {(fulfilment.status === 'PENDING' || fulfilment.status === 'AVAILABLE') && (
-          <p className="text-sm text-[#6B3F1F]">
-            The dealer is working on this item. The brand and price will be visible once you approve them.
-          </p>
-        )}
-
-        {fulfilment.status === 'SENT_FOR_APPROVAL' && (
-          <p className="text-sm text-[#6B3F1F]">
-            The dealer has sent you the brand and price for approval — open the order to review them.
-          </p>
-        )}
-
-        <button onClick={goToOrder}
-          className="w-full mt-5 py-3 rounded-2xl text-white font-semibold text-sm"
-          style={{ background: '#3A7D44' }}>
-          Open order →
-        </button>
-      </div>
     </div>
   )
 }

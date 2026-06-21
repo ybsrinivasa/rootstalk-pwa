@@ -889,7 +889,7 @@
           "routed": "Routed",
           "approval": "For Approval",
           "returned": "Returned",
-          "pickup": "Pickup"
+          "pickup": "Ready for pickup"
         },
         "historyChip": "📁 History",
         "approvalPeek": "Approval",
@@ -1139,10 +1139,22 @@
     "addVoiceNote": "🎙 Add a voice note",
     "howUrgentLabel": "How urgent is this?",
     "severity": {
-      "CRITICAL": { "label": "Critical", "desc": "Severe damage visible, urgent action needed" },
-      "HIGH": { "label": "High", "desc": "Significant impact, needs prompt attention" },
-      "MODERATE": { "label": "Moderate", "desc": "Some concern but crop is managing" },
-      "LOW": { "label": "Low", "desc": "Minor issue or general question" }
+      "CRITICAL": {
+        "label": "Critical",
+        "desc": "Severe damage visible, urgent action needed"
+      },
+      "HIGH": {
+        "label": "High",
+        "desc": "Significant impact, needs prompt attention"
+      },
+      "MODERATE": {
+        "label": "Moderate",
+        "desc": "Some concern but crop is managing"
+      },
+      "LOW": {
+        "label": "Low",
+        "desc": "Minor issue or general question"
+      }
     },
     "openingPayment": "Opening payment…",
     "submitting": "Submitting…",
