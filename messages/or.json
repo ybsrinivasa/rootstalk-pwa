@@ -2196,7 +2196,12 @@
       "kmAway": "{km} କିମି ଦୂରରେ",
       "callBtn": "📞 କଲ୍ କରନ୍ତୁ",
       "forwardBtn": "ଆଗକୁ",
-      "errorReroute": "ପୁନଃ-ରୁଟ୍ କରିପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
+      "errorReroute": "ପୁନଃ-ରୁଟ୍ କରିପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "ଅର୍ଡର ବିବରଣୀ",

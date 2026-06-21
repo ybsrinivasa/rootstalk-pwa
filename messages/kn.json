@@ -2196,7 +2196,12 @@
       "kmAway": "{km} ಕಿಮೀ ದೂರ",
       "callBtn": "📞 ಕರೆ ಮಾಡಿ",
       "forwardBtn": "ಮುಂದೆ",
-      "errorReroute": "ಮಾರ್ಗ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+      "errorReroute": "ಮಾರ್ಗ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "ಆದೇಶದ ವಿವರಗಳು",

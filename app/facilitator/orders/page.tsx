@@ -51,6 +51,7 @@ interface Order {
   crop_name?: string | null
   subscription_id?: string | null
   packing_code?: string | null
+  packing_list_shared_at?: string | null
   packing_picked_up_at?: string | null
   packing_farmer_received_at?: string | null
 }
@@ -60,20 +61,26 @@ interface NearbyDealer {
   shop_address: string | null; distance_km: number; sell_categories: string[]
 }
 
-type Pill = 'pending' | 'routed' | 'returned' | 'farmer'
+type Pill = 'pending' | 'routed' | 'returned' | 'farmer' | 'pickup'
 
-const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned' | 'pillFarmer'> = {
+const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned' | 'pillFarmer' | 'pillPickup'> = {
   pending: 'pillPending',
   routed: 'pillRouted',
   returned: 'pillReturned',
   farmer: 'pillFarmer',
+  pickup: 'pillPickup',
 }
 
 function subBelongsTo(o: Order, pill: Pill): boolean {
   // 2026-06-20 — Defence-in-depth: terminal statuses never on active
   // pills regardless of backend payload. Matches the farmer + dealer
   // guards added 2026-06-20.
-  if (['CANCELLED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
+  // 2026-06-21 — COMPLETED dropped from the blocklist: when the
+  // farmer approves the last item, the order flips to COMPLETED, but
+  // the facilitator still has to pick up + deliver. The Pickup pill
+  // is the correct surface for that — pill predicate gates further
+  // down. Same fix shipped to dealer + farmer earlier today.
+  if (['CANCELLED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
     return false
   }
   const c = o.item_status_counts
@@ -105,6 +112,18 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       return (c?.not_available ?? 0) > 0
     case 'farmer':
       return (c?.sent_for_approval ?? 0) > 0
+    case 'pickup':
+      // 2026-06-21 — Order has approved items + dealer shared the
+      // packing list + farmer hasn't confirmed receipt yet. Two
+      // sub-states inside this pill:
+      //   (a) packing_picked_up_at is null → "Pick up from dealer"
+      //       (mark-picked-up CTA)
+      //   (b) packing_picked_up_at set, no farmer_received_at → "With
+      //       you — deliver to farmer" (info only; farmer's tap is
+      //       what closes the order)
+      return (c?.approved ?? 0) > 0
+        && !!o.packing_list_shared_at
+        && !o.packing_farmer_received_at
   }
 }
 
@@ -163,6 +182,20 @@ export default function FacilitatorOrdersPage() {
       await api.put(`/facilitator/orders/${id}/reject`, {})
       setConfirmReject(null)
       load()
+    } finally { setActing(null) }
+  }
+
+  // 2026-06-21 — Pickup pill: facilitator marks "I've picked up the
+  // items from the dealer." Uses the same endpoint /facilitator/pickup
+  // calls; the order stays on the Pickup pill afterwards (with a
+  // "deliver to farmer" message) until the farmer marks received.
+  async function markPickedUp(id: string) {
+    setActing(id)
+    try {
+      await api.put(`/facilitator/orders/${id}/packing-list/mark-picked-up`, {})
+      load()
+    } catch {
+      alert(t('pickupErrorMark'))
     } finally { setActing(null) }
   }
 
@@ -232,7 +265,7 @@ export default function FacilitatorOrdersPage() {
   // matching the pill (not raw sub-orders) so the count matches
   // what the user sees rendered.
   const counts: Record<Pill, number> = useMemo(() => {
-    const c: Record<Pill, number> = { pending: 0, routed: 0, returned: 0, farmer: 0 }
+    const c: Record<Pill, number> = { pending: 0, routed: 0, returned: 0, farmer: 0, pickup: 0 }
     for (const list of groups.values()) {
       for (const p of Object.keys(c) as Pill[]) {
         if (list.some(o => subBelongsTo(o, p))) c[p] += 1
@@ -320,6 +353,7 @@ export default function FacilitatorOrdersPage() {
                 onAccept={accept}
                 onReject={(id) => setConfirmReject(id)}
                 onForwardReturned={(id) => openRerouteSheet(id)}
+                onMarkPickedUp={markPickedUp}
                 onOpenDetail={(id) => router.push(`/facilitator/orders/${id}`)}
                 acting={acting}
               />
@@ -441,7 +475,7 @@ export default function FacilitatorOrdersPage() {
 
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onAccept, onReject, onForwardReturned, onOpenDetail, acting,
+  onAccept, onReject, onForwardReturned, onMarkPickedUp, onOpenDetail, acting,
 }: {
   orderId: string
   subs: Order[]
@@ -452,6 +486,7 @@ function OrderIdCard({
   onAccept: (id: string) => void
   onReject: (id: string) => void
   onForwardReturned: (id: string) => void
+  onMarkPickedUp: (id: string) => void
   onOpenDetail: (id: string) => void
   acting: string | null
 }) {
@@ -473,6 +508,7 @@ function OrderIdCard({
               <PillChunk key={sub.id} sub={sub} pill={pill}
                 onAccept={onAccept} onReject={onReject}
                 onForwardReturned={onForwardReturned}
+                onMarkPickedUp={onMarkPickedUp}
                 onOpenDetail={onOpenDetail}
                 acting={acting}
                 showSubHeader />
@@ -481,6 +517,7 @@ function OrderIdCard({
               <PillChunk sub={matching[0]} pill={pill}
                 onAccept={onAccept} onReject={onReject}
                 onForwardReturned={onForwardReturned}
+                onMarkPickedUp={onMarkPickedUp}
                 onOpenDetail={onOpenDetail}
                 acting={acting} />
             )
@@ -546,7 +583,7 @@ function CardHeader({
 }
 
 function PillChunk({
-  sub, pill, onAccept, onReject, onForwardReturned, onOpenDetail,
+  sub, pill, onAccept, onReject, onForwardReturned, onMarkPickedUp, onOpenDetail,
   acting, showSubHeader,
 }: {
   sub: Order
@@ -554,6 +591,7 @@ function PillChunk({
   onAccept: (id: string) => void
   onReject: (id: string) => void
   onForwardReturned: (id: string) => void
+  onMarkPickedUp: (id: string) => void
   onOpenDetail: (id: string) => void
   acting: string | null
   showSubHeader?: boolean
@@ -634,6 +672,39 @@ function PillChunk({
             {t('waitingFarmerApproval', { count: sub.item_status_counts?.sent_for_approval ?? 0 })}
           </p>
           <PostponedStrip sub={sub} />
+        </>
+      )}
+      {pill === 'pickup' && (
+        <>
+          <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
+          {!sub.packing_picked_up_at ? (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mt-2">
+              <p className="text-xs text-emerald-900 mb-2">
+                {t('pickupBodyFromDealer', {
+                  dealer: sub.dealer_shop_name || sub.dealer_name || '—',
+                  farmer: sub.farmer_name || '—',
+                })}
+                {sub.packing_code && (
+                  <span className="ml-1 font-mono tracking-widest text-[10px] opacity-80">#{sub.packing_code}</span>
+                )}
+              </p>
+              <button onClick={() => onMarkPickedUp(sub.id)}
+                disabled={acting === sub.id}
+                className="w-full py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+                style={{ background: COLOUR }}>
+                {acting === sub.id ? '…' : t('pickupCta')}
+              </button>
+            </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mt-2">
+              <p className="text-xs text-amber-900">
+                {t('pickupBodyWithYou', { farmer: sub.farmer_name || '—' })}
+                {sub.packing_code && (
+                  <span className="ml-1 font-mono tracking-widest text-[10px] opacity-80">#{sub.packing_code}</span>
+                )}
+              </p>
+            </div>
+          )}
         </>
       )}
     </div>

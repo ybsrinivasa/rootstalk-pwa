@@ -2196,7 +2196,12 @@
       "kmAway": "{km} কিমি দূরে",
       "callBtn": "📞 কল করুন",
       "forwardBtn": "ফরোয়ার্ড",
-      "errorReroute": "পথ পরিবর্তন করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
+      "errorReroute": "পথ পরিবর্তন করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "অর্ডারের বিবরণ",

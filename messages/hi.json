@@ -2196,7 +2196,12 @@
       "kmAway": "{km} किमी दूर",
       "callBtn": "📞 कॉल करें",
       "forwardBtn": "आगे",
-      "errorReroute": "रूट नहीं बदला जा सका। कृपया पुनः प्रयास करें।"
+      "errorReroute": "रूट नहीं बदला जा सका। कृपया पुनः प्रयास करें।",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "ऑर्डर का विवरण",

@@ -2196,7 +2196,12 @@
       "kmAway": "{km} কিলোমিটাৰ দূৰত",
       "callBtn": "📞 ফোন কৰক",
       "forwardBtn": "আগলৈ",
-      "errorReroute": "পুনৰ ৰুট কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
+      "errorReroute": "পুনৰ ৰুট কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "অৰ্ডাৰৰ বিৱৰণ",

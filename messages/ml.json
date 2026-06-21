@@ -2196,7 +2196,12 @@
       "kmAway": "{km} കിലോമീറ്റർ അകലെ",
       "callBtn": "📞 വിളിക്കുക",
       "forwardBtn": "മുന്നോട്ട്",
-      "errorReroute": "റീ-റൂട്ട് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക."
+      "errorReroute": "റീ-റൂട്ട് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "ഓർഡർ വിശദാംശങ്ങൾ",

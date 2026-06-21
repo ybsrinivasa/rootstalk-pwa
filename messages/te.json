@@ -2196,7 +2196,12 @@
       "kmAway": "{km} కిమీ దూరంలో",
       "callBtn": "📞 కాల్",
       "forwardBtn": "ముందుకు",
-      "errorReroute": "మార్గాన్ని మార్చలేకపోయాము. దయచేసి మళ్ళీ ప్రయత్నించండి."
+      "errorReroute": "మార్గాన్ని మార్చలేకపోయాము. దయచేసి మళ్ళీ ప్రయత్నించండి.",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "ఆర్డర్ వివరాలు",

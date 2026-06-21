@@ -2196,7 +2196,12 @@
       "kmAway": "{km} કિમી દૂર",
       "callBtn": "📞 કૉલ કરો",
       "forwardBtn": "આગળ",
-      "errorReroute": "ફરીથી રૂટ કરી શકાયો નથી. કૃપા કરીને ફરી પ્રયાસ કરો."
+      "errorReroute": "ફરીથી રૂટ કરી શકાયો નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+      "pillPickup": "Ready for pickup",
+      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
+      "pickupBodyWithYou": "With you — deliver to {farmer}.",
+      "pickupCta": "I've picked it up",
+      "pickupErrorMark": "Couldn't mark picked up. Please try again."
     },
     "orderDetail": {
       "headerTitle": "ઓર્ડર વિગતો",
