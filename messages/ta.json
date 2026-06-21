@@ -2749,7 +2749,14 @@
       "kmAway": "{km} கிமீ தொலைவில்",
       "promoterBadge": "விளம்பரதாரர்",
       "sendCta": "அனுப்பு",
-      "sendingCta": "அனுப்புகிறது…"
+      "sendingCta": "அனுப்புகிறது…",
+      "pickupBannerBody": "Pick this up from your dealer. Tap below once you have the seed in hand.",
+      "pickupConfirmCta": "I've picked it up",
+      "pickupConfirmTitle": "Confirm receipt",
+      "pickupConfirmBody": "Tap Yes only after you actually have the seed in hand. This closes the order.",
+      "pickupYesCta": "Yes, I have it",
+      "pickupCancelCta": "Cancel",
+      "errorReceive": "Could not confirm. Please try again."
     }
   },
   "shareLink": {

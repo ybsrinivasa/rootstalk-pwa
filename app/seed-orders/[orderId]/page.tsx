@@ -74,6 +74,10 @@ export default function FarmerSeedOrderDetailPage() {
   const [pickerLoading, setPickerLoading] = useState(false)
   const [sending, setSending] = useState<string | null>(null)
 
+  // 2026-06-21 — Receipt confirmation modal (mirrors regular-order
+  // ReceiveBanner). READY_FOR_PICKUP is the only state where this fires.
+  const [confirmReceive, setConfirmReceive] = useState(false)
+
   const load = async () => {
     try {
       const { data } = await api.get<SeedOrder>(`/farmer/seed-orders/${orderId}`)
@@ -97,25 +101,15 @@ export default function FarmerSeedOrderDetailPage() {
     if (!confirm(tDetail('confirmCancel'))) return
     setBusy(true)
     try {
-      const { data } = await api.put<{ status: string; new_draft_seed_order_id?: string }>(
-        `/farmer/seed-orders/${order.id}/cancel`, {},
+      // 2026-06-21 — Release-not-migrate parity with regular cancel.
+      // No DRAFT continuation; the farmer creates a fresh seed order
+      // through advisory if they want one.
+      await api.put(`/farmer/seed-orders/${order.id}/cancel`, {})
+      router.replace(
+        order.subscription_id
+          ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
+          : '/orders'
       )
-      const draftId = data?.new_draft_seed_order_id
-      if (draftId) {
-        alert(tDetail('cancelledToast'))
-        // The new DRAFT keeps the per-id detail surface alive (the
-        // draft-recipient picker lives there).
-        router.replace(`/seed-orders/${draftId}`)
-      } else {
-        // 2026-06-19 — /seed-orders flat list page retired; bounce
-        // back to the per-crop Manage tab where the cancel husk is
-        // visible.
-        router.replace(
-          order.subscription_id
-            ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
-            : '/orders'
-        )
-      }
     } catch {
       alert(tDetail('errorCancel'))
     } finally { setBusy(false) }
@@ -165,6 +159,25 @@ export default function FarmerSeedOrderDetailPage() {
       load()
     } catch {
       alert(tDetail('errorReject'))
+    } finally { setBusy(false) }
+  }
+
+  async function markReceived() {
+    if (!order) return
+    setBusy(true)
+    try {
+      await api.put(`/farmer/seed-orders/${order.id}/mark-received`, {})
+      setConfirmReceive(false)
+      // 2026-06-21 — Bounce back to Manage so the now-PURCHASED order
+      // drops off the Pickup pill and shows in History (mirrors the
+      // regular-order post-receive nav).
+      if (order.subscription_id) {
+        router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage`)
+      } else {
+        load()
+      }
+    } catch {
+      alert(tDetail('errorReceive'))
     } finally { setBusy(false) }
   }
 
@@ -280,6 +293,21 @@ export default function FarmerSeedOrderDetailPage() {
           </div>
         )}
 
+        {/* READY_FOR_PICKUP — receive-confirmation banner.
+            Mirrors the regular-order ReceiveBanner so the farmer's
+            seed flow looks identical to pesticide / fertilizer. */}
+        {order.status === 'READY_FOR_PICKUP' && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+            <p className="text-xs text-amber-800 mb-2">
+              {tDetail('pickupBannerBody')}
+            </p>
+            <button onClick={() => setConfirmReceive(true)} disabled={busy}
+              className="w-full bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+              {tDetail('pickupConfirmCta')}
+            </button>
+          </div>
+        )}
+
         {/* DRAFT — picker CTA */}
         {isDraft && (
           <>
@@ -392,6 +420,29 @@ export default function FarmerSeedOrderDetailPage() {
           if (pendingSend) sendToRecipient(pendingSend.r, pendingSend.isDealer)
         }}
       />
+
+      {/* 2026-06-21 — Receive confirmation sheet (parity with regular
+          order ReceiveBanner's confirm modal). */}
+      {confirmReceive && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => !busy && setConfirmReceive(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">{tDetail('pickupConfirmTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">{tDetail('pickupConfirmBody')}</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmReceive(false)} disabled={busy}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                {tDetail('pickupCancelCta')}
+              </button>
+              <button onClick={markReceived} disabled={busy}
+                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {busy ? '…' : tDetail('pickupYesCta')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

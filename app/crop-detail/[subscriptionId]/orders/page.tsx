@@ -555,25 +555,16 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   useEffect(() => { load().catch(() => setOrders([])) }, [subscriptionId])
 
   async function cancel(orderId: string, kind: 'REGULAR' | 'SEED') {
-    // 2026-06-06 — Seed cancel uses the seed-specific endpoint which
-    // returns a `new_draft_seed_order_id`. The husk becomes
-    // CANCELLED; the draft carries the variety + quantity so the
-    // farmer can pick a new recipient without re-keying. Regular
-    // cancel keeps its existing behaviour (items flip to NA, husk
-    // stays for forward/delete).
+    // 2026-06-21 — Both regular and seed cancel use release-not-migrate.
+    // Order goes CANCELLED, no DRAFT continuation. Farmer re-orders
+    // through advisory in their preferred window.
     if (kind === 'SEED') {
       if (!confirm(t('confirmCancelSeed'))) return
       setBusy(orderId)
       try {
-        const { data } = await api.put<{ status: string; new_draft_seed_order_id?: string }>(
-          `/farmer/seed-orders/${orderId}/cancel`, {},
-        )
-        const draftId = data?.new_draft_seed_order_id
-        if (draftId) {
-          router.push(`/seed-orders/${draftId}`)
-        } else {
-          await load()
-        }
+        // 2026-06-21 — Release-not-migrate parity with regular cancel.
+        await api.put(`/farmer/seed-orders/${orderId}/cancel`, {})
+        await load()
       } finally { setBusy(null) }
       return
     }
