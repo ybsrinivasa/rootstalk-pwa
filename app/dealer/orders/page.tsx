@@ -124,7 +124,17 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   // appear on any active pill regardless of what the backend ships.
   // EXPIRED is the one most likely to leak (orders whose window
   // lapsed but the cleanup pass hasn't run).
-  if (['CANCELLED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
+  //
+  // 2026-06-21 — COMPLETED removed from the blocklist. Order status
+  // flips to COMPLETED the moment the farmer approves the last item
+  // (see `_update_order_status`), but the dealer still has to pack +
+  // hand over. The Packing pill's per-pill filter
+  // (`c.approved > 0 && !packing_list_removed_at && !packing_farmer_received_at`)
+  // is the correct gate — drop the order off Packing only when packing
+  // is actually done, not when farmer approval lands. The Home Screen
+  // Packing tile uses the same predicate without this guard, so this
+  // alignment fixes the "tile says 1, tab shows 0" discrepancy.
+  if (['CANCELLED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
     return false
   }
   // 2026-06-06 — Seed orders use the SeedOrderStatus enum directly
