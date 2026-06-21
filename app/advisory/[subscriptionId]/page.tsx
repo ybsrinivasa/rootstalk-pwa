@@ -1031,9 +1031,16 @@ function PracticeCard({
 }
 
 // 2026-06-19 — "I've done this" tick + delete button.
-// Gating rules (locked):
-//   - INPUT practices: tick only renders post-purchase (is_purchased).
+// Gating rules:
 //   - Non-INPUT (NON_INPUT / INSTRUCTION / MEDIA): tick always renders.
+//   - INPUT practices: tick renders only once the farmer has the item
+//     in hand. 2026-06-21: tightened from `is_purchased` (true on
+//     APPROVED) to `farmer_received_at` on the live fulfilment.
+//     Rationale: between approval and pickup the farmer can't honestly
+//     say "I've done this" — they don't even have the input yet. If
+//     the practice has no live fulfilment but was purchased historically
+//     (legacy order, item gone from active set), is_purchased remains
+//     a valid fallback.
 // Visual: grey circle with check icon when ACTIVE; emerald-filled
 // circle when MARKED, with a small red Delete button beside it.
 // First-time hide gets a one-shot confirmation sheet (the user's
@@ -1049,8 +1056,12 @@ function PracticeAckFooter({
   const tAck = useTranslations('practice.ack')
   const [busy, setBusy] = useState(false)
   const [confirmHide, setConfirmHide] = useState(false)
-  const ackable =
-    practice.l0_type !== 'INPUT' || practice.is_purchased === true
+  const fulf = practice.fulfilment
+  const ackable = practice.l0_type !== 'INPUT' || (
+    fulf
+      ? !!fulf.farmer_received_at
+      : practice.is_purchased === true
+  )
   if (!ackable) return null
   if (!timelineLineageId || !practice.occurrence_date) return null
 
