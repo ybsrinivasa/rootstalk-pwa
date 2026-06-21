@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -153,7 +153,11 @@ export default function FacilitatorOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [acting, setActing] = useState<string | null>(null)
-  const [pill, setPill] = useState<Pill>('pending')
+  // 2026-06-21 — URL-controllable initial pill so post-action redirects
+  // (e.g. after Forward-to-Dealer) can deep-link to a specific pill.
+  const search = useSearchParams()
+  const initialPill = (search.get('pill') as Pill | null) || 'pending'
+  const [pill, setPill] = useState<Pill>(initialPill)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
   const load = () =>

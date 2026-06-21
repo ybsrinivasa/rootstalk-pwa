@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -78,6 +78,34 @@ export default function FacilitatorOrderDetailPage() {
     load()
   }, [orderId])
 
+  // 2026-06-21 — When the facilitator arrives here from Pending pill
+  // tapping "Pick Dealer →" (order is ACCEPTED + no dealer), the only
+  // meaningful action is picking a dealer. Auto-open the picker so the
+  // facilitator doesn't see an intermediate "Forward to Dealer" status
+  // screen. If they close the picker without picking, bounce them back
+  // to the Orders feed (Pending pill) — the bare status screen would
+  // feel like a dead-end.
+  const autoPickerOpenedRef = useRef(false)
+  useEffect(() => {
+    if (!order) return
+    if (autoPickerOpenedRef.current) return
+    if (order.status === 'ACCEPTED' && !order.dealer_user_id) {
+      autoPickerOpenedRef.current = true
+      openDealerSelect()
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order])
+
+  function closeDealerSelect() {
+    setShowDealerSelect(false)
+    // If we auto-opened the picker for an ACCEPTED+no-dealer order and
+    // the facilitator closes it without picking, bounce them back to
+    // the Orders feed where they can pick this card up again later.
+    if (autoPickerOpenedRef.current && order?.status === 'ACCEPTED' && !order?.dealer_user_id) {
+      router.replace('/facilitator/orders?pill=pending')
+    }
+  }
+
   // Phone-entry debounced lookup. Only active when the bottom
   // sheet is open so we don't waste lookups when the input is
   // hidden.
@@ -136,7 +164,9 @@ export default function FacilitatorOrderDetailPage() {
     try {
       await api.put(`/facilitator/orders/${orderId}/route-to-dealer`, { dealer_user_id: dealerUserId })
       setShowDealerSelect(false)
-      load()
+      // 2026-06-21 — Land on the Routed pill so the just-forwarded order
+      // is visible right where the facilitator now expects it.
+      router.replace('/facilitator/orders?pill=routed')
     } catch (e: unknown) {
       // FastAPI detail can be string or {code, message}. Normalise.
       const err = e as { response?: { data?: { detail?: string | { code?: string; message?: string } } } }
@@ -365,12 +395,12 @@ export default function FacilitatorOrderDetailPage() {
 
       {/* Dealer selection bottom sheet */}
       {showDealerSelect && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={() => setShowDealerSelect(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end" onClick={closeDealerSelect}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl pb-10 max-h-[80vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-[#DDD0B8]">
               <p className="font-bold text-[#6B3F1F]">{t('dealerSelectTitle')}</p>
-              <button onClick={() => setShowDealerSelect(false)} className="text-[#7A8C7E] text-xl">✕</button>
+              <button onClick={closeDealerSelect} className="text-[#7A8C7E] text-xl">✕</button>
             </div>
             {/* Phone-entry block — first option above the nearby
                 list. Mirrors the farmer-side picker. */}
