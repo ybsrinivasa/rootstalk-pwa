@@ -151,6 +151,14 @@ interface Order {
   // client's draft map on mount; IndexedDB mirror lives at
   // `dealer-drafts.ts` so a power-off can't lose partial work.
   dealer_draft?: Record<string, DraftEntry>
+  // 2026-06-21 — Packing-state snapshot for the post-share status
+  // banner (mirrors /dealer/orders list shape).
+  packing_code?: string | null
+  packing_list_shared_at?: string | null
+  packing_picked_up_at?: string | null
+  packing_picked_up_by_role?: 'FARMER' | 'FACILITATOR' | null
+  packing_picked_up_by_name?: string | null
+  packing_farmer_received_at?: string | null
 }
 interface BrandGroup { label: string; brands: { cosh_id: string; name: string; manufacturer: string | null }[] }
 interface BrandOptions {
@@ -1493,6 +1501,8 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
+        <PickupStatusBanner order={order} />
+
         {order.farmer_context && <FarmerContextCard ctx={order.farmer_context} />}
         {order.facilitator_context && (
           <FacilitatorContextCard ctx={order.facilitator_context} />
@@ -2113,6 +2123,60 @@ function ElementGuidance({
 // Renders the farmer details + crop context the dealer needs to act on the
 // order. Phone is a `tel:` link for one-tap calling. Age renders as days
 // (area-wise) or years (plant-wise) per the subscription's measure.
+// 2026-06-21 — Post-share status banner on the dealer detail page.
+// Mirrors the PickupStatus line on the /dealer/orders Packing card so
+// the dealer sees the same state info after tapping into an order.
+// Renders nothing until the packing list has actually been shared —
+// before then the order is still mid-packing and the banner would just
+// add noise.
+function PickupStatusBanner({ order }: { order: Order }) {
+  const t = useTranslations('dealer.orders.pickup')
+  const locale = useLocale()
+  if (!order.packing_list_shared_at) return null
+
+  const code = order.packing_code
+
+  if (order.packing_farmer_received_at) {
+    const stamp = new Date(order.packing_farmer_received_at)
+    return (
+      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 mt-4 text-sm text-emerald-800">
+        {t('receivedByFarmer', {
+          date: stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+          time: stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+        })}
+        {code && <span className="ml-2 text-[10px] font-mono tracking-widest opacity-70">#{code}</span>}
+      </div>
+    )
+  }
+
+  if (order.packing_picked_up_at) {
+    const stamp = new Date(order.packing_picked_up_at)
+    const date = stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' })
+    const time = stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+    let line: string
+    if (order.packing_picked_up_by_role === 'FACILITATOR') {
+      line = order.packing_picked_up_by_name
+        ? t('pickedUpByFacilitatorNamed', { name: order.packing_picked_up_by_name, date, time })
+        : t('pickedUpByFacilitator', { date, time })
+    } else {
+      line = t('pickedUpByFarmer', { date, time })
+    }
+    return (
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mt-4 text-sm text-amber-800">
+        {line}
+        {code && <span className="ml-2 text-[10px] font-mono tracking-widest opacity-70">#{code}</span>}
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 mt-4 text-sm text-slate-700">
+      {t('awaitingPickup')}
+      {code && <span className="ml-2 text-[10px] font-mono tracking-widest opacity-70">#{code}</span>}
+    </div>
+  )
+}
+
 function FarmerContextCard({ ctx }: { ctx: FarmerContext }) {
   const t = useTranslations('dealer.orderDetail.farmerContext')
   const measureLine = ctx.measure === 'PLANT_WISE' && ctx.number_of_plants != null

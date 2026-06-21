@@ -275,11 +275,13 @@ export default function FarmerOrderDetailPage() {
   async function approveAll() {
     try {
       await api.put(`/farmer/orders/${orderId}/items/approve-all`, {})
-      // 2026-06-03 — Per user direction: after Approve all, take the
-      // farmer back to the Manage tab. The cleared order shows as
-      // COMPLETED there; no need to stay on the review page.
+      // 2026-06-21 — Land on the Pickup pill (mirrors seed-approve).
+      // Approve-all moves the order's approved items into pickup-ready
+      // state; the Receive Confirm CTA lives there. Without `pill=pickup`
+      // the farmer landed on Approval (now empty for this order) and had
+      // no visible trail to the pickup step.
       if (order?.subscription_id) {
-        router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage`)
+        router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage&pill=pickup`)
       } else {
         router.replace('/orders')
       }
