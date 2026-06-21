@@ -504,17 +504,28 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   const awaiting = o.awaiting_approval_count ?? 0
   const returned = o.returned_count ?? 0
   const pickup = o.pickup_ready_count ?? 0
+  // 2026-06-21 — For facilitator-routed orders, returned items live
+  // in the facilitator's queue (their /facilitator/orders Returned
+  // pill carries the reroute action). The farmer only ever sees the
+  // order back on their Returned pill AFTER the facilitator hits
+  // return-to-farmer (which creates a fresh DRAFT with
+  // facilitator_user_id=NULL). For Approval + Pickup always go to
+  // the farmer regardless of routing.
+  const facilitatorOwned = !!o.facilitator_user_id
   switch (pill) {
     case 'routed':
-      // Dealer is processing or order is DRAFT awaiting send.
-      // Nothing else needs farmer attention. COMPLETED-with-leftover
-      // (NA / postponed) drops to Returned / Routed via their own
-      // counts; truly-done COMPLETED filtered out earlier.
+      // Direct: dealer is processing or order is DRAFT awaiting send.
+      // Facilitator-routed: ignore returned (facilitator handles).
+      // Approval + pickup pull the order out either way.
+      if (facilitatorOwned) return awaiting === 0 && pickup === 0
       return awaiting === 0 && returned === 0 && pickup === 0
     case 'approval':
       return awaiting > 0
     case 'returned':
-      return returned > 0
+      // Hide facilitator-routed orders — those are in the
+      // facilitator's queue. They only resurface here after
+      // facilitator's return-to-farmer creates a fresh DRAFT.
+      return returned > 0 && !facilitatorOwned
     case 'pickup':
       return pickup > 0
   }
@@ -1165,17 +1176,10 @@ function ReturnedChunk({
 }) {
   const t = useTranslations('orders.cropOrders.chunk')
   const returned = sub.returned_count ?? (sub.status === 'NOT_AVAILABLE' ? 1 : 0)
-  // Facilitator-owned: returned items belong to the facilitator's
-  // queue. Farmer sees a passive note.
-  if (sub.facilitator_user_id) {
-    return (
-      <div className="bg-amber-50/60 rounded-lg px-3 py-2">
-        <p className="text-xs text-amber-800">
-          {t('returnedFacilitatorHandling', { count: returned })}
-        </p>
-      </div>
-    )
-  }
+  // 2026-06-21 — Facilitator-owned orders no longer reach this chunk
+  // — the Returned pill predicate filters them out. The passive
+  // "your facilitator is handling" branch that used to live here has
+  // been removed along with its dead code path.
   return (
     <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
       <p className="text-xs text-amber-800">
