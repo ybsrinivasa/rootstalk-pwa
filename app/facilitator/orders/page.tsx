@@ -55,6 +55,14 @@ interface Order {
   packing_list_shared_at?: string | null
   packing_picked_up_at?: string | null
   packing_farmer_received_at?: string | null
+  // 2026-06-22 — APPROVED items the facilitator will pick up + deliver.
+  packing_items?: {
+    id: string
+    brand_name: string | null
+    given_volume: number | null
+    volume_unit: string | null
+    price: number | null
+  }[]
 }
 
 interface NearbyDealer {
@@ -701,7 +709,9 @@ function PillChunk({
       )}
       {pill === 'pickup' && (
         <>
-          <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
+          <RoutedBody sub={sub} onOpenDetail={onOpenDetail}
+            itemCountOverride={sub.packing_items?.length ?? sub.item_status_counts?.approved ?? 0} />
+          <PickupItemsList items={sub.packing_items ?? []} />
           {!sub.packing_picked_up_at ? (
             <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mt-2">
               <p className="text-xs text-emerald-900 mb-2">
@@ -768,11 +778,51 @@ function ApprovedHintStrip({ sub }: { sub: Order }) {
   )
 }
 
-function RoutedBody({ sub, onOpenDetail }: { sub: Order; onOpenDetail: (id: string) => void }) {
+// 2026-06-22 — Cross-check list for the facilitator at the dealer's
+// shop: brand · qty unit · ₹price for each APPROVED item.
+function PickupItemsList({ items }: {
+  items: { id: string; brand_name: string | null; given_volume: number | null; volume_unit: string | null; price: number | null }[]
+}) {
+  if (items.length === 0) return null
+  const total = items.reduce((sum, it) => sum + (it.price ?? 0), 0)
+  return (
+    <div className="mt-2 bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 space-y-1">
+      {items.map((it, idx) => (
+        <div key={it.id} className="flex items-baseline justify-between gap-3 text-[11px]">
+          <p className="text-[#6B3F1F] truncate flex-1">
+            <span className="text-[#7A8C7E]">{idx + 1}.</span> <span className="font-medium">{it.brand_name || '—'}</span>
+            {it.given_volume != null && (
+              <span className="text-[#7A8C7E]"> · {it.given_volume}{it.volume_unit ? ` ${it.volume_unit}` : ''}</span>
+            )}
+          </p>
+          {it.price != null && (
+            <p className="text-[#6B3F1F] font-semibold shrink-0">₹{it.price.toLocaleString()}</p>
+          )}
+        </div>
+      ))}
+      {total > 0 && (
+        <div className="flex items-baseline justify-between gap-3 pt-1.5 mt-1 border-t border-stone-200">
+          <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wide">Total</p>
+          <p className="text-xs font-bold text-[#6B3F1F]">₹{total.toLocaleString()}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RoutedBody({ sub, onOpenDetail, itemCountOverride }: {
+  sub: Order
+  onOpenDetail: (id: string) => void
+  itemCountOverride?: number
+}) {
   const t = useTranslations('facilitator.orders')
   const mapsHref = (sub.dealer_shop_gps_lat != null && sub.dealer_shop_gps_lng != null)
     ? `https://maps.google.com/?q=${sub.dealer_shop_gps_lat},${sub.dealer_shop_gps_lng}`
     : null
+  // 2026-06-22 — Pickup pill passes itemCountOverride = number of
+  // approved items (what the facilitator actually picks up), so the
+  // "5 items" line doesn't include the 2 NA items.
+  const itemCount = itemCountOverride ?? sub.item_count
   return (
     <button onClick={() => onOpenDetail(sub.id)} className="w-full text-left">
       <p className="text-xs font-semibold text-[#6B3F1F] truncate">
@@ -794,7 +844,7 @@ function RoutedBody({ sub, onOpenDetail }: { sub: Order; onOpenDetail: (id: stri
             🗺️ Maps
           </a>
         )}
-        <span className="text-[10px] text-[#7A8C7E]">{t('itemCountInline', { count: sub.item_count })}</span>
+        <span className="text-[10px] text-[#7A8C7E]">{t('itemCountInline', { count: itemCount })}</span>
       </div>
     </button>
   )
