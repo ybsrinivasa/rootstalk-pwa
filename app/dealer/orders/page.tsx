@@ -537,7 +537,7 @@ function DealerOrdersInner() {
                 <button key={p} onClick={() => setPill(p)}
                   className={`text-xs font-semibold px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                     active
-                      ? 'bg-[#085041] text-white border-[#085041]'
+                      ? 'bg-[#5B21B6] text-white border-[#5B21B6]'
                       : 'bg-white text-[#6B3F1F] border-[#DDD0B8]'
                   }`}>
                   <span>{t(`pill.${p}`)}</span>
@@ -546,7 +546,7 @@ function DealerOrdersInner() {
                       ? 'bg-white/25 text-white'
                       : n === 0
                         ? 'bg-stone-100 text-[#7A8C7E]'
-                        : 'bg-[#085041]/15 text-[#085041]'
+                        : 'bg-[#5B21B6]/15 text-[#5B21B6]'
                   }`}>{n}</span>
                 </button>
               )
@@ -556,7 +556,7 @@ function DealerOrdersInner() {
               right edge. Row 2 holds only Packing, so collision is
               not a concern. */}
           <button onClick={() => router.push('/dealer/history')}
-            className="absolute top-[53px] right-4 text-xs font-semibold text-[#7A8C7E] active:text-[#085041]">
+            className="absolute top-[53px] right-4 text-xs font-semibold text-[#7A8C7E] active:text-[#5B21B6]">
             {t('historyChip')} →
           </button>
         </div>
@@ -725,7 +725,7 @@ function DealerOrdersInner() {
         </div>
       )}
 
-      <BottomNav color="#085041" activeRole="DEALER" />
+      <BottomNav color="#5B21B6" activeRole="DEALER" />
     </div>
   )
 }
@@ -736,7 +736,7 @@ function PickupStatus({ order }: { order: Order }) {
   if (order.packing_farmer_received_at) {
     const stamp = new Date(order.packing_farmer_received_at)
     return (
-      <p className="text-[11px] text-emerald-700 mt-1 font-semibold">
+      <p className="text-[11px] text-violet-700 mt-1 font-semibold">
         {t('receivedByFarmer', {
           date: stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
           time: stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
@@ -803,7 +803,7 @@ function DealerOrderIdCard({
   const head = subs[0]
   const renderRows = matching.length > 1
   const borderClass = pill === 'packing'
-    ? 'border-emerald-200'
+    ? 'border-violet-200'
     : pill === 'farmer' || pill === 'postponed'
       ? 'border-amber-200'
       : 'border-[#DDD0B8]'
@@ -861,11 +861,11 @@ function DealerOrderCardHeader({
           now it leads the card so the dealer can confirm it over
           phone before reading anything else. */}
       <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="font-mono text-xs font-semibold text-[#085041] tracking-wide truncate">
+        <p className="font-mono text-xs font-semibold text-[#5B21B6] tracking-wide truncate">
           {orderId}
         </p>
         {head.is_seed ? (
-          <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full shrink-0">
+          <span className="text-[10px] font-semibold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded-full shrink-0">
             {t('seedTag')}
           </span>
         ) : (
@@ -901,7 +901,7 @@ function DealerOrderCardHeader({
           <a href={`tel:${head.farmer_phone}`}
             onClick={(e) => e.stopPropagation()}
             aria-label={t('callFarmerAria')}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-semibold">
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-100 text-violet-800 text-xs font-semibold">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -931,7 +931,7 @@ function DealerOrderCardHeader({
             <a href={`tel:${head.facilitator_phone}`}
               onClick={(e) => e.stopPropagation()}
               aria-label={t('callFacilitatorAria')}
-              className="shrink-0 text-xs bg-emerald-100 text-emerald-800 px-2.5 py-1.5 rounded-lg font-semibold">
+              className="shrink-0 text-xs bg-violet-100 text-violet-800 px-2.5 py-1.5 rounded-lg font-semibold">
               {t('callBtn')}
             </a>
           )}
@@ -1090,7 +1090,7 @@ function SeedPendingChunk({
           <p className="text-[11px] text-[#7A8C7E]">{t('blindAcceptHint')}</p>
           <div className="flex gap-2">
             <button onClick={onAccept} disabled={busy}
-              className="flex-1 bg-emerald-600 disabled:opacity-50 text-white text-xs font-semibold py-2.5 rounded-xl">
+              className="flex-1 bg-violet-600 disabled:opacity-50 text-white text-xs font-semibold py-2.5 rounded-xl">
               {t('acceptCta')}
             </button>
             <button onClick={onDecline} disabled={busy}
@@ -1190,17 +1190,17 @@ function PackingChunk({
   return (
     <div>
       {order.packing_code && (
-        <div className="px-4 py-2 bg-emerald-600 text-white flex items-baseline justify-between">
+        <div className="px-4 py-2 bg-violet-600 text-white flex items-baseline justify-between">
           <p className="text-[10px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
           <p className="text-base font-bold font-mono tracking-widest">{order.packing_code}</p>
         </div>
       )}
-      <div className="px-4 py-3 bg-emerald-50/40">
+      <div className="px-4 py-3 bg-violet-50/40">
         <div className="flex items-center gap-2 flex-wrap">
           {order.farmer_phone && (
             <a href={`tel:${order.farmer_phone}`}
               onClick={e => e.stopPropagation()}
-              className="text-[11px] font-semibold text-[#085041] bg-emerald-100 px-2.5 py-1 rounded-lg">
+              className="text-[11px] font-semibold text-[#5B21B6] bg-violet-100 px-2.5 py-1 rounded-lg">
               {t('callFarmer')}
             </a>
           )}
@@ -1218,7 +1218,7 @@ function PackingChunk({
           )}
         </div>
         {sharedAt && (
-          <p className="text-[11px] text-emerald-700 mt-2 font-medium">
+          <p className="text-[11px] text-violet-700 mt-2 font-medium">
             {t('sharedAt', {
               date: sharedAt.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
               time: sharedAt.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
@@ -1227,7 +1227,7 @@ function PackingChunk({
         )}
         <PickupStatus order={order} />
       </div>
-      <div className="divide-y divide-emerald-100">
+      <div className="divide-y divide-violet-100">
         {order.packing_items.map(it => (
           <div key={it.id} className="p-3 flex items-baseline justify-between gap-3">
             <div className="flex-1 min-w-0">
@@ -1240,18 +1240,18 @@ function PackingChunk({
               )}
             </div>
             {it.price != null && (
-              <p className="text-sm font-bold text-[#085041] shrink-0">₹{it.price.toLocaleString(locale)}</p>
+              <p className="text-sm font-bold text-[#5B21B6] shrink-0">₹{it.price.toLocaleString(locale)}</p>
             )}
           </div>
         ))}
       </div>
-      <div className="px-3 py-2 bg-emerald-50/40 border-t border-emerald-100 flex items-center justify-between">
+      <div className="px-3 py-2 bg-violet-50/40 border-t border-violet-100 flex items-center justify-between">
         <p className="text-[11px] text-[#7A8C7E]">{t('totalLabel')}</p>
-        <p className="text-sm font-bold text-[#085041]">₹{total.toLocaleString(locale)}</p>
+        <p className="text-sm font-bold text-[#5B21B6]">₹{total.toLocaleString(locale)}</p>
       </div>
       <div className="p-3 flex gap-2">
         <button onClick={onShare} disabled={busy}
-          className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-60">
+          className="flex-1 bg-[#5B21B6] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-60">
           {busy ? '…' : (shared ? t('shareAgainCta') : t('shareCta'))}
         </button>
         <button onClick={onRemove} disabled={busy}
