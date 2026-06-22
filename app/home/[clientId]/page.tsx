@@ -17,6 +17,23 @@ type Subscription = {
   crop_cosh_id?: string | null
   crop_name?: string | null
   package_name?: string | null
+  // 2026-06-22 — plot discriminators shown on the card so the
+  // farmer can tell apart multiple subscriptions of the same crop
+  // (different acres / start date / origin).
+  subscription_type?: 'SELF' | 'ASSIGNED' | null
+  crop_measure?: 'AREA_WISE' | 'PLANT_WISE' | null
+  farm_area_acres?: number | null
+  area_unit?: string | null
+  number_of_plants?: number | null
+  planting_year?: number | null
+}
+
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+function formatStartDate(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`
 }
 
 type ClientInfo = {
@@ -183,6 +200,27 @@ export default function BrandedSpacePage() {
             const cropLabel = cropDisplayName(sub.crop_cosh_id, sub.crop_name)
             const attentionCount = attention[sub.id]?.total ?? 0
             const urgency = attention[sub.id]?.urgency ?? null
+            // Plot discriminators — origin, size, time anchor.
+            // Skipped silently when the underlying field is missing
+            // so partly-filled subscriptions don't render orphans.
+            const originLabel = sub.subscription_type === 'ASSIGNED'
+              ? 'Assigned by company'
+              : sub.subscription_type === 'SELF'
+                ? 'Self-subscribed'
+                : null
+            const measure = sub.crop_measure ?? 'AREA_WISE'
+            let sizeLabel: string | null = null
+            if (measure === 'PLANT_WISE' && sub.number_of_plants != null) {
+              sizeLabel = `${sub.number_of_plants} plants`
+            } else if (measure !== 'PLANT_WISE' && sub.farm_area_acres != null) {
+              const unit = sub.area_unit || 'acres'
+              sizeLabel = `${sub.farm_area_acres} ${unit}`
+            }
+            const startLabel = formatStartDate(sub.crop_start_date)
+            const timeLabel = measure === 'PLANT_WISE'
+              ? (sub.planting_year ? `Planted ${sub.planting_year}` : null)
+              : (startLabel ? `Started ${startLabel}` : null)
+            const detailSegments = [originLabel, sizeLabel, timeLabel].filter(Boolean) as string[]
             return (
               <button key={sub.id}
                 onClick={() => router.push(`/crop-detail/${sub.id}`)}
@@ -203,10 +241,15 @@ export default function BrandedSpacePage() {
                     )}
                   </span>
                 )}
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1 pr-2">
                   <p className="text-[#6B3F1F] font-semibold text-[15px]">{cropLabel}</p>
                   {sub.reference_number && (
                     <p className="text-[#7A8C7E] text-[11px] mt-0.5 font-mono">{sub.reference_number}</p>
+                  )}
+                  {detailSegments.length > 0 && (
+                    <p className="text-[#7A8C7E] text-[11px] mt-1 leading-snug">
+                      {detailSegments.join(' · ')}
+                    </p>
                   )}
                 </div>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
