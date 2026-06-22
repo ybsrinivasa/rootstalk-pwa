@@ -20,6 +20,11 @@ interface Company {
   logo_url: string | null
   primary_colour: string | null
   crop_cosh_ids: string[]
+  // 2026-06-22 — payment_model drives the subscription-mode hint
+  // line; support_phone + website drive the inline icon buttons.
+  payment_model?: 'FARMER_PAYS' | 'COMPANY_PAYS'
+  support_phone?: string | null
+  website?: string | null
 }
 
 interface DiscoverResponse {
@@ -195,10 +200,31 @@ export default function CropsAndCompaniesPage() {
                   const accent = company.primary_colour || C.primary
                   const initials = (company.display_name || '?')
                     .split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+                  // 2026-06-22 — subscription-mode hint. COMPANY_PAYS
+                  // companies don't accept direct farmer subscriptions
+                  // (their farmers are onboarded via the company /
+                  // promoter); FARMER_PAYS clients are open to anyone
+                  // in the district.
+                  const subscribeHint = company.payment_model === 'COMPANY_PAYS'
+                    ? 'The company should assign advisories'
+                    : 'Farmers can subscribe to advisories'
+                  // The card itself is one big tap target (toggles
+                  // the cross-filter). Inline Call + Website icons
+                  // need stopPropagation so the filter doesn't also
+                  // fire when the farmer taps them.
+                  const stop = (e: React.MouseEvent | React.SyntheticEvent) => e.stopPropagation()
+                  const tel = company.support_phone || null
+                  const site = company.website || null
                   return (
-                    <button key={company.id}
+                    <div key={company.id} role="button" tabIndex={0}
                       onClick={() => toggleCompany(company.id)}
-                      className="w-full text-left rounded-xl border p-3 transition-colors"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          toggleCompany(company.id)
+                        }
+                      }}
+                      className="w-full text-left rounded-xl border p-3 transition-colors cursor-pointer"
                       style={{
                         background: isSelected ? accent + '14' : C.cardBg,
                         borderColor: isSelected ? accent : C.divider,
@@ -227,7 +253,33 @@ export default function CropsAndCompaniesPage() {
                           <span className="text-xs leading-none mt-0.5" style={{ color: accent }}>✓</span>
                         )}
                       </div>
-                    </button>
+                      {(tel || site) && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                          {tel && (
+                            <a href={`tel:${tel}`} onClick={stop} aria-label="Call"
+                              className="inline-flex items-center justify-center w-7 h-7 rounded-md border"
+                              style={{ borderColor: C.divider, color: accent, background: 'white' }}>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+                              </svg>
+                            </a>
+                          )}
+                          {site && (
+                            <a href={site.startsWith('http') ? site : `https://${site}`}
+                              target="_blank" rel="noreferrer" onClick={stop} aria-label="Website"
+                              className="inline-flex items-center justify-center w-7 h-7 rounded-md border"
+                              style={{ borderColor: C.divider, color: accent, background: 'white' }}>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a14.5 14.5 0 010 18M12 3a14.5 14.5 0 000 18"/>
+                              </svg>
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      <p className="text-[10px] mt-1.5 leading-snug" style={{ color: C.textSecond }}>
+                        {subscribeHint}
+                      </p>
+                    </div>
                   )
                 })}
               </div>
