@@ -91,7 +91,7 @@ export function hasRole(user: PWAUser | null, role: string): boolean {
 // Role colour system from design documents
 export const ROLE_COLOURS: Record<string, string> = {
   FARMER:       "#1A5C2A",
-  DEALER:       "#085041",
+  DEALER:       "#7D4196",
   FACILITATOR:  "#7D4E00",
   FARM_PUNDIT:  "#3C3489",
 };
