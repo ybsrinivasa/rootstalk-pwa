@@ -25,12 +25,12 @@
     "home": "घर",
     "orders": "ऑर्डर",
     "queries": "प्रश्न",
-    "history": "इतिहास",
     "profile": "प्रोफाइल",
     "payments": "पेमेंट",
     "alerts": "सूचना",
     "pickup": "पिकअप",
-    "dashboard": "डॅशबोर्ड"
+    "dashboard": "डॅशबोर्ड",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "पिकाच्या समस्येचे निदान करा",

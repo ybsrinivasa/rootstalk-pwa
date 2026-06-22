@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { C } from '@/lib/tokens'
 
 type Role = 'FARMER' | 'DEALER' | 'FACILITATOR' | 'FARM_PUNDIT'
-type NavKey = 'home' | 'orders' | 'queries' | 'history' | 'profile' | 'payments' | 'alerts' | 'pickup' | 'dashboard'
+type NavKey = 'home' | 'orders' | 'queries' | 'subscriptions' | 'profile' | 'payments' | 'alerts' | 'pickup' | 'dashboard'
 
 const HomeIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
 const BoxIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -27,7 +27,7 @@ const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType 
     // we reintroduce the global view with per-row crop chips.
     { href: '/home',        key: 'home',    Icon: HomeIcon },
     { href: '/orders',      key: 'orders',  Icon: BoxIcon },
-    { href: '/my-subscriptions', key: 'history', Icon: HistoryIcon },
+    { href: '/my-subscriptions', key: 'subscriptions', Icon: HistoryIcon },
     { href: '/profile',     key: 'profile', Icon: ProfileIcon },
   ],
   DEALER: [

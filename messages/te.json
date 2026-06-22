@@ -25,12 +25,12 @@
     "home": "హోమ్",
     "orders": "ఆర్డర్లు",
     "queries": "ప్రశ్నలు",
-    "history": "చరిత్ర",
     "profile": "ప్రొఫైల్",
     "payments": "చెల్లింపులు",
     "alerts": "హెచ్చరికలు",
     "pickup": "పికప్",
-    "dashboard": "డాష్‌బోర్డ్"
+    "dashboard": "డాష్‌బోర్డ్",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "పంట సమస్యను నిర్ధారించండి",

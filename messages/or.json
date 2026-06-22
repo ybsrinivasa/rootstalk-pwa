@@ -25,12 +25,12 @@
     "home": "ଘର",
     "orders": "ଅର୍ଡର",
     "queries": "ପ୍ରଶ୍ନଗୁଡିକ",
-    "history": "ଇତିହାସ",
     "profile": "ପ୍ରୋଫାଇଲ୍",
     "payments": "ପେମେଣ୍ଟ",
     "alerts": "ଆଲର୍ଟ",
     "pickup": "ପିକଅପ୍",
-    "dashboard": "ଡ୍ୟାସବୋର୍ଡ"
+    "dashboard": "ଡ୍ୟାସବୋର୍ଡ",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "ଫସଲ ସମସ୍ୟା ନିର୍ଣ୍ଣୟ କରନ୍ତୁ",

@@ -25,12 +25,12 @@
     "home": "வீடு",
     "orders": "ஆர்டர்கள்",
     "queries": "வினவல்கள்",
-    "history": "வரலாறு",
     "profile": "சுயவிவரம்",
     "payments": "பணம் செலுத்துதல்",
     "alerts": "எச்சரிக்கைகள்",
     "pickup": "பிக்கப்",
-    "dashboard": "டாஷ்போர்டு"
+    "dashboard": "டாஷ்போர்டு",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "பயிர் பிரச்சனையை கண்டறியவும்",

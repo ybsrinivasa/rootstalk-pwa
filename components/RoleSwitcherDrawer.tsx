@@ -187,13 +187,6 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
           />
           <MenuRow
             icon={
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.27-.63 2.39-1.59 3.07a3.75 3.75 0 01-1.04 3.3 3.75 3.75 0 01-3.3 1.04A3.75 3.75 0 0112 21c-1.27 0-2.39-.63-3.07-1.59a3.75 3.75 0 01-3.3-1.04 3.75 3.75 0 01-1.04-3.3A3.75 3.75 0 013 12c0-1.27.63-2.39 1.59-3.07a3.75 3.75 0 011.04-3.3 3.75 3.75 0 013.3-1.04A3.75 3.75 0 0112 3c1.27 0 2.39.63 3.07 1.59a3.75 3.75 0 013.3 1.04 3.75 3.75 0 011.04 3.3A3.75 3.75 0 0121 12z"/>
-            }
-            label={t('mySubscriptions')}
-            onClick={() => go('/my-subscriptions')}
-          />
-          <MenuRow
-            icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.95-8.95a1.5 1.5 0 012.12 0L21.75 12M4.5 9.75v9.75a1.5 1.5 0 001.5 1.5h3.75v-6h4.5v6H18a1.5 1.5 0 001.5-1.5V9.75"/>
             }
             label={t('cropsAndCompanies')}

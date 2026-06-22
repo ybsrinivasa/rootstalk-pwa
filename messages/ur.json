@@ -25,12 +25,12 @@
     "home": "گھر",
     "orders": "احکامات",
     "queries": "سوالات",
-    "history": "تاریخ",
     "profile": "پروفائل",
     "payments": "ادائیگیاں",
     "alerts": "انتباہات",
     "pickup": "اٹھاؤ",
-    "dashboard": "ڈیش بورڈ"
+    "dashboard": "ڈیش بورڈ",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "فصل کے مسئلے کی تشخیص کریں۔",

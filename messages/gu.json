@@ -25,12 +25,12 @@
     "home": "ઘર",
     "orders": "ઓર્ડર",
     "queries": "પ્રશ્નો",
-    "history": "ઇતિહાસ",
     "profile": "પ્રોફાઇલ",
     "payments": "ચુકવણીઓ",
     "alerts": "ચેતવણીઓ",
     "pickup": "પિકઅપ",
-    "dashboard": "ડેશબોર્ડ"
+    "dashboard": "ડેશબોર્ડ",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "પાકની સમસ્યાનું નિદાન કરો",

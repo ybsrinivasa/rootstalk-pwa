@@ -25,12 +25,12 @@
     "home": "ಮರಳಿ ಪ್ರಥಮ ಪುಟಕ್ಕೆ",
     "orders": "ಆದೇಶಗಳು",
     "queries": "ಪ್ರಶ್ನೆಗಳು",
-    "history": "ಇತಿಹಾಸ",
     "profile": "ಪ್ರೊಫೈಲ್",
     "payments": "ಪಾವತಿಗಳು",
     "alerts": "ಎಚ್ಚರಿಕೆಗಳು",
     "pickup": "ಪಿಕಪ್",
-    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್"
+    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "ಬೆಳೆ ಸಮಸ್ಯೆಯನ್ನು ಪತ್ತೆಹಚ್ಚಿ",

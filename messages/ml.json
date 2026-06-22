@@ -25,12 +25,12 @@
     "home": "വീട്",
     "orders": "ഓർഡറുകൾ",
     "queries": "ചോദ്യങ്ങൾ",
-    "history": "ചരിത്രം",
     "profile": "പ്രൊഫൈൽ",
     "payments": "പേയ്‌മെന്റുകൾ",
     "alerts": "അലേർട്ടുകൾ",
     "pickup": "പുരോഗമിക്കുക",
-    "dashboard": "ഡാഷ്‌ബോർഡ്"
+    "dashboard": "ഡാഷ്‌ബോർഡ്",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "വിള പ്രശ്നം നിർണ്ണയിക്കുക",

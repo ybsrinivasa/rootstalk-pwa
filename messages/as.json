@@ -25,12 +25,12 @@
     "home": "গৃহ",
     "orders": "অৰ্ডাৰ",
     "queries": "প্ৰশ্ন",
-    "history": "ইতিহাস",
     "profile": "ৰূপৰেখা",
     "payments": "পেমেন্ট",
     "alerts": "সতৰ্কবাণী",
     "pickup": "উঠাওক",
-    "dashboard": "ডেচব'ৰ্ড"
+    "dashboard": "ডেচব'ৰ্ড",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "শস্যৰ সমস্যা নিৰ্ণয় কৰা",

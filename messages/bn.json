@@ -25,12 +25,12 @@
     "home": "হোম",
     "orders": "আদেশ",
     "queries": "প্রশ্ন",
-    "history": "ইতিহাস",
     "profile": "প্রোফাইল",
     "payments": "পেমেন্ট",
     "alerts": "সতর্কতা",
     "pickup": "পিকআপ",
-    "dashboard": "ড্যাশবোর্ড"
+    "dashboard": "ড্যাশবোর্ড",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "ফসলের সমস্যা নির্ণয় করুন",

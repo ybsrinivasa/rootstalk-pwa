@@ -25,12 +25,12 @@
     "home": "ਮੁੱਖ ਪੇਜ",
     "orders": "ਆਰਡਰ",
     "queries": "ਸਵਾਲ",
-    "history": "ਇਤਿਹਾਸ",
     "profile": "ਪ੍ਰੋਫਾਈਲ",
     "payments": "ਭੁਗਤਾਨ",
     "alerts": "ਚੇਤਾਵਨੀਆਂ",
     "pickup": "ਚੁੱਕਣਾ",
-    "dashboard": "ਡੈਸ਼ਬੋਰਡ"
+    "dashboard": "ਡੈਸ਼ਬੋਰਡ",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "ਫਸਲ ਦੀ ਸਮੱਸਿਆ ਦਾ ਨਿਦਾਨ ਕਰੋ",

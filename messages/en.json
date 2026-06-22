@@ -25,12 +25,12 @@
     "home": "Home",
     "orders": "Orders",
     "queries": "Queries",
-    "history": "History",
     "profile": "Profile",
     "payments": "Payments",
     "alerts": "Alerts",
     "pickup": "Pickup",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "Diagnose Crop Problem",

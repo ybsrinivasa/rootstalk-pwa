@@ -25,12 +25,12 @@
     "home": "घर",
     "orders": "आदेश",
     "queries": "प्रश्नों",
-    "history": "इतिहास",
     "profile": "प्रोफ़ाइल",
     "payments": "भुगतान",
     "alerts": "अलर्ट",
     "pickup": "उठाना",
-    "dashboard": "डैशबोर्ड"
+    "dashboard": "डैशबोर्ड",
+    "subscriptions": "Subscriptions"
   },
   "diagnose": {
     "headerTitle": "फसल की समस्या का निदान करें",
