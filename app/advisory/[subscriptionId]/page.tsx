@@ -1057,11 +1057,17 @@ function PracticeAckFooter({
   const [busy, setBusy] = useState(false)
   const [confirmHide, setConfirmHide] = useState(false)
   const fulf = practice.fulfilment
-  const ackable = practice.l0_type !== 'INPUT' || (
-    fulf
-      ? !!fulf.farmer_received_at
-      : practice.is_purchased === true
-  )
+  // 2026-06-22 — Tightened: INPUT cards REQUIRE a live fulfilment
+  // with farmer_received_at to be ackable. Pre-fix the `is_purchased`
+  // fallback (true when ANY APPROVED item has ever existed for the
+  // practice) showed the tick on cards whose live fulfilment was
+  // missing — e.g. when a past APPROVED item was REROUTED and the
+  // replacement order hadn't yet been picked up by the farmer. The
+  // farmer's mental model: "I haven't received this, why does it say
+  // I've done it?" The fallback is a real edge case (purchased + then
+  // timeline-archived without reroute) — those farmers won't see the
+  // tick anymore, accepted trade-off.
+  const ackable = practice.l0_type !== 'INPUT' || !!fulf?.farmer_received_at
   if (!ackable) return null
   if (!timelineLineageId || !practice.occurrence_date) return null
 
