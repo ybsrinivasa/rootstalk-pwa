@@ -1138,6 +1138,19 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
       </div>
     )
   }
+  // 2026-06-22 — For facilitator-routed orders that have no dealer-
+  // actionable items left (just NA items the facilitator is rerouting
+  // + already-received APPROVED items), the "N items · Dealer is
+  // processing" line is misleading. The dealer is done; the
+  // facilitator is the one with work to do. Show the truth.
+  const returned = sub.returned_count ?? 0
+  if (sub.facilitator_user_id && returned > 0) {
+    return (
+      <p className="text-xs text-amber-800">
+        {t('returnedFacilitatorHandling', { count: returned })}
+      </p>
+    )
+  }
   return (
     <p className="text-xs text-[#7A8C7E]">
       {sub.item_count !== undefined && sub.item_count > 0
