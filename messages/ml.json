@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 വിത്ത്",
+      "seedFarmArea": "{acres} ഏക്കർ",
+      "seedNewOrderHint": "പുതിയ വിത്ത് ഓർഡർ - ഏറ്റെടുക്കാൻ സമ്മതിക്കുക, അല്ലെങ്കിൽ സഹായിക്കാൻ കഴിയുന്നില്ലെങ്കിൽ നിരസിക്കുക.",
+      "seedAcceptedHint": "കർഷകന് വിത്ത് വിതരണം ചെയ്യാൻ കഴിയുന്ന ഒരു ഡീലറെ തിരഞ്ഞെടുക്കുക.",
+      "seedForwardCta": "ഒരു ഡീലർക്ക് കൈമാറുക →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "ഡീലറിലേക്ക് അയച്ചു · അടുത്ത ഘട്ടത്തിനായി കാത്തിരിക്കുന്നു.",
+      "seedRejectSheetTitle": "ഈ വിത്ത് ഓർഡർ നിരസിക്കണോ?",
+      "seedRejectSheetBody": "കർഷകനെ അറിയിക്കുന്നതാണ്. ആവശ്യമെങ്കിൽ അവർക്ക് പുതിയ വിത്ത് ഓർഡർ നൽകാം."
     },
     "orderDetail": {
       "headerTitle": "ഓർഡർ വിശദാംശങ്ങൾ",

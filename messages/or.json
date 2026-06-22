@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 ବିହନ",
+      "seedFarmArea": "{acres} ଏକର",
+      "seedNewOrderHint": "ନୂତନ ବିହନ ଅର୍ଡର - ଏହାକୁ ଗ୍ରହଣ କରିବାକୁ ଗ୍ରହଣ କରନ୍ତୁ, ନଚେତ୍ ଯଦି ଆପଣ ସାହାଯ୍ୟ କରିପାରିବେ ନାହିଁ ତେବେ ପ୍ରତ୍ୟାଖ୍ୟାନ କରନ୍ତୁ।",
+      "seedAcceptedHint": "ଚାଷୀଙ୍କୁ ବିହନ ଯୋଗାଇ ପାରୁଥିବା ଜଣେ ଡିଲରଙ୍କୁ ବାଛନ୍ତୁ।",
+      "seedForwardCta": "ଜଣେ ଡିଲରଙ୍କୁ ଫରୱାର୍ଡ କରନ୍ତୁ →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "ଡିଲରଙ୍କ ପାଖକୁ ପଠାଗଲା · ପରବର୍ତ୍ତୀ ପଦକ୍ଷେପ ପାଇଁ ଅପେକ୍ଷା କଲା।",
+      "seedRejectSheetTitle": "ଏହି ବିହନ ଅର୍ଡରକୁ ପ୍ରତ୍ୟାଖ୍ୟାନ କରିବେ?",
+      "seedRejectSheetBody": "ଚାଷୀଙ୍କୁ ସୂଚିତ କରାଯିବ। ଆବଶ୍ୟକ ହେଲେ ସେମାନେ ଏକ ନୂତନ ବିହନ ଅର୍ଡର ଦେଇପାରିବେ।"
     },
     "orderDetail": {
       "headerTitle": "ଅର୍ଡର ବିବରଣୀ",

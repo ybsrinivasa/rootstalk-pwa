@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 બીજ",
+      "seedFarmArea": "{acres} એકર",
+      "seedNewOrderHint": "નવો બીજ ઓર્ડર - તેને સ્વીકારો, અથવા જો તમે મદદ ન કરી શકો તો નકારી કાઢો.",
+      "seedAcceptedHint": "ખેડૂતને બીજ સપ્લાય કરી શકે તેવા ડીલરને પસંદ કરો.",
+      "seedForwardCta": "ડીલરને ફોરવર્ડ કરો →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "ડીલર પાસે મોકલવામાં આવ્યો · આગલા પગલાની રાહ જોઈ રહ્યો છું.",
+      "seedRejectSheetTitle": "આ બીજનો ઓર્ડર નકારીએ?",
+      "seedRejectSheetBody": "ખેડૂતને જાણ કરવામાં આવશે. જરૂર પડ્યે તેઓ તાજા બીજનો ઓર્ડર આપી શકે છે."
     },
     "orderDetail": {
       "headerTitle": "ઓર્ડર વિગતો",

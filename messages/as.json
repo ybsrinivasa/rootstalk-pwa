@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 বীজ",
+      "seedFarmArea": "{acres} একৰ",
+      "seedNewOrderHint": "নতুন বীজৰ অৰ্ডাৰ — ল’বলৈ মানি লওক, বা সহায় কৰিব নোৱাৰিলে নাকচ কৰক।",
+      "seedAcceptedHint": "কৃষকক বীজ যোগান ধৰিব পৰা ডিলাৰ বাছি লওক।",
+      "seedForwardCta": "এজন ডিলাৰলৈ আগবঢ়াওক →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "ডিলাৰলৈ ৰুট কৰা হৈছে · পৰৱৰ্তী পদক্ষেপৰ বাবে অপেক্ষা কৰি আছে।",
+      "seedRejectSheetTitle": "এই বীজৰ ক্ৰম নাকচ কৰা?",
+      "seedRejectSheetBody": "খেতিয়কক অৱগত কৰা হ’ব। প্ৰয়োজন হ’লে সতেজ বীজৰ অৰ্ডাৰ দিব পাৰে।"
     },
     "orderDetail": {
       "headerTitle": "অৰ্ডাৰৰ বিৱৰণ",

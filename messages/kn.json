@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 ಬೀಜ",
+      "seedFarmArea": "{acres} ಎಕರೆಗಳು",
+      "seedNewOrderHint": "ಹೊಸ ಬೀಜ ಆರ್ಡರ್ - ಅದನ್ನು ತೆಗೆದುಕೊಳ್ಳಲು ಒಪ್ಪಿಕೊಳ್ಳಿ, ಅಥವಾ ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ಸಾಧ್ಯವಾಗದಿದ್ದರೆ ತಿರಸ್ಕರಿಸಿ.",
+      "seedAcceptedHint": "ರೈತರಿಗೆ ಬೀಜ ಪೂರೈಸುವ ವ್ಯಾಪಾರಿಯನ್ನು ಆರಿಸಿ.",
+      "seedForwardCta": "ಡೀಲರ್‌ಗೆ ಫಾರ್ವರ್ಡ್ ಮಾಡಿ →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "ಡೀಲರ್‌ಗೆ ರವಾನಿಸಲಾಗಿದೆ · ಮುಂದಿನ ಹಂತಕ್ಕಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ.",
+      "seedRejectSheetTitle": "ಈ ಬೀಜ ಆದೇಶವನ್ನು ತಿರಸ್ಕರಿಸುವುದೇ?",
+      "seedRejectSheetBody": "ರೈತರಿಗೆ ತಿಳಿಸಲಾಗುವುದು. ಅಗತ್ಯವಿದ್ದರೆ ಅವರು ಹೊಸ ಬೀಜ ಆರ್ಡರ್ ಮಾಡಬಹುದು."
     },
     "orderDetail": {
       "headerTitle": "ಆದೇಶದ ವಿವರಗಳು",

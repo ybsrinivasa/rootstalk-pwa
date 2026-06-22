@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 बीज",
+      "seedFarmArea": "{acres}",
+      "seedNewOrderHint": "बीज उत्पादन का नया ऑर्डर आया है — इसे स्वीकार करें या यदि आप मदद नहीं कर सकते तो अस्वीकार कर दें।",
+      "seedAcceptedHint": "ऐसे विक्रेता का चयन करें जो किसान को बीज की आपूर्ति कर सके।",
+      "seedForwardCta": "डीलर को अग्रेषित करें →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "डीलर के पास भेजा गया · अगले चरण की प्रतीक्षा है।",
+      "seedRejectSheetTitle": "क्या आप इस सीड ऑर्डर को अस्वीकार करना चाहेंगे?",
+      "seedRejectSheetBody": "किसान को सूचित कर दिया जाएगा। जरूरत पड़ने पर वे नए बीज का ऑर्डर दे सकते हैं।"
     },
     "orderDetail": {
       "headerTitle": "ऑर्डर का विवरण",

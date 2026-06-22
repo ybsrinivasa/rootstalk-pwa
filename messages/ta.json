@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 விதை",
+      "seedFarmArea": "{acres}",
+      "seedNewOrderHint": "புதிய விதை ஆர்டர் — இதை ஏற்றுக்கொள்வதாக ஒப்புக்கொள்ளுங்கள், அல்லது உங்களால் உதவ முடியாவிட்டால் நிராகரித்துவிடுங்கள்.",
+      "seedAcceptedHint": "விவசாயிக்கு விதைகளை வழங்கக்கூடிய ஒரு விற்பனையாளரைத் தேர்ந்தெடுக்கவும்.",
+      "seedForwardCta": "விற்பனையாளருக்கு அனுப்பவும் →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "விற்பனையாளருக்கு அனுப்பப்பட்டது · அடுத்த கட்டத்திற்காக காத்திருக்கிறது.",
+      "seedRejectSheetTitle": "இந்த விதை ஆர்டரை நிராகரிக்கலாமா?",
+      "seedRejectSheetBody": "விவசாயிக்குத் தகவல் தெரிவிக்கப்படும். தேவைப்பட்டால் அவர் புதிய விதைகளை ஆர்டர் செய்யலாம்."
     },
     "orderDetail": {
       "headerTitle": "ஆர்டர் விவரங்கள்",

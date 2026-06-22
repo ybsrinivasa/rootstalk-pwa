@@ -2231,7 +2231,16 @@
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again."
+      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
+      "seedTag": "🌱 విత్తనం",
+      "seedFarmArea": "{acres} ఎకరాలు",
+      "seedNewOrderHint": "కొత్త విత్తనాల ఆర్డర్ — తీసుకోవడానికి అంగీకరించండి, లేదా సహాయం చేయలేకపోతే తిరస్కరించండి.",
+      "seedAcceptedHint": "రైతుకు విత్తనాలను సరఫరా చేయగల వ్యాపారిని ఎంచుకోండి.",
+      "seedForwardCta": "డీలర్‌కు పంపండి →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "డీలర్‌కు పంపబడింది · తదుపరి చర్య కోసం వేచి ఉంది.",
+      "seedRejectSheetTitle": "ఈ విత్తనాల ఆర్డర్‌ను తిరస్కరించాలా?",
+      "seedRejectSheetBody": "రైతుకు తెలియజేయబడుతుంది. అవసరమైతే వారు కొత్త విత్తనాల ఆర్డర్ ఇవ్వవచ్చు."
     },
     "orderDetail": {
       "headerTitle": "ఆర్డర్ వివరాలు",
