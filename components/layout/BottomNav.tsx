@@ -27,7 +27,7 @@ const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType 
     // we reintroduce the global view with per-row crop chips.
     { href: '/home',        key: 'home',    Icon: HomeIcon },
     { href: '/orders',      key: 'orders',  Icon: BoxIcon },
-    { href: '/history',     key: 'history', Icon: HistoryIcon },
+    { href: '/my-subscriptions', key: 'history', Icon: HistoryIcon },
     { href: '/profile',     key: 'profile', Icon: ProfileIcon },
   ],
   DEALER: [

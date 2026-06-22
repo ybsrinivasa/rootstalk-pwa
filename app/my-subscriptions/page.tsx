@@ -7,25 +7,31 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
-interface Subscription {
-  id: string; status: string; client_id: string; package_id: string
-  crop_start_date: string | null; reference_number: string | null
-  subscription_type?: string
-}
-interface Branding { display_name: string; primary_colour: string; logo_url: string | null }
-interface DiscoverPackage {
-  package_id: string; package_name: string; crop_cosh_id: string
-  client_id: string; client_name: string | null; client_colour: string | null
-  // legacy field aliases (backend may return either form)
-  company_name?: string | null; primary_colour?: string | null
-}
+// 2026-06-22 — Merged former /history into this page. The right-drawer
+// link "My Subscriptions" and the bottom-nav "History" tab both land
+// here now. Three sections: Active / Unsubscribed / Completed. Other
+// statuses (WAITLISTED, CANCELLED-by-promoter, SUSPENDED) live on
+// other surfaces (Home pending-payment card, alerts) — they don't
+// belong on a lifecycle-history page.
+//
+// The "Advisories in your area" discovery section was removed per user
+// direction (privacy: revealing companies serving your district can
+// out you to nearby competitors).
 
-const STATUS_COLOUR: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-700',
-  WAITLISTED: 'bg-amber-100 text-amber-700',
-  SUSPENDED: 'bg-orange-100 text-orange-700',
-  LAPSED: 'bg-slate-100 text-[#7A8C7E]',
-  CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
+interface Subscription {
+  id: string
+  status: string
+  client_id: string
+  crop_start_date: string | null
+  reference_number: string | null
+  package_name: string | null
+  crop_name: string | null
+  client_display_name: string | null
+  client_logo_url: string | null
+  client_primary_colour: string | null
+  subscription_type: 'SELF' | 'ASSIGNED' | string
+  lapsed_at: string | null
+  updated_at: string | null
 }
 
 export default function MySubscriptionsPage() {
@@ -34,210 +40,325 @@ export default function MySubscriptionsPage() {
   const tCommon = useTranslations('common')
   const locale = useLocale()
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
-  const [brandings, setBrandings] = useState<Record<string, Branding>>({})
-  const [discover, setDiscover] = useState<DiscoverPackage[]>([])
   const [loading, setLoading] = useState(true)
-  const [unsubscribing, setUnsubscribing] = useState<string | null>(null)
-  const [cancelling, setCancelling] = useState<string | null>(null)
 
-  const load = async () => {
+  // QR + unsubscribe state
+  const [qrSub, setQrSub] = useState<string | null>(null)
+  const [qrUrl, setQrUrl] = useState<string | null>(null)
+  const [loadingQr, setLoadingQr] = useState(false)
+  const [confirmUnsub, setConfirmUnsub] = useState<Subscription | null>(null)
+  const [unsubBusy, setUnsubBusy] = useState(false)
+
+  async function load() {
+    setLoading(true)
     try {
-      const [subRes, discRes] = await Promise.allSettled([
-        api.get<Subscription[]>('/farmer/my-subscriptions'),
-        api.get<DiscoverPackage[]>('/farmer/active-advisories-in-district'),
-      ])
-      const subs = subRes.status === 'fulfilled' ? subRes.value.data : []
-      setSubscriptions(subs)
-      setDiscover(discRes.status === 'fulfilled' ? discRes.value.data : [])
-
-      const ids = [...new Set(subs.map(s => s.client_id))]
-      const brandResults = await Promise.allSettled(
-        ids.map(id => api.get<Branding>(`/client/${id}/info`).then(r => ({ id, data: r.data })))
-      )
-      const m: Record<string, Branding> = {}
-      brandResults.forEach(r => { if (r.status === 'fulfilled') m[r.value.id] = r.value.data })
-      setBrandings(m)
+      const { data } = await api.get<Subscription[]>('/farmer/my-subscriptions')
+      setSubscriptions(data)
     } finally { setLoading(false) }
   }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function unsubscribe(sub: Subscription) {
-    if (!confirm(t('unsubscribeConfirm'))) return
-    setUnsubscribing(sub.id)
+  async function openQR(subId: string) {
+    setQrSub(subId)
+    setLoadingQr(true)
     try {
-      await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`, {})
-      load()
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      alert(msg || t('unsubscribeError'))
-    } finally { setUnsubscribing(null) }
+      const token = localStorage.getItem('rt_pwa_token')
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'
+      const res = await fetch(`${API_URL}/farmer/subscriptions/${subId}/crop-qr`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const blob = await res.blob()
+      setQrUrl(URL.createObjectURL(blob))
+    } catch { setQrSub(null) }
+    finally { setLoadingQr(false) }
   }
 
-  async function cancelDelegation(sub: Subscription) {
-    if (!confirm(t('cancelPendingConfirm'))) return
-    setCancelling(sub.id)
+  async function shareQR() {
+    if (!qrUrl) return
+    const navAny = navigator as Navigator & {
+      share?: (data: ShareData) => Promise<void>
+      canShare?: (data: ShareData) => boolean
+    }
     try {
-      await api.delete(`/farmer/subscriptions/${sub.id}/delegate-payment`)
+      const blob = await (await fetch(qrUrl)).blob()
+      const file = new File([blob], 'crop-record-qr.png', { type: 'image/png' })
+      const shareData: ShareData = {
+        title: t('qr.shareTitle'),
+        text: t('qr.shareText'),
+        files: [file],
+      } as ShareData
+      if (navAny.share && (!navAny.canShare || navAny.canShare(shareData))) {
+        await navAny.share(shareData)
+        return
+      }
+    } catch { /* user cancelled or unsupported */ }
+    const a = document.createElement('a')
+    a.href = qrUrl
+    a.download = 'crop-record-qr.png'
+    a.click()
+  }
+
+  async function unsubscribe(sub: Subscription) {
+    setUnsubBusy(true)
+    try {
+      await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`, {})
+      setConfirmUnsub(null)
       load()
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      alert(msg || t('cancelPendingError'))
-    } finally { setCancelling(null) }
+      const e = err as { response?: { data?: { detail?: string } } }
+      alert(e?.response?.data?.detail || t('errorUnsubscribe'))
+    } finally { setUnsubBusy(false) }
   }
 
   const active = subscriptions.filter(s => s.status === 'ACTIVE')
-  const others = subscriptions.filter(s => s.status !== 'ACTIVE')
+  const unsubscribed = subscriptions.filter(s => s.status === 'UNSUBSCRIBED')
+  const completed = subscriptions.filter(s => s.status === 'LAPSED')
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
-        {/* Back to home — /my-subscriptions is reached from the
-            right drawer, so there's no obvious one-step back; an
-            explicit Home link gives the farmer a clear exit. */}
-        <button
-          onClick={() => router.replace('/home')}
-          className="mt-4 mb-2 flex items-center gap-1 text-sm"
-          style={{ color: '#7A8C7E' }}>
-          {t('backToHome')}
-        </button>
         {loading ? (
-          <div className="mt-4 space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}</div>
+          <div className="mt-4 space-y-3">
+            {[1, 2].map(i => <div key={i} className="h-24 bg-white rounded-2xl animate-pulse" />)}
+          </div>
+        ) : subscriptions.length === 0 ? (
+          <div className="text-center py-20 mt-4">
+            <span className="text-4xl">🌾</span>
+            <p className="text-[#7A8C7E] font-medium mt-3">{t('emptyTitle')}</p>
+            <button onClick={() => router.push('/subscribe')}
+              className="mt-4 px-6 py-3 rounded-2xl text-white text-sm font-semibold bg-green-700">
+              {t('emptyCta')}
+            </button>
+          </div>
         ) : (
-          <div className="space-y-6 mt-4">
-            {/* Active subscriptions */}
+          <div className="mt-4 space-y-6">
             {active.length > 0 && (
-              <section>
-                <p className="text-xs font-bold text-[#7A8C7E] uppercase tracking-wider mb-3">{t('active', { count: active.length })}</p>
-                <div className="space-y-3">
-                  {active.map(sub => {
-                    const b = brandings[sub.client_id]
-                    const colour = b?.primary_colour || '#3A7D44'
-                    return (
-                      <div key={sub.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-                        <div className="px-4 py-2.5 flex items-center gap-3" style={{ background: colour + '18' }}>
-                          {b?.logo_url && <img src={b.logo_url} alt="" className="w-6 h-6 rounded object-cover" />}
-                          <p className="text-sm font-bold flex-1" style={{ color: colour }}>{b?.display_name || t('companyFallback')}</p>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700">{t('activeBadge')}</span>
-                        </div>
-                        <div className="px-4 py-3">
-                          {sub.reference_number && (
-                            <p className="text-xs font-mono text-[#7A8C7E] mb-1">{sub.reference_number}</p>
-                          )}
-                          <p className="text-xs text-[#7A8C7E]">
-                            {sub.crop_start_date
-                              ? t('startedOn', { date: new Date(sub.crop_start_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })
-                              : t('awaitingStartDate')}
-                          </p>
-                          <div className="flex gap-2 mt-3">
-                            <button onClick={() => router.push(`/crop-detail/${sub.id}`)}
-                              className="flex-1 py-2 rounded-xl text-xs font-semibold text-white"
-                              style={{ background: colour }}>
-                              {t('openAdvisory')}
-                            </button>
-                            <button onClick={() => unsubscribe(sub)}
-                              disabled={unsubscribing === sub.id}
-                              className="px-4 py-2 rounded-xl text-xs font-medium text-[#D4682E] border border-red-200 hover:bg-red-50 disabled:opacity-40">
-                              {unsubscribing === sub.id ? '…' : t('unsubscribe')}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </section>
+              <SectionList title={t('active', { count: active.length })}
+                subs={active} kind="active"
+                router={router} locale={locale} t={t}
+                onShareQR={openQR}
+                onUnsubscribe={s => setConfirmUnsub(s)} />
             )}
-
-            {/* Waitlisted / past */}
-            {others.length > 0 && (
-              <section>
-                <p className="text-xs font-bold text-[#7A8C7E] uppercase tracking-wider mb-3">{t('other', { count: others.length })}</p>
-                <div className="space-y-2">
-                  {others.map(sub => {
-                    const b = brandings[sub.client_id]
-                    const isWaitlisted = sub.status === 'WAITLISTED'
-                    return (
-                      <div key={sub.id} className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-semibold text-[#6B3F1F]">{b?.display_name || t('companyFallback')}</p>
-                            {sub.reference_number && <p className="text-xs font-mono text-[#7A8C7E]">{sub.reference_number}</p>}
-                            {isWaitlisted && (
-                              <p className="text-xs text-amber-700 mt-1">{t('pendingPayment')}</p>
-                            )}
-                          </div>
-                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[sub.status] || 'bg-slate-100 text-[#7A8C7E]'}`}>
-                            {sub.status}
-                          </span>
-                        </div>
-                        {isWaitlisted && (
-                          <button
-                            onClick={() => cancelDelegation(sub)}
-                            disabled={cancelling === sub.id}
-                            className="mt-2 text-xs text-amber-700 underline disabled:opacity-40">
-                            {cancelling === sub.id ? tCommon('cancelling') : t('cancelPending')}
-                          </button>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </section>
+            {unsubscribed.length > 0 && (
+              <SectionList title={t('unsubscribed', { count: unsubscribed.length })}
+                subs={unsubscribed} kind="unsubscribed"
+                router={router} locale={locale} t={t}
+                onShareQR={openQR}
+                onUnsubscribe={s => setConfirmUnsub(s)} />
             )}
-
-            {/* Active Advisories in District — discovery (A3a) */}
-            {discover.length > 0 && (
-              <section>
-                <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-1">{t('discoverHeader')}</p>
-                <p className="text-xs text-[#7A8C7E] mb-3">{t('discoverSubheader')}</p>
-                <div className="space-y-2">
-                  {discover.map(pkg => {
-                    const companyName = pkg.client_name || pkg.company_name || t('companyFallback')
-                    const accentColour = pkg.client_colour || pkg.primary_colour || '#3A7D44'
-                    const cropLabel = pkg.crop_cosh_id
-                      .replace(/^crop_/, '')
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, c => c.toUpperCase())
-                    return (
-                      <div key={pkg.package_id} className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: accentColour }} />
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-[#6B3F1F] truncate" style={{ color: accentColour }}>{companyName}</p>
-                            <p className="text-xs text-[#7A8C7E]">{cropLabel}</p>
-                          </div>
-                        </div>
-                        <button onClick={() => router.push('/subscribe')}
-                          className="text-xs px-3 py-1.5 rounded-lg text-white font-medium ml-3 flex-shrink-0"
-                          style={{ background: accentColour }}>
-                          {t('explore')}
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </section>
-            )}
-
-            {subscriptions.length === 0 && discover.length === 0 && (
-              <div className="text-center py-16">
-                <span className="text-4xl">🌾</span>
-                <p className="text-[#7A8C7E] font-medium mt-3">{t('emptyTitle')}</p>
-                <button onClick={() => router.push('/subscribe')}
-                  className="mt-4 px-6 py-3 rounded-2xl text-white text-sm font-semibold bg-green-700">
-                  {t('emptyCta')}
-                </button>
-              </div>
+            {completed.length > 0 && (
+              <SectionList title={t('completed', { count: completed.length })}
+                subs={completed} kind="completed"
+                router={router} locale={locale} t={t}
+                onShareQR={openQR}
+                onUnsubscribe={s => setConfirmUnsub(s)} />
             )}
           </div>
         )}
       </div>
       <BottomNav color="#3A7D44" />
+
+      {/* QR bottom sheet */}
+      {qrSub && (
+        <div className="fixed inset-0 z-[60] flex items-end bg-black/40"
+          onClick={() => { setQrSub(null); setQrUrl(null) }}>
+          <div className="bg-white rounded-t-2xl w-full pt-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-stone-200 rounded-full mx-auto mb-5" />
+            <p className="text-center font-semibold text-[#6B3F1F] mb-4">{t('qr.title')}</p>
+            {loadingQr ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-2 border-[#3A7D44] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : qrUrl ? (
+              <div className="flex flex-col items-center gap-4">
+                <img src={qrUrl} alt={t('qr.alt')} className="w-48 h-48 mx-auto" />
+                <p className="text-[#7A8C7E] text-xs text-center max-w-xs px-4">{t('qr.hint')}</p>
+                <div className="flex gap-2 px-4 w-full max-w-sm">
+                  <button onClick={shareQR}
+                    className="flex-1 py-3 rounded-2xl text-white text-sm font-medium"
+                    style={{ background: '#3A7D44' }}>
+                    {t('qr.share')}
+                  </button>
+                  <a href={qrUrl} download="crop-record-qr.png"
+                    className="flex-1 py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium text-center">
+                    {t('qr.save')}
+                  </a>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* Unsubscribe confirm */}
+      {confirmUnsub && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => !unsubBusy && setConfirmUnsub(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">{t('confirmUnsub.title')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
+              {t('confirmUnsub.bodyPrefix')}{' '}
+              <strong className="text-[#6B3F1F]">{confirmUnsub.crop_name || t('thisCropFallback')}</strong>{' '}
+              {t('confirmUnsub.bodyMiddle')}{' '}
+              <strong className="text-[#6B3F1F]">{confirmUnsub.client_display_name}</strong>
+              {t('confirmUnsub.bodySuffix')}
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmUnsub(null)} disabled={unsubBusy}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                {tCommon('cancel')}
+              </button>
+              <button onClick={() => unsubscribe(confirmUnsub)} disabled={unsubBusy}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {unsubBusy ? '…' : t('confirmUnsub.yes')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function SectionList({
+  title, subs, kind, router, locale, t, onShareQR, onUnsubscribe,
+}: {
+  title: string
+  subs: Subscription[]
+  kind: 'active' | 'unsubscribed' | 'completed'
+  router: ReturnType<typeof useRouter>
+  locale: string
+  t: ReturnType<typeof useTranslations>
+  onShareQR: (id: string) => void
+  onUnsubscribe: (s: Subscription) => void
+}) {
+  return (
+    <section>
+      <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3">{title}</p>
+      <div className="space-y-3">
+        {subs.map(sub => (
+          <SubCard key={sub.id} sub={sub} kind={kind}
+            router={router} locale={locale} t={t}
+            onShareQR={onShareQR} onUnsubscribe={onUnsubscribe} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function SubCard({
+  sub, kind, router, locale, t, onShareQR, onUnsubscribe,
+}: {
+  sub: Subscription
+  kind: 'active' | 'unsubscribed' | 'completed'
+  router: ReturnType<typeof useRouter>
+  locale: string
+  t: ReturnType<typeof useTranslations>
+  onShareQR: (id: string) => void
+  onUnsubscribe: (s: Subscription) => void
+}) {
+  const colour = sub.client_primary_colour || '#3A7D44'
+  // Voluntary unsubscribe is only offered for SELF subscriptions that
+  // are still ACTIVE. Promoter-assigned subs must go through the
+  // company channel (same rule the backend enforces at PUT
+  // /unsubscribe via is_self_unsubscribable).
+  const canUnsubscribe = kind === 'active' && sub.subscription_type === 'SELF'
+  const start = sub.crop_start_date
+    ? new Date(sub.crop_start_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+    : null
+  // End-date: for completed → lapsed_at; for unsubscribed → updated_at
+  // (the status flip is the row's last touch on UNSUBSCRIBED rows).
+  const endIso = kind === 'completed' ? sub.lapsed_at : kind === 'unsubscribed' ? sub.updated_at : null
+  const end = endIso
+    ? new Date(endIso).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+    : null
+
+  return (
+    <div className="w-full bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+      <div className="px-4 py-2.5 flex items-center gap-2.5" style={{ background: colour + '18' }}>
+        {sub.client_logo_url ? (
+          <img src={sub.client_logo_url} alt="" className="w-7 h-7 rounded object-cover bg-white" />
+        ) : (
+          <div className="w-7 h-7 rounded bg-white border border-[#DDD0B8] flex items-center justify-center text-[10px] font-bold"
+            style={{ color: colour }}>
+            {(sub.client_display_name || '?').slice(0, 2).toUpperCase()}
+          </div>
+        )}
+        <p className="text-sm font-bold flex-1 truncate" style={{ color: colour }}>
+          {sub.client_display_name || t('companyFallback')}
+        </p>
+        <StatusBadge kind={kind} t={t} />
+      </div>
+      <div className="px-4 pt-3">
+        <p className="text-base font-bold text-[#6B3F1F]">
+          {sub.crop_name || t('cropFallback')}
+        </p>
+        {sub.reference_number && (
+          <p className="text-[11px] font-mono text-[#7A8C7E] mt-0.5">{sub.reference_number}</p>
+        )}
+        <p className="text-[11px] text-[#7A8C7E] mt-1">
+          {sub.subscription_type === 'ASSIGNED'
+            ? t('assignedBy', { company: sub.client_display_name || t('companyFallback') })
+            : t('subscribedBySelf')}
+        </p>
+        {(start || end) && (
+          <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+            {start && end
+              ? t('startToEnd', { start, end })
+              : start
+                ? t('startedOn', { date: start })
+                : t('endedOn', { date: end as string })}
+          </p>
+        )}
+      </div>
+      <div className="px-4 pt-3 pb-3 flex gap-2 flex-wrap">
+        {kind === 'active' && (
+          <button onClick={() => router.push(`/crop-detail/${sub.id}`)}
+            className="text-[11px] font-semibold px-3 py-1.5 rounded-lg text-white"
+            style={{ background: colour }}>
+            {t('openAdvisory')}
+          </button>
+        )}
+        <button onClick={() => onShareQR(sub.id)}
+          className="text-[11px] font-medium px-3 py-1.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] flex items-center gap-1.5">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+          </svg>
+          {t('shareCropQR')}
+        </button>
+        {canUnsubscribe && (
+          <button onClick={() => onUnsubscribe(sub)}
+            className="text-[11px] font-medium px-3 py-1.5 rounded-lg border border-red-200 text-[#D4682E] bg-red-50 ml-auto">
+            {t('unsubscribeBtn')}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function StatusBadge({ kind, t }: {
+  kind: 'active' | 'unsubscribed' | 'completed'
+  t: ReturnType<typeof useTranslations>
+}) {
+  const cls = kind === 'active'
+    ? 'bg-green-100 text-green-700'
+    : kind === 'unsubscribed'
+      ? 'bg-rose-100 text-rose-700'
+      : 'bg-slate-100 text-[#7A8C7E]'
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>
+      {t(`statusBadge.${kind}`)}
+    </span>
   )
 }

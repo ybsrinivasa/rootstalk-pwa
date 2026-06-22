@@ -2707,7 +2707,39 @@
     "discoverSubheader": "আপনার জেলায় পরামর্শ প্রদানকারী অন্যান্য সংস্থাগুলি",
     "explore": "অন্বেষণ করুন →",
     "emptyTitle": "এখনো কোনো সাবস্ক্রিপশন নেই",
-    "emptyCta": "একটি পরামর্শে সাবস্ক্রাইব করুন"
+    "emptyCta": "একটি পরামর্শে সাবস্ক্রাইব করুন",
+    "unsubscribed": "Unsubscribed ({count})",
+    "completed": "Completed ({count})",
+    "statusBadge": {
+      "active": "Active",
+      "unsubscribed": "Unsubscribed",
+      "completed": "Completed"
+    },
+    "shareCropQR": "↗ Share crop QR",
+    "unsubscribeBtn": "✗ Unsubscribe",
+    "errorUnsubscribe": "Could not unsubscribe. Please try again.",
+    "cropFallback": "Crop",
+    "thisCropFallback": "this crop",
+    "subscribedBySelf": "Subscribed by you",
+    "assignedBy": "Assigned by {company}",
+    "endedOn": "Ended {date}",
+    "startToEnd": "{start} → {end}",
+    "qr": {
+      "title": "Crop Record QR",
+      "alt": "Crop QR",
+      "hint": "Anyone can scan this to see your crop record — no app needed.",
+      "share": "↗ Share",
+      "save": "💾 Save",
+      "shareTitle": "My crop record",
+      "shareText": "Scan this to see my crop record on rootsTALK.in"
+    },
+    "confirmUnsub": {
+      "title": "Unsubscribe from this advisory?",
+      "bodyPrefix": "You'll stop receiving advisories for",
+      "bodyMiddle": "from",
+      "bodySuffix": ". You can subscribe again later if you change your mind.",
+      "yes": "Yes, unsubscribe"
+    }
   },
   "seedOrders": {
     "headerTitle": "বীজের অর্ডার",
