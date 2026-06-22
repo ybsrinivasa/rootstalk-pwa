@@ -16,7 +16,7 @@ interface Selected {
   category: Category | null
 }
 
-const COLOUR = '#085041'
+const COLOUR = '#7D4196'
 
 export default function MyDealershipsPage() {
   const router = useRouter()
@@ -156,9 +156,9 @@ export default function MyDealershipsPage() {
                 <button key={s.id}
                   onClick={() => removeManufacturer(s)}
                   disabled={busyCoshId === (s.manufacturer_cosh_id || s.id)}
-                  className="inline-flex items-center gap-1.5 bg-[#085041]/10 border border-[#085041]/30 text-[#085041] rounded-full pl-3 pr-2 py-1.5 text-xs font-medium disabled:opacity-50">
+                  className="inline-flex items-center gap-1.5 bg-[#7D4196]/10 border border-[#7D4196]/30 text-[#7D4196] rounded-full pl-3 pr-2 py-1.5 text-xs font-medium disabled:opacity-50">
                   <span>{s.manufacturer_name}</span>
-                  <span className="w-4 h-4 rounded-full bg-[#085041] text-white flex items-center justify-center text-[10px] leading-none">×</span>
+                  <span className="w-4 h-4 rounded-full bg-[#7D4196] text-white flex items-center justify-center text-[10px] leading-none">×</span>
                 </button>
               ))}
             </div>
@@ -174,12 +174,12 @@ export default function MyDealershipsPage() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={t('searchPlaceholder')}
-          className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#085041]/20 mb-3"
+          className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7D4196]/20 mb-3"
         />
 
         {loading[tab] ? (
           <div className="flex items-center justify-center py-10">
-            <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
           </div>
         ) : unselectedFiltered.length === 0 ? (
           <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-6 text-center">
@@ -195,7 +195,7 @@ export default function MyDealershipsPage() {
                 disabled={busyCoshId === c.cosh_id}
                 className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-[#F5F0E8]/60 disabled:opacity-50">
                 <span className="text-sm text-[#6B3F1F]">{c.name}</span>
-                <span className="text-xs font-semibold text-[#085041] shrink-0 ml-3">
+                <span className="text-xs font-semibold text-[#7D4196] shrink-0 ml-3">
                   {busyCoshId === c.cosh_id ? t('adding') : t('add')}
                 </span>
               </button>

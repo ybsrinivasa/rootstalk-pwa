@@ -7,7 +7,7 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
-const COLOUR = '#085041'
+const COLOUR = '#7D4196'
 
 type Stage = 'gate' | 'company' | 'phone' | 'confirm_farmer' | 'crop' | 'guided' | 'confirm' | 'done'
 
@@ -237,7 +237,7 @@ export default function DealerPromoterAssignPage() {
         <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/home" />
         <div className="pt-16 px-4 max-w-lg mx-auto">
           <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
           </div>
         </div>
       </div>
@@ -281,15 +281,15 @@ export default function DealerPromoterAssignPage() {
               company-pick so the Dealer always sees which kitty
               they're spending from. */}
           {selectedRow && stage !== 'company' && stage !== 'done' && (
-            <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-full bg-emerald-50 border border-emerald-200">
-              <span className="text-xs text-emerald-800 truncate">
+            <div className="flex items-center justify-between mb-4 px-3 py-2 rounded-full bg-purple-50 border border-purple-200">
+              <span className="text-xs text-purple-800 truncate">
                 <span className="font-semibold">{selectedRow.units_balance.toLocaleString(locale)}</span>{' '}
                 {t('kittyChipPrefix')}{' '}
                 <span className="font-semibold">{selectedRow.client_name}</span>
               </span>
               <button
                 onClick={() => router.push('/dealer/promoter-assign/pending')}
-                className="text-xs font-semibold text-emerald-900 underline underline-offset-2 shrink-0 ml-2">
+                className="text-xs font-semibold text-purple-900 underline underline-offset-2 shrink-0 ml-2">
                 {t('kittyChipLink')}
               </button>
             </div>
@@ -309,7 +309,7 @@ export default function DealerPromoterAssignPage() {
                   <button
                     key={a.client_id}
                     onClick={() => { setSelectedClientId(a.client_id); setStage('phone') }}
-                    className="w-full flex items-center justify-between text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white hover:border-[#085041] transition-colors">
+                    className="w-full flex items-center justify-between text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white hover:border-[#7D4196] transition-colors">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-[#6B3F1F] truncate">{a.client_name}</p>
                       <p className="text-xs text-[#7A8C7E] mt-0.5">
@@ -386,22 +386,22 @@ export default function DealerPromoterAssignPage() {
                 <p className="text-sm font-semibold text-[#6B3F1F] mb-2">{t('confirmFarmer.locationLabel')}</p>
                 {!coshLocations && (
                   <div className="flex items-center gap-3 text-[#7A8C7E] text-sm mb-3">
-                    <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin"/>
+                    <div className="w-4 h-4 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin"/>
                     {t('confirmFarmer.loadingLocations')}
                   </div>
                 )}
 
                 {coshLocations && hasResolvedLocation && !editingLocation && (
-                  <div className="mb-4 px-4 py-3 rounded-2xl border border-[#085041]/30 bg-[#085041]/10 flex items-start gap-3">
+                  <div className="mb-4 px-4 py-3 rounded-2xl border border-[#7D4196]/30 bg-[#7D4196]/10 flex items-start gap-3">
                     <span className="text-lg leading-none mt-0.5">📍</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] uppercase tracking-wide font-semibold text-[#085041]">{t('confirmFarmer.savedLabel')}</p>
+                      <p className="text-[11px] uppercase tracking-wide font-semibold text-[#7D4196]">{t('confirmFarmer.savedLabel')}</p>
                       <p className="text-[#6B3F1F] font-semibold text-[15px] mt-0.5">
                         {districtName} <span className="text-[#7A8C7E] font-normal">· {stateName || '—'}</span>
                       </p>
                     </div>
                     <button onClick={() => { setEditingLocation(true); setStateSearch(''); setDistrictSearch('') }}
-                      className="text-[12px] text-[#085041] underline shrink-0">
+                      className="text-[12px] text-[#7D4196] underline shrink-0">
                       {tCommon('change')}
                     </button>
                   </div>
@@ -413,7 +413,7 @@ export default function DealerPromoterAssignPage() {
                       <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{t('confirmFarmer.stateLabel')}</label>
                       {stateId ? (
                         <div className="flex items-center gap-2">
-                          <span className="bg-[#085041]/10 text-[#085041] text-sm font-medium px-3 py-1.5 rounded-full">
+                          <span className="bg-[#7D4196]/10 text-[#7D4196] text-sm font-medium px-3 py-1.5 rounded-full">
                             {stateName || t('confirmFarmer.unnamed')}
                           </span>
                           <button onClick={() => {
@@ -426,7 +426,7 @@ export default function DealerPromoterAssignPage() {
                         <>
                           <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
                             placeholder={t('confirmFarmer.searchState')}
-                            className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"/>
+                            className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4196]/20"/>
                           {stateSearch && (
                             <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                               {filteredStates.length === 0
@@ -450,7 +450,7 @@ export default function DealerPromoterAssignPage() {
                         <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{t('confirmFarmer.districtLabel')}</label>
                         {district ? (
                           <div className="flex items-center gap-2">
-                            <span className="bg-[#085041]/10 text-[#085041] text-sm font-medium px-3 py-1.5 rounded-full">
+                            <span className="bg-[#7D4196]/10 text-[#7D4196] text-sm font-medium px-3 py-1.5 rounded-full">
                               {districtName || t('confirmFarmer.unnamed')}
                             </span>
                             <button onClick={() => { setDistrict(''); setDistrictSearch('') }}
@@ -460,7 +460,7 @@ export default function DealerPromoterAssignPage() {
                           <>
                             <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
                               placeholder={t('confirmFarmer.searchDistrict')}
-                              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20"/>
+                              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4196]/20"/>
                             {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
                               <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
                                 {filteredDistricts.length === 0
@@ -522,7 +522,7 @@ export default function DealerPromoterAssignPage() {
                       key={c.crop_cosh_id}
                       onClick={() => selectCrop(c.crop_cosh_id)}
                       disabled={loading}
-                      className="w-full text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white text-sm font-medium text-[#6B3F1F] hover:border-[#085041] hover:text-[#085041] transition-colors disabled:opacity-40">
+                      className="w-full text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white text-sm font-medium text-[#6B3F1F] hover:border-[#7D4196] hover:text-[#7D4196] transition-colors disabled:opacity-40">
                       {formatCropName(c.crop_cosh_id, c.name)}
                     </button>
                   ))}
@@ -530,7 +530,7 @@ export default function DealerPromoterAssignPage() {
               )}
               {loading && (
                 <div className="flex justify-center py-6">
-                  <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
                 </div>
               )}
               <button onClick={() => setStage('confirm_farmer')} className="mt-4 w-full text-center text-sm text-[#7A8C7E]">
@@ -566,7 +566,7 @@ export default function DealerPromoterAssignPage() {
                     key={v.id}
                     onClick={() => submitAnswer(guidedStep.parameter!.id, v.id, v.name)}
                     disabled={loading}
-                    className="w-full text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white text-sm font-medium text-[#6B3F1F] hover:border-[#085041] hover:text-[#085041] transition-colors disabled:opacity-40">
+                    className="w-full text-left px-4 py-3.5 rounded-xl border border-[#DDD0B8] bg-white text-sm font-medium text-[#6B3F1F] hover:border-[#7D4196] hover:text-[#7D4196] transition-colors disabled:opacity-40">
                     {v.name}
                   </button>
                 ))}
@@ -574,7 +574,7 @@ export default function DealerPromoterAssignPage() {
 
               {loading && (
                 <div className="flex justify-center py-4">
-                  <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
                 </div>
               )}
               {error && <p className="text-[#D4682E] text-xs mt-2">{error}</p>}

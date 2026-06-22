@@ -87,9 +87,9 @@ function isCancelled(o: DealerOrder): boolean {
 }
 
 const STATUS_COLOUR: Record<string, string> = {
-  COMPLETED: 'bg-emerald-100 text-emerald-700',
-  PARTIALLY_APPROVED: 'bg-emerald-100 text-emerald-700',
-  PURCHASED: 'bg-emerald-100 text-emerald-700',
+  COMPLETED: 'bg-purple-100 text-purple-700',
+  PARTIALLY_APPROVED: 'bg-purple-100 text-purple-700',
+  PURCHASED: 'bg-purple-100 text-purple-700',
   CANCELLED: 'bg-slate-100 text-[#7A8C7E]',
   EXPIRED: 'bg-slate-100 text-[#7A8C7E]',
   REJECTED: 'bg-rose-100 text-rose-600',
@@ -181,7 +181,7 @@ export default function DealerHistoryPage() {
           {(['completed', 'cancelled'] as const).map(tabKey => (
             <button key={tabKey} onClick={() => setTab(tabKey)}
               className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors capitalize ${
-                tab === tabKey ? 'border-[#085041] text-[#085041]' : 'border-transparent text-[#7A8C7E]'
+                tab === tabKey ? 'border-[#7D4196] text-[#7D4196]' : 'border-transparent text-[#7A8C7E]'
               }`}>
               {tabKey === 'completed' ? t('tabCompleted') : t('tabCancelled')}
             </button>
@@ -214,8 +214,8 @@ export default function DealerHistoryPage() {
                         <img src={head.farmer_photo_url} alt={head?.farmer_name || t('farmerAlt')}
                           className="w-10 h-10 rounded-full object-cover border border-[#DDD0B8] shrink-0" />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-[#085041]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
-                          <span className="text-xs font-bold text-[#085041]">{initials(head?.farmer_name)}</span>
+                        <div className="w-10 h-10 rounded-full bg-[#7D4196]/10 border border-[#DDD0B8] shrink-0 flex items-center justify-center">
+                          <span className="text-xs font-bold text-[#7D4196]">{initials(head?.farmer_name)}</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -225,7 +225,7 @@ export default function DealerHistoryPage() {
                         {head?.client_name && (
                           <p className="text-xs text-[#7A8C7E] truncate">{head.client_name}</p>
                         )}
-                        <p className="text-[10px] font-mono tracking-wide text-[#085041] mt-0.5">
+                        <p className="text-[10px] font-mono tracking-wide text-[#7D4196] mt-0.5">
                           {orderId}
                         </p>
                       </div>
@@ -263,7 +263,7 @@ export default function DealerHistoryPage() {
           )}
         </div>
       </div>
-      <BottomNav color="#085041" activeRole="DEALER" />
+      <BottomNav color="#7D4196" activeRole="DEALER" />
     </div>
   )
 }

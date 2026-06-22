@@ -13,7 +13,7 @@ interface PromotedFarmer {
   status: string; reference_number: string | null; crop_start_date: string | null
 }
 
-const COLOUR = '#085041'
+const COLOUR = '#7D4196'
 
 export default function DealerPromotedFarmersPage() {
   const router = useRouter()
@@ -35,7 +35,7 @@ export default function DealerPromotedFarmersPage() {
         <div className="mt-4 mb-3 flex justify-end">
           <button onClick={() => router.push('/dealer/promoter-assign')}
             className="text-sm font-semibold px-4 py-2.5 rounded-xl text-white"
-            style={{ background: '#085041' }}>
+            style={{ background: '#7D4196' }}>
             {t('assignCta')}
           </button>
         </div>

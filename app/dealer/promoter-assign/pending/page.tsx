@@ -7,7 +7,7 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
-const COLOUR = '#085041'
+const COLOUR = '#7D4196'
 
 interface PendingAssignment {
   assignment_id: string
@@ -100,7 +100,7 @@ export default function DealerPendingSentPage() {
 
           {rows === null && (
             <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
             </div>
           )}
 
@@ -142,7 +142,7 @@ export default function DealerPendingSentPage() {
                           </p>
                           {r.farmer_phone && (
                             <a href={`tel:${r.farmer_phone}`}
-                              className="inline-block text-xs text-[#085041] underline underline-offset-2 mt-0.5">
+                              className="inline-block text-xs text-[#7D4196] underline underline-offset-2 mt-0.5">
                               📞 {r.farmer_phone}
                             </a>
                           )}
@@ -150,7 +150,7 @@ export default function DealerPendingSentPage() {
                         <span className={`shrink-0 text-[11px] font-semibold px-2 py-1 rounded-full ${
                           hr.amber
                             ? 'bg-amber-50 border border-amber-200 text-amber-900'
-                            : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                            : 'bg-purple-50 border border-purple-200 text-purple-800'
                         }`}>
                           {chipText}
                         </span>

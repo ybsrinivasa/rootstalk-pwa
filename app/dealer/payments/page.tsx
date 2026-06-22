@@ -28,7 +28,7 @@ interface PaymentRequest {
   amount: number; status: string; expires_at: string; created_at: string
 }
 
-const COLOUR = '#085041'
+const COLOUR = '#7D4196'
 
 export default function DealerPaymentsPage() {
   const router = useRouter()

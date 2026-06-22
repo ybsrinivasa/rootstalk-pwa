@@ -196,7 +196,7 @@ const STATUS_COLOUR: Record<string, string> = {
   POSTPONED: 'bg-amber-100 text-amber-700',
   NOT_AVAILABLE: 'bg-red-100 text-[#D4682E]',
   SENT_FOR_APPROVAL: 'bg-blue-100 text-blue-700',
-  APPROVED: 'bg-emerald-100 text-emerald-700',
+  APPROVED: 'bg-purple-100 text-purple-700',
   REJECTED: 'bg-rose-100 text-rose-600',
   NOT_NEEDED: 'bg-slate-100 text-[#7A8C7E]',
   SKIPPED: 'bg-slate-100 text-[#7A8C7E]',
@@ -205,7 +205,7 @@ const STATUS_COLOUR: Record<string, string> = {
 
 const PART_STATUS_COLOUR: Record<string, string> = {
   PENDING: 'bg-slate-100 text-[#6B3F1F] border-[#DDD0B8]',
-  RESOLVED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+  RESOLVED: 'bg-purple-100 text-purple-700 border-purple-200',
   FAILED: 'bg-red-100 text-[#D4682E] border-red-200',
 }
 
@@ -884,7 +884,7 @@ export default function DealerOrderDetailPage() {
 
   if (loading || !order) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#085041] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#7D4196] border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
@@ -957,7 +957,7 @@ export default function DealerOrderDetailPage() {
           {showPriceColumn && (
             <div className="text-right shrink-0">
               {item.price != null ? (
-                <p className="text-base font-bold text-[#085041]">₹{item.price.toLocaleString(locale)}</p>
+                <p className="text-base font-bold text-[#7D4196]">₹{item.price.toLocaleString(locale)}</p>
               ) : (
                 <p className="text-[10px] text-amber-700 font-medium italic">{t('item.priceNotProvided')}</p>
               )}
@@ -967,7 +967,7 @@ export default function DealerOrderDetailPage() {
 
         {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
-            className="mt-2 w-full bg-[#085041] text-white text-xs font-semibold py-2 rounded-lg">
+            className="mt-2 w-full bg-[#7D4196] text-white text-xs font-semibold py-2 rounded-lg">
             {t('item.pickBrandAndVolume')}
           </button>
         )}
@@ -1146,7 +1146,7 @@ export default function DealerOrderDetailPage() {
             {t('npk.doseLine', { n: dose.n, p: dose.p, k: dose.k })}
           </p>
           {npkOptions.fertigation && (npkOptions.applications_multiplier ?? 1) > 1 && (
-            <p className="text-[11px] text-[#085041] font-semibold mt-1">
+            <p className="text-[11px] text-[#7D4196] font-semibold mt-1">
               {t('npk.multiplierLine', { multiplier: npkOptions.applications_multiplier ?? 1 })}
             </p>
           )}
@@ -1163,7 +1163,7 @@ export default function DealerOrderDetailPage() {
             const selected = npkSelectedMixed === m.cosh_id
             const tn = npkPickedTradeNames[m.cosh_id]
             return (
-              <div key={m.cosh_id} className={`rounded-lg border ${selected ? 'border-[#085041] bg-emerald-50/40' : 'border-[#DDD0B8] bg-white'}`}>
+              <div key={m.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
                 <button onClick={() => npkPickMixed(selected ? null : m.cosh_id)}
                   className="w-full text-left px-3 py-2.5">
                   <div className="flex items-center justify-between gap-2">
@@ -1172,23 +1172,23 @@ export default function DealerOrderDetailPage() {
                       <p className="text-[11px] text-[#7A8C7E]">
                         {t('npk.mixedSummary', { n: m.n, p: m.p, k: m.k, kg: m.kg_product })}
                         {npkOptions.fertigation && m.kg_product_total && m.kg_product_total !== m.kg_product && (
-                          <> · <span className="font-semibold text-[#085041]">{t('npk.mixedTotalAffix', { kg: m.kg_product_total })}</span></>
+                          <> · <span className="font-semibold text-[#7D4196]">{t('npk.mixedTotalAffix', { kg: m.kg_product_total })}</span></>
                         )}
                       </p>
                     </div>
-                    <div className={`w-4 h-4 rounded-full border-2 ${selected ? 'border-[#085041] bg-[#085041]' : 'border-[#7A8C7E]'}`} />
+                    <div className={`w-4 h-4 rounded-full border-2 ${selected ? 'border-[#7D4196] bg-[#7D4196]' : 'border-[#7A8C7E]'}`} />
                   </div>
                 </button>
                 {selected && (
                   <div className="px-3 pb-2.5">
                     {tn ? (
                       <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
-                        className="w-full text-xs font-medium text-[#085041] bg-emerald-50 border border-[#085041]/30 rounded-lg py-1.5">
+                        className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
                         {t('npk.brandPicked', { name: tn.trade_name })}
                       </button>
                     ) : (
                       <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
-                        className="w-full text-xs font-semibold text-white bg-[#085041] rounded-lg py-2">
+                        className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
                         {t('npk.pickBrand')}
                       </button>
                     )}
@@ -1200,7 +1200,7 @@ export default function DealerOrderDetailPage() {
           <button onClick={() => npkPickMixed(null)}
             className={`w-full text-xs font-medium py-2 rounded-lg border ${
               npkSelectedMixed === null
-                ? 'border-[#085041] bg-emerald-50/40 text-[#085041]'
+                ? 'border-[#7D4196] bg-purple-50/40 text-[#7D4196]'
                 : 'border-[#DDD0B8] text-[#7A8C7E]'
             }`}>
             {t('npk.skipMixed')}
@@ -1217,26 +1217,26 @@ export default function DealerOrderDetailPage() {
               const selected = npkPickedStraights.has(s.cosh_id)
               const tn = npkPickedTradeNames[s.cosh_id]
               return (
-                <div key={s.cosh_id} className={`rounded-lg border ${selected ? 'border-[#085041] bg-emerald-50/40' : 'border-[#DDD0B8] bg-white'}`}>
+                <div key={s.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
                   <button onClick={() => npkToggleStraight(s.cosh_id)}
                     className="w-full text-left px-3 py-2.5">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-[#6B3F1F]">
                         {s.name} <span className="text-[11px] text-[#7A8C7E] font-normal">{t('npk.straightOnly', { letter: s.class.replace('STRAIGHT_', '') })}</span>
                       </p>
-                      <div className={`w-4 h-4 rounded ${selected ? 'bg-[#085041]' : 'border border-[#7A8C7E]'}`} />
+                      <div className={`w-4 h-4 rounded ${selected ? 'bg-[#7D4196]' : 'border border-[#7A8C7E]'}`} />
                     </div>
                   </button>
                   {selected && (
                     <div className="px-3 pb-2.5">
                       {tn ? (
                         <button onClick={() => npkOpenTradeNameSheet(s.cosh_id)}
-                          className="w-full text-xs font-medium text-[#085041] bg-emerald-50 border border-[#085041]/30 rounded-lg py-1.5">
+                          className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
                           {t('npk.brandPicked', { name: tn.trade_name })}
                         </button>
                       ) : (
                         <button onClick={() => npkOpenTradeNameSheet(s.cosh_id)}
-                          className="w-full text-xs font-semibold text-white bg-[#085041] rounded-lg py-2">
+                          className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
                           {t('npk.pickBrand')}
                         </button>
                       )}
@@ -1250,7 +1250,7 @@ export default function DealerOrderDetailPage() {
 
         <div className="flex gap-2 pt-1">
           <button onClick={npkSubmit} disabled={!canSubmit || npkSubmitting}
-            className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
+            className="flex-1 bg-[#7D4196] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
             {npkSubmitting ? t('npk.committing') : t('npk.commitCta')}
           </button>
           <button onClick={() => {
@@ -1272,9 +1272,9 @@ export default function DealerOrderDetailPage() {
 
     return (
       <div key={rel.relation_id}
-        className="bg-emerald-50/40 border-l-4 border-[#085041] rounded-2xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-emerald-100/60">
-          <p className="text-xs font-semibold text-[#085041] uppercase tracking-wider">
+        className="bg-purple-50/40 border-l-4 border-[#7D4196] rounded-2xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-purple-100/60">
+          <p className="text-xs font-semibold text-[#7D4196] uppercase tracking-wider">
             {t('relation.label')}
           </p>
           <p className="text-xs text-[#7A8C7E] mt-0.5">
@@ -1285,9 +1285,9 @@ export default function DealerOrderDetailPage() {
           <div className="flex gap-1.5 mt-2">
             {rel.parts.map(p => {
               const colour =
-                p.part_status === 'RESOLVED' ? 'bg-emerald-500' :
+                p.part_status === 'RESOLVED' ? 'bg-purple-500' :
                 p.part_status === 'FAILED' ? 'bg-red-400' :
-                p.part_index === expandedPart ? 'bg-[#085041]' : 'bg-slate-300'
+                p.part_index === expandedPart ? 'bg-[#7D4196]' : 'bg-slate-300'
               return <div key={p.part_index} className={`h-1.5 flex-1 rounded-full ${colour}`} />
             })}
           </div>
@@ -1341,7 +1341,7 @@ export default function DealerOrderDetailPage() {
     const isCommitting = committingOption === optKey
     const optionPickable = part.part_status === 'PENDING' && opt.option_status === 'NEW'
     const tone =
-      opt.option_status === 'AVAILABLE' ? 'border-emerald-300 bg-emerald-50/40' :
+      opt.option_status === 'AVAILABLE' ? 'border-purple-300 bg-purple-50/40' :
       opt.option_status === 'NOT_AVAILABLE' ? 'border-red-200 bg-red-50/30 opacity-70' :
       'border-[#DDD0B8] bg-white'
     return (
@@ -1371,7 +1371,7 @@ export default function DealerOrderDetailPage() {
               <button
                 onClick={() => tryPickOption(relationId, part.part_index, opt.option_index)}
                 disabled={isCommitting}
-                className="flex-1 bg-[#085041] text-white text-xs font-semibold py-2.5 rounded-lg disabled:opacity-50">
+                className="flex-1 bg-[#7D4196] text-white text-xs font-semibold py-2.5 rounded-lg disabled:opacity-50">
                 {isCommitting ? t('relation.checking') : t('relation.markOptionAvailable')}
               </button>
               <button
@@ -1416,7 +1416,7 @@ export default function DealerOrderDetailPage() {
             {showPriceColumn && (
               <div className="text-right shrink-0">
                 {item.price != null ? (
-                  <p className="text-lg font-bold text-[#085041]">₹{item.price.toLocaleString(locale)}</p>
+                  <p className="text-lg font-bold text-[#7D4196]">₹{item.price.toLocaleString(locale)}</p>
                 ) : (
                   <p className="text-[11px] text-amber-700 font-medium italic">{t('item.priceNotProvided')}</p>
                 )}
@@ -1497,7 +1497,7 @@ export default function DealerOrderDetailPage() {
         {order.reference_number && (
           <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] mt-4 flex items-center justify-between gap-3">
             <p className="text-xs text-[#7A8C7E]">{t('orderIdLabel')}</p>
-            <p className="font-mono text-sm font-semibold text-[#085041] tracking-wide">{order.reference_number}</p>
+            <p className="font-mono text-sm font-semibold text-[#7D4196] tracking-wide">{order.reference_number}</p>
           </div>
         )}
 
@@ -1540,7 +1540,7 @@ export default function DealerOrderDetailPage() {
               </p>
             </div>
             <button onClick={acceptOrder} disabled={accepting || declining}
-              className="w-full py-4 rounded-2xl bg-[#085041] text-white font-semibold text-sm disabled:opacity-50">
+              className="w-full py-4 rounded-2xl bg-[#7D4196] text-white font-semibold text-sm disabled:opacity-50">
               {accepting ? t('acceptDecline.accepting') : t('acceptDecline.acceptCta')}
             </button>
             <button onClick={() => setShowDeclineConfirm(true)} disabled={accepting || declining}
@@ -1596,7 +1596,7 @@ export default function DealerOrderDetailPage() {
             when at least one brand spans more than one line — single
             lines stay on their items so the dealer doesn't see noise. */}
         {(order.consolidated_brands || []).filter(b => b.line_count > 1).length > 0 && (
-          <div className="bg-emerald-50/40 border border-[#085041]/15 rounded-2xl p-4 space-y-2">
+          <div className="bg-purple-50/40 border border-[#7D4196]/15 rounded-2xl p-4 space-y-2">
             <div className="flex items-baseline justify-between">
               <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
                 {t('sections.consolidatedBrands')}
@@ -1606,12 +1606,12 @@ export default function DealerOrderDetailPage() {
             {(order.consolidated_brands || [])
               .filter(b => b.line_count > 1)
               .map(b => (
-                <div key={b.brand_cosh_id} className="flex items-baseline justify-between gap-3 border-t border-[#085041]/10 pt-1.5 first:border-0 first:pt-0">
+                <div key={b.brand_cosh_id} className="flex items-baseline justify-between gap-3 border-t border-[#7D4196]/10 pt-1.5 first:border-0 first:pt-0">
                   <div>
                     <p className="text-sm font-semibold text-[#6B3F1F]">{b.brand_name}</p>
                     <p className="text-[10px] text-[#7A8C7E]">{t('sections.linesCount', { count: b.line_count })}</p>
                   </div>
-                  <p className="text-sm font-bold text-[#085041]">
+                  <p className="text-sm font-bold text-[#7D4196]">
                     {b.total_volume} {b.volume_unit}
                   </p>
                 </div>
@@ -1620,14 +1620,14 @@ export default function DealerOrderDetailPage() {
         )}
 
         {pricedItems.length > 0 && (
-          <div className="bg-white border-2 border-[#085041]/15 rounded-2xl p-4 flex items-baseline justify-between gap-3">
+          <div className="bg-white border-2 border-[#7D4196]/15 rounded-2xl p-4 flex items-baseline justify-between gap-3">
             <div>
               <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">{t('footer.totalAmount')}</p>
               <p className="text-[10px] text-[#7A8C7E] mt-0.5">
                 {t('footer.pricedCoverage', { priced: pricedItems.length, total: availableItemCount })}
               </p>
             </div>
-            <p className="text-2xl font-bold text-[#085041]">₹{totalAmount.toLocaleString(locale)}</p>
+            <p className="text-2xl font-bold text-[#7D4196]">₹{totalAmount.toLocaleString(locale)}</p>
           </div>
         )}
 
@@ -1647,7 +1647,7 @@ export default function DealerOrderDetailPage() {
         {canSubmit && (
           <button onClick={() => setShowSubmitConfirm(true)} disabled={submitting}
             className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
+            style={{ background: 'linear-gradient(135deg, #054a3a, #7D4196)' }}>
             {submitting ? t('footer.sending') : `✓ ${submitButtonLabel}`}
           </button>
         )}
@@ -1693,7 +1693,7 @@ export default function DealerOrderDetailPage() {
                   {t('brandSheet.noBrandsHint')}
                 </p>
                 <button onClick={() => setShowBrandSheet(false)}
-                  className="mt-4 px-4 py-2 border border-[#085041] text-[#085041] rounded-xl text-sm font-medium">
+                  className="mt-4 px-4 py-2 border border-[#7D4196] text-[#7D4196] rounded-xl text-sm font-medium">
                   {t('brandSheet.close')}
                 </button>
               </div>
@@ -1745,7 +1745,7 @@ export default function DealerOrderDetailPage() {
               <p className="text-xs text-[#6B3F1F] mt-2">
                 {t('dup.suggestedPrefix')}
                 {' '}
-                <span className="font-semibold text-[#085041]">
+                <span className="font-semibold text-[#7D4196]">
                   {dupModal.check.suggested_alternatives.join(', ')}
                 </span>
               </p>
@@ -1761,7 +1761,7 @@ export default function DealerOrderDetailPage() {
               </button>
               <button
                 onClick={() => commitSelectOption(dupModal.relationId, dupModal.partIndex, dupModal.optionIndex)}
-                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl">
+                className="flex-1 bg-[#7D4196] text-white text-sm font-semibold py-2.5 rounded-xl">
                 {t('dup.continueAnyway')}
               </button>
             </div>
@@ -1791,7 +1791,7 @@ export default function DealerOrderDetailPage() {
               </div>
               <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
                 <span className="text-[#7A8C7E]">{t('focusConfirm.priceLabel')}</span>
-                <span className="font-bold text-[#085041]">
+                <span className="font-bold text-[#7D4196]">
                   {itemEdit.price ? `₹${parseFloat(itemEdit.price).toLocaleString(locale)}` : t('focusConfirm.priceMissing')}
                 </span>
               </div>
@@ -1804,7 +1804,7 @@ export default function DealerOrderDetailPage() {
               <button
                 onClick={() => { setShowFocusConfirm(false); markAvailable(focusItemId, { skipFocusConfirm: true }) }}
                 disabled={saving}
-                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                className="flex-1 bg-[#7D4196] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
                 {saving ? t('footer.sending') : t('focusConfirm.confirmCta')}
               </button>
             </div>
@@ -1846,7 +1846,7 @@ export default function DealerOrderDetailPage() {
               )}
               <div className="flex justify-between gap-3 pt-1 border-t border-[#F0E5D0]">
                 <span className="text-[#7A8C7E]">{t('submitConfirm.totalLabel')}</span>
-                <span className="font-bold text-[#085041]">
+                <span className="font-bold text-[#7D4196]">
                   ₹{totalAmount.toLocaleString(locale)}
                 </span>
               </div>
@@ -1857,7 +1857,7 @@ export default function DealerOrderDetailPage() {
                 {tCommon('cancel')}
               </button>
               <button onClick={submitForApproval} disabled={submitting}
-                className="flex-1 bg-[#085041] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                className="flex-1 bg-[#7D4196] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
                 {submitting ? t('footer.sending') : t('submitConfirm.confirmCta')}
               </button>
             </div>
@@ -1942,7 +1942,7 @@ export default function DealerOrderDetailPage() {
                         </p>
                         {list.map(tn => (
                           <button key={tn.cosh_id} onClick={() => npkPickTradeName(tn)}
-                            className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-emerald-50">
+                            className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-purple-50">
                             <p className="text-sm font-semibold text-[#6B3F1F]">{tn.name}</p>
                           </button>
                         ))}
@@ -1953,7 +1953,7 @@ export default function DealerOrderDetailPage() {
                   ? <p className="text-xs text-[#7A8C7E] italic text-center py-6">{t('npkSheet.empty')}</p>
                   : npkTradeNameList.map(tn => (
                       <button key={tn.cosh_id} onClick={() => npkPickTradeName(tn)}
-                        className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-emerald-50">
+                        className="w-full text-left px-3 py-2.5 border border-[#DDD0B8] rounded-lg hover:bg-purple-50">
                         <p className="text-sm font-semibold text-[#6B3F1F]">{tn.name}</p>
                       </button>
                     ))}
@@ -2110,7 +2110,7 @@ function ElementGuidance({
       {rows.map((r) => (
         <div key={r.label} className="flex items-baseline justify-between gap-3">
           <span className="text-[11px] text-[#7A8C7E]">{r.label}</span>
-          <span className={`text-xs ${r.emphasis ? 'font-bold text-[#085041]' : r.italic ? 'italic text-[#7A8C7E]' : 'font-semibold text-[#6B3F1F]'} text-right`}>
+          <span className={`text-xs ${r.emphasis ? 'font-bold text-[#7D4196]' : r.italic ? 'italic text-[#7A8C7E]' : 'font-semibold text-[#6B3F1F]'} text-right`}>
             {r.value}
           </span>
         </div>
@@ -2139,7 +2139,7 @@ function PickupStatusBanner({ order }: { order: Order }) {
   if (order.packing_farmer_received_at) {
     const stamp = new Date(order.packing_farmer_received_at)
     return (
-      <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 mt-4 text-sm text-emerald-800">
+      <div className="bg-purple-50 border border-purple-200 rounded-2xl px-4 py-3 mt-4 text-sm text-purple-800">
         {t('receivedByFarmer', {
           date: stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
           time: stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
@@ -2202,7 +2202,7 @@ function FarmerContextCard({ ctx }: { ctx: FarmerContext }) {
         </div>
         {ctx.farmer_phone && (
           <a href={`tel:${ctx.farmer_phone}`}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-semibold">
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-100 text-purple-800 text-xs font-semibold">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
@@ -2245,7 +2245,7 @@ function FacilitatorContextCard({ ctx }: { ctx: FacilitatorContext }) {
         </div>
         {ctx.facilitator_phone && (
           <a href={`tel:${ctx.facilitator_phone}`}
-            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-100 text-emerald-800 text-xs font-semibold">
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-100 text-purple-800 text-xs font-semibold">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

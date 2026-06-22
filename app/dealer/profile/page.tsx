@@ -245,7 +245,7 @@ export default function DealerProfilePage() {
               <img src={form.shop_photo_url} alt={t('photoCard.uploadedAlt')}
                 className="w-14 h-14 rounded-lg object-cover border border-[#DDD0B8] shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#085041]">{t('photoCard.uploaded')}</p>
+                <p className="text-sm font-medium text-[#7D4196]">{t('photoCard.uploaded')}</p>
               </div>
               <div className="flex gap-1.5 shrink-0">
                 <button onClick={() => photoCameraRef.current?.click()}
@@ -284,14 +284,14 @@ export default function DealerProfilePage() {
             <input value={form.shop_name}
               onChange={e => setForm(f => ({ ...f, shop_name: e.target.value }))}
               placeholder={t('detailsCard.shopNamePlaceholder')}
-              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20" />
+              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4196]/20" />
           </div>
           <div>
             <label className="block text-xs text-[#7A8C7E] mb-1">{t('detailsCard.shopAddress')}</label>
             <textarea value={form.shop_address}
               onChange={e => setForm(f => ({ ...f, shop_address: e.target.value }))}
               rows={2} placeholder={t('detailsCard.shopAddressPlaceholder')}
-              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#085041]/20 resize-none" />
+              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4196]/20 resize-none" />
           </div>
         </div>
 
@@ -313,7 +313,7 @@ export default function DealerProfilePage() {
                   <p className="text-xs text-[#7A8C7E] font-mono">
                     {form.shop_gps_lat.toFixed(6)}, {form.shop_gps_lng.toFixed(6)}
                   </p>
-                  <p className="text-xs text-[#085041] mt-0.5">{t('gpsCard.captured')}</p>
+                  <p className="text-xs text-[#7D4196] mt-0.5">{t('gpsCard.captured')}</p>
                 </div>
                 <button onClick={captureShopGps} disabled={gpsLoading}
                   className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
@@ -339,7 +339,7 @@ export default function DealerProfilePage() {
               })()}
               {mapHref && (
                 <a href={mapHref} target="_blank" rel="noopener noreferrer"
-                  className="block w-full text-center py-2.5 rounded-xl border border-[#DDD0B8] text-sm font-medium text-[#085041]">
+                  className="block w-full text-center py-2.5 rounded-xl border border-[#DDD0B8] text-sm font-medium text-[#7D4196]">
                   {t('gpsCard.viewMap')}
                 </a>
               )}
@@ -371,16 +371,16 @@ export default function DealerProfilePage() {
               <button key={catId}
                 onClick={() => toggleCategory(catId)}
                 className={`w-full flex items-center justify-between p-4 rounded-xl border-2 text-left transition-all ${
-                  selected ? 'border-[#085041] bg-[#085041]/5' : 'border-[#DDD0B8] bg-white'
+                  selected ? 'border-[#7D4196] bg-[#7D4196]/5' : 'border-[#DDD0B8] bg-white'
                 }`}>
                 <div>
-                  <p className={`text-sm font-semibold ${selected ? 'text-[#085041]' : 'text-[#6B3F1F]'}`}>
+                  <p className={`text-sm font-semibold ${selected ? 'text-[#7D4196]' : 'text-[#6B3F1F]'}`}>
                     {t(keys.label)}
                   </p>
                   <p className="text-xs text-[#7A8C7E] mt-0.5">{t(keys.note)}</p>
                 </div>
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                  selected ? 'border-[#085041] bg-[#085041]' : 'border-[#DDD0B8]'
+                  selected ? 'border-[#7D4196] bg-[#7D4196]' : 'border-[#DDD0B8]'
                 }`}>
                   {selected && <span className="text-white text-xs font-bold">✓</span>}
                 </div>
@@ -418,7 +418,7 @@ export default function DealerProfilePage() {
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#085041]">{t('certCard.uploaded')}</p>
+                <p className="text-sm font-medium text-[#7D4196]">{t('certCard.uploaded')}</p>
                 <a href={form.shop_registration_url} target="_blank" rel="noopener noreferrer"
                   className="text-xs text-[#7A8C7E] underline truncate block">{t('certCard.viewDocument')}</a>
               </div>
@@ -444,7 +444,7 @@ export default function DealerProfilePage() {
 
         <button onClick={save} disabled={saving || profileIncomplete}
           className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-40 transition-opacity"
-          style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
+          style={{ background: 'linear-gradient(135deg, #054a3a, #7D4196)' }}>
           {saving ? t('save.saving') : saved ? t('save.saved') : profileIncomplete ? t('save.pending', { count: missingFields.length }) : t('save.ready')}
         </button>
       </div>

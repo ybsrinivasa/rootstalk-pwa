@@ -9,7 +9,7 @@ import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
-const COLOUR = '#085041'
+const COLOUR = '#7D4196'
 
 type AlertType = 'START_DATE' | 'INPUT'
 
@@ -113,7 +113,7 @@ export default function DealerAlertsIncomingPage() {
 
           {rows === null && (
             <div className="flex justify-center py-12">
-              <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+              <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
             </div>
           )}
 

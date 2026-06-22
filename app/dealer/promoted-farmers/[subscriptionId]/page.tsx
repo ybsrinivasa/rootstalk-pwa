@@ -7,7 +7,7 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
-const COLOUR = '#085041'
+const COLOUR = '#7D4196'
 
 interface ElementRow {
   element_type: string
@@ -177,7 +177,7 @@ export default function DealerFarmerAdvisoryPage() {
         <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/promoted-farmers" />
         <div className="pt-16 px-4 max-w-lg mx-auto">
           <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#085041] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
           </div>
         </div>
       </div>
@@ -282,10 +282,10 @@ export default function DealerFarmerAdvisoryPage() {
                               that"). Matches the farmer's
                               PurchasedSummary block on /advisory. */}
                           {p.fulfilment?.status === 'APPROVED' && p.fulfilment?.brand_name && (
-                            <div className="-mx-3 -mt-3 mb-3 px-3 py-2 border-b border-emerald-100 bg-emerald-50/40">
-                              <p className="text-sm font-bold text-emerald-900 truncate">{p.fulfilment.brand_name}</p>
+                            <div className="-mx-3 -mt-3 mb-3 px-3 py-2 border-b border-purple-100 bg-purple-50/40">
+                              <p className="text-sm font-bold text-purple-900 truncate">{p.fulfilment.brand_name}</p>
                               {p.fulfilment.manufacturer_name && (
-                                <p className="text-[11px] text-emerald-800">by {p.fulfilment.manufacturer_name}</p>
+                                <p className="text-[11px] text-purple-800">by {p.fulfilment.manufacturer_name}</p>
                               )}
                             </div>
                           )}

@@ -199,7 +199,7 @@ export default function DealerPostponedPage() {
                   </div>
                   {g.farmer_phone && (
                     <a href={`tel:${g.farmer_phone}`}
-                      className="text-[11px] bg-white text-[#085041] border border-amber-300 px-2.5 py-1 rounded-lg shrink-0 font-semibold">
+                      className="text-[11px] bg-white text-[#7D4196] border border-amber-300 px-2.5 py-1 rounded-lg shrink-0 font-semibold">
                       {t('callBtn')}
                     </a>
                   )}
