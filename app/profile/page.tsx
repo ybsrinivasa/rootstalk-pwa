@@ -61,10 +61,6 @@ export default function ProfilePage() {
   const [gpsLat, setGpsLat] = useState<number | null>(null)
   const [gpsLng, setGpsLng] = useState<number | null>(null)
 
-  const [showLangSheet, setShowLangSheet] = useState(false)
-  const [languages, setLanguages] = useState<{ language_code: string; language_name_native: string }[]>([])
-  const [currentLang, setCurrentLang] = useState(user?.language_code || 'en')
-
   // Delete account flow
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'otp'>('idle')
   const [deleteOtp, setDeleteOtp] = useState('')
@@ -83,13 +79,11 @@ export default function ProfilePage() {
       if (fresh) {
         setUser(fresh)
         setNameValue(fresh.name || '')
-        setCurrentLang(fresh.language_code || 'en')
       }
     })
     api.get<Subscription[]>('/farmer/my-subscriptions')
       .then(r => setSubscriptions(r.data.filter(s => s.status === 'ACTIVE')))
       .catch(() => {})
-    api.get('/platform/languages').then(r => setLanguages(r.data)).catch(() => {})
     // Load the Cosh location universe so we can resolve the
     // farmer's stored cosh_ids to display names. One small payload,
     // cached by the browser anyway.
@@ -185,20 +179,6 @@ export default function ProfilePage() {
       () => setGpsLoading(false),
       { enableHighAccuracy: true, timeout: 10000 },
     )
-  }
-
-  async function switchLang(code: string) {
-    setCurrentLang(code)
-    setShowLangSheet(false)
-    try {
-      await api.put('/auth/me/profile', { language_code: code })
-      const u = getUser()
-      if (u) {
-        u.language_code = code
-        localStorage.setItem('rt_pwa_user', JSON.stringify(u))
-      }
-    } catch { /* best effort */ }
-    window.location.reload()
   }
 
   async function requestDeleteOtp() {
@@ -577,21 +557,10 @@ export default function ProfilePage() {
           <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-3 px-1">{t('prefs.sectionHeader')}</p>
           <div className="space-y-3">
 
-            {/* Language */}
-            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-0.5">{t('prefs.languageLabel')}</p>
-                  <p className="text-sm text-[#6B3F1F] font-medium">
-                    {languages.find(l => l.language_code === currentLang)?.language_name_native || currentLang.toUpperCase()}
-                  </p>
-                </div>
-                <button onClick={() => setShowLangSheet(true)}
-                  className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
-                  {t('prefs.change')}
-                </button>
-              </div>
-            </div>
+            {/* 2026-06-22 — Language picker removed. The PWAHeader's
+                language switcher (top-right) is the working,
+                canonical entry point; this in-profile copy didn't
+                actually persist the selection. */}
 
             {/* Alert recipient configuration moved to /crop-detail per
                 Alerts A/B/C (2026-05-29). Each crop's alert sheet there
@@ -629,27 +598,6 @@ export default function ProfilePage() {
       </div>
 
       <BottomNav color="#3A7D44" />
-
-      {/* ── Language sheet ── */}
-      {showLangSheet && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowLangSheet(false)}>
-          <div className="bg-white rounded-t-2xl w-full max-h-80 overflow-auto pb-6" onClick={e => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between">
-              <p className="font-medium text-[#6B3F1F] text-sm">{t('language.selectorTitle')}</p>
-              <button onClick={() => setShowLangSheet(false)} className="text-[#7A8C7E] text-xl">×</button>
-            </div>
-            {languages.map(l => (
-              <button key={l.language_code} onClick={() => switchLang(l.language_code)}
-                className={`w-full text-left px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between ${
-                  currentLang === l.language_code ? 'bg-green-50' : ''
-                }`}>
-                <span className="text-[#6B3F1F]">{l.language_name_native}</span>
-                {currentLang === l.language_code && <span className="text-[#3A7D44]">✓</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Delete Account: Confirm sheet ── */}
       {deleteStep === 'confirm' && (

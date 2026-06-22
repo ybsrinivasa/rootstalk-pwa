@@ -260,9 +260,9 @@
       "version": "వెర్షన్ 2.0",
       "visit": "eywa.farm ను సందర్శించండి →"
     },
-    "personalDetails": "Personal Details",
-    "shopDetails": "Shop Details",
-    "professionalDetails": "Professional Details"
+    "personalDetails": "వ్యక్తిగత వివరాలు",
+    "shopDetails": "దుకాణ వివరాలు",
+    "professionalDetails": "వృత్తిపరమైన వివరాలు"
   },
   "header": {
     "aboutRootsTalk": "రూట్స్‌టాక్ గురించి",

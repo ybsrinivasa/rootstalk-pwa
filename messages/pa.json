@@ -260,9 +260,9 @@
       "version": "ਵਰਜਨ 2.0",
       "visit": "eywa.farm → 'ਤੇ ਜਾਓ"
     },
-    "personalDetails": "Personal Details",
-    "shopDetails": "Shop Details",
-    "professionalDetails": "Professional Details"
+    "personalDetails": "ਨਿੱਜੀ ਵੇਰਵੇ",
+    "shopDetails": "ਦੁਕਾਨ ਦੇ ਵੇਰਵੇ",
+    "professionalDetails": "ਪੇਸ਼ੇਵਰ ਵੇਰਵੇ"
   },
   "header": {
     "aboutRootsTalk": "ਰੂਟਸਟਾਕ ਬਾਰੇ",

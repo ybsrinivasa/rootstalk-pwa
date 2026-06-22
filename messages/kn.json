@@ -260,9 +260,9 @@
       "version": "ಆವೃತ್ತಿ 2.0",
       "visit": "eywa.farm ಗೆ ಭೇಟಿ ನೀಡಿ →"
     },
-    "personalDetails": "Personal Details",
-    "shopDetails": "Shop Details",
-    "professionalDetails": "Professional Details"
+    "personalDetails": "ವೈಯಕ್ತಿಕ ವಿವರಗಳು",
+    "shopDetails": "ಅಂಗಡಿಯ ವಿವರಗಳು",
+    "professionalDetails": "ವೃತ್ತಿಪರ ವಿವರಗಳು"
   },
   "header": {
     "aboutRootsTalk": "ಬೇರುಗಳ ಬಗ್ಗೆTALK",

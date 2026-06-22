@@ -260,9 +260,9 @@
       "version": "संस्करण 2.0",
       "visit": "eywa.farm पर जाएँ →"
     },
-    "personalDetails": "Personal Details",
-    "shopDetails": "Shop Details",
-    "professionalDetails": "Professional Details"
+    "personalDetails": "व्यक्तिगत विवरण",
+    "shopDetails": "दुकान विवरण",
+    "professionalDetails": "व्यावसायिक विवरण"
   },
   "header": {
     "aboutRootsTalk": "रूट्सटॉक के बारे में",
