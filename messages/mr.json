@@ -989,7 +989,7 @@
       "headerTitle": "परत आलेल्या वस्तू पुढे पाठवा",
       "postponeOnlyReady": "{count, plural, one {१ स्थगित केलेली वस्तू पुढे पाठवण्यासाठी तयार आहे (स्थगित करणे रद्द करा + बंडल).} other {# पुढे पाठवण्यासाठी तयार असलेल्या स्थगित केलेल्या वस्तू (स्थगित रद्द करा + बंडल).}}",
       "readyToForward": "{count, plural, one {१ वस्तू पुढे पाठवण्यासाठी तयार आहे.} other {# पुढे पाठवण्यासाठी तयार असलेल्या वस्तू.}}",
-      "pickHint": " खालीलपैकी एक विक्रेता किंवा मध्यस्थ निवडा.",
+      "pickHint": " Enter the dealer's or facilitator's phone number below.",
       "brandLockedTitle": "ब्रँड-लॉक ऑर्डर",
       "tabDealers": "विक्रेते ( {count} )",
       "tabFacilitators": "सुविधा देणारे ( {count} )",
@@ -1006,7 +1006,20 @@
       "errorLoad": "ही ऑर्डर सध्या पुढे पाठवता येणार नाही. कदाचित तिची मुदत संपली असेल किंवा ती आधीच हाताळली गेली असेल.",
       "emptyTitle": "पुढे पाठवण्यासारखे काही नाही",
       "emptyBody": "या ऑर्डरमध्ये परत केलेल्या किंवा पुढे ढकललेल्या अशा कोणत्याही वस्तू नाहीत, ज्या सध्या दुसऱ्या डीलरकडे पाठवता येतील.",
-      "backToManage": "व्यवस्थापनाकडे परत जा"
+      "backToManage": "व्यवस्थापनाकडे परत जा",
+      "customPhoneLabel": "Dealer / Facilitator phone",
+      "customPhonePlaceholder": "10-digit phone number",
+      "phoneChecking": "Checking…",
+      "sendOrder": "Send Order",
+      "lookup": {
+        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+        "self": "You cannot send the order to yourself. Enter someone else's number.",
+        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
+        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
+        "roleDealer": "Dealer",
+        "roleFacilitator": "Facilitator",
+        "companyFallback": "the company"
+      }
     },
     "pickup": {
       "headerPickUp": "उचलून घ्या",

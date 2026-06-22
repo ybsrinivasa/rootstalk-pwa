@@ -989,7 +989,7 @@
       "headerTitle": "ಫಾರ್ವರ್ಡ್ ಮಾಡಿದ ಐಟಂಗಳು ಹಿಂತಿರುಗಿದವು",
       "postponeOnlyReady": "{count, plural, one {1 ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂ ಫಾರ್ವರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧವಾಗಿದೆ (ಮುಂದೂಡುವಿಕೆಯನ್ನು ರದ್ದುಗೊಳಿಸಿ + ಬಂಡಲ್).} other {# ಮುಂದೂಡಲಾದ ಐಟಂಗಳು ಫಾರ್ವರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧವಾಗಿವೆ (ಮುಂದೂಡುವಿಕೆಯನ್ನು ರದ್ದುಗೊಳಿಸಿ + ಬಂಡಲ್).}}",
       "readyToForward": "{count, plural, one {1 ಐಟಂ ಫಾರ್ವರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧವಾಗಿದೆ.} other {# ಐಟಂಗಳು ಫಾರ್ವರ್ಡ್ ಮಾಡಲು ಸಿದ್ಧವಾಗಿವೆ.}}",
-      "pickHint": " ಕೆಳಗೆ ಡೀಲರ್ ಅಥವಾ ಫೆಸಿಲಿಟೇಟರ್ ಅನ್ನು ಆರಿಸಿ.",
+      "pickHint": " Enter the dealer's or facilitator's phone number below.",
       "brandLockedTitle": "ಬ್ರ್ಯಾಂಡ್-ಲಾಕ್ ಮಾಡಿದ ಆರ್ಡರ್",
       "tabDealers": "ವಿತರಕರು ( {count} )",
       "tabFacilitators": "ಸಹಾಯಕರು ( {count} )",
@@ -1006,7 +1006,20 @@
       "errorLoad": "ಈ ಆರ್ಡರ್ ಅನ್ನು ಇದೀಗ ಫಾರ್ವರ್ಡ್ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಇದರ ಅವಧಿ ಮುಗಿದಿರಬಹುದು ಅಥವಾ ಈಗಾಗಲೇ ನಿರ್ವಹಿಸಿರಬಹುದು.",
       "emptyTitle": "ಫಾರ್ವರ್ಡ್ ಮಾಡಲು ಏನೂ ಇಲ್ಲ",
       "emptyBody": "ಈ ಆದೇಶವು ಇದೀಗ ಬೇರೆ ಡೀಲರ್‌ಗೆ ಕಳುಹಿಸಬಹುದಾದ ಯಾವುದೇ ಹಿಂತಿರುಗಿಸಿದ ಅಥವಾ ಮುಂದೂಡಲ್ಪಟ್ಟ ವಸ್ತುಗಳನ್ನು ಹೊಂದಿಲ್ಲ.",
-      "backToManage": "ನಿರ್ವಹಣೆಗೆ ಹಿಂತಿರುಗಿ"
+      "backToManage": "ನಿರ್ವಹಣೆಗೆ ಹಿಂತಿರುಗಿ",
+      "customPhoneLabel": "Dealer / Facilitator phone",
+      "customPhonePlaceholder": "10-digit phone number",
+      "phoneChecking": "Checking…",
+      "sendOrder": "Send Order",
+      "lookup": {
+        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+        "self": "You cannot send the order to yourself. Enter someone else's number.",
+        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
+        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
+        "roleDealer": "Dealer",
+        "roleFacilitator": "Facilitator",
+        "companyFallback": "the company"
+      }
     },
     "pickup": {
       "headerPickUp": "ಎತ್ತಿಕೊಳ್ಳಿ",

@@ -989,7 +989,7 @@
       "headerTitle": "ഫോർവേഡ് റിട്ടേൺ ചെയ്ത ഇനങ്ങൾ",
       "postponeOnlyReady": "{count, plural, one {മാറ്റിവച്ച 1 ഇനം ഫോർവേഡ് ചെയ്യാൻ തയ്യാറാണ് (റദ്ദാക്കുക മാറ്റിവയ്ക്കൽ + ബണ്ടിൽ).} other {# മാറ്റിവച്ച ഇനങ്ങൾ ഫോർവേഡ് ചെയ്യാൻ തയ്യാറാണ് (റദ്ദാക്കുക മാറ്റിവച്ചത് + ബണ്ടിൽ).}}",
       "readyToForward": "{count, plural, one {ഒരു ഇനം ഫോർവേഡ് ചെയ്യാൻ തയ്യാറാണ്.} other {# ഇനങ്ങൾ ഫോർവേഡ് ചെയ്യാൻ തയ്യാറാണ്.}}",
-      "pickHint": " താഴെ ഒരു ഡീലറെയോ ഫെസിലിറ്റേറ്ററെയോ തിരഞ്ഞെടുക്കുക.",
+      "pickHint": " Enter the dealer's or facilitator's phone number below.",
       "brandLockedTitle": "ബ്രാൻഡ്-ലോക്ക്ഡ് ഓർഡർ",
       "tabDealers": "ഡീലർമാർ ( {count} )",
       "tabFacilitators": "സഹായകർ ( {count} )",
@@ -1006,7 +1006,20 @@
       "errorLoad": "ഈ ഓർഡർ ഇപ്പോൾ ഫോർവേഡ് ചെയ്യാൻ കഴിയില്ല. ഇത് കാലഹരണപ്പെട്ടിരിക്കാം അല്ലെങ്കിൽ ഇതിനകം കൈകാര്യം ചെയ്തിട്ടുണ്ടാകാം.",
       "emptyTitle": "ഫോർവേഡ് ചെയ്യാൻ ഒന്നുമില്ല",
       "emptyBody": "ഈ ഓർഡറിൽ ഇപ്പോൾ മറ്റൊരു ഡീലർക്ക് അയയ്ക്കാൻ കഴിയുന്ന തിരികെ നൽകിയതോ മാറ്റിവച്ചതോ ആയ ഇനങ്ങൾ ഇല്ല.",
-      "backToManage": "മാനേജ് എന്നതിലേക്ക് മടങ്ങുക"
+      "backToManage": "മാനേജ് എന്നതിലേക്ക് മടങ്ങുക",
+      "customPhoneLabel": "Dealer / Facilitator phone",
+      "customPhonePlaceholder": "10-digit phone number",
+      "phoneChecking": "Checking…",
+      "sendOrder": "Send Order",
+      "lookup": {
+        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+        "self": "You cannot send the order to yourself. Enter someone else's number.",
+        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
+        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
+        "roleDealer": "Dealer",
+        "roleFacilitator": "Facilitator",
+        "companyFallback": "the company"
+      }
     },
     "pickup": {
       "headerPickUp": "പുരോഗമിക്കുക",

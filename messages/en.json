@@ -989,12 +989,12 @@
       "headerTitle": "Forward returned items",
       "postponeOnlyReady": "{count, plural, one {1 postponed item ready to forward (cancel postpone + bundle).} other {# postponed items ready to forward (cancel postpone + bundle).}}",
       "readyToForward": "{count, plural, one {1 item ready to forward.} other {# items ready to forward.}}",
-      "pickHint": " Pick a dealer or facilitator below.",
+      "pickHint": " Enter the dealer's or facilitator's phone number below.",
       "brandLockedTitle": "Brand-locked order",
-      "tabDealers": "dealers ({count})",
-      "tabFacilitators": "facilitators ({count})",
-      "emptyDealers": "No dealers available right now.",
-      "emptyFacilitators": "No facilitators available right now.",
+      "customPhoneLabel": "Dealer / Facilitator phone",
+      "customPhonePlaceholder": "10-digit phone number",
+      "phoneChecking": "Checking…",
+      "sendOrder": "Send Order",
       "nudgeTitle": "Send postponed items too?",
       "nudgeBodyPrefix": "You have",
       "nudgeBodyMiddle": "still with the current dealer. Want to cancel them and bundle with the",
@@ -1006,7 +1006,16 @@
       "errorLoad": "This order can't be forwarded right now. It may have expired or already been handled.",
       "emptyTitle": "Nothing to forward",
       "emptyBody": "This order has no returned or postponed items that can be sent to another dealer right now.",
-      "backToManage": "Back to Manage"
+      "backToManage": "Back to Manage",
+      "lookup": {
+        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+        "self": "You cannot send the order to yourself. Enter someone else's number.",
+        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk. Ask them to register via 'Become a Dealer' or 'Become a Facilitator' first.",
+        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}, so the order cannot be sent to them. Send to a facilitator or pick a different dealer.",
+        "roleDealer": "Dealer",
+        "roleFacilitator": "Facilitator",
+        "companyFallback": "the company"
+      }
     },
     "pickup": {
       "headerPickUp": "Pick up",

@@ -989,7 +989,7 @@
       "headerTitle": "ঘূৰাই দিয়া বস্তুবোৰ ফৰৱাৰ্ড কৰক",
       "postponeOnlyReady": "{count, plural, one {1 টা পিছুৱাই দিয়া বস্তুটো আগবঢ়াবলৈ সাজু (স্থগিত ৰখা + বাণ্ডিল বাতিল কৰক)।} other {# পিছুৱাই দিয়া বস্তুবোৰ আগবঢ়াবলৈ সাজু (স্থগিত ৰখা + বাণ্ডিল বাতিল কৰক)।}}",
       "readyToForward": "{count, plural, one {১ টা বস্তু আগবঢ়াবলৈ সাজু।} other {# ফৰৱাৰ্ড কৰিবলৈ সাজু বস্তু।}}",
-      "pickHint": " তলত এজন ডিলাৰ বা সুবিধা প্ৰদানকাৰী বাছি লওক।",
+      "pickHint": " Enter the dealer's or facilitator's phone number below.",
       "brandLockedTitle": "ব্ৰেণ্ড-লক কৰা অৰ্ডাৰ",
       "tabDealers": "ডিলাৰ ( {count} )",
       "tabFacilitators": "সুবিধা প্ৰদানকাৰী ( {count} )",
@@ -1006,7 +1006,20 @@
       "errorLoad": "এই অৰ্ডাৰ এতিয়াই ফৰৱাৰ্ড কৰিব নোৱাৰিব। হয়তো ইয়াৰ ম্যাদ উকলি গৈছে বা ইতিমধ্যে চম্ভালি লোৱা হৈছে।",
       "emptyTitle": "আগবঢ়াবলৈ একো নাই",
       "emptyBody": "এই অৰ্ডাৰত কোনো ঘূৰাই দিয়া বা পিছুৱাই দিয়া বস্তু নাই যিবোৰ এতিয়াই আন এজন ডিলাৰলৈ পঠিয়াব পাৰি।",
-      "backToManage": "পৰিচালনালৈ উভতি যাওক"
+      "backToManage": "পৰিচালনালৈ উভতি যাওক",
+      "customPhoneLabel": "Dealer / Facilitator phone",
+      "customPhonePlaceholder": "10-digit phone number",
+      "phoneChecking": "Checking…",
+      "sendOrder": "Send Order",
+      "lookup": {
+        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+        "self": "You cannot send the order to yourself. Enter someone else's number.",
+        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
+        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
+        "roleDealer": "Dealer",
+        "roleFacilitator": "Facilitator",
+        "companyFallback": "the company"
+      }
     },
     "pickup": {
       "headerPickUp": "উঠাওক",

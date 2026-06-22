@@ -989,7 +989,7 @@
       "headerTitle": "ଫେରସ୍ତ କରାଯାଇଥିବା ଆଇଟମ୍‌ଗୁଡ଼ିକୁ ଫରୱାର୍ଡ କରାଯାଇଛି",
       "postponeOnlyReady": "{count, plural, one {ଫରୱାର୍ଡ କରିବା ପାଇଁ ପ୍ରସ୍ତୁତ 1ଟି ସ୍ଥଗିତ ଆଇଟମ୍ (ସ୍ଥଗିତ ରଦ୍ଦ କରନ୍ତୁ + ବଣ୍ଡଲ୍)।} other {# ଟି ସ୍ଥଗିତ ଆଇଟମ୍ ଫରୱାର୍ଡ କରିବାକୁ ପ୍ରସ୍ତୁତ (ସ୍ଥଗିତ ରଦ୍ଦ + ବଣ୍ଡଲ୍)।}}",
       "readyToForward": "{count, plural, one {1ଟି ଆଇଟମ୍ ଫରୱାର୍ଡ କରିବାକୁ ପ୍ରସ୍ତୁତ।} other {# ଟି ଆଇଟମ୍ ଫରୱାର୍ଡ କରିବାକୁ ପ୍ରସ୍ତୁତ।}}",
-      "pickHint": " ତଳେ ଜଣେ ଡିଲର କିମ୍ବା ସୁବିଧାଦାତା ବାଛନ୍ତୁ।",
+      "pickHint": " Enter the dealer's or facilitator's phone number below.",
       "brandLockedTitle": "ବ୍ରାଣ୍ଡ-ଲକ୍ ଅର୍ଡର",
       "tabDealers": "ଡିଲର୍ ( {count} )",
       "tabFacilitators": "ସହାୟତାକାରୀ ( {count} )",
@@ -1006,7 +1006,20 @@
       "errorLoad": "ଏହି ଅର୍ଡରଟି ବର୍ତ୍ତମାନ ଫରୱାର୍ଡ କରାଯାଇପାରିବ ନାହିଁ। ଏହାର ମିଆଦ ଶେଷ ହୋଇଯାଇଥିବ କିମ୍ବା ପୂର୍ବରୁ ପରିଚାଳନା କରାଯାଇଥିବ।",
       "emptyTitle": "ଫରୱାର୍ଡ କରିବାକୁ କିଛି ନାହିଁ",
       "emptyBody": "ଏହି ଅର୍ଡରରେ କୌଣସି ଫେରସ୍ତ କିମ୍ବା ସ୍ଥଗିତ ସାମଗ୍ରୀ ନାହିଁ ଯାହାକୁ ବର୍ତ୍ତମାନ ଅନ୍ୟ ଡିଲରଙ୍କୁ ପଠାଯାଇପାରିବ।",
-      "backToManage": "ପରିଚାଳନାକୁ ଫେରନ୍ତୁ"
+      "backToManage": "ପରିଚାଳନାକୁ ଫେରନ୍ତୁ",
+      "customPhoneLabel": "Dealer / Facilitator phone",
+      "customPhonePlaceholder": "10-digit phone number",
+      "phoneChecking": "Checking…",
+      "sendOrder": "Send Order",
+      "lookup": {
+        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
+        "self": "You cannot send the order to yourself. Enter someone else's number.",
+        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
+        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
+        "roleDealer": "Dealer",
+        "roleFacilitator": "Facilitator",
+        "companyFallback": "the company"
+      }
     },
     "pickup": {
       "headerPickUp": "ପିକଅପ୍",
