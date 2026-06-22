@@ -114,16 +114,21 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
     case 'farmer':
       return (c?.sent_for_approval ?? 0) > 0
     case 'pickup':
-      // 2026-06-21 — Order has approved items + dealer shared the
-      // packing list + farmer hasn't confirmed receipt yet. Two
-      // sub-states inside this pill:
+      // 2026-06-22 — Drop the packing_list_shared_at gate. Match the
+      // farmer's Pickup pill behaviour (fires on approved_count alone).
+      // Reason: the dealer's "Share Packing List" is a soft formality
+      // — once items are APPROVED the dealer can already hand them
+      // over physically, and the backend lazy-creates the packing row
+      // + code on mark-picked-up. User report 2026-06-22: facilitator
+      // saw 0 on Pickup with 3 approved items because the dealer
+      // hadn't shared yet, even though physically the items were ready.
+      // Two sub-states inside this pill (unchanged):
       //   (a) packing_picked_up_at is null → "Pick up from dealer"
       //       (mark-picked-up CTA)
       //   (b) packing_picked_up_at set, no farmer_received_at → "With
       //       you — deliver to farmer" (info only; farmer's tap is
       //       what closes the order)
       return (c?.approved ?? 0) > 0
-        && !!o.packing_list_shared_at
         && !o.packing_farmer_received_at
   }
 }
