@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "ବନ୍ଦ କରନ୍ତୁ",
     "activeRoleFallback": "ଚାଷୀ",
-    "myDetails": "ମୋ ବିବରଣୀ",
     "mySubscriptions": "ମୋର ସଦସ୍ୟତା",
     "cropsAndCompanies": "ଫସଲ ଏବଂ କମ୍ପାନୀଗୁଡ଼ିକ",
     "messageRootsTalk": "ରୁଟସଟକ୍‌କୁ ମେସେଜ୍ କରନ୍ତୁ",
@@ -260,7 +259,10 @@
       "byOrg": "ନେଟିରି ୟେୱାଫାର୍ମ ଆଗ୍ରୀଟେକ୍ ଦ୍ୱାରା",
       "version": "ସଂସ୍କରଣ 2.0",
       "visit": "eywa.farm → ପରିଦର୍ଶନ କରନ୍ତୁ"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK ବିଷୟରେ",

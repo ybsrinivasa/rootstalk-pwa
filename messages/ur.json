@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "بند",
     "activeRoleFallback": "کسان",
-    "myDetails": "میری تفصیلات",
     "mySubscriptions": "میری سبسکرپشنز",
     "cropsAndCompanies": "فصلیں اور کمپنیاں",
     "messageRootsTalk": "میسج روٹس ٹاک",
@@ -260,7 +259,10 @@
       "byOrg": "Neytiri Eywafarm Agritech کی طرف سے",
       "version": "ورژن 2.0",
       "visit": "eywa.farm → ملاحظہ کریں۔"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK کے بارے میں",

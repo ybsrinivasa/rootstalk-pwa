@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "बंद करा",
     "activeRoleFallback": "शेतकरी",
-    "myDetails": "माझी माहिती",
     "mySubscriptions": "माझी सदस्यत्वे",
     "cropsAndCompanies": "पिके आणि कंपन्या",
     "messageRootsTalk": "रूट्सटॉक संदेश",
@@ -260,7 +259,10 @@
       "byOrg": "नेयतिरी एयवाफार्म ॲग्रीटेक द्वारे",
       "version": "आवृत्ती २.०",
       "visit": "eywa.farm ला भेट द्या →"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "रूट्सटॉक बद्दल",

@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "ਬੰਦ ਕਰੋ",
     "activeRoleFallback": "ਕਿਸਾਨ",
-    "myDetails": "ਮੇਰੇ ਵੇਰਵੇ",
     "mySubscriptions": "ਮੇਰੀਆਂ ਗਾਹਕੀਆਂ",
     "cropsAndCompanies": "ਫਸਲਾਂ ਅਤੇ ਕੰਪਨੀਆਂ",
     "messageRootsTalk": "ਸੁਨੇਹਾ ਰੂਟਸਟਾਕ",
@@ -260,7 +259,10 @@
       "byOrg": "ਨੇਟੀਰੀ ਈਵਾਫਾਰਮ ਐਗਰੀਟੈਕ ਵੱਲੋਂ",
       "version": "ਵਰਜਨ 2.0",
       "visit": "eywa.farm → 'ਤੇ ਜਾਓ"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "ਰੂਟਸਟਾਕ ਬਾਰੇ",

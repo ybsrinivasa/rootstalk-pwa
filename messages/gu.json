@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "બંધ કરો",
     "activeRoleFallback": "ખેડૂત",
-    "myDetails": "મારી વિગતો",
     "mySubscriptions": "મારા સબ્સ્ક્રિપ્શન્સ",
     "cropsAndCompanies": "પાક અને કંપનીઓ",
     "messageRootsTalk": "મેસેજ રૂટ્સટોક",
@@ -260,7 +259,10 @@
       "byOrg": "નેયતિરી ઇવાફાર્મ એગ્રીટેક દ્વારા",
       "version": "સંસ્કરણ 2.0",
       "visit": "eywa.farm ની મુલાકાત લો →"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "રૂટ્સટાલ્ક વિશે",

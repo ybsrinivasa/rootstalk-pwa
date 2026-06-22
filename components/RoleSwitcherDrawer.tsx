@@ -182,9 +182,33 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.12a7.5 7.5 0 0115 0A17.93 17.93 0 0112 21.75c-2.68 0-5.22-.58-7.5-1.63z"/>
             }
-            label={t('myDetails')}
+            label={t('personalDetails')}
             onClick={() => go('/profile')}
           />
+          {/* 2026-06-22 — Role-specific profile entries. The same
+              person can hold multiple roles, so the common
+              "Personal Details" label stays consistent everywhere
+              (no "My Details" vs "Personal Details" divergence).
+              Shop / Professional Details are role-specific
+              sub-entries the drawer shows only when relevant. */}
+          {activeRole === 'DEALER' && (
+            <MenuRow
+              icon={
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
+              }
+              label={t('shopDetails')}
+              onClick={() => go('/dealer/profile')}
+            />
+          )}
+          {activeRole === 'FARM_PUNDIT' && (
+            <MenuRow
+              icon={
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/>
+              }
+              label={t('professionalDetails')}
+              onClick={() => go('/pundit/profile')}
+            />
+          )}
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.95-8.95a1.5 1.5 0 012.12 0L21.75 12M4.5 9.75v9.75a1.5 1.5 0 001.5 1.5h3.75v-6h4.5v6H18a1.5 1.5 0 001.5-1.5V9.75"/>

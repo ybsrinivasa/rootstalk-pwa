@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "ಮುಚ್ಚಿ",
     "activeRoleFallback": "ರೈತ",
-    "myDetails": "ನನ್ನ ವಿವರಗಳು",
     "mySubscriptions": "ನನ್ನ ಚಂದಾದಾರಿಕೆಗಳು",
     "cropsAndCompanies": "ಬೆಳೆಗಳು & ಕಂಪನಿಗಳು",
     "messageRootsTalk": "ಸಂದೇಶ ರೂಟ್ಸ್‌ಟಾಕ್",
@@ -260,7 +259,10 @@
       "byOrg": "ನೇಯ್ಟಿರಿ ಐವಾಫಾರ್ಮ್ ಅಗ್ರಿಟೆಕ್ ಅವರಿಂದ",
       "version": "ಆವೃತ್ತಿ 2.0",
       "visit": "eywa.farm ಗೆ ಭೇಟಿ ನೀಡಿ →"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "ಬೇರುಗಳ ಬಗ್ಗೆTALK",

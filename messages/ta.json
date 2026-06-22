@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "அருகில்",
     "activeRoleFallback": "விவசாயி",
-    "myDetails": "எனது விவரங்கள்",
     "mySubscriptions": "எனது சந்தாக்கள்",
     "cropsAndCompanies": "பயிர்கள் மற்றும் நிறுவனங்கள்",
     "messageRootsTalk": "ரூட்ஸ்டாக் செய்தி",
@@ -260,7 +259,10 @@
       "byOrg": "நெய்திரி ஐவாஃபார்ம் அக்ரிடெக் மூலம்",
       "version": "பதிப்பு 2.0",
       "visit": "eywa.farm-ஐப் பார்வையிடவும் →"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "ரூட்ஸ்டாக் பற்றி",

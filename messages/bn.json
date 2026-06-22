@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "বন্ধ করুন",
     "activeRoleFallback": "কৃষক",
-    "myDetails": "আমার বিবরণ",
     "mySubscriptions": "আমার সাবস্ক্রিপশন",
     "cropsAndCompanies": "শস্য ও কোম্পানি",
     "messageRootsTalk": "মেসেজ রুটসটক",
@@ -260,7 +259,10 @@
       "byOrg": "নেয়তিরি আইওয়াফার্ম এগ্রিটেক দ্বারা",
       "version": "সংস্করণ ২.০",
       "visit": "eywa.farm পরিদর্শন করুন →"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "রুটসটক সম্পর্কে",

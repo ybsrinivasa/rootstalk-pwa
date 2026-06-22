@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "বন্ধ",
     "activeRoleFallback": "খেতিয়ক",
-    "myDetails": "মোৰ বিৱৰণ",
     "mySubscriptions": "মোৰ চাবস্ক্ৰিপচনসমূহ",
     "cropsAndCompanies": "শস্য আৰু কোম্পানী",
     "messageRootsTalk": "বাৰ্তা RootsTalk",
@@ -260,7 +259,10 @@
       "byOrg": "নেইটিৰি আইৱাফাৰ্ম এগ্ৰিটেকৰ দ্বাৰা",
       "version": "সংস্কৰণ ২.০",
       "visit": "eywa.farm → চাওক"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK ৰ বিষয়ে",

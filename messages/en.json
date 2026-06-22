@@ -238,7 +238,9 @@
   "roleSwitcher": {
     "close": "Close",
     "activeRoleFallback": "Farmer",
-    "myDetails": "My Details",
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details",
     "mySubscriptions": "My Subscriptions",
     "cropsAndCompanies": "Crops & Companies",
     "messageRootsTalk": "Message RootsTalk",

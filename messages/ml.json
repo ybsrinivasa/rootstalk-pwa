@@ -238,7 +238,6 @@
   "roleSwitcher": {
     "close": "അടയ്ക്കുക",
     "activeRoleFallback": "കർഷകൻ",
-    "myDetails": "എന്റെ വിശദാംശങ്ങൾ",
     "mySubscriptions": "എന്റെ സബ്‌സ്‌ക്രിപ്‌ഷനുകൾ",
     "cropsAndCompanies": "വിളകളും കമ്പനികളും",
     "messageRootsTalk": "റൂട്ട്‌സ് ടോക്ക് സന്ദേശം",
@@ -260,7 +259,10 @@
       "byOrg": "നെയ്തിരി ഐവാഫാം അഗ്രിടെക്",
       "version": "പതിപ്പ് 2.0",
       "visit": "eywa.farm സന്ദർശിക്കുക →"
-    }
+    },
+    "personalDetails": "Personal Details",
+    "shopDetails": "Shop Details",
+    "professionalDetails": "Professional Details"
   },
   "header": {
     "aboutRootsTalk": "വേരുകളെ കുറിച്ച്TALK",

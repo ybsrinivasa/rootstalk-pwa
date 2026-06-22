@@ -25,28 +25,29 @@ const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType 
     // The per-sub Queries tile on every Crop Detail page covers
     // 95% of the use case; /my-queries route stays alive in case
     // we reintroduce the global view with per-row crop chips.
+    // 2026-06-22 — Profile dropped from every role's bottom-nav.
+    // Personal Details lives in the right drawer (consistent across
+    // roles); role-specific sub-entries (Shop Details / Professional
+    // Details) live there too. Frees the 4th tab for what the role
+    // actually does most.
     { href: '/home',        key: 'home',    Icon: HomeIcon },
     { href: '/orders',      key: 'orders',  Icon: BoxIcon },
     { href: '/my-subscriptions', key: 'subscriptions', Icon: HistoryIcon },
-    { href: '/profile',     key: 'profile', Icon: ProfileIcon },
   ],
   DEALER: [
     { href: '/dealer/orders',           key: 'orders',   Icon: BoxIcon },
     { href: '/dealer/payments',         key: 'payments', Icon: PaymentIcon },
     { href: '/dealer/alerts-incoming',  key: 'alerts',   Icon: BellIcon },
-    { href: '/profile',                 key: 'profile',  Icon: ProfileIcon },
   ],
   FACILITATOR: [
     { href: '/facilitator/orders',           key: 'orders',   Icon: BoxIcon },
     { href: '/facilitator/pickup',           key: 'pickup',   Icon: PickupIcon },
     { href: '/facilitator/payments',         key: 'payments', Icon: PaymentIcon },
     { href: '/facilitator/alerts-incoming',  key: 'alerts',   Icon: BellIcon },
-    { href: '/profile',                      key: 'profile',  Icon: ProfileIcon },
   ],
   FARM_PUNDIT: [
     { href: '/pundit/home',    key: 'dashboard', Icon: HomeIcon },
     { href: '/pundit/queries', key: 'queries',   Icon: QueriesIcon },
-    { href: '/profile',        key: 'profile',   Icon: ProfileIcon },
   ],
 }
 
