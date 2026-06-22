@@ -255,6 +255,7 @@
     "activeBadge": "Active",
     "setupHint": "Set up →",
     "helpAndTips": "Help & Tips",
+    "privacyPolicy": "Privacy Policy",
     "aboutRootsTalk": "About RootsTalk",
     "signOut": "Sign out",
     "about": {
@@ -2830,6 +2831,8 @@
   "privacyPolicy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: April 2026",
+    "externalTitle": "Read the full policy on eywa.farm",
+    "externalSubtitle": "eywa.farm/privacy — opens in your browser",
     "sections": {
       "collectTitle": "What we collect",
       "collectBody": "We collect your mobile phone number (for login and verification), your name, your location (state, district, and GPS coordinates), and your farm-related information including crop subscriptions and advisory records. We also collect queries you raise to agricultural experts and responses received.",
@@ -2847,6 +2850,116 @@
       "securityBody": "All data is encrypted in transit and at rest. Login is secured with OTP verification. We do not store plain-text passwords. Access to your data is limited to authorised personnel of Neytiri Eywafarm Agritech Private Limited.",
       "contactTitle": "Contact us",
       "contactBody": "For any privacy-related queries, contact us at: support@eywa.farm or visit eywa.farm. Neytiri Eywafarm Agritech Private Limited, India."
+    }
+  },
+  "helpTips": {
+    "title": "Help & Tips",
+    "contactFooter": "Still need help? Write to us at",
+    "farmer": {
+      "intro": "RootsTalk helps you grow your crop step by step — with day-by-day advice from your company, easy ordering of inputs, and a free path to ask an expert when you're in doubt.",
+      "gettingStarted": {
+        "title": "Getting started",
+        "items": [
+          "Tap a company tile on Home to see all your subscriptions with that company. The list shows the crop, the plot details (Self or Assigned, acres or plants, start date) so you can tell apart multiple plots of the same crop.",
+          "Open a crop to see its Crop Dashboard. Set the start (or sowing) date — you have a 15-day window to change it, after which it locks.",
+          "Explore companies serving your district from the right panel → Crops & Companies. You can call them, visit their website, and see whether you can self-subscribe."
+        ]
+      },
+      "dayToDay": {
+        "title": "Day-to-day",
+        "items": [
+          "Today's advisory shows up on the Crop Dashboard. Tap a practice card to read the details.",
+          "When the advisory recommends an input, place an order with one tap. The order is routed to your dealer or facilitator — they'll confirm price and packing.",
+          "Once you've followed a practice, tap ✓ I've done this on the card. This keeps your record clean and helps experts give you better guidance.",
+          "See all your orders in the Orders tab. The pills (Routed / For Approval / Returned / Ready for pickup) tell you the stage."
+        ]
+      },
+      "gettingHelp": {
+        "title": "When you need help",
+        "items": [
+          "Spot a problem on a plant? Use Diagnose from the Crop Dashboard — take a photo, answer a few questions, and get a likely cause.",
+          "Still not sure? Ask an Expert. The first six queries are free; afterwards a small fee applies. Replies arrive within 2 days.",
+          "Subscriptions tab shows all your active and past subscriptions, with QR codes you can share."
+        ]
+      }
+    },
+    "dealer": {
+      "intro": "RootsTalk routes orders from farmers (sometimes via a facilitator) to your shop. You decide what you can supply, at what price, and when.",
+      "gettingStarted": {
+        "title": "Getting started",
+        "items": [
+          "Make sure your Shop Details are filled in — name, location, and the crops/inputs you sell. Farmers and facilitators see this when choosing a dealer.",
+          "Pending orders land on the Orders tab. Each card shows the farmer, the items, and any postponement history."
+        ]
+      },
+      "dayToDay": {
+        "title": "Day-to-day",
+        "items": [
+          "On each pending order, accept what you can fulfil and set quantity and price. Anything you can't supply right now can be marked Postpone — the order returns to you when the brand is back.",
+          "If you can't supply at all, decline so the farmer or facilitator can re-route quickly.",
+          "After the farmer approves the prices, pack the order and mark Ready for pickup. The farmer collects from your shop.",
+          "Seed orders follow the same flow but are brand-locked: you can't substitute varieties before acceptance."
+        ]
+      },
+      "gettingHelp": {
+        "title": "Keeping things smooth",
+        "items": [
+          "Use Postpone instead of Decline when stock is temporarily out — you keep the order in your queue without holding up the farmer.",
+          "Check the Payments tab to reconcile who has paid for which order.",
+          "Alerts let you know when an order is waiting on you."
+        ]
+      }
+    },
+    "facilitator": {
+      "intro": "As a facilitator you act as the bridge between farmers and dealers in your area. RootsTalk routes farmer orders to you so you can place them with the right dealer and bring the items together for pickup.",
+      "gettingStarted": {
+        "title": "Getting started",
+        "items": [
+          "Make sure your service area is set up correctly. Farmers in that area can route orders through you.",
+          "Routed orders appear on the Orders tab. Each card shows the farmer, the crop, and the items."
+        ]
+      },
+      "dayToDay": {
+        "title": "Day-to-day",
+        "items": [
+          "For each item on a routed order, choose a dealer. You can re-route if the dealer can't supply.",
+          "Once dealers accept and the farmer approves prices, the order moves to the Pickup tab. Bring all items together so the farmer can collect them in one trip.",
+          "Use the Payment Requests flow to pay on a farmer's behalf and reconcile later. The payment link expires in 24 hours.",
+          "Alerts notify you when something needs your attention — new orders, approvals, or expiring requests."
+        ]
+      },
+      "gettingHelp": {
+        "title": "Keeping it organised",
+        "items": [
+          "Postponed orders stay in your queue with a clear note. They don't get lost.",
+          "The History pill on Orders is your record of completed work."
+        ]
+      }
+    },
+    "pundit": {
+      "intro": "As an expert on RootsTalk, you receive queries from farmers — text, photos, and audio. You have two days to respond, and your guidance reaches the farmer instantly.",
+      "gettingStarted": {
+        "title": "Getting started",
+        "items": [
+          "Fill in your Professional Details — your designation and a short profile. Farmers see this when their query is routed to you.",
+          "New queries appear on the Queries tab with severity and nature labels."
+        ]
+      },
+      "dayToDay": {
+        "title": "Day-to-day",
+        "items": [
+          "Open a query to see all photos, listen to any audio, and read the farmer's question.",
+          "Reply with text and, if useful, attach reference photos. The farmer gets a notification immediately.",
+          "Queries that aren't answered within 2 days close automatically. Try to respond well within that window."
+        ]
+      },
+      "gettingHelp": {
+        "title": "Reach + impact",
+        "items": [
+          "Your Dashboard shows your active queries and recent activity.",
+          "Invitations from companies (to become a Primary or Promoter-Pundit) arrive in the Invitations area."
+        ]
+      }
     }
   },
   "location": {
