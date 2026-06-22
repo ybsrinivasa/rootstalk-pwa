@@ -2227,7 +2227,16 @@
       "kmAway": "{km} km away",
       "callBtn": "📞 Call",
       "forwardBtn": "Forward",
-      "errorReroute": "Could not re-route. Please try again."
+      "errorReroute": "Could not re-route. Please try again.",
+      "seedTag": "🌱 Seed",
+      "seedFarmArea": "{acres} acres",
+      "seedNewOrderHint": "New seed order — accept to take it on, or reject if you can't help.",
+      "seedAcceptedHint": "Pick a dealer who can supply the seed to the farmer.",
+      "seedForwardCta": "Forward to a Dealer →",
+      "seedAtDealer": "→ {dealer}",
+      "seedRoutedHint": "Routed to dealer · waiting for next step.",
+      "seedRejectSheetTitle": "Reject this seed order?",
+      "seedRejectSheetBody": "The farmer will be notified. They can place a fresh seed order if needed."
     },
     "orderDetail": {
       "headerTitle": "Order Details",

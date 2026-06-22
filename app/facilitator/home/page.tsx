@@ -20,8 +20,6 @@ export default function FacilitatorHomePage() {
   const [promotedCount, setPromotedCount] = useState(0)
   // 2026-06-06 — Alerts shared across Promoter/Facilitator/Dealer.
   const [alertCount, setAlertCount] = useState(0)
-  // 2026-06-18 — Seed orders routed to this facilitator (Point 3c).
-  const [seedCount, setSeedCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
@@ -51,14 +49,6 @@ export default function FacilitatorHomePage() {
       }).catch(() => {}),
       api.get('/promoter/me/incoming-alerts').then(r => {
         setAlertCount((r.data as unknown[]).length)
-      }).catch(() => {}),
-      api.get('/facilitator/seed-orders').then(r => {
-        // Pending seed work = SENT or ACCEPTED (waiting on this
-        // facilitator to act). Done states don't count.
-        const pending = (r.data as { status: string }[]).filter(o =>
-          o.status === 'SENT' || o.status === 'ACCEPTED'
-        )
-        setSeedCount(pending.length)
       }).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
@@ -130,12 +120,6 @@ export default function FacilitatorHomePage() {
             <span className="text-2xl">🔔</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileAlerts')}</p>
             <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tileAlertsHint', { count: alertCount })}</p>
-          </button>
-          <button onClick={() => router.push('/facilitator/seed-orders')}
-            className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
-            <span className="text-2xl">🌱</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileSeedOrders')}</p>
-            <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tileSeedOrdersHint', { count: seedCount })}</p>
           </button>
         </div>
       </div>

@@ -80,7 +80,7 @@ export default function FacilitatorSeedForwardPage() {
       await api.put(`/facilitator/seed-orders/${orderId}/route-to-dealer`, {
         dealer_user_id: lookup.user_id,
       })
-      router.replace('/facilitator/seed-orders')
+      router.replace('/facilitator/orders?pill=routed')
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: { code?: string; message?: string } | string } } }
       const detail = err.response?.data?.detail
@@ -99,7 +99,7 @@ export default function FacilitatorSeedForwardPage() {
       await api.put(`/facilitator/seed-orders/${orderId}/route-to-dealer`, {
         dealer_user_id: dealer.user_id,
       })
-      router.replace('/facilitator/seed-orders')
+      router.replace('/facilitator/orders?pill=routed')
     } catch (e: unknown) {
       // Brand-lock safety net — the picker already filtered to
       // onboarded dealers, but a stale list could still hit this.
@@ -117,7 +117,7 @@ export default function FacilitatorSeedForwardPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8] pb-24">
       <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR"
-        back={`/facilitator/seed-orders`} />
+        back={`/facilitator/orders?pill=pending`} />
       <div className="pt-16 px-4 max-w-lg mx-auto">
         <p className="text-xs text-[#7A8C7E] mt-4 mb-4 leading-relaxed">
           {t('helpText')}

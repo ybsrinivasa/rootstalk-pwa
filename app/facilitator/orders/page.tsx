@@ -7,6 +7,7 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 // 2026-06-07 — Order-ID-grouped active feed.
 // Spec: one card per Order ID; pills filter by sub-order status;
@@ -63,6 +64,33 @@ interface Order {
     volume_unit: string | null
     price: number | null
   }[]
+  // 2026-06-22 — Seed-order folding into the unified feed (dealer
+  // parity). Seed cards branch downstream for label, pill predicate,
+  // and CTA. `crop_cosh_id` + `farm_area_acres` are seed-card body
+  // fields; the variety name is intentionally never set on this
+  // surface (variety-blind by design).
+  is_seed?: boolean
+  crop_cosh_id?: string | null
+  farm_area_acres?: number | null
+}
+
+// 2026-06-22 — Raw payload shape from /facilitator/seed-orders.
+interface SeedOrderRaw {
+  id: string
+  status: string
+  reference_number: string | null
+  category: string | null
+  crop_cosh_id: string | null
+  farmer_user_id: string
+  farmer_name: string | null
+  farmer_phone: string | null
+  farmer_photo_url: string | null
+  farm_area_acres: number | null
+  client_id: string
+  client_name: string | null
+  dealer_user_id: string | null
+  dealer_name: string | null
+  created_at: string
 }
 
 interface NearbyDealer {
@@ -91,6 +119,25 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   // down. Same fix shipped to dealer + farmer earlier today.
   if (['CANCELLED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
     return false
+  }
+  // 2026-06-22 — Seed cards branch off the SeedOrderStatus enum.
+  // Facilitator's life-cycle in seeds: SENT (accept/reject) →
+  // ACCEPTED-no-dealer (forward to dealer) → routed to dealer
+  // (read-only). NOT_AVAILABLE / REJECTED / PURCHASED are terminal
+  // and already filtered above. Seeds don't appear on returned /
+  // farmer / pickup — those stages happen at the dealer.
+  if (o.is_seed) {
+    switch (pill) {
+      case 'pending':
+        return ['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id
+      case 'routed':
+        return !!o.dealer_user_id
+          && !['NOT_AVAILABLE', 'REJECTED', 'PURCHASED', 'CANCELLED', 'REROUTED'].includes(o.status)
+      case 'returned':
+      case 'farmer':
+      case 'pickup':
+        return false
+    }
   }
   const c = o.item_status_counts
   switch (pill) {
@@ -159,6 +206,51 @@ function initials(name: string | null | undefined): string {
   return ((parts[0]?.[0] || '') + (parts[1]?.[0] || '')).toUpperCase() || '?'
 }
 
+// 2026-06-22 — Shape a /facilitator/seed-orders row into the unified
+// Order interface so the same OrderIdCard + pill machinery can render
+// both flows without per-call branching. Variety-blind: we never
+// receive variety_name and never set it. The crop label comes from
+// crop_cosh_id via the shared cropDisplayName helper.
+function adaptSeedOrder(s: SeedOrderRaw): Order {
+  return {
+    id: s.id,
+    status: s.status,
+    reference_number: s.reference_number,
+    category: s.category || 'SEED',
+    farmer_user_id: s.farmer_user_id,
+    client_id: s.client_id,
+    dealer_user_id: s.dealer_user_id,
+    date_from: s.created_at,
+    date_to: s.created_at,
+    created_at: s.created_at,
+    item_count: 1,
+    pending_count: ['SENT', 'ACCEPTED'].includes(s.status) && !s.dealer_user_id ? 1 : 0,
+    item_status_counts: {
+      pending: 0, available: 0, postponed: 0, not_available: 0,
+      sent_for_approval: 0, approved: 0, rejected: 0,
+    },
+    farmer_name: s.farmer_name,
+    farmer_phone: s.farmer_phone,
+    farmer_photo_url: s.farmer_photo_url,
+    dealer_name: s.dealer_name,
+    dealer_phone: null,
+    dealer_shop_name: null,
+    dealer_shop_address: null,
+    dealer_shop_gps_lat: null,
+    dealer_shop_gps_lng: null,
+    crop_name: s.crop_cosh_id ? cropDisplayName(s.crop_cosh_id) : null,
+    subscription_id: null,
+    client_name: s.client_name,
+    packing_code: null,
+    packing_list_shared_at: null,
+    packing_picked_up_at: null,
+    packing_farmer_received_at: null,
+    is_seed: true,
+    crop_cosh_id: s.crop_cosh_id,
+    farm_area_acres: s.farm_area_acres,
+  }
+}
+
 export default function FacilitatorOrdersPage() {
   const router = useRouter()
   const t = useTranslations('facilitator.orders')
@@ -173,10 +265,25 @@ export default function FacilitatorOrdersPage() {
   const [pill, setPill] = useState<Pill>(initialPill)
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
-  const load = () =>
-    api.get<Order[]>('/facilitator/orders')
-      .then(r => setOrders(r.data))
-      .finally(() => setLoading(false))
+  // 2026-06-22 — Fetch both feeds in parallel and merge into a single
+  // chronological timeline. Seed cards are tagged via is_seed for
+  // downstream branching (label, pill membership, CTA). Same shape as
+  // the dealer parity work shipped 2026-06-19.
+  const load = async () => {
+    try {
+      const [regular, seeds] = await Promise.all([
+        api.get<Order[]>('/facilitator/orders').catch(() => ({ data: [] as Order[] })),
+        api.get<SeedOrderRaw[]>('/facilitator/seed-orders').catch(() => ({ data: [] as SeedOrderRaw[] })),
+      ])
+      const merged: Order[] = [
+        ...regular.data,
+        ...seeds.data.map(adaptSeedOrder),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      setOrders(merged)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -206,6 +313,27 @@ export default function FacilitatorOrdersPage() {
     try {
       await api.put(`/facilitator/orders/${id}/reject`, {})
       setConfirmReject(null)
+      load()
+    } finally { setActing(null) }
+  }
+
+  // 2026-06-22 — Seed accept/reject, inlined from the retired
+  // /facilitator/seed-orders page. Accept keeps the card on the
+  // Pending pill (now ACCEPTED + no dealer → "Forward to Dealer" CTA);
+  // reject is terminal.
+  async function acceptSeed(id: string) {
+    setActing(id)
+    try {
+      await api.put(`/facilitator/seed-orders/${id}/accept`, {})
+      load()
+    } finally { setActing(null) }
+  }
+  const [confirmRejectSeedId, setConfirmRejectSeedId] = useState<string | null>(null)
+  async function rejectSeed(id: string) {
+    setActing(id)
+    try {
+      await api.put(`/facilitator/seed-orders/${id}/reject`, {})
+      setConfirmRejectSeedId(null)
       load()
     } finally { setActing(null) }
   }
@@ -384,6 +512,9 @@ export default function FacilitatorOrdersPage() {
                 onForwardReturned={(id) => openRerouteSheet(id)}
                 onMarkPickedUp={markPickedUp}
                 onOpenDetail={(id) => router.push(`/facilitator/orders/${id}`)}
+                onAcceptSeed={acceptSeed}
+                onConfirmRejectSeed={(id) => setConfirmRejectSeedId(id)}
+                onForwardSeed={(id) => router.push(`/facilitator/seed-orders/${id}/forward`)}
                 acting={acting}
               />
             ))
@@ -410,6 +541,30 @@ export default function FacilitatorOrdersPage() {
               <button onClick={() => reject(confirmReject)} disabled={acting === confirmReject}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
                 {acting === confirmReject ? '…' : t('rejectSheetConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Seed reject confirmation sheet — terminal action, so a
+          confirm step matches the regular-reject pattern. */}
+      {confirmRejectSeedId && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => acting !== confirmRejectSeedId && setConfirmRejectSeedId(null)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">{t('seedRejectSheetTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">{t('seedRejectSheetBody')}</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmRejectSeedId(null)} disabled={acting === confirmRejectSeedId}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                {t('rejectSheetCancel')}
+              </button>
+              <button onClick={() => rejectSeed(confirmRejectSeedId)} disabled={acting === confirmRejectSeedId}
+                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {acting === confirmRejectSeedId ? '…' : t('rejectSheetConfirm')}
               </button>
             </div>
           </div>
@@ -504,7 +659,8 @@ export default function FacilitatorOrdersPage() {
 
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onAccept, onReject, onForwardReturned, onMarkPickedUp, onOpenDetail, acting,
+  onAccept, onReject, onForwardReturned, onMarkPickedUp, onOpenDetail,
+  onAcceptSeed, onConfirmRejectSeed, onForwardSeed, acting,
 }: {
   orderId: string
   subs: Order[]
@@ -517,6 +673,9 @@ function OrderIdCard({
   onForwardReturned: (id: string) => void
   onMarkPickedUp: (id: string) => void
   onOpenDetail: (id: string) => void
+  onAcceptSeed: (id: string) => void
+  onConfirmRejectSeed: (id: string) => void
+  onForwardSeed: (id: string) => void
   acting: string | null
 }) {
   // Header data comes from the first sub-order in the group (the
@@ -539,6 +698,9 @@ function OrderIdCard({
                 onForwardReturned={onForwardReturned}
                 onMarkPickedUp={onMarkPickedUp}
                 onOpenDetail={onOpenDetail}
+                onAcceptSeed={onAcceptSeed}
+                onConfirmRejectSeed={onConfirmRejectSeed}
+                onForwardSeed={onForwardSeed}
                 acting={acting}
                 showSubHeader />
             ))
@@ -548,6 +710,9 @@ function OrderIdCard({
                 onForwardReturned={onForwardReturned}
                 onMarkPickedUp={onMarkPickedUp}
                 onOpenDetail={onOpenDetail}
+                onAcceptSeed={onAcceptSeed}
+                onConfirmRejectSeed={onConfirmRejectSeed}
+                onForwardSeed={onForwardSeed}
                 acting={acting} />
             )
         }
@@ -617,6 +782,7 @@ function CardHeader({
 
 function PillChunk({
   sub, pill, onAccept, onReject, onForwardReturned, onMarkPickedUp, onOpenDetail,
+  onAcceptSeed, onConfirmRejectSeed, onForwardSeed,
   acting, showSubHeader,
 }: {
   sub: Order
@@ -626,6 +792,9 @@ function PillChunk({
   onForwardReturned: (id: string) => void
   onMarkPickedUp: (id: string) => void
   onOpenDetail: (id: string) => void
+  onAcceptSeed: (id: string) => void
+  onConfirmRejectSeed: (id: string) => void
+  onForwardSeed: (id: string) => void
   acting: string | null
   showSubHeader?: boolean
 }) {
@@ -638,7 +807,72 @@ function PillChunk({
           {t('subOrderHeader', { date: new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
         </p>
       )}
-      {pill === 'pending' && sub.status === 'SENT' && (
+
+      {/* ── Seed-order branches (variety-blind; facilitator-only). ── */}
+      {sub.is_seed && pill === 'pending' && sub.status === 'SENT' && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
+              {t('seedTag')}
+            </span>
+            {sub.farm_area_acres != null && (
+              <span className="text-[11px] text-[#7A8C7E]">
+                {t('seedFarmArea', { acres: sub.farm_area_acres })}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-amber-700">{t('seedNewOrderHint')}</p>
+          <div className="flex gap-2">
+            <button onClick={() => onAcceptSeed(sub.id)} disabled={acting === sub.id}
+              className="flex-1 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+              style={{ background: COLOUR }}>
+              {acting === sub.id ? '…' : t('acceptCta')}
+            </button>
+            <button onClick={() => onConfirmRejectSeed(sub.id)} disabled={acting === sub.id}
+              className="flex-1 py-2 rounded-lg bg-red-100 text-[#D4682E] text-xs font-semibold disabled:opacity-50">
+              {t('rejectCta')}
+            </button>
+          </div>
+        </>
+      )}
+      {sub.is_seed && pill === 'pending' && sub.status === 'ACCEPTED' && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
+              {t('seedTag')}
+            </span>
+            {sub.farm_area_acres != null && (
+              <span className="text-[11px] text-[#7A8C7E]">
+                {t('seedFarmArea', { acres: sub.farm_area_acres })}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-amber-700">{t('seedAcceptedHint')}</p>
+          <button onClick={() => onForwardSeed(sub.id)}
+            className="w-full py-2 rounded-lg text-white text-xs font-semibold"
+            style={{ background: COLOUR }}>
+            {t('seedForwardCta')}
+          </button>
+        </>
+      )}
+      {sub.is_seed && pill === 'routed' && (
+        <>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
+              {t('seedTag')}
+            </span>
+            {sub.dealer_name && (
+              <span className="text-[11px] text-[#7A8C7E]">
+                {t('seedAtDealer', { dealer: sub.dealer_name })}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-[#7A8C7E]">{t('seedRoutedHint')}</p>
+        </>
+      )}
+
+      {/* ── Regular order branches (unchanged). ── */}
+      {!sub.is_seed && pill === 'pending' && sub.status === 'SENT' && (
         <>
           <p className="text-xs text-amber-700">
             {t('newOrderHint', { count: sub.item_count })}
@@ -661,7 +895,7 @@ function PillChunk({
           chosen dealer declined (server auto-routes the items back
           here). Either way: pick a dealer. No Accept/Reject — the
           facilitator already committed. */}
-      {pill === 'pending' && sub.status === 'ACCEPTED' && (
+      {!sub.is_seed && pill === 'pending' && sub.status === 'ACCEPTED' && (
         <>
           <p className="text-xs text-amber-700">
             {t('forwardToDealerHint', { count: sub.item_count })}
@@ -676,14 +910,14 @@ function PillChunk({
           </button>
         </>
       )}
-      {pill === 'routed' && (
+      {!sub.is_seed && pill === 'routed' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <PostponedStrip sub={sub} />
           <ApprovedHintStrip sub={sub} />
         </>
       )}
-      {pill === 'returned' && (
+      {!sub.is_seed && pill === 'returned' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2 mt-2">
@@ -698,7 +932,7 @@ function PillChunk({
           <PostponedStrip sub={sub} />
         </>
       )}
-      {pill === 'farmer' && (
+      {!sub.is_seed && pill === 'farmer' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <p className="text-xs text-amber-700 font-medium mt-2">
@@ -707,7 +941,7 @@ function PillChunk({
           <PostponedStrip sub={sub} />
         </>
       )}
-      {pill === 'pickup' && (
+      {!sub.is_seed && pill === 'pickup' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail}
             itemCountOverride={sub.packing_items?.length ?? sub.item_status_counts?.approved ?? 0} />
