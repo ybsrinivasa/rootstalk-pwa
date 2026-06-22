@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
@@ -17,12 +18,29 @@ interface IncomingAlert {
   alert_type: AlertType
   sent_at: string
   subscription_id: string
+  subscription_reference_number: string | null
   client_id: string
+  client_display_name: string | null
   farmer_user_id: string
   farmer_name: string | null
   farmer_phone: string | null
+  farmer_photo_url: string | null
   crop_cosh_id: string | null
   crop_name: string | null
+  crop_measure: 'AREA_WISE' | 'PLANT_WISE' | null
+  crop_start_date: string | null
+  farm_area_acres: number | null
+  area_unit: string | null
+  number_of_plants: number | null
+  planting_year: number | null
+}
+
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+function formatStartDate(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return null
+  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`
 }
 
 function formatSentAt(iso: string): string {
@@ -150,31 +168,74 @@ export default function DealerAlertsIncomingPage() {
                     {t('countAndHint', { count: visibleRows.length })}
                   </p>
                   <div className="space-y-3">
-                    {visibleRows.map(r => (
-                      <div
-                        key={r.alert_id}
-                        className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <p className="font-semibold text-[#6B3F1F] truncate flex-1">
-                            {r.farmer_name || t('unnamedFarmer')}
-                          </p>
-                          <span className="text-[11px] text-[#7A8C7E] shrink-0">{formatSentAt(r.sent_at)}</span>
+                    {visibleRows.map(r => {
+                      const cropLabel = r.crop_name || cropDisplayName(r.crop_cosh_id || '')
+                      const measure = r.crop_measure ?? 'AREA_WISE'
+                      let sizeLabel: string | null = null
+                      if (measure === 'PLANT_WISE' && r.number_of_plants != null) {
+                        sizeLabel = `${r.number_of_plants} plants`
+                      } else if (measure !== 'PLANT_WISE' && r.farm_area_acres != null) {
+                        const unit = r.area_unit || 'acres'
+                        sizeLabel = `${r.farm_area_acres} ${unit}`
+                      }
+                      const startLabel = formatStartDate(r.crop_start_date)
+                      const timeLabel = r.alert_type === 'START_DATE'
+                        ? null
+                        : measure === 'PLANT_WISE'
+                          ? (r.planting_year ? `Planted ${r.planting_year}` : null)
+                          : (startLabel ? `Started ${startLabel}` : null)
+                      const detailSegments = [cropLabel, sizeLabel, timeLabel].filter(Boolean) as string[]
+                      const subRef = r.subscription_reference_number
+                      const company = r.client_display_name
+                      return (
+                        <div
+                          key={r.alert_id}
+                          className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
+                          <div className="flex items-start gap-3">
+                            <AvatarLightbox
+                              photoUrl={r.farmer_photo_url}
+                              name={r.farmer_name}
+                              size={44}
+                              bgColor={COLOUR + '1A'}
+                              textColor={COLOUR}
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="font-semibold text-[#6B3F1F] truncate flex-1">
+                                  {r.farmer_name || t('unnamedFarmer')}
+                                </p>
+                                <span className="text-[11px] text-[#7A8C7E] shrink-0">{formatSentAt(r.sent_at)}</span>
+                              </div>
+                              {(subRef || company) && (
+                                <p className="text-[11px] text-[#7A8C7E] mt-0.5 truncate">
+                                  {subRef && <span className="font-mono">{subRef}</span>}
+                                  {subRef && company && ' · '}
+                                  {company}
+                                </p>
+                              )}
+                              {detailSegments.length > 0 && (
+                                <p className="text-xs text-[#7A8C7E] mt-1 leading-snug">
+                                  {detailSegments.join(' · ')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {r.farmer_phone && (
+                            <div className="mt-3 flex justify-end">
+                              <a href={`tel:${r.farmer_phone}`}
+                                aria-label={t('callBtnAria', { name: r.farmer_name || t('unnamedFarmer') })}
+                                className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full"
+                                style={{ background: '#fff', color: COLOUR, border: `1.5px solid ${COLOUR}66` }}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+                                </svg>
+                                {t('callBtnLabel')}
+                              </a>
+                            </div>
+                          )}
                         </div>
-                        <p className="text-xs text-[#7A8C7E]">
-                          {t('cropLabel')}{' '}
-                          <span className="text-[#6B3F1F] font-medium">
-                            {r.crop_name || cropDisplayName(r.crop_cosh_id || '')}
-                          </span>
-                        </p>
-                        {r.farmer_phone && (
-                          <a href={`tel:${r.farmer_phone}`}
-                            className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-full"
-                            style={{ background: '#fff', color: COLOUR, border: `1.5px solid ${COLOUR}66` }}>
-                            {t('callBtn', { phone: r.farmer_phone })}
-                          </a>
-                        )}
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </>
               )}

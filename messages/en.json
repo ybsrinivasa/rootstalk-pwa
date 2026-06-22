@@ -2024,7 +2024,9 @@
       "countAndHint": "{count, plural, one {1 pending alert. Tap the phone number to call the farmer.} other {# pending alerts. Tap the phone number to call the farmer.}}",
       "unnamedFarmer": "Unnamed farmer",
       "cropLabel": "Crop:",
-      "callBtn": "📞 Call {phone}"
+      "callBtn": "📞 Call {phone}",
+      "callBtnLabel": "Call",
+      "callBtnAria": "Call {name}"
     }
   },
   "facilitator": {
@@ -2063,7 +2065,9 @@
       "countAndHint": "{count, plural, one {1 pending alert. Tap the phone number to call the farmer.} other {# pending alerts. Tap the phone number to call the farmer.}}",
       "unnamedFarmer": "Unnamed farmer",
       "cropLabel": "Crop:",
-      "callBtn": "📞 Call {phone}"
+      "callBtn": "📞 Call {phone}",
+      "callBtnLabel": "Call",
+      "callBtnAria": "Call {name}"
     },
     "payments": {
       "headerTitle": "Farmer Payments",
