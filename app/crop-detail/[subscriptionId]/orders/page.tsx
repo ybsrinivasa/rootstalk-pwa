@@ -16,7 +16,7 @@
 // from the Orders button on the crop dashboard opens the page with
 // nothing pre-filled.
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -129,10 +129,43 @@ export default function CropOrdersPage() {
   const router = useRouter()
   const search = useSearchParams()
   const t = useTranslations('orders.cropOrders')
+  // 2026-06-23 — Default tab is now Manage (was Order). Per user
+  // direction: the farmer's most common need on this page is to act
+  // on in-flight orders. The Order tab is for placing new ones —
+  // they come here from advisory/CTAs that already pre-fill it.
   const [tab, setTab] = useState<'order' | 'manage' | 'received'>(
-    (search.get('tab') as 'order' | 'manage' | 'received') || 'order',
+    (search.get('tab') as 'order' | 'manage' | 'received') || 'manage',
   )
   const [sub, setSub] = useState<Subscription | null>(null)
+
+  // 2026-06-23 — Manage tab orders hoisted to the parent so the
+  // tab strip can render a count badge of in-flight orders, AND so
+  // ManageTab can pick its default pill dynamically (priority:
+  // approval > returned > pickup > routed) based on what's actually
+  // pending. ManageTab still owns mutations; the parent owns the
+  // fetch + a reload callback that ManageTab calls after each
+  // mutation.
+  const [manageOrders, setManageOrders] = useState<SubOrder[] | null>(null)
+  const loadManageOrders = useCallback(async () => {
+    try {
+      const { data } = await api.get<{ orders: SubOrder[] }>(
+        `/farmer/subscriptions/${subscriptionId}/orders`,
+      )
+      // Same filter ManageTab applied internally pre-hoist: drop
+      // PURCHASED outright, and drop COMPLETED orders that have no
+      // outstanding returned / postponed / pickup-ready items.
+      setManageOrders((data.orders || []).filter(o => {
+        if (o.status === 'PURCHASED') return false
+        if (o.status === 'COMPLETED' &&
+            !(o.returned_count || 0) &&
+            !(o.postponed_count || 0) &&
+            !(o.pickup_ready_count || 0)) return false
+        return true
+      }))
+    } catch {
+      setManageOrders([])
+    }
+  }, [subscriptionId])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -144,7 +177,34 @@ export default function CropOrdersPage() {
         if (match) setSub(match)
       })
       .catch(() => {})
-  }, [subscriptionId, router])
+    loadManageOrders()
+  }, [subscriptionId, router, loadManageOrders])
+
+  // Manage tab badge count + pill counts. Badge = number of distinct
+  // order groups in the Manage tab (each is something the farmer is
+  // tracking). Pill counts feed ManageTab's dynamic-default-pill pick.
+  const { pillCounts, manageBadgeCount } = useMemo(() => {
+    if (!manageOrders) {
+      return {
+        pillCounts: { routed: 0, approval: 0, returned: 0, pickup: 0 } as Record<Pill, number>,
+        manageBadgeCount: 0,
+      }
+    }
+    const groupMap = new Map<string, SubOrder[]>()
+    for (const o of manageOrders) {
+      const key = o.reference_number || o.lineage_root_id || o.id
+      const list = groupMap.get(key)
+      if (list) list.push(o)
+      else groupMap.set(key, [o])
+    }
+    const counts: Record<Pill, number> = { routed: 0, approval: 0, returned: 0, pickup: 0 }
+    for (const list of groupMap.values()) {
+      for (const p of PILLS) {
+        if (list.some(o => subBelongsToPill(o, p))) counts[p] += 1
+      }
+    }
+    return { pillCounts: counts, manageBadgeCount: groupMap.size }
+  }, [manageOrders])
 
   const todayBeforeStart = useMemo(() => {
     if (!sub?.crop_start_date) return true   // no start date yet → pre-sowing window open
@@ -157,7 +217,7 @@ export default function CropOrdersPage() {
   const hasStartDate = !!sub?.crop_start_date
 
   const tabClass = (k: typeof tab) =>
-    `flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
+    `flex-1 py-3 text-sm font-medium transition-colors border-b-2 inline-flex items-center justify-center gap-1.5 ${
       tab === k ? 'border-[#3A7D44] text-[#3A7D44]' : 'border-transparent text-[#7A8C7E]'
     }`
 
@@ -170,12 +230,31 @@ export default function CropOrdersPage() {
             instant the page opens. */}
         <ClientCropChip subscriptionId={subscriptionId} />
 
+        {/* 2026-06-23 — Tab order: Manage first (highest-frequency
+            need), then Order, then Received. */}
         <div className="flex bg-white border-b border-[#DDD0B8] sticky top-16 z-30">
+          <button onClick={() => setTab('manage')}   className={tabClass('manage')}>
+            <span>{t('tabs.manage')}</span>
+            {manageBadgeCount > 0 && (
+              <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold ${
+                tab === 'manage'
+                  ? 'bg-[#3A7D44] text-white'
+                  : 'bg-[#3A7D44]/15 text-[#3A7D44]'
+              }`}>{manageBadgeCount}</span>
+            )}
+          </button>
           <button onClick={() => setTab('order')}    className={tabClass('order')}>{t('tabs.order')}</button>
-          <button onClick={() => setTab('manage')}   className={tabClass('manage')}>{t('tabs.manage')}</button>
           <button onClick={() => setTab('received')} className={tabClass('received')}>{t('tabs.received')}</button>
         </div>
 
+        {tab === 'manage' && (
+          <ManageTab
+            subscriptionId={subscriptionId}
+            orders={manageOrders}
+            reload={loadManageOrders}
+            pillCounts={pillCounts}
+          />
+        )}
         {tab === 'order' && (
           <OrderTab
             subscriptionId={subscriptionId}
@@ -186,7 +265,6 @@ export default function CropOrdersPage() {
             initialDateTo={search.get('date_to') || ''}
           />
         )}
-        {tab === 'manage'   && <ManageTab subscriptionId={subscriptionId} />}
         {tab === 'received' && <ReceivedTab subscriptionId={subscriptionId} />}
       </div>
     </div>
@@ -531,46 +609,52 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   }
 }
 
-function ManageTab({ subscriptionId }: { subscriptionId: string }) {
+function ManageTab({
+  subscriptionId, orders, reload, pillCounts,
+}: {
+  subscriptionId: string
+  orders: SubOrder[] | null
+  reload: () => Promise<void>
+  pillCounts: Record<Pill, number>
+}) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.manage')
   const search = useSearchParams()
-  const [orders, setOrders] = useState<SubOrder[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   // 2026-06-19 — Pill is URL-controllable via ?pill=, mirroring the
   // pattern on /dealer/orders. Lets handlers from other pages
   // (seed approve, mark-received redirects) land the farmer on
   // the right pill without an extra tap.
-  const initialPill = (search.get('pill') as Pill) || 'approval'
-  const [pill, setPill] = useState<Pill>(initialPill)
+  // 2026-06-23 — Dynamic default: when no ?pill= is given (the
+  // farmer just landed on Manage), pick the highest-priority pill
+  // that actually has activity: approval > returned > pickup >
+  // routed. So a fresh order submission lands on Routed (only thing
+  // with items), but the moment the dealer marks something
+  // available the next visit lands on For Approval, etc. User
+  // direction.
+  const initialUrlPill = (search.get('pill') as Pill) || null
+  const [pill, setPillRaw] = useState<Pill>(initialUrlPill || 'approval')
+  const [pillUserPicked, setPillUserPicked] = useState(!!initialUrlPill)
+  function setPill(p: Pill) { setPillRaw(p); setPillUserPicked(true) }
+  // Once orders load, if the user hasn't picked a pill and no URL
+  // param forced one, snap to the highest-priority non-empty pill.
+  useEffect(() => {
+    if (pillUserPicked) return
+    if (orders === null) return
+    const priority: Pill[] = ['approval', 'returned', 'pickup', 'routed']
+    for (const p of priority) {
+      if (pillCounts[p] > 0) { setPillRaw(p); return }
+    }
+    // All empty — leave at the default ('approval'). The empty-state
+    // copy then reads "Nothing under For Approval" which is the
+    // calmest read of "you have no orders right now."
+  }, [orders, pillCounts, pillUserPicked])
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
-  async function load() {
-    const { data } = await api.get<{ orders: SubOrder[] }>(
-      `/farmer/subscriptions/${subscriptionId}/orders`,
-    )
-    // 2026-06-03 — Manage hides truly-done orders, but a COMPLETED
-    // order can still have NA items the farmer hasn't rerouted yet
-    // (dealer marked them NA, farmer approved the rest, order moved
-    // to COMPLETED). Keep COMPLETED orders visible whenever there's
-    // any returned_count or postponed_count outstanding so the
-    // farmer can still reach their review page and reroute.
-    setOrders((data.orders || []).filter(o => {
-      if (o.status === 'PURCHASED') return false
-      // 2026-06-21 — COMPLETED is now non-terminal for the Pickup
-      // pill (order goes COMPLETED on farmer's last approval, even
-      // though pickup + receipt-confirmation are still pending). Keep
-      // the order visible while pickup_ready_count > 0 so it shows
-      // on the Pickup pill — same pattern as the dealer's /dealer/orders
-      // Packing-pill alignment fix.
-      if (o.status === 'COMPLETED' &&
-          !(o.returned_count || 0) &&
-          !(o.postponed_count || 0) &&
-          !(o.pickup_ready_count || 0)) return false
-      return true
-    }))
-  }
-  useEffect(() => { load().catch(() => setOrders([])) }, [subscriptionId])
+  // 2026-06-23 — `load` is now a no-arg call to the parent's
+  // hoisted reload. Kept as a local alias so the existing handler
+  // bodies don't change shape.
+  const load = reload
 
   async function cancel(orderId: string, kind: 'REGULAR' | 'SEED') {
     // 2026-06-21 — Both regular and seed cancel use release-not-migrate.
@@ -691,14 +775,11 @@ function ManageTab({ subscriptionId }: { subscriptionId: string }) {
   const currentAwaiting = allAwaiting[0]
   const otherAwaiting = allAwaiting.slice(1)
 
-  // Pill counts: count GROUPS that have at least one matching
-  // sub-order (matches what the user sees rendered).
-  const counts: Record<Pill, number> = { routed: 0, approval: 0, returned: 0, pickup: 0 }
-  for (const list of groups.values()) {
-    for (const p of PILLS) {
-      if (list.some(o => subBelongsToPill(o, p))) counts[p] += 1
-    }
-  }
+  // 2026-06-23 — Pill counts are now computed at the parent (so
+  // the tab strip can render a Manage badge and the dynamic-default-
+  // pill effect can read them on mount). Alias here so the existing
+  // pill-tile render below keeps reading `counts[p]`.
+  const counts = pillCounts
 
   // Visible groups for the selected pill.
   const visibleGroups: { key: string; subs: SubOrder[]; matching: SubOrder[] }[] = []
