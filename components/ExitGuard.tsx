@@ -3,56 +3,38 @@ import { useEffect } from 'react'
 
 /** Device-back guard for the four dashboard pages.
  *
- * Goal: a single device-Back press from a dashboard exits the app,
- * regardless of how deep the in-app history is. Without this, a user
- * who navigated several pages before returning to the dashboard would
- * walk back through every entry one press at a time.
+ * Tries `window.close()` on the FIRST device-back press from a
+ * dashboard. In an installed PWA (Android Chrome standalone, iOS
+ * standalone), `window.close()` is honoured and the app exits in one
+ * press. In a browser tab where the API silently no-ops, the natural
+ * back-history behaviour continues from where the popstate left the
+ * user — no fake about:blank intermediate, no visible history walk.
  *
- * No prompt — per 2026-06-23 user observation, the dealer dashboard's
- * direct exit "is absolutely fine." Match that on all four.
- *
- * On mount:
- *   1. Push a sentinel history entry. The first device-Back press
- *      will pop it and fire `popstate` on this handler.
- *
- * On popstate (device-Back fired on the dashboard):
- *   1. Try `window.close()` — works in installed PWA standalone mode;
- *      silently no-ops in browser tabs.
- *   2. Browser-tab fallback: walk history back to the first entry of
- *      this tab session (`history.go(-(length-1))`). When the
- *      navigation lands, replace the destination with `about:blank`.
- *      This purges every in-app navigation entry so device-Back from
- *      `about:blank` cannot bounce back into the app.
- *
- * Previous iteration (pre-2026-06-23) only did `location.replace`
- * without the history-walk — earlier in-app entries stayed alive in
- * the back stack, so device-Back from about:blank bounced the user
- * right back to the PWA. The history-walk is what fixes that.
+ * Why no smarter fallback: browser-tab JS fundamentally cannot
+ * dismiss a tab it didn't open, and any attempt to walk history with
+ * `history.go(-N)` in a Next.js app re-renders each intermediate
+ * route on the way back. Earlier iterations tried both
+ * (location.replace('about:blank') and chained history.go) — both
+ * either bounced back into the app or made the history walk visible.
+ * The honest answer is: installed PWAs exit cleanly; browser tabs
+ * keep their natural behaviour.
  */
 export default function ExitGuard() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    window.history.pushState({ rtExit: true }, '')
-
-    const handlePopState = () => {
-      try { window.close() } catch { /* ignore */ }
-
-      const popSteps = window.history.length - 1
-      if (popSteps <= 0) {
-        window.location.replace('about:blank')
-        return
-      }
-      const onLanded = () => {
-        window.removeEventListener('popstate', onLanded)
-        window.location.replace('about:blank')
-      }
-      window.addEventListener('popstate', onLanded)
-      window.history.go(-popSteps)
+    // Don't stack sentinels if one is already present (re-mount after
+    // sub-page navigation would otherwise push another).
+    if (!(window.history.state && (window.history.state as { rtExit?: boolean }).rtExit)) {
+      window.history.pushState({ rtExit: true }, '')
     }
 
-    window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+    const onPopState = () => {
+      try { window.close() } catch { /* ignore */ }
+    }
+
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
   }, [])
 
   return null
