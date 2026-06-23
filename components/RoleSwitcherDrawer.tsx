@@ -183,7 +183,7 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.12a7.5 7.5 0 0115 0A17.93 17.93 0 0112 21.75c-2.68 0-5.22-.58-7.5-1.63z"/>
             }
             label={t('personalDetails')}
-            onClick={() => go('/profile')}
+            onClick={() => go(`/profile?role=${activeRole}`)}
           />
           {/* 2026-06-22 — Role-specific profile entries. The same
               person can hold multiple roles, so the common

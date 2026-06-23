@@ -1,11 +1,25 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { getToken, getUser, getActiveRoles, logout, refreshUser, type PWAUser } from '@/lib/auth'
+import { getToken, getUser, getActiveRoles, logout, refreshUser, ROLE_COLOURS, type PWAUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
+
+// 2026-06-23 — Role-aware via `?role=<activeRole>` from the drawer.
+// The Personal Details surface should preserve whichever role the
+// user is currently in; auto-switching them to FARMER on entry
+// would override their explicit role choice.
+const ROLE_HOME: Record<string, string> = {
+  FARMER: '/home',
+  DEALER: '/dealer/home',
+  FACILITATOR: '/facilitator/home',
+  FARM_PUNDIT: '/pundit/home',
+}
+function isRole(s: string | null): s is 'FARMER' | 'DEALER' | 'FACILITATOR' | 'FARM_PUNDIT' {
+  return s === 'FARMER' || s === 'DEALER' || s === 'FACILITATOR' || s === 'FARM_PUNDIT'
+}
 
 interface Subscription { id: string; status: string; package_id: string; client_id?: string; client_name?: string }
 
@@ -19,6 +33,13 @@ type CoshLocations = {
 
 export default function ProfilePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const roleParam = searchParams.get('role')
+  // Drawer passes the active role so the Personal Details surface
+  // stays in the user's current role context. Falls back to FARMER
+  // for direct deep-links (e.g. shared URLs, pre-2026-06-23 sessions).
+  const activeRole = isRole(roleParam) ? roleParam : 'FARMER'
+  const backTarget = ROLE_HOME[activeRole]
   const t = useTranslations('farmerProfile')
   const tCommon = useTranslations('common')
   // User comes from localStorage initially (no flash of empty state)
@@ -248,7 +269,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/home" />
+      <PWAHeader title={t('headerTitle')} activeRole={activeRole} back={backTarget} />
       <div className="pt-16 pb-20 px-4">
 
         {/* ── Hero user card ── */}
@@ -597,7 +618,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <BottomNav color="#3A7D44" />
+      <BottomNav color={ROLE_COLOURS[activeRole] || '#3A7D44'} activeRole={activeRole} />
 
       {/* ── Delete Account: Confirm sheet ── */}
       {deleteStep === 'confirm' && (
