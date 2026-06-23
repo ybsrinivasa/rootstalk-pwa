@@ -201,12 +201,19 @@ export default function PunditHomePage() {
                         <p className="text-sm font-medium text-[#6B3F1F] truncate">{info?.display_name || c.client_id}</p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {c.is_promoter_pundit && (
+                        {/* Promoter Pundit and regular pundit (Primary /
+                            Panel) are mutually exclusive role types per
+                            client. Backend stores Promoter Pundit rows
+                            with role=PANEL + is_promoter_pundit=true,
+                            so the flag wins — never render both badges
+                            together. (User report 2026-06-23.) */}
+                        {c.is_promoter_pundit ? (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{t('promoterBadge')}</span>
+                        ) : (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
+                            {c.role === 'PRIMARY' ? t('rolePrimary') : t('rolePanel')}
+                          </span>
                         )}
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                          {c.role === 'PRIMARY' ? t('rolePrimary') : t('rolePanel')}
-                        </span>
                       </div>
                     </div>
                     <div className="flex gap-2 mt-3">
