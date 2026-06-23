@@ -264,7 +264,9 @@
     "shopDetails": "ਦੁਕਾਨ ਦੇ ਵੇਰਵੇ",
     "professionalDetails": "ਪੇਸ਼ੇਵਰ ਵੇਰਵੇ",
     "privacyPolicy": "ਪਰਾਈਵੇਟ ਨੀਤੀ",
-    "onboardedCompanies": "ਆਨਬੋਰਡਡ ਕੰਪਨੀਆਂ"
+    "onboardedCompanies": "ਆਨਬੋਰਡਡ ਕੰਪਨੀਆਂ",
+    "exclusivityHint": "ਉਪਲਬਧ ਨਹੀਂ ਹੈ — ਤੁਸੀਂ ਇੱਕ {otherRole} ਹੋ",
+    "exclusivityMessage": "ਤੁਸੀਂ ਪਹਿਲਾਂ ਹੀ ਇੱਕ {currentRole} ਹੋ। ਇੱਕ ਸਿੰਗਲ ਯੂਜ਼ਰ ਰੂਟਸਟਾਕ 'ਤੇ ਡੀਲਰ ਅਤੇ ਫੈਸੀਲੀਟੇਟਰ ਦੋਵੇਂ ਨਹੀਂ ਹੋ ਸਕਦਾ — ਉਹ ਆਰਡਰ-ਰੂਟਿੰਗ ਚੇਨ ਦੇ ਉਲਟ ਸਿਰਿਆਂ 'ਤੇ ਬੈਠਦੇ ਹਨ। ਸਵੈ-ਇੱਛਾ ਨਾਲ ਇੱਕ ਭੂਮਿਕਾ ਨੂੰ ਖਤਮ ਕਰਨਾ ਭਵਿੱਖ ਦੇ ਅਪਡੇਟ ਵਿੱਚ ਆ ਰਿਹਾ ਹੈ।"
   },
   "header": {
     "aboutRootsTalk": "ਰੂਟਸਟਾਕ ਬਾਰੇ",

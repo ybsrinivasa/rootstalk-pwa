@@ -16,7 +16,10 @@ import api from '@/lib/api'
 export default function BecomeFacilitatorPage() {
   const router = useRouter()
   const user = getUser()
-  const isFacilitator = getActiveRoles(user).includes('FACILITATOR')
+  const roles = getActiveRoles(user)
+  const isFacilitator = roles.includes('FACILITATOR')
+  // 2026-06-23 — Mirror of /become-dealer's exclusivity gate.
+  const blockedByDealer = roles.includes('DEALER')
 
   const [claiming, setClaiming] = useState(false)
   const [error, setError] = useState('')
@@ -29,6 +32,35 @@ export default function BecomeFacilitatorPage() {
   }, [])
 
   if (isFacilitator) return null
+
+  if (blockedByDealer) {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: '#7D4E00' }}>
+        <PWAHeader title="Become a Facilitator" activeRole="FACILITATOR" customColour="#7D4E00" back="/home" />
+        <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5 bg-amber-100">
+            <span className="text-2xl">🔒</span>
+          </div>
+          <h2 className="text-[#6B3F1F] text-2xl font-semibold">You're already a Dealer</h2>
+          <p className="text-[#7A8C7E] text-sm mt-3 leading-relaxed">
+            A single user cannot be both a Dealer and a Facilitator on RootsTalk. They sit on opposite ends of the order-routing chain — a Facilitator routes farmer orders to Dealers, so the same person can't be on both sides.
+          </p>
+          <p className="text-[#7A8C7E] text-sm mt-3 leading-relaxed">
+            You're free to combine any other role (Farmer + Dealer + Pundit, or Farmer + Facilitator + Pundit, etc.) — just not Dealer and Facilitator together.
+          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mt-6">
+            <p className="text-amber-800 text-sm leading-relaxed">
+              <strong>Coming soon:</strong> a way to voluntarily end your Dealer role (once all your pending tasks are clear), after which you'll be able to register as a Facilitator.
+            </p>
+          </div>
+          <button onClick={() => router.push('/home')}
+            className="mt-6 w-full py-3 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
+            Back to Farmer Home
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   async function become() {
     setClaiming(true); setError('')

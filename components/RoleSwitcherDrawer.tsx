@@ -66,10 +66,11 @@ function Icon({ children, color = C.textPrimary }: { children: React.ReactNode; 
 
 // ── Menu row ──────────────────────────────────────────────────────────────
 function MenuRow({
-  icon, label, onClick, trailing, color = C.textPrimary,
+  icon, label, subLabel, onClick, trailing, color = C.textPrimary,
 }: {
   icon: React.ReactNode
   label: string
+  subLabel?: string
   onClick: () => void
   trailing?: React.ReactNode
   color?: string
@@ -80,7 +81,12 @@ function MenuRow({
       className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-black/[0.03] transition-colors"
       style={{ minHeight: 48 }}>
       <Icon color={color}>{icon}</Icon>
-      <span className="flex-1 text-[15px] font-medium" style={{ color }}>{label}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block text-[15px] font-medium" style={{ color }}>{label}</span>
+        {subLabel && (
+          <span className="block text-[11px] mt-0.5" style={{ color: C.textSecond }}>{subLabel}</span>
+        )}
+      </span>
       {trailing}
     </button>
   )
@@ -116,7 +122,29 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
     return true
   }
 
+  // 2026-06-23 — Dealer + Facilitator are mutually exclusive (conflict
+  // of interest in the order-routing chain). All other combinations
+  // are fine. Returns the role currently blocking the candidate, or
+  // null if the candidate is allowed.
+  function isBlockedByExclusivity(candidate: string): 'DEALER' | 'FACILITATOR' | null {
+    if (userRoles.includes(candidate)) return null
+    if (candidate === 'DEALER' && userRoles.includes('FACILITATOR')) return 'FACILITATOR'
+    if (candidate === 'FACILITATOR' && userRoles.includes('DEALER')) return 'DEALER'
+    return null
+  }
+
   function handleRoleClick(role: string) {
+    // Dealer + Facilitator exclusivity: block the "Become a …" /
+    // "Switch to …" tap with a clear explanation. Other roles
+    // proceed normally.
+    const blockedBy = isBlockedByExclusivity(role)
+    if (blockedBy) {
+      const otherRoleName = blockedBy === 'DEALER' ? tRole('dealer') : tRole('facilitator')
+      const candidateName = role === 'DEALER' ? tRole('dealer') : tRole('facilitator')
+      alert(t('exclusivityMessage', { currentRole: otherRoleName, candidateRole: candidateName }))
+      onClose()
+      return
+    }
     const roleIsSetUp = isRoleSetUp(role)
     if (!roleIsSetUp) {
       // Two not-set-up paths:
@@ -252,6 +280,7 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
         {ROLE_ORDER.map(role => {
           const isActive = role === activeRole
           const roleIsSetUp = isRoleSetUp(role)
+          const blockedBy = isBlockedByExclusivity(role)
           let label: string
           if (isActive) label = tRole(ROLE_LABEL_KEY[role])
           else if (roleIsSetUp) label = t(SWITCH_LABEL_KEY[role])
@@ -273,13 +302,18 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               key={role}
               icon={iconPath}
               label={label}
-              color={isActive ? C.primary : C.textPrimary}
+              color={isActive ? C.primary : (blockedBy ? C.textSecond : C.textPrimary)}
+              subLabel={blockedBy ? t('exclusivityHint', {
+                otherRole: blockedBy === 'DEALER' ? tRole('dealer') : tRole('facilitator'),
+              }) : undefined}
               onClick={() => handleRoleClick(role)}
               trailing={isActive ? (
                 <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
                   style={{ background: C.primary + '1A', color: C.primary }}>
                   {t('activeBadge')}
                 </span>
+              ) : blockedBy ? (
+                <span className="text-[18px] font-light" style={{ color: C.textSecond }}>🔒</span>
               ) : !roleIsSetUp ? (
                 <span className="text-[12px]" style={{ color: C.textSecond }}>{t('setupHint')}</span>
               ) : (

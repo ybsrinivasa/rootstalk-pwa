@@ -264,7 +264,9 @@
     "shopDetails": "দোকানৰ বিৱৰণ",
     "professionalDetails": "পেছাগত বিৱৰণ",
     "privacyPolicy": "গোপনীয়তা নীতি",
-    "onboardedCompanies": "অনবৰ্ড কৰা কোম্পানী"
+    "onboardedCompanies": "অনবৰ্ড কৰা কোম্পানী",
+    "exclusivityHint": "উপলব্ধ নহয় — আপুনি এজন {otherRole}",
+    "exclusivityMessage": "আপুনি ইতিমধ্যে এটা {currentRole} । এটা ব্যৱহাৰকাৰী RootsTalk ত এজন ডিলাৰ আৰু এটা সুবিধা প্ৰদানকাৰী দুয়োটা হ'ব নোৱাৰে — সিহঁতে অৰ্ডাৰ-ৰুটিং শৃংখলৰ বিপৰীত মূৰত বহি থাকে। স্বেচ্ছাই এটা ভূমিকা শেষ কৰাটো ভৱিষ্যতৰ এটা আপডেটত আহি আছে।"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK ৰ বিষয়ে",

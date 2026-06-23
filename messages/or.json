@@ -264,7 +264,9 @@
     "shopDetails": "ଦୋକାନ ବିବରଣୀ",
     "professionalDetails": "ବୃତ୍ତିଗତ ବିବରଣୀ",
     "privacyPolicy": "ଗୋପନୀୟତା ନୀତି",
-    "onboardedCompanies": "ଅନବୋର୍ଡଡ୍ କମ୍ପାନୀଗୁଡ଼ିକ"
+    "onboardedCompanies": "ଅନବୋର୍ଡଡ୍ କମ୍ପାନୀଗୁଡ଼ିକ",
+    "exclusivityHint": "ଉପଲବ୍ଧ ନାହିଁ — ଆପଣ ଜଣେ {otherRole}",
+    "exclusivityMessage": "ତୁମେ ପୂର୍ବରୁ ଜଣେ {currentRole} । ଜଣେ ବ୍ୟବହାରକାରୀ RootsTalk ରେ ଜଣେ ଡିଲର ଏବଂ ଜଣେ ଫ୍ୟାସିଲିଟେଟର ଉଭୟ ହୋଇପାରିବେ ନାହିଁ — ସେମାନେ ଅର୍ଡର-ରାଉଟିଂ ଶୃଙ୍ଖଳର ବିପରୀତ ପ୍ରାନ୍ତରେ ବସିଥାନ୍ତି। ଭବିଷ୍ୟତର ଅପଡେଟରେ ସ୍ୱେଚ୍ଛାକୃତ ଭାବରେ ଏକ ଭୂମିକା ଶେଷ କରାଯିବ।"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK ବିଷୟରେ",

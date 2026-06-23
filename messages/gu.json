@@ -264,7 +264,9 @@
     "shopDetails": "દુકાનની વિગતો",
     "professionalDetails": "વ્યાવસાયિક વિગતો",
     "privacyPolicy": "ગોપનીયતા નીતિ",
-    "onboardedCompanies": "ઓનબોર્ડેડ કંપનીઓ"
+    "onboardedCompanies": "ઓનબોર્ડેડ કંપનીઓ",
+    "exclusivityHint": "ઉપલબ્ધ નથી — તમે {otherRole} છો",
+    "exclusivityMessage": "તમે પહેલેથી જ {currentRole} છો. રૂટ્સટૉક પર એક જ વપરાશકર્તા ડીલર અને ફેસિલિટેટર બંને ન હોઈ શકે — તેઓ ઓર્ડર-રૂટિંગ ચેઇનના વિરુદ્ધ છેડા પર બેસે છે. ભવિષ્યના અપડેટમાં સ્વેચ્છાએ ભૂમિકા સમાપ્ત કરવાની વાત આવી રહી છે."
   },
   "header": {
     "aboutRootsTalk": "રૂટ્સટાલ્ક વિશે",

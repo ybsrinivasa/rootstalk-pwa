@@ -264,7 +264,9 @@
     "shopDetails": "دکان کی تفصیلات",
     "professionalDetails": "پیشہ ورانہ تفصیلات",
     "privacyPolicy": "رازداری کی پالیسی",
-    "onboardedCompanies": "آن بورڈڈ کمپنیاں"
+    "onboardedCompanies": "آن بورڈڈ کمپنیاں",
+    "exclusivityHint": "دستیاب نہیں — آپ ایک {otherRole} ہیں",
+    "exclusivityMessage": "آپ پہلے سے ہی ایک {currentRole} ہیں۔ ایک واحد صارف RootsTalk پر ڈیلر اور ایک سہولت کار دونوں نہیں ہو سکتا - وہ آرڈر روٹنگ چین کے مخالف سروں پر بیٹھتے ہیں۔ رضاکارانہ طور پر کسی کردار کو ختم کرنا مستقبل کی تازہ کاری میں آ رہا ہے۔"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK کے بارے میں",

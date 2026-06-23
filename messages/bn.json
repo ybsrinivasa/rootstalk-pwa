@@ -264,7 +264,9 @@
     "shopDetails": "দোকানের বিবরণ",
     "professionalDetails": "পেশাগত বিবরণ",
     "privacyPolicy": "গোপনীয়তা নীতি",
-    "onboardedCompanies": "অন্তর্ভুক্ত কোম্পানিগুলি"
+    "onboardedCompanies": "অন্তর্ভুক্ত কোম্পানিগুলি",
+    "exclusivityHint": "উপলব্ধ নয় — আপনি একজন {otherRole}",
+    "exclusivityMessage": "আপনি ইতিমধ্যেই একজন {currentRole} । RootsTalk-এ একজন ব্যবহারকারী একই সাথে ডিলার এবং ফ্যাসিলিটেটর হতে পারেন না — তারা অর্ডার-রাউটিং চেইনের বিপরীত প্রান্তে অবস্থান করেন। স্বেচ্ছায় কোনো ভূমিকা শেষ করার সুবিধাটি ভবিষ্যতের একটি আপডেটে আসছে।"
   },
   "header": {
     "aboutRootsTalk": "রুটসটক সম্পর্কে",

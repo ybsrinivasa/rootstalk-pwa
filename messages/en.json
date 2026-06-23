@@ -255,6 +255,8 @@
     "setupPundit": "Become an Expert",
     "activeBadge": "Active",
     "setupHint": "Set up →",
+    "exclusivityHint": "Not available — you're a {otherRole}",
+    "exclusivityMessage": "You're already a {currentRole}. A single user cannot be both a Dealer and a Facilitator on RootsTalk — they sit on opposite ends of the order-routing chain. Voluntarily ending a role is coming in a future update.",
     "helpAndTips": "Help & Tips",
     "privacyPolicy": "Privacy Policy",
     "aboutRootsTalk": "About RootsTalk",
