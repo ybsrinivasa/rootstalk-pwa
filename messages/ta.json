@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "நீங்கள் ஏன் இந்த அழைப்பை நிராகரிக்கிறீர்கள்?",
       "modalCancel": "ரத்துசெய்",
       "modalConfirmIdle": "நிராகரிப்பை உறுதிப்படுத்து",
-      "modalConfirmBusy": "சரிந்து வருகிறது…"
+      "modalConfirmBusy": "சரிந்து வருகிறது…",
+      "companyFallback": "ஒரு நிறுவனம்",
+      "confirmAcceptTitle": "{company} வழங்கும் அழைப்பை ஏற்கிறீர்களா?",
+      "confirmAcceptBody": "இந்த நிறுவனத்திடமிருந்து உங்களுக்கு விசாரணைகள் வரத் தொடங்கும்.",
+      "confirmAcceptCta": "ஆம், ஏற்றுக்கொள்",
+      "confirmRejectTitle": "{company} வழங்கும் அழைப்பை நிராகரிக்கலாமா?",
+      "confirmRejectBody": "நிறுவனத்திற்குத் தெரிவிக்கப்படும். நீங்கள் பின்னர் மீண்டும் அழைக்கப்படலாம்.",
+      "confirmRejectCta": "ஆம், நிராகரி",
+      "confirmCancel": "ரத்துசெய்",
+      "confirmBusy": "சேமிக்கப்படுகிறது…"
     },
     "profile": {
       "headerTitle": "நிபுணர் சான்றுகள்",

@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "ਤੁਸੀਂ ਇਸ ਸੱਦੇ ਨੂੰ ਕਿਉਂ ਠੁਕਰਾ ਰਹੇ ਹੋ?",
       "modalCancel": "ਰੱਦ ਕਰੋ",
       "modalConfirmIdle": "ਅਸਵੀਕਾਰ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ",
-      "modalConfirmBusy": "ਅਸਵੀਕਾਰ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…"
+      "modalConfirmBusy": "ਅਸਵੀਕਾਰ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
+      "companyFallback": "ਇੱਕ ਕੰਪਨੀ",
+      "confirmAcceptTitle": "ਕੀ {company} ਵੱਲੋਂ ਸੱਦਾ ਸਵੀਕਾਰ ਕਰਨਾ ਹੈ?",
+      "confirmAcceptBody": "ਤੁਹਾਨੂੰ ਇਸ ਕੰਪਨੀ ਤੋਂ ਪੁੱਛਗਿੱਛਾਂ ਮਿਲਣੀਆਂ ਸ਼ੁਰੂ ਹੋ ਜਾਣਗੀਆਂ।",
+      "confirmAcceptCta": "ਹਾਂ, ਸਵੀਕਾਰ ਕਰੋ",
+      "confirmRejectTitle": "ਕੀ {company} ਵੱਲੋਂ ਸੱਦਾ ਅਸਵੀਕਾਰ ਕਰਨਾ ਹੈ?",
+      "confirmRejectBody": "ਕੰਪਨੀ ਨੂੰ ਸੂਚਿਤ ਕੀਤਾ ਜਾਵੇਗਾ। ਤੁਹਾਨੂੰ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਸੱਦਾ ਦਿੱਤਾ ਜਾ ਸਕਦਾ ਹੈ।",
+      "confirmRejectCta": "ਹਾਂ, ਅਸਵੀਕਾਰ ਕਰੋ",
+      "confirmCancel": "ਰੱਦ ਕਰੋ",
+      "confirmBusy": "ਸੇਵ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ..."
     },
     "profile": {
       "headerTitle": "ਮਾਹਰ ਪ੍ਰਮਾਣ ਪੱਤਰ",

@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "ତୁମେ ଏହି ନିମନ୍ତ୍ରଣକୁ କାହିଁକି ପ୍ରତ୍ୟାଖ୍ୟାନ କରୁଛ?",
       "modalCancel": "ବାତିଲ କରନ୍ତୁ",
       "modalConfirmIdle": "ଅଗ୍ରାହ୍ୟ କରିବା ସୁନିଶ୍ଚିତ କରନ୍ତୁ",
-      "modalConfirmBusy": "ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଉଛି…"
+      "modalConfirmBusy": "ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଉଛି…",
+      "companyFallback": "ଏକ କମ୍ପାନୀ",
+      "confirmAcceptTitle": "{company} ଠାରୁ ନିମନ୍ତ୍ରଣ ଗ୍ରହଣ କରିବେ?",
+      "confirmAcceptBody": "ଆପଣ ଏହି କମ୍ପାନୀରୁ ପ୍ରଶ୍ନ ପାଇବା ଆରମ୍ଭ କରିବେ।",
+      "confirmAcceptCta": "ହଁ, ଗ୍ରହଣ କରନ୍ତୁ",
+      "confirmRejectTitle": "{company} ଠାରୁ ନିମନ୍ତ୍ରଣ ପ୍ରତ୍ୟାଖ୍ୟାନ କରିବେ?",
+      "confirmRejectBody": "କମ୍ପାନୀକୁ ଜଣାଇ ଦିଆଯିବ। ଆପଣଙ୍କୁ ପରେ ପୁଣି ନିମନ୍ତ୍ରଣ କରାଯାଇପାରିବ।",
+      "confirmRejectCta": "ହଁ, ମନା କରନ୍ତୁ",
+      "confirmCancel": "ବାତିଲ କରନ୍ତୁ",
+      "confirmBusy": "ସଞ୍ଚୟ ହେଉଛି…"
     },
     "profile": {
       "headerTitle": "ବିଶେଷଜ୍ଞ ପ୍ରମାଣପତ୍ର",

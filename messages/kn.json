@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "ನೀವು ಈ ಆಹ್ವಾನವನ್ನು ಏಕೆ ನಿರಾಕರಿಸುತ್ತಿದ್ದೀರಿ?",
       "modalCancel": "ರದ್ದುಮಾಡಿ",
       "modalConfirmIdle": "ನಿರಾಕರಣೆಯನ್ನು ದೃಢೀಕರಿಸಿ",
-      "modalConfirmBusy": "ಕ್ಷೀಣಿಸುತ್ತಿದೆ..."
+      "modalConfirmBusy": "ಕ್ಷೀಣಿಸುತ್ತಿದೆ...",
+      "companyFallback": "ಒಂದು ಕಂಪನಿ",
+      "confirmAcceptTitle": "{company} ಯಿಂದ ಆಹ್ವಾನವನ್ನು ಸ್ವೀಕರಿಸುವುದೇ?",
+      "confirmAcceptBody": "ನೀವು ಈ ಕಂಪನಿಯಿಂದ ಪ್ರಶ್ನೆಗಳನ್ನು ಸ್ವೀಕರಿಸಲು ಪ್ರಾರಂಭಿಸುತ್ತೀರಿ.",
+      "confirmAcceptCta": "ಹೌದು, ಸ್ವೀಕರಿಸಿ",
+      "confirmRejectTitle": "{company} ಯಿಂದ ಆಹ್ವಾನವನ್ನು ನಿರಾಕರಿಸುವುದೇ?",
+      "confirmRejectBody": "ಕಂಪನಿಗೆ ತಿಳಿಸಲಾಗುವುದು. ನಿಮ್ಮನ್ನು ನಂತರ ಮತ್ತೆ ಆಹ್ವಾನಿಸಬಹುದು.",
+      "confirmRejectCta": "ಹೌದು, ನಿರಾಕರಿಸಿ",
+      "confirmCancel": "ರದ್ದುಮಾಡಿ",
+      "confirmBusy": "ಉಳಿಸಲಾಗುತ್ತಿದೆ..."
     },
     "profile": {
       "headerTitle": "ತಜ್ಞರ ರುಜುವಾತುಗಳು",

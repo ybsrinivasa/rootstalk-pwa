@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "এই নিমন্ত্ৰণ কিয় নাকচ কৰিছে?",
       "modalCancel": "বাতিল কৰক",
       "modalConfirmIdle": "অস্বীকাৰ নিশ্চিত কৰক",
-      "modalConfirmBusy": "হ্ৰাস পাইছে..."
+      "modalConfirmBusy": "হ্ৰাস পাইছে...",
+      "companyFallback": "এটা কোম্পানী",
+      "confirmAcceptTitle": "{company} ৰ পৰা আমন্ত্ৰণ গ্ৰহণ কৰক ?",
+      "confirmAcceptBody": "এই কোম্পানীটোৰ পৰা আপুনি প্ৰশ্ন লাভ কৰিবলৈ আৰম্ভ কৰিব।",
+      "confirmAcceptCta": "হয়, গ্ৰহণ কৰক",
+      "confirmRejectTitle": "{company} ৰ পৰা আমন্ত্ৰণ অস্বীকাৰ কৰক ?",
+      "confirmRejectBody": "কোম্পানীটোক অৱগত কৰা হ’ব। পিছত পুনৰ নিমন্ত্ৰণ কৰিব পাৰিব।",
+      "confirmRejectCta": "হয়, অস্বীকাৰ কৰক",
+      "confirmCancel": "বাতিল কৰক",
+      "confirmBusy": "সঞ্চয়..."
     },
     "profile": {
       "headerTitle": "বিশেষজ্ঞৰ প্ৰমাণপত্ৰ",

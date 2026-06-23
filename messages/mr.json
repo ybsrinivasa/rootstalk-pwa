@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "तुम्ही हे आमंत्रण का नाकारत आहात?",
       "modalCancel": "रद्द करा",
       "modalConfirmIdle": "नकाराची पुष्टी करा",
-      "modalConfirmBusy": "घटत आहे…"
+      "modalConfirmBusy": "घटत आहे…",
+      "companyFallback": "एक कंपनी",
+      "confirmAcceptTitle": "{company} कडून आलेले आमंत्रण स्वीकारायचे आहे का?",
+      "confirmAcceptBody": "तुम्हाला या कंपनीकडून चौकशा येऊ लागतील.",
+      "confirmAcceptCta": "हो, स्वीकारा",
+      "confirmRejectTitle": "{company} कडून आलेले आमंत्रण नाकारायचे का?",
+      "confirmRejectBody": "कंपनीला कळवले जाईल. तुम्हाला नंतर पुन्हा आमंत्रित केले जाऊ शकते.",
+      "confirmRejectCta": "हो, नकार",
+      "confirmCancel": "रद्द करा",
+      "confirmBusy": "जतन करत आहे…"
     },
     "profile": {
       "headerTitle": "तज्ञ पात्रता",

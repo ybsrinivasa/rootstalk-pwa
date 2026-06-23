@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "आप इस निमंत्रण को क्यों अस्वीकार कर रहे हैं?",
       "modalCancel": "रद्द करना",
       "modalConfirmIdle": "अस्वीकृति की पुष्टि करें",
-      "modalConfirmBusy": "अस्वीकृत करना…"
+      "modalConfirmBusy": "अस्वीकृत करना…",
+      "companyFallback": "एक कंपनी",
+      "confirmAcceptTitle": "क्या आप {company} से निमंत्रण स्वीकार करेंगे?",
+      "confirmAcceptBody": "आपको इस कंपनी से पूछताछ मिलनी शुरू हो जाएगी।",
+      "confirmAcceptCta": "हाँ, स्वीकार करें",
+      "confirmRejectTitle": "{company} से मिले आमंत्रण को अस्वीकार करें?",
+      "confirmRejectBody": "कंपनी को सूचित कर दिया जाएगा। आपको बाद में दोबारा आमंत्रित किया जा सकता है।",
+      "confirmRejectCta": "हाँ, अस्वीकार करें",
+      "confirmCancel": "रद्द करना",
+      "confirmBusy": "सहेजा जा रहा है…"
     },
     "profile": {
       "headerTitle": "विशेषज्ञ प्रमाण पत्र",

@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "તમે આ આમંત્રણ કેમ નકારી રહ્યા છો?",
       "modalCancel": "રદ કરો",
       "modalConfirmIdle": "ઇનકારની પુષ્ટિ કરો",
-      "modalConfirmBusy": "નકારી રહ્યું છે..."
+      "modalConfirmBusy": "નકારી રહ્યું છે...",
+      "companyFallback": "એક કંપની",
+      "confirmAcceptTitle": "{company} તરફથી આમંત્રણ સ્વીકારીએ?",
+      "confirmAcceptBody": "તમને આ કંપની તરફથી પ્રશ્નો મળવાનું શરૂ થશે.",
+      "confirmAcceptCta": "હા, સ્વીકારો",
+      "confirmRejectTitle": "{company} તરફથી આમંત્રણ નકારીએ?",
+      "confirmRejectBody": "કંપનીને જાણ કરવામાં આવશે. તમને પછીથી ફરીથી આમંત્રણ મળી શકે છે.",
+      "confirmRejectCta": "હા, નકારો",
+      "confirmCancel": "રદ કરો",
+      "confirmBusy": "સાચવી રહ્યું છે..."
     },
     "profile": {
       "headerTitle": "નિષ્ણાત ઓળખપત્રો",

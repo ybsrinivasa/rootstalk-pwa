@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "আপনি এই আমন্ত্রণটি কেন প্রত্যাখ্যান করছেন?",
       "modalCancel": "বাতিল করুন",
       "modalConfirmIdle": "প্রত্যাখ্যান নিশ্চিত করুন",
-      "modalConfirmBusy": "হ্রাস পাচ্ছে…"
+      "modalConfirmBusy": "হ্রাস পাচ্ছে…",
+      "companyFallback": "একটি কোম্পানি",
+      "confirmAcceptTitle": "{company} এর আমন্ত্রণ গ্রহণ করবেন?",
+      "confirmAcceptBody": "আপনি এই কোম্পানি থেকে অনুসন্ধান পেতে শুরু করবেন।",
+      "confirmAcceptCta": "হ্যাঁ, গ্রহণ করুন",
+      "confirmRejectTitle": "{company} এর আমন্ত্রণ প্রত্যাখ্যান করবেন?",
+      "confirmRejectBody": "কোম্পানিকে জানানো হবে। আপনাকে পরবর্তীতে আবার আমন্ত্রণ জানানো যেতে পারে।",
+      "confirmRejectCta": "হ্যাঁ, প্রত্যাখ্যান করুন",
+      "confirmCancel": "বাতিল করুন",
+      "confirmBusy": "সঞ্চয়…"
     },
     "profile": {
       "headerTitle": "বিশেষজ্ঞের যোগ্যতা",

@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "మీరు ఈ ఆహ్వానాన్ని ఎందుకు తిరస్కరిస్తున్నారు?",
       "modalCancel": "రద్దు చేయండి",
       "modalConfirmIdle": "తిరస్కరణను నిర్ధారించండి",
-      "modalConfirmBusy": "క్షీణిస్తోంది…"
+      "modalConfirmBusy": "క్షీణిస్తోంది…",
+      "companyFallback": "ఒక కంపెనీ",
+      "confirmAcceptTitle": "{company} నుండి వచ్చిన ఆహ్వానాన్ని అంగీకరిస్తారా?",
+      "confirmAcceptBody": "మీకు ఈ కంపెనీ నుండి విచారణలు రావడం మొదలవుతుంది.",
+      "confirmAcceptCta": "అవును, అంగీకరించండి",
+      "confirmRejectTitle": "{company} నుండి వచ్చిన ఆహ్వానాన్ని తిరస్కరించాలా?",
+      "confirmRejectBody": "కంపెనీకి తెలియజేయబడుతుంది. మిమ్మల్ని తర్వాత మళ్ళీ ఆహ్వానించవచ్చు.",
+      "confirmRejectCta": "అవును, తిరస్కరించండి",
+      "confirmCancel": "రద్దు చేయండి",
+      "confirmBusy": "సేవ్ అవుతోంది…"
     },
     "profile": {
       "headerTitle": "నిపుణుల అర్హతలు",

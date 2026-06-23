@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "എന്തുകൊണ്ടാണ് നിങ്ങൾ ഈ ക്ഷണം നിരസിക്കുന്നത്?",
       "modalCancel": "റദ്ദാക്കുക",
       "modalConfirmIdle": "നിരസിക്കൽ സ്ഥിരീകരിക്കുക",
-      "modalConfirmBusy": "കുറയുന്നു..."
+      "modalConfirmBusy": "കുറയുന്നു...",
+      "companyFallback": "ഒരു കമ്പനി",
+      "confirmAcceptTitle": "{company} യിൽ നിന്നുള്ള ക്ഷണം സ്വീകരിക്കണോ?",
+      "confirmAcceptBody": "ഈ കമ്പനിയിൽ നിന്ന് നിങ്ങൾക്ക് അന്വേഷണങ്ങൾ ലഭിച്ചു തുടങ്ങും.",
+      "confirmAcceptCta": "അതെ, അംഗീകരിക്കുക",
+      "confirmRejectTitle": "{company} യിൽ നിന്നുള്ള ക്ഷണം നിരസിക്കണോ?",
+      "confirmRejectBody": "കമ്പനിയെ അറിയിക്കുന്നതായിരിക്കും. നിങ്ങളെ പിന്നീട് വീണ്ടും ക്ഷണിക്കാവുന്നതാണ്.",
+      "confirmRejectCta": "അതെ, നിരസിക്കുക",
+      "confirmCancel": "റദ്ദാക്കുക",
+      "confirmBusy": "സംരക്ഷിക്കുന്നു..."
     },
     "profile": {
       "headerTitle": "വിദഗ്ദ്ധ യോഗ്യതാപത്രങ്ങൾ",

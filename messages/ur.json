@@ -2532,7 +2532,16 @@
       "modalPlaceholder": "آپ اس دعوت کو کیوں ٹھکرا رہے ہیں؟",
       "modalCancel": "منسوخ کریں۔",
       "modalConfirmIdle": "انکار کی تصدیق کریں۔",
-      "modalConfirmBusy": "رد ہو رہا ہے…"
+      "modalConfirmBusy": "رد ہو رہا ہے…",
+      "companyFallback": "ایک کمپنی",
+      "confirmAcceptTitle": "{company} کی طرف سے دعوت قبول کریں؟",
+      "confirmAcceptBody": "آپ کو اس کمپنی سے سوالات موصول ہونا شروع ہو جائیں گے۔",
+      "confirmAcceptCta": "ہاں، قبول ہے۔",
+      "confirmRejectTitle": "{company} کی طرف سے دعوت نامے کو مسترد کریں؟",
+      "confirmRejectBody": "کمپنی کو آگاہ کیا جائے گا۔ آپ کو بعد میں دوبارہ مدعو کیا جا سکتا ہے۔",
+      "confirmRejectCta": "ہاں، انکار",
+      "confirmCancel": "منسوخ کریں۔",
+      "confirmBusy": "محفوظ ہو رہا ہے…"
     },
     "profile": {
       "headerTitle": "ماہر اسناد",
