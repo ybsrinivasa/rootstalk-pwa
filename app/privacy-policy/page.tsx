@@ -1,9 +1,18 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
+
+const ROLE_HOME: Record<string, string> = {
+  FARMER: '/home',
+  DEALER: '/dealer/home',
+  FACILITATOR: '/facilitator/home',
+  FARM_PUNDIT: '/pundit/home',
+}
 
 export default function PrivacyPolicyPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const backTarget = ROLE_HOME[searchParams.get('role') || ''] || '/home'
   const t = useTranslations('privacyPolicy')
   const sections: { titleKey: 'collectTitle' | 'useTitle' | 'shareTitle' | 'locationTitle' | 'retentionTitle' | 'rightsTitle' | 'securityTitle' | 'contactTitle'; bodyKey: 'collectBody' | 'useBody' | 'shareBody' | 'locationBody' | 'retentionBody' | 'rightsBody' | 'securityBody' | 'contactBody' }[] = [
     { titleKey: 'collectTitle',    bodyKey: 'collectBody' },
@@ -19,10 +28,10 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen bg-[#F7F5F0]">
       {/* Header */}
       <div className="px-5 py-5 flex items-center gap-3" style={{ background: '#3A7D44' }}>
-        <button onClick={() => router.back()} className="text-white/70 hover:text-white">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-          </svg>
+        <button onClick={() => router.push(backTarget)}
+          aria-label="Back"
+          className="text-white/90 hover:text-white text-[28px] leading-none w-9 h-9 flex items-center justify-center font-light pb-1">
+          ‹
         </button>
         <h1 className="text-white font-semibold text-lg">{t('title')}</h1>
       </div>

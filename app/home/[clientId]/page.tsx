@@ -120,11 +120,10 @@ export default function BrandedSpacePage() {
       {/* Branded top header (not using PWAHeader — custom branded) */}
       <div className="sticky top-0 z-40" style={{ background: colour }}>
         <div className="flex items-center px-4 pt-12 pb-4">
-          <button onClick={() => router.back()}
-            className="text-white opacity-70 mr-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-            </svg>
+          <button onClick={() => router.push('/home')}
+            aria-label="Back"
+            className="text-white opacity-90 mr-3 text-[28px] leading-none w-9 h-9 flex items-center justify-center font-light pb-1">
+            ‹
           </button>
           <div className="flex-1 flex flex-col items-center">
             {branding?.logo_url ? (

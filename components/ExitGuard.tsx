@@ -35,17 +35,15 @@ export default function ExitGuard() {
 
   function closeApp() {
     setOpen(false)
-    // window.close() works for popup-style windows in some
-    // browsers but reliably fails on Android Chrome's installed
-    // PWA — so we always navigate out of scope as the fallback.
-    // Pre-fix the fallback was about:blank, which surprised the
-    // user with a stark white page. Navigating to eywa.farm
-    // (the company site) instead has the same effect — Android
-    // shows the PWA-CCT chrome with an X to close the PWA — but
-    // lands the user on a meaningful page if they choose to read
-    // rather than dismiss.
+    // Installed PWA contexts (Android Chrome, iOS standalone) honour
+    // window.close() and exit cleanly. Browser tabs can't be closed
+    // by script — there's no clean exit there, and we used to redirect
+    // to eywa.farm as a "soft landing," but a marketing-site redirect
+    // surprises the user (2026-06-23 feedback: "we are leading the
+    // user to our website, which is not right"). Drop the redirect —
+    // if window.close() is a no-op, leave the user on the dashboard
+    // with the sheet dismissed; they'll exit via the OS back gesture.
     try { window.close() } catch { /* ignore */ }
-    window.location.href = 'https://eywa.farm'
   }
 
   if (!open) return null

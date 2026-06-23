@@ -282,14 +282,14 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               <path strokeLinecap="round" strokeLinejoin="round" d="M9.66 17h4.68m-2.34 3v-3m0-14a7 7 0 014.95 11.95l-.7.7c-.6.6-1.21 1.18-1.69 1.86-.4.56-.66 1.19-.66 1.99H9.78c0-.8-.26-1.43-.66-2-.48-.67-1.09-1.25-1.69-1.85l-.7-.7A7 7 0 0112 3z"/>
             }
             label={t('helpAndTips')}
-            onClick={() => go('/help-tips')}
+            onClick={() => go(`/help-tips?role=${activeRole}`)}
           />
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/>
             }
             label={t('privacyPolicy')}
-            onClick={() => go('/privacy-policy')}
+            onClick={() => go(`/privacy-policy?role=${activeRole}`)}
           />
           <MenuRow
             icon={

@@ -78,10 +78,10 @@ export default function AssignmentReviewPage() {
     <div className="min-h-screen bg-[#F7F5F0]">
       {/* Branded header */}
       <div className="px-5 py-6" style={{ background: colour }}>
-        <button onClick={() => router.back()} className="text-white/70 mb-3">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-          </svg>
+        <button onClick={() => router.push('/home')}
+          aria-label="Back"
+          className="text-white/90 mb-3 text-[28px] leading-none w-9 h-9 flex items-center justify-center font-light pb-1">
+          ‹
         </button>
         <p className="text-white/70 text-xs uppercase tracking-widest">Advisory Request</p>
         <h1 className="text-white text-2xl font-bold mt-1">{detail.company?.name}</h1>

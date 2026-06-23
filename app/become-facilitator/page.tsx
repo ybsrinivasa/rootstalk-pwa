@@ -100,7 +100,7 @@ export default function BecomeFacilitatorPage() {
           style={{ background: '#7D4E00' }}>
           {claiming ? 'Registering…' : 'Register as a Facilitator'}
         </button>
-        <button onClick={() => router.back()}
+        <button onClick={() => router.push('/home')}
           className="mt-3 w-full py-3 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
           Cancel
         </button>

@@ -110,8 +110,8 @@ export default function PWAHeader({
                   ? back.label
                   : tCommon('back')
               }
-              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors text-white text-xl">
-              ←
+              className="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 active:bg-white/20 transition-colors text-white text-[28px] leading-none pb-1 font-light">
+              ‹
             </button>
           )}
 

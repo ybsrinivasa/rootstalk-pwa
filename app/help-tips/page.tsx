@@ -1,15 +1,8 @@
 'use client'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 
 type Role = 'FARMER' | 'DEALER' | 'FACILITATOR' | 'FARM_PUNDIT'
-
-function getActiveRoleFromPath(pathname: string): Role {
-  if (pathname.startsWith('/dealer')) return 'DEALER'
-  if (pathname.startsWith('/facilitator')) return 'FACILITATOR'
-  if (pathname.startsWith('/pundit')) return 'FARM_PUNDIT'
-  return 'FARMER'
-}
 
 const ROLE_KEY: Record<Role, 'farmer' | 'dealer' | 'facilitator' | 'pundit'> = {
   FARMER: 'farmer',
@@ -18,22 +11,38 @@ const ROLE_KEY: Record<Role, 'farmer' | 'dealer' | 'facilitator' | 'pundit'> = {
   FARM_PUNDIT: 'pundit',
 }
 
+const ROLE_HOME: Record<Role, string> = {
+  FARMER: '/home',
+  DEALER: '/dealer/home',
+  FACILITATOR: '/facilitator/home',
+  FARM_PUNDIT: '/pundit/home',
+}
+
 const SECTION_KEYS = ['gettingStarted', 'dayToDay', 'gettingHelp'] as const
+
+function isRole(s: string | null): s is Role {
+  return s === 'FARMER' || s === 'DEALER' || s === 'FACILITATOR' || s === 'FARM_PUNDIT'
+}
 
 export default function HelpTipsPage() {
   const router = useRouter()
-  const pathname = usePathname() || '/'
-  const activeRole = getActiveRoleFromPath(pathname)
+  const searchParams = useSearchParams()
+  const roleParam = searchParams.get('role')
+  // Role-aware via the `?role=` param the drawer passes. /help-tips itself
+  // has no role-prefixed path, so we can't infer from pathname — yesterday's
+  // version always defaulted to FARMER for that reason.
+  const activeRole: Role = isRole(roleParam) ? roleParam : 'FARMER'
+  const backTarget = ROLE_HOME[activeRole]
   const t = useTranslations('helpTips')
   const roleKey = ROLE_KEY[activeRole]
 
   return (
     <div className="min-h-screen bg-[#F7F5F0]">
       <div className="px-5 py-5 flex items-center gap-3" style={{ background: '#3A7D44' }}>
-        <button onClick={() => router.back()} className="text-white/70 hover:text-white" aria-label="Back">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
-          </svg>
+        <button onClick={() => router.push(backTarget)}
+          aria-label="Back"
+          className="text-white/90 hover:text-white text-[28px] leading-none w-9 h-9 flex items-center justify-center font-light pb-1">
+          ‹
         </button>
         <h1 className="text-white font-semibold text-lg">{t('title')}</h1>
       </div>

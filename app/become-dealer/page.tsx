@@ -104,7 +104,7 @@ export default function BecomeDealerPage() {
           style={{ background: '#7D4196' }}>
           {claiming ? 'Registering…' : 'Register as a Dealer'}
         </button>
-        <button onClick={() => router.back()}
+        <button onClick={() => router.push('/home')}
           className="mt-3 w-full py-3 rounded-2xl text-[#7A8C7E] border border-[#DDD0B8] font-medium text-sm">
           Cancel
         </button>
