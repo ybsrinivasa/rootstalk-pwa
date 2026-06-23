@@ -12,7 +12,7 @@ interface QueryItem {
   client_id: string; expires_at: string; days_remaining: number
   recipient_name?: string
 }
-interface Company { client_id: string; role: string; is_promoter_pundit: boolean }
+interface Company { client_id: string; role: 'PRIMARY' | 'PANEL' | 'PROMOTER_PUNDIT' }
 interface ClientInfo {
   id: string; display_name: string; primary_colour: string
   tagline: string | null; logo_url: string | null

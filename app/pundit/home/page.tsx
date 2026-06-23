@@ -12,7 +12,7 @@ interface QuerySummary {
   id: string; title: string; status: string; severity: string
   client_id: string; expires_at: string; days_remaining: number
 }
-interface Company { client_id: string; role: string; is_promoter_pundit: boolean }
+interface Company { client_id: string; role: 'PRIMARY' | 'PANEL' | 'PROMOTER_PUNDIT' }
 interface ClientInfo {
   id: string; display_name: string; primary_colour: string
   tagline: string | null; logo_url: string | null
@@ -201,13 +201,10 @@ export default function PunditHomePage() {
                         <p className="text-sm font-medium text-[#6B3F1F] truncate">{info?.display_name || c.client_id}</p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {/* Promoter Pundit and regular pundit (Primary /
-                            Panel) are mutually exclusive role types per
-                            client. Backend stores Promoter Pundit rows
-                            with role=PANEL + is_promoter_pundit=true,
-                            so the flag wins — never render both badges
-                            together. (User report 2026-06-23.) */}
-                        {c.is_promoter_pundit ? (
+                        {/* PROMOTER_PUNDIT is a first-class role (since
+                            2026-06-23). Regular pundits (PRIMARY / PANEL)
+                            and PPs are mutually exclusive. */}
+                        {c.role === 'PROMOTER_PUNDIT' ? (
                           <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{t('promoterBadge')}</span>
                         ) : (
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
