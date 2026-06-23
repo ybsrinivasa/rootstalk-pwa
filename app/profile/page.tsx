@@ -537,12 +537,17 @@ export default function ProfilePage() {
             all three are set up. */}
         {(() => {
           const setupCtas: { key: string; label: string; href: string; tagline: string }[] = []
-          if (!isDealer) setupCtas.push({
+          // 2026-06-23 — Dealer + Facilitator exclusivity. Suppress the
+          // CTA for the conflicting role; the destination page would
+          // block anyway, but showing the CTA without the gate is
+          // misleading and was being read as "Dealer→Facilitator is
+          // allowed while Facilitator→Dealer isn't."
+          if (!isDealer && !isFacilitator) setupCtas.push({
             key: 'DEALER', label: t('roles.dealer.label'),
             href: '/become-dealer',
             tagline: t('roles.dealer.tagline'),
           })
-          if (!isFacilitator) setupCtas.push({
+          if (!isFacilitator && !isDealer) setupCtas.push({
             key: 'FACILITATOR', label: t('roles.facilitator.label'),
             href: '/become-facilitator',
             tagline: t('roles.facilitator.tagline'),
