@@ -1503,6 +1503,17 @@
       "soldLine": "{sold} sold",
       "soldWithUnavailable": "{sold} sold, {na} unavailable"
     },
+    "onboardedCompanies": {
+      "headerTitle": "Onboarded Companies",
+      "promoterBadge": "Promoter",
+      "stepDown": "Step down",
+      "stepDownConfirm": "Step down as Promoter at this company? You will stay onboarded as a Dealer.",
+      "errorStepDown": "Could not step down. Please try again.",
+      "callAria": "Call {company}",
+      "websiteAria": "Open {company} website",
+      "emptyTitle": "No companies yet",
+      "emptyBody": "No company has onboarded you as a Dealer yet. Ask a Field Manager at the company you want to work with to onboard you."
+    },
     "promoterInvitations": {
       "headerTitle": "Promoter Invitations",
       "emptyTitle": "No pending invitations",
