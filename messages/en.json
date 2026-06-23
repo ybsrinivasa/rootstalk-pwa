@@ -295,24 +295,24 @@
     "greeting": "Welcome, {name}!",
     "fallbackName": "to rootsTALK",
     "subline": "Your complete farming companion",
-    "cta": "Let's get started →",
-    "alsoRoles": "I'm also a dealer / facilitator / expert",
-    "tile": {
-      "advisories": {
-        "title": "Advisories",
-        "body": "Expert-guided crop management, season by season"
+    "choicePrompt": "Where would you like to start?",
+    "choiceFooterHint": "You can take on more roles later from the side drawer.",
+    "role": {
+      "farmer": {
+        "title": "Farmer Dashboard",
+        "body": "Track your crops and get advisories"
       },
-      "purchase": {
-        "title": "Purchase",
-        "body": "Order recommended inputs through trusted dealers"
+      "dealer": {
+        "title": "Open my Shop",
+        "body": "Receive orders from farmers and supply inputs"
       },
-      "diagnose": {
-        "title": "Diagnose",
-        "body": "Identify crop problems with guided diagnosis"
+      "facilitator": {
+        "title": "Help as Facilitator",
+        "body": "Earn by promoting subscriptions in your village"
       },
-      "askExpert": {
-        "title": "Ask Expert",
-        "body": "Get answers from certified agronomists"
+      "pundit": {
+        "title": "Be an Expert",
+        "body": "Answer farmer questions in your area of expertise"
       }
     }
   },

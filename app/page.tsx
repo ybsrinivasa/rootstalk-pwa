@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser } from '@/lib/auth'
@@ -437,6 +437,63 @@ export default function RootPage() {
   // ── Welcome stage ──────────────────────────────────────────────────────────
   if (stage === 'welcome') {
     const user = getUser()
+    // 2026-06-23 — Role-choice intro. Per user direction: instead of
+    // always landing on the farmer dashboard and forcing dealers /
+    // facilitators / pundits to find their setup through the right
+    // drawer, the intro screen asks "where would you like to start?"
+    // and routes to the matching setup or dashboard. Farmer is
+    // pre-emphasised (emerald accent) since it's the majority path
+    // and remains the implicit role for every user. Choice is a
+    // starting point, not a commitment — the drawer still surfaces
+    // every role afterwards.
+    type RoleChoice = 'FARMER' | 'DEALER' | 'FACILITATOR' | 'FARM_PUNDIT'
+    const goRole = (r: RoleChoice) => {
+      if (r === 'FARMER')           router.replace('/home')
+      else if (r === 'DEALER')      router.replace('/become-dealer')
+      else if (r === 'FACILITATOR') router.replace('/become-facilitator')
+      else                          router.replace('/pundit/register')
+    }
+    // Role tile palette — same hexes the rest of the PWA uses
+    // (lib/auth.ts::ROLE_COLOURS) so the user starts seeing the
+    // role's visual identity from the very first tap.
+    const tilesPalette: Record<RoleChoice, { fg: string; tint: string }> = {
+      FARMER:      { fg: '#3A7D44', tint: '#3A7D4414' },
+      DEALER:      { fg: '#7D4196', tint: '#7D419614' },
+      FACILITATOR: { fg: '#7D4E00', tint: '#7D4E0014' },
+      FARM_PUNDIT: { fg: '#3C3489', tint: '#3C348914' },
+    }
+
+    const RoleTile = ({
+      role, title, body, defaultChoice, svg,
+    }: {
+      role: RoleChoice
+      title: string
+      body: string
+      defaultChoice?: boolean
+      svg: ReactNode
+    }) => {
+      const c = tilesPalette[role]
+      return (
+        <button
+          onClick={() => goRole(role)}
+          className="text-left bg-white rounded-2xl p-4 shadow-sm transition-transform active:scale-[0.98]"
+          style={{
+            border: defaultChoice ? `2px solid ${c.fg}` : '1px solid #DDD0B8',
+            background: defaultChoice ? c.tint : '#FFFFFF',
+          }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-2"
+            style={{ background: c.tint }}>
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={c.fg} strokeWidth={1.7}
+              strokeLinecap="round" strokeLinejoin="round">
+              {svg}
+            </svg>
+          </div>
+          <p className="font-semibold text-[#6B3F1F] text-sm leading-tight">{title}</p>
+          <p className="text-[#7A8C7E] text-xs mt-1 leading-snug">{body}</p>
+        </button>
+      )
+    }
+
     return (
       <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: BG }}>
         <DewDrops/>
@@ -468,63 +525,42 @@ export default function RootPage() {
             paddingBottom:        'max(2.5rem, env(safe-area-inset-bottom))',
           }}>
 
-          {/* Feature grid */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {/* Advisories */}
-            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
-              <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <rect x="4" y="3" width="14" height="18" rx="2" fill="#3A7D44" opacity="0.15"/>
-                <rect x="4" y="3" width="14" height="18" rx="2" stroke="#3A7D44" strokeWidth="1.5"/>
-                <path d="M8 8h6M8 11.5h6M8 15h4" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
-                <circle cx="21" cy="19" r="5" fill="#3A7D44"/>
-                <path d="M21 16.5v2.5l1.5 1.5" stroke="white" strokeWidth="1.2" strokeLinecap="round"/>
-              </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.advisories.title')}</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.advisories.body')}</p>
-            </div>
+          <p className="text-[#6B3F1F] font-semibold text-sm mb-3 text-center">
+            {tWelcome('choicePrompt')}
+          </p>
 
-            {/* Purchase */}
-            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
-              <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <path d="M5 4h2l2.5 11h10l2.5-8H9" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="12" cy="23" r="1.5" fill="#3A7D44"/>
-                <circle cx="19" cy="23" r="1.5" fill="#3A7D44"/>
-              </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.purchase.title')}</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.purchase.body')}</p>
-            </div>
-
-            {/* Diagnose */}
-            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
-              <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <circle cx="13" cy="13" r="7" stroke="#3A7D44" strokeWidth="1.5"/>
-                <path d="M18.5 18.5L23 23" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M10 13h6M13 10v6" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.diagnose.title')}</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.diagnose.body')}</p>
-            </div>
-
-            {/* Ask Expert */}
-            <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 shadow-sm">
-              <svg className="w-7 h-7 mb-2" viewBox="0 0 28 28" fill="none">
-                <path d="M5 6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H9l-4 4V6z" stroke="#3A7D44" strokeWidth="1.5" strokeLinejoin="round"/>
-                <path d="M10 10h8M10 13.5h5" stroke="#3A7D44" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-              <p className="font-semibold text-[#6B3F1F] text-sm">{tWelcome('tile.askExpert.title')}</p>
-              <p className="text-[#7A8C7E] text-xs mt-0.5 leading-snug">{tWelcome('tile.askExpert.body')}</p>
-            </div>
+          {/* Role choice grid */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <RoleTile
+              role="FARMER"
+              defaultChoice
+              title={tWelcome('role.farmer.title')}
+              body={tWelcome('role.farmer.body')}
+              svg={<path d="M12 21V10m0 0c2.5-2.5 5-2 5-5 0 3-2.5 2.5-5 5zm0 0c-2.5-2.5-5-2-5-5 0 3 2.5 2.5 5 5z"/>}
+            />
+            <RoleTile
+              role="DEALER"
+              title={tWelcome('role.dealer.title')}
+              body={tWelcome('role.dealer.body')}
+              svg={<path d="M3 6h18l-2 13H5L3 6zm4 0V4a2 2 0 012-2h6a2 2 0 012 2v2"/>}
+            />
+            <RoleTile
+              role="FACILITATOR"
+              title={tWelcome('role.facilitator.title')}
+              body={tWelcome('role.facilitator.body')}
+              svg={<path d="M5 17a2 2 0 104 0 2 2 0 00-4 0zm10 0a2 2 0 104 0 2 2 0 00-4 0zm-9-3V8h7v6m0 0h6.5l-2-5H13"/>}
+            />
+            <RoleTile
+              role="FARM_PUNDIT"
+              title={tWelcome('role.pundit.title')}
+              body={tWelcome('role.pundit.body')}
+              svg={<path d="M12 6a3 3 0 110 6 3 3 0 010-6zm0 8c-3 0-7 1.5-7 4.5V20h14v-1.5c0-3-4-4.5-7-4.5zm5-9l2 2-2 2m-12-2l2 2-2 2"/>}
+            />
           </div>
 
-          {/* CTA buttons */}
-          <Btn onClick={() => roleHome()}>
-            {tWelcome('cta')}
-          </Btn>
-          <button
-            onClick={() => roleHome()}
-            className="w-full text-center text-[#7A8C7E] text-sm py-3 mt-2">
-            {tWelcome('alsoRoles')}
-          </button>
+          <p className="text-[#7A8C7E] text-[11px] text-center leading-relaxed mb-3">
+            {tWelcome('choiceFooterHint')}
+          </p>
         </div>
       </div>
     )
