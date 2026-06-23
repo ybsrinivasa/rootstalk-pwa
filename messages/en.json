@@ -2014,6 +2014,11 @@
       "emptyTitle": "No promoted farmers yet",
       "emptyHint": "Farmers you sponsor will appear here",
       "unknownFarmer": "Unknown farmer",
+      "acresLabel": "{count, plural, one {1 acre} other {# acres}}",
+      "plantsLabel": "{count, plural, one {1 plant} other {# plants}}",
+      "startedLabel": "Started {date}",
+      "plantedLabel": "Planted {year}",
+      "callBtnAria": "Call {name}",
       "detail": {
         "headerTitle": "Farmer advisory",
         "errorTitleWaiting": "Waiting on the farmer",
@@ -2450,6 +2455,11 @@
       "emptyTitle": "No promoted farmers yet",
       "emptyHint": "Farmers you sponsor will appear here",
       "farmerFallback": "Farmer",
+      "acresLabel": "{count, plural, one {1 acre} other {# acres}}",
+      "plantsLabel": "{count, plural, one {1 plant} other {# plants}}",
+      "startedLabel": "Started {date}",
+      "plantedLabel": "Planted {year}",
+      "callBtnAria": "Call {name}",
       "detail": {
         "headerTitle": "Farmer advisory",
         "errorTitleWaiting": "Waiting on the farmer",
