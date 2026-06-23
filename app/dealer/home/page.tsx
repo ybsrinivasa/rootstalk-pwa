@@ -6,7 +6,6 @@ import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import BottomNav from '@/components/layout/BottomNav'
-import ExitGuard from '@/components/ExitGuard'
 import api from '@/lib/api'
 
 const COLOUR = '#7D4196'
@@ -271,7 +270,6 @@ export default function DealerHomePage() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
-      <ExitGuard />
 
       <RoleSwitcherDrawer
         open={showRoleDrawer}
