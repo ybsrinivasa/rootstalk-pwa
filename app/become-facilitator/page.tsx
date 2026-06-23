@@ -17,9 +17,11 @@ export default function BecomeFacilitatorPage() {
   const router = useRouter()
   const user = getUser()
   const roles = getActiveRoles(user)
-  const isFacilitator = roles.includes('FACILITATOR')
+  const isFacilitator = roles.includes('FACILITATOR') || !!user?.facilitator_declared_at
   // 2026-06-23 — Mirror of /become-dealer's exclusivity gate.
-  const blockedByDealer = roles.includes('DEALER')
+  // `dealer_profile_complete` covers the legacy case where pwa_roles
+  // is missing DEALER despite the user having gone through dealer setup.
+  const blockedByDealer = roles.includes('DEALER') || user?.dealer_profile_complete === true
 
   const [claiming, setClaiming] = useState(false)
   const [error, setError] = useState('')

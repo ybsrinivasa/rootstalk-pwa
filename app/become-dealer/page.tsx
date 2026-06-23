@@ -17,12 +17,14 @@ export default function BecomeDealerPage() {
   const router = useRouter()
   const user = getUser()
   const roles = getActiveRoles(user)
-  const isDealer = roles.includes('DEALER')
+  const isDealer = roles.includes('DEALER') || user?.dealer_profile_complete === true
   // 2026-06-23 — Dealer + Facilitator exclusivity. If the user already
   // holds the Facilitator role, the Become-a-Dealer flow blocks
   // upfront with a clear explanation instead of letting them try and
-  // hit a 409 on claim-role.
-  const blockedByFacilitator = roles.includes('FACILITATOR')
+  // hit a 409 on claim-role. `facilitator_declared_at` covers the
+  // legacy case where pwa_roles is missing FACILITATOR despite the
+  // user having gone through facilitator setup.
+  const blockedByFacilitator = roles.includes('FACILITATOR') || !!user?.facilitator_declared_at
 
   const [claiming, setClaiming] = useState(false)
   const [error, setError] = useState('')

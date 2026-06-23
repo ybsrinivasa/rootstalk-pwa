@@ -126,10 +126,26 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
   // of interest in the order-routing chain). All other combinations
   // are fine. Returns the role currently blocking the candidate, or
   // null if the candidate is allowed.
+  //
+  // "Effective role" widens past `userRoles` to catch legacy sessions
+  // where the user is acting as a dealer/facilitator (via URL or
+  // completed setup) but the UserRole/ClientPromoter row isn't in
+  // `pwa_roles` for whatever reason. Without this, the lock didn't
+  // render and the role read as "Set up →".
+  const isEffectiveDealer =
+    userRoles.includes('DEALER') ||
+    activeRole === 'DEALER' ||
+    user?.dealer_profile_complete === true
+  const isEffectiveFacilitator =
+    userRoles.includes('FACILITATOR') ||
+    activeRole === 'FACILITATOR' ||
+    !!user?.facilitator_declared_at
+
   function isBlockedByExclusivity(candidate: string): 'DEALER' | 'FACILITATOR' | null {
-    if (userRoles.includes(candidate)) return null
-    if (candidate === 'DEALER' && userRoles.includes('FACILITATOR')) return 'FACILITATOR'
-    if (candidate === 'FACILITATOR' && userRoles.includes('DEALER')) return 'DEALER'
+    if (candidate === 'DEALER' && isEffectiveDealer) return null
+    if (candidate === 'FACILITATOR' && isEffectiveFacilitator) return null
+    if (candidate === 'DEALER' && isEffectiveFacilitator) return 'FACILITATOR'
+    if (candidate === 'FACILITATOR' && isEffectiveDealer) return 'DEALER'
     return null
   }
 

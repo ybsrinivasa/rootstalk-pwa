@@ -263,8 +263,12 @@ export default function ProfilePage() {
     }
   }
 
-  const isDealer = pwaRoles.includes('DEALER') || roles.includes('DEALER')
-  const isFacilitator = pwaRoles.includes('FACILITATOR') || roles.includes('FACILITATOR')
+  // 2026-06-23 — Widen the "is X role" check to also cover legacy
+  // sessions whose pwa_roles is missing DEALER/FACILITATOR despite the
+  // user having gone through setup. Mirrors the drawer + become-X
+  // pages so the Dealer/Facilitator exclusivity gate fires consistently.
+  const isDealer = pwaRoles.includes('DEALER') || roles.includes('DEALER') || user?.dealer_profile_complete === true
+  const isFacilitator = pwaRoles.includes('FACILITATOR') || roles.includes('FACILITATOR') || !!user?.facilitator_declared_at
   const isFarmPundit = pwaRoles.includes('FARM_PUNDIT') || roles.includes('FARM_PUNDIT')
 
   return (
