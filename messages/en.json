@@ -2472,8 +2472,13 @@
         "errorLoad": "Could not load the advisory.",
         "readOnlyHint": "Read-only view. The farmer is the one acting on this advisory.",
         "dayHeader": "Day {day} · {count, plural, one {1 active timeline} other {# active timelines}}",
+        "dayN": "Day {day}",
+        "activeTimelines": "Active timelines",
         "noneToday": "Nothing is due in the farmer's advisory window today.",
         "noPracticeToday": "No practice due today on this timeline.",
+        "suppressedNote": "{count, plural, one {1 practice is already covered by another active recommendation.} other {# practices are already covered by other active recommendations.}}",
+        "pendingQuestionLabel": "Farmer needs to answer",
+        "pendingQuestionHint": "The farmer is being asked this question; the advisory will branch once they respond.",
         "l0": {
           "input": "Apply Input",
           "nonInput": "Crop Activity",
@@ -2485,7 +2490,15 @@
         "farmerPurchased": "✓ Farmer has purchased",
         "purchasePending": "Purchase pending",
         "frequencyEvery": "{count, plural, one {Every 1 day} other {Every # days}}",
-        "frequencyNotDueToday": " · not due today"
+        "frequencyEveryDay": "Every day",
+        "frequencyNotDueToday": " · not due today",
+        "adjuvantBadge": "Adjuvant",
+        "generalAdvisory": "General advisory",
+        "ackMarked": "Farmer marked done",
+        "ackPending": "Farmer hasn't marked done",
+        "andGroupHeader": "Apply both together — AND group",
+        "partHeader": "Part {part}",
+        "orSeparator": "OR"
       }
     },
     "seedOrders": {
