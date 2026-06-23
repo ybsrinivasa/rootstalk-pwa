@@ -35,15 +35,19 @@ export default function ExitGuard() {
 
   function closeApp() {
     setOpen(false)
-    // Installed PWA contexts (Android Chrome, iOS standalone) honour
-    // window.close() and exit cleanly. Browser tabs can't be closed
-    // by script — there's no clean exit there, and we used to redirect
-    // to eywa.farm as a "soft landing," but a marketing-site redirect
-    // surprises the user (2026-06-23 feedback: "we are leading the
-    // user to our website, which is not right"). Drop the redirect —
-    // if window.close() is a no-op, leave the user on the dashboard
-    // with the sheet dismissed; they'll exit via the OS back gesture.
+    // Installed PWA contexts (Android Chrome standalone, iOS PWA)
+    // honour window.close() and the app shuts cleanly.
+    //
+    // Browser-tab contexts silently no-op window.close() — that's a
+    // browser security restriction we can't talk around. Without a
+    // fallback the confirm tap appears to do nothing (2026-06-23
+    // user report). Fall back to about:blank via location.replace()
+    // — replace() wipes the in-app history entry so the back gesture
+    // doesn't bounce the user back into the app, and about:blank is
+    // a browser-native "no page" state rather than a marketing site
+    // (previous fix shipped eywa.farm, which we already rejected).
     try { window.close() } catch { /* ignore */ }
+    window.location.replace('about:blank')
   }
 
   if (!open) return null
