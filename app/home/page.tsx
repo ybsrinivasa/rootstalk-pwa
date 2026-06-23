@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import ExitGuard from '@/components/ExitGuard'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
 import { C } from '@/lib/tokens'
@@ -543,6 +544,7 @@ export default function HomePage() {
       </div>
 
       <BottomNav color={C.primary}/>
+      <ExitGuard />
 
       <RoleSwitcherDrawer
         open={showRoleDrawer}
