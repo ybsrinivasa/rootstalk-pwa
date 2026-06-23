@@ -2491,7 +2491,10 @@
       "emptyReturned": "କୌଣସି ଫେରସ୍ତ କରାଯାଇଥିବା କ୍ୱେରୀ ନାହିଁ",
       "emptyHistory": "କୌଣସି ଇତିହାସ କ୍ୱେରୀ ନାହିଁ",
       "daysRemaining": "{count} ଦିନ ବାକି ଅଛି",
-      "forwardedTo": "{name} କୁ ଫରୱାର୍ଡ କରାଯାଇଛି"
+      "forwardedTo": "{name} କୁ ଫରୱାର୍ଡ କରାଯାଇଛି",
+      "filterChip": "{company} ପାଇଁ କ୍ୱେରୀଗୁଡ଼ିକ ଦେଖାଉଛି",
+      "filterChipFallback": "ଗୋଟିଏ କମ୍ପାନୀକୁ ଫିଲ୍ଟର କରାଯାଇଛି",
+      "clearFilter": "ଫିଲ୍ଟର୍ ସଫା କରନ୍ତୁ"
     },
     "invitations": {
       "headerTitle": "କମ୍ପାନୀ ନିମନ୍ତ୍ରଣଗୁଡ଼ିକ",

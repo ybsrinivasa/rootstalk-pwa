@@ -2487,7 +2487,10 @@
       "emptyReturned": "No returned queries",
       "emptyHistory": "No history queries",
       "daysRemaining": "{count}d remaining",
-      "forwardedTo": "Forwarded to {name}"
+      "forwardedTo": "Forwarded to {name}",
+      "filterChip": "Showing queries for {company}",
+      "filterChipFallback": "Filtered to one company",
+      "clearFilter": "Clear filter"
     },
     "invitations": {
       "headerTitle": "Company Invitations",

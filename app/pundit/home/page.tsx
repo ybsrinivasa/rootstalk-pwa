@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser } from '@/lib/auth'
@@ -70,7 +69,6 @@ export default function PunditHomePage() {
         const profile = pRes.value.data
         setCompanies(profile.companies || [])
         setPhoneHidden(profile.phone_privacy ?? false)
-        // Fetch client info for each company
         const ids = (profile.companies || []).map((c: Company) => c.client_id)
         if (ids.length > 0) {
           Promise.allSettled(
@@ -94,12 +92,26 @@ export default function PunditHomePage() {
     } finally { setPrivacyLoading(false) }
   }
 
-  const newCount = queries.filter(q => q.status === 'NEW').length
-  const pendingCount = queries.filter(q => q.status === 'FORWARDED').length
-  const returnedCount = queries.filter(q => q.status === 'RETURNED').length
+  // 2026-06-23 — Per-org counts. Pundit can be onboarded with multiple
+  // companies; pooled counts hide which company is waiting. Each pill
+  // navigates to /pundit/queries?client=…&status=… for a filtered view.
+  function countsFor(clientId: string) {
+    return {
+      newCount: queries.filter(q => q.client_id === clientId && q.status === 'NEW').length,
+      pendingCount: queries.filter(q => q.client_id === clientId && q.status === 'FORWARDED').length,
+      returnedCount: queries.filter(q => q.client_id === clientId && q.status === 'RETURNED').length,
+    }
+  }
 
-  // Show only active queries (NEW, FORWARDED, RETURNED) in dashboard preview
-  const activeQueries = queries.filter(q => ['NEW', 'FORWARDED', 'RETURNED'].includes(q.status))
+  const totalNew = queries.filter(q => q.status === 'NEW').length
+  const totalPending = queries.filter(q => q.status === 'FORWARDED').length
+  const totalReturned = queries.filter(q => q.status === 'RETURNED').length
+
+  // Active Queries preview — cross-org, sorted by urgency. Each row now
+  // carries a small company chip so the cross-org context is visible.
+  const activeQueries = queries
+    .filter(q => ['NEW', 'FORWARDED', 'RETURNED'].includes(q.status))
+    .sort((a, b) => a.days_remaining - b.days_remaining)
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -107,7 +119,7 @@ export default function PunditHomePage() {
         title={t('headerTitle')}
         activeRole="FARM_PUNDIT"
         onRoleSwitch={() => setShowRoleDrawer(true)}
-        urgencyBadges={{ new: newCount, pending: pendingCount, returned: returnedCount }}
+        urgencyBadges={{ new: totalNew, pending: totalPending, returned: totalReturned }}
       />
       <div className="pt-16 pb-20 px-4">
         {/* Greeting */}
@@ -116,22 +128,6 @@ export default function PunditHomePage() {
             {user?.name ? t('welcomeWithName', { name: user.name.split(' ')[0] }) : t('welcomeNoName')}
           </p>
           <p className="text-[#7A8C7E] text-sm mt-0.5">{t('companyCount', { count: companies.length })}</p>
-        </div>
-
-        {/* Stats — New / Pending / Returned */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
-            <p className="text-2xl font-bold text-[#6B3F1F]">{loading ? '…' : newCount}</p>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">{t('statNew')}</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
-            <p className="text-2xl font-bold text-amber-500">{loading ? '…' : pendingCount}</p>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">{t('statPending')}</p>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] text-center">
-            <p className="text-2xl font-bold text-[#D4682E]">{loading ? '…' : returnedCount}</p>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">{t('statReturned')}</p>
-          </div>
         </div>
 
         {/* Phone privacy toggle */}
@@ -148,17 +144,6 @@ export default function PunditHomePage() {
               <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${phoneHidden ? 'translate-x-7' : 'translate-x-1'}`} />
             </button>
           </div>
-        </div>
-
-        {/* Quick actions */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <Link href="/pundit/profile" className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
-            <svg className="w-6 h-6 text-[#3C3489]" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/>
-            </svg>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileCredentials')}</p>
-            <p className="text-xs text-[#7A8C7E]">{t('tileCredentialsHint')}</p>
-          </Link>
         </div>
 
         {/* Pending invitations */}
@@ -181,7 +166,10 @@ export default function PunditHomePage() {
           </div>
         )}
 
-        {/* My Companies */}
+        {/* My Companies — now the primary action surface. Each row shows
+            per-org counts as clickable pills that drill into a filtered
+            /pundit/queries view. Pundit responses + recommendations
+            differ per onboarding company, so per-org scoping matters. */}
         <div className="mb-5">
           <h2 className="font-semibold text-[#6B3F1F] mb-3">{t('companiesTitle')}</h2>
           {loading ? (
@@ -196,27 +184,38 @@ export default function PunditHomePage() {
                 const info = clientInfos[c.client_id]
                 const colour = info?.primary_colour || COLOUR
                 const initials = (info?.display_name || '?').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
+                const { newCount, pendingCount, returnedCount } = countsFor(c.client_id)
                 return (
-                  <div key={c.client_id} className="bg-white rounded-2xl p-3 border border-[#DDD0B8] flex items-center gap-3">
-                    {info?.logo_url ? (
-                      <img src={info.logo_url} alt={info.display_name}
-                        className="w-9 h-9 rounded-full object-contain bg-[#F5F0E8] p-1 shrink-0 border border-[#DDD0B8]" />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                        style={{ background: colour }}>
-                        <span className="text-white text-xs font-bold">{initials}</span>
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#6B3F1F] truncate">{info?.display_name || c.client_id}</p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {c.is_promoter_pundit && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{t('promoterBadge')}</span>
+                  <div key={c.client_id} className="bg-white rounded-2xl p-3 border border-[#DDD0B8]">
+                    <div className="flex items-center gap-3">
+                      {info?.logo_url ? (
+                        <img src={info.logo_url} alt={info.display_name}
+                          className="w-9 h-9 rounded-full object-contain bg-[#F5F0E8] p-1 shrink-0 border border-[#DDD0B8]" />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                          style={{ background: colour }}>
+                          <span className="text-white text-xs font-bold">{initials}</span>
+                        </div>
                       )}
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
-                        {c.role === 'PRIMARY' ? t('rolePrimary') : t('rolePanel')}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-[#6B3F1F] truncate">{info?.display_name || c.client_id}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {c.is_promoter_pundit && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-medium">{t('promoterBadge')}</span>
+                        )}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.role === 'PRIMARY' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-[#7A8C7E]'}`}>
+                          {c.role === 'PRIMARY' ? t('rolePrimary') : t('rolePanel')}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-3">
+                      <CountPill label={t('statNew')} count={newCount}
+                        onClick={() => newCount > 0 && router.push(`/pundit/queries?client=${c.client_id}&status=NEW`)} />
+                      <CountPill label={t('statPending')} count={pendingCount} tone="amber"
+                        onClick={() => pendingCount > 0 && router.push(`/pundit/queries?client=${c.client_id}&status=FORWARDED`)} />
+                      <CountPill label={t('statReturned')} count={returnedCount} tone="alert"
+                        onClick={() => returnedCount > 0 && router.push(`/pundit/queries?client=${c.client_id}&status=RETURNED`)} />
                     </div>
                   </div>
                 )
@@ -225,7 +224,9 @@ export default function PunditHomePage() {
           )}
         </div>
 
-        {/* Active Queries preview */}
+        {/* Active Queries preview — cross-org, sorted by urgency. Each
+            row carries a small company chip so the recipient can tell
+            which onboarding org's context applies before opening. */}
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-[#6B3F1F]">{t('activeQueriesTitle')}</h2>
@@ -244,25 +245,36 @@ export default function PunditHomePage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {activeQueries.slice(0, 5).map(q => (
-                <button key={q.id} onClick={() => router.push(`/pundit/queries/${q.id}`)}
-                  className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${q.status === 'RETURNED' || q.days_remaining <= 1 ? 'border-red-200' : 'border-[#DDD0B8]'}`}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[#6B3F1F] text-sm line-clamp-1">{q.title}</p>
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">{q.status}</p>
+              {activeQueries.slice(0, 5).map(q => {
+                const info = clientInfos[q.client_id]
+                return (
+                  <button key={q.id} onClick={() => router.push(`/pundit/queries/${q.id}`)}
+                    className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${q.status === 'RETURNED' || q.days_remaining <= 1 ? 'border-red-200' : 'border-[#DDD0B8]'}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-[#6B3F1F] text-sm line-clamp-1">{q.title}</p>
+                        <div className="flex items-center gap-2 mt-1 flex-wrap">
+                          {info?.display_name && (
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
+                              style={{ background: (info.primary_colour || COLOUR) + '1A', color: info.primary_colour || COLOUR }}>
+                              {info.display_name}
+                            </span>
+                          )}
+                          <p className="text-xs text-[#7A8C7E]">{q.status}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-[#7A8C7E]'}`}>
+                          {q.severity}
+                        </span>
+                        <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
+                          {t('daysLeft', { count: q.days_remaining })}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-[#7A8C7E]'}`}>
-                        {q.severity}
-                      </span>
-                      <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
-                        {t('daysLeft', { count: q.days_remaining })}
-                      </span>
-                    </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -277,5 +289,28 @@ export default function PunditHomePage() {
         activeRole="FARM_PUNDIT"
       />
     </div>
+  )
+}
+
+// Compact per-org count pill. Greys out at zero (no nav target).
+function CountPill({
+  label, count, onClick, tone = 'primary',
+}: {
+  label: string
+  count: number
+  onClick: () => void
+  tone?: 'primary' | 'amber' | 'alert'
+}) {
+  const disabled = count === 0
+  const toneClasses =
+    disabled ? 'bg-stone-100 text-[#7A8C7E]'
+    : tone === 'amber' ? 'bg-amber-100 text-amber-800'
+    : tone === 'alert' ? 'bg-red-100 text-[#D4682E]'
+    : 'bg-[#3C3489]/10 text-[#3C3489]'
+  return (
+    <button onClick={onClick} disabled={disabled}
+      className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-opacity ${toneClasses} ${disabled ? 'cursor-default' : 'active:opacity-80'}`}>
+      {label} <span className="font-bold">{count}</span>
+    </button>
   )
 }

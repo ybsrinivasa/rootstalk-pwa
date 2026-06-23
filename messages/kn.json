@@ -2491,7 +2491,10 @@
       "emptyReturned": "ಯಾವುದೇ ಹಿಂತಿರುಗಿಸಲಾದ ಪ್ರಶ್ನೆಗಳಿಲ್ಲ.",
       "emptyHistory": "ಯಾವುದೇ ಇತಿಹಾಸ ಪ್ರಶ್ನೆಗಳಿಲ್ಲ",
       "daysRemaining": "{count} d ಉಳಿದಿದೆ",
-      "forwardedTo": "{name} ಗೆ ಫಾರ್ವರ್ಡ್ ಮಾಡಲಾಗಿದೆ"
+      "forwardedTo": "{name} ಗೆ ಫಾರ್ವರ್ಡ್ ಮಾಡಲಾಗಿದೆ",
+      "filterChip": "{company} ಗಾಗಿ ಪ್ರಶ್ನೆಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ",
+      "filterChipFallback": "ಒಂದು ಕಂಪನಿಗೆ ಫಿಲ್ಟರ್ ಮಾಡಲಾಗಿದೆ",
+      "clearFilter": "ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ"
     },
     "invitations": {
       "headerTitle": "ಕಂಪನಿ ಆಹ್ವಾನಗಳು",

@@ -2491,7 +2491,10 @@
       "emptyReturned": "ਕੋਈ ਵਾਪਸ ਕੀਤੀਆਂ ਪੁੱਛਗਿੱਛਾਂ ਨਹੀਂ",
       "emptyHistory": "ਕੋਈ ਇਤਿਹਾਸ ਪੁੱਛਗਿੱਛ ਨਹੀਂ",
       "daysRemaining": "{count} d ਬਾਕੀ",
-      "forwardedTo": "{name} ਨੂੰ ਅੱਗੇ ਭੇਜਿਆ ਗਿਆ"
+      "forwardedTo": "{name} ਨੂੰ ਅੱਗੇ ਭੇਜਿਆ ਗਿਆ",
+      "filterChip": "{company} ਲਈ ਪੁੱਛਗਿੱਛਾਂ ਦਿਖਾਈਆਂ ਜਾ ਰਹੀਆਂ ਹਨ",
+      "filterChipFallback": "ਇੱਕ ਕੰਪਨੀ ਲਈ ਫਿਲਟਰ ਕੀਤਾ ਗਿਆ",
+      "clearFilter": "ਫਿਲਟਰ ਸਾਫ਼ ਕਰੋ"
     },
     "invitations": {
       "headerTitle": "ਕੰਪਨੀ ਦੇ ਸੱਦੇ",

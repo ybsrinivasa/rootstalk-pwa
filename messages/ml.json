@@ -2491,7 +2491,10 @@
       "emptyReturned": "തിരിച്ചയച്ച ചോദ്യങ്ങളൊന്നുമില്ല.",
       "emptyHistory": "ചരിത്ര അന്വേഷണങ്ങളൊന്നുമില്ല.",
       "daysRemaining": "{count} d ശേഷിക്കുന്നു",
-      "forwardedTo": "{name} എന്നയാൾക്ക് കൈമാറി"
+      "forwardedTo": "{name} എന്നയാൾക്ക് കൈമാറി",
+      "filterChip": "{company} എന്നതിനായുള്ള ചോദ്യങ്ങൾ കാണിക്കുന്നു",
+      "filterChipFallback": "ഒരു കമ്പനിയിലേക്ക് ഫിൽട്ടർ ചെയ്‌തു",
+      "clearFilter": "ഫിൽട്ടർ മായ്‌ക്കുക"
     },
     "invitations": {
       "headerTitle": "കമ്പനി ക്ഷണങ്ങൾ",

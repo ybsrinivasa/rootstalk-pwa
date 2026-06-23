@@ -2491,7 +2491,10 @@
       "emptyReturned": "কোনো ঘূৰাই দিয়া প্ৰশ্ন নাই",
       "emptyHistory": "কোনো ইতিহাসৰ প্ৰশ্ন নাই",
       "daysRemaining": "{count} ঘ বাকী",
-      "forwardedTo": "{name} লৈ প্ৰেৰণ কৰা হৈছে"
+      "forwardedTo": "{name} লৈ প্ৰেৰণ কৰা হৈছে",
+      "filterChip": "{company} ৰ বাবে প্ৰশ্ন দেখুৱা হৈছে",
+      "filterChipFallback": "এটা কোম্পানীলৈ ফিল্টাৰ কৰা হৈছে",
+      "clearFilter": "ফিল্টাৰ পৰিষ্কাৰ কৰক"
     },
     "invitations": {
       "headerTitle": "কোম্পানী নিমন্ত্ৰণী পত্ৰ",

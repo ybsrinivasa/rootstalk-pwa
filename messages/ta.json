@@ -2491,7 +2491,10 @@
       "emptyReturned": "திருப்பி அனுப்பப்பட்ட வினவல்கள் இல்லை",
       "emptyHistory": "வரலாற்று வினவல்கள் இல்லை",
       "daysRemaining": "மீதமுள்ள {count} d",
-      "forwardedTo": "{name} க்கு அனுப்பப்பட்டது"
+      "forwardedTo": "{name} க்கு அனுப்பப்பட்டது",
+      "filterChip": "{company} க்கான வினவல்களைக் காட்டுகிறது",
+      "filterChipFallback": "ஒரு நிறுவனத்திற்கு வடிகட்டப்பட்டது",
+      "clearFilter": "வடிகட்டியைத் தெளிவுபடுத்துங்கள்"
     },
     "invitations": {
       "headerTitle": "நிறுவன அழைப்பிதழ்கள்",

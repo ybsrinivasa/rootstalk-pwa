@@ -2491,7 +2491,10 @@
       "emptyReturned": "कोणतेही प्रश्न परत आले नाहीत",
       "emptyHistory": "इतिहासाच्या क्वेरी नाहीत",
       "daysRemaining": "{count} d उर्वरित",
-      "forwardedTo": "{name} यांना पाठवले"
+      "forwardedTo": "{name} यांना पाठवले",
+      "filterChip": "{company} साठी क्वेरी दाखवत आहे",
+      "filterChipFallback": "एका कंपनीपुरते मर्यादित",
+      "clearFilter": "फिल्टर साफ करा"
     },
     "invitations": {
       "headerTitle": "कंपनी आमंत्रणे",

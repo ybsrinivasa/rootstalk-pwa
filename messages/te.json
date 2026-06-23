@@ -2491,7 +2491,10 @@
       "emptyReturned": "తిరిగి వచ్చిన ప్రశ్నలు లేవు",
       "emptyHistory": "చరిత్ర ప్రశ్నలు లేవు",
       "daysRemaining": "{count} d మిగిలినవి",
-      "forwardedTo": "{name} కు ఫార్వార్డ్ చేయబడింది"
+      "forwardedTo": "{name} కు ఫార్వార్డ్ చేయబడింది",
+      "filterChip": "{company} కోసం క్వెరీలను చూపుతోంది",
+      "filterChipFallback": "ఒక కంపెనీకి ఫిల్టర్ చేయబడింది",
+      "clearFilter": "క్లియర్ ఫిల్టర్"
     },
     "invitations": {
       "headerTitle": "కంపెనీ ఆహ్వానాలు",
