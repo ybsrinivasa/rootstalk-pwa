@@ -263,7 +263,8 @@
     "personalDetails": "ذاتی تفصیلات",
     "shopDetails": "دکان کی تفصیلات",
     "professionalDetails": "پیشہ ورانہ تفصیلات",
-    "privacyPolicy": "رازداری کی پالیسی"
+    "privacyPolicy": "رازداری کی پالیسی",
+    "onboardedCompanies": "آن بورڈڈ کمپنیاں"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK کے بارے میں",
@@ -2450,6 +2451,26 @@
           "forwardFailed": "آرڈر آگے نہیں بڑھا سکا۔ براہ کرم دوبارہ کوشش کریں۔"
         }
       }
+    },
+    "onboardedCompanies": {
+      "headerTitle": "آن بورڈڈ کمپنیاں",
+      "invitationsTitle": "پروموٹر کے دعوت نامے",
+      "invitationsBody": "یہ کمپنیاں آپ کو اپنے پروموٹر بننے کی دعوت دے رہی ہیں۔ آپ ایک وقت میں ایک کمپنی میں پروموٹر بن سکتے ہیں۔",
+      "invitationSent": "بھیجی گئی {date}",
+      "declineCta": "رد کرنا",
+      "acceptCta": "قبول کریں۔",
+      "actionAccept": "قبول کریں",
+      "actionDecline": "کمی",
+      "errorAction": "دعوت نامہ {action} نہیں کر سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+      "promoterBadge": "پروموٹر",
+      "promoterPunditBadge": "پروموٹر-پنڈت",
+      "stepDown": "نیچے اتریں۔",
+      "stepDownConfirm": "اس کمپنی میں پروموٹر کی حیثیت سے دستبردار ہو جائیں؟ آپ ایک سہولت کار کے طور پر آن بورڈ رہیں گے۔",
+      "errorStepDown": "عہدہ نہیں چھوڑ سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+      "callAria": "{company} کو کال کریں",
+      "websiteAria": "{company} ویب سائٹ کھولیں۔",
+      "emptyTitle": "ابھی تک کوئی کمپنیاں نہیں ہیں۔",
+      "emptyBody": "ابھی تک کسی کمپنی نے آپ کو بطور سہولت کار شامل نہیں کیا ہے۔ آپ جس کمپنی کے ساتھ کام کرنا چاہتے ہیں اس کے فیلڈ مینیجر سے پوچھیں۔"
     }
   },
   "pundit": {

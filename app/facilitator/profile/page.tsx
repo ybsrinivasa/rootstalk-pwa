@@ -191,20 +191,8 @@ export default function FacilitatorProfilePage() {
           </div>
         )}
 
-        {/* Read-only info */}
-        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-5 space-y-4 mb-5">
-          <h2 className="font-semibold text-[#6B3F1F]">{t('detailsTitle')}</h2>
-
-          <div>
-            <p className="text-xs text-[#7A8C7E] mb-1">{t('nameLabel')}</p>
-            <p className="text-sm text-[#6B3F1F] font-medium">{user?.name || t('missing')}</p>
-          </div>
-
-          <div>
-            <p className="text-xs text-[#7A8C7E] mb-1">{t('phoneLabel')}</p>
-            <p className="text-sm text-[#6B3F1F] font-medium">{user?.phone || t('missing')}</p>
-          </div>
-        </div>
+        {/* 2026-06-23 — Name/Phone block removed per user direction.
+            Those fields live in Personal Details (drawer entry). */}
 
         {/* Pending Promoter invitations — R9 (2026-05-29). Shows
             invitations the Facilitator hasn't yet accepted/declined.

@@ -263,7 +263,8 @@
     "personalDetails": "ਨਿੱਜੀ ਵੇਰਵੇ",
     "shopDetails": "ਦੁਕਾਨ ਦੇ ਵੇਰਵੇ",
     "professionalDetails": "ਪੇਸ਼ੇਵਰ ਵੇਰਵੇ",
-    "privacyPolicy": "ਪਰਾਈਵੇਟ ਨੀਤੀ"
+    "privacyPolicy": "ਪਰਾਈਵੇਟ ਨੀਤੀ",
+    "onboardedCompanies": "ਆਨਬੋਰਡਡ ਕੰਪਨੀਆਂ"
   },
   "header": {
     "aboutRootsTalk": "ਰੂਟਸਟਾਕ ਬਾਰੇ",
@@ -2450,6 +2451,26 @@
           "forwardFailed": "ਆਰਡਰ ਅੱਗੇ ਨਹੀਂ ਭੇਜਿਆ ਜਾ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
         }
       }
+    },
+    "onboardedCompanies": {
+      "headerTitle": "ਆਨਬੋਰਡਡ ਕੰਪਨੀਆਂ",
+      "invitationsTitle": "ਪ੍ਰਮੋਟਰ ਸੱਦੇ",
+      "invitationsBody": "ਇਹ ਕੰਪਨੀਆਂ ਤੁਹਾਨੂੰ ਆਪਣੇ ਪ੍ਰਮੋਟਰ ਬਣਨ ਲਈ ਸੱਦਾ ਦੇ ਰਹੀਆਂ ਹਨ। ਤੁਸੀਂ ਇੱਕ ਸਮੇਂ ਇੱਕ ਕੰਪਨੀ ਵਿੱਚ ਪ੍ਰਮੋਟਰ ਹੋ ਸਕਦੇ ਹੋ।",
+      "invitationSent": "ਭੇਜਿਆ ਗਿਆ {date}",
+      "declineCta": "ਅਸਵੀਕਾਰ ਕਰੋ",
+      "acceptCta": "ਸਵੀਕਾਰ ਕਰੋ",
+      "actionAccept": "ਸਵੀਕਾਰ ਕਰੋ",
+      "actionDecline": "ਗਿਰਾਵਟ",
+      "errorAction": "ਸੱਦੇ 'ਤੇ {action} ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "promoterBadge": "ਪ੍ਰਮੋਟਰ",
+      "promoterPunditBadge": "ਪ੍ਰਮੋਟਰ-ਪੰਡਿਤ",
+      "stepDown": "ਹੇਠਾਂ ਉਤਰੋ",
+      "stepDownConfirm": "ਕੀ ਤੁਸੀਂ ਇਸ ਕੰਪਨੀ ਦੇ ਪ੍ਰਮੋਟਰ ਵਜੋਂ ਅਸਤੀਫਾ ਦੇ ਰਹੇ ਹੋ? ਤੁਸੀਂ ਇੱਕ ਸੁਵਿਧਾਕਰਤਾ ਵਜੋਂ ਜੁੜੇ ਰਹੋਗੇ।",
+      "errorStepDown": "ਅਹੁਦਾ ਨਹੀਂ ਛੱਡਿਆ ਜਾ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "callAria": "{company} ਨੂੰ ਕਾਲ ਕਰੋ",
+      "websiteAria": "{company} ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ",
+      "emptyTitle": "ਹਾਲੇ ਕੋਈ ਕੰਪਨੀ ਨਹੀਂ ਹੈ",
+      "emptyBody": "ਅਜੇ ਤੱਕ ਕਿਸੇ ਵੀ ਕੰਪਨੀ ਨੇ ਤੁਹਾਨੂੰ ਫੈਸੀਲੀਟੇਟਰ ਵਜੋਂ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤਾ ਹੈ। ਜਿਸ ਕੰਪਨੀ ਨਾਲ ਤੁਸੀਂ ਕੰਮ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ, ਉਸ ਦੇ ਫੀਲਡ ਮੈਨੇਜਰ ਨੂੰ ਆਪਣੇ ਆਪ ਨੂੰ ਸ਼ਾਮਲ ਕਰਨ ਲਈ ਕਹੋ।"
     }
   },
   "pundit": {

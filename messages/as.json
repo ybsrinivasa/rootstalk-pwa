@@ -263,7 +263,8 @@
     "personalDetails": "ব্যক্তিগত বিৱৰণ",
     "shopDetails": "দোকানৰ বিৱৰণ",
     "professionalDetails": "পেছাগত বিৱৰণ",
-    "privacyPolicy": "গোপনীয়তা নীতি"
+    "privacyPolicy": "গোপনীয়তা নীতি",
+    "onboardedCompanies": "অনবৰ্ড কৰা কোম্পানী"
   },
   "header": {
     "aboutRootsTalk": "rootsTALK ৰ বিষয়ে",
@@ -2450,6 +2451,26 @@
           "forwardFailed": "অৰ্ডাৰটো ফৰৱাৰ্ড কৰিব পৰা নগ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
         }
       }
+    },
+    "onboardedCompanies": {
+      "headerTitle": "অনবৰ্ড কৰা কোম্পানী",
+      "invitationsTitle": "প্ৰমোটাৰৰ আমন্ত্ৰণ পত্ৰ",
+      "invitationsBody": "এই কোম্পানীবোৰে আপোনাক তেওঁলোকৰ Promoter হ’বলৈ আমন্ত্ৰণ জনাইছে। এটা এটাকৈ কোম্পানীত Promoter হব পাৰে।",
+      "invitationSent": "প্ৰেৰণ কৰা হৈছে {date}",
+      "declineCta": "অস্বীকাৰ কৰা",
+      "acceptCta": "গ্ৰহণ কৰা",
+      "actionAccept": "গ্ৰহণ কৰা",
+      "actionDecline": "অস্বীকাৰ কৰা",
+      "errorAction": "আমন্ত্ৰণ {action} কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+      "promoterBadge": "প্ৰমোটাৰ",
+      "promoterPunditBadge": "প্ৰমোটাৰ-পণ্ডিত",
+      "stepDown": "তললৈ নামি যাওক",
+      "stepDownConfirm": "এই কোম্পানীত প্ৰমোটাৰ হিচাপে পদত্যাগ কৰক? আপুনি এজন Facilitator হিচাপে অনবৰ্ড হৈ থাকিব।",
+      "errorStepDown": "পদত্যাগ কৰিব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+      "callAria": "{company} কল কৰক",
+      "websiteAria": "{company} ৱেবছাইট খোলক",
+      "emptyTitle": "এতিয়াও কোনো কোম্পানী নাই",
+      "emptyBody": "কোনো কোম্পানীয়ে আপোনাক এতিয়াও Facilitator হিচাপে onboarded কৰা নাই। আপুনি কাম কৰিব বিচৰা কোম্পানীটোৰ এজন ফিল্ড মেনেজাৰক আপোনাক অনব’ৰ্ড কৰিবলৈ কওক।"
     }
   },
   "pundit": {

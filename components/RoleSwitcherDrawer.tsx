@@ -209,6 +209,15 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               onClick={() => go('/pundit/profile')}
             />
           )}
+          {activeRole === 'FACILITATOR' && (
+            <MenuRow
+              icon={
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5M3.75 3v18m16.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
+              }
+              label={t('onboardedCompanies')}
+              onClick={() => go('/facilitator/onboarded-companies')}
+            />
+          )}
           <MenuRow
             icon={
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.95-8.95a1.5 1.5 0 012.12 0L21.75 12M4.5 9.75v9.75a1.5 1.5 0 001.5 1.5h3.75v-6h4.5v6H18a1.5 1.5 0 001.5-1.5V9.75"/>

@@ -263,7 +263,8 @@
     "personalDetails": "વ્યક્તિગત વિગતો",
     "shopDetails": "દુકાનની વિગતો",
     "professionalDetails": "વ્યાવસાયિક વિગતો",
-    "privacyPolicy": "ગોપનીયતા નીતિ"
+    "privacyPolicy": "ગોપનીયતા નીતિ",
+    "onboardedCompanies": "ઓનબોર્ડેડ કંપનીઓ"
   },
   "header": {
     "aboutRootsTalk": "રૂટ્સટાલ્ક વિશે",
@@ -2450,6 +2451,26 @@
           "forwardFailed": "ઓર્ડર ફોરવર્ડ કરી શકાયો નથી. કૃપા કરીને ફરી પ્રયાસ કરો."
         }
       }
+    },
+    "onboardedCompanies": {
+      "headerTitle": "ઓનબોર્ડેડ કંપનીઓ",
+      "invitationsTitle": "પ્રમોટર આમંત્રણો",
+      "invitationsBody": "આ કંપનીઓ તમને તેમના પ્રમોટર બનવા માટે આમંત્રણ આપી રહી છે. તમે એક સમયે એક કંપનીમાં પ્રમોટર બની શકો છો.",
+      "invitationSent": "મોકલેલ {date}",
+      "declineCta": "નકારો",
+      "acceptCta": "સ્વીકારો",
+      "actionAccept": "સ્વીકારો",
+      "actionDecline": "ઘટાડો",
+      "errorAction": "આમંત્રણ {action} કરી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+      "promoterBadge": "પ્રમોટર",
+      "promoterPunditBadge": "પ્રમોટર-પંડિત",
+      "stepDown": "નીચે ઉતરો",
+      "stepDownConfirm": "આ કંપનીમાં પ્રમોટર તરીકે રાજીનામું આપો છો? તમે ફેસિલિટેટર તરીકે જોડાયેલા રહેશો.",
+      "errorStepDown": "પદ છોડી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+      "callAria": "{company} ને કૉલ કરો",
+      "websiteAria": "{company} વેબસાઇટ ખોલો",
+      "emptyTitle": "હજુ સુધી કોઈ કંપની નથી",
+      "emptyBody": "હજુ સુધી કોઈ કંપનીએ તમને ફેસિલિટેટર તરીકે સામેલ કર્યા નથી. તમે જે કંપની સાથે કામ કરવા માંગો છો તેના ફીલ્ડ મેનેજરને તમારી સાથે જોડવા માટે કહો."
     }
   },
   "pundit": {
