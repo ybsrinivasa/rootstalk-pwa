@@ -2584,6 +2584,14 @@
       "emptyReturned": "No returned queries",
       "emptyHistory": "No history queries",
       "daysRemaining": "{count}d remaining",
+      "daysRemainingShort": "{count, plural, one {1d} other {#d}}",
+      "startedShort": "Started {date}",
+      "severityInline": {
+        "CRITICAL": "Critical",
+        "HIGH": "High intensity",
+        "MODERATE": "Moderate intensity",
+        "LOW": "Low intensity"
+      },
       "forwardedTo": "Forwarded to {name}",
       "filterChip": "Showing queries for {company}",
       "filterChipFallback": "Filtered to one company",

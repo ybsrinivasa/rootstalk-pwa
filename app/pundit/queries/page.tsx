@@ -1,16 +1,26 @@
 'use client'
 import { useState, useEffect, Suspense, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
+import { cropDisplayName } from '@/lib/crop-name'
 
 interface QueryItem {
   id: string; title: string; status: string; severity: string
   client_id: string; expires_at: string; days_remaining: number
   recipient_name?: string
+  // 2026-06-23 — Card enrichment fields. All optional so the History
+  // endpoint (which doesn't ship these yet) still renders gracefully.
+  farmer_name?: string | null
+  farmer_photo_url?: string | null
+  crop_cosh_id?: string | null
+  crop_name?: string | null
+  crop_start_date?: string | null
+  client_name?: string | null
 }
 interface Company { client_id: string; role: 'PRIMARY' | 'PANEL' | 'PROMOTER_PUNDIT' }
 interface ClientInfo {
@@ -24,6 +34,15 @@ const SEVERITY_COLOUR: Record<string, string> = {
   HIGH: 'bg-orange-100 text-orange-700',
   MODERATE: 'bg-amber-100 text-amber-700',
   LOW: 'bg-slate-100 text-[#7A8C7E]',
+}
+// 2026-06-23 — Text-only severity tone for the inline-with-title
+// rendering. Matches the urgency cue of SEVERITY_COLOUR without
+// the pill background.
+const SEVERITY_TEXT: Record<string, string> = {
+  CRITICAL: 'text-red-700',
+  HIGH: 'text-orange-700',
+  MODERATE: 'text-amber-700',
+  LOW: 'text-[#7A8C7E]',
 }
 
 type Tab = 'new' | 'pending' | 'returned' | 'history'
@@ -44,10 +63,18 @@ export default function PunditQueriesPage() {
   )
 }
 
+function fmtStart(iso: string | null | undefined, locale: string): string | null {
+  if (!iso) return null
+  try {
+    return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
+  } catch { return null }
+}
+
 function PunditQueriesInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const t = useTranslations('pundit.queries')
+  const locale = useLocale()
 
   // Per-org filter via `?client=<id>` set by the dashboard's count
   // pills. Empty string means cross-org.
@@ -210,41 +237,83 @@ function PunditQueriesInner() {
           ) : (
             list.map(q => {
               const info = clientInfos[q.client_id]
+              // 2026-06-23 — Card redesign per user direction:
+              //   [photo]  Poor fruit set · Moderate intensity      2d
+              //            Tomato · Started 12 Jun · Company name    ›
+              // Severity moves inline with the title (no longer a
+              // separate pill). Company name + crop + start date land
+              // on a quieter metadata line. Time-remaining stays
+              // right-aligned so the urgency anchor is preserved.
+              const crop = cropDisplayName(q.crop_cosh_id || null, q.crop_name || null)
+              const startedLabel = fmtStart(q.crop_start_date, locale)
+              const companyName = q.client_name || info?.display_name || null
+              const metaSegments: string[] = []
+              if (crop) metaSegments.push(crop)
+              if (startedLabel) metaSegments.push(t('startedShort', { date: startedLabel }))
+              // Company only on the cross-org view (the filter chip
+              // up-top already tells the pundit who they're filtered to).
+              if (!clientFilter && companyName) metaSegments.push(companyName)
+              const farmerName = q.farmer_name || ''
+              const severityText = q.severity
+                ? t.has(`severityInline.${q.severity}`)
+                    ? t(`severityInline.${q.severity}`)
+                    : q.severity
+                : ''
+              const sevClass = SEVERITY_TEXT[q.severity] || 'text-[#7A8C7E]'
               return (
                 <button key={q.id}
                   onClick={() => tab !== 'history' ? router.push(`/pundit/queries/${q.id}`) : undefined}
                   className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${cardBorderClass(q)}`}>
                   <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-[#6B3F1F] text-sm line-clamp-1">{q.title}</p>
-                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        {/* Company badge — shown when cross-org (i.e. no
-                            per-client filter active). Within a filtered
-                            view it'd be redundant — the chip already
-                            tells the user. */}
-                        {!clientFilter && info?.display_name && (
-                          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
-                            style={{ background: (info.primary_colour || COLOUR) + '1A', color: info.primary_colour || COLOUR }}>
-                            {info.display_name}
-                          </span>
-                        )}
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-[#7A8C7E]'}`}>
-                          {q.severity}
-                        </span>
-                        {tab === 'new' && q.days_remaining !== undefined && (
-                          <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
-                            {t('daysRemaining', { count: q.days_remaining })}
-                          </span>
-                        )}
-                        {tab === 'pending' && q.recipient_name && (
-                          <span className="text-xs text-[#7A8C7E]">{t('forwardedTo', { name: q.recipient_name })}</span>
-                        )}
-                        {tab === 'history' && (
-                          <span className="text-xs text-[#7A8C7E]">{q.status}</span>
-                        )}
-                      </div>
+                    <div onClick={e => e.stopPropagation()} className="shrink-0">
+                      <AvatarLightbox
+                        photoUrl={q.farmer_photo_url || null}
+                        name={farmerName}
+                        size={48}
+                        bgColor={COLOUR + '1A'}
+                        textColor={COLOUR}
+                      />
                     </div>
-                    {tab !== 'history' && <span className="text-[#DDD0B8] text-xl shrink-0">›</span>}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm leading-snug">
+                        <span className="font-semibold text-[#6B3F1F]">{q.title}</span>
+                        {severityText && (
+                          <>
+                            <span className="text-[#7A8C7E]"> · </span>
+                            <span className={`font-medium ${sevClass}`}>{severityText}</span>
+                          </>
+                        )}
+                      </p>
+                      {metaSegments.length > 0 && (
+                        <p className="text-[11px] text-[#7A8C7E] mt-1 leading-snug">
+                          {metaSegments.join(' · ')}
+                        </p>
+                      )}
+                      {tab === 'pending' && q.recipient_name && (
+                        <p className="text-[11px] text-[#7A8C7E] mt-1">
+                          {t('forwardedTo', { name: q.recipient_name })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="shrink-0 flex flex-col items-end gap-1">
+                      {tab === 'new' && q.days_remaining !== undefined && (
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                          q.days_remaining <= 1
+                            ? 'bg-red-50 text-red-700 border border-red-200'
+                            : q.days_remaining <= 3
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-stone-100 text-[#7A8C7E]'
+                        }`}>
+                          {t('daysRemainingShort', { count: q.days_remaining })}
+                        </span>
+                      )}
+                      {tab === 'history' && (
+                        <span className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
+                          {q.status}
+                        </span>
+                      )}
+                      {tab !== 'history' && <span className="text-[#DDD0B8] text-xl">›</span>}
+                    </div>
                   </div>
                 </button>
               )
