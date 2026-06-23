@@ -6,7 +6,6 @@ import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import BottomNav from '@/components/layout/BottomNav'
-import ExitGuard from '@/components/ExitGuard'
 import api from '@/lib/api'
 
 const COLOUR = '#7D4E00'
@@ -124,7 +123,6 @@ export default function FacilitatorHomePage() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
-      <ExitGuard />
 
       <RoleSwitcherDrawer
         open={showRoleDrawer}
