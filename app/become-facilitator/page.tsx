@@ -47,7 +47,7 @@ export default function BecomeFacilitatorPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#7D4E00' }}>
-      <PWAHeader title="Become a Facilitator" activeRole="FACILITATOR" customColour="#7D4E00" back />
+      <PWAHeader title="Become a Facilitator" activeRole="FACILITATOR" customColour="#7D4E00" back="/home" />
       <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
           style={{ background: '#7D4E00' }}>

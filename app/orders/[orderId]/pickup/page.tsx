@@ -70,7 +70,7 @@ export default function FarmerPickupPage() {
   if (loading || !order) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerPickUp')} activeRole="FARMER" back />
+        <PWAHeader title={t('headerPickUp')} activeRole="FARMER" back="/orders" />
         <div className="pt-16 px-4 mt-4">
           <div className="h-28 bg-white/60 rounded-2xl animate-pulse" />
         </div>

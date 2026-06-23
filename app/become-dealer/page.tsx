@@ -49,7 +49,7 @@ export default function BecomeDealerPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#7D4196' }}>
-      <PWAHeader title="Become a Dealer" activeRole="DEALER" back />
+      <PWAHeader title="Become a Dealer" activeRole="DEALER" back="/home" />
       <div className="flex-1 flex flex-col rounded-t-[2rem] px-5 pt-7 pb-10 mt-14 bg-[#FAFAF8]">
         <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-5"
           style={{ background: '#7D4196' }}>
