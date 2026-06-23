@@ -19,6 +19,9 @@ export default function FacilitatorHomePage() {
   const [promotedCount, setPromotedCount] = useState(0)
   // 2026-06-06 — Alerts shared across Promoter/Facilitator/Dealer.
   const [alertCount, setAlertCount] = useState(0)
+  // 2026-06-23 — Pending Promoter invitations surfaced on the
+  // dashboard via a banner, mirroring the pundit pattern.
+  const [invitationCount, setInvitationCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
@@ -49,6 +52,9 @@ export default function FacilitatorHomePage() {
       api.get('/promoter/me/incoming-alerts').then(r => {
         setAlertCount((r.data as unknown[]).length)
       }).catch(() => {}),
+      api.get('/facilitator/promoter-invitations').then(r => {
+        setInvitationCount((r.data as unknown[]).length)
+      }).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
 
@@ -63,6 +69,29 @@ export default function FacilitatorHomePage() {
             {pendingCount > 0 ? t('ordersToProcess', { count: pendingCount }) : t('noPendingOrders')}
           </p>
         </div>
+
+        {/* Pending Promoter invitations — dashboard banner mirroring
+            the pundit pattern. A/R happens on the dedicated
+            /facilitator/promoter-invitations page. */}
+        {invitationCount > 0 && (
+          <button onClick={() => router.push('/facilitator/promoter-invitations')}
+            className="w-full bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3 text-left">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"
+              className="text-amber-600 shrink-0">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <div className="flex-1">
+              <p className="font-semibold text-amber-800 text-sm">{t('invitationsCount', { count: invitationCount })}</p>
+              <p className="text-amber-600 text-xs">{t('invitationsHint')}</p>
+            </div>
+            <span className="text-xs font-semibold text-white px-3 py-1.5 rounded-xl shrink-0"
+              style={{ background: COLOUR }}>
+              {t('invitationsViewCta')}
+            </span>
+          </button>
+        )}
 
         {/* Pending orders CTA */}
         <button onClick={() => router.push('/facilitator/orders')}

@@ -1331,7 +1331,10 @@
         "alertsIncoming": "મને મળતી ચેતવણીઓ",
         "alertsSubtitle": "વાંચ્યા વગરનું",
         "unreadCount": "{count} વાંચ્યા વગરના"
-      }
+      },
+      "invitationsCount": "{ગણતરી, બહુવચન, એક {1 પ્રમોટર આમંત્રણ} અન્ય {# પ્રમોટર આમંત્રણો}}",
+      "invitationsHint": "એક કંપની તમને તેમના પ્રમોટર તરીકે ઇચ્છે છે",
+      "invitationsViewCta": "જુઓ"
     },
     "payments": {
       "headerTitle": "ખેડૂત ચુકવણીઓ",
@@ -2032,6 +2035,23 @@
       "emptyInput": "હમણાં કોઈ ઇનપુટ ચેતવણીઓ નથી. બાકી શરૂઆત તારીખ ચેતવણીઓ જોવા માટે શરૂઆત તારીખ પર સ્વિચ કરો.",
       "callBtnLabel": "કૉલ કરો",
       "callBtnAria": "{name} પર કૉલ કરો"
+    },
+    "promoterInvitations": {
+      "headerTitle": "પ્રમોટર આમંત્રણો",
+      "emptyTitle": "કોઈ બાકી આમંત્રણો નથી",
+      "invitationSent": "મોકલેલ {date}",
+      "description": "આ કંપની તમને તેમના પ્રમોટર તરીકે ઇચ્છે છે - ખેડૂતોને સબ્સ્ક્રિપ્શન સોંપો અને તમારા નેટવર્કમાંથી કમાણી કરો. એક ડીલર તરીકે, તમે એકસાથે અનેક કંપનીઓમાં પ્રમોટર બની શકો છો.",
+      "acceptCta": "✓ સ્વીકારો",
+      "declineCta": "✗ નકારો",
+      "confirmAcceptTitle": "{company} માં પ્રમોટરની ભૂમિકા સ્વીકારો છો?",
+      "confirmAcceptBody": "તમે આ કંપનીમાં પ્રમોટર હશો. તમે અન્ય કંપનીઓમાં પણ પ્રમોટર બની શકો છો - અહીં સ્વીકારવાથી અન્ય કોઈ પ્રમોટર ભૂમિકા પર અસર થતી નથી.",
+      "confirmAcceptCta": "હા, સ્વીકારો",
+      "confirmRejectTitle": "{company} તરફથી આમંત્રણ નકારશો?",
+      "confirmRejectBody": "કંપનીને જાણ કરવામાં આવશે. તેઓ તમને પછીથી ફરીથી આમંત્રણ આપી શકે છે.",
+      "confirmRejectCta": "હા, નકારો",
+      "confirmCancel": "રદ કરો",
+      "confirmBusy": "સાચવી રહ્યું છે...",
+      "errorGeneric": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો."
     }
   },
   "facilitator": {
@@ -2052,7 +2072,10 @@
       "tileAlerts": "મને મળતી ચેતવણીઓ",
       "tileAlertsHint": "{count} વાંચ્યા વગરના",
       "tileSeedOrders": "બીજ ઓર્ડર",
-      "tileSeedOrdersHint": "{count, plural, =0 {કોઈ રાહ જોતું નથી} one {૧ રાહ જોઈ રહ્યું છે} other {# રાહ જોવી}}"
+      "tileSeedOrdersHint": "{count, plural, =0 {કોઈ રાહ જોતું નથી} one {૧ રાહ જોઈ રહ્યું છે} other {# રાહ જોવી}}",
+      "invitationsCount": "{ગણતરી, બહુવચન, એક {1 પ્રમોટર આમંત્રણ} અન્ય {# પ્રમોટર આમંત્રણો}}",
+      "invitationsHint": "એક કંપની તમને તેમના પ્રમોટર તરીકે ઇચ્છે છે",
+      "invitationsViewCta": "જુઓ"
     },
     "alertsIncoming": {
       "headerTitle": "આવનારી ચેતવણીઓ",
@@ -2471,6 +2494,23 @@
       "websiteAria": "{company} વેબસાઇટ ખોલો",
       "emptyTitle": "હજુ સુધી કોઈ કંપની નથી",
       "emptyBody": "હજુ સુધી કોઈ કંપનીએ તમને ફેસિલિટેટર તરીકે સામેલ કર્યા નથી. તમે જે કંપની સાથે કામ કરવા માંગો છો તેના ફીલ્ડ મેનેજરને તમારી સાથે જોડવા માટે કહો."
+    },
+    "promoterInvitations": {
+      "headerTitle": "પ્રમોટર આમંત્રણો",
+      "emptyTitle": "કોઈ બાકી આમંત્રણો નથી",
+      "invitationSent": "મોકલેલ {date}",
+      "description": "આ કંપની તમને તેમના પ્રમોટર તરીકે ઇચ્છે છે - ખેડૂતોને સબ્સ્ક્રિપ્શન સોંપો, તેમના ઓર્ડર રૂટ કરો અને તમારા નેટવર્કમાંથી કમાણી કરો.",
+      "acceptCta": "✓ સ્વીકારો",
+      "declineCta": "✗ નકારો",
+      "confirmAcceptTitle": "{company} માં પ્રમોટરની ભૂમિકા સ્વીકારો છો?",
+      "confirmAcceptBody": "તમે આ કંપનીમાં પ્રમોટર હશો. એક ફેસિલિટેટર એક સમયે ફક્ત એક જ કંપનીમાં પ્રમોટર બની શકે છે - પહેલા અન્ય કોઈપણ પ્રમોટરની ભૂમિકા છોડી દો.",
+      "confirmAcceptCta": "હા, સ્વીકારો",
+      "confirmRejectTitle": "{company} તરફથી આમંત્રણ નકારશો?",
+      "confirmRejectBody": "કંપનીને જાણ કરવામાં આવશે. તેઓ તમને પછીથી ફરીથી આમંત્રણ આપી શકે છે.",
+      "confirmRejectCta": "હા, નકારો",
+      "confirmCancel": "રદ કરો",
+      "confirmBusy": "સાચવી રહ્યું છે...",
+      "errorGeneric": "કંઈક ખોટું થયું. કૃપા કરીને ફરી પ્રયાસ કરો."
     }
   },
   "pundit": {

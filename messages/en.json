@@ -1302,6 +1302,9 @@
       "onboardingBody": "You've set up your shop profile — well done. To start receiving farmer orders, you need to be onboarded by at least one RootsTalk company. Share your registered phone number with a Field Manager from any company you sell for. Once any one of them adds you, your tiles below will start showing live activity.",
       "reviewProfile": "Review profile",
       "myDealershipsBtn": "My dealerships",
+      "invitationsCount": "{count, plural, one {1 Promoter invitation} other {# Promoter invitations}}",
+      "invitationsHint": "A company wants you as their Promoter",
+      "invitationsViewCta": "View",
       "pendingOrders": "Pending Orders",
       "tapToProcess": "Tap to process →",
       "postponedItems": "Postponed items",
@@ -1499,6 +1502,23 @@
       "categoryFallback": "order",
       "soldLine": "{sold} sold",
       "soldWithUnavailable": "{sold} sold, {na} unavailable"
+    },
+    "promoterInvitations": {
+      "headerTitle": "Promoter Invitations",
+      "emptyTitle": "No pending invitations",
+      "invitationSent": "Sent {date}",
+      "description": "This company wants you as their Promoter — to assign farmers to subscriptions and earn from your network. As a Dealer, you can be Promoter at multiple companies at once.",
+      "acceptCta": "✓ Accept",
+      "declineCta": "✗ Decline",
+      "confirmAcceptTitle": "Accept Promoter role at {company}?",
+      "confirmAcceptBody": "You'll be a Promoter at this company. You can also be Promoter at other companies — accepting here doesn't affect any other Promoter role.",
+      "confirmAcceptCta": "Yes, accept",
+      "confirmRejectTitle": "Decline invitation from {company}?",
+      "confirmRejectBody": "The company will be informed. They can re-invite you later.",
+      "confirmRejectCta": "Yes, decline",
+      "confirmCancel": "Cancel",
+      "confirmBusy": "Saving…",
+      "errorGeneric": "Something went wrong. Please try again."
     },
     "postponed": {
       "headerTitle": "Postponed items",
@@ -2047,6 +2067,9 @@
       "tileServiceProfileHint": "My declaration",
       "tileAlerts": "Alerts I receive",
       "tileAlertsHint": "{count} unread",
+      "invitationsCount": "{count, plural, one {1 Promoter invitation} other {# Promoter invitations}}",
+      "invitationsHint": "A company wants you as their Promoter",
+      "invitationsViewCta": "View",
       "tileSeedOrders": "Seed orders",
       "tileSeedOrdersHint": "{count, plural, =0 {none waiting} one {1 waiting} other {# waiting}}"
     },
@@ -2356,6 +2379,23 @@
       "websiteAria": "Open {company} website",
       "emptyTitle": "No companies yet",
       "emptyBody": "No company has onboarded you as a Facilitator yet. Ask a Field Manager at the company you want to work with to onboard you."
+    },
+    "promoterInvitations": {
+      "headerTitle": "Promoter Invitations",
+      "emptyTitle": "No pending invitations",
+      "invitationSent": "Sent {date}",
+      "description": "This company wants you as their Promoter — to assign farmers to subscriptions, route their orders, and earn from your network.",
+      "acceptCta": "✓ Accept",
+      "declineCta": "✗ Decline",
+      "confirmAcceptTitle": "Accept Promoter role at {company}?",
+      "confirmAcceptBody": "You'll be the Promoter at this company. A Facilitator can only be a Promoter at one company at a time — step down from any other Promoter role first.",
+      "confirmAcceptCta": "Yes, accept",
+      "confirmRejectTitle": "Decline invitation from {company}?",
+      "confirmRejectBody": "The company will be informed. They can re-invite you later.",
+      "confirmRejectCta": "Yes, decline",
+      "confirmCancel": "Cancel",
+      "confirmBusy": "Saving…",
+      "errorGeneric": "Something went wrong. Please try again."
     },
     "history": {
       "headerTitle": "History",

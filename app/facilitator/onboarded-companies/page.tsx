@@ -21,15 +21,10 @@ interface OnboardingClient {
   onboarded_at: string
 }
 
-interface PromoterInvitation {
-  client_promoter_id: string
-  client_id: string
-  client_name: string
-  short_name: string
-  logo_url: string | null
-  primary_colour: string | null
-  sent_at: string
-}
+// 2026-06-23 — Pending Promoter invitations were moved to the
+// dedicated /facilitator/promoter-invitations page (mirroring the
+// pundit pattern). Onboarded Companies is now strictly the companies
+// roster + Step Down.
 
 const COLOUR = '#7D4E00'
 
@@ -37,43 +32,19 @@ export default function FacilitatorOnboardedCompaniesPage() {
   const router = useRouter()
   const t = useTranslations('facilitator.onboardedCompanies')
   const [companies, setCompanies] = useState<OnboardingClient[]>([])
-  const [invitations, setInvitations] = useState<PromoterInvitation[]>([])
   const [loading, setLoading] = useState(true)
   const [actingId, setActingId] = useState<string | null>(null)
   const [error, setError] = useState('')
 
   const load = useCallback(async () => {
-    const [onboardingRes, invitationsRes] = await Promise.allSettled([
-      api.get<OnboardingClient[]>('/facilitator/onboarding-clients'),
-      api.get<PromoterInvitation[]>('/facilitator/promoter-invitations'),
-    ])
-    setCompanies(onboardingRes.status === 'fulfilled' ? onboardingRes.value.data : [])
-    setInvitations(invitationsRes.status === 'fulfilled' ? invitationsRes.value.data : [])
+    const { data } = await api.get<OnboardingClient[]>('/facilitator/onboarding-clients')
+    setCompanies(data)
   }, [])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/'); return }
     load().finally(() => setLoading(false))
   }, [load, router])
-
-  async function actOnInvitation(clientPromoterId: string, action: 'accept' | 'decline') {
-    setActingId(clientPromoterId); setError('')
-    try {
-      const endpoint = action === 'accept'
-        ? `/facilitator/promoter-invitations/${clientPromoterId}/accept`
-        : `/facilitator/promoter-invitations/${clientPromoterId}/decline`
-      await api.put(endpoint)
-      await load()
-    } catch (err: unknown) {
-      const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
-      const msg = typeof detail === 'string'
-        ? detail
-        : (detail as { message?: string })?.message
-      setError(msg || t('errorAction', { action: action === 'accept' ? t('actionAccept') : t('actionDecline') }))
-    } finally {
-      setActingId(null)
-    }
-  }
 
   async function stepDown(clientPromoterId: string) {
     if (!confirm(t('stepDownConfirm'))) return
@@ -100,42 +71,6 @@ export default function FacilitatorOnboardedCompaniesPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/home" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto space-y-4">
-
-        {/* Pending Promoter Invitations */}
-        {!loading && invitations.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-            <h2 className="font-semibold text-amber-900 mb-1">{t('invitationsTitle')}</h2>
-            <p className="text-xs text-amber-800 mb-3 leading-relaxed">{t('invitationsBody')}</p>
-            <div className="space-y-3">
-              {invitations.map(inv => (
-                <div key={inv.client_promoter_id} className="bg-white rounded-xl border border-amber-200 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: inv.primary_colour || COLOUR }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-[#6B3F1F] truncate">{inv.client_name}</p>
-                      <p className="text-[11px] text-[#7A8C7E]">
-                        {t('invitationSent', { date: new Date(inv.sent_at).toLocaleDateString() })}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 mt-3">
-                    <button onClick={() => actOnInvitation(inv.client_promoter_id, 'decline')}
-                      disabled={actingId === inv.client_promoter_id}
-                      className="flex-1 py-2.5 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50">
-                      {t('declineCta')}
-                    </button>
-                    <button onClick={() => actOnInvitation(inv.client_promoter_id, 'accept')}
-                      disabled={actingId === inv.client_promoter_id}
-                      className="flex-1 py-2.5 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
-                      style={{ background: COLOUR }}>
-                      {actingId === inv.client_promoter_id ? '…' : t('acceptCta')}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Companies list */}
         {loading ? (
