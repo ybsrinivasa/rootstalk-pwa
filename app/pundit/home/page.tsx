@@ -19,27 +19,12 @@ interface ClientInfo {
 }
 
 const COLOUR = '#3C3489'
-const SEVERITY_COLOUR: Record<string, string> = {
-  CRITICAL: 'bg-red-100 text-red-700',
-  HIGH: 'bg-orange-100 text-orange-700',
-  MODERATE: 'bg-amber-100 text-amber-700',
-  LOW: 'bg-slate-100 text-[#7A8C7E]',
-}
 
 function MailIcon() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
       <polyline points="22,6 12,13 2,6"/>
-    </svg>
-  )
-}
-
-function CheckCircleIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" className="text-[#DDD0B8]">
-      <circle cx="12" cy="12" r="10"/>
-      <polyline points="9,12 11,14 15,10"/>
     </svg>
   )
 }
@@ -106,12 +91,6 @@ export default function PunditHomePage() {
   const totalNew = queries.filter(q => q.status === 'NEW').length
   const totalPending = queries.filter(q => q.status === 'FORWARDED').length
   const totalReturned = queries.filter(q => q.status === 'RETURNED').length
-
-  // Active Queries preview — cross-org, sorted by urgency. Each row now
-  // carries a small company chip so the cross-org context is visible.
-  const activeQueries = queries
-    .filter(q => ['NEW', 'FORWARDED', 'RETURNED'].includes(q.status))
-    .sort((a, b) => a.days_remaining - b.days_remaining)
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -228,60 +207,6 @@ export default function PunditHomePage() {
           )}
         </div>
 
-        {/* Active Queries preview — cross-org, sorted by urgency. Each
-            row carries a small company chip so the recipient can tell
-            which onboarding org's context applies before opening. */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-[#6B3F1F]">{t('activeQueriesTitle')}</h2>
-            <button onClick={() => router.push('/pundit/queries')}
-              className="text-xs font-medium" style={{ color: COLOUR }}>{t('viewAllCta')}</button>
-          </div>
-
-          {loading ? (
-            <div className="h-20 bg-white rounded-2xl animate-pulse" />
-          ) : activeQueries.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 text-center border border-[#DDD0B8]">
-              <div className="flex justify-center mb-3">
-                <CheckCircleIcon />
-              </div>
-              <p className="text-[#7A8C7E] text-sm">{t('noActiveQueries')}</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {activeQueries.slice(0, 5).map(q => {
-                const info = clientInfos[q.client_id]
-                return (
-                  <button key={q.id} onClick={() => router.push(`/pundit/queries/${q.id}`)}
-                    className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${q.status === 'RETURNED' || q.days_remaining <= 1 ? 'border-red-200' : 'border-[#DDD0B8]'}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-[#6B3F1F] text-sm line-clamp-1">{q.title}</p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          {info?.display_name && (
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
-                              style={{ background: (info.primary_colour || COLOUR) + '1A', color: info.primary_colour || COLOUR }}>
-                              {info.display_name}
-                            </span>
-                          )}
-                          <p className="text-xs text-[#7A8C7E]">{q.status}</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 shrink-0">
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${SEVERITY_COLOUR[q.severity] || 'bg-slate-100 text-[#7A8C7E]'}`}>
-                          {q.severity}
-                        </span>
-                        <span className={`text-xs font-medium ${q.days_remaining <= 1 ? 'text-[#D4682E]' : q.days_remaining <= 3 ? 'text-amber-600' : 'text-[#7A8C7E]'}`}>
-                          {t('daysLeft', { count: q.days_remaining })}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
       </div>
 
       <BottomNav color={COLOUR} activeRole="FARM_PUNDIT" />
