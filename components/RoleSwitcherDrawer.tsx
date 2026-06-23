@@ -142,8 +142,16 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
     !!user?.facilitator_declared_at
 
   function isBlockedByExclusivity(candidate: string): 'DEALER' | 'FACILITATOR' | null {
-    if (candidate === 'DEALER' && isEffectiveDealer) return null
-    if (candidate === 'FACILITATOR' && isEffectiveFacilitator) return null
+    // "Already holds candidate role" check is STRICT — only userRoles
+    // satisfies it. If the legacy/widened signal (declared_at,
+    // dealer_profile_complete) were enough, a user with leftover
+    // facilitator_declared_at but no current FACILITATOR role would
+    // early-return as null on candidate=FACILITATOR, defeating the
+    // dealer-side block. The drawer's roleIsSetUp also gates on
+    // userRoles, so this stays consistent with the row label.
+    if (userRoles.includes(candidate)) return null
+    // "Conflicting role exists" check is LENIENT — any signal of the
+    // other role triggers the block, including the legacy signals.
     if (candidate === 'DEALER' && isEffectiveFacilitator) return 'FACILITATOR'
     if (candidate === 'FACILITATOR' && isEffectiveDealer) return 'DEALER'
     return null
