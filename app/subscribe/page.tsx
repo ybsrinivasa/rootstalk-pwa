@@ -578,11 +578,11 @@ function SubscribeFlow() {
                 {delegateSentInfo.phone && (
                   <> (<span className="font-mono">{delegateSentInfo.phone}</span>)</>
                 )}
-                {' '}{t('delegateSent.askedToPay', { crop: cropDisplay, company: company?.display_name || '' })}
+                {' '}{t('delegateSent.askedToPay', { crop: cropDisplay, company: company?.display_name || '', price: user?.subscription_amount_inr ?? 199 })}
               </p>
             ) : (
               <p className="text-white/85 mt-3 max-w-[280px]">
-                {t('delegateSent.bodyWithoutName', { crop: cropDisplay, company: company?.display_name || '' })}
+                {t('delegateSent.bodyWithoutName', { crop: cropDisplay, company: company?.display_name || '', price: user?.subscription_amount_inr ?? 199 })}
               </p>
             )}
             <p className="text-white/60 text-sm mt-4 max-w-[280px]">
@@ -945,7 +945,7 @@ function SubscribeFlow() {
                         )}
                         <div className="mt-4 pt-4 border-t border-[#DDD0B8] flex items-center justify-between">
                           <span className="text-[#7A8C7E] text-sm">{t('confirm.priceLabel')}</span>
-                          <span className="text-[#6B3F1F] font-bold text-lg">{t('confirm.priceAmount')}</span>
+                          <span className="text-[#6B3F1F] font-bold text-lg">{t('confirm.priceAmount', { price: user?.subscription_amount_inr ?? 199 })}</span>
                         </div>
                       </div>
                     </div>
@@ -981,13 +981,13 @@ function SubscribeFlow() {
                         not paying the company. Same disclaimer renders
                         on the Razorpay sheet description. */}
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4 text-xs text-amber-800">
-                      {t('payment.attributionPrefix')} <strong>rootsTALK.in</strong> {t('payment.attributionMiddle')} <em>{t('payment.attributionNot')}</em> {t('payment.attributionSuffix', { company: company?.display_name || t('payment.attributionCompanyFallback') })}
+                      {t('payment.attributionPrefix', { price: user?.subscription_amount_inr ?? 199 })} <strong>rootsTALK.in</strong> {t('payment.attributionMiddle')} <em>{t('payment.attributionNot')}</em> {t('payment.attributionSuffix', { company: company?.display_name || t('payment.attributionCompanyFallback') })}
                     </div>
 
                     <div className="space-y-3">
                       {/* Pay yourself */}
                       <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
-                        <p className="font-semibold text-[#6B3F1F]">{t('payment.payNow')}</p>
+                        <p className="font-semibold text-[#6B3F1F]">{t('payment.payNow', { price: user?.subscription_amount_inr ?? 199 })}</p>
                         <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
                           {t('payment.payNowBody')}
                         </p>

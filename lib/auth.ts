@@ -26,6 +26,11 @@ export interface PWAUser {
   // drawer's "Set up →" vs "Switch to" label for the DEALER
   // row. False until every required shop field is filled.
   dealer_profile_complete?: boolean;
+  // 2026-06-24 — Server-driven Razorpay amounts so the PWA can render
+  // ₹{price} templates from the catalog instead of hardcoding "Rs. 199".
+  // Defaults match production (₹199 / ₹20) on legacy payloads.
+  subscription_amount_inr?: number;
+  query_amount_inr?: number;
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {
