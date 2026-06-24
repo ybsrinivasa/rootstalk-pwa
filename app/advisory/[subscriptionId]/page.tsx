@@ -995,8 +995,48 @@ function PracticeCard({
           })
         if (visibleEls.length === 0) return null
         return (
-          <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-1.5">
+          <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-2">
             {visibleEls.map((el, i) => {
+              const type = (el.element_type || '').toUpperCase()
+              const url = (el.value || '').trim()
+              const isSafe = /^https?:\/\//i.test(url)
+              // 2026-06-24 — Media element types ship the asset URL in
+              // el.value. The previous render leaked them as plain
+              // text so farmers couldn't open images / play audio /
+              // tap links. Mirrors the SA-portal authoring preview
+              // (components/advisory-authoring/PreviewCards.tsx).
+              if (type === 'UPLOAD_IMAGE' && isSafe) {
+                return (
+                  <div key={i} className="text-sm">
+                    <p className="text-[#6B3F1F] font-medium text-xs mb-1">{elementLabel(type)}</p>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="inline-block">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="" className="max-h-48 rounded-lg border border-[#DDD0B8]" />
+                    </a>
+                  </div>
+                )
+              }
+              if (type === 'UPLOAD_AUDIO' && isSafe) {
+                return (
+                  <div key={i} className="text-sm">
+                    <p className="text-[#6B3F1F] font-medium text-xs mb-1">{elementLabel(type)}</p>
+                    {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                    <audio controls src={url} className="w-full max-w-sm" />
+                  </div>
+                )
+              }
+              if (type === 'HYPERLINK' && isSafe) {
+                return (
+                  <div key={i} className="flex items-start gap-2 text-sm">
+                    <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[#6B3F1F] font-medium">{elementLabel(type)}: </span>
+                      <a href={url} target="_blank" rel="noopener noreferrer"
+                        className="text-blue-700 underline break-all">{url}</a>
+                    </div>
+                  </div>
+                )
+              }
               const showRef = el.cosh_ref && !isUuid(el.cosh_ref)
               const inlineUnit =
                 (el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : '')
@@ -1005,7 +1045,7 @@ function PracticeCard({
                 <div key={i} className="flex items-start gap-2 text-sm">
                   <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
                   <div>
-                    <span className="text-[#6B3F1F] font-medium">{elementLabel((el.element_type || '').toUpperCase())}</span>
+                    <span className="text-[#6B3F1F] font-medium">{elementLabel(type)}</span>
                     {el.value
                       ? <span className="text-[#6B3F1F] ml-1">: {el.value}{inlineUnit ? ` ${inlineUnit}` : ''}</span>
                       : showRef
