@@ -1617,7 +1617,13 @@
         "lockedBrandBadge": "लॉक केलेला ब्रँड",
         "checking": "तपासत आहे…",
         "markOptionAvailable": "पर्याय उपलब्ध आहे असे चिन्हांकित करा",
-        "markNotAvailable": "मार्क उपलब्ध नाही"
+        "markNotAvailable": "मार्क उपलब्ध नाही",
+        "andApplyTogether": "हे शेतकरी एकत्र वापरतो.",
+        "orEitherOr": "कोणताही एक निवडा — दुसऱ्याची गरज नाही.",
+        "changeSelection": "निवड बदला",
+        "changing": "रीसेट होत आहे…",
+        "andPrefix": "आणि",
+        "orPrefix": "किंवा"
       },
       "sections": {
         "relations": "बहु-टप्प्यांच्या शिफारसी ( {count} )",

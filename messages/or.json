@@ -1617,7 +1617,13 @@
         "lockedBrandBadge": "ଲକ୍ ହୋଇଥିବା ବ୍ରାଣ୍ଡ",
         "checking": "ଯାଞ୍ଚ କରାଯାଉଛି…",
         "markOptionAvailable": "ଚିହ୍ନିତ କରିବା ବିକଳ୍ପ ଉପଲବ୍ଧ ଅଛି",
-        "markNotAvailable": "ଉପଲବ୍ଧ ନାହିଁ ଭାବରେ ଚିହ୍ନିତ କରନ୍ତୁ"
+        "markNotAvailable": "ଉପଲବ୍ଧ ନାହିଁ ଭାବରେ ଚିହ୍ନିତ କରନ୍ତୁ",
+        "andApplyTogether": "କୃଷକ ଏଗୁଡ଼ିକୁ ଏକାଠି ପ୍ରୟୋଗ କରନ୍ତି।",
+        "orEitherOr": "ଯେକୌଣସି ଗୋଟିଏ ବାଛନ୍ତୁ — ଅନ୍ୟଟି ଆବଶ୍ୟକ ନୁହେଁ।",
+        "changeSelection": "ବାଛିବାକୁ ବଦଳାନ୍ତୁ",
+        "changing": "ରିସେଟ୍ ହେଉଛି…",
+        "andPrefix": "ଏବଂ",
+        "orPrefix": "କିମ୍ବା"
       },
       "sections": {
         "relations": "ଏକାଧିକ-ପଦକ୍ଷେପ ସୁପାରିଶଗୁଡ଼ିକ ( {count} )",

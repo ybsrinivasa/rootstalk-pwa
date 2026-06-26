@@ -1617,7 +1617,13 @@
         "lockedBrandBadge": "مقفل برانڈ",
         "checking": "چیک کیا جا رہا ہے…",
         "markOptionAvailable": "مارک آپشن دستیاب ہے۔",
-        "markNotAvailable": "نشان زد دستیاب نہیں ہے۔"
+        "markNotAvailable": "نشان زد دستیاب نہیں ہے۔",
+        "andApplyTogether": "کسان انہیں ایک ساتھ استعمال کرتا ہے۔",
+        "orEitherOr": "کوئی ایک منتخب کریں — دوسرے کی ضرورت نہیں۔",
+        "changeSelection": "انتخاب تبدیل کریں",
+        "changing": "ری سیٹ ہو رہا ہے…",
+        "andPrefix": "اور",
+        "orPrefix": "یا"
       },
       "sections": {
         "relations": "متعدد قدمی تجاویز ( {count} )",

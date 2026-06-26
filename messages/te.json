@@ -1617,7 +1617,13 @@
         "lockedBrandBadge": "లాక్ చేయబడిన బ్రాండ్",
         "checking": "తనిఖీ చేస్తోంది…",
         "markOptionAvailable": "మార్క్ ఎంపిక అందుబాటులో ఉంది",
-        "markNotAvailable": "మార్క్ అందుబాటులో లేదు"
+        "markNotAvailable": "మార్క్ అందుబాటులో లేదు",
+        "andApplyTogether": "వీటిని రైతు కలిపి వేస్తాడు.",
+        "orEitherOr": "ఏదైనా ఒకటి ఎంచుకోండి — మరొకటి అవసరం లేదు.",
+        "changeSelection": "ఎంపికను మార్చండి",
+        "changing": "రీసెట్ చేస్తోంది…",
+        "andPrefix": "మరియు",
+        "orPrefix": "లేదా"
       },
       "sections": {
         "relations": "బహుళ-దశల సిఫార్సులు ( {count} )",

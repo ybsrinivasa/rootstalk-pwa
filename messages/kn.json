@@ -1637,7 +1637,13 @@
         "lockedBrandBadge": "ಲಾಕ್ ಮಾಡಲಾದ ಬ್ರ್ಯಾಂಡ್",
         "checking": "ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",
         "markOptionAvailable": "ಗುರುತು ಆಯ್ಕೆ ಲಭ್ಯವಿದೆ",
-        "markNotAvailable": "ಲಭ್ಯವಿಲ್ಲ ಎಂದು ಗುರುತಿಸಿ"
+        "markNotAvailable": "ಲಭ್ಯವಿಲ್ಲ ಎಂದು ಗುರುತಿಸಿ",
+        "andApplyTogether": "ರೈತ ಇವುಗಳನ್ನು ಒಟ್ಟಿಗೆ ಬಳಸುತ್ತಾನೆ.",
+        "orEitherOr": "ಯಾವುದಾದರೂ ಒಂದನ್ನು ಆಯ್ಕೆಮಾಡಿ — ಬೇರೊಂದರ ಅಗತ್ಯವಿಲ್ಲ.",
+        "changeSelection": "ಆಯ್ಕೆ ಬದಲಾಯಿಸಿ",
+        "changing": "ಮರುಹೊಂದಿಸಲಾಗುತ್ತಿದೆ…",
+        "andPrefix": "ಮತ್ತು",
+        "orPrefix": "ಅಥವಾ"
       },
       "sections": {
         "relations": "ಬಹು-ಹಂತದ ಶಿಫಾರಸುಗಳು ( {count} )",

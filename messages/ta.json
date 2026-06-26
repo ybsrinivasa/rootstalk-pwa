@@ -1637,7 +1637,13 @@
         "lockedBrandBadge": "பூட்டப்பட்ட பிராண்ட்",
         "checking": "சரிபார்க்கப்படுகிறது…",
         "markOptionAvailable": "தேர்வு விருப்பம் உள்ளது",
-        "markNotAvailable": "குறியீடு கிடைக்கவில்லை"
+        "markNotAvailable": "குறியீடு கிடைக்கவில்லை",
+        "andApplyTogether": "இவற்றை விவசாயி ஒன்றாகப் பயன்படுத்துகிறார்.",
+        "orEitherOr": "ஏதேனும் ஒன்றைத் தேர்வு செய்யவும் — மற்றொன்று தேவையில்லை.",
+        "changeSelection": "தேர்வை மாற்று",
+        "changing": "மீட்டமைக்கப்படுகிறது…",
+        "andPrefix": "மற்றும்",
+        "orPrefix": "அல்லது"
       },
       "sections": {
         "relations": "பல படிநிலை பரிந்துரைகள் ( {count} )",

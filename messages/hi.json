@@ -1637,7 +1637,13 @@
         "lockedBrandBadge": "लॉक्ड ब्रांड",
         "checking": "जाँच चल रही है…",
         "markOptionAvailable": "उपलब्ध विकल्प चिह्नित करें",
-        "markNotAvailable": "मार्क उपलब्ध नहीं है"
+        "markNotAvailable": "मार्क उपलब्ध नहीं है",
+        "andApplyTogether": "इन्हें किसान एक साथ लगाता है।",
+        "orEitherOr": "कोई एक चुनें — दूसरे की ज़रूरत नहीं।",
+        "changeSelection": "चयन बदलें",
+        "changing": "रीसेट हो रहा है…",
+        "andPrefix": "और",
+        "orPrefix": "या"
       },
       "sections": {
         "relations": "बहु-चरणीय अनुशंसाएँ ( {count} )",

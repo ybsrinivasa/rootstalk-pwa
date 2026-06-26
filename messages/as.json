@@ -1617,7 +1617,13 @@
         "lockedBrandBadge": "লক কৰা ব্ৰেণ্ড",
         "checking": "চেক কৰি আছে...",
         "markOptionAvailable": "চিহ্নিত বিকল্প উপলব্ধ",
-        "markNotAvailable": "মাৰ্ক উপলব্ধ নহয়"
+        "markNotAvailable": "মাৰ্ক উপলব্ধ নহয়",
+        "andApplyTogether": "এইবোৰ কৃষকে একেলগে প্ৰয়োগ কৰে।",
+        "orEitherOr": "যিকোনো এটা বাছনি কৰক — আনটোৰ প্ৰয়োজন নাই।",
+        "changeSelection": "নিৰ্বাচন সলনি কৰক",
+        "changing": "ৰিছেট কৰি আছে…",
+        "andPrefix": "আৰু",
+        "orPrefix": "বা"
       },
       "sections": {
         "relations": "বহু-পদক্ষেপৰ পৰামৰ্শ ( {count} )",
