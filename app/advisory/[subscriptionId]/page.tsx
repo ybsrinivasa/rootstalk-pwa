@@ -1238,6 +1238,11 @@ function RelationGroup({
 }) {
   const tAction = useTranslations('practice.action')
   const tRel = useTranslations('practice.relations')
+  // 2026-06-26 — Manage-pill chip support inside AND containers so
+  // the farmer sees per-leg fulfilment status (Routed / For Approval
+  // / Returned / Ready for pickup) without leaving the advisory page.
+  const tPill = useTranslations('orders.cropOrders.manage.pill')
+  const router = useRouter()
   if (parts.length === 0) return null
 
   // Single Part with single Option AND-group: paired card with "Order N together"
@@ -1295,6 +1300,13 @@ function RelationGroup({
     const ids = opt.practices.map(p => p.id)
     const isOrderingAny = ids.some(id => orderingPractice === id)
     const isAnyOrdered = ids.some(id => orderSuccess === id)
+    // Any leg already in flight (or post-fulfilment) suppresses the
+    // "Order both together" button — same gate PracticeCard uses for
+    // standalones (pillName || is_purchased).
+    const anyInFlight = opt.practices.some(p => {
+      const f = p.fulfilment ?? null
+      return (f && fulfilmentToPill(f) != null) || p.is_purchased
+    })
     return (
       <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
@@ -1304,24 +1316,42 @@ function RelationGroup({
           </p>
         </div>
         <div className="divide-y divide-slate-100">
-          {opt.practices.map(p => (
-            <InnerPracticeRow key={p.id} practice={p} />
-          ))}
+          {opt.practices.map(p => {
+            const f = p.fulfilment ?? null
+            const pillName = f ? fulfilmentToPill(f) : null
+            const pillTone = pillName ? MANAGE_PILL_TONE[pillName] : null
+            return (
+              <InnerPracticeRow
+                key={p.id}
+                practice={p}
+                pillName={pillName}
+                pillTone={pillTone}
+                tPill={tPill}
+                onPillClick={pillName
+                  ? () => router.push(
+                      `/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`,
+                    )
+                  : undefined}
+              />
+            )
+          })}
         </div>
-        <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
-          <button
-            onClick={() => onOrder(ids)}
-            disabled={isOrderingAny || isAnyOrdered}
-            className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
-            style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
-          >
-            {isAnyOrdered
-              ? tAction('ordered')
-              : isOrderingAny
-                ? '…'
-                : tRel('orderAllTogether', { count: ids.length })}
-          </button>
-        </div>
+        {!anyInFlight && (
+          <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
+            <button
+              onClick={() => onOrder(ids)}
+              disabled={isOrderingAny || isAnyOrdered}
+              className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
+              style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
+            >
+              {isAnyOrdered
+                ? tAction('ordered')
+                : isOrderingAny
+                  ? '…'
+                  : tRel('orderAllTogether', { count: ids.length })}
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -1352,7 +1382,15 @@ function RelationGroup({
                     <div className="h-px flex-1 bg-slate-300" />
                   </div>
                 )}
-                {isCompound ? (
+                {isCompound ? (() => {
+                  // Same pill + Order-suppression logic as the pure-AND
+                  // branch above. Repeats inline because the loop
+                  // captures `opt`/`ids` per iteration.
+                  const anyInFlight = opt.practices.some(p => {
+                    const f = p.fulfilment ?? null
+                    return (f && fulfilmentToPill(f) != null) || p.is_purchased
+                  })
+                  return (
                   <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
                     <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
                       <div className="w-1 h-5 rounded-full bg-emerald-600" />
@@ -1361,26 +1399,45 @@ function RelationGroup({
                       </p>
                     </div>
                     <div className="divide-y divide-slate-100">
-                      {opt.practices.map(p => (
-                        <InnerPracticeRow key={p.id} practice={p} />
-                      ))}
+                      {opt.practices.map(p => {
+                        const f = p.fulfilment ?? null
+                        const pillName = f ? fulfilmentToPill(f) : null
+                        const pillTone = pillName ? MANAGE_PILL_TONE[pillName] : null
+                        return (
+                          <InnerPracticeRow
+                            key={p.id}
+                            practice={p}
+                            pillName={pillName}
+                            pillTone={pillTone}
+                            tPill={tPill}
+                            onPillClick={pillName
+                              ? () => router.push(
+                                  `/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`,
+                                )
+                              : undefined}
+                          />
+                        )
+                      })}
                     </div>
-                    <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
-                      <button
-                        onClick={() => onOrder(ids)}
-                        disabled={isOrderingAny || isAnyOrdered}
-                        className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
-                        style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
-                      >
-                        {isAnyOrdered
-                          ? tAction('ordered')
-                          : isOrderingAny
-                            ? '…'
-                            : tRel('orderAllTogether', { count: ids.length })}
-                      </button>
-                    </div>
+                    {!anyInFlight && (
+                      <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
+                        <button
+                          onClick={() => onOrder(ids)}
+                          disabled={isOrderingAny || isAnyOrdered}
+                          className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
+                          style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
+                        >
+                          {isAnyOrdered
+                            ? tAction('ordered')
+                            : isOrderingAny
+                              ? '…'
+                              : tRel('orderAllTogether', { count: ids.length })}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                ) : (
+                  )
+                })() : (
                   // Single practice in this Option — render a normal practice card with
                   // its own Order button that sends just this practice id.
                   <PracticeCard
@@ -1412,26 +1469,56 @@ function RelationGroup({
 }
 
 // Compact in-group practice row (used inside a paired AND-group card)
-function InnerPracticeRow({ practice }: { practice: Practice }) {
+function InnerPracticeRow({
+  practice,
+  pillName, pillTone, onPillClick, tPill,
+}: {
+  practice: Practice
+  // 2026-06-26 — Optional Manage-pill chip on the right edge of the
+  // row. Mirrors the chip PracticeCard renders for standalones, so a
+  // farmer looking at an AND group can see each leg's fulfilment
+  // state (Routed / For Approval / Returned / Ready for pickup)
+  // without having to bounce out to the Manage tab. When any leg
+  // has a pill, the parent AND container suppresses its
+  // "Order both together" button — there's already an order in
+  // flight.
+  pillName?: ManagePill | null
+  pillTone?: { bg: string; fg: string } | null
+  onPillClick?: () => void
+  tPill?: (k: string) => string
+}) {
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
+  const fulf = practice.fulfilment ?? null
   return (
-    <div className="px-4 py-3">
-      {(practice.is_special_input
-        || (practice.frequency_days != null && practice.frequency_days > 0)) && (
-        <div className="flex items-center gap-2 flex-wrap mb-0.5">
-          {practice.is_special_input && (
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
-          )}
-          {practice.frequency_days != null && practice.frequency_days > 0 && (
-            <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
-              {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
-            </span>
-          )}
-        </div>
+    <div className="px-4 py-3 flex items-center justify-between gap-3">
+      <div className="flex-1 min-w-0">
+        {(practice.is_special_input
+          || (practice.frequency_days != null && practice.frequency_days > 0)) && (
+          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+            {practice.is_special_input && (
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
+            )}
+            {practice.frequency_days != null && practice.frequency_days > 0 && (
+              <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
+              </span>
+            )}
+          </div>
+        )}
+        <p className="text-sm font-medium text-[#6B3F1F]">
+          {l2Label || 'General Advisory'}
+        </p>
+      </div>
+      {pillName && pillTone && tPill && (
+        <button
+          onClick={e => { e.stopPropagation(); onPillClick?.() }}
+          className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl"
+          style={{ background: pillTone.bg, color: pillTone.fg }}>
+          {tPill(pillName)}
+          {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
+            ? ` · ${fulf.postpone_days_remaining}d` : ''}
+        </button>
       )}
-      <p className="text-sm font-medium text-[#6B3F1F]">
-        {l2Label || 'General Advisory'}
-      </p>
     </div>
   )
 }
