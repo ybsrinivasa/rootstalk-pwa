@@ -963,16 +963,32 @@ export default function DealerOrderDetailPage() {
       showPendingActions?: boolean
       // 2026-06-26 — In a pure-OR Part, an item that's been resolved
       // by the dealer (AVAILABLE, NOT_AVAILABLE, or auto-NOT_AVAILABLE
-      // via sibling pick) carries a quiet "Change selection" link
-      // that resets the whole Part back to PENDING. The caller owns
-      // the reset action; this row just renders the link.
+      // via sibling pick) carries a single "Change selection" reset
+      // button on the chosen leg. The caller owns the reset action;
+      // this row just renders the button.
       onChangeSelection?: () => void
       changeSelectionBusy?: boolean
+      // 2026-06-26 — Pure-OR Part state once one leg has been
+      // committed AVAILABLE. The chosen leg gets the single
+      // "Change selection" reset button (replacing both Edit details
+      // and the inline link — they're functionally identical for OR).
+      // Sibling legs auto-cascaded to NOT_AVAILABLE are visually
+      // locked — dimmed, no action buttons of any kind — because
+      // they're not real decisions: they were set when the dealer
+      // picked the alternative. The only path back is the chosen
+      // leg's Reset, which puts the whole Part back to PENDING.
+      orGroupState?: 'chosen' | 'locked'
     } = {},
   ) {
     const showPriceColumn = item.status === 'AVAILABLE'
+    const isLocked = opts.orGroupState === 'locked'
+    const isChosen = opts.orGroupState === 'chosen'
     return (
-      <div key={item.id} className="bg-white rounded-xl border border-[#DDD0B8] p-3">
+      <div
+        key={item.id}
+        className={`bg-white rounded-xl border border-[#DDD0B8] p-3 ${
+          isLocked ? 'opacity-60' : ''
+        }`}>
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex gap-1.5 flex-wrap">
@@ -1005,6 +1021,7 @@ export default function DealerOrderDetailPage() {
         </div>
 
         {opts.showPendingActions
+          && !isLocked
           && order!.status === 'PROCESSING'
           && item.status === 'PENDING'
           && editingItem !== item.id && (
@@ -1024,13 +1041,29 @@ export default function DealerOrderDetailPage() {
             </button>
           </div>
         )}
-        {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
+        {/* OR-chosen leg: single Reset button replaces both Edit
+            details and the underline Change-selection link. They were
+            functionally identical for an OR group — "change my mind"
+            redoes the whole choice. */}
+        {isChosen && opts.onChangeSelection
+          && order!.status === 'PROCESSING'
+          && editingItem !== item.id && (
+          <button
+            onClick={opts.onChangeSelection}
+            disabled={opts.changeSelectionBusy}
+            className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
+            {opts.changeSelectionBusy ? t('relation.changing') : t('relation.changeSelection')}
+          </button>
+        )}
+        {!isChosen && !isLocked
+          && order!.status === 'PROCESSING'
+          && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full bg-[#7D4196] text-white text-xs font-semibold py-2 rounded-lg">
             {t('item.pickBrandAndVolume')}
           </button>
         )}
-        {opts.onChangeSelection
+        {!isChosen && !isLocked && opts.onChangeSelection
           && order!.status === 'PROCESSING'
           && (item.status === 'AVAILABLE' || item.status === 'NOT_AVAILABLE')
           && editingItem !== item.id && (
@@ -1041,7 +1074,9 @@ export default function DealerOrderDetailPage() {
             {opts.changeSelectionBusy ? t('relation.changing') : t('relation.changeSelection')}
           </button>
         )}
-        {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && item.brand_name && editingItem !== item.id && (
+        {!isChosen && !isLocked
+          && order!.status === 'PROCESSING'
+          && item.status === 'AVAILABLE' && item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
             {t('item.editDetails')}
@@ -1056,13 +1091,16 @@ export default function DealerOrderDetailPage() {
             this" happens. Backend's mark_item_available auto-flips
             POSTPONED → SENT_FOR_APPROVAL when order is past PROCESSING,
             so the farmer's review picks the item up automatically. */}
-        {order!.status === 'PROCESSING' && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
+        {!isChosen && !isLocked
+          && order!.status === 'PROCESSING'
+          && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
             {t('item.changeDecision')}
           </button>
         )}
-        {item.status === 'POSTPONED' && editingItem !== item.id && (
+        {!isChosen && !isLocked
+          && item.status === 'POSTPONED' && editingItem !== item.id && (
           <div className="mt-2 flex gap-2">
             <button onClick={() => openItemForm(item)}
               className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
@@ -1407,12 +1445,19 @@ export default function DealerOrderDetailPage() {
     // to NOT_AVAILABLE for same-Part-different-Option items (see
     // backend audit 2026-06-26), so the dealer's "Available" tap on
     // any leg locks the alternatives without any frontend
-    // coordination. The "Change selection" link calls resetPart to
-    // re-open the whole group.
+    // coordination.
+    //
+    // Once one leg is AVAILABLE, the OR is decided:
+    //   - The chosen leg gets a single "Change selection" reset
+    //     button (collapsed from the old Change-selection link +
+    //     Edit-details button, which were functionally identical
+    //     for OR — both end up redoing the choice).
+    //   - The auto-cascaded sibling(s) are visually locked — dimmed,
+    //     no action buttons. They're not real decisions; they were
+    //     set when the dealer picked the alternative.
+    // Reset on the chosen leg sends the whole Part back to PENDING.
     const items = part.options.map(o => o.items[0]).filter(Boolean)
-    const anyDecided = items.some(it =>
-      it.status === 'AVAILABLE' || it.status === 'NOT_AVAILABLE'
-    )
+    const hasAvailable = items.some(it => it.status === 'AVAILABLE')
     const partKey = `${rel.relation_id}-${part.part_index}`
     const isResetting = resettingPart === partKey
     return (
@@ -1424,13 +1469,20 @@ export default function DealerOrderDetailPage() {
           </p>
         </div>
         <div className="px-3 pb-3 space-y-2">
-          {items.map(it => renderItemRow(it, {
-            showPendingActions: true,
-            onChangeSelection: anyDecided && order!.status === 'PROCESSING'
-              ? () => resetPart(rel.relation_id, part.part_index)
-              : undefined,
-            changeSelectionBusy: isResetting,
-          }))}
+          {items.map(it => {
+            let orGroupState: 'chosen' | 'locked' | undefined
+            if (hasAvailable) {
+              orGroupState = it.status === 'AVAILABLE' ? 'chosen' : 'locked'
+            }
+            return renderItemRow(it, {
+              showPendingActions: true,
+              orGroupState,
+              onChangeSelection: orGroupState === 'chosen'
+                ? () => resetPart(rel.relation_id, part.part_index)
+                : undefined,
+              changeSelectionBusy: isResetting,
+            })
+          })}
         </div>
       </div>
     )
