@@ -84,6 +84,12 @@ interface OrderItem {
   // multiple timelines have different windows per item.
   application_date_from?: string | null
   application_date_to?: string | null
+  // 2026-06-26 — BL-07 brand-lock flag. When true, the dealer's
+  // brand picker on this item pre-fills with the SE-locked brand
+  // and can't be changed (qty / price stay editable). Surfaced as
+  // a quiet badge next to the status pill so the dealer can see
+  // the constraint at a glance.
+  is_brand_locked?: boolean
 }
 interface RelationOption {
   option_index: number
@@ -1007,6 +1013,11 @@ export default function DealerOrderDetailPage() {
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-[#6B3F1F]'}`}>
                 {item.status.replace(/_/g, ' ')}
               </span>
+              {item.is_brand_locked && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                  {t('relation.lockedBrandBadge')}
+                </span>
+              )}
             </div>
             {!opts.compactMeta && (
               <p className="text-sm font-semibold text-[#6B3F1F] mt-1 truncate">
