@@ -482,6 +482,38 @@ function RelationGroup({
     parts[0].options.length === 1 &&
     parts[0].options[0].practices.length > 1
 
+  // 2026-06-26 — Pure OR group (single Part, ≥ 2 single-practice
+  // Options): wrap in a labelled container so the OR is unambiguous
+  // when standalones sit alongside in the same timeline. Mirror of
+  // the farmer page.
+  const isPureOrGroup =
+    relationType === 'OR' &&
+    parts.length === 1 &&
+    parts[0].options.length >= 2 &&
+    parts[0].options.every(o => o.practices.length === 1)
+
+  if (isPureOrGroup) {
+    const opts = parts[0].options
+    return (
+      <div className="bg-amber-50/30 rounded-2xl overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50">
+          <div className="w-1 h-5 rounded-full bg-amber-600" />
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+            {tRel('orChooseOne')}
+          </p>
+        </div>
+        <div className="p-3 space-y-2">
+          {opts.map(opt => {
+            const p = opt.practices[0]
+            return (
+              <PracticeCard key={p.id} practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   if (isPureAndGroup) {
     const opt = parts[0].options[0]
     return (

@@ -193,7 +193,8 @@
       "applyAllTogether": "{count, plural, one {Apply together} =2 {Apply both together} other {Apply all # together}}",
       "orderAllTogether": "{count, plural, one {Order} =2 {Order both together} other {Order all # together}}",
       "orSeparator": "OR",
-      "andBetweenParts": "AND"
+      "andBetweenParts": "AND",
+      "orChooseOne": "Choose ONE"
     },
     "element": {
       "APPLICATION_METHOD": "Application Method",

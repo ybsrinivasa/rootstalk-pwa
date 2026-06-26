@@ -1240,6 +1240,50 @@ function RelationGroup({
     parts[0].options.length === 1 &&
     parts[0].options[0].practices.length > 1
 
+  // 2026-06-26 — Single Part with ≥ 2 single-practice Options:
+  // pure OR (A OR B [OR C]). Wrap in a labelled container so the
+  // grouping is unambiguous when the OR sits next to a standalone
+  // item in the same timeline. Earlier rendering relied on an
+  // inline "OR" pill between cards, which the eye binds to whichever
+  // cards are immediately above / below the pill — confusing when
+  // the timeline also contains standalones.
+  const isPureOrGroup =
+    relationType === 'OR' &&
+    parts.length === 1 &&
+    parts[0].options.length >= 2 &&
+    parts[0].options.every(o => o.practices.length === 1)
+
+  if (isPureOrGroup) {
+    const opts = parts[0].options
+    return (
+      <div className="bg-amber-50/30 rounded-2xl overflow-hidden">
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50">
+          <div className="w-1 h-5 rounded-full bg-amber-600" />
+          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
+            {tRel('orChooseOne')}
+          </p>
+        </div>
+        <div className="p-3 space-y-2">
+          {opts.map(opt => {
+            const p = opt.practices[0]
+            return (
+              <PracticeCard
+                key={p.id}
+                practice={p}
+                onOrder={() => onOrder([p.id])}
+                isOrdering={orderingPractice === p.id}
+                ordered={orderSuccess === p.id}
+                subscriptionId={subscriptionId}
+                timelineLineageId={timelineLineageId}
+                onAckChanged={onAckChanged}
+              />
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   if (isPureAndGroup) {
     const opt = parts[0].options[0]
     const ids = opt.practices.map(p => p.id)
