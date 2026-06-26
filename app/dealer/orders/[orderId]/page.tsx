@@ -1377,19 +1377,26 @@ export default function DealerOrderDetailPage() {
   // cases. The AND/OR labels are farmer-side semantics (how the
   // farmer applies the inputs); for the dealer they collapse to a
   // flat per-item decision list.
-  //  - AND:     one Option, compound (≥ 2 positions). Dealer marks
-  //             each Position Available / Later / N/A independently.
-  //  - OR:      multiple Options, every Option size 1. Dealer marks
-  //             ONE Position Available — siblings auto-resolve via
-  //             the existing per-item sibling-cascade in
-  //             mark_item_available, and a "Change selection" link
-  //             resets the Part if the dealer needs to switch.
-  //  - COMPLEX: anything else (e.g. (A+B) OR (C+D)). Falls back to
-  //             the existing Part-collapsed + Option-pick UI.
-  type PartPattern = 'AND' | 'OR' | 'COMPLEX'
+  //  - AND:        one Option, compound (≥ 2 positions). Dealer marks
+  //                each Position Available / Later / N/A independently.
+  //  - OR:         multiple Options, every Option size 1. Dealer marks
+  //                ONE Position Available — siblings auto-resolve via
+  //                the existing per-item sibling-cascade in
+  //                mark_item_available, and a single "Change selection"
+  //                button on the chosen leg resets the Part.
+  //  - COMPLEX_OR: multiple Options with at least one compound (e.g.
+  //                (A+B) OR (C+D) or (A+B) OR C). Each Option renders
+  //                as its own flat block under one outer OR card; the
+  //                same sibling cascade locks the non-chosen Options;
+  //                a card-level Change-selection button resets the
+  //                whole Part.
+  //  - COMPLEX:    anything else (residual / IF-gated cases). Falls
+  //                back to the existing Part-collapsed + Option-pick UI.
+  type PartPattern = 'AND' | 'OR' | 'COMPLEX_OR' | 'COMPLEX'
   function classifyPart(part: RelationPart): PartPattern {
     if (part.options.length === 1 && part.options[0].is_compound) return 'AND'
     if (part.options.length >= 2 && part.options.every(o => !o.is_compound)) return 'OR'
+    if (part.options.length >= 2 && part.options.some(o => o.is_compound)) return 'COMPLEX_OR'
     return 'COMPLEX'
   }
 
@@ -1412,8 +1419,9 @@ export default function DealerOrderDetailPage() {
 
   function renderFlatPart(rel: RelationGroup, part: RelationPart) {
     const pattern = classifyPart(part)
-    if (pattern === 'AND') return renderFlatAndPart(rel, part)
-    if (pattern === 'OR')  return renderFlatOrPart(rel, part)
+    if (pattern === 'AND')        return renderFlatAndPart(rel, part)
+    if (pattern === 'OR')         return renderFlatOrPart(rel, part)
+    if (pattern === 'COMPLEX_OR') return renderComplexOrPart(rel, part)
     return null
   }
 
@@ -1491,6 +1499,102 @@ export default function DealerOrderDetailPage() {
               changeSelectionBusy: isResetting,
             })
           })}
+        </div>
+      </div>
+    )
+  }
+
+  function renderComplexOrPart(rel: RelationGroup, part: RelationPart) {
+    // COMPLEX_OR — multiple Options with at least one compound, e.g.
+    // (A+B) OR (C+D) or (A+B) OR C. Each Option is flattened into its
+    // own block under one outer card:
+    //
+    //   ┌─ OR — Pick either one ───────────────────┐
+    //   │  AND — apply together                    │
+    //   │  [A row + buttons]                       │
+    //   │  [B row + buttons]                       │
+    //   │  ───────  OR  ───────                    │
+    //   │  AND — apply together                    │
+    //   │  [C row + buttons]                       │
+    //   │  [D row + buttons]                       │
+    //   │  [Change selection]   (only when chosen) │
+    //   └──────────────────────────────────────────┘
+    //
+    // mark_item_available's cascade already does the locking — once
+    // any item in Option 1 is AVAILABLE, every PENDING item in
+    // Option 2 becomes NOT_AVAILABLE. We surface that by passing
+    // orGroupState='locked' for items in the non-chosen Options, so
+    // their cards dim and shed buttons. Items in the chosen Option
+    // render normally (Edit details on AVAILABLE rows still works —
+    // unlike pure-OR, editing a compound-leg brand isn't the same
+    // as redoing the whole choice, so we keep that path).
+    //
+    // The card-level Change-selection button replaces the inline
+    // ones: a compound Option may have multiple AVAILABLE rows, and
+    // N inline reset buttons would be noisy.
+    const partKey = `${rel.relation_id}-${part.part_index}`
+    const isResetting = resettingPart === partKey
+    const chosenOpt = part.options.find(o =>
+      o.items.some(it => it.status === 'AVAILABLE'),
+    )
+    const chosenOptionIndex = chosenOpt?.option_index ?? null
+    return (
+      <div key={partKey}
+        className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
+        <div className="px-3 pt-3 pb-1">
+          <p className="text-[11px] text-[#7A8C7E] italic">
+            <span className="not-italic font-bold text-[#6B3F1F]">
+              {t('relation.orPrefix')}
+            </span>
+            {' — '}
+            {t('relation.orEitherOr')}
+          </p>
+        </div>
+        <div className="px-3 pb-3 space-y-3">
+          {part.options.map((opt, idx) => {
+            const isLockedOption = chosenOptionIndex != null
+              && opt.option_index !== chosenOptionIndex
+            return (
+              <div key={opt.option_index}>
+                {idx > 0 && (
+                  <div className="flex items-center gap-3 my-2">
+                    <div className="h-px flex-1 bg-[#DDD0B8]" />
+                    <span className="text-[10px] font-bold text-[#7A8C7E] uppercase tracking-wider">
+                      {t('relation.orPrefix')}
+                    </span>
+                    <div className="h-px flex-1 bg-[#DDD0B8]" />
+                  </div>
+                )}
+                {opt.is_compound && (
+                  <p className={`text-[11px] italic mb-2 ${
+                    isLockedOption ? 'text-[#7A8C7E]/50' : 'text-[#7A8C7E]'
+                  }`}>
+                    <span className={`not-italic font-bold ${
+                      isLockedOption ? 'text-[#6B3F1F]/50' : 'text-[#6B3F1F]'
+                    }`}>
+                      {t('relation.andPrefix')}
+                    </span>
+                    {' — '}
+                    {t('relation.andApplyTogether')}
+                  </p>
+                )}
+                <div className="space-y-2">
+                  {opt.items.map(it => renderItemRow(it, {
+                    showPendingActions: true,
+                    orGroupState: isLockedOption ? 'locked' : undefined,
+                  }))}
+                </div>
+              </div>
+            )
+          })}
+          {chosenOptionIndex != null && order!.status === 'PROCESSING' && (
+            <button
+              onClick={() => resetPart(rel.relation_id, part.part_index)}
+              disabled={isResetting}
+              className="w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
+              {isResetting ? t('relation.changing') : t('relation.changeSelection')}
+            </button>
+          )}
         </div>
       </div>
     )
