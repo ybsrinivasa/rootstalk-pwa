@@ -1731,16 +1731,20 @@ export default function DealerOrderDetailPage() {
             render only its relation. */}
         {!focusItemId && order.status !== 'SENT' && relations.length > 0 && (
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              {t('sections.relations', { count: relations.length })}
-            </p>
             {relations.map(renderRelation)}
           </div>
         )}
 
         {/* Standalone items — hidden when order.status === 'SENT'
             (pre-accept) so the dealer makes their accept/decline call
-            blind. */}
+            blind. Section headers ("Standalone items (N)" /
+            "Multi-step recommendations (N)") were dropped 2026-06-26
+            now that the cards carry their own per-group hint label
+            (AND / OR italics) and the standalone cards are visually
+            indistinguishable in shape — the dealer reads a single
+            flat list of decisions. The focus-item path keeps the
+            "Resolve this postponed item" label because the framing
+            is genuinely contextual there. */}
         {(() => {
           if (order.status === 'SENT' && !focusItemId) return null
           const visible = focusItemId
@@ -1749,11 +1753,6 @@ export default function DealerOrderDetailPage() {
           if (visible.length === 0) return null
           return (
             <div className="space-y-3">
-              {!focusItemId && (
-                <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-                  {t('sections.standalone', { count: standaloneItems.length })}
-                </p>
-              )}
               {focusItemId && (
                 <p className="text-sm font-semibold text-[#6B3F1F] px-1">
                   {t('sections.resolvePostponed')}
