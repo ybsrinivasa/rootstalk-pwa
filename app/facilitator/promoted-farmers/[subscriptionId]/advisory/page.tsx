@@ -463,13 +463,16 @@ function PracticeCard({
 }
 
 function RelationGroup({
-  relationType, parts, elementLabel, t, tPill,
+  relationType, parts, elementLabel, t, tPill, tRel,
 }: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
   elementLabel: (et: string) => string
   t: (k: string, vars?: Record<string, string | number>) => string
   tPill: (k: string) => string
+  // 2026-06-26 — shared keys with the farmer page so promoter sees
+  // exactly what the farmer sees on a relation block.
+  tRel: (k: string, vars?: Record<string, string | number>) => string
 }) {
   if (parts.length === 0) return null
 
@@ -486,7 +489,7 @@ function RelationGroup({
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
           <div className="w-1 h-5 rounded-full bg-emerald-600" />
           <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-            {t('andGroupHeader')}
+            {tRel('applyAllTogether', { count: opt.practices.length })}
           </p>
         </div>
         <div className="divide-y divide-slate-100">
@@ -502,37 +505,57 @@ function RelationGroup({
 
   return (
     <div className="space-y-2">
-      {parts.map(part => (
+      {parts.map((part, partIdx) => (
         <div key={part.part}>
-          {parts.length > 1 && (
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold text-[#7A8C7E] bg-slate-100 px-2 py-0.5 rounded">
-                {t('partHeader', { part: part.part })}
-              </span>
-              <div className="h-px flex-1 bg-slate-200" />
-            </div>
-          )}
           {part.options.map((opt, optIdx) => {
             const isChoice = part.options.length > 1
+            const isCompound = opt.practices.length > 1
             return (
               <div key={opt.option}>
                 {isChoice && optIdx > 0 && (
                   <div className="flex items-center my-2">
                     <div className="h-px flex-1 bg-slate-300" />
                     <span className="px-3 text-xs font-bold text-[#7A8C7E] bg-[#F5F0E8] rounded">
-                      {t('orSeparator')}
+                      {tRel('orSeparator')}
                     </span>
                     <div className="h-px flex-1 bg-slate-300" />
                   </div>
                 )}
-                <div className="space-y-2">
-                  {opt.practices.map(p => (
-                    <PracticeCard key={p.id} practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
-                  ))}
-                </div>
+                {isCompound ? (
+                  <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
+                      <div className="w-1 h-5 rounded-full bg-emerald-600" />
+                      <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                        {tRel('applyAllTogether', { count: opt.practices.length })}
+                      </p>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {opt.practices.map(p => (
+                        <div key={p.id} className="px-3 py-2">
+                          <PracticeCard practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {opt.practices.map(p => (
+                      <PracticeCard key={p.id} practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })}
+          {partIdx < parts.length - 1 && (
+            <div className="flex items-center my-3">
+              <div className="h-px flex-1 bg-emerald-200" />
+              <span className="px-3 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded">
+                {tRel('andBetweenParts')}
+              </span>
+              <div className="h-px flex-1 bg-emerald-200" />
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -546,6 +569,9 @@ export default function FacilitatorAdvisoryViewPage() {
   const t = useTranslations('facilitator.promotedFarmers.detail')
   const tEl = useTranslations('practice.element')
   const tPill = useTranslations('orders.cropOrders.manage.pill')
+  // 2026-06-26 — shared with farmer page so the relation hierarchy
+  // reads identically on both surfaces.
+  const tRel = useTranslations('practice.relations')
   const locale = useLocale()
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -717,7 +743,7 @@ export default function FacilitatorAdvisoryViewPage() {
                         <RelationGroup key={row.relation_id}
                           relationType={row.relation_type || 'OR'}
                           parts={row.parts || []}
-                          elementLabel={elementLabel} t={t} tPill={tPill} />
+                          elementLabel={elementLabel} t={t} tPill={tPill} tRel={tRel} />
                       ) : null
                     )}
                   </div>

@@ -1197,6 +1197,20 @@ function PracticeAckFooter({
 }
 
 // ── Practice Relations: AND/OR group renderer ───────────────────────────────
+// 2026-06-26 — Visual hierarchy + i18n pass (Phase 1 of the Relations
+// workstream). Three things changed for clarity:
+//   - Hardcoded English strings replaced with `practice.relations.*` keys.
+//   - Between Parts (top-level AND concatenation) we now render a labeled
+//     "AND" pill instead of a faint hairline, so the structural
+//     `(A+B) AND (C or D)` shape is visible to the farmer rather than
+//     hidden behind whitespace.
+//   - Dropped the abstract "Part 1 / Part 2" headers — with the explicit
+//     AND pill, the numbered labels were redundant and read as jargon
+//     ("what's a Part?"). Each Part now renders as its own visually
+//     bordered block; the pill between names the relationship.
+//   - Pure-AND group header is count-aware: "Apply both together" for 2
+//     practices, "Apply all N together" for 3+, via the ICU plural in
+//     `practice.relations.applyAllTogether`.
 function RelationGroup({
   relationType, parts, orderingPractice, orderSuccess, onOrder,
   subscriptionId, timelineLineageId, onAckChanged,
@@ -1216,9 +1230,10 @@ function RelationGroup({
   onAckChanged: () => void
 }) {
   const tAction = useTranslations('practice.action')
+  const tRel = useTranslations('practice.relations')
   if (parts.length === 0) return null
 
-  // Single Part with single Option AND-group: paired card with "Order both together"
+  // Single Part with single Option AND-group: paired card with "Order N together"
   const isPureAndGroup =
     relationType === 'AND' &&
     parts.length === 1 &&
@@ -1235,7 +1250,7 @@ function RelationGroup({
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
           <div className="w-1 h-5 rounded-full bg-emerald-600" />
           <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-            Apply both together — AND group
+            {tRel('applyAllTogether', { count: ids.length })}
           </p>
         </div>
         <div className="divide-y divide-slate-100">
@@ -1250,42 +1265,40 @@ function RelationGroup({
             className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
             style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
           >
-            {isAnyOrdered ? '✓ Ordered' : isOrderingAny ? '…' : 'Order both together'}
+            {isAnyOrdered
+              ? tAction('ordered')
+              : isOrderingAny
+                ? '…'
+                : tRel('orderAllTogether', { count: ids.length })}
           </button>
         </div>
       </div>
     )
   }
 
-  // Otherwise: render each Part; show OR separators between Options of choice Parts
+  // Otherwise: render each Part as its own block. Between Parts: a
+  // labelled "AND" pill (same shape as the OR pill within a choice
+  // Part) so the top-level concatenation is visible. Within a choice
+  // Part: OR pills between Options.
   return (
     <div className="space-y-2">
       {parts.map((part, partIdx) => (
         <div key={part.part}>
-          {parts.length > 1 && (
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xs font-bold text-[#7A8C7E] bg-slate-100 px-2 py-0.5 rounded">
-                Part {part.part}
-              </span>
-              <div className="h-px flex-1 bg-slate-200" />
-            </div>
-          )}
           {part.options.map((opt, optIdx) => {
             const ids = opt.practices.map(p => p.id)
             const isOrderingAny = ids.some(id => orderingPractice === id)
             const isAnyOrdered = ids.some(id => orderSuccess === id)
             const isCompound = opt.practices.length > 1
             const isChoice = part.options.length > 1
-            const buttonLabel = isCompound
-              ? (isAnyOrdered ? tAction('ordered') : isOrderingAny ? '…' : tAction('order'))
-              : (isAnyOrdered ? tAction('ordered') : isOrderingAny ? '…' : tAction('order'))
 
             return (
               <div key={opt.option}>
                 {isChoice && optIdx > 0 && (
                   <div className="flex items-center my-2">
                     <div className="h-px flex-1 bg-slate-300" />
-                    <span className="px-3 text-xs font-bold text-[#7A8C7E] bg-[#F5F0E8] rounded">OR</span>
+                    <span className="px-3 text-xs font-bold text-[#7A8C7E] bg-[#F5F0E8] rounded">
+                      {tRel('orSeparator')}
+                    </span>
                     <div className="h-px flex-1 bg-slate-300" />
                   </div>
                 )}
@@ -1294,7 +1307,7 @@ function RelationGroup({
                     <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
                       <div className="w-1 h-5 rounded-full bg-emerald-600" />
                       <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-                        Apply together
+                        {tRel('applyAllTogether', { count: ids.length })}
                       </p>
                     </div>
                     <div className="divide-y divide-slate-100">
@@ -1309,7 +1322,11 @@ function RelationGroup({
                         className="text-xs font-semibold text-white px-4 py-2 rounded-xl disabled:opacity-60"
                         style={{ background: isAnyOrdered ? '#16a34a' : '#3A7D44' }}
                       >
-                        {buttonLabel}
+                        {isAnyOrdered
+                          ? tAction('ordered')
+                          : isOrderingAny
+                            ? '…'
+                            : tRel('orderAllTogether', { count: ids.length })}
                       </button>
                     </div>
                   </div>
@@ -1329,8 +1346,14 @@ function RelationGroup({
               </div>
             )
           })}
-          {partIdx < parts.length - 1 && parts.length > 1 && (
-            <div className="my-3 h-px bg-slate-300" />
+          {partIdx < parts.length - 1 && (
+            <div className="flex items-center my-3">
+              <div className="h-px flex-1 bg-emerald-200" />
+              <span className="px-3 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded">
+                {tRel('andBetweenParts')}
+              </span>
+              <div className="h-px flex-1 bg-emerald-200" />
+            </div>
           )}
         </div>
       ))}
