@@ -1651,6 +1651,8 @@
         "markNotAvailable": "Mark Not Available",
         "andApplyTogether": "These are applied together by the farmer.",
         "orEitherOr": "Pick either one — the alternative is not needed.",
+        "andPrefix": "AND",
+        "orPrefix": "OR",
         "changeSelection": "Change selection",
         "changing": "Resetting…"
       },

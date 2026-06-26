@@ -1429,6 +1429,10 @@ export default function DealerOrderDetailPage() {
         className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
         <div className="px-3 pt-3 pb-1">
           <p className="text-[11px] text-[#7A8C7E] italic">
+            <span className="not-italic font-bold text-[#6B3F1F]">
+              {t('relation.andPrefix')}
+            </span>
+            {' — '}
             {t('relation.andApplyTogether')}
           </p>
         </div>
@@ -1465,6 +1469,10 @@ export default function DealerOrderDetailPage() {
         className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
         <div className="px-3 pt-3 pb-1">
           <p className="text-[11px] text-[#7A8C7E] italic">
+            <span className="not-italic font-bold text-[#6B3F1F]">
+              {t('relation.orPrefix')}
+            </span>
+            {' — '}
             {t('relation.orEitherOr')}
           </p>
         </div>
