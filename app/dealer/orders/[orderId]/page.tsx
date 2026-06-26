@@ -675,9 +675,10 @@ export default function DealerOrderDetailPage() {
   }
 
   // 2026-06-26 — Wipes every item in a (relation, part) back to PENDING
-  // so the dealer can re-decide a pure-OR Part after an earlier
-  // commit. Backend clears brand / volume / price on rows that were
-  // AVAILABLE. Only valid while the order is PROCESSING.
+  // so the dealer can re-decide a pure-OR or COMPLEX_OR Part after
+  // an earlier commit. Backend clears brand / volume / price on
+  // rows that were AVAILABLE. Only valid while the order is
+  // PROCESSING.
   async function resetPart(relationId: string, partIndex: number) {
     const key = `${relationId}-${partIndex}`
     setResettingPart(key)
@@ -685,6 +686,21 @@ export default function DealerOrderDetailPage() {
       await api.post(
         `/dealer/orders/${orderId}/relations/${relationId}/parts/${partIndex}/reset`,
       )
+      await load()
+    } finally {
+      setResettingPart(null)
+    }
+  }
+
+  // 2026-06-26 — Per-item Change-selection for standalone or
+  // AND-member cards where there's no relation cascade to revert.
+  // Flips a single AVAILABLE item back to PENDING and clears its
+  // brand / volume / price. OR-related items route through
+  // resetPart instead.
+  async function resetItem(itemId: string) {
+    setResettingPart(`item-${itemId}`)
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/reset`, {})
       await load()
     } finally {
       setResettingPart(null)
@@ -961,28 +977,24 @@ export default function DealerOrderDetailPage() {
       // surface so the dealer's mental model is one consistent card
       // pattern regardless of whether the item is grouped or not.
       showPendingActions?: boolean
-      // 2026-06-26 — In a pure-OR Part, an item that's been resolved
-      // by the dealer (AVAILABLE, NOT_AVAILABLE, or auto-NOT_AVAILABLE
-      // via sibling pick) carries a single "Change selection" reset
-      // button on the chosen leg. The caller owns the reset action;
-      // this row just renders the button.
+      // 2026-06-26 — "Change selection" companion button next to
+      // Edit details on every AVAILABLE card. Scope is owned by the
+      // caller (resetItem for standalone / AND members; resetPart
+      // for pure-OR / COMPLEX_OR chosen-Option items). When undefined
+      // the button is suppressed (e.g. on focus-item-mode rows).
       onChangeSelection?: () => void
       changeSelectionBusy?: boolean
-      // 2026-06-26 — Pure-OR Part state once one leg has been
-      // committed AVAILABLE. The chosen leg gets the single
-      // "Change selection" reset button (replacing both Edit details
-      // and the inline link — they're functionally identical for OR).
-      // Sibling legs auto-cascaded to NOT_AVAILABLE are visually
-      // locked — dimmed, no action buttons of any kind — because
-      // they're not real decisions: they were set when the dealer
-      // picked the alternative. The only path back is the chosen
-      // leg's Reset, which puts the whole Part back to PENDING.
-      orGroupState?: 'chosen' | 'locked'
+      // 2026-06-26 — Pure-OR or COMPLEX_OR sibling that the backend
+      // cascade auto-flipped to NOT_AVAILABLE. The whole card is
+      // dimmed and sheds every action button — the dealer never
+      // chose this status, the cascade did. The only way back is
+      // Change selection on the chosen card / Option, which resets
+      // the whole Part.
+      orGroupState?: 'locked'
     } = {},
   ) {
     const showPriceColumn = item.status === 'AVAILABLE'
     const isLocked = opts.orGroupState === 'locked'
-    const isChosen = opts.orGroupState === 'chosen'
     return (
       <div
         key={item.id}
@@ -1041,21 +1053,12 @@ export default function DealerOrderDetailPage() {
             </button>
           </div>
         )}
-        {/* OR-chosen leg: single Reset button replaces both Edit
-            details and the underline Change-selection link. They were
-            functionally identical for an OR group — "change my mind"
-            redoes the whole choice. */}
-        {isChosen && opts.onChangeSelection
-          && order!.status === 'PROCESSING'
-          && editingItem !== item.id && (
-          <button
-            onClick={opts.onChangeSelection}
-            disabled={opts.changeSelectionBusy}
-            className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
-            {opts.changeSelectionBusy ? t('relation.changing') : t('relation.changeSelection')}
-          </button>
-        )}
-        {!isChosen && !isLocked
+        {/* AVAILABLE without a brand_name yet — mid-flow, dealer
+            hasn't committed brand / qty / price. Single purple CTA
+            to drive them back into the form. No Change-selection
+            paired here: there's nothing to "undo" until they
+            actually save. */}
+        {!isLocked
           && order!.status === 'PROCESSING'
           && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
@@ -1063,24 +1066,29 @@ export default function DealerOrderDetailPage() {
             {t('item.pickBrandAndVolume')}
           </button>
         )}
-        {!isChosen && !isLocked && opts.onChangeSelection
-          && order!.status === 'PROCESSING'
-          && (item.status === 'AVAILABLE' || item.status === 'NOT_AVAILABLE')
-          && editingItem !== item.id && (
-          <button
-            onClick={opts.onChangeSelection}
-            disabled={opts.changeSelectionBusy}
-            className="mt-2 w-full text-[11px] text-[#7D4196] underline underline-offset-2 disabled:opacity-50">
-            {opts.changeSelectionBusy ? t('relation.changing') : t('relation.changeSelection')}
-          </button>
-        )}
-        {!isChosen && !isLocked
+        {/* AVAILABLE with brand_name committed — paired Edit details
+            + Change selection (2026-06-26). Edit re-opens the form
+            for a brand / qty / price tweak; Change selection undoes
+            this card's decision (scope set by the caller —
+            standalone resets just this row, OR-related resets the
+            whole Part). */}
+        {!isLocked
           && order!.status === 'PROCESSING'
           && item.status === 'AVAILABLE' && item.brand_name && editingItem !== item.id && (
-          <button onClick={() => openItemForm(item)}
-            className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-            {t('item.editDetails')}
-          </button>
+          <div className="flex gap-2 mt-2">
+            <button onClick={() => openItemForm(item)}
+              className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
+              {t('item.editDetails')}
+            </button>
+            {opts.onChangeSelection && (
+              <button
+                onClick={opts.onChangeSelection}
+                disabled={opts.changeSelectionBusy}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
+                {opts.changeSelectionBusy ? t('relation.changing') : t('relation.changeSelection')}
+              </button>
+            )}
+          </div>
         )}
         {/* 2026-06-03 — Change decision on POSTPONED / NOT_AVAILABLE.
             For NOT_AVAILABLE we keep the order.status === 'PROCESSING'
@@ -1091,7 +1099,7 @@ export default function DealerOrderDetailPage() {
             this" happens. Backend's mark_item_available auto-flips
             POSTPONED → SENT_FOR_APPROVAL when order is past PROCESSING,
             so the farmer's review picks the item up automatically. */}
-        {!isChosen && !isLocked
+        {!isLocked
           && order!.status === 'PROCESSING'
           && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
@@ -1099,7 +1107,7 @@ export default function DealerOrderDetailPage() {
             {t('item.changeDecision')}
           </button>
         )}
-        {!isChosen && !isLocked
+        {!isLocked
           && item.status === 'POSTPONED' && editingItem !== item.id && (
           <div className="mt-2 flex gap-2">
             <button onClick={() => openItemForm(item)}
@@ -1430,7 +1438,9 @@ export default function DealerOrderDetailPage() {
     // with independent decisions. The "Apply together" hint reminds
     // the dealer (and the order trail) that the farmer plans to use
     // these as one combined intervention — useful context when
-    // something goes NOT_AVAILABLE.
+    // something goes NOT_AVAILABLE. Change selection on an AVAILABLE
+    // member resets just that member (AND siblings are independent —
+    // no relation cascade to revert).
     const items = part.options[0]?.items ?? []
     return (
       <div key={`${rel.relation_id}-${part.part_index}`}
@@ -1445,7 +1455,11 @@ export default function DealerOrderDetailPage() {
           </p>
         </div>
         <div className="px-3 pb-3 space-y-2">
-          {items.map(it => renderItemRow(it, { showPendingActions: true }))}
+          {items.map(it => renderItemRow(it, {
+            showPendingActions: true,
+            onChangeSelection: () => resetItem(it.id),
+            changeSelectionBusy: resettingPart === `item-${it.id}`,
+          }))}
         </div>
       </div>
     )
@@ -1460,14 +1474,11 @@ export default function DealerOrderDetailPage() {
     // coordination.
     //
     // Once one leg is AVAILABLE, the OR is decided:
-    //   - The chosen leg gets a single "Change selection" reset
-    //     button (collapsed from the old Change-selection link +
-    //     Edit-details button, which were functionally identical
-    //     for OR — both end up redoing the choice).
+    //   - The chosen leg shows paired Edit details + Change selection
+    //     (Change selection scope = whole Part, so siblings un-lock).
     //   - The auto-cascaded sibling(s) are visually locked — dimmed,
     //     no action buttons. They're not real decisions; they were
     //     set when the dealer picked the alternative.
-    // Reset on the chosen leg sends the whole Part back to PENDING.
     const items = part.options.map(o => o.items[0]).filter(Boolean)
     const hasAvailable = items.some(it => it.status === 'AVAILABLE')
     const partKey = `${rel.relation_id}-${part.part_index}`
@@ -1486,14 +1497,11 @@ export default function DealerOrderDetailPage() {
         </div>
         <div className="px-3 pb-3 space-y-2">
           {items.map(it => {
-            let orGroupState: 'chosen' | 'locked' | undefined
-            if (hasAvailable) {
-              orGroupState = it.status === 'AVAILABLE' ? 'chosen' : 'locked'
-            }
+            const isLocked = hasAvailable && it.status !== 'AVAILABLE'
             return renderItemRow(it, {
               showPendingActions: true,
-              orGroupState,
-              onChangeSelection: orGroupState === 'chosen'
+              orGroupState: isLocked ? 'locked' : undefined,
+              onChangeSelection: it.status === 'AVAILABLE'
                 ? () => resetPart(rel.relation_id, part.part_index)
                 : undefined,
               changeSelectionBusy: isResetting,
@@ -1509,7 +1517,7 @@ export default function DealerOrderDetailPage() {
     // (A+B) OR (C+D) or (A+B) OR C. Each Option is flattened into its
     // own block under one outer card:
     //
-    //   ┌─ OR — Pick either one ───────────────────┐
+    //   ┌──────────────────────────────────────────┐
     //   │  AND — apply together                    │
     //   │  [A row + buttons]                       │
     //   │  [B row + buttons]                       │
@@ -1517,21 +1525,18 @@ export default function DealerOrderDetailPage() {
     //   │  AND — apply together                    │
     //   │  [C row + buttons]                       │
     //   │  [D row + buttons]                       │
-    //   │  [Change selection]   (only when chosen) │
     //   └──────────────────────────────────────────┘
     //
     // mark_item_available's cascade already does the locking — once
     // any item in Option 1 is AVAILABLE, every PENDING item in
     // Option 2 becomes NOT_AVAILABLE. We surface that by passing
     // orGroupState='locked' for items in the non-chosen Options, so
-    // their cards dim and shed buttons. Items in the chosen Option
-    // render normally (Edit details on AVAILABLE rows still works —
-    // unlike pure-OR, editing a compound-leg brand isn't the same
-    // as redoing the whole choice, so we keep that path).
-    //
-    // The card-level Change-selection button replaces the inline
-    // ones: a compound Option may have multiple AVAILABLE rows, and
-    // N inline reset buttons would be noisy.
+    // their cards dim and shed every button. Items in the chosen
+    // Option carry the paired Edit details + Change selection — the
+    // Change-selection scope is the whole Part, so the locked
+    // Option un-locks. (Locked-block Change-selection button was
+    // dropped 2026-06-26 after the unified Edit + Change-selection
+    // model — discovery now happens on the chosen Option's cards.)
     const partKey = `${rel.relation_id}-${part.part_index}`
     const isResetting = resettingPart === partKey
     const chosenOpt = part.options.find(o =>
@@ -1573,24 +1578,17 @@ export default function DealerOrderDetailPage() {
                   {opt.items.map(it => renderItemRow(it, {
                     showPendingActions: true,
                     orGroupState: isLockedOption ? 'locked' : undefined,
+                    // 2026-06-26 — Change-selection is paired with
+                    // Edit details on every AVAILABLE item in the
+                    // chosen Option. Scope is the whole Part (so the
+                    // OTHER Option un-locks). Locked-Option items
+                    // shed all buttons via orGroupState='locked'.
+                    onChangeSelection: it.status === 'AVAILABLE' && !isLockedOption
+                      ? () => resetPart(rel.relation_id, part.part_index)
+                      : undefined,
+                    changeSelectionBusy: isResetting,
                   }))}
                 </div>
-                {/* 2026-06-26 — Per-Option Change-selection button.
-                    Sits at the bottom of each LOCKED Option block, so
-                    the dealer's path to "switch to the other set" is
-                    discoverable right where their attention is —
-                    instead of an abstract card-level reset. Tapping
-                    runs the same reset endpoint (whole Part back to
-                    PENDING); the locked Option then becomes pickable
-                    fresh. Same wording as pure-OR's button. */}
-                {isLockedOption && order!.status === 'PROCESSING' && (
-                  <button
-                    onClick={() => resetPart(rel.relation_id, part.part_index)}
-                    disabled={isResetting}
-                    className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
-                    {isResetting ? t('relation.changing') : t('relation.changeSelection')}
-                  </button>
-                )}
               </div>
             )
           })}
@@ -1779,12 +1777,23 @@ export default function DealerOrderDetailPage() {
 
           {/* 2026-06-03 — Edit on decided standalone items. AVAILABLE
               re-opens the brand form; POSTPONED / NOT_AVAILABLE flip
-              the decision via the state-machine self-edges. */}
+              the decision via the state-machine self-edges.
+              2026-06-26 — AVAILABLE paired with Change selection
+              (resetItem) so the dealer can undo this card's
+              decision in one tap without going through N/A → toggle. */}
           {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && editingItem !== item.id && (
-            <button onClick={() => openItemForm(item)}
-              className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-              {t('item.editDetails')}
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => openItemForm(item)}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
+                {t('item.editDetails')}
+              </button>
+              <button
+                onClick={() => resetItem(item.id)}
+                disabled={resettingPart === `item-${item.id}`}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
+                {resettingPart === `item-${item.id}` ? t('relation.changing') : t('relation.changeSelection')}
+              </button>
+            </div>
           )}
           {order!.status === 'PROCESSING' && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
             <button onClick={() => openItemForm(item)}
