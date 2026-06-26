@@ -538,7 +538,45 @@ function RelationGroup({
 
   return (
     <div className="space-y-2">
-      {parts.map((part, partIdx) => (
+      {parts.map((part, partIdx) => {
+        // 2026-06-26 — Pure-OR-at-Part-level collapse, mirror of
+        // farmer page: an OR Part inside a multi-Part Relation
+        // (e.g. Part 2 of (A+B) AND (C OR D)) collapses to ONE
+        // card with the merged L2 label.
+        const isPartPureOr =
+          part.options.length >= 2 &&
+          part.options.every(o => o.practices.length === 1)
+        if (isPartPureOr) {
+          const orPractices = part.options.map(o => o.practices[0])
+          const head = orPractices[0]
+          const labels = Array.from(new Set(
+            orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+          )).filter(Boolean)
+          const joinedLabel = labels.length > 1
+            ? labels.join(` ${tRel('orJoin')} `)
+            : labels[0]
+          return (
+            <div key={part.part}>
+              <PracticeCard
+                practice={head}
+                labelOverride={joinedLabel}
+                elementLabel={elementLabel}
+                t={t}
+                tPill={tPill}
+              />
+              {partIdx < parts.length - 1 && (
+                <div className="flex items-center my-3">
+                  <div className="h-px flex-1 bg-emerald-200" />
+                  <span className="px-3 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded">
+                    {tRel('andBetweenParts')}
+                  </span>
+                  <div className="h-px flex-1 bg-emerald-200" />
+                </div>
+              )}
+            </div>
+          )
+        }
+        return (
         <div key={part.part}>
           {part.options.map((opt, optIdx) => {
             const isChoice = part.options.length > 1
@@ -590,7 +628,8 @@ function RelationGroup({
             </div>
           )}
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

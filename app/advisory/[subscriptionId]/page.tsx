@@ -1362,7 +1362,55 @@ function RelationGroup({
   // Part: OR pills between Options.
   return (
     <div className="space-y-2">
-      {parts.map((part, partIdx) => (
+      {parts.map((part, partIdx) => {
+        // 2026-06-26 — Pure-OR-at-Part-level collapse. When a Part
+        // inside a multi-Part Relation has ≥ 2 single-practice
+        // Options (e.g. Part 2 of (A+B) AND (C OR D)), the OR is
+        // again a dealer-side substitution path that doesn't reach
+        // the farmer. Collapse to ONE PracticeCard with the merged
+        // L2 label, same as the top-level pure-OR collapse — without
+        // this, the farmer sees "Microbial pesticides OR Microbial
+        // pesticides" inside a Complex Relation.
+        const isPartPureOr =
+          part.options.length >= 2 &&
+          part.options.every(o => o.practices.length === 1)
+        if (isPartPureOr) {
+          const orPractices = part.options.map(o => o.practices[0])
+          const head = orPractices[0]
+          const labels = Array.from(new Set(
+            orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+          )).filter(Boolean)
+          const joinedLabel = labels.length > 1
+            ? labels.join(` ${tRel('orJoin')} `)
+            : labels[0]
+          const ids = orPractices.map(p => p.id)
+          const isOrderingAny = ids.some(id => orderingPractice === id)
+          const isAnyOrdered = ids.some(id => orderSuccess === id)
+          return (
+            <div key={part.part}>
+              <PracticeCard
+                practice={head}
+                labelOverride={joinedLabel}
+                onOrder={() => onOrder(ids)}
+                isOrdering={isOrderingAny}
+                ordered={isAnyOrdered}
+                subscriptionId={subscriptionId}
+                timelineLineageId={timelineLineageId}
+                onAckChanged={onAckChanged}
+              />
+              {partIdx < parts.length - 1 && (
+                <div className="flex items-center my-3">
+                  <div className="h-px flex-1 bg-emerald-200" />
+                  <span className="px-3 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded">
+                    {tRel('andBetweenParts')}
+                  </span>
+                  <div className="h-px flex-1 bg-emerald-200" />
+                </div>
+              )}
+            </div>
+          )
+        }
+        return (
         <div key={part.part}>
           {part.options.map((opt, optIdx) => {
             const ids = opt.practices.map(p => p.id)
@@ -1463,7 +1511,8 @@ function RelationGroup({
             </div>
           )}
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
