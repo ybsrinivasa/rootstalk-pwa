@@ -1541,16 +1541,7 @@ export default function DealerOrderDetailPage() {
     return (
       <div key={partKey}
         className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
-        <div className="px-3 pt-3 pb-1">
-          <p className="text-[11px] text-[#7A8C7E] italic">
-            <span className="not-italic font-bold text-[#6B3F1F]">
-              {t('relation.orPrefix')}
-            </span>
-            {' — '}
-            {t('relation.orEitherOr')}
-          </p>
-        </div>
-        <div className="px-3 pb-3 space-y-3">
+        <div className="px-3 py-3 space-y-3">
           {part.options.map((opt, idx) => {
             const isLockedOption = chosenOptionIndex != null
               && opt.option_index !== chosenOptionIndex
