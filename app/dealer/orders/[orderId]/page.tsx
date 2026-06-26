@@ -1575,17 +1575,25 @@ export default function DealerOrderDetailPage() {
                     orGroupState: isLockedOption ? 'locked' : undefined,
                   }))}
                 </div>
+                {/* 2026-06-26 — Per-Option Change-selection button.
+                    Sits at the bottom of each LOCKED Option block, so
+                    the dealer's path to "switch to the other set" is
+                    discoverable right where their attention is —
+                    instead of an abstract card-level reset. Tapping
+                    runs the same reset endpoint (whole Part back to
+                    PENDING); the locked Option then becomes pickable
+                    fresh. Same wording as pure-OR's button. */}
+                {isLockedOption && order!.status === 'PROCESSING' && (
+                  <button
+                    onClick={() => resetPart(rel.relation_id, part.part_index)}
+                    disabled={isResetting}
+                    className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
+                    {isResetting ? t('relation.changing') : t('relation.changeSelection')}
+                  </button>
+                )}
               </div>
             )
           })}
-          {chosenOptionIndex != null && order!.status === 'PROCESSING' && (
-            <button
-              onClick={() => resetPart(rel.relation_id, part.part_index)}
-              disabled={isResetting}
-              className="w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg disabled:opacity-50">
-              {isResetting ? t('relation.changing') : t('relation.changeSelection')}
-            </button>
-          )}
         </div>
       </div>
     )
