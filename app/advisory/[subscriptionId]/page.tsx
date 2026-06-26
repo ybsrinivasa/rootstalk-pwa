@@ -870,6 +870,7 @@ function fulfilmentToPill(f: Fulfilment): ManagePill | null {
 function PracticeCard({
   practice, onOrder, isOrdering, ordered,
   subscriptionId, timelineLineageId, onAckChanged,
+  labelOverride,
 }: {
   practice: Practice
   onOrder: () => void
@@ -878,6 +879,12 @@ function PracticeCard({
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
+  // 2026-06-26 — Replaces the L2 label when set. Used by the
+  // pure-OR collapsed render to show "Microbial Pesticide or
+  // Botanical Pesticide" on a single card instead of asking the
+  // farmer to pick a leg (OR is a dealer-side decision; farmer's
+  // authority ends at Package selection).
+  labelOverride?: string
 }) {
   const router = useRouter()
   const tEl = useTranslations('practice.element')
@@ -927,7 +934,7 @@ function PracticeCard({
             </div>
           )}
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
-            {l2Label || 'General Advisory'}
+            {labelOverride || l2Label || 'General Advisory'}
           </p>
         </div>
         {practice.l0_type === 'INPUT' && (
@@ -1240,13 +1247,17 @@ function RelationGroup({
     parts[0].options.length === 1 &&
     parts[0].options[0].practices.length > 1
 
-  // 2026-06-26 — Single Part with ≥ 2 single-practice Options:
-  // pure OR (A OR B [OR C]). Wrap in a labelled container so the
-  // grouping is unambiguous when the OR sits next to a standalone
-  // item in the same timeline. Earlier rendering relied on an
-  // inline "OR" pill between cards, which the eye binds to whichever
-  // cards are immediately above / below the pill — confusing when
-  // the timeline also contains standalones.
+  // 2026-06-26 — Pure OR (single Part, ≥ 2 single-practice
+  // Options): collapse to ONE card on the farmer page. OR is a
+  // dealer-side substitution path, not a farming choice — the
+  // farmer's decision authority ends at Package selection, and
+  // routing between OR siblings is the dealer's call (via the
+  // sibling cascade in mark_item_available). To keep the farmer
+  // informed about what's coming, if the options span multiple L2
+  // types we splice them into the label ("Microbial Pesticide or
+  // Botanical Pesticide"); if every option shares the same L2 we
+  // just show that L2. Either way: one row, one Order button, no
+  // "choose ONE" framing.
   const isPureOrGroup =
     relationType === 'OR' &&
     parts.length === 1 &&
@@ -1254,33 +1265,28 @@ function RelationGroup({
     parts[0].options.every(o => o.practices.length === 1)
 
   if (isPureOrGroup) {
-    const opts = parts[0].options
+    const orPractices = parts[0].options.map(o => o.practices[0])
+    const head = orPractices[0]
+    const labels = Array.from(new Set(
+      orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+    )).filter(Boolean)
+    const joinedLabel = labels.length > 1
+      ? labels.join(` ${tRel('orJoin')} `)
+      : labels[0]
+    const ids = orPractices.map(p => p.id)
+    const isOrderingAny = ids.some(id => orderingPractice === id)
+    const isAnyOrdered = ids.some(id => orderSuccess === id)
     return (
-      <div className="bg-amber-50/30 rounded-2xl overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50">
-          <div className="w-1 h-5 rounded-full bg-amber-600" />
-          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
-            {tRel('orChooseOne')}
-          </p>
-        </div>
-        <div className="p-3 space-y-2">
-          {opts.map(opt => {
-            const p = opt.practices[0]
-            return (
-              <PracticeCard
-                key={p.id}
-                practice={p}
-                onOrder={() => onOrder([p.id])}
-                isOrdering={orderingPractice === p.id}
-                ordered={orderSuccess === p.id}
-                subscriptionId={subscriptionId}
-                timelineLineageId={timelineLineageId}
-                onAckChanged={onAckChanged}
-              />
-            )
-          })}
-        </div>
-      </div>
+      <PracticeCard
+        practice={head}
+        labelOverride={joinedLabel}
+        onOrder={() => onOrder(ids)}
+        isOrdering={isOrderingAny}
+        ordered={isAnyOrdered}
+        subscriptionId={subscriptionId}
+        timelineLineageId={timelineLineageId}
+        onAckChanged={onAckChanged}
+      />
     )
   }
 

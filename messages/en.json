@@ -194,7 +194,7 @@
       "orderAllTogether": "{count, plural, one {Order} =2 {Order both together} other {Order all # together}}",
       "orSeparator": "OR",
       "andBetweenParts": "AND",
-      "orChooseOne": "Choose ONE"
+      "orJoin": "or"
     },
     "element": {
       "APPLICATION_METHOD": "Application Method",

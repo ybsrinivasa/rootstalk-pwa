@@ -308,12 +308,14 @@ function ReadOnlyAckMarker({ marked, label }: { marked: boolean; label: string }
 }
 
 function PracticeCard({
-  practice, elementLabel, t, tPill,
+  practice, elementLabel, t, tPill, labelOverride,
 }: {
   practice: Practice
   elementLabel: (et: string) => string
   t: (k: string, vars?: Record<string, string | number>) => string
   tPill: (k: string) => string
+  // 2026-06-26 — Pure-OR collapse (mirror of farmer page).
+  labelOverride?: string
 }) {
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
@@ -360,7 +362,7 @@ function PracticeCard({
             </div>
           )}
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
-            {l2Label || t('generalAdvisory')}
+            {labelOverride || l2Label || t('generalAdvisory')}
           </p>
         </div>
         {/* Read-only status chip (no tap action — promoter is not
@@ -482,10 +484,11 @@ function RelationGroup({
     parts[0].options.length === 1 &&
     parts[0].options[0].practices.length > 1
 
-  // 2026-06-26 — Pure OR group (single Part, ≥ 2 single-practice
-  // Options): wrap in a labelled container so the OR is unambiguous
-  // when standalones sit alongside in the same timeline. Mirror of
-  // the farmer page.
+  // 2026-06-26 — Pure OR collapse: ONE card with a joined L2 label
+  // (e.g. "Microbial Pesticide or Botanical Pesticide") so the
+  // promoter sees what the farmer sees. OR is a dealer-side
+  // substitution path, not a farming choice — promoter's view
+  // mirrors the farmer page.
   const isPureOrGroup =
     relationType === 'OR' &&
     parts.length === 1 &&
@@ -493,24 +496,22 @@ function RelationGroup({
     parts[0].options.every(o => o.practices.length === 1)
 
   if (isPureOrGroup) {
-    const opts = parts[0].options
+    const orPractices = parts[0].options.map(o => o.practices[0])
+    const head = orPractices[0]
+    const labels = Array.from(new Set(
+      orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+    )).filter(Boolean)
+    const joinedLabel = labels.length > 1
+      ? labels.join(` ${tRel('orJoin')} `)
+      : labels[0]
     return (
-      <div className="bg-amber-50/30 rounded-2xl overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50">
-          <div className="w-1 h-5 rounded-full bg-amber-600" />
-          <p className="text-xs font-bold text-amber-700 uppercase tracking-wide">
-            {tRel('orChooseOne')}
-          </p>
-        </div>
-        <div className="p-3 space-y-2">
-          {opts.map(opt => {
-            const p = opt.practices[0]
-            return (
-              <PracticeCard key={p.id} practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
-            )
-          })}
-        </div>
-      </div>
+      <PracticeCard
+        practice={head}
+        labelOverride={joinedLabel}
+        elementLabel={elementLabel}
+        t={t}
+        tPill={tPill}
+      />
     )
   }
 
