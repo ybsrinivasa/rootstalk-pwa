@@ -251,6 +251,10 @@ export default function DealerOrderDetailPage() {
     | { relationId: string; partIndex: number; optionIndex: number; check: DuplicateCheck }
   >(null)
   const [committingOption, setCommittingOption] = useState<string | null>(null)
+  // 2026-06-26 — Tracks the (relation, part) currently being reset
+  // by the "Change selection" link in a pure-OR Part. Keyed as
+  // `${relationId}-${partIndex}`.
+  const [resettingPart, setResettingPart] = useState<string | null>(null)
   // Batch 29 — confirm-before-submit + dealer Abort dialog.
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
   const [showAbortConfirm, setShowAbortConfirm] = useState(false)
@@ -670,6 +674,23 @@ export default function DealerOrderDetailPage() {
     load()
   }
 
+  // 2026-06-26 — Wipes every item in a (relation, part) back to PENDING
+  // so the dealer can re-decide a pure-OR Part after an earlier
+  // commit. Backend clears brand / volume / price on rows that were
+  // AVAILABLE. Only valid while the order is PROCESSING.
+  async function resetPart(relationId: string, partIndex: number) {
+    const key = `${relationId}-${partIndex}`
+    setResettingPart(key)
+    try {
+      await api.post(
+        `/dealer/orders/${orderId}/relations/${relationId}/parts/${partIndex}/reset`,
+      )
+      await load()
+    } finally {
+      setResettingPart(null)
+    }
+  }
+
   async function submitForApproval() {
     if (!order) return
     setSubmitting(true)
@@ -930,7 +951,25 @@ export default function DealerOrderDetailPage() {
 
   // ── Renderers ───────────────────────────────────────────────────────────────
 
-  function renderItemRow(item: OrderItem, opts: { compactMeta?: boolean } = {}) {
+  function renderItemRow(
+    item: OrderItem,
+    opts: {
+      compactMeta?: boolean
+      // 2026-06-26 — When the parent renders a pure-AND or pure-OR
+      // Relation Part as individual items, PENDING rows need the
+      // three-button decision row inline. Mirrors the standalone-item
+      // surface so the dealer's mental model is one consistent card
+      // pattern regardless of whether the item is grouped or not.
+      showPendingActions?: boolean
+      // 2026-06-26 — In a pure-OR Part, an item that's been resolved
+      // by the dealer (AVAILABLE, NOT_AVAILABLE, or auto-NOT_AVAILABLE
+      // via sibling pick) carries a quiet "Change selection" link
+      // that resets the whole Part back to PENDING. The caller owns
+      // the reset action; this row just renders the link.
+      onChangeSelection?: () => void
+      changeSelectionBusy?: boolean
+    } = {},
+  ) {
     const showPriceColumn = item.status === 'AVAILABLE'
     return (
       <div key={item.id} className="bg-white rounded-xl border border-[#DDD0B8] p-3">
@@ -965,10 +1004,41 @@ export default function DealerOrderDetailPage() {
           )}
         </div>
 
+        {opts.showPendingActions
+          && order!.status === 'PROCESSING'
+          && item.status === 'PENDING'
+          && editingItem !== item.id && (
+          <div className="flex gap-2 mt-3">
+            <button onClick={() => openItemForm(item)}
+              className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
+              {t('item.available')}
+            </button>
+            <button onClick={() => openPostponePicker(item.id)}
+              disabled={postponeBusy}
+              className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2 rounded-lg disabled:opacity-50">
+              {t('item.later')}
+            </button>
+            <button onClick={() => markUnavailable(item.id)}
+              className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
+              {t('item.na')}
+            </button>
+          </div>
+        )}
         {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && !item.brand_name && editingItem !== item.id && (
           <button onClick={() => openItemForm(item)}
             className="mt-2 w-full bg-[#7D4196] text-white text-xs font-semibold py-2 rounded-lg">
             {t('item.pickBrandAndVolume')}
+          </button>
+        )}
+        {opts.onChangeSelection
+          && order!.status === 'PROCESSING'
+          && (item.status === 'AVAILABLE' || item.status === 'NOT_AVAILABLE')
+          && editingItem !== item.id && (
+          <button
+            onClick={opts.onChangeSelection}
+            disabled={opts.changeSelectionBusy}
+            className="mt-2 w-full text-[11px] text-[#7D4196] underline underline-offset-2 disabled:opacity-50">
+            {opts.changeSelectionBusy ? t('relation.changing') : t('relation.changeSelection')}
           </button>
         )}
         {order!.status === 'PROCESSING' && item.status === 'AVAILABLE' && item.brand_name && editingItem !== item.id && (
@@ -1264,7 +1334,109 @@ export default function DealerOrderDetailPage() {
     )
   }
 
+  // 2026-06-26 — Classify a Part by shape so the dealer surface can
+  // strip the "Multi-step recommendation" framing for the simple
+  // cases. The AND/OR labels are farmer-side semantics (how the
+  // farmer applies the inputs); for the dealer they collapse to a
+  // flat per-item decision list.
+  //  - AND:     one Option, compound (≥ 2 positions). Dealer marks
+  //             each Position Available / Later / N/A independently.
+  //  - OR:      multiple Options, every Option size 1. Dealer marks
+  //             ONE Position Available — siblings auto-resolve via
+  //             the existing per-item sibling-cascade in
+  //             mark_item_available, and a "Change selection" link
+  //             resets the Part if the dealer needs to switch.
+  //  - COMPLEX: anything else (e.g. (A+B) OR (C+D)). Falls back to
+  //             the existing Part-collapsed + Option-pick UI.
+  type PartPattern = 'AND' | 'OR' | 'COMPLEX'
+  function classifyPart(part: RelationPart): PartPattern {
+    if (part.options.length === 1 && part.options[0].is_compound) return 'AND'
+    if (part.options.length >= 2 && part.options.every(o => !o.is_compound)) return 'OR'
+    return 'COMPLEX'
+  }
+
   function renderRelation(rel: RelationGroup) {
+    // If every Part in this Relation collapses to a flat pattern,
+    // drop the heavy "Multi-step recommendation" wrapper — the dealer
+    // sees a quiet bordered card per Part with a subtle hint label.
+    const allFlat = rel.parts.every(p => classifyPart(p) !== 'COMPLEX')
+
+    if (allFlat) {
+      return (
+        <div key={rel.relation_id} className="space-y-3">
+          {rel.parts.map(part => renderFlatPart(rel, part))}
+        </div>
+      )
+    }
+
+    return renderComplexRelation(rel)
+  }
+
+  function renderFlatPart(rel: RelationGroup, part: RelationPart) {
+    const pattern = classifyPart(part)
+    if (pattern === 'AND') return renderFlatAndPart(rel, part)
+    if (pattern === 'OR')  return renderFlatOrPart(rel, part)
+    return null
+  }
+
+  function renderFlatAndPart(rel: RelationGroup, part: RelationPart) {
+    // AND: the single Option's positions become a flat list of items
+    // with independent decisions. The "Apply together" hint reminds
+    // the dealer (and the order trail) that the farmer plans to use
+    // these as one combined intervention — useful context when
+    // something goes NOT_AVAILABLE.
+    const items = part.options[0]?.items ?? []
+    return (
+      <div key={`${rel.relation_id}-${part.part_index}`}
+        className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
+        <div className="px-3 pt-3 pb-1">
+          <p className="text-[11px] text-[#7A8C7E] italic">
+            {t('relation.andApplyTogether')}
+          </p>
+        </div>
+        <div className="px-3 pb-3 space-y-2">
+          {items.map(it => renderItemRow(it, { showPendingActions: true }))}
+        </div>
+      </div>
+    )
+  }
+
+  function renderFlatOrPart(rel: RelationGroup, part: RelationPart) {
+    // OR: each Option holds exactly one Position. Render each as a
+    // per-item row. mark_item_available already cascades siblings
+    // to NOT_AVAILABLE for same-Part-different-Option items (see
+    // backend audit 2026-06-26), so the dealer's "Available" tap on
+    // any leg locks the alternatives without any frontend
+    // coordination. The "Change selection" link calls resetPart to
+    // re-open the whole group.
+    const items = part.options.map(o => o.items[0]).filter(Boolean)
+    const anyDecided = items.some(it =>
+      it.status === 'AVAILABLE' || it.status === 'NOT_AVAILABLE'
+    )
+    const partKey = `${rel.relation_id}-${part.part_index}`
+    const isResetting = resettingPart === partKey
+    return (
+      <div key={partKey}
+        className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
+        <div className="px-3 pt-3 pb-1">
+          <p className="text-[11px] text-[#7A8C7E] italic">
+            {t('relation.orEitherOr')}
+          </p>
+        </div>
+        <div className="px-3 pb-3 space-y-2">
+          {items.map(it => renderItemRow(it, {
+            showPendingActions: true,
+            onChangeSelection: anyDecided && order!.status === 'PROCESSING'
+              ? () => resetPart(rel.relation_id, part.part_index)
+              : undefined,
+            changeSelectionBusy: isResetting,
+          }))}
+        </div>
+      </div>
+    )
+  }
+
+  function renderComplexRelation(rel: RelationGroup) {
     const expandedPart = expandedPartByRelation[rel.relation_id]
     const totalParts = rel.parts.length
     const resolvedParts = rel.parts.filter(p => p.part_status === 'RESOLVED').length

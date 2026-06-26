@@ -1647,7 +1647,11 @@
         "lockedBrandBadge": "Locked brand",
         "checking": "Checking…",
         "markOptionAvailable": "Mark Option Available",
-        "markNotAvailable": "Mark Not Available"
+        "markNotAvailable": "Mark Not Available",
+        "andApplyTogether": "These are applied together by the farmer.",
+        "orEitherOr": "Pick either one — the alternative is not needed.",
+        "changeSelection": "Change selection",
+        "changing": "Resetting…"
       },
       "sections": {
         "relations": "Multi-step recommendations ({count})",
