@@ -71,13 +71,23 @@ export default function PWAHeader({
       .catch(() => setLanguages([{ language_code: 'en', language_name_native: 'English' }]))
   }, [])
 
-  function switchLang(code: string) {
-    // Fire-and-forget backend persist; local state (cookie + localStorage)
-    // is updated synchronously inside changeLanguage so the reload below
-    // picks it up regardless of network outcome.
-    void changeLanguage(code)
+  async function switchLang(code: string) {
+    // 2026-06-28 — Await the backend persist before reloading the
+    // page. Previous fire-and-forget version raced `window.location
+    // .reload()` against the in-flight PUT — the reload tore down
+    // the request mid-flight, so the cookie / localStorage updated
+    // to the new language but the backend's `user.language_code`
+    // stayed at the old value. Net effect: UI strings (next-intl)
+    // rendered in the newly-picked language while Cosh content
+    // (resolved from `current_user.language_code` server-side) kept
+    // rendering in the old one. `changeLanguage` silently swallows
+    // network errors so awaiting it does not surface failures to
+    // the user — we only block long enough to let the PUT either
+    // complete or fail; either way the local cookie has already
+    // been written so the post-reload UI is correct.
     setCurrentLang(code)
     setShowLang(false)
+    await changeLanguage(code)
     window.location.reload()
   }
 
@@ -166,7 +176,7 @@ export default function PWAHeader({
               <button onClick={() => setShowLang(false)} className="text-[#7A8C7E] text-xl">×</button>
             </div>
             {languages.map((l: Lang) => (
-              <button key={l.language_code} onClick={() => switchLang(l.language_code)}
+              <button key={l.language_code} onClick={() => void switchLang(l.language_code)}
                 className={`w-full text-left px-4 py-3 border-b border-[#DDD0B8] flex items-center justify-between ${currentLang === l.language_code ? 'bg-green-50' : ''}`}>
                 <span className="text-[#6B3F1F]">{l.language_name_native}</span>
                 {currentLang === l.language_code && <span style={{ color: colour }}>✓</span>}

@@ -3,7 +3,7 @@ import { useState, useEffect, FormEvent, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser } from '@/lib/auth'
-import { setLanguage, getLanguage } from '@/lib/language'
+import { getLanguage, changeLanguage } from '@/lib/language'
 import api from '@/lib/api'
 import InstallPrompt from '@/components/InstallPrompt'
 import AppMark from '@/components/AppMark'
@@ -392,7 +392,17 @@ export default function RootPage() {
               <div className="flex gap-2 pb-1 w-max">
                 {languages.map(l => (
                   <button key={l.language_code}
-                    onClick={() => { setSelected(l.language_code); setLanguage(l.language_code) }}
+                    // 2026-06-28 — Onboarding language picker now
+                    // routes through `changeLanguage` so the choice
+                    // is durably written to the user's
+                    // `language_code` on the backend. Earlier code
+                    // called `setLanguage` (local only), so a
+                    // user who picked, say, Hindi here ended up
+                    // with UI strings in Hindi but Cosh content in
+                    // whatever the backend default was — and any
+                    // later switch via PWAHeader could leave the
+                    // two sides desynced.
+                    onClick={() => { setSelected(l.language_code); void changeLanguage(l.language_code) }}
                     className="px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-all"
                     style={selectedLang === l.language_code
                       ? { background: G, color: 'white' }
