@@ -1280,10 +1280,28 @@ function RelationGroup({
 
   if (isPureOrGroup) {
     const orPractices = parts[0].options.map(o => o.practices[0])
-    const head = orPractices[0]
-    const labels = Array.from(new Set(
-      orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
-    )).filter(Boolean)
+    // 2026-06-29 — Pre-decision vs post-decision OR rendering.
+    // Once the dealer picks a leg of the OR (the chosen leg's
+    // fulfilment lands in any of these "real" states), the card
+    // should reflect THAT leg's reality — its L2 label, its
+    // brand details, its Manage chip — not the abstract
+    // "Microbial or Botanical or…" alternatives. Sibling legs
+    // are NOT_NEEDED at this point, so picking orPractices[0]
+    // as head (the default) would surface a blank no-pill card
+    // for the OPT_1 sibling instead of the actual fulfilment on
+    // OPT_n. Pre-decision (no leg chosen yet) keeps the joined
+    // OR label so the farmer sees what's coming.
+    const CHOSEN_STATUSES = new Set(['AVAILABLE', 'SENT_FOR_APPROVAL', 'APPROVED'])
+    const chosenPractice = orPractices.find(p => {
+      const s = p.fulfilment?.status
+      return s != null && CHOSEN_STATUSES.has(s)
+    })
+    const head = chosenPractice ?? orPractices[0]
+    const labels = chosenPractice
+      ? [chosenPractice.l2_name_loc || humanizeType(chosenPractice.l2_type) || '']
+      : Array.from(new Set(
+          orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+        )).filter(Boolean)
     const joinedLabel = labels.length > 1
       ? labels.join(` ${tRel('orJoin')} `)
       : labels[0]
@@ -1385,10 +1403,22 @@ function RelationGroup({
           part.options.every(o => o.practices.length === 1)
         if (isPartPureOr) {
           const orPractices = part.options.map(o => o.practices[0])
-          const head = orPractices[0]
-          const labels = Array.from(new Set(
-            orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
-          )).filter(Boolean)
+          // 2026-06-29 — Same pre-/post-decision swap as the
+          // top-level pure-OR collapse: once a leg has been picked
+          // (AVAILABLE / SENT_FOR_APPROVAL / APPROVED), use that
+          // leg's data so the chip + brand details reflect the
+          // farmer's actual fulfilment, not a NOT_NEEDED sibling.
+          const CHOSEN_STATUSES_P = new Set(['AVAILABLE', 'SENT_FOR_APPROVAL', 'APPROVED'])
+          const chosenPracticeP = orPractices.find(p => {
+            const s = p.fulfilment?.status
+            return s != null && CHOSEN_STATUSES_P.has(s)
+          })
+          const head = chosenPracticeP ?? orPractices[0]
+          const labels = chosenPracticeP
+            ? [chosenPracticeP.l2_name_loc || humanizeType(chosenPracticeP.l2_type) || '']
+            : Array.from(new Set(
+                orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+              )).filter(Boolean)
           const joinedLabel = labels.length > 1
             ? labels.join(` ${tRel('orJoin')} `)
             : labels[0]

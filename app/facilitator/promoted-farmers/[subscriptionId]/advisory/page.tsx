@@ -498,10 +498,20 @@ function RelationGroup({
 
   if (isPureOrGroup) {
     const orPractices = parts[0].options.map(o => o.practices[0])
-    const head = orPractices[0]
-    const labels = Array.from(new Set(
-      orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
-    )).filter(Boolean)
+    // 2026-06-29 — Mirror of farmer page: once a leg has been
+    // picked, the card reflects THAT leg's reality (label, brand,
+    // chip) rather than the alternatives.
+    const CHOSEN_STATUSES = new Set(['AVAILABLE', 'SENT_FOR_APPROVAL', 'APPROVED'])
+    const chosenPractice = orPractices.find(p => {
+      const s = p.fulfilment?.status
+      return s != null && CHOSEN_STATUSES.has(s)
+    })
+    const head = chosenPractice ?? orPractices[0]
+    const labels = chosenPractice
+      ? [chosenPractice.l2_name_loc || humanizeType(chosenPractice.l2_type) || '']
+      : Array.from(new Set(
+          orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+        )).filter(Boolean)
     const joinedLabel = labels.length > 1
       ? labels.join(` ${tRel('orJoin')} `)
       : labels[0]
@@ -549,10 +559,19 @@ function RelationGroup({
           part.options.every(o => o.practices.length === 1)
         if (isPartPureOr) {
           const orPractices = part.options.map(o => o.practices[0])
-          const head = orPractices[0]
-          const labels = Array.from(new Set(
-            orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
-          )).filter(Boolean)
+          // 2026-06-29 — Mirror of farmer page per-Part collapse:
+          // chosen leg's data takes over once a leg is picked.
+          const CHOSEN_STATUSES_P = new Set(['AVAILABLE', 'SENT_FOR_APPROVAL', 'APPROVED'])
+          const chosenPracticeP = orPractices.find(p => {
+            const s = p.fulfilment?.status
+            return s != null && CHOSEN_STATUSES_P.has(s)
+          })
+          const head = chosenPracticeP ?? orPractices[0]
+          const labels = chosenPracticeP
+            ? [chosenPracticeP.l2_name_loc || humanizeType(chosenPracticeP.l2_type) || '']
+            : Array.from(new Set(
+                orPractices.map(p => p.l2_name_loc || humanizeType(p.l2_type) || ''),
+              )).filter(Boolean)
           const joinedLabel = labels.length > 1
             ? labels.join(` ${tRel('orJoin')} `)
             : labels[0]
