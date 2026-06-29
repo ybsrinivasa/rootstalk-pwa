@@ -36,7 +36,8 @@ interface Element {
   unit_cosh_id: string | null
 }
 interface Fulfilment {
-  status: 'PENDING' | 'AVAILABLE' | 'POSTPONED' | 'NOT_AVAILABLE'
+  // 2026-06-29 — NOT_NEEDED for OR cascade siblings (mirror of farmer page).
+  status: 'PENDING' | 'AVAILABLE' | 'POSTPONED' | 'NOT_AVAILABLE' | 'NOT_NEEDED'
         | 'SENT_FOR_APPROVAL' | 'APPROVED' | 'REJECTED'
   order_id: string
   order_item_id: string

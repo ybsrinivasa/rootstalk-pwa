@@ -10,7 +10,11 @@ import api from '@/lib/api'
 
 interface Element { element_type: string; cosh_ref: string | null; value: string | null; unit_cosh_id: string | null }
 interface Fulfilment {
-  status: 'PENDING' | 'AVAILABLE' | 'POSTPONED' | 'NOT_AVAILABLE'
+  // 2026-06-29 — NOT_NEEDED added for OR-group siblings that the
+  // dealer didn't pick (auto-cascaded when a peer was marked
+  // AVAILABLE). They're semantically "covered by the chosen
+  // alternative," not "returned by the dealer."
+  status: 'PENDING' | 'AVAILABLE' | 'POSTPONED' | 'NOT_AVAILABLE' | 'NOT_NEEDED'
         | 'SENT_FOR_APPROVAL' | 'APPROVED' | 'REJECTED'
   order_id: string
   order_item_id: string
@@ -864,6 +868,11 @@ function fulfilmentToPill(f: Fulfilment): ManagePill | null {
       return 'returned'
     case 'APPROVED':
       return 'pickup'
+    case 'NOT_NEEDED':
+      // 2026-06-29 — OR alternative the dealer didn't pick. Not a
+      // farmer-actionable state; no pill. The chosen leg's chip
+      // tells the farmer what they're actually getting.
+      return null
   }
 }
 
