@@ -1359,6 +1359,9 @@ function RelationGroup({
                       `/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`,
                     )
                   : undefined}
+                subscriptionId={subscriptionId}
+                timelineLineageId={timelineLineageId}
+                onAckChanged={onAckChanged}
               />
             )
           })}
@@ -1502,6 +1505,9 @@ function RelationGroup({
                                   `/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`,
                                 )
                               : undefined}
+                            subscriptionId={subscriptionId}
+                            timelineLineageId={timelineLineageId}
+                            onAckChanged={onAckChanged}
                           />
                         )
                       })}
@@ -1560,6 +1566,7 @@ function RelationGroup({
 function InnerPracticeRow({
   practice,
   pillName, pillTone, onPillClick, tPill,
+  subscriptionId, timelineLineageId, onAckChanged,
 }: {
   practice: Practice
   // 2026-06-26 — Optional Manage-pill chip on the right edge of the
@@ -1574,38 +1581,68 @@ function InnerPracticeRow({
   pillTone?: { bg: string; fg: string } | null
   onPillClick?: () => void
   tPill?: (k: string) => string
+  // 2026-06-30 — Per-leg post-pickup affordances. When the farmer
+  // has received the input for this leg (farmer_received_at set), the
+  // row gains the PurchasedSummary block (brand + manufacturer +
+  // dose) and the "I've done this" tick — parity with how standalone
+  // PracticeCards behave after pickup. Without these, the farmer
+  // looks at a picked-up AND leg and sees only the L2 label, with no
+  // way to acknowledge completion and no brand context to act on.
+  // Pre-fix the legs reverted to a bare label, looking identical to
+  // a pending advisory.
+  subscriptionId?: string
+  timelineLineageId?: string | undefined
+  onAckChanged?: () => void
 }) {
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
+  const pickedUp = !!fulf?.farmer_received_at
   return (
-    <div className="px-4 py-3 flex items-center justify-between gap-3">
-      <div className="flex-1 min-w-0">
-        {(practice.is_special_input
-          || (practice.frequency_days != null && practice.frequency_days > 0)) && (
-          <div className="flex items-center gap-2 flex-wrap mb-0.5">
-            {practice.is_special_input && (
-              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
-            )}
-            {practice.frequency_days != null && practice.frequency_days > 0 && (
-              <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
-                {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
-              </span>
-            )}
-          </div>
+    <div>
+      <div className="px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          {(practice.is_special_input
+            || (practice.frequency_days != null && practice.frequency_days > 0)) && (
+            <div className="flex items-center gap-2 flex-wrap mb-0.5">
+              {practice.is_special_input && (
+                <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
+              )}
+              {practice.frequency_days != null && practice.frequency_days > 0 && (
+                <span className="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                  {practice.frequency_days === 1 ? 'Every day' : `Every ${practice.frequency_days} days`}
+                </span>
+              )}
+            </div>
+          )}
+          <p className="text-sm font-medium text-[#6B3F1F]">
+            {l2Label || 'General Advisory'}
+          </p>
+        </div>
+        {pillName && pillTone && tPill && (
+          <button
+            onClick={e => { e.stopPropagation(); onPillClick?.() }}
+            className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl"
+            style={{ background: pillTone.bg, color: pillTone.fg }}>
+            {tPill(pillName)}
+            {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
+              ? ` · ${fulf.postpone_days_remaining}d` : ''}
+          </button>
         )}
-        <p className="text-sm font-medium text-[#6B3F1F]">
-          {l2Label || 'General Advisory'}
-        </p>
       </div>
-      {pillName && pillTone && tPill && (
-        <button
-          onClick={e => { e.stopPropagation(); onPillClick?.() }}
-          className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-xl"
-          style={{ background: pillTone.bg, color: pillTone.fg }}>
-          {tPill(pillName)}
-          {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
-            ? ` · ${fulf.postpone_days_remaining}d` : ''}
-        </button>
+      {pickedUp && fulf?.brand_name && (
+        <PurchasedSummary
+          brand={fulf.brand_name}
+          manufacturer={fulf.manufacturer_name}
+          elements={practice.elements}
+        />
+      )}
+      {pickedUp && subscriptionId && (
+        <PracticeAckFooter
+          practice={practice}
+          subscriptionId={subscriptionId}
+          timelineLineageId={timelineLineageId}
+          onAckChanged={onAckChanged ?? (() => {})}
+        />
       )}
     </div>
   )
