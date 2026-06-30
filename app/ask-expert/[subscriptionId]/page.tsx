@@ -59,7 +59,17 @@ export default function AskExpertPage() {
     severity: 'MODERATE',
     photos: [] as string[],   // image URLs, mandatory ≥1, max MAX_PHOTOS
     audio: null as string | null,  // optional, single
+    // 2026-06-30 — Optional for plant-wise crops. Propagates into a
+    // QA-triggered TriggeredCHAEntry's affected_plants_count when the
+    // pundit's chosen Standard Response fires a CHA. Left blank means
+    // the dealer screen shows a "Please check with the farmer" hint.
+    affected_plants: '',
   })
+  // Measure + declared plant count drive whether to render the
+  // optional affected-plants field on the form. Area-wise crops hide
+  // it entirely; the question is meaningless for them.
+  const [measure, setMeasure] = useState<'PLANT_WISE' | 'AREA_WISE' | null>(null)
+  const [numberOfPlants, setNumberOfPlants] = useState<number | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -78,7 +88,31 @@ export default function AskExpertPage() {
           .then(qr => setQuota(qr.data))
           .catch(() => {})
       })
+    // Eligibility ships measure + declared plant count too.
+    api.get<{
+      eligible: boolean
+      measure?: 'PLANT_WISE' | 'AREA_WISE' | null
+      number_of_plants?: number | null
+    }>(`/diagnosis/eligibility/${subscriptionId}`)
+      .then(r => {
+        if (r.data.measure) setMeasure(r.data.measure)
+        if (r.data.number_of_plants) setNumberOfPlants(r.data.number_of_plants)
+      })
+      .catch(() => { /* form still works without measure gating */ })
   }, [subscriptionId])
+
+  // Parse + validate optional affected-plants input. Returns the number
+  // if valid, null otherwise. Empty string is valid (means "skip").
+  const parsedAffectedPlants: number | null = (() => {
+    if (!form.affected_plants.trim()) return null
+    const n = parseInt(form.affected_plants, 10)
+    if (!Number.isFinite(n) || n < 1) return null
+    if (numberOfPlants && n > numberOfPlants) return null
+    return n
+  })()
+  const affectedPlantsInvalid = (
+    form.affected_plants.trim() !== '' && parsedAffectedPlants === null
+  )
 
   async function uploadPhoto(file: File) {
     if (form.photos.length >= MAX_PHOTOS) return
@@ -132,6 +166,9 @@ export default function AskExpertPage() {
       description: form.description || undefined,
       severity: form.severity,
       media,
+      ...(parsedAffectedPlants !== null
+        ? { affected_plants_count: parsedAffectedPlants }
+        : {}),
       ...(razorpay ? {
         razorpay_order_id: razorpay.razorpay_order_id,
         razorpay_payment_id: razorpay.razorpay_payment_id,
@@ -246,7 +283,8 @@ export default function AskExpertPage() {
     form.photos.length >= 1 &&
     !!form.severity &&
     !submitting &&
-    !uploading
+    !uploading &&
+    !affectedPlantsInvalid
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -315,6 +353,37 @@ export default function AskExpertPage() {
                 placeholder={t('cropAgePlaceholder')}
                 className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
             </div>
+            {/* 2026-06-30 — Optional affected-plants count for
+                plant-wise crops. Hidden for area-wise. If filled, it
+                propagates into a QA-triggered TriggeredCHAEntry so
+                the dealer's order is sized for affected plants. */}
+            {measure === 'PLANT_WISE' && (
+              <div>
+                <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">
+                  {t('affectedPlantsLabel', { total: numberOfPlants ?? '?' })}
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={numberOfPlants ?? undefined}
+                  value={form.affected_plants}
+                  onChange={e => setForm(f => ({ ...f, affected_plants: e.target.value }))}
+                  placeholder={t('affectedPlantsPlaceholder')}
+                  className="w-full border border-[#DDD0B8] rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+                />
+                <p className="mt-1 text-xs text-[#7A8C7E]">
+                  {t('affectedPlantsHelp')}
+                </p>
+                {affectedPlantsInvalid && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {numberOfPlants
+                      ? t('affectedPlantsRange', { max: numberOfPlants })
+                      : t('affectedPlantsMin')}
+                  </p>
+                )}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-[#6B3F1F] mb-1.5">{t('describeDetailLabel')}</label>
               <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}

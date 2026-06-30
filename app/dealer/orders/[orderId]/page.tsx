@@ -90,6 +90,13 @@ interface OrderItem {
   // a quiet badge next to the status pill so the dealer can see
   // the constraint at a glance.
   is_brand_locked?: boolean
+  // 2026-06-30 — Affected-plants count captured at pest diagnosis.
+  // Non-null on plant-wise CHA items where the farmer filled the
+  // mandatory PG/SP prompt (or the optional QA-submission field).
+  // Null on plant-wise QA items where the farmer left it blank —
+  // PWA renders a "Please check with the farmer" hint and the
+  // dealer enters volume manually.
+  affected_plants_count?: number | null
 }
 interface RelationOption {
   option_index: number
@@ -1031,6 +1038,25 @@ export default function DealerOrderDetailPage() {
                 {item.given_volume} {item.volume_unit}
               </p>
             )}
+            {/* 2026-06-30 — Affected-plants context. Plant-wise crops
+                only; hidden for area-wise. Shows "Treatment for N of M
+                palms" when count is known; "Please check with the
+                farmer" hint when null (QA path where farmer skipped
+                the optional question-time field). */}
+            {order?.farmer_context?.measure === 'PLANT_WISE' && (
+              item.affected_plants_count != null ? (
+                <p className="text-xs text-[#7A8C7E] mt-1 italic">
+                  {t('item.affectedPlants', {
+                    affected: item.affected_plants_count,
+                    total: order.farmer_context.number_of_plants ?? '?',
+                  })}
+                </p>
+              ) : (
+                <p className="text-xs text-amber-700 mt-1 italic">
+                  {t('item.checkWithFarmer')}
+                </p>
+              )
+            )}
           </div>
           {showPriceColumn && (
             <div className="text-right shrink-0">
@@ -1755,6 +1781,21 @@ export default function DealerOrderDetailPage() {
                 <p className="text-xs text-[#7A8C7E] mt-0.5">
                   {item.given_volume} {item.volume_unit}
                 </p>
+              )}
+              {/* 2026-06-30 — Affected-plants context (standalone view). */}
+              {order?.farmer_context?.measure === 'PLANT_WISE' && (
+                item.affected_plants_count != null ? (
+                  <p className="text-xs text-[#7A8C7E] mt-1 italic">
+                    {t('item.affectedPlants', {
+                      affected: item.affected_plants_count,
+                      total: order.farmer_context.number_of_plants ?? '?',
+                    })}
+                  </p>
+                ) : (
+                  <p className="text-xs text-amber-700 mt-1 italic">
+                    {t('item.checkWithFarmer')}
+                  </p>
+                )
               )}
             </div>
             {showPriceColumn && (

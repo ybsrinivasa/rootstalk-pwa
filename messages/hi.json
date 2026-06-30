@@ -147,6 +147,13 @@
       "alsoAskExpert": "आप FarmPundit के किसी विशेषज्ञ से भी पूछ सकते हैं।",
       "goToAdvisory": "सलाह पर जाएं →",
       "goToDashboard": "फसल डैशबोर्ड पर जाएं"
+    },
+    "affectedPlants": {
+      "label": "आपके {total} कितने पौधे प्रभावित हुए हैं?",
+      "help": "हमें पौधों की संख्या बताएँ ताकि डीलर सही मात्रा में सामग्री तैयार कर सके। अप्रभावित पौधों का उपचार करना पैसे और मेहनत की बर्बादी है।",
+      "placeholder": "एक संख्या दर्ज करें",
+      "range": "1 और {max} के बीच एक संख्या दर्ज करें।",
+      "min": "कम से कम 1 दर्ज करें।"
     }
   },
   "practice": {
@@ -1214,7 +1221,12 @@
       "needOnePhoto": "कृपया कम से कम एक तस्वीर जोड़ें।",
       "bypassFailed": "बायपास सबमिट विफल।"
     },
-    "razorpayDescription": "विशेषज्ञ प्रश्न (rootsTALK.in को भुगतान किया गया, न कि {client} )"
+    "razorpayDescription": "विशेषज्ञ प्रश्न (rootsTALK.in को भुगतान किया गया, न कि {client} )",
+    "affectedPlantsLabel": "आपके {total} पौधों में से कितने पौधे प्रभावित हैं? (वैकल्पिक)",
+    "affectedPlantsPlaceholder": "एक संख्या दर्ज करें",
+    "affectedPlantsHelp": "यदि आपका प्रश्न किसी कीट या बीमारी के बारे में नहीं है, तो इस फॉर्म को खाली छोड़ दें।",
+    "affectedPlantsRange": "1 और {max} के बीच एक संख्या दर्ज करें।",
+    "affectedPlantsMin": "कम से कम 1 दर्ज करें।"
   },
   "farmerQueries": {
     "headerTitle": "मेरे विशेषज्ञ प्रश्न",
@@ -1590,7 +1602,9 @@
         "notAvailable": "✗ उपलब्ध नहीं है",
         "available": "✓ उपलब्ध",
         "later": "⏰ बाद में",
-        "na": "✗ लागू नहीं"
+        "na": "✗ लागू नहीं",
+        "affectedPlants": "{total} पौधों में से {affected} पौधों का उपचार",
+        "checkWithFarmer": "कृपया किसान से पता करें कि कितने पौधे प्रभावित हुए हैं।"
       },
       "form": {
         "lockedBrandLabel": "लॉक किया गया ब्रांड (पूर्व-निर्दिष्ट)",
@@ -2371,7 +2385,8 @@
         "cancel": "रद्द करना",
         "confirmCta": "हाँ, उठा लिया",
         "errorPickup": "पिकअप मार्क नहीं हो सका। कृपया पुनः प्रयास करें।"
-      }
+      },
+      "affectedPlants": "{total} पौधों में से {affected} पौधों का उपचार"
     },
     "profile": {
       "headerTitle": "सेवा प्रोफ़ाइल",

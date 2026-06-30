@@ -147,6 +147,13 @@
       "alsoAskExpert": "Also ask a FarmPundit expert",
       "goToAdvisory": "Go to Advisory →",
       "goToDashboard": "Go to Crop Dashboard"
+    },
+    "affectedPlants": {
+      "label": "How many of your {total} plants are affected?",
+      "help": "Tell us the count so the dealer prepares the right volume of inputs. Treating plants that aren't affected wastes money and effort.",
+      "placeholder": "Enter a number",
+      "range": "Enter a number between 1 and {max}.",
+      "min": "Enter at least 1."
     }
   },
   "practice": {
@@ -1197,7 +1204,12 @@
       "needOnePhoto": "Please add at least one photograph.",
       "bypassFailed": "Bypass submit failed."
     },
-    "razorpayDescription": "Expert Query (paid to rootsTALK.in, not {client})"
+    "razorpayDescription": "Expert Query (paid to rootsTALK.in, not {client})",
+    "affectedPlantsLabel": "Of your {total} plants, how many are affected? (optional)",
+    "affectedPlantsPlaceholder": "Enter a number",
+    "affectedPlantsHelp": "Leave blank if your question isn't about a pest or disease.",
+    "affectedPlantsRange": "Enter a number between 1 and {max}.",
+    "affectedPlantsMin": "Enter at least 1."
   },
   "farmerQueries": {
     "headerTitle": "My Expert Queries",
@@ -1601,7 +1613,9 @@
         "notAvailable": "✗ Not available",
         "available": "✓ Available",
         "later": "⏰ Later",
-        "na": "✗ N/A"
+        "na": "✗ N/A",
+        "affectedPlants": "Treatment for {affected} of {total} plants",
+        "checkWithFarmer": "Please check with the farmer how many plants are affected"
       },
       "form": {
         "lockedBrandLabel": "Locked brand (pre-specified)",
@@ -2354,7 +2368,8 @@
         "cancel": "Cancel",
         "confirmCta": "Yes, picked up",
         "errorPickup": "Could not mark pickup. Please try again."
-      }
+      },
+      "affectedPlants": "Treatment for {affected} of {total} plants"
     },
     "profile": {
       "headerTitle": "Service Profile",

@@ -147,6 +147,13 @@
       "alsoAskExpert": "ફાર્મપંડિત નિષ્ણાતને પણ પૂછો",
       "goToAdvisory": "સલાહકાર પર જાઓ →",
       "goToDashboard": "ક્રોપ ડેશબોર્ડ પર જાઓ"
+    },
+    "affectedPlants": {
+      "label": "તમારા {total} છોડમાંથી કેટલાને અસર થઈ છે?",
+      "help": "અમને ગણતરી જણાવો જેથી ડીલર યોગ્ય માત્રામાં ઇનપુટ્સ તૈયાર કરી શકે. જે છોડને અસર થતી નથી તેમની સારવાર કરવાથી પૈસા અને પ્રયત્નોનો બગાડ થાય છે.",
+      "placeholder": "નંબર દાખલ કરો",
+      "range": "૧ અને {max} વચ્ચેનો નંબર દાખલ કરો.",
+      "min": "ઓછામાં ઓછું 1 દાખલ કરો."
     }
   },
   "practice": {
@@ -1194,7 +1201,12 @@
       "needOnePhoto": "કૃપા કરીને ઓછામાં ઓછો એક ફોટોગ્રાફ ઉમેરો.",
       "bypassFailed": "બાયપાસ સબમિટ નિષ્ફળ થયું."
     },
-    "razorpayDescription": "નિષ્ણાત ક્વેરી (rootsTALK.in ને ચૂકવવામાં આવે છે, {client} ને નહીં)"
+    "razorpayDescription": "નિષ્ણાત ક્વેરી (rootsTALK.in ને ચૂકવવામાં આવે છે, {client} ને નહીં)",
+    "affectedPlantsLabel": "તમારા {total} છોડમાંથી, કેટલાને અસર થઈ છે? (વૈકલ્પિક)",
+    "affectedPlantsPlaceholder": "નંબર દાખલ કરો",
+    "affectedPlantsHelp": "જો તમારો પ્રશ્ન કોઈ જીવાત અથવા રોગ વિશે ન હોય તો ખાલી છોડી દો.",
+    "affectedPlantsRange": "૧ અને {max} વચ્ચેનો નંબર દાખલ કરો.",
+    "affectedPlantsMin": "ઓછામાં ઓછું 1 દાખલ કરો."
   },
   "farmerQueries": {
     "headerTitle": "મારા નિષ્ણાત પ્રશ્નો",
@@ -1570,7 +1582,9 @@
         "notAvailable": "✗ ઉપલબ્ધ નથી",
         "available": "✓ ઉપલબ્ધ",
         "later": "⏰ પછીથી",
-        "na": "✗ પ્રતિબંધિત"
+        "na": "✗ પ્રતિબંધિત",
+        "affectedPlants": "{total} છોડમાંથી {affected} છોડની સારવાર",
+        "checkWithFarmer": "કૃપા કરીને ખેડૂત પાસેથી તપાસ કરો કે કેટલા છોડને અસર થઈ છે."
       },
       "form": {
         "lockedBrandLabel": "લૉક કરેલ બ્રાન્ડ (પૂર્વ-નિર્દિષ્ટ)",
@@ -2346,7 +2360,8 @@
         "cancel": "રદ કરો",
         "confirmCta": "હા, ઉપાડ્યું",
         "errorPickup": "પિકઅપ ચિહ્નિત કરી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો."
-      }
+      },
+      "affectedPlants": "{total} છોડમાંથી {affected} છોડની સારવાર"
     },
     "profile": {
       "headerTitle": "સેવા પ્રોફાઇલ",

@@ -147,6 +147,13 @@
       "alsoAskExpert": "فارم پنڈت کے ماہر سے بھی پوچھیں۔",
       "goToAdvisory": "ایڈوائزری → پر جائیں۔",
       "goToDashboard": "کراپ ڈیش بورڈ پر جائیں۔"
+    },
+    "affectedPlants": {
+      "label": "آپ کے کتنے {total} پودے متاثر ہوئے ہیں؟",
+      "help": "ہمیں گنتی بتائیں تاکہ ڈیلر صحیح مقدار میں معلومات تیار کرے۔ ایسے پودوں کا علاج کرنا جو متاثر نہیں ہوتے ہیں پیسہ اور محنت ضائع کرتے ہیں۔",
+      "placeholder": "ایک نمبر درج کریں۔",
+      "range": "1 اور {max} کے درمیان نمبر درج کریں۔",
+      "min": "کم از کم 1 درج کریں۔"
     }
   },
   "practice": {
@@ -1194,7 +1201,12 @@
       "needOnePhoto": "براہ کرم کم از کم ایک تصویر شامل کریں۔",
       "bypassFailed": "بائی پاس جمع کرانے میں ناکام۔"
     },
-    "razorpayDescription": "ماہر کا سوال (rootsTALK.in کو ادا کیا گیا، {client} کو نہیں)"
+    "razorpayDescription": "ماہر کا سوال (rootsTALK.in کو ادا کیا گیا، {client} کو نہیں)",
+    "affectedPlantsLabel": "آپ کے {total} پودوں میں سے کتنے متاثر ہوئے ہیں؟ (اختیاری)",
+    "affectedPlantsPlaceholder": "ایک نمبر درج کریں۔",
+    "affectedPlantsHelp": "اگر آپ کا سوال کسی کیڑوں یا بیماری کے بارے میں نہیں ہے تو اسے خالی چھوڑ دیں۔",
+    "affectedPlantsRange": "1 اور {max} کے درمیان نمبر درج کریں۔",
+    "affectedPlantsMin": "کم از کم 1 درج کریں۔"
   },
   "farmerQueries": {
     "headerTitle": "میرے ماہرین کے سوالات",
@@ -1570,7 +1582,9 @@
         "notAvailable": "✗ دستیاب نہیں ہے۔",
         "available": "✓ دستیاب ہے۔",
         "later": "⏰ بعد میں",
-        "na": "✗ N/A"
+        "na": "✗ N/A",
+        "affectedPlants": "{total} پودوں میں سے {affected} کا علاج",
+        "checkWithFarmer": "براہ کرم کسان سے معلوم کریں کہ کتنے پودے متاثر ہوئے ہیں۔"
       },
       "form": {
         "lockedBrandLabel": "مقفل برانڈ (پہلے سے مخصوص)",
@@ -2346,7 +2360,8 @@
         "cancel": "منسوخ کریں۔",
         "confirmCta": "ہاں، اٹھایا",
         "errorPickup": "پک اپ کو نشان زد نہیں کیا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔"
-      }
+      },
+      "affectedPlants": "{total} پودوں میں سے {affected} کا علاج"
     },
     "profile": {
       "headerTitle": "سروس پروفائل",

@@ -147,6 +147,13 @@
       "alsoAskExpert": "লগতে FarmPundit বিশেষজ্ঞক সুধিব",
       "goToAdvisory": "পৰামৰ্শদাতা → লৈ যাওক",
       "goToDashboard": "ক্ৰপ ডেচব'ৰ্ডলৈ যাওক"
+    },
+    "affectedPlants": {
+      "label": "আপোনাৰ {total} গছবোৰৰ কিমানটা আক্ৰান্ত হয়?",
+      "help": "আমাক গণনা কওক যাতে ডিলাৰে সঠিক পৰিমাণৰ ইনপুট প্ৰস্তুত কৰে। যিবোৰ উদ্ভিদ প্ৰভাৱিত নহয় সেইবোৰ পৰিশোধন কৰিলে ধন আৰু কষ্টৰ অপচয় হয়।",
+      "placeholder": "এটা নম্বৰ দিয়ক",
+      "range": "1 আৰু {max} ৰ মাজত এটা সংখ্যা সুমুৱাওক।",
+      "min": "অন্ততঃ ১ লিখক।"
     }
   },
   "practice": {
@@ -1194,7 +1201,12 @@
       "needOnePhoto": "অনুগ্ৰহ কৰি অন্ততঃ এখন ফটো যোগ কৰক।",
       "bypassFailed": "বাইপাছ জমা দিয়া বিফল।"
     },
-    "razorpayDescription": "বিশেষজ্ঞ প্ৰশ্ন (rootsTALK.in লৈ পৰিশোধ কৰা হৈছে, {client} নহয়)"
+    "razorpayDescription": "বিশেষজ্ঞ প্ৰশ্ন (rootsTALK.in লৈ পৰিশোধ কৰা হৈছে, {client} নহয়)",
+    "affectedPlantsLabel": "আপোনাৰ {total} উদ্ভিদৰ ভিতৰত কিমানজন আক্ৰান্ত হয়? (বৈকল্পিক)",
+    "affectedPlantsPlaceholder": "এটা নম্বৰ দিয়ক",
+    "affectedPlantsHelp": "যদি আপোনাৰ প্ৰশ্নটো কোনো কীট-পতংগ বা ৰোগৰ বিষয়ে নহয় তেন্তে খালীকৈ ৰাখক।",
+    "affectedPlantsRange": "1 আৰু {max} ৰ মাজত এটা সংখ্যা সুমুৱাওক।",
+    "affectedPlantsMin": "অন্ততঃ ১ লিখক।"
   },
   "farmerQueries": {
     "headerTitle": "মোৰ বিশেষজ্ঞৰ প্ৰশ্ন",
@@ -1570,7 +1582,9 @@
         "notAvailable": "✗ উপলব্ধ নহয়",
         "available": "✓ উপলব্ধ",
         "later": "⏰ পিছত",
-        "na": "✗ N/A"
+        "na": "✗ N/A",
+        "affectedPlants": "{total} উদ্ভিদৰ {affected} চিকিৎসা",
+        "checkWithFarmer": "অনুগ্ৰহ কৰি কৃষকৰ লগত কিমান গছ-গছনি ক্ষতিগ্ৰস্ত হৈছে সেই বিষয়ে জানি লওক"
       },
       "form": {
         "lockedBrandLabel": "লক কৰা ব্ৰেণ্ড (পূৰ্ব-নিৰ্দিষ্ট)",
@@ -2346,7 +2360,8 @@
         "cancel": "বাতিল কৰক",
         "confirmCta": "হয়, তুলি ল’লে",
         "errorPickup": "পিকআপ মাৰ্ক কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
-      }
+      },
+      "affectedPlants": "{total} উদ্ভিদৰ {affected} চিকিৎসা"
     },
     "profile": {
       "headerTitle": "সেৱা প্ৰফাইল",

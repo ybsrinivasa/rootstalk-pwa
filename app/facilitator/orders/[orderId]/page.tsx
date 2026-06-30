@@ -15,8 +15,13 @@ interface OrderDetail {
   // inputType label.
   category?: string | null
   date_from: string; date_to: string
+  // 2026-06-30 — Declared plant count (plant-wise crops only) for
+  // rendering "Treatment for N of M palms" context alongside approved
+  // items. Null for area-wise.
+  number_of_plants?: number | null
   items: { id: string; practice_id: string; status: string; brand_name: string | null
-           given_volume: number | null; volume_unit: string | null; price: number | null }[]
+           given_volume: number | null; volume_unit: string | null; price: number | null
+           affected_plants_count?: number | null }[]
   // 2026-06-06 — Packing surface fields so the facilitator can
   // confirm pickup and the farmer can see status.
   packing_code?: string | null
@@ -301,10 +306,25 @@ export default function FacilitatorOrderDetailPage() {
                 )}
                 <div className="mt-2 space-y-1">
                   {approvedItems.map(item => (
-                    <div key={item.id} className="flex items-center justify-between text-sm">
-                      <p className="text-green-800">{item.brand_name || t('itemFallback')}</p>
-                      {item.given_volume && (
-                        <p className="text-green-600">{item.given_volume} {item.volume_unit} {item.price ? `· ₹${item.price}` : ''}</p>
+                    <div key={item.id} className="text-sm">
+                      <div className="flex items-center justify-between">
+                        <p className="text-green-800">{item.brand_name || t('itemFallback')}</p>
+                        {item.given_volume && (
+                          <p className="text-green-600">{item.given_volume} {item.volume_unit} {item.price ? `· ₹${item.price}` : ''}</p>
+                        )}
+                      </div>
+                      {/* 2026-06-30 — Affected-plants context for
+                          plant-wise crops. Null + plant-wise = QA path
+                          where the farmer didn't fill the optional
+                          question-time field; dealer sized this entry
+                          manually after asking the farmer. */}
+                      {order?.number_of_plants != null && item.affected_plants_count != null && (
+                        <p className="text-[11px] text-green-700/80 italic">
+                          {t('affectedPlants', {
+                            affected: item.affected_plants_count,
+                            total: order.number_of_plants,
+                          })}
+                        </p>
                       )}
                     </div>
                   ))}

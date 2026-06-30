@@ -122,6 +122,14 @@ export default function DiagnosisPage() {
   // gate on every IDK gateway / fallback button in this flow.
   const [hasPrimaryExpert, setHasPrimaryExpert] = useState(true)
 
+  // 2026-06-30 — Plant-wise crops gate commit on a mandatory
+  // "How many of your N plants are affected?" entry. Captured at
+  // diagnosis time so dose math sizes to affected plants rather than
+  // the declared total. Area-wise crops bypass the prompt entirely.
+  const [measure, setMeasure] = useState<'PLANT_WISE' | 'AREA_WISE' | null>(null)
+  const [numberOfPlants, setNumberOfPlants] = useState<number | null>(null)
+  const [affectedPlantsInput, setAffectedPlantsInput] = useState<string>('')
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     // Load subscription to get crop_cosh_id + Ask-Expert eligibility.
@@ -140,6 +148,18 @@ export default function DiagnosisPage() {
           setLoading(false)
         }
       })
+    // Eligibility also carries measure + declared plant count
+    // — drives the plant-wise affected-count prompt gate.
+    api.get<{
+      eligible: boolean
+      measure?: 'PLANT_WISE' | 'AREA_WISE' | null
+      number_of_plants?: number | null
+    }>(`/diagnosis/eligibility/${subscriptionId}`)
+      .then(r => {
+        if (r.data.measure) setMeasure(r.data.measure)
+        if (r.data.number_of_plants) setNumberOfPlants(r.data.number_of_plants)
+      })
+      .catch(() => { /* eligibility errors handled by the diagnose CTA */ })
   }, [subscriptionId])
 
   // Single guarded routing entry — every "Ask Expert" CTA on this
@@ -412,12 +432,29 @@ export default function DiagnosisPage() {
     }
   }
 
+  // Plant-wise gate: backend requires affected_plants_count for
+  // PLANT_WISE crops. We block the button locally until the farmer
+  // enters a valid 1..numberOfPlants integer so the request never
+  // reaches the 422.
+  const parsedAffectedCount: number | null = (() => {
+    if (measure !== 'PLANT_WISE') return null
+    const n = parseInt(affectedPlantsInput, 10)
+    if (!Number.isFinite(n) || n < 1) return null
+    if (numberOfPlants && n > numberOfPlants) return null
+    return n
+  })()
+  const plantsCountValid = measure !== 'PLANT_WISE' || parsedAffectedCount !== null
+
   async function commitToAdvisory() {
     if (!sessionId) return
+    if (!plantsCountValid) return
     setCommitting(true); setCommitError('')
     try {
+      const body: { affected_plants_count?: number } = {}
+      if (parsedAffectedCount !== null) body.affected_plants_count = parsedAffectedCount
       const { data } = await api.post<CommitResult>(
         `/diagnosis/${sessionId}/commit-to-advisory`,
+        body,
       )
       setCommittedToAdvisory(!!data.committed_to_advisory)
     } catch (err: unknown) {
@@ -1111,7 +1148,39 @@ export default function DiagnosisPage() {
 
             {!committedToAdvisory ? (
               <div className="space-y-2">
-                <button onClick={commitToAdvisory} disabled={committing}
+                {/* 2026-06-30 — Plant-wise affected-plants prompt. Sizes
+                    the dealer's order to affected plants rather than
+                    the farmer's declared total — treating 200 palms
+                    when 10 are infested wastes money + resources. */}
+                {measure === 'PLANT_WISE' && (
+                  <div className="bg-white rounded-2xl px-4 py-4 border border-[#DDD0B8]">
+                    <label className="block text-sm font-semibold text-[#6B3F1F]">
+                      {t('affectedPlants.label', { total: numberOfPlants ?? '?' })}
+                    </label>
+                    <p className="text-xs text-[#7A8C7E] mt-1">
+                      {t('affectedPlants.help')}
+                    </p>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={numberOfPlants ?? undefined}
+                      value={affectedPlantsInput}
+                      onChange={e => setAffectedPlantsInput(e.target.value)}
+                      placeholder={t('affectedPlants.placeholder')}
+                      className="mt-3 w-full px-3 py-2 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-base"
+                    />
+                    {affectedPlantsInput && !parsedAffectedCount && (
+                      <p className="mt-2 text-xs text-red-600">
+                        {numberOfPlants
+                          ? t('affectedPlants.range', { max: numberOfPlants })
+                          : t('affectedPlants.min')}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <button onClick={commitToAdvisory}
+                  disabled={committing || !plantsCountValid}
                   className="w-full py-4 rounded-2xl text-white font-semibold disabled:opacity-60"
                   style={{ background: COLOUR }}>
                   {committing ? t('diagnosed.adding') : t('diagnosed.addTreatments')}
