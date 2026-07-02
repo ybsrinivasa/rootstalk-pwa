@@ -1439,7 +1439,13 @@ export default function DealerOrderDetailPage() {
   //                back to the existing Part-collapsed + Option-pick UI.
   type PartPattern = 'AND' | 'OR' | 'COMPLEX_OR' | 'COMPLEX'
   function classifyPart(part: RelationPart): PartPattern {
-    if (part.options.length === 1 && part.options[0].is_compound) return 'AND'
+    // 2026-07-02 — Singleton Part (single Option, single Position —
+    // e.g. `C` in `(A/B) AND C`) previously fell through to COMPLEX
+    // and triggered the legacy Multi-Step wrapper. Treat as a
+    // trivial AND: the render iterates the Option's items — for a
+    // singleton, that's just the one item, no "Apply together"
+    // framing (suppressed downstream when items.length <= 1).
+    if (part.options.length === 1) return 'AND'
     if (part.options.length >= 2 && part.options.every(o => !o.is_compound)) return 'OR'
     if (part.options.length >= 2 && part.options.some(o => o.is_compound)) return 'COMPLEX_OR'
     return 'COMPLEX'
@@ -1479,19 +1485,25 @@ export default function DealerOrderDetailPage() {
     // member resets just that member (AND siblings are independent —
     // no relation cascade to revert).
     const items = part.options[0]?.items ?? []
+    // 2026-07-02 — Suppress the "AND — Apply together" hint when the
+    // Part is a singleton (one Position). "Apply together" reads as
+    // noise on a lone item — there's nothing to apply it with.
+    const showAndHint = items.length > 1
     return (
       <div key={`${rel.relation_id}-${part.part_index}`}
         className="bg-white rounded-xl border border-[#DDD0B8] overflow-hidden">
-        <div className="px-3 pt-3 pb-1">
-          <p className="text-[11px] text-[#7A8C7E] italic">
-            <span className="not-italic font-bold text-[#6B3F1F]">
-              {t('relation.andPrefix')}
-            </span>
-            {' — '}
-            {t('relation.andApplyTogether')}
-          </p>
-        </div>
-        <div className="px-3 pb-3 space-y-2">
+        {showAndHint && (
+          <div className="px-3 pt-3 pb-1">
+            <p className="text-[11px] text-[#7A8C7E] italic">
+              <span className="not-italic font-bold text-[#6B3F1F]">
+                {t('relation.andPrefix')}
+              </span>
+              {' — '}
+              {t('relation.andApplyTogether')}
+            </p>
+          </div>
+        )}
+        <div className={`px-3 pb-3 space-y-2 ${showAndHint ? '' : 'pt-3'}`}>
           {items.map(it => renderItemRow(it, {
             showPendingActions: true,
             onChangeSelection: () => resetItem(it.id),
