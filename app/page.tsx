@@ -432,8 +432,13 @@ export default function RootPage() {
         <p className="text-[#7A8C7E] text-xs text-center mt-3 tracking-wide">
           {tLanding('audience')}
         </p>
-        <div className="flex items-center justify-center gap-3 mt-5">
+        <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
           <p className="text-[#DDD0B8] text-[10px] font-light">{tAbout('companyFull')}</p>
+          <span className="text-[#DDD0B8] text-[10px]">·</span>
+          <a href="https://eywa.farm" target="_blank" rel="noopener noreferrer"
+            className="text-[#7A8C7E] text-[10px] underline">
+            {tLanding('companyWebsite')}
+          </a>
           <span className="text-[#DDD0B8] text-[10px]">·</span>
           <button onClick={() => router.push('/privacy-policy')}
             className="text-[#7A8C7E] text-[10px] underline">

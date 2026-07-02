@@ -304,7 +304,8 @@
     "audience": "For farmers · dealers · facilitators · experts",
     "privacyPolicy": "Privacy Policy",
     "sessionEndedAnotherDevice": "You signed in on another device. Please sign in again.",
-    "sessionEndedExpired": "Your session expired. Please sign in again."
+    "sessionEndedExpired": "Your session expired. Please sign in again.",
+    "companyWebsite": "Company Website"
   },
   "welcome": {
     "greeting": "Welcome, {name}!",
