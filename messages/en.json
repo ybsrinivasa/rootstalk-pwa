@@ -160,7 +160,8 @@
     "label": {
       "today": "Today",
       "reference": "Reference",
-      "day": "Day"
+      "day": "Day",
+      "coversAlso": "Covers also: {names}"
     },
     "empty": {
       "noAdviceToday": "No advice for today",

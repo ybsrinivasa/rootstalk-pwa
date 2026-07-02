@@ -75,6 +75,11 @@ interface TimelineItem {
   // us tell the farmer WHY a CHA card is empty — covered elsewhere
   // vs no plans yet.
   suppressed_count?: number
+  // 2026-07-02 — Phase 2C merge chip. When BL-03 merged one or more
+  // sibling TLs into this one (shared OR identity + united window),
+  // this array carries the display names of the members so the card
+  // can show "covers TL2, TL3" beneath the date band.
+  merged_from_tl_names?: string[]
 }
 interface AdvisoryDay {
   subscription_id: string; client_id: string; package_id: string; package_name: string
@@ -563,6 +568,15 @@ export default function AdvisoryPage() {
                   {tl.problem_name && (
                     <p className="text-center text-sm font-semibold text-[#6B3F1F] mt-1.5">
                       {tl.problem_name}
+                    </p>
+                  )}
+                  {/* 2026-07-02 — Phase 2C merge chip. Shown when
+                      BL-03 folded one or more sibling TLs' OR options
+                      into this timeline's merged card. Explains the
+                      wider window without cluttering the main row. */}
+                  {tl.merged_from_tl_names && tl.merged_from_tl_names.length > 0 && (
+                    <p className="text-center text-[11px] text-emerald-700 mt-1 italic">
+                      {tLabel('coversAlso', { names: tl.merged_from_tl_names.join(', ') })}
                     </p>
                   )}
                 </div>
