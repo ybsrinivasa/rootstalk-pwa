@@ -9,6 +9,18 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISS_KEY = 'rt_a2hs_dismissed'
 const DISMISS_DAYS = 7
 
+// 2026-07-03 — Manual open channel. The landing screen's "Install app"
+// footer link dispatches this event; InstallPrompt subscribes and pops
+// the sheet regardless of engagement / dismissal state. Lets users who
+// missed the auto-popup (Chrome's engagement heuristic gates
+// beforeinstallprompt) still get to the install flow on demand.
+export const INSTALL_PROMPT_OPEN_EVENT = 'rt-install-prompt-open'
+export function openInstallPrompt() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(INSTALL_PROMPT_OPEN_EVENT))
+  }
+}
+
 function NodeMark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none">
@@ -28,33 +40,62 @@ function NodeMark({ size = 28 }: { size?: number }) {
 export default function InstallPrompt() {
   const [show, setShow]                   = useState(false)
   const [isIOS, setIsIOS]                 = useState(false)
+  const [isAndroid, setIsAndroid]         = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [installing, setInstalling]       = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    // Already installed as standalone
-    if (window.matchMedia('(display-mode: standalone)').matches) return
-    // Dismissed recently
-    const ts = localStorage.getItem(DISMISS_KEY)
-    if (ts && Date.now() - parseInt(ts) < DISMISS_DAYS * 86_400_000) return
-
-    const ios = /iphone|ipad|ipod/i.test(navigator.userAgent)
+    // Already installed as standalone — never show the sheet.
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    const ua = navigator.userAgent
+    const ios = /iphone|ipad|ipod/i.test(ua)
+    const android = /android/i.test(ua)
     setIsIOS(ios)
+    setIsAndroid(android)
 
-    if (ios) {
-      const t = setTimeout(() => setShow(true), 3000)
-      return () => clearTimeout(t)
+    // Manual-open channel — always active. The landing "Install app"
+    // link dispatches openInstallPrompt() which fires this. Ignores
+    // dismissal cooldown but respects standalone mode.
+    const openHandler = () => {
+      if (isStandalone) return
+      setShow(true)
+    }
+    window.addEventListener(INSTALL_PROMPT_OPEN_EVENT, openHandler)
+
+    if (isStandalone) {
+      return () => window.removeEventListener(INSTALL_PROMPT_OPEN_EVENT, openHandler)
     }
 
-    // Android/Desktop Chrome — wait for the browser's install readiness signal
+    // Auto-popup path — governed by the dismissal cooldown so users
+    // aren't nagged. Manual open above stays available either way.
+    const dismissedTs = localStorage.getItem(DISMISS_KEY)
+    const cooledDown = !dismissedTs || Date.now() - parseInt(dismissedTs) >= DISMISS_DAYS * 86_400_000
+
+    if (ios && cooledDown) {
+      const t = setTimeout(() => setShow(true), 3000)
+      return () => {
+        clearTimeout(t)
+        window.removeEventListener(INSTALL_PROMPT_OPEN_EVENT, openHandler)
+      }
+    }
+
+    // Android/Desktop Chrome — wait for the browser's install
+    // readiness signal. Capture the event regardless of cooldown so
+    // manual-open can use `deferredPrompt` even after auto-popup was
+    // dismissed.
     const handler = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
-      setTimeout(() => setShow(true), 3000)
+      if (cooledDown) {
+        setTimeout(() => setShow(true), 3000)
+      }
     }
     window.addEventListener('beforeinstallprompt', handler)
-    return () => window.removeEventListener('beforeinstallprompt', handler)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler)
+      window.removeEventListener(INSTALL_PROMPT_OPEN_EVENT, openHandler)
+    }
   }, [])
 
   function dismiss() {
@@ -139,8 +180,8 @@ export default function InstallPrompt() {
               </p>
             </div>
           </div>
-        ) : (
-          /* Android / Desktop Chrome */
+        ) : deferredPrompt ? (
+          /* Android / Desktop Chrome — captured the install event */
           <div className="px-6 mb-4">
             <button
               onClick={install}
@@ -150,6 +191,36 @@ export default function InstallPrompt() {
             >
               {installing ? 'Installing…' : 'Add to Home Screen'}
             </button>
+          </div>
+        ) : (
+          /* Android / Chrome — install event hasn't fired yet.
+             This happens when the user opens the sheet manually
+             (via the landing "Install app" link) before Chrome's
+             engagement heuristic satisfies. Show the manual menu
+             route so the user always has a path. */
+          <div className="mx-6 bg-[#F5F0E8] rounded-xl p-4 border border-[#DDD0B8] mb-4">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-6 h-6 rounded-full bg-[#3A7D44] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</div>
+              <p className="text-[#6B3F1F] text-sm leading-relaxed">
+                Tap the{' '}
+                <span className="inline-flex items-center gap-1 bg-white border border-[#DDD0B8] rounded px-1.5 py-0.5 mx-0.5">
+                  <span className="text-[#6B3F1F] font-semibold text-xs tracking-wider">⋮</span>
+                </span>{' '}
+                menu in {isAndroid ? "Chrome's" : "your browser's"} toolbar
+              </p>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-[#3A7D44] text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</div>
+              <p className="text-[#6B3F1F] text-sm leading-relaxed">
+                Tap{' '}
+                <span className="font-semibold text-[#6B3F1F]">"Install app"</span>
+                {' '}or{' '}
+                <span className="font-semibold text-[#6B3F1F]">"Add to Home screen"</span>
+              </p>
+            </div>
+            <p className="text-[#7A8C7E] text-[11px] mt-3 italic">
+              If neither option appears yet, browse the app for a minute and try again — Chrome unlocks Install after a short engagement.
+            </p>
           </div>
         )}
 

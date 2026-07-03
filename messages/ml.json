@@ -297,7 +297,8 @@
     "privacyPolicy": "സ്വകാര്യതാ നയം",
     "sessionEndedAnotherDevice": "നിങ്ങൾ മറ്റൊരു ഉപകരണത്തിൽ സൈൻ ഇൻ ചെയ്‌തു. വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.",
     "sessionEndedExpired": "നിങ്ങളുടെ സെഷൻ കാലഹരണപ്പെട്ടു. വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.",
-    "companyWebsite": "കമ്പനി വെബ്‌സൈറ്റ്"
+    "companyWebsite": "കമ്പനി വെബ്‌സൈറ്റ്",
+    "installApp": "ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യുക"
   },
   "welcome": {
     "greeting": "സ്വാഗതം, {name} !",

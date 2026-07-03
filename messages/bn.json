@@ -297,7 +297,8 @@
     "privacyPolicy": "গোপনীয়তা নীতি",
     "sessionEndedAnotherDevice": "আপনি অন্য একটি ডিভাইস থেকে সাইন ইন করেছেন। অনুগ্রহ করে আবার সাইন ইন করুন।",
     "sessionEndedExpired": "আপনার সেশনের মেয়াদ শেষ হয়ে গেছে। অনুগ্রহ করে আবার সাইন ইন করুন।",
-    "companyWebsite": "কোম্পানির ওয়েবসাইট"
+    "companyWebsite": "কোম্পানির ওয়েবসাইট",
+    "installApp": "অ্যাপটি ইনস্টল করুন"
   },
   "welcome": {
     "greeting": "স্বাগতম, {name} !",

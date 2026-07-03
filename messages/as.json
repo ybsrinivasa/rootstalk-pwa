@@ -297,7 +297,8 @@
     "privacyPolicy": "গোপনীয়তা নীতি",
     "sessionEndedAnotherDevice": "আপুনি আন এটা ডিভাইচত চাইন ইন কৰিলে। অনুগ্ৰহ কৰি পুনৰ চাইন ইন কৰক।",
     "sessionEndedExpired": "আপোনাৰ অধিবেশনৰ ম্যাদ উকলি গ'ল। অনুগ্ৰহ কৰি পুনৰ চাইন ইন কৰক।",
-    "companyWebsite": "কোম্পানী ৱেবছাইট"
+    "companyWebsite": "কোম্পানী ৱেবছাইট",
+    "installApp": "এপ ইনষ্টল কৰক"
   },
   "welcome": {
     "greeting": "স্বাগতম, {name} !",

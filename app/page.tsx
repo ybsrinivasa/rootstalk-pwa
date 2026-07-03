@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser } from '@/lib/auth'
 import { getLanguage, changeLanguage } from '@/lib/language'
 import api from '@/lib/api'
-import InstallPrompt from '@/components/InstallPrompt'
+import InstallPrompt, { openInstallPrompt } from '@/components/InstallPrompt'
 import AppMark from '@/components/AppMark'
 
 type Stage = 'loading' | 'landing' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
@@ -137,6 +137,31 @@ function ProgressDots({ filled }: { filled: number }) {
         />
       ))}
     </div>
+  )
+}
+
+// 2026-07-03 — "Install app" link for the landing footer. Rendered
+// only when the PWA isn't already running in standalone mode; the
+// link always opens the InstallPrompt sheet (which internally decides
+// whether to show the native install button, the iOS Share
+// instruction, or the Chrome Android menu fallback).
+function InstallAppLink() {
+  const tLanding = useTranslations('landing')
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+    setVisible(!standalone)
+  }, [])
+  if (!visible) return null
+  return (
+    <>
+      <span className="text-[#7A8C7E]/60 text-[10px]">·</span>
+      <button onClick={() => openInstallPrompt()}
+        className="text-[#7A8C7E] text-[10px] underline">
+        {tLanding('installApp')}
+      </button>
+    </>
   )
 }
 
@@ -444,6 +469,7 @@ export default function RootPage() {
             className="text-[#7A8C7E] text-[10px] underline">
             {tLanding('privacyPolicy')}
           </button>
+          <InstallAppLink />
         </div>
       </div>
     </div>

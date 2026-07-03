@@ -297,7 +297,8 @@
     "privacyPolicy": "గోప్యతా విధానం",
     "sessionEndedAnotherDevice": "మీరు వేరొక పరికరంలో లాగిన్ అయ్యారు. దయచేసి మళ్ళీ లాగిన్ అవ్వండి.",
     "sessionEndedExpired": "మీ సెషన్ గడువు ముగిసింది. దయచేసి మళ్ళీ లాగిన్ అవ్వండి.",
-    "companyWebsite": "కంపెనీ వెబ్‌సైట్"
+    "companyWebsite": "కంపెనీ వెబ్‌సైట్",
+    "installApp": "యాప్‌ను ఇన్‌స్టాల్ చేయండి"
   },
   "welcome": {
     "greeting": "స్వాగతం, {name} !",

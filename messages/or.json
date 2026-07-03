@@ -297,7 +297,8 @@
     "privacyPolicy": "ଗୋପନୀୟତା ନୀତି",
     "sessionEndedAnotherDevice": "ଆପଣ ଅନ୍ୟ ଏକ ଡିଭାଇସ୍‌ରେ ସାଇନ୍ ଇନ୍ କରିଛନ୍ତି। ଦୟାକରି ପୁଣି ସାଇନ୍ ଇନ୍ କରନ୍ତୁ।",
     "sessionEndedExpired": "ଆପଣଙ୍କର ଅଧିବେଶନ ସମାପ୍ତ ହୋଇଛି । ଦୟାକରି ପୁଣି ସାଇନ୍ ଇନ୍ କରନ୍ତୁ ।",
-    "companyWebsite": "କମ୍ପାନୀର ୱେବସାଇଟ୍"
+    "companyWebsite": "କମ୍ପାନୀର ୱେବସାଇଟ୍",
+    "installApp": "ଆପ୍ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ"
   },
   "welcome": {
     "greeting": "ସ୍ୱାଗତ, {name} !",

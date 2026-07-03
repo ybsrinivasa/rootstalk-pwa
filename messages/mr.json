@@ -297,7 +297,8 @@
     "privacyPolicy": "गोपनीयता धोरण",
     "sessionEndedAnotherDevice": "तुम्ही दुसऱ्या डिव्हाइसवरून साइन इन केले आहे. कृपया पुन्हा साइन इन करा.",
     "sessionEndedExpired": "तुमचे सत्र कालबाह्य झाले आहे. कृपया पुन्हा साइन इन करा.",
-    "companyWebsite": "कंपनीची वेबसाइट"
+    "companyWebsite": "कंपनीची वेबसाइट",
+    "installApp": "अ‍ॅप इंस्टॉल करा"
   },
   "welcome": {
     "greeting": "स्वागत आहे, {name} !",

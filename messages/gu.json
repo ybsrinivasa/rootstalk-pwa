@@ -297,7 +297,8 @@
     "privacyPolicy": "ગોપનીયતા નીતિ",
     "sessionEndedAnotherDevice": "તમે બીજા ઉપકરણ પર સાઇન ઇન કર્યું છે. કૃપા કરીને ફરીથી સાઇન ઇન કરો.",
     "sessionEndedExpired": "તમારા સત્રની સમયસીમા સમાપ્ત થઈ ગઈ છે. કૃપા કરીને ફરીથી સાઇન ઇન કરો.",
-    "companyWebsite": "કંપની વેબસાઇટ"
+    "companyWebsite": "કંપની વેબસાઇટ",
+    "installApp": "એપ્લિકેશન ઇન્સ્ટોલ કરો"
   },
   "welcome": {
     "greeting": "સ્વાગત છે, {name} !",
