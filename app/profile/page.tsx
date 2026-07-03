@@ -538,8 +538,16 @@ export default function ProfilePage() {
             management. Already-set-up roles live in the right
             drawer's Switch list and don't appear here. List shrinks
             as the farmer claims more roles, hides entirely when
-            all three are set up. */}
-        {(() => {
+            all three are set up.
+            2026-07-03 — Only shown on the plain farmer profile view.
+            On branded profile views (activeRole=DEALER/FACILITATOR/
+            FARM_PUNDIT — reached via the drawer's role-scoped
+            Personal Details link) the section is noise: e.g. a
+            Facilitator sees "Become an Expert →" which is a valid
+            new role but reads as an orphaned nudge on their branded
+            profile. The drawer's role switcher is the canonical
+            entry point for adding a new role. */}
+        {activeRole === 'FARMER' && (() => {
           const setupCtas: { key: string; label: string; href: string; tagline: string }[] = []
           // 2026-06-23 — Dealer + Facilitator exclusivity. Suppress the
           // CTA for the conflicting role; the destination page would
