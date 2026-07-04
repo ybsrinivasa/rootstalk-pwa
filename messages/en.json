@@ -1353,7 +1353,9 @@
         "whatYouSell": "What you sell",
         "alertsIncoming": "Alerts I receive",
         "alertsSubtitle": "Unread",
-        "unreadCount": "{count} unread"
+        "unreadCount": "{count} unread",
+        "brandForms": "Brand Submissions",
+        "brandFormsSubtitle": "Can't find a brand? Send it in"
       }
     },
     "payments": {
@@ -2096,10 +2098,6 @@
       "callBtn": "📞 Call {phone}",
       "callBtnLabel": "Call",
       "callBtnAria": "Call {name}"
-    },
-    "tiles": {
-      "brandForms": "Brand Submissions",
-      "brandFormsSubtitle": "Can't find a brand? Send it in"
     },
     "brandForms": {
       "title": "Brand Submissions",
