@@ -2096,6 +2096,45 @@
       "callBtn": "📞 Call {phone}",
       "callBtnLabel": "Call",
       "callBtnAria": "Call {name}"
+    },
+    "tiles": {
+      "brandForms": "Brand Submissions",
+      "brandFormsSubtitle": "Can't find a brand? Send it in"
+    },
+    "brandForms": {
+      "title": "Brand Submissions",
+      "newCta": "+ New Submission",
+      "loading": "Loading…",
+      "emptyTitle": "No submissions yet",
+      "emptyBody": "When you can't find a brand you sell, tell us — tap New Submission above.",
+      "statusSubmitted": "Submitted",
+      "statusIncluded": "Included",
+      "statusRejected": "Rejected",
+      "reasonLabel": "Reason",
+      "hideCta": "Remove from history",
+      "confirmHide": "Remove this submission from your history?",
+      "new": {
+        "title": "New Brand Submission",
+        "intro": "Missing a brand from our list? Tell us what you're selling and we'll add it. One submission per product.",
+        "l1Label": "Input category",
+        "l1Placeholder": "Select a category…",
+        "l2Label": "Sub-category",
+        "l2Placeholder": "Select a sub-category…",
+        "brandLabel": "Brand name",
+        "brandPlaceholder": "e.g. Acelon",
+        "manufacturerLabel": "Manufacturer's name",
+        "manufacturerPlaceholder": "e.g. Rallis India",
+        "photosLabel": "Product photos",
+        "photosHint": "{count} of 2-4",
+        "addPhoto": "+ Add photo",
+        "uploading": "Uploading…",
+        "notesLabel": "Anything else? (optional)",
+        "notesPlaceholder": "Batch code, pack size, or anything that helps us identify the product",
+        "submit": "Send to RootsTalk",
+        "submitting": "Sending…",
+        "submitFailed": "Couldn't send. Please try again.",
+        "photoUploadFailed": "Couldn't upload photo. Please try again."
+      }
     }
   },
   "facilitator": {
