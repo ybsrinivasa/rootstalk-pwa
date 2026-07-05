@@ -3230,6 +3230,9 @@
     "cultivationNotes": "Cultivation practices",
     "contactCompany": "Contact the company",
     "rootstalkTagline": "Your agricultural advisory network",
-    "rootstalkValueProp": "rootsTALK connects you to your seed/crop-input company for personalised advisory, verified inputs, and support through the season. Free to use — install once and stay connected."
+    "rootstalkValueProp": "rootsTALK connects you to your seed/crop-input company for personalised advisory, verified inputs, and support through the season. Free to use — install once and stay connected.",
+    "photosLabel": "Photos of the variety",
+    "descriptionLabel": "About this variety",
+    "dusCharactersLabel": "Distinctness · Uniformity · Stability"
   }
 }

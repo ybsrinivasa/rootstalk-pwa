@@ -38,6 +38,16 @@ interface CompanyBlock {
   office_phone: string | null
 }
 
+interface DusRow {
+  part_name?: string | null
+  character_name?: string | null
+  descriptor_name?: string | null
+  // legacy free-text (pre-Batch W)
+  part?: string | null
+  character?: string | null
+  descriptor?: string | null
+}
+
 interface VerifyResponse {
   verified: boolean
   reason: string | null
@@ -49,6 +59,9 @@ interface VerifyResponse {
   expiry_date: string
   company: CompanyBlock
   cultivation_notes: string | null
+  description_points: string[]
+  photos: string[]
+  dus_characters: DusRow[]
 }
 
 function formatDate(iso: string, locale: string): string {
@@ -220,7 +233,78 @@ export default function PublicVerifyPage() {
           </div>
         </div>
 
-        {/* Cultivation notes — seed products with notes populated */}
+        {/* Seed-only content sections. Order matters — photos come
+            first because they're the biggest attention-getter,
+            followed by the summary bullets, then structured DUS
+            data for serious growers, then the cultivation write-up
+            for how-to-grow. */}
+
+        {/* Photos gallery — horizontal scroll strip. Keeps thumbnail
+            heights consistent; users swipe to see the rest. */}
+        {isSeed && record.photos.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8]">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider mb-3">
+              {t('photosLabel')}
+            </p>
+            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x snap-mandatory">
+              {record.photos.map((url, i) => (
+                <img key={i} src={url} alt=""
+                  className="h-40 w-40 object-cover rounded-xl shrink-0 snap-start border border-[#DDD0B8]" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Description points — bullet list of the variety's key
+            claims. Comes from the CA at variety creation time. */}
+        {isSeed && record.description_points.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8]">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider mb-2">
+              {t('descriptionLabel')}
+            </p>
+            <ul className="space-y-1.5">
+              {record.description_points.map((pt, i) => (
+                <li key={i} className="flex gap-2 text-sm text-[#6B3F1F]">
+                  <span aria-hidden style={{ color: brand.secondary }} className="mt-1 shrink-0">•</span>
+                  <span>{pt}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* DUS characters — structured Distinctness/Uniformity/
+            Stability data. Grouped by part for readability. */}
+        {isSeed && record.dus_characters.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8]">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider mb-3">
+              {t('dusCharactersLabel')}
+            </p>
+            <div className="space-y-2">
+              {record.dus_characters.map((row, i) => {
+                const part = row.part_name || row.part || '—'
+                const character = row.character_name || row.character || '—'
+                const descriptor = row.descriptor_name || row.descriptor || '—'
+                return (
+                  <div key={i} className="flex justify-between gap-3 py-1.5 border-b border-[#F0E6D2] last:border-b-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs text-[#7A8C7E]">{part}</p>
+                      <p className="text-sm font-medium text-[#6B3F1F]">{character}</p>
+                    </div>
+                    <p className="text-sm font-semibold shrink-0 text-right"
+                      style={{ color: brand.secondary }}>
+                      {descriptor}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Cultivation write-up. Kept last of the seed-only stack —
+            it's usually the longest block so putting it after the
+            visually-heavier photos + DUS keeps the page rhythm. */}
         {isSeed && record.cultivation_notes && (
           <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8]">
             <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider mb-2">
