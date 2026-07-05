@@ -6,6 +6,7 @@ import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
+import AppMark from '@/components/AppMark'
 import api from '@/lib/api'
 import { C } from '@/lib/tokens'
 
@@ -217,16 +218,24 @@ export default function HomePage() {
       />
 
       <div className="pt-16 pb-20 px-4">
-        {/* Greeting */}
-        <div className="mt-4 mb-5">
-          <p className="text-xl font-bold" style={{ color: C.textPrimary }}>
-            {user?.name ? t('greetingNamed', { name: user.name.split(' ')[0] }) : t('greetingFallback')}
-          </p>
-          <p className="text-sm mt-0.5" style={{ color: C.textSecond }}>
-            {uniqueClientIds.length > 0
-              ? t('summary', { companies: uniqueClientIds.length, crops: activeCropCount })
-              : t('noAdvisoriesYet')}
-          </p>
+        {/* Greeting — 2026-07-05: added a small logo mark alongside
+            the greeting so the farmer's dashboard reinforces the
+            brand they see on the app icon, the header, and (most
+            importantly) on the QR label on their inputs. Cross-
+            reference matters when they're staring at a pouch trying
+            to figure out which QR to scan. */}
+        <div className="mt-4 mb-5 flex items-center gap-3">
+          <AppMark size={44} tone="duo" />
+          <div className="min-w-0 flex-1">
+            <p className="text-xl font-bold truncate" style={{ color: C.textPrimary }}>
+              {user?.name ? t('greetingNamed', { name: user.name.split(' ')[0] }) : t('greetingFallback')}
+            </p>
+            <p className="text-sm mt-0.5" style={{ color: C.textSecond }}>
+              {uniqueClientIds.length > 0
+                ? t('summary', { companies: uniqueClientIds.length, crops: activeCropCount })
+                : t('noAdvisoriesYet')}
+            </p>
+          </div>
         </div>
 
         {/* Content */}
