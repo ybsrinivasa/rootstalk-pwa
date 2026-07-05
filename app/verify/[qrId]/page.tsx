@@ -102,7 +102,10 @@ export default function PublicVerifyPage() {
   const [invalidCode, setInvalidCode] = useState(false)
 
   useEffect(() => {
-    api.get<VerifyResponse>(`/public/qr-verify/${qrId}`)
+    // Phase T-4: pass locale so the backend can serve description
+    // points in the farmer's language (falls back to English when
+    // no translation exists).
+    api.get<VerifyResponse>(`/public/qr-verify/${qrId}?lang=${encodeURIComponent(locale)}`)
       .then(r => setRecord(r.data))
       .catch(err => {
         const status = (err as { response?: { status?: number } })?.response?.status
@@ -110,7 +113,7 @@ export default function PublicVerifyPage() {
         else setInvalidCode(true)
       })
       .finally(() => setLoading(false))
-  }, [qrId])
+  }, [qrId, locale])
 
   const brand = useMemo(() => {
     if (!record?.company) return { primary: '#3A7D44', secondary: '#085041' }
