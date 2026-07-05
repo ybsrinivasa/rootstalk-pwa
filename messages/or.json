@@ -3199,21 +3199,22 @@
   },
   "publicVerify": {
     "productAuthentication": "ଉତ୍ପାଦ ପ୍ରାମାଣିକତା",
-    "verifiedTitle": "ଅସଲି ଉତ୍ପାଦ ✓",
-    "verifiedSubtitle": "ଏହି QR କୋଡ୍ {company} ଦ୍ୱାରା rootsTALK ମାଧ୍ୟମରେ ସୃଷ୍ଟି କରାଯାଇଥିଲା।",
-    "notActiveTitle": "କୋଡ୍ ସକ୍ରିୟ ନାହିଁ",
-    "notActiveSubtitle": "ଏହି QR କୋଡ୍ ବର୍ତ୍ତମାନ ସକ୍ରିୟ ନାହିଁ। ଦୟାକରି ଆପଣଙ୍କର ଡିଲରଙ୍କ ସହ ଯୋଗାଯୋଗ କରନ୍ତୁ।",
     "invalidTitle": "rootsTALK QR ନୁହେଁ",
     "invalidBody": "ଆମେ ଆମ ସିଷ୍ଟମରେ ଏହି QR କୋଡ୍ ପାଇଲୁ ନାହିଁ। ଏହା rootsTALK ମାଧ୍ୟମରେ ଜେନେରେଟ୍ ହୋଇନଥାଇପାରେ।",
     "theManufacturer": "ନିର୍ମାତା",
-    "company": "କମ୍ପାନୀ",
-    "product": "ଉତ୍ପାଦ",
-    "batchLot": "ବ୍ୟାଚ୍ / ଲଟ୍",
-    "dates": "ଉତ୍ପାଦନ → ମିଆଦ ଶେଷ",
-    "installTitle": "rootsTALK ଆପ୍ ପାଆନ୍ତୁ",
-    "installBody": "ପରାମର୍ଶ, ଅର୍ଡର ଏବଂ ଏହି ଉତ୍ପାଦକୁ ଆପଣଙ୍କ ନିର୍ଦ୍ଦିଷ୍ଟ ଅର୍ଡର ସହିତ ଲିଙ୍କ୍ କରିବା ପାଇଁ, rootsTALK ସଂସ୍ଥାପନ କରନ୍ତୁ।",
     "openApp": "ରୁଟ୍ସTALK ଖୋଲନ୍ତୁ",
     "goToApp": "rootsTALK କୁ ଯାଆନ୍ତୁ",
-    "publicVerifyFootnote": "ଏହା ଏକ ଅନସ୍କପ୍ ଯାଞ୍ଚକରଣ। ଏହାକୁ ଆପଣଙ୍କ ଅର୍ଡର ସହିତ ଲିଙ୍କ୍ କରିବା ପାଇଁ ଆପ୍ ଖୋଲନ୍ତୁ।"
+    "publicVerifyFootnote": "ଏହା rootsTALK ଦ୍ୱାରା ଏକ ସ୍ୱାଧୀନ ଯାଞ୍ଚକରଣ। ଏହି ଉତ୍ପାଦକୁ ଆପଣଙ୍କର ନିର୍ଦ୍ଦିଷ୍ଟ ଅର୍ଡର ସହିତ ଲିଙ୍କ୍ କରିବା ପାଇଁ ଆପ୍ ଖୋଲନ୍ତୁ।",
+    "varietyLabel": "ବିବିଧତା",
+    "productLabel": "ଉତ୍ପାଦ",
+    "verifiedShort": "ଯାଞ୍ଚ ହୋଇଛି",
+    "notActiveShort": "ସକ୍ରିୟ ନୁହେଁ",
+    "batchLot": "ବ୍ୟାଚ୍ / ଲଟ୍",
+    "manufactured": "ନିର୍ମିତ",
+    "expiryDate": "ପୂର୍ବରୁ ସର୍ବୋତ୍ତମ",
+    "cultivationNotes": "ଚାଷ ପ୍ରଣାଳୀ",
+    "contactCompany": "କମ୍ପାନୀ ସହିତ ଯୋଗାଯୋଗ କରନ୍ତୁ",
+    "rootstalkTagline": "ଆପଣଙ୍କର କୃଷି ପରାମର୍ଶଦାତା ନେଟୱାର୍କ",
+    "rootstalkValueProp": "rootsTALK ଆପଣଙ୍କୁ ବ୍ୟକ୍ତିଗତ ପରାମର୍ଶ, ଯାଞ୍ଚ ହୋଇଥିବା ଇନପୁଟ୍ ଏବଂ ଋତୁ ସମୟରେ ସମର୍ଥନ ପାଇଁ ଆପଣଙ୍କର ବିହନ/ଫସଲ-ଇନପୁଟ୍ କମ୍ପାନୀ ସହିତ ସଂଯୋଗ କରେ। ବ୍ୟବହାର ପାଇଁ ମାଗଣା — ଥରେ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ ଏବଂ ସଂଯୁକ୍ତ ରୁହନ୍ତୁ।"
   }
 }

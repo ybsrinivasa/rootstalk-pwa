@@ -1,36 +1,54 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import Link from 'next/link'
 import api from '@/lib/api'
 
-// 2026-07-05 — Public product-verify landing.
+// 2026-07-05 (Phase 7) — Full-brand public verify landing.
 //
-// Route reached in two ways:
+// Reached in two ways:
 //   1. Farmer scanning the QR with a generic camera / QR app /
 //      Google Lens — browser opens the URL, lands here.
 //   2. Farmer inside the PWA — the app scanner intercepts the URL,
 //      posts to /farmer/qr/scan (scoped verify) instead of navigating
 //      here. So this page is really for the out-of-app case.
 //
-// This is the UNSCOPED verify: it confirms "yes, rootsTALK generated
-// this QR for company X's product Y" — but does NOT compare against
-// the scanner's order. Scoped verify happens inside the PWA.
+// Landing is intentionally company-first:
+//   - Product name (largest text)
+//   - Company logo + name (client brand colours)
+//   - Company contact block (website / phone / address)
+//   - Mfr / Exp / Batch metadata
+//   - Cultivation notes (seed products, when SA/CA has authored)
+//   - rootsTALK.in hero block with value prop + CTA
 //
-// Page requires no auth; api client naturally skips the token header
-// when there's no token, and /public/qr-verify accepts anonymous calls.
+// The client's `primary_colour` drives the hero card + accent
+// treatment. Fallback tokens match the rest of the PWA when the
+// client hasn't set a brand colour.
+
+interface CompanyBlock {
+  name: string | null
+  tagline: string | null
+  logo_url: string | null
+  primary_colour: string | null
+  secondary_colour: string | null
+  hq_address: string | null
+  website: string | null
+  support_phone: string | null
+  office_phone: string | null
+}
 
 interface VerifyResponse {
   verified: boolean
   reason: string | null
-  company_name: string | null
+  status: 'ACTIVE' | 'INACTIVE'
   product_display_name: string
-  batch_lot_number: string
   product_type: string
+  batch_lot_number: string
   manufacture_date: string
   expiry_date: string
-  status: 'ACTIVE' | 'INACTIVE'
+  company: CompanyBlock
+  cultivation_notes: string | null
 }
 
 function formatDate(iso: string, locale: string): string {
@@ -38,6 +56,28 @@ function formatDate(iso: string, locale: string): string {
   return new Date(iso).toLocaleDateString(locale, {
     day: '2-digit', month: 'short', year: 'numeric',
   })
+}
+
+/** Return the given colour if it looks like a valid hex, else the
+ *  Crop Green fallback. Guards against a malformed primary_colour
+ *  from an older client row. */
+function safeColour(c: string | null, fallback: string): string {
+  if (!c) return fallback
+  return /^#[0-9a-fA-F]{6}$/.test(c) ? c : fallback
+}
+
+/** Render a website URL as-shown vs full URL for href. */
+function displayHost(url: string): string {
+  try {
+    const u = new URL(url.startsWith('http') ? url : `https://${url}`)
+    return u.host.replace(/^www\./, '') + (u.pathname !== '/' ? u.pathname : '')
+  } catch {
+    return url
+  }
+}
+
+function ensureHttps(url: string): string {
+  return url.startsWith('http') ? url : `https://${url}`
 }
 
 export default function PublicVerifyPage() {
@@ -52,13 +92,20 @@ export default function PublicVerifyPage() {
     api.get<VerifyResponse>(`/public/qr-verify/${qrId}`)
       .then(r => setRecord(r.data))
       .catch(err => {
-        // 404 → not a valid rootsTALK QR
         const status = (err as { response?: { status?: number } })?.response?.status
         if (status === 404) setInvalidCode(true)
         else setInvalidCode(true)
       })
       .finally(() => setLoading(false))
   }, [qrId])
+
+  const brand = useMemo(() => {
+    if (!record?.company) return { primary: '#3A7D44', secondary: '#085041' }
+    return {
+      primary: safeColour(record.company.primary_colour, '#3A7D44'),
+      secondary: safeColour(record.company.secondary_colour, '#085041'),
+    }
+  }, [record])
 
   if (loading) {
     return (
@@ -82,73 +129,177 @@ export default function PublicVerifyPage() {
   }
 
   const isVerified = record.verified
+  const isSeed = record.product_type === 'SEED'
+  const company = record.company
+
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <div className="max-w-md mx-auto px-5 py-8">
-        {/* Brand strip */}
-        <div className="flex items-center gap-3 mb-6">
-          <img src="/logos/eywa-logo-notext-square.png" alt="" className="w-12 h-12" />
-          <div>
-            <p className="text-lg leading-none">
+      <div className="max-w-md mx-auto px-4 pt-4 pb-10">
+        {/* Slim rootsTALK badge at the very top — quiet, so the
+            client brand can command the fold. Verify page context
+            comes from the "Product Authentication" mini-line. */}
+        <div className="flex items-center justify-between mb-3 px-1">
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/logos/eywa-logo-notext-square.png" alt="" className="w-6 h-6" />
+            <p className="text-[13px] leading-none">
               <span className="text-[#6B3F1F] font-light">roots</span>
               <span className="text-[#6B3F1F] font-black">TALK</span>
-              <span className="text-[#7A8C7E] font-light text-base">.in</span>
+              <span className="text-[#7A8C7E] font-light text-[11px]">.in</span>
             </p>
-            <p className="text-[11px] text-[#7A8C7E] mt-1">{t('productAuthentication')}</p>
-          </div>
-        </div>
-
-        {/* Verdict card */}
-        <div className={`rounded-2xl p-5 mb-4 border-2 ${
-          isVerified
-            ? 'bg-emerald-50 border-emerald-300'
-            : 'bg-amber-50 border-amber-300'
-        }`}>
-          <p className={`text-2xl font-black mb-1 ${
-            isVerified ? 'text-emerald-800' : 'text-amber-800'
-          }`}>
-            {isVerified ? t('verifiedTitle') : t('notActiveTitle')}
-          </p>
-          <p className={`text-sm ${isVerified ? 'text-emerald-700' : 'text-amber-700'}`}>
-            {isVerified ? t('verifiedSubtitle', { company: record.company_name || t('theManufacturer') }) : (record.reason || t('notActiveSubtitle'))}
-          </p>
-        </div>
-
-        {/* Product detail block */}
-        <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8] mb-4 space-y-3">
-          <div>
-            <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider">{t('company')}</p>
-            <p className="text-base font-semibold text-[#6B3F1F]">{record.company_name || '—'}</p>
-          </div>
-          <div>
-            <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider">{t('product')}</p>
-            <p className="text-base font-semibold text-[#6B3F1F]">{record.product_display_name}</p>
-            <p className="text-xs text-[#7A8C7E] mt-0.5">{record.product_type}</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider">{t('batchLot')}</p>
-              <p className="text-sm text-[#6B3F1F]">{record.batch_lot_number}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider">{t('dates')}</p>
-              <p className="text-sm text-[#6B3F1F]">
-                {formatDate(record.manufacture_date, locale)} → {formatDate(record.expiry_date, locale)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Deep-link CTA */}
-        <div className="bg-white rounded-2xl p-5 border border-[#DDD0B8]">
-          <p className="text-sm text-[#6B3F1F] font-semibold mb-1">{t('installTitle')}</p>
-          <p className="text-xs text-[#7A8C7E] mb-4 leading-relaxed">{t('installBody')}</p>
-          <Link href="/" className="block w-full text-center py-3 bg-[#3A7D44] text-white text-sm font-semibold rounded-xl">
-            {t('openApp')}
           </Link>
+          <span className="text-[10px] uppercase tracking-wider text-[#7A8C7E]">
+            {t('productAuthentication')}
+          </span>
         </div>
 
-        <p className="text-[10px] text-[#7A8C7E] text-center mt-6">
+        {/* Hero — company card in their brand colour. Product name
+            comes first (biggest thing on the page), then verified
+            verdict, then company logo + name. */}
+        <div
+          className="rounded-2xl p-5 mb-3 text-white shadow-lg"
+          style={{
+            background: `linear-gradient(135deg, ${brand.primary}, ${brand.secondary})`,
+          }}>
+          <p className="text-[11px] uppercase tracking-widest opacity-80 mb-1">
+            {isSeed ? t('varietyLabel') : t('productLabel')}
+          </p>
+          <p className="text-3xl font-black leading-tight">{record.product_display_name}</p>
+          <p className="text-xs opacity-80 mt-1">{record.product_type}</p>
+
+          <div className="mt-4 pt-4 border-t border-white/25 flex items-center gap-3">
+            {company.logo_url ? (
+              <img src={company.logo_url} alt={company.name || ''}
+                className="w-12 h-12 rounded-lg object-contain bg-white/95 p-1.5" />
+            ) : (
+              <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center text-white text-lg font-black">
+                {(company.name || '?').slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="font-bold truncate">{company.name || t('theManufacturer')}</p>
+              {company.tagline && (
+                <p className="text-xs opacity-90 truncate">{company.tagline}</p>
+              )}
+            </div>
+            {isVerified ? (
+              <span className="text-[11px] font-bold bg-white/95 text-emerald-700 px-2 py-0.5 rounded-full shrink-0">
+                ✓ {t('verifiedShort')}
+              </span>
+            ) : (
+              <span className="text-[11px] font-bold bg-white/95 text-amber-700 px-2 py-0.5 rounded-full shrink-0">
+                {t('notActiveShort')}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Not-active reason banner — only for INACTIVE codes */}
+        {!isVerified && record.reason && (
+          <div className="rounded-2xl p-4 mb-3 bg-amber-50 border border-amber-200">
+            <p className="text-sm text-amber-800">{record.reason}</p>
+          </div>
+        )}
+
+        {/* Batch + dates */}
+        <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8] grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider">{t('batchLot')}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F]">{record.batch_lot_number}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider">{t('manufactured')}</p>
+            <p className="text-sm font-semibold text-[#6B3F1F]">
+              {formatDate(record.manufacture_date, locale)}
+            </p>
+          </div>
+          <div className="col-span-2">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider">{t('expiryDate')}</p>
+            <p className="text-sm font-semibold" style={{ color: brand.secondary }}>
+              {formatDate(record.expiry_date, locale)}
+            </p>
+          </div>
+        </div>
+
+        {/* Cultivation notes — seed products with notes populated */}
+        {isSeed && record.cultivation_notes && (
+          <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8]">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider mb-2">
+              {t('cultivationNotes')}
+            </p>
+            <p className="text-sm text-[#6B3F1F] whitespace-pre-line leading-relaxed">
+              {record.cultivation_notes}
+            </p>
+          </div>
+        )}
+
+        {/* Company contact block */}
+        {(company.website || company.support_phone || company.office_phone || company.hq_address) && (
+          <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8] space-y-3">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider">{t('contactCompany')}</p>
+            {company.website && (
+              <a href={ensureHttps(company.website)} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm hover:underline"
+                style={{ color: brand.secondary }}>
+                <span aria-hidden>🌐</span>
+                <span className="truncate">{displayHost(company.website)}</span>
+              </a>
+            )}
+            {(company.support_phone || company.office_phone) && (
+              <div className="flex items-center gap-2 text-sm text-[#6B3F1F]">
+                <span aria-hidden>📞</span>
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                  {company.support_phone && (
+                    <a href={`tel:${company.support_phone}`}
+                      className="hover:underline" style={{ color: brand.secondary }}>
+                      {company.support_phone}
+                    </a>
+                  )}
+                  {company.office_phone && company.office_phone !== company.support_phone && (
+                    <a href={`tel:${company.office_phone}`}
+                      className="hover:underline" style={{ color: brand.secondary }}>
+                      {company.office_phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+            {company.hq_address && (
+              <div className="flex items-start gap-2 text-sm text-[#6B3F1F]">
+                <span aria-hidden className="mt-0.5">📍</span>
+                <p className="whitespace-pre-line leading-relaxed">{company.hq_address}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* rootsTALK value-prop card. Positioned after the client
+            payload so the client's brand owns the fold; this reads
+            as "how to link this to your farming".  Uses our
+            colours, not the client's, so the brand handoff is
+            visually clear. */}
+        <div className="rounded-2xl p-5 mb-3"
+          style={{ background: 'linear-gradient(135deg, #085041, #3A7D44)' }}>
+          <div className="flex items-center gap-3 mb-3">
+            <img src="/logos/eywa-logo-white.png" alt="" className="w-10 h-10" />
+            <div>
+              <p className="text-white text-lg leading-none">
+                <span className="font-light">roots</span>
+                <span className="font-black">TALK</span>
+                <span className="font-light opacity-85 text-sm">.in</span>
+              </p>
+              <p className="text-white/75 text-[11px] mt-1">{t('rootstalkTagline')}</p>
+            </div>
+          </div>
+          <p className="text-white/95 text-sm leading-relaxed mb-4">
+            {t('rootstalkValueProp')}
+          </p>
+          <a href="/" className="block w-full text-center py-2.5 bg-white text-sm font-bold rounded-xl"
+            style={{ color: brand.secondary }}>
+            {t('openApp')}
+          </a>
+        </div>
+
+        <p className="text-[10px] text-[#7A8C7E] text-center mt-4 leading-relaxed">
           {t('publicVerifyFootnote')}
         </p>
       </div>

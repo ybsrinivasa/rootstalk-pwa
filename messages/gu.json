@@ -3199,21 +3199,22 @@
   },
   "publicVerify": {
     "productAuthentication": "ઉત્પાદન પ્રમાણીકરણ",
-    "verifiedTitle": "અસલી ઉત્પાદન ✓",
-    "verifiedSubtitle": "આ QR કોડ {company} દ્વારા rootsTALK દ્વારા જનરેટ કરવામાં આવ્યો હતો.",
-    "notActiveTitle": "કોડ સક્રિય નથી",
-    "notActiveSubtitle": "આ QR કોડ હાલમાં સક્રિય નથી. કૃપા કરીને તમારા ડીલરનો સંપર્ક કરો.",
     "invalidTitle": "રૂટ્સટાલ્ક QR નથી",
     "invalidBody": "અમને અમારી સિસ્ટમમાં આ QR કોડ મળ્યો નથી. તે rootsTALK દ્વારા જનરેટ થયો ન હોય શકે.",
     "theManufacturer": "ઉત્પાદક",
-    "company": "કંપની",
-    "product": "ઉત્પાદન",
-    "batchLot": "બેચ / લોટ",
-    "dates": "ઉત્પાદન → સમાપ્તિ તારીખ",
-    "installTitle": "રૂટ્સટાલ્ક એપ્લિકેશન મેળવો",
-    "installBody": "સલાહ, ઓર્ડર અને આ પ્રોડક્ટને તમારા ચોક્કસ ઓર્ડર સાથે લિંક કરવા માટે, rootsTALK ઇન્સ્ટોલ કરો.",
     "openApp": "રૂટ્સTALK ખોલો",
     "goToApp": "રૂટ્સTALK પર જાઓ",
-    "publicVerifyFootnote": "આ એક અનસ્કોપ્ડ વેરિફિકેશન છે. આને તમારા ઓર્ડર સાથે લિંક કરવા માટે એપ્લિકેશન ખોલો."
+    "publicVerifyFootnote": "આ rootsTALK દ્વારા સ્વતંત્ર ચકાસણી છે. આ પ્રોડક્ટને તમારા ચોક્કસ ઓર્ડર સાથે લિંક કરવા માટે એપ્લિકેશન ખોલો.",
+    "varietyLabel": "વિવિધતા",
+    "productLabel": "ઉત્પાદન",
+    "verifiedShort": "ચકાસાયેલ",
+    "notActiveShort": "સક્રિય નથી",
+    "batchLot": "બેચ / લોટ",
+    "manufactured": "ઉત્પાદિત",
+    "expiryDate": "પહેલાં શ્રેષ્ઠ",
+    "cultivationNotes": "ખેતી પદ્ધતિઓ",
+    "contactCompany": "કંપનીનો સંપર્ક કરો",
+    "rootstalkTagline": "તમારું કૃષિ સલાહકાર નેટવર્ક",
+    "rootstalkValueProp": "રૂટ્સટાલ્ક તમને તમારી બીજ/પાક-ઇનપુટ કંપની સાથે વ્યક્તિગત સલાહ, ચકાસાયેલ ઇનપુટ્સ અને સિઝન દરમ્યાન સપોર્ટ માટે જોડે છે. ઉપયોગ માટે મફત - એકવાર ઇન્સ્ટોલ કરો અને કનેક્ટેડ રહો."
   }
 }

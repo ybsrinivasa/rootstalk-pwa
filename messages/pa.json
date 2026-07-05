@@ -3199,21 +3199,22 @@
   },
   "publicVerify": {
     "productAuthentication": "ਉਤਪਾਦ ਪ੍ਰਮਾਣੀਕਰਨ",
-    "verifiedTitle": "ਅਸਲੀ ਉਤਪਾਦ ✓",
-    "verifiedSubtitle": "ਇਹ QR ਕੋਡ {company} ਦੁਆਰਾ rootsTALK ਰਾਹੀਂ ਤਿਆਰ ਕੀਤਾ ਗਿਆ ਸੀ।",
-    "notActiveTitle": "ਕੋਡ ਕਿਰਿਆਸ਼ੀਲ ਨਹੀਂ ਹੈ",
-    "notActiveSubtitle": "ਇਹ QR ਕੋਡ ਇਸ ਵੇਲੇ ਕਿਰਿਆਸ਼ੀਲ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਡੀਲਰ ਨਾਲ ਸੰਪਰਕ ਕਰੋ।",
     "invalidTitle": "ਰੂਟਸਟਾਕ QR ਨਹੀਂ",
     "invalidBody": "ਸਾਨੂੰ ਇਹ QR ਕੋਡ ਸਾਡੇ ਸਿਸਟਮ ਵਿੱਚ ਨਹੀਂ ਮਿਲਿਆ। ਹੋ ਸਕਦਾ ਹੈ ਕਿ ਇਹ rootsTALK ਰਾਹੀਂ ਤਿਆਰ ਨਾ ਕੀਤਾ ਗਿਆ ਹੋਵੇ।",
     "theManufacturer": "ਨਿਰਮਾਤਾ",
-    "company": "ਕੰਪਨੀ",
-    "product": "ਉਤਪਾਦ",
-    "batchLot": "ਬੈਚ / ਲਾਟ",
-    "dates": "ਨਿਰਮਾਣ → ਮਿਆਦ ਪੁੱਗਣ ਦੀ ਤਾਰੀਖ",
-    "installTitle": "ਰੂਟਸਟਾਲਕ ਐਪ ਪ੍ਰਾਪਤ ਕਰੋ",
-    "installBody": "ਸਲਾਹ, ਆਰਡਰ, ਅਤੇ ਇਸ ਉਤਪਾਦ ਨੂੰ ਆਪਣੇ ਖਾਸ ਆਰਡਰ ਨਾਲ ਲਿੰਕ ਕਰਨ ਲਈ, rootsTALK ਇੰਸਟਾਲ ਕਰੋ।",
     "openApp": "ਰੂਟਸਟਾਕ ਖੋਲ੍ਹੋ",
     "goToApp": "ਰੂਟਸਟਾਕ 'ਤੇ ਜਾਓ",
-    "publicVerifyFootnote": "ਇਹ ਇੱਕ ਅਨਸਕੋਪਡ ਵੈਰੀਫਿਕੇਸ਼ਨ ਹੈ। ਇਸਨੂੰ ਆਪਣੇ ਆਰਡਰ ਨਾਲ ਲਿੰਕ ਕਰਨ ਲਈ ਐਪ ਖੋਲ੍ਹੋ।"
+    "publicVerifyFootnote": "ਇਹ rootsTALK ਦੁਆਰਾ ਇੱਕ ਸੁਤੰਤਰ ਪੁਸ਼ਟੀਕਰਨ ਹੈ। ਇਸ ਉਤਪਾਦ ਨੂੰ ਆਪਣੇ ਖਾਸ ਆਰਡਰ ਨਾਲ ਲਿੰਕ ਕਰਨ ਲਈ ਐਪ ਖੋਲ੍ਹੋ।",
+    "varietyLabel": "ਕਿਸਮ",
+    "productLabel": "ਉਤਪਾਦ",
+    "verifiedShort": "ਪ੍ਰਮਾਣਿਤ",
+    "notActiveShort": "ਕਿਰਿਆਸ਼ੀਲ ਨਹੀਂ",
+    "batchLot": "ਬੈਚ / ਲਾਟ",
+    "manufactured": "ਨਿਰਮਿਤ",
+    "expiryDate": "ਮਿਆਦ ਖਤਮ ਹੋਣ ਤੋਂ ਪਹਿਲਾ",
+    "cultivationNotes": "ਕਾਸ਼ਤ ਦੇ ਅਭਿਆਸ",
+    "contactCompany": "ਕੰਪਨੀ ਨਾਲ ਸੰਪਰਕ ਕਰੋ",
+    "rootstalkTagline": "ਤੁਹਾਡਾ ਖੇਤੀਬਾੜੀ ਸਲਾਹਕਾਰ ਨੈੱਟਵਰਕ",
+    "rootstalkValueProp": "ਰੂਟਸਟਾਕ ਤੁਹਾਨੂੰ ਤੁਹਾਡੀ ਬੀਜ/ਫਸਲ-ਇਨਪੁਟ ਕੰਪਨੀ ਨਾਲ ਜੋੜਦਾ ਹੈ ਤਾਂ ਜੋ ਤੁਹਾਨੂੰ ਸੀਜ਼ਨ ਦੌਰਾਨ ਵਿਅਕਤੀਗਤ ਸਲਾਹ, ਪ੍ਰਮਾਣਿਤ ਇਨਪੁਟ ਅਤੇ ਸਹਾਇਤਾ ਮਿਲ ਸਕੇ। ਵਰਤਣ ਲਈ ਮੁਫ਼ਤ — ਇੱਕ ਵਾਰ ਇੰਸਟਾਲ ਕਰੋ ਅਤੇ ਜੁੜੇ ਰਹੋ।"
   }
 }
