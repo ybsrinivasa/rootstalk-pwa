@@ -3193,5 +3193,22 @@
       "gpsTimeout": "Took too long to find you. Tap Try again.",
       "gpsUnavailable": "Your location isn't available right now. Tap Try again or skip for later."
     }
+  },
+  "qrScan": {
+    "scanButton": "Scan to Verify",
+    "modalTitle": "Scan Product QR",
+    "modalSubtitle": "Point your phone at the QR code on the product package",
+    "cancel": "Cancel",
+    "cameraDenied": "Camera access is needed to scan. Please allow camera access.",
+    "cameraStarting": "Starting camera…",
+    "resultMatchTitle": "Verified — Genuine Product",
+    "resultMatchBody": "This matches your order.",
+    "resultMismatchTitle": "Doesn't match",
+    "resultMismatchBody": "The product you scanned doesn't match your order. Please check the label carefully.",
+    "resultInactiveTitle": "Code inactive",
+    "resultInactiveBody": "This product code is no longer active. Please contact your dealer.",
+    "retry": "Try again",
+    "close": "Close",
+    "verified": "Verified"
   }
 }

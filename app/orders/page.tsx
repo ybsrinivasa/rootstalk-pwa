@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
+import QRScannerModal from '@/components/QRScannerModal'
 import api from '@/lib/api'
 
 // 2026-06-20 — Re-scoped as the farmer's cross-crop retrospective
@@ -60,10 +61,18 @@ const STATUS_COLOUR: Record<string, string> = {
 export default function OrderHistoryPage() {
   const router = useRouter()
   const locale = useLocale()
+  const tQr = useTranslations('qrScan')
   const [tab, setTab] = useState<'orders' | 'received'>('orders')
   const [orders, setOrders] = useState<Order[]>([])
   const [purchased, setPurchased] = useState<PurchasedItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [scanTarget, setScanTarget] = useState<string | null>(null)
+
+  const refreshPurchased = () => {
+    api.get<PurchasedItem[]>('/farmer/purchased-items')
+      .then(res => setPurchased(res.data))
+      .catch(() => { /* silent — parent list keeps showing what it had */ })
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -204,8 +213,13 @@ export default function OrderHistoryPage() {
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-1 shrink-0">
-                          {item.scan_verified && (
-                            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ Verified</span>
+                          {item.scan_verified ? (
+                            <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ {tQr('verified')}</span>
+                          ) : (
+                            <button onClick={() => setScanTarget(item.id)}
+                              className="text-xs bg-[#3A7D44] text-white px-3 py-1 rounded-full font-medium">
+                              {tQr('scanButton')}
+                            </button>
                           )}
                           {badge && (
                             <span className={`text-[10px] border px-2 py-0.5 rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
@@ -227,6 +241,13 @@ export default function OrderHistoryPage() {
         </div>
       </div>
       <BottomNav color="#3A7D44" />
+      {scanTarget && (
+        <QRScannerModal
+          orderItemId={scanTarget}
+          onClose={() => setScanTarget(null)}
+          onVerified={refreshPurchased}
+        />
+      )}
     </div>
   )
 }

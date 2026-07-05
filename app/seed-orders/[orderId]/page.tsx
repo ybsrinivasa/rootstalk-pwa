@@ -7,6 +7,7 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
+import QRScannerModal from '@/components/QRScannerModal'
 
 // Orders V2 Batch 14 — farmer-side seed order detail. Same
 // affordances as the pesticide/fertiliser detail
@@ -28,6 +29,7 @@ interface SeedOrder {
   subscription_id: string
   client_id: string
   postponed_until: string | null
+  scan_verified?: boolean
   created_at: string
 }
 
@@ -60,11 +62,13 @@ export default function FarmerSeedOrderDetailPage() {
   const t = useTranslations('seedOrders')
   const tDetail = useTranslations('seedOrders.detail')
   const tCommon = useTranslations('orders.common')
+  const tQr = useTranslations('qrScan')
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
   const [order, setOrder] = useState<SeedOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [scanning, setScanning] = useState(false)
 
   // DRAFT recipient picker
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -267,6 +271,21 @@ export default function FarmerSeedOrderDetailPage() {
               {order.total_price != null && order.status === 'PURCHASED' ? ` · ₹${order.total_price}` : ''}
             </p>
           )}
+          {/* QR verification — only meaningful once the farmer has
+              taken delivery (PURCHASED). Verified rows show a chip;
+              unverified show a Scan CTA. */}
+          {order.status === 'PURCHASED' && (
+            order.scan_verified ? (
+              <span className="inline-block mt-3 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
+                ✓ {tQr('verified')}
+              </span>
+            ) : (
+              <button onClick={() => setScanning(true)}
+                className="mt-3 text-xs bg-[#3A7D44] text-white px-3 py-1.5 rounded-full font-medium">
+                {tQr('scanButton')}
+              </button>
+            )
+          )}
         </div>
 
         {/* Dealer-submitted qty/price awaiting farmer approval */}
@@ -423,6 +442,13 @@ export default function FarmerSeedOrderDetailPage() {
 
       {/* 2026-06-21 — Receive confirmation sheet (parity with regular
           order ReceiveBanner's confirm modal). */}
+      {scanning && (
+        <QRScannerModal
+          seedOrderId={order.id}
+          onClose={() => setScanning(false)}
+          onVerified={load}
+        />
+      )}
       {confirmReceive && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => !busy && setConfirmReceive(false)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
