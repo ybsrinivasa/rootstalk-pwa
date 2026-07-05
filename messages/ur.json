@@ -3194,6 +3194,26 @@
     "resultInactiveBody": "یہ پروڈکٹ کوڈ اب فعال نہیں ہے۔ براہ کرم اپنے ڈیلر سے رابطہ کریں۔",
     "retry": "دوبارہ کوشش کریں۔",
     "close": "بند",
-    "verified": "تصدیق شدہ"
+    "verified": "تصدیق شدہ",
+    "batchNotice": "یہ بیچ کی تصدیق کرتا ہے۔ اسی بیچ کے دیگر پیکٹوں کو دوبارہ اسکین کرنے کی ضرورت نہیں ہے۔"
+  },
+  "publicVerify": {
+    "productAuthentication": "پروڈکٹ کی تصدیق",
+    "verifiedTitle": "حقیقی پروڈکٹ ✓",
+    "verifiedSubtitle": "یہ QR کوڈ {company} نے rootsTALK کے ذریعے تیار کیا تھا۔",
+    "notActiveTitle": "کوڈ فعال نہیں ہے۔",
+    "notActiveSubtitle": "یہ QR کوڈ فی الحال فعال نہیں ہے۔ براہ کرم اپنے ڈیلر سے رابطہ کریں۔",
+    "invalidTitle": "روٹسٹاک کیو آر نہیں ہے۔",
+    "invalidBody": "ہمیں اپنے سسٹم میں یہ QR کوڈ نہیں مل سکا۔ ہو سکتا ہے یہ rootsTALK کے ذریعے تیار نہ کیا گیا ہو۔",
+    "theManufacturer": "کارخانہ دار",
+    "company": "کمپنی",
+    "product": "پروڈکٹ",
+    "batchLot": "بیچ / لاٹ",
+    "dates": "مینوفیکچر → میعاد ختم",
+    "installTitle": "rootsTALK ایپ حاصل کریں۔",
+    "installBody": "ایڈوائزری، آرڈرز، اور اس پروڈکٹ کو اپنے مخصوص آرڈر سے لنک کرنے کے لیے، rootsTALK انسٹال کریں۔",
+    "openApp": "جڑیں کھولیں۔",
+    "goToApp": "rootsTALK پر جائیں۔",
+    "publicVerifyFootnote": "یہ ایک غیر اسکوپ شدہ تصدیق ہے۔ اسے اپنے آرڈر سے لنک کرنے کے لیے ایپ کھولیں۔"
   }
 }

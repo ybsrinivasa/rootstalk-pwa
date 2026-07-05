@@ -30,6 +30,7 @@ interface SeedOrder {
   client_id: string
   postponed_until: string | null
   scan_verified?: boolean
+  qr_available?: boolean
   created_at: string
 }
 
@@ -272,19 +273,21 @@ export default function FarmerSeedOrderDetailPage() {
             </p>
           )}
           {/* QR verification — only meaningful once the farmer has
-              taken delivery (PURCHASED). Verified rows show a chip;
-              unverified show a Scan CTA. */}
+              taken delivery (PURCHASED) AND the seed company has
+              actually rolled out QR authentication for this variety
+              (qr_available from backend). Otherwise the Scan CTA
+              would send them chasing a QR that isn't on the package. */}
           {order.status === 'PURCHASED' && (
             order.scan_verified ? (
               <span className="inline-block mt-3 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">
                 ✓ {tQr('verified')}
               </span>
-            ) : (
+            ) : order.qr_available ? (
               <button onClick={() => setScanning(true)}
                 className="mt-3 text-xs bg-[#3A7D44] text-white px-3 py-1.5 rounded-full font-medium">
                 {tQr('scanButton')}
               </button>
-            )
+            ) : null
           )}
         </div>
 

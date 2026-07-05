@@ -38,6 +38,7 @@ type PurchasedItem = {
   id: string; brand_name: string | null; l1_type: string | null; l2_type: string | null
   given_volume: number | null; volume_unit: string | null; price: number | null
   scan_verified: boolean; order_id: string; created_at: string
+  qr_available?: boolean
   timeline_from_type?: 'DAS' | 'DBS' | 'CALENDAR' | null
   application_date_from?: string | null
   application_date_to?: string | null
@@ -215,12 +216,12 @@ export default function OrderHistoryPage() {
                         <div className="flex flex-col items-end gap-1 shrink-0">
                           {item.scan_verified ? (
                             <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ {tQr('verified')}</span>
-                          ) : (
+                          ) : item.qr_available ? (
                             <button onClick={() => setScanTarget(item.id)}
                               className="text-xs bg-[#3A7D44] text-white px-3 py-1 rounded-full font-medium">
                               {tQr('scanButton')}
                             </button>
-                          )}
+                          ) : null}
                           {badge && (
                             <span className={`text-[10px] border px-2 py-0.5 rounded-full font-medium ${badge.cls}`}>{badge.label}</span>
                           )}

@@ -180,7 +180,12 @@ export default function QRScannerModal({ orderItemId, seedOrderId, onClose, onVe
             </p>
             <p className="text-sm text-[#6B3F1F]">{result.message}</p>
             {result.status === 'MATCH' && (
-              <p className="text-xs text-emerald-600 mt-3">✓</p>
+              <>
+                <p className="text-xs text-emerald-600 mt-3">✓</p>
+                <p className="text-[11px] text-[#7A8C7E] mt-2 leading-relaxed">
+                  {t('batchNotice')}
+                </p>
+              </>
             )}
             {result.status === 'MISMATCH' && result.retry && (
               <div className="flex gap-2 mt-4">
