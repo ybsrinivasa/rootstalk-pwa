@@ -94,7 +94,9 @@ type PurchasedItem = {
   id: string; brand_name: string | null; manufacturer_name?: string | null
   l1_type: string | null; l2_type: string | null
   given_volume: number | null; volume_unit: string | null; price: number | null
-  scan_verified: boolean; order_id: string; created_at: string
+  scan_verified: boolean
+  qr_available?: boolean
+  order_id: string; created_at: string
   timeline_name?: string | null
   application_date_from?: string | null
   application_date_to?: string | null
@@ -1413,6 +1415,7 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
   const [items, setItems] = useState<PurchasedItem[] | null>(null)
   const [seeds, setSeeds] = useState<SeedPurchased[] | null>(null)
   const [scanSeedId, setScanSeedId] = useState<string | null>(null)
+  const [scanItemId, setScanItemId] = useState<string | null>(null)
   // 2026-06-09 (restored) — "Ready to pick up" strip on top of the
   // Received tab. Surfaces approved-but-not-yet-confirmed orders
   // (pickup_ready_count > 0) so the farmer is naturally nudged to
@@ -1540,16 +1543,30 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
       {items.map(it => (
         <div key={it.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
           <div className="p-4">
-            <div className="flex items-baseline justify-between gap-2">
-              <div className="min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold text-[#6B3F1F] truncate">{it.brand_name || t('unknownBrand')}</p>
                 {it.manufacturer_name && (
                   <p className="text-xs text-[#7A8C7E] truncate">{t('byManufacturer', { manufacturer: it.manufacturer_name })}</p>
                 )}
               </div>
-              {it.given_volume != null && it.volume_unit && (
-                <p className="text-xs text-[#7A8C7E] shrink-0">{it.given_volume} {it.volume_unit}{it.price != null ? ` · ₹${it.price}` : ''}</p>
-              )}
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                {it.given_volume != null && it.volume_unit && (
+                  <p className="text-xs text-[#7A8C7E]">{it.given_volume} {it.volume_unit}{it.price != null ? ` · ₹${it.price}` : ''}</p>
+                )}
+                {/* 2026-07-06 — Scan verification chip / CTA, parity
+                    with the /orders top-level Received tab. Only
+                    shows when qr_available (client has an ACTIVE
+                    ProductQRCode for this brand). */}
+                {it.scan_verified ? (
+                  <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ {tQr('verified')}</span>
+                ) : it.qr_available ? (
+                  <button onClick={() => setScanItemId(it.id)}
+                    className="text-xs bg-[#3A7D44] text-white px-3 py-1 rounded-full font-medium">
+                    {tQr('scanButton')}
+                  </button>
+                ) : null}
+              </div>
             </div>
             {(it.application_date_from && it.application_date_to) && (
               <p className="text-[11px] text-[#7A8C7E] mt-1">
@@ -1584,6 +1601,18 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
           )}
         </div>
       ))}
+      {scanItemId && (
+        <QRScannerModal
+          orderItemId={scanItemId}
+          onClose={() => setScanItemId(null)}
+          onVerified={() => {
+            // Refresh items so the ✓ Verified chip lights up.
+            api.get<PurchasedItem[]>(`/farmer/purchased-items?subscription_id=${subscriptionId}`)
+              .then(({ data }) => setItems(data))
+              .catch(() => { /* silent — chip appears on next mount */ })
+          }}
+        />
+      )}
     </div>
   )
 }
