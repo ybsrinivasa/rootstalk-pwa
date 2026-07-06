@@ -859,26 +859,32 @@ export default function CropDetailPage() {
           </button>
         )}
 
-        {/* Pre-Start section */}
-        {showPreStart && (seedAvail.has_varieties || pestPractices.length > 0 || fertPractices.length > 0) && (
+        {/* Seeds CTA — 2026-07-06: lifted out of the Pre-Start gate.
+            Farmers whose crop has already started still legitimately
+            need seed orders: replacement stock after poor germination,
+            multi-cycle plantings, perennials, or a mid-season variety
+            add. Renders whenever the client has varieties available
+            for this subscription's package. */}
+        {seedAvail.has_varieties && (
+          <button
+            onClick={() => router.push(`/subscribe/seed-varieties/${subscriptionId}`)}
+            className="w-full bg-white rounded-2xl border border-[#DDD0B8] px-4 py-4 flex items-center justify-between active:scale-98 transition-transform mb-3 mt-6"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🌾</span>
+              <div className="text-left">
+                <p className="font-semibold text-[#6B3F1F] text-sm">{t('preStart.seedsTitle')}</p>
+                <p className="text-xs text-[#7A8C7E]">{t('preStart.seedsBody')}</p>
+              </div>
+            </div>
+            <span className="text-[#DDD0B8] text-xl">›</span>
+          </button>
+        )}
+
+        {/* Pre-Start section (pesticides / fertilisers only from here on) */}
+        {showPreStart && (pestPractices.length > 0 || fertPractices.length > 0) && (
           <>
             <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-6 px-1">{t('preStart.sectionHeader')}</p>
-
-            {seedAvail.has_varieties && (
-              <button
-                onClick={() => router.push(`/subscribe/seed-varieties/${subscriptionId}`)}
-                className="w-full bg-white rounded-2xl border border-[#DDD0B8] px-4 py-4 flex items-center justify-between active:scale-98 transition-transform mb-3"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🌾</span>
-                  <div className="text-left">
-                    <p className="font-semibold text-[#6B3F1F] text-sm">{t('preStart.seedsTitle')}</p>
-                    <p className="text-xs text-[#7A8C7E]">{t('preStart.seedsBody')}</p>
-                  </div>
-                </div>
-                <span className="text-[#DDD0B8] text-xl">›</span>
-              </button>
-            )}
 
             {pestPractices.length > 0 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-3">

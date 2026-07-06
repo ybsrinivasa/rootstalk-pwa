@@ -23,6 +23,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
+import QRScannerModal from '@/components/QRScannerModal'
 
 type Subscription = {
   id: string
@@ -1390,6 +1391,7 @@ function ExpandedSubOrderList({ subs }: { subs: SubOrder[] }) {
 
 interface SeedPurchased {
   id: string; status: string; variety_name?: string | null
+  variety_id?: string | null
   unit?: string | null; quantity?: number | null
   total_price?: number | null; created_at: string
   subscription_id: string
@@ -1397,15 +1399,20 @@ interface SeedPurchased {
   recipient_shop_name?: string | null
   recipient_phone?: string | null
   recipient_role?: 'DEALER' | 'FACILITATOR' | null
+  // 2026-07-06 — Scan-verify state, parity with pesticide/fertilizer.
+  scan_verified?: boolean
+  qr_available?: boolean
 }
 
 function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.received')
   const tChunk = useTranslations('orders.cropOrders.chunk')
+  const tQr = useTranslations('qrScan')
   const locale = useLocale()
   const [items, setItems] = useState<PurchasedItem[] | null>(null)
   const [seeds, setSeeds] = useState<SeedPurchased[] | null>(null)
+  const [scanSeedId, setScanSeedId] = useState<string | null>(null)
   // 2026-06-09 (restored) — "Ready to pick up" strip on top of the
   // Received tab. Surfaces approved-but-not-yet-confirmed orders
   // (pickup_ready_count > 0) so the farmer is naturally nudged to
@@ -1481,14 +1488,29 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
       )}
       {seeds.map(s => (
         <div key={s.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
-          <div className="flex items-baseline justify-between gap-2">
-            <div className="min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
               <span className="text-[10px] uppercase tracking-wide text-indigo-700 bg-indigo-100 px-1.5 py-0.5 rounded-full font-semibold">{t('seedBadge')}</span>
               <p className="font-semibold text-[#6B3F1F] truncate mt-1">{s.variety_name || t('seedVarietyFallback')}</p>
             </div>
-            {s.quantity != null && s.unit && (
-              <p className="text-xs text-[#7A8C7E] shrink-0">{s.quantity} {s.unit}{s.total_price != null ? ` · ₹${s.total_price}` : ''}</p>
-            )}
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              {s.quantity != null && s.unit && (
+                <p className="text-xs text-[#7A8C7E]">{s.quantity} {s.unit}{s.total_price != null ? ` · ₹${s.total_price}` : ''}</p>
+              )}
+              {/* 2026-07-06 — Scan verification chip / CTA, parity
+                  with the pesticide/fertilizer row. Only shows when
+                  the client has an ACTIVE ProductQRCode for this
+                  variety (qr_available). Verified chip once the
+                  scan has landed a MATCH server-side. */}
+              {s.scan_verified ? (
+                <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-medium">✓ {tQr('verified')}</span>
+              ) : s.qr_available ? (
+                <button onClick={() => setScanSeedId(s.id)}
+                  className="text-xs bg-[#3A7D44] text-white px-3 py-1 rounded-full font-medium">
+                  {tQr('scanButton')}
+                </button>
+              ) : null}
+            </div>
           </div>
           <p className="text-[11px] text-[#7A8C7E] mt-1">
             {t('purchasedOn', { date: new Date(s.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
@@ -1501,6 +1523,20 @@ function ReceivedTab({ subscriptionId }: { subscriptionId: string }) {
           />
         </div>
       ))}
+      {scanSeedId && (
+        <QRScannerModal
+          seedOrderId={scanSeedId}
+          onClose={() => setScanSeedId(null)}
+          onVerified={() => {
+            // Refresh the seed list so the ✓ Verified chip lights up.
+            api.get<SeedPurchased[]>(`/farmer/seed-orders`)
+              .then(({ data }) => setSeeds(data.filter(x =>
+                x.subscription_id === subscriptionId && x.status === 'PURCHASED'
+              )))
+              .catch(() => { /* silent — chip appears on next mount */ })
+          }}
+        />
+      )}
       {items.map(it => (
         <div key={it.id} className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
           <div className="p-4">
