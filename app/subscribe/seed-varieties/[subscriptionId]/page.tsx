@@ -193,6 +193,34 @@ export default function SeedVarietiesPage() {
     }
   }
 
+  // 2026-07-06 — The ConfirmSendOrderSheet used to be mounted only
+  // inside the last return (line ~488, variety-list view). All four
+  // early-returns above skipped it, so tapping "Send Order" on the
+  // picker view (setPendingPickerSend) never rendered the sheet →
+  // farmer's tap looked like nothing happened. Hoisting the sheet
+  // into a shared fragment so every view mounts it.
+  const confirmSheet = (
+    <ConfirmSendOrderSheet
+      open={pendingLookupSend || !!pendingPickerSend}
+      inputType={tOrdersCommon('inputType.seed')}
+      recipient={
+        pendingLookupSend
+          ? recipientLabel(lookup?.role === 'DEALER', lookup ?? null, tOrdersCommon('unknownRecipient'))
+          : recipientLabel(
+              pendingPickerSend?.isDealer ?? false,
+              pendingPickerSend?.recipient ?? null,
+              tOrdersCommon('unknownRecipient'),
+            )
+      }
+      busy={!!placing}
+      onCancel={() => { setPendingLookupSend(false); setPendingPickerSend(null) }}
+      onConfirm={() => {
+        if (pendingLookupSend) void sendOrderFromLookup()
+        else if (pendingPickerSend) void sendOrder(pendingPickerSend.recipient, pendingPickerSend.isDealer)
+      }}
+    />
+  )
+
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-[#085041] border-t-transparent rounded-full animate-spin" />
@@ -351,6 +379,7 @@ export default function SeedVarietiesPage() {
             </button>
           </div>
         </div>
+        {confirmSheet}
       </div>
     )
   }
@@ -442,6 +471,7 @@ export default function SeedVarietiesPage() {
             </div>
           )}
         </div>
+        {confirmSheet}
       </div>
     )
   }
@@ -485,25 +515,7 @@ export default function SeedVarietiesPage() {
           </div>
         )}
       </div>
-      <ConfirmSendOrderSheet
-        open={pendingLookupSend || !!pendingPickerSend}
-        inputType={tOrdersCommon('inputType.seed')}
-        recipient={
-          pendingLookupSend
-            ? recipientLabel(lookup?.role === 'DEALER', lookup ?? null, tOrdersCommon('unknownRecipient'))
-            : recipientLabel(
-                pendingPickerSend?.isDealer ?? false,
-                pendingPickerSend?.recipient ?? null,
-                tOrdersCommon('unknownRecipient'),
-              )
-        }
-        busy={!!placing}
-        onCancel={() => { setPendingLookupSend(false); setPendingPickerSend(null) }}
-        onConfirm={() => {
-          if (pendingLookupSend) void sendOrderFromLookup()
-          else if (pendingPickerSend) void sendOrder(pendingPickerSend.recipient, pendingPickerSend.isDealer)
-        }}
-      />
+      {confirmSheet}
     </div>
   )
 }
