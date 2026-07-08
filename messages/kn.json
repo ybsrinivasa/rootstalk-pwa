@@ -1453,7 +1453,13 @@
         "farmerRoleLabel": "ರೈತ",
         "facilitatorRoleLabel": "ಫೆಸಿಲಿಟೇಟರ್ ಮೂಲಕ ರೂಟ್ ಮಾಡಲಾಗಿದೆ",
         "callFarmerAria": "ರೈತನಿಗೆ ಕರೆ ಮಾಡಿ",
-        "callFacilitatorAria": "ಕರೆ ಫೆಸಿಲಿಟೇಟರ್"
+        "callFacilitatorAria": "ಕರೆ ಫೆಸಿಲಿಟೇಟರ್",
+        "cropContext": {
+          "acres": "{count, plural, one {1 ಎಕರೆ} other {# ಎಕರೆ}}",
+          "plants": "{count, plural, one {1 ಗಿಡ} other {# ಗಿಡಗಳು}}",
+          "ageDays": "{count, plural, one {1 ದಿನ} other {# ದಿನಗಳು}}",
+          "ageYears": "{count, plural, one {1 ವರ್ಷ} other {# ವರ್ಷಗಳು}}"
+        }
       },
       "chunk": {
         "subOrderPrefix": "ಉಪ-ಆದೇಶ · {date}",

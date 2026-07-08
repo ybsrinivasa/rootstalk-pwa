@@ -1453,7 +1453,13 @@
         "farmerRoleLabel": "விவசாயி",
         "facilitatorRoleLabel": "ஒருங்கிணைப்பாளரால் வழிநடத்தப்பட்டது",
         "callFarmerAria": "விவசாயியை அழைக்கவும்",
-        "callFacilitatorAria": "அழைப்பு ஒருங்கிணைப்பாளர்"
+        "callFacilitatorAria": "அழைப்பு ஒருங்கிணைப்பாளர்",
+        "cropContext": {
+          "acres": "{count, plural, one {1 ஏக்கர்} other {# ஏக்கர்}}",
+          "plants": "{count, plural, one {1 செடி} other {# செடிகள்}}",
+          "ageDays": "{count, plural, one {1 நாள்} other {# நாட்கள்}}",
+          "ageYears": "{count, plural, one {1 வருடம்} other {# வருடங்கள்}}"
+        }
       },
       "chunk": {
         "subOrderPrefix": "துணை ஆர்டர் · {date}",

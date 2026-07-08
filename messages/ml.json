@@ -1433,7 +1433,13 @@
         "farmerRoleLabel": "കർഷകൻ",
         "facilitatorRoleLabel": "ഫെസിലിറ്റേറ്റർ വഴി റൂട്ട് ചെയ്‌തു",
         "callFarmerAria": "കർഷകനെ വിളിക്കുക",
-        "callFacilitatorAria": "കോൾ ഫെസിലിറ്റേറ്റർ"
+        "callFacilitatorAria": "കോൾ ഫെസിലിറ്റേറ്റർ",
+        "cropContext": {
+          "acres": "{count, plural, one {1 acre} other {# acres}}",
+          "plants": "{count, plural, one {1 plant} other {# plants}}",
+          "ageDays": "{count, plural, one {1 day old} other {# days old}}",
+          "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+        }
       },
       "chunk": {
         "subOrderPrefix": "ഉപ-ഓർഡർ · {date}",

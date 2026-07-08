@@ -1433,7 +1433,13 @@
         "farmerRoleLabel": "शेतकरी",
         "facilitatorRoleLabel": "सुविधाकर्त्याद्वारे मार्गस्थ केले",
         "callFarmerAria": "शेतकऱ्याला बोलवा",
-        "callFacilitatorAria": "कॉल फॅसिलिटेटर"
+        "callFacilitatorAria": "कॉल फॅसिलिटेटर",
+        "cropContext": {
+          "acres": "{count, plural, one {1 acre} other {# acres}}",
+          "plants": "{count, plural, one {1 plant} other {# plants}}",
+          "ageDays": "{count, plural, one {1 day old} other {# days old}}",
+          "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+        }
       },
       "chunk": {
         "subOrderPrefix": "उप-ऑर्डर · {date}",

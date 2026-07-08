@@ -1433,7 +1433,13 @@
         "farmerRoleLabel": "ଚାଷୀ",
         "facilitatorRoleLabel": "ଫ୍ୟାସିଲିଟେଟରଙ୍କ ଦ୍ୱାରା ପଠାଯାଇଛି",
         "callFarmerAria": "ଚାଷୀଙ୍କୁ କଲ୍ କରନ୍ତୁ",
-        "callFacilitatorAria": "କଲ୍ ଫ୍ୟାସିଲିଟେଟର"
+        "callFacilitatorAria": "କଲ୍ ଫ୍ୟାସିଲିଟେଟର",
+        "cropContext": {
+          "acres": "{count, plural, one {1 acre} other {# acres}}",
+          "plants": "{count, plural, one {1 plant} other {# plants}}",
+          "ageDays": "{count, plural, one {1 day old} other {# days old}}",
+          "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+        }
       },
       "chunk": {
         "subOrderPrefix": "ସବ୍-ଅର୍ଡର · {date}",

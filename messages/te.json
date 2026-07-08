@@ -1433,7 +1433,13 @@
         "farmerRoleLabel": "రైతు",
         "facilitatorRoleLabel": "ఫెసిలిటేటర్ ద్వారా మార్గనిర్దేశం చేయబడింది",
         "callFarmerAria": "రైతును పిలవండి",
-        "callFacilitatorAria": "కాల్ ఫెసిలిటేటర్"
+        "callFacilitatorAria": "కాల్ ఫెసిలిటేటర్",
+        "cropContext": {
+          "acres": "{count, plural, one {1 acre} other {# acres}}",
+          "plants": "{count, plural, one {1 plant} other {# plants}}",
+          "ageDays": "{count, plural, one {1 day old} other {# days old}}",
+          "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+        }
       },
       "chunk": {
         "subOrderPrefix": "ఉప-క్రమం · {date}",

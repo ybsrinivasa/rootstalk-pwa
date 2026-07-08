@@ -75,6 +75,13 @@ interface Order {
   is_seed?: boolean
   variety_name?: string | null
   crop_cosh_id?: string | null
+  // 2026-07-08 — Crop context for the dealer card (seed orders
+  // today; regular orders can adopt the same shape later).
+  crop_name?: string | null
+  crop_measure?: 'AREA_WISE' | 'PLANT_WISE' | null
+  farm_area_acres?: number | null
+  number_of_plants?: number | null
+  computed_crop_age?: { value: number; unit: string; source: string; is_minimum?: boolean } | null
 }
 
 // 2026-06-06 — Raw shape from /dealer/seed-orders before adapter.
@@ -86,10 +93,15 @@ interface SeedOrderRaw {
   category: string | null
   variety_name: string | null
   crop_cosh_id: string | null
+  crop_name: string | null
+  crop_measure: 'AREA_WISE' | 'PLANT_WISE' | null
+  computed_crop_age: { value: number; unit: string; source: string; is_minimum?: boolean } | null
   farmer_user_id: string
   farmer_name: string | null
   farmer_phone: string | null
   farmer_photo_url: string | null
+  farm_area_acres: number | null
+  number_of_plants: number | null
   client_id: string
   client_name: string | null
   unit: string | null
@@ -216,6 +228,11 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
     is_seed: true,
     variety_name: s.variety_name,
     crop_cosh_id: s.crop_cosh_id,
+    crop_name: s.crop_name,
+    crop_measure: s.crop_measure,
+    farm_area_acres: s.farm_area_acres,
+    number_of_plants: s.number_of_plants,
+    computed_crop_age: s.computed_crop_age,
   }
 }
 
@@ -934,6 +951,45 @@ function DealerOrderCardHeader({
               className="shrink-0 text-xs bg-purple-100 text-purple-800 px-2.5 py-1.5 rounded-lg font-semibold">
               {t('callBtn')}
             </a>
+          )}
+        </div>
+      )}
+      {/* 2026-07-08 — Crop context strip: crop name · area or plants ·
+          age. Rendered when we have any of the three fields; keeps the
+          card compact when data is missing (e.g. pre-Cosh-resolve
+          orders with no measure). Dot separators drop naturally when
+          adjacent segments are absent. */}
+      {head.is_seed && (head.crop_name || head.farm_area_acres || head.number_of_plants || head.computed_crop_age) && (
+        <div className="mt-2 pt-2 border-t border-[#F0E8D6] text-[11px] text-[#6B3F1F] flex flex-wrap items-center gap-x-2 gap-y-0.5">
+          {head.crop_name && (
+            <span className="font-semibold">{head.crop_name}</span>
+          )}
+          {head.crop_measure === 'PLANT_WISE' && head.number_of_plants ? (
+            <>
+              {head.crop_name && <span className="text-[#7A8C7E]">·</span>}
+              <span>{t('cropContext.plants', { count: head.number_of_plants })}</span>
+            </>
+          ) : head.farm_area_acres ? (
+            <>
+              {head.crop_name && <span className="text-[#7A8C7E]">·</span>}
+              <span>{t('cropContext.acres', { count: head.farm_area_acres })}</span>
+            </>
+          ) : null}
+          {head.computed_crop_age && (
+            <>
+              {(head.crop_name || head.farm_area_acres || head.number_of_plants) && (
+                <span className="text-[#7A8C7E]">·</span>
+              )}
+              <span>
+                {head.computed_crop_age.is_minimum ? '> ' : ''}
+                {t(
+                  head.computed_crop_age.unit === 'years'
+                    ? 'cropContext.ageYears'
+                    : 'cropContext.ageDays',
+                  { count: head.computed_crop_age.value },
+                )}
+              </span>
+            </>
           )}
         </div>
       )}
