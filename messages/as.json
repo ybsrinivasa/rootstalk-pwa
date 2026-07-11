@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "অডিঅ' আপলোড কৰক",
       "UPLOAD_IMAGE": "ছবি আপলোড কৰক",
       "VOLUME_PER_PLANT": "প্ৰতি উদ্ভিদৰ আয়তন"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "General Instructions",
+      "MEDIA_IMAGE": "Image",
+      "MEDIA_AUDIO": "Audio",
+      "MEDIA_HYPERLINK": "Link"
     }
   },
   "role": {

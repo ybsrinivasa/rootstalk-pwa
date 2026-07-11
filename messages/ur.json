@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "آڈیو اپ لوڈ کریں۔",
       "UPLOAD_IMAGE": "تصویر اپ لوڈ کریں۔",
       "VOLUME_PER_PLANT": "حجم فی پلانٹ"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "General Instructions",
+      "MEDIA_IMAGE": "Image",
+      "MEDIA_AUDIO": "Audio",
+      "MEDIA_HYPERLINK": "Link"
     }
   },
   "role": {

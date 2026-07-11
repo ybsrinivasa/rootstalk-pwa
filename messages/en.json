@@ -242,6 +242,12 @@
       "UPLOAD_AUDIO": "Upload Audio",
       "UPLOAD_IMAGE": "Upload Image",
       "VOLUME_PER_PLANT": "Volume per Plant"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "General Instructions",
+      "MEDIA_IMAGE": "Image",
+      "MEDIA_AUDIO": "Audio",
+      "MEDIA_HYPERLINK": "Link"
     }
   },
   "role": {

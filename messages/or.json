@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "ଅଡିଓ ଅପଲୋଡ୍ କରନ୍ତୁ",
       "UPLOAD_IMAGE": "ପ୍ରତିଛବି ଅପଲୋଡ୍ କରନ୍ତୁ",
       "VOLUME_PER_PLANT": "ପ୍ରତି ଗଛର ପରିମାଣ"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "General Instructions",
+      "MEDIA_IMAGE": "Image",
+      "MEDIA_AUDIO": "Audio",
+      "MEDIA_HYPERLINK": "Link"
     }
   },
   "role": {

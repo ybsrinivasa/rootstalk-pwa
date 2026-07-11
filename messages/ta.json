@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "ஆடியோவைப் பதிவேற்றவும்",
       "UPLOAD_IMAGE": "படத்தை பதிவேற்றவும்",
       "VOLUME_PER_PLANT": "ஒரு தாவரத்திற்கான அளவு"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "பொதுவான அறிவுறுத்தல்கள்",
+      "MEDIA_IMAGE": "படம்",
+      "MEDIA_AUDIO": "ஆடியோ",
+      "MEDIA_HYPERLINK": "இணைப்பு"
     }
   },
   "role": {

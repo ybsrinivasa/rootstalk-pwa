@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "ऑडियो अपलोड करें",
       "UPLOAD_IMAGE": "तस्विर अपलोड करना",
       "VOLUME_PER_PLANT": "प्रति पौधे की मात्रा"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "सामान्य निर्देश",
+      "MEDIA_IMAGE": "चित्र",
+      "MEDIA_AUDIO": "ऑडियो",
+      "MEDIA_HYPERLINK": "लिंक"
     }
   },
   "role": {

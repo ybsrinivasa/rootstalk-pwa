@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "ఆడియోను అప్‌లోడ్ చేయండి",
       "UPLOAD_IMAGE": "చిత్రాన్ని అప్‌లోడ్ చేయండి",
       "VOLUME_PER_PLANT": "మొక్కకు దిగుబడి"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "General Instructions",
+      "MEDIA_IMAGE": "Image",
+      "MEDIA_AUDIO": "Audio",
+      "MEDIA_HYPERLINK": "Link"
     }
   },
   "role": {

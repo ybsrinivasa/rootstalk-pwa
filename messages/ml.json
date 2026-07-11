@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "ഓഡിയോ അപ്‌ലോഡ് ചെയ്യുക",
       "UPLOAD_IMAGE": "ചിത്രം അപ്‌ലോഡ് ചെയ്യുക",
       "VOLUME_PER_PLANT": "ഓരോ ചെടിയുടെയും അളവ്"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "General Instructions",
+      "MEDIA_IMAGE": "Image",
+      "MEDIA_AUDIO": "Audio",
+      "MEDIA_HYPERLINK": "Link"
     }
   },
   "role": {

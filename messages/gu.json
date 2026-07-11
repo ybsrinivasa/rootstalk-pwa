@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "ઑડિઓ અપલોડ કરો",
       "UPLOAD_IMAGE": "છબી અપલોડ કરો",
       "VOLUME_PER_PLANT": "છોડ દીઠ વોલ્યુમ"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "General Instructions",
+      "MEDIA_IMAGE": "Image",
+      "MEDIA_AUDIO": "Audio",
+      "MEDIA_HYPERLINK": "Link"
     }
   },
   "role": {

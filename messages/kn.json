@@ -234,6 +234,12 @@
       "UPLOAD_AUDIO": "ಆಡಿಯೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
       "UPLOAD_IMAGE": "ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
       "VOLUME_PER_PLANT": "ಪ್ರತಿ ಸಸ್ಯಕ್ಕೆ ಪರಿಮಾಣ"
+    },
+    "l2": {
+      "GENERAL_INSTRUCTIONS": "ಸಾಮಾನ್ಯ ಸೂಚನೆಗಳು",
+      "MEDIA_IMAGE": "ಚಿತ್ರ",
+      "MEDIA_AUDIO": "ಆಡಿಯೊ",
+      "MEDIA_HYPERLINK": "ಲಿಂಕ್"
     }
   },
   "role": {

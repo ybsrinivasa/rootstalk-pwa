@@ -914,8 +914,15 @@ function PracticeCard({
   const tPill = useTranslations('orders.cropOrders.manage.pill')
   const tAction = useTranslations('practice.action')
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
+  const tL2 = useTranslations('practice.l2')
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
-  const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
+  // 2026-07-11 — L2 fallback ladder: backend `l2_name_loc` (Cosh-
+  // sourced) → i18n `practice.l2.<ENUM>` (covers the enums Cosh hasn't
+  // shipped: GENERAL_INSTRUCTIONS, MEDIA_*) → humanized enum.
+  const l2Label =
+    practice.l2_name_loc
+    || (practice.l2_type && tL2.has(practice.l2_type) ? tL2(practice.l2_type) : null)
+    || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
   // 2026-06-21 — Status chip now reuses the Manage tab's 4 pill names
   // (Routed / For Approval / Returned / Ready for pickup). Tapping the
@@ -1019,7 +1026,16 @@ function PracticeCard({
           .filter(el => {
             const t = (el.element_type || '').toUpperCase()
             if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
-            if (!summaryShown && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(t)) return false
+            // 2026-07-11 — POST_PURCHASE_ONLY was designed to hide the
+            // "how to apply" details before the farmer picked up an
+            // INPUT. Applying it universally also hid INSTRUCTIONS on
+            // L0=INSTRUCTION practices, where the Instructions text is
+            // the whole point of the card and there's no purchase to
+            // wait for. Gate the filter on isPurchasable so
+            // non-purchasable practices always show INSTRUCTIONS +
+            // VOLUME_PER_PLANT + APPLICATION_METHOD + DOSAGE. INPUT
+            // pre-purchase behaviour unchanged.
+            if (isPurchasable && !summaryShown && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(t)) return false
             if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
             return true
           })
