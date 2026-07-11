@@ -1006,7 +1006,12 @@
         "pesticide": "Pesticide",
         "fertilizer": "Fertilizer",
         "fallback": "Input"
-      }
+      },
+      "tabDealers": "Dealers ({count})",
+      "tabFacilitators": "Facilitators ({count})",
+      "emptyDealers": "No dealers found nearby.",
+      "emptyFacilitators": "No facilitators found nearby.",
+      "tryPhoneHint": "Try entering a phone number below."
     },
     "forward": {
       "headerTitle": "Forward returned items",

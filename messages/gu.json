@@ -998,7 +998,12 @@
         "pesticide": "જંતુનાશક",
         "fertilizer": "ખાતર",
         "fallback": "ઇનપુટ"
-      }
+      },
+      "tabDealers": "Dealers ({count})",
+      "tabFacilitators": "Facilitators ({count})",
+      "emptyDealers": "No dealers found nearby.",
+      "emptyFacilitators": "No facilitators found nearby.",
+      "tryPhoneHint": "Try entering a phone number below."
     },
     "forward": {
       "headerTitle": "પરત કરેલી વસ્તુઓ ફોરવર્ડ કરો",

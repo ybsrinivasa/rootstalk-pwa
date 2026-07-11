@@ -1018,7 +1018,12 @@
         "pesticide": "ಕೀಟನಾಶಕ",
         "fertilizer": "ಗೊಬ್ಬರ",
         "fallback": "ಇನ್ಪುಟ್"
-      }
+      },
+      "tabDealers": "ವ್ಯಾಪಾರಿಗಳು ({count})",
+      "tabFacilitators": "ಸಹಾಯಕರು ({count})",
+      "emptyDealers": "ಹತ್ತಿರದಲ್ಲಿ ವ್ಯಾಪಾರಿಗಳು ಇಲ್ಲ.",
+      "emptyFacilitators": "ಹತ್ತಿರದಲ್ಲಿ ಸಹಾಯಕರು ಇಲ್ಲ.",
+      "tryPhoneHint": "ಕೆಳಗೆ ಫೋನ್ ಸಂಖ್ಯೆ ಟೈಪ್ ಮಾಡಿ."
     },
     "forward": {
       "headerTitle": "ಫಾರ್ವರ್ಡ್ ಮಾಡಿದ ಐಟಂಗಳು ಹಿಂತಿರುಗಿದವು",

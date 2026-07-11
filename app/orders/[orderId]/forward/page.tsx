@@ -20,6 +20,31 @@ import api from '@/lib/api'
 // at /order/new/[subscriptionId]. Backend endpoint
 // /farmer/orders/{id}/lookup-recipient mirrors the new-order shape
 // but scopes brand-lock to the order's items.
+//
+// 2026-07-11 — List brought back on top of phone-entry to match the
+// /order/new picker (which kept both). User feedback: the phone-only
+// path made it look like nothing was available when the farmer
+// hadn't typed anything yet. Backend endpoint
+// /farmer/orders/{id}/eligible-recipients has existed all along;
+// this page just never called it.
+
+interface Person {
+  user_id: string
+  name: string | null
+  phone: string | null
+  distance_km: number
+  is_promoter: boolean
+  shop_name?: string | null
+  shop_address?: string | null
+  sell_categories?: string[]
+}
+
+interface EligibleRecipientsResult {
+  dealers: Person[]
+  facilitators: Person[]
+  has_locked_brand: boolean
+  locked_brand_explainer: string | null
+}
 
 interface ForwardOrder {
   id: string
@@ -50,31 +75,50 @@ export default function FarmerForwardPage() {
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookup, setLookup] = useState<RecipientLookupResult | null>(null)
 
+  // 2026-07-11 — Pre-filtered dealer / facilitator lists (mirror of
+  // /order/new). Populated once from /eligible-recipients when the
+  // order loads.
+  const [tab, setTab] = useState<'dealers' | 'facilitators'>('dealers')
+  const [dealers, setDealers] = useState<Person[]>([])
+  const [facilitators, setFacilitators] = useState<Person[]>([])
+  const [lockedBrandExplainer, setLockedBrandExplainer] = useState<string | null>(null)
+
   const backHref = order?.subscription_id
     ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
     : '/orders'
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<ForwardOrder>(`/farmer/orders/${orderId}`).then(o => {
-      setOrder(o.data)
-      const returnedN = o.data.returned_items?.length || 0
-      const postponedN = o.data.postponed_items?.length || 0
-      if (postponedN > 0 && returnedN === 0) {
-        // Postpone-only path: auto-include (no choice to make).
-        setIncludePostponed(true)
-      } else if (postponedN === 0) {
-        setIncludePostponed(false)
+    Promise.allSettled([
+      api.get<ForwardOrder>(`/farmer/orders/${orderId}`),
+      api.get<EligibleRecipientsResult>(`/farmer/orders/${orderId}/eligible-recipients`),
+    ]).then(([orderRes, eligibleRes]) => {
+      if (orderRes.status === 'fulfilled') {
+        setOrder(orderRes.value.data)
+        const returnedN = orderRes.value.data.returned_items?.length || 0
+        const postponedN = orderRes.value.data.postponed_items?.length || 0
+        if (postponedN > 0 && returnedN === 0) {
+          // Postpone-only path: auto-include (no choice to make).
+          setIncludePostponed(true)
+        } else if (postponedN === 0) {
+          setIncludePostponed(false)
+        }
+      } else {
+        const err = orderRes.reason as { response?: { data?: { detail?: string | { message?: string } } } }
+        const detail = err.response?.data?.detail
+        setLoadError(
+          typeof detail === 'string'
+            ? detail
+            : (detail && typeof detail === 'object' && detail.message)
+              || t('errorLoad')
+        )
       }
-    }).catch((e: unknown) => {
-      const err = e as { response?: { data?: { detail?: string | { message?: string } } } }
-      const detail = err.response?.data?.detail
-      setLoadError(
-        typeof detail === 'string'
-          ? detail
-          : (detail && typeof detail === 'object' && detail.message)
-            || t('errorLoad')
-      )
+      if (eligibleRes.status === 'fulfilled') {
+        setDealers(eligibleRes.value.data.dealers || [])
+        setFacilitators(eligibleRes.value.data.facilitators || [])
+        setLockedBrandExplainer(eligibleRes.value.data.locked_brand_explainer)
+        if (eligibleRes.value.data.has_locked_brand) setTab('dealers')
+      }
     }).finally(() => setLoading(false))
   }, [orderId, router, t])
 
@@ -116,6 +160,16 @@ export default function FarmerForwardPage() {
     })
   }
 
+  function startSendFromList(person: Person, isDealer: boolean) {
+    if (!order || includePostponed === null) return
+    setPendingForward({
+      user_id: person.user_id,
+      name: (isDealer ? person.shop_name : null) || person.name || null,
+      phone: person.phone,
+      isDealer,
+    })
+  }
+
   async function commitForward() {
     if (!order || includePostponed === null || !pendingForward) return
     setSending(true)
@@ -137,6 +191,44 @@ export default function FarmerForwardPage() {
       alert(msg || tOrdersCommon('errors.forwardFailed'))
       setSending(false)
     }
+  }
+
+  function PersonCard({ person, isDealer }: { person: Person; isDealer: boolean }) {
+    return (
+      <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="font-bold text-[#6B3F1F]">{(isDealer ? person.shop_name : null) || person.name || tOrdersCommon('unknownRecipient')}</p>
+              {person.is_promoter && (
+                <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">{tOrdersCommon('promoterBadge')}</span>
+              )}
+            </div>
+            {isDealer && person.name && person.shop_name && (
+              <p className="text-xs text-[#7A8C7E]">{person.name}</p>
+            )}
+            <p className="text-xs text-[#7A8C7E] mt-0.5">{tOrdersCommon('distanceKm', { km: person.distance_km })}</p>
+            {isDealer && person.shop_address && (
+              <p className="text-xs text-[#7A8C7E] truncate">{person.shop_address}</p>
+            )}
+          </div>
+          <div className="flex flex-col gap-2 shrink-0">
+            {person.phone && (
+              <a href={`tel:${person.phone}`}
+                className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
+                {tOrdersCommon('callBtn')}
+              </a>
+            )}
+            <button onClick={() => startSendFromList(person, isDealer)}
+              disabled={sending || includePostponed === null}
+              className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
+              style={{ background: '#3A7D44' }}>
+              {t('sendOrder')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loadError) {
@@ -202,6 +294,48 @@ export default function FarmerForwardPage() {
             : t('readyToForward', { count: totalForwardable })}
           {t('pickHint')}
         </p>
+
+        {/* 2026-07-11 — Locked-brand explainer + tabs + list, mirrors
+            /order/new picker. Only rendered once the postpone-nudge
+            has been resolved (includePostponed !== null). */}
+        {includePostponed !== null && lockedBrandExplainer && (
+          <div className="bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed mb-3">
+            <p className="font-semibold mb-0.5">{t('brandLockedTitle')}</p>
+            <p>{lockedBrandExplainer}</p>
+          </div>
+        )}
+        {includePostponed !== null && (
+          <div className="flex bg-white rounded-2xl border border-[#DDD0B8] mb-3 p-1">
+            {(['dealers', 'facilitators'] as const).map(tabKey => {
+              if (tabKey === 'facilitators' && lockedBrandExplainer) return null
+              return (
+                <button key={tabKey} onClick={() => setTab(tabKey)}
+                  className={`flex-1 py-2.5 text-sm font-medium rounded-xl capitalize transition-all ${tab === tabKey ? 'bg-green-700 text-white shadow-sm' : 'text-[#7A8C7E]'}`}>
+                  {tabKey === 'dealers'
+                    ? tOrdersCommon('tabDealers', { count: dealers.length })
+                    : tOrdersCommon('tabFacilitators', { count: facilitators.length })}
+                </button>
+              )
+            })}
+          </div>
+        )}
+        {includePostponed !== null && (
+          <div className="space-y-3 mb-3">
+            {(tab === 'dealers' ? dealers : facilitators).length === 0 ? (
+              <div className="text-center py-8 bg-white rounded-2xl border border-[#DDD0B8]">
+                <p className="text-2xl mb-2">{tab === 'dealers' ? '🏪' : '🌾'}</p>
+                <p className="text-[#7A8C7E] font-medium text-sm">
+                  {tab === 'dealers' ? tOrdersCommon('emptyDealers') : tOrdersCommon('emptyFacilitators')}
+                </p>
+                <p className="text-xs text-[#7A8C7E] mt-1">{tOrdersCommon('tryPhoneHint')}</p>
+              </div>
+            ) : (
+              (tab === 'dealers' ? dealers : facilitators).map(person => (
+                <PersonCard key={person.user_id} person={person} isDealer={tab === 'dealers'} />
+              ))
+            )}
+          </div>
+        )}
 
         {/* Phone-entry — same shape as /order/new picker so the
             farmer sees one consistent dealer/facilitator picker

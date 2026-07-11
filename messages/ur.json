@@ -998,7 +998,12 @@
         "pesticide": "کیڑے مار دوا",
         "fertilizer": "کھاد",
         "fallback": "ان پٹ"
-      }
+      },
+      "tabDealers": "Dealers ({count})",
+      "tabFacilitators": "Facilitators ({count})",
+      "emptyDealers": "No dealers found nearby.",
+      "emptyFacilitators": "No facilitators found nearby.",
+      "tryPhoneHint": "Try entering a phone number below."
     },
     "forward": {
       "headerTitle": "واپس کی گئی اشیاء کو آگے بھیجیں۔",

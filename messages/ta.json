@@ -1018,7 +1018,12 @@
         "pesticide": "பூச்சிக்கொல்லி",
         "fertilizer": "உரம்",
         "fallback": "உள்ளீடு"
-      }
+      },
+      "tabDealers": "விற்பனையாளர்கள் ({count})",
+      "tabFacilitators": "உதவியாளர்கள் ({count})",
+      "emptyDealers": "அருகில் விற்பனையாளர்கள் இல்லை.",
+      "emptyFacilitators": "அருகில் உதவியாளர்கள் இல்லை.",
+      "tryPhoneHint": "கீழே தொலைபேசி எண்ணை உள்ளிடவும்."
     },
     "forward": {
       "headerTitle": "திருப்பி அனுப்பப்பட்ட பொருட்களை அனுப்பவும்",

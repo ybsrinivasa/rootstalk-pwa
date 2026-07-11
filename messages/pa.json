@@ -998,7 +998,12 @@
         "pesticide": "ਕੀਟਨਾਸ਼ਕ",
         "fertilizer": "ਖਾਦ",
         "fallback": "ਇਨਪੁੱਟ"
-      }
+      },
+      "tabDealers": "Dealers ({count})",
+      "tabFacilitators": "Facilitators ({count})",
+      "emptyDealers": "No dealers found nearby.",
+      "emptyFacilitators": "No facilitators found nearby.",
+      "tryPhoneHint": "Try entering a phone number below."
     },
     "forward": {
       "headerTitle": "ਵਾਪਸ ਕੀਤੀਆਂ ਗਈਆਂ ਚੀਜ਼ਾਂ ਅੱਗੇ ਭੇਜੀਆਂ ਗਈਆਂ",

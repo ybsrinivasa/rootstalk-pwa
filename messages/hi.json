@@ -1018,7 +1018,12 @@
         "pesticide": "कीटनाशक",
         "fertilizer": "उर्वरक",
         "fallback": "इनपुट"
-      }
+      },
+      "tabDealers": "दुकानदार ({count})",
+      "tabFacilitators": "फैसिलिटेटर ({count})",
+      "emptyDealers": "आसपास कोई दुकानदार नहीं मिला।",
+      "emptyFacilitators": "आसपास कोई फैसिलिटेटर नहीं मिला।",
+      "tryPhoneHint": "नीचे फ़ोन नंबर डालकर देखें।"
     },
     "forward": {
       "headerTitle": "आगे लौटाई गई वस्तुएँ",

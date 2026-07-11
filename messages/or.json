@@ -998,7 +998,12 @@
         "pesticide": "କୀଟନାଶକ",
         "fertilizer": "ସାର",
         "fallback": "ଇନପୁଟ୍"
-      }
+      },
+      "tabDealers": "Dealers ({count})",
+      "tabFacilitators": "Facilitators ({count})",
+      "emptyDealers": "No dealers found nearby.",
+      "emptyFacilitators": "No facilitators found nearby.",
+      "tryPhoneHint": "Try entering a phone number below."
     },
     "forward": {
       "headerTitle": "ଫେରସ୍ତ କରାଯାଇଥିବା ଆଇଟମ୍‌ଗୁଡ଼ିକୁ ଫରୱାର୍ଡ କରାଯାଇଛି",

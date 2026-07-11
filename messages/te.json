@@ -998,7 +998,12 @@
         "pesticide": "పురుగుమందు",
         "fertilizer": "ఎరువు",
         "fallback": "ఇన్‌పుట్"
-      }
+      },
+      "tabDealers": "Dealers ({count})",
+      "tabFacilitators": "Facilitators ({count})",
+      "emptyDealers": "No dealers found nearby.",
+      "emptyFacilitators": "No facilitators found nearby.",
+      "tryPhoneHint": "Try entering a phone number below."
     },
     "forward": {
       "headerTitle": "తిరిగి వచ్చిన వస్తువులను ఫార్వార్డ్ చేయండి",
