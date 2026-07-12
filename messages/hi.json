@@ -1265,7 +1265,9 @@
     "yourVoiceNote": "🎙 आपका वॉइस नोट",
     "askedOn": "{date} को पूछा गया",
     "awaitingReply": "एक विशेषज्ञ जल्द ही जवाब देंगे।",
-    "closedNoResponse": "कोई जवाब न मिलने पर बंद कर दिया गया।"
+    "closedNoResponse": "कोई जवाब न मिलने पर बंद कर दिया गया।",
+    "viewOriginal": "मूल भाषा में देखें",
+    "viewTranslated": "अनुवाद देखें"
   },
   "farmerProfile": {
     "headerTitle": "मेरी प्रोफाइल",
@@ -2923,6 +2925,11 @@
         "browseHint": "क्यूरेटेड प्रश्नोत्तर लाइब्रेरी में खोजने के लिए टाइप करें, या सभी प्रविष्टियों को ब्राउज़ करें।",
         "resultsCount": "{count, plural, one {1 परिणाम} other {# परिणाम}}",
         "cropAgnostic": "फसल-स्वतंत्र"
+      },
+      "translation": {
+        "viewInEnglish": "अंग्रेज़ी में देखें",
+        "viewOriginal": "मूल भाषा में देखें",
+        "loading": "अनुवाद हो रहा है…"
       }
     }
   },

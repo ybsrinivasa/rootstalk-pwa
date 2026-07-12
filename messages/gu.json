@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 તમારી વૉઇસ નોટ",
     "askedOn": "{date} ના રોજ પૂછવામાં આવ્યું",
     "awaitingReply": "નિષ્ણાત ટૂંક સમયમાં જવાબ આપશે.",
-    "closedNoResponse": "કોઈ પ્રતિભાવ વિના બંધ."
+    "closedNoResponse": "કોઈ પ્રતિભાવ વિના બંધ.",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "મારી પ્રોફાઇલ",
@@ -2872,6 +2874,11 @@
         "browseHint": "ક્યુરેટેડ પ્રશ્ન અને જવાબ લાઇબ્રેરી શોધવા માટે ટાઇપ કરો, અથવા બધી એન્ટ્રીઓ બ્રાઉઝ કરો.",
         "resultsCount": "{count, plural, one {૧ પરિણામ} other {# પરિણામો}}",
         "cropAgnostic": "પાક-અજ્ઞેયવાદી"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

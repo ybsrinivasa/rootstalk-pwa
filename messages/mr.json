@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 तुमची व्हॉइस नोट",
     "askedOn": "{date} रोजी विचारले",
     "awaitingReply": "तज्ज्ञ लवकरच प्रतिसाद देतील.",
-    "closedNoResponse": "प्रतिसाद न देता बंद केले."
+    "closedNoResponse": "प्रतिसाद न देता बंद केले.",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "माझे प्रोफाइल",
@@ -2872,6 +2874,11 @@
         "browseHint": "निवडक प्रश्नोत्तर संग्रहात शोधण्यासाठी टाईप करा, किंवा सर्व नोंदी ब्राउझ करा.",
         "resultsCount": "{count, plural, one {१ निकाल} other {# निकाल}}",
         "cropAgnostic": "पीक-निरपेक्ष"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

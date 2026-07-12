@@ -7,6 +7,76 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
+// 2026-07-12 — Toggle-driven text block for the pundit's view of a
+// farmer's original message (query description or a colleague's
+// remark). Default view is the author's language; a "View in English"
+// button appears when source_locale != 'en'. English-pivot design
+// means the toggle target is always English.
+function TranslatableText({
+  label,
+  queryId,
+  field,
+  sourceText,
+  sourceLocale,
+  t,
+  compact = false,
+}: {
+  label?: string
+  queryId: string
+  field: string
+  sourceText: string
+  sourceLocale: string | null
+  t: (key: string) => string
+  compact?: boolean
+}) {
+  const [translated, setTranslated] = useState<string | null>(null)
+  const [showEnglish, setShowEnglish] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const canToggle = !!sourceLocale && sourceLocale !== 'en'
+
+  async function fetchTranslation() {
+    if (translated) { setShowEnglish(true); return }
+    setLoading(true)
+    try {
+      const { data } = await api.post<{ translated_text: string }>(
+        `/queries/${queryId}/translate`,
+        { field, target_locale: 'en' },
+      )
+      setTranslated(data.translated_text)
+      setShowEnglish(true)
+    } catch {
+      // silent — leave the toggle in place; user can retry
+    } finally { setLoading(false) }
+  }
+
+  const shown = showEnglish && translated ? translated : sourceText
+  const textCls = compact
+    ? 'text-xs text-[#7A8C7E] mt-0.5 leading-relaxed'
+    : 'text-sm text-[#6B3F1F] leading-relaxed'
+
+  return (
+    <div>
+      {(label || canToggle) && (
+        <div className="flex items-center justify-between gap-2 mb-1">
+          {label ? (
+            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide">{label}</p>
+          ) : <span />}
+          {canToggle && (
+            <button
+              onClick={() => showEnglish ? setShowEnglish(false) : fetchTranslation()}
+              disabled={loading}
+              className="text-[11px] font-medium text-blue-600 underline disabled:opacity-50"
+            >
+              {loading ? t('translation.loading') : (showEnglish ? t('translation.viewOriginal') : t('translation.viewInEnglish'))}
+            </button>
+          )}
+        </div>
+      )}
+      <p className={textCls}>{shown}</p>
+    </div>
+  )
+}
+
 interface StandardResponse {
   id: string
   client_id: string
@@ -62,6 +132,7 @@ interface QueryDetail {
   query_type_cosh_id: string | null
   query_type_name: string | null
   description: string | null; severity: string
+  description_locale: string | null
   client_id: string
   crop_cosh_id: string | null
   crop_name: string | null
@@ -74,7 +145,14 @@ interface QueryDetail {
   status: string; created_at: string; expires_at: string; days_remaining: number
   is_holding: boolean
   media: { media_type: string; url: string }[]
-  remarks: { action: string; pundit_id: string | null; remark: string | null; created_at: string }[]
+  remarks: {
+    id: string
+    action: string
+    pundit_id: string | null
+    remark: string | null
+    remark_locale: string | null
+    created_at: string
+  }[]
   response: {
     problem_cosh_id: string | null
     problem_name: string | null
@@ -434,8 +512,14 @@ export default function PunditQueryDetailPage() {
         {/* Description card — only when the farmer wrote one. */}
         {query.description && (
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8]">
-            <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-1.5">{t('descriptionLabel')}</p>
-            <p className="text-sm text-[#6B3F1F] leading-relaxed">{query.description}</p>
+            <TranslatableText
+              label={t('descriptionLabel')}
+              queryId={query.id}
+              field="description"
+              sourceText={query.description}
+              sourceLocale={query.description_locale}
+              t={t}
+            />
           </div>
         )}
 
@@ -485,11 +569,20 @@ export default function PunditQueryDetailPage() {
             <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-wide mb-3">{t('historyTitle')}</p>
             <div className="space-y-3">
               {query.remarks.map((r, i) => (
-                <div key={i} className="flex gap-3">
+                <div key={r.id || i} className="flex gap-3">
                   <div className="w-2 h-2 rounded-full bg-slate-300 mt-2 shrink-0" />
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-[#6B3F1F] capitalize">{r.action.toLowerCase()}</p>
-                    {r.remark && <p className="text-xs text-[#7A8C7E] mt-0.5">{r.remark}</p>}
+                    {r.remark && (
+                      <TranslatableText
+                        queryId={query.id}
+                        field={`remark:${r.id}`}
+                        sourceText={r.remark}
+                        sourceLocale={r.remark_locale}
+                        t={t}
+                        compact
+                      />
+                    )}
                     <p className="text-xs text-[#DDD0B8] mt-0.5">{new Date(r.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>

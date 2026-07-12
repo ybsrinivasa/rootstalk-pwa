@@ -1265,7 +1265,9 @@
     "yourVoiceNote": "🎙 ನಿಮ್ಮ ಧ್ವನಿ ಟಿಪ್ಪಣಿ",
     "askedOn": "{date} ರಂದು ಕೇಳಲಾಗಿದೆ",
     "awaitingReply": "ತಜ್ಞರು ಶೀಘ್ರದಲ್ಲೇ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತಾರೆ.",
-    "closedNoResponse": "ಯಾವುದೇ ಪ್ರತಿಕ್ರಿಯೆ ಇಲ್ಲದೆ ಮುಚ್ಚಲಾಗಿದೆ."
+    "closedNoResponse": "ಯಾವುದೇ ಪ್ರತಿಕ್ರಿಯೆ ಇಲ್ಲದೆ ಮುಚ್ಚಲಾಗಿದೆ.",
+    "viewOriginal": "ಮೂಲ ಭಾಷೆಯಲ್ಲಿ ನೋಡಿ",
+    "viewTranslated": "ಅನುವಾದ ನೋಡಿ"
   },
   "farmerProfile": {
     "headerTitle": "ನನ್ನ ಪ್ರೊಫೈಲ್",
@@ -2923,6 +2925,11 @@
         "browseHint": "ಕ್ಯುರೇಟೆಡ್ ಪ್ರಶ್ನೋತ್ತರ ಲೈಬ್ರರಿಯನ್ನು ಹುಡುಕಲು ಟೈಪ್ ಮಾಡಿ ಅಥವಾ ಎಲ್ಲಾ ನಮೂದುಗಳನ್ನು ಬ್ರೌಸ್ ಮಾಡಿ.",
         "resultsCount": "{count, plural, one {1 ಫಲಿತಾಂಶ} other {# ಫಲಿತಾಂಶಗಳು}}",
         "cropAgnostic": "ಬೆಳೆ-ಅಜ್ಞೇಯತಾವಾದಿ"
+      },
+      "translation": {
+        "viewInEnglish": "ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ನೋಡಿ",
+        "viewOriginal": "ಮೂಲ ಭಾಷೆಯಲ್ಲಿ ನೋಡಿ",
+        "loading": "ಅನುವಾದಿಸಲಾಗುತ್ತಿದೆ…"
       }
     }
   },

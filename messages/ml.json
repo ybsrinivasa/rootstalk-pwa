@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 നിങ്ങളുടെ വോയ്‌സ് നോട്ട്",
     "askedOn": "{date} ന് ചോദിച്ചു",
     "awaitingReply": "ഒരു വിദഗ്ദ്ധൻ ഉടൻ പ്രതികരിക്കും.",
-    "closedNoResponse": "മറുപടിയൊന്നുമില്ലാതെ അടച്ചു."
+    "closedNoResponse": "മറുപടിയൊന്നുമില്ലാതെ അടച്ചു.",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "എന്റെ പ്രൊഫൈൽ",
@@ -2872,6 +2874,11 @@
         "browseHint": "ക്യുറേറ്റ് ചെയ്‌ത ചോദ്യോത്തര ലൈബ്രറി തിരയാൻ ടൈപ്പ് ചെയ്യുക, അല്ലെങ്കിൽ എല്ലാ എൻട്രികളും ബ്രൗസ് ചെയ്യുക.",
         "resultsCount": "{count, plural, one {1 ഫലം} other {# ഫലങ്ങൾ}}",
         "cropAgnostic": "ക്രോപ്പ്-അഗ്നോസ്റ്റിക്"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

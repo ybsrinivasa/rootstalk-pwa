@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 ଆପଣଙ୍କର ଭଏସ୍ ନୋଟ୍",
     "askedOn": "{date} ରେ ପଚରାଯାଇଥିଲା",
     "awaitingReply": "ଜଣେ ବିଶେଷଜ୍ଞ ଖୁବ୍ ଶୀଘ୍ର ଉତ୍ତର ଦେବେ।",
-    "closedNoResponse": "କୌଣସି ପ୍ରତିକ୍ରିୟା ବିନା ବନ୍ଦ ହୋଇଗଲା।"
+    "closedNoResponse": "କୌଣସି ପ୍ରତିକ୍ରିୟା ବିନା ବନ୍ଦ ହୋଇଗଲା।",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "ମୋ ପ୍ରୋଫାଇଲ୍‌",
@@ -2872,6 +2874,11 @@
         "browseHint": "ସଂଗୃହିତ ପ୍ରଶ୍ନୋତ୍ତର ଲାଇବ୍ରେରୀ ଖୋଜିବା ପାଇଁ ଟାଇପ୍ କରନ୍ତୁ, କିମ୍ବା ସମସ୍ତ ପ୍ରବେଶଗୁଡ଼ିକୁ ବ୍ରାଉଜ୍ କରନ୍ତୁ।",
         "resultsCount": "{count, plural, one {1 ଫଳାଫଳ} other {# ଫଳାଫଳ}}",
         "cropAgnostic": "ଫସଲ-ଅଗ୍ନେଷ୍ଟିକ୍"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

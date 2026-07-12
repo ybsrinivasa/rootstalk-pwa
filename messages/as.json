@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 আপোনাৰ কণ্ঠৰ টোকা",
     "askedOn": "{date} ত সোধা হৈছে।",
     "awaitingReply": "এজন বিশেষজ্ঞই অতি সোনকালে ইয়াৰ উত্তৰ দিব।",
-    "closedNoResponse": "কোনো সঁহাৰি নোহোৱাকৈ বন্ধ।"
+    "closedNoResponse": "কোনো সঁহাৰি নোহোৱাকৈ বন্ধ।",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "মোৰ প্ৰফাইল",
@@ -2872,6 +2874,11 @@
         "browseHint": "কিউৰেট কৰা প্ৰশ্নোত্তৰ লাইব্ৰেৰী সন্ধান কৰিবলে টাইপ কৰক, বা সকলো প্ৰবিষ্ট ব্ৰাউজ কৰক।",
         "resultsCount": "{count, plural, one {১ টা ফলাফল} other {# ফলাফল}}",
         "cropAgnostic": "শস্য-অজ্ঞান"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

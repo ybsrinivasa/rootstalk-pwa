@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 آپ کا صوتی نوٹ",
     "askedOn": "{date} کو پوچھا گیا",
     "awaitingReply": "ایک ماہر جلد ہی جواب دے گا۔",
-    "closedNoResponse": "بغیر کسی جواب کے بند کر دیا گیا۔"
+    "closedNoResponse": "بغیر کسی جواب کے بند کر دیا گیا۔",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "میرا پروفائل",
@@ -2872,6 +2874,11 @@
         "browseHint": "کیوریٹ شدہ سوال و جواب کی لائبریری کو تلاش کرنے کے لیے ٹائپ کریں، یا تمام اندراجات کو براؤز کریں۔",
         "resultsCount": "{count, plural, one {1 نتیجہ} other {# نتائج}}",
         "cropAgnostic": "فصل اجناسٹک"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

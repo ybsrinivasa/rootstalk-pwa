@@ -1265,7 +1265,9 @@
     "yourVoiceNote": "🎙 உங்கள் குரல் பதிவு",
     "askedOn": "{date} அன்று கேட்கப்பட்டது",
     "awaitingReply": "ஒரு நிபுணர் விரைவில் பதிலளிப்பார்.",
-    "closedNoResponse": "பதில் ஏதுமின்றி மூடப்பட்டது."
+    "closedNoResponse": "பதில் ஏதுமின்றி மூடப்பட்டது.",
+    "viewOriginal": "மூல மொழியில் காண்க",
+    "viewTranslated": "மொழிபெயர்ப்பைக் காண்க"
   },
   "farmerProfile": {
     "headerTitle": "எனது சுயவிவரம்",
@@ -2923,6 +2925,11 @@
         "browseHint": "தொகுக்கப்பட்ட கேள்வி-பதில் தொகுப்பில் தேட தட்டச்சு செய்யவும், அல்லது அனைத்து உள்ளீடுகளையும் உலாவவும்.",
         "resultsCount": "{count, plural, one {1 முடிவு} other {# முடிவுகள்}}",
         "cropAgnostic": "பயிர்-சாராத"
+      },
+      "translation": {
+        "viewInEnglish": "ஆங்கிலத்தில் காண்க",
+        "viewOriginal": "மூல மொழியில் காண்க",
+        "loading": "மொழிபெயர்க்கிறது…"
       }
     }
   },

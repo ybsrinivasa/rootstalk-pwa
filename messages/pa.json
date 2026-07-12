@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 ਤੁਹਾਡਾ ਵੌਇਸ ਨੋਟ",
     "askedOn": "{date} ਨੂੰ ਪੁੱਛਿਆ ਗਿਆ",
     "awaitingReply": "ਇੱਕ ਮਾਹਰ ਜਲਦੀ ਹੀ ਜਵਾਬ ਦੇਵੇਗਾ।",
-    "closedNoResponse": "ਬਿਨਾਂ ਕਿਸੇ ਜਵਾਬ ਦੇ ਬੰਦ ਕਰ ਦਿੱਤਾ ਗਿਆ।"
+    "closedNoResponse": "ਬਿਨਾਂ ਕਿਸੇ ਜਵਾਬ ਦੇ ਬੰਦ ਕਰ ਦਿੱਤਾ ਗਿਆ।",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "ਮੇਰੀ ਪ੍ਰੋਫਾਈਲ",
@@ -2872,6 +2874,11 @@
         "browseHint": "ਕਿਉਰੇਟਿਡ Q&A ਲਾਇਬ੍ਰੇਰੀ ਖੋਜਣ ਲਈ ਟਾਈਪ ਕਰੋ, ਜਾਂ ਸਾਰੀਆਂ ਐਂਟਰੀਆਂ ਬ੍ਰਾਊਜ਼ ਕਰੋ।",
         "resultsCount": "{count, plural, one {1 ਨਤੀਜਾ} other {# ਨਤੀਜੇ}}",
         "cropAgnostic": "ਫ਼ਸਲ-ਅਗਨੋਸਟਿਕ"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

@@ -23,12 +23,53 @@ interface QueryDetail {
   media: SubmissionMedia[]
   response: {
     text: string | null
+    text_original: string | null
+    text_source_locale: string | null
+    text_translated: boolean
     problem_cosh_id: string | null
     problem_name: string | null
     has_cha_recommendation: boolean
     media: ResponseMedia[]
     created_at: string
   } | null
+}
+
+// 2026-07-12 — Expert-advice block with a "View original / View
+// translated" toggle. Backend already delivers `text` in the farmer's
+// locale when translation was needed (English pivot); `text_original`
+// carries whatever the pundit typed. Toggle stays in component state,
+// resets on parent re-render (fresh query card open).
+function ExpertAdviceBlock({
+  resp,
+  t,
+}: {
+  resp: {
+    text: string | null
+    text_original: string | null
+    text_source_locale: string | null
+    text_translated: boolean
+  }
+  t: (key: string) => string
+}) {
+  const [showOriginal, setShowOriginal] = useState(false)
+  const canToggle = resp.text_translated && !!resp.text_original
+  const shown = showOriginal && resp.text_original ? resp.text_original : resp.text
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <p className="text-xs font-medium text-[#7A8C7E]">{t('expertAdvice')}</p>
+        {canToggle && (
+          <button
+            onClick={() => setShowOriginal(v => !v)}
+            className="text-[11px] font-medium text-blue-600 underline"
+          >
+            {showOriginal ? t('viewTranslated') : t('viewOriginal')}
+          </button>
+        )}
+      </div>
+      <p className="text-sm text-[#6B3F1F] leading-relaxed">{shown}</p>
+    </div>
+  )
 }
 
 const STATUS_COLOUR: Record<string, string> = {
@@ -160,10 +201,7 @@ export default function SubscriptionQueriesPage() {
                     </div>
                   )}
                   {resp.text && (
-                    <div>
-                      <p className="text-xs font-medium text-[#7A8C7E] mb-1">{t('expertAdvice')}</p>
-                      <p className="text-sm text-[#6B3F1F] leading-relaxed">{resp.text}</p>
-                    </div>
+                    <ExpertAdviceBlock resp={resp} t={t} />
                   )}
                   {respPhotos.length > 0 && (
                     <div className="grid grid-cols-2 gap-2">

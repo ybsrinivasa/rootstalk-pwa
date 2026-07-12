@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 আপনার ভয়েস নোট",
     "askedOn": "{date} -এ জিজ্ঞাসা করা হয়েছিল।",
     "awaitingReply": "একজন বিশেষজ্ঞ শীঘ্রই উত্তর দেবেন।",
-    "closedNoResponse": "কোনো প্রতিক্রিয়া ছাড়াই বন্ধ করা হয়েছে।"
+    "closedNoResponse": "কোনো প্রতিক্রিয়া ছাড়াই বন্ধ করা হয়েছে।",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "আমার প্রোফাইল",
@@ -2872,6 +2874,11 @@
         "browseHint": "সংকলিত প্রশ্নোত্তর লাইব্রেরি অনুসন্ধান করতে টাইপ করুন, অথবা সমস্ত এন্ট্রি ব্রাউজ করুন।",
         "resultsCount": "{count, plural, one {১টি ফলাফল} other {# ফলাফল}}",
         "cropAgnostic": "শস্য-অজ্ঞেয়"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },

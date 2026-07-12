@@ -1245,7 +1245,9 @@
     "yourVoiceNote": "🎙 మీ వాయిస్ నోట్",
     "askedOn": "{date} న అడిగారు",
     "awaitingReply": "ఒక నిపుణుడు త్వరలో స్పందిస్తారు.",
-    "closedNoResponse": "స్పందన లేకుండా మూసివేయబడింది."
+    "closedNoResponse": "స్పందన లేకుండా మూసివేయబడింది.",
+    "viewOriginal": "View original",
+    "viewTranslated": "View translated"
   },
   "farmerProfile": {
     "headerTitle": "నా ప్రొఫైల్",
@@ -2872,6 +2874,11 @@
         "browseHint": "క్రమబద్ధీకరించిన ప్రశ్నోత్తరాల లైబ్రరీలో వెతకడానికి టైప్ చేయండి, లేదా అన్ని ఎంట్రీలను బ్రౌజ్ చేయండి.",
         "resultsCount": "{count, plural, one {1 ఫలితం} other {# ఫలితాలు}}",
         "cropAgnostic": "పంటతో సంబంధం లేని"
+      },
+      "translation": {
+        "viewInEnglish": "View in English",
+        "viewOriginal": "View original",
+        "loading": "Translating…"
       }
     }
   },
