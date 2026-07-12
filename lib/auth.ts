@@ -46,6 +46,28 @@ export async function verifyOtp(phone: string, otp_code: string): Promise<void> 
   try {
     const me = await api.get<PWAUser>("/auth/me");
     localStorage.setItem("rt_pwa_user", JSON.stringify(me.data));
+    // 2026-07-12 — Sync the pre-login language pick to the backend.
+    // The root-page onboarding picker calls `changeLanguage` before
+    // login, but `changeLanguage` skips the PUT when no token exists.
+    // Result: user picks Hindi, logs in, backend User.language_code
+    // is still 'en' (default). Server-side translation pipelines that
+    // trust language_code (SE-content read paths, query/response
+    // English pivot) then serve English despite the UI being Hindi.
+    // Fix: unconditional sync PUT here — idempotent, and only fires
+    // when the local choice differs from the freshly-fetched backend
+    // language, so no wasted round-trips on the common case where
+    // they already match.
+    try {
+      const stored = localStorage.getItem("rt_pwa_lang");
+      if (stored && stored !== me.data.language_code) {
+        await api.put("/auth/me/profile", { language_code: stored });
+        // Refresh cached user so downstream reads see the sync'd value.
+        me.data.language_code = stored;
+        localStorage.setItem("rt_pwa_user", JSON.stringify(me.data));
+      }
+    } catch {
+      // Best-effort — never fail the login on the sync PUT.
+    }
   } catch {
     // Token stored; user data will reload on next visit
   }
