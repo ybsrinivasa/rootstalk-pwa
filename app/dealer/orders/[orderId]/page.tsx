@@ -1283,12 +1283,34 @@ export default function DealerOrderDetailPage() {
     const gap = npkOptions.gap || dose
     const mixedPick = npkSelectedMixed
     const mixedPickTradeName = mixedPick ? npkPickedTradeNames[mixedPick] : null
-    // Submit enabled iff: at least one pick, AND every pick has a trade name.
+    // 2026-07-13 — Spec §2.3 hard block. Every non-zero recommended
+    // nutrient must be covered by the Mixed OR by a picked Straight
+    // of that class. When a nutrient's gap > 0 after the Mixed pick
+    // and no matching Straight is picked, the Commit button stays
+    // disabled and we tell the dealer exactly what's missing.
+    const pickedStraightClasses = new Set<string>()
+    for (const cn of npkPickedStraights) {
+      const cand = npkOptions.enabled_straights.find(s => s.cosh_id === cn)
+      if (cand) pickedStraightClasses.add(cand.class)
+    }
+    const eps = 1e-6
+    const uncovered: string[] = []
+    if (dose.n > eps && gap.n > eps && !pickedStraightClasses.has('STRAIGHT_N')) uncovered.push('N')
+    if (dose.p > eps && gap.p > eps && !pickedStraightClasses.has('STRAIGHT_P')) uncovered.push('P')
+    if (dose.k > eps && gap.k > eps && !pickedStraightClasses.has('STRAIGHT_K')) uncovered.push('K')
+    // Submit enabled iff: at least one pick, every pick has a trade
+    // name, AND every recommended nutrient is covered.
     const everyPickHasTradeName =
       (!mixedPick || !!mixedPickTradeName) &&
       [...npkPickedStraights].every(cn => !!npkPickedTradeNames[cn])
     const hasAnyPick = !!mixedPick || npkPickedStraights.size > 0
-    const canSubmit = hasAnyPick && everyPickHasTradeName
+    const isFullyCovered = uncovered.length === 0
+    const canSubmit = hasAnyPick && everyPickHasTradeName && isFullyCovered
+    // "All covered" hint fires when a Mixed pick has zeroed every
+    // gap and there are no Straight rows to show. Absent when the
+    // dealer skipped Mixed on a 0:0:0 dose (edge case, shouldn't
+    // exist in real SE authoring).
+    const allCoveredByMixed = !!mixedPick && npkOptions.enabled_straights.length === 0
     return (
       <div className="mt-3 space-y-3 bg-[#F5F0E8] rounded-xl p-3">
         <div className="bg-white rounded-lg p-3 border border-[#DDD0B8]">
@@ -1360,6 +1382,17 @@ export default function DealerOrderDetailPage() {
           </button>
         </div>
 
+        {/* Empty-state hint — Mixed pick zeroed every gap (spec §2.3). */}
+        {allCoveredByMixed && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2">
+            <p className="text-xs font-semibold text-emerald-800">
+              {t.has('npk.allCoveredByMixed')
+                ? t('npk.allCoveredByMixed')
+                : 'All N, P, K covered by the Mixed — no Straights needed.'}
+            </p>
+          </div>
+        )}
+
         {/* Straight fertilisers — gap-filtered, multi-select. */}
         {npkOptions.enabled_straights.length > 0 && (
           <div className="space-y-2">
@@ -1398,6 +1431,17 @@ export default function DealerOrderDetailPage() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Hard-block hint — nutrients still uncovered (spec §2.3). */}
+        {hasAnyPick && !isFullyCovered && (
+          <div className="rounded-lg border border-[#D4682E]/40 bg-[#D4682E]/5 px-3 py-2">
+            <p className="text-xs font-semibold text-[#D4682E]">
+              {t.has('npk.uncoveredWarning')
+                ? t('npk.uncoveredWarning', { nutrients: uncovered.join(', ') })
+                : `Still uncovered: ${uncovered.join(', ')}. Pick a Straight or mark the item unavailable.`}
+            </p>
           </div>
         )}
 

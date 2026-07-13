@@ -1671,6 +1671,8 @@
         "skipMixed": "Skip Mixed",
         "straightHeader": "Straight fertilisers (remaining gap: {n} N · {p} P · {k} K)",
         "straightOnly": "({letter}-only)",
+        "allCoveredByMixed": "All N, P, K covered by the Mixed — no Straights needed.",
+        "uncoveredWarning": "Still uncovered: {nutrients}. Pick a Straight for each, or mark this item unavailable.",
         "committing": "Committing…",
         "commitCta": "Commit NPK selection"
       },
