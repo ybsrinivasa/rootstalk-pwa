@@ -32,6 +32,20 @@ interface Fulfilment {
   // pickup" hint on APPROVED-but-not-yet-received advisory rows.
   packing_code?: string | null
   farmer_received_at?: string | null
+  // 2026-07-13 — NPK auto-AND siblings (spec §3.2). Present when the
+  // primary OrderItem is part of an NPK Mixed+Straight combo — the
+  // dealer picked one Mixed + zero-to-three Straights on `npk_select`
+  // and every pick got the same `relation_id` + `relation_type='AND'`.
+  // PurchasedSummary renders primary + siblings together with an
+  // "Apply together" hint.
+  siblings?: {
+    order_item_id: string
+    relation_role: string | null
+    brand_name: string | null
+    manufacturer_name: string | null
+    given_volume: number | null
+    volume_unit: string | null
+  }[]
 }
 interface Practice {
   id: string; l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
@@ -194,11 +208,28 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
 // items — the farmer shouldn't have to expand to see what they
 // bought.
 function PurchasedSummary({
-  brand, manufacturer, elements,
+  brand, manufacturer, elements, siblings, primaryVolume, primaryUnit, primaryRole,
 }: {
   brand: string
   manufacturer: string | null
   elements: Element[]
+  // 2026-07-13 — NPK auto-AND (spec §3.2). When the practice was
+  // fulfilled by a Mixed+Straight combo, the backend attaches the
+  // remaining APPROVED items as `siblings[]` on the fulfilment
+  // payload; we render primary + siblings as a stacked list with an
+  // "Apply together" hint. When siblings is empty/undefined, the
+  // component behaves exactly as before.
+  siblings?: {
+    order_item_id: string
+    relation_role: string | null
+    brand_name: string | null
+    manufacturer_name: string | null
+    given_volume: number | null
+    volume_unit: string | null
+  }[]
+  primaryVolume?: number | null
+  primaryUnit?: string | null
+  primaryRole?: string | null
 }) {
   // Pull application method + dosage from the SE elements; merged
   // so the dosage + unit appear on one line.
@@ -208,17 +239,64 @@ function PurchasedSummary({
   // surfaced on the Purchased Items list — duplicating it on the
   // advisory card was noise.
   const tEl = useTranslations('practice.element')
+  const tRel = useTranslations('practice.relations')
   const merged = mergeUnitElements(elements)
   const appMethod = merged.find(e => (e.element_type || '').toUpperCase() === 'APPLICATION_METHOD')
   const dosage = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
   const dosageUnit = (dosage?.unit_cosh_id && !isUuid(dosage.unit_cosh_id))
     ? dosage.unit_cosh_id
     : (dosage?.trailing_unit || '')
+  const hasSiblings = !!siblings && siblings.length > 0
+  // Order Mixed (POS_1) first, then Straights in position order.
+  const rolePos = (r: string | null | undefined): number => {
+    const m = r ? /POS_(\d+)/.exec(r) : null
+    return m ? +m[1] : 999
+  }
+  const stack = hasSiblings
+    ? [
+        {
+          order_item_id: 'primary',
+          relation_role: primaryRole ?? null,
+          brand_name: brand,
+          manufacturer_name: manufacturer,
+          given_volume: primaryVolume ?? null,
+          volume_unit: primaryUnit ?? null,
+        },
+        ...siblings!,
+      ].sort((a, b) => rolePos(a.relation_role) - rolePos(b.relation_role))
+    : null
   return (
     <div className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-3 space-y-1">
-      <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
-      {manufacturer && (
-        <p className="text-xs text-emerald-800">by {manufacturer}</p>
+      {stack ? (
+        <>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+            {tRel('applyAllTogether', { count: stack.length })}
+          </p>
+          <ul className="space-y-1.5">
+            {stack.map(s => (
+              <li key={s.order_item_id} className="space-y-0.5">
+                <p className="text-sm font-bold text-emerald-900 truncate">
+                  {s.brand_name || ''}
+                  {s.given_volume != null && s.volume_unit && (
+                    <span className="ml-2 text-xs font-medium text-emerald-800">
+                      · {s.given_volume} {s.volume_unit}
+                    </span>
+                  )}
+                </p>
+                {s.manufacturer_name && (
+                  <p className="text-[11px] text-emerald-800">by {s.manufacturer_name}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
+          {manufacturer && (
+            <p className="text-xs text-emerald-800">by {manufacturer}</p>
+          )}
+        </>
       )}
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-emerald-900 pt-1">
         {appMethod && (appMethod.value || appMethod.cosh_ref) && (
@@ -1014,6 +1092,10 @@ function PracticeCard({
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
           elements={practice.elements}
+          siblings={fulf.siblings}
+          primaryVolume={fulf.given_volume}
+          primaryUnit={fulf.volume_unit}
+          primaryRole={null}
         />
       )}
 
@@ -1664,6 +1746,10 @@ function InnerPracticeRow({
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
           elements={practice.elements}
+          siblings={fulf.siblings}
+          primaryVolume={fulf.given_volume}
+          primaryUnit={fulf.volume_unit}
+          primaryRole={null}
         />
       )}
       {pickedUp && subscriptionId && (
