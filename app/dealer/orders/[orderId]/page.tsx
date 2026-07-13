@@ -292,6 +292,13 @@ export default function DealerOrderDetailPage() {
   // both the type list AND the brand for a full reset.
   const [npkMixedExpanded, setNpkMixedExpanded] = useState(false)
   const [npkStraightExpanded, setNpkStraightExpanded] = useState<Set<string>>(new Set())
+  // 2026-07-13 — Inline Volume + Price entry on each Type card
+  // (keyed by common_name_cosh_id). Kept as strings while the dealer
+  // types; parsed at submit. Volume defaults to the auto-computed kg
+  // but the dealer can override to match pack sizes. Price starts
+  // blank; NULL is fine (dealer can add later via Edit Details).
+  const [npkPickedGivenVolumes, setNpkPickedGivenVolumes] = useState<Record<string, string>>({})
+  const [npkPickedPrices, setNpkPickedPrices] = useState<Record<string, string>>({})
 
   // Batch 28 — draft state. Map of item_id -> {brand_cosh_id, brand_name,
   // given_volume, volume_unit, price}. On mount we read the server copy
@@ -477,6 +484,8 @@ export default function DealerOrderDetailPage() {
           setNpkPickedStraights(new Set())
           setNpkMixedExpanded(false)
           setNpkStraightExpanded(new Set())
+          setNpkPickedGivenVolumes({})
+          setNpkPickedPrices({})
           return  // skip the brand-options path entirely
         }
         setNpkOptions(null)
@@ -876,13 +885,21 @@ export default function DealerOrderDetailPage() {
       // Build payload from picks. Mixed pick is optional; each picked
       // Straight must have a trade-name pick (the UI gate already
       // enforces this but be defensive).
-      let mixedPayload: { common_name_cosh_id: string; trade_name_cosh_id: string } | null = null
+      // 2026-07-13 — Include dealer-entered given_volume + price per
+      // pick. Both empty-string-safe: backend treats "" / omitted as
+      // "use auto-computed kg" / "no price yet" respectively.
+      let mixedPayload: {
+        common_name_cosh_id: string; trade_name_cosh_id: string;
+        given_volume?: string; price?: string;
+      } | null = null
       if (npkSelectedMixed) {
         const tn = npkPickedTradeNames[npkSelectedMixed]
         if (!tn) return  // shouldn't reach
         mixedPayload = {
           common_name_cosh_id: npkSelectedMixed,
           trade_name_cosh_id: tn.trade_name_cosh_id,
+          given_volume: npkPickedGivenVolumes[npkSelectedMixed] || '',
+          price: npkPickedPrices[npkSelectedMixed] || '',
         }
       }
       const straightsPayload = [...npkPickedStraights].flatMap(cn => {
@@ -894,6 +911,8 @@ export default function DealerOrderDetailPage() {
           target_nutrient: target,
           common_name_cosh_id: cn,
           trade_name_cosh_id: tn.trade_name_cosh_id,
+          given_volume: npkPickedGivenVolumes[cn] || '',
+          price: npkPickedPrices[cn] || '',
         }]
       })
       await api.post(`/dealer/orders/${orderId}/items/${editingItem}/npk-select`, {
@@ -907,6 +926,8 @@ export default function DealerOrderDetailPage() {
       setNpkPickedStraights(new Set())
       setNpkMixedExpanded(false)
       setNpkStraightExpanded(new Set())
+      setNpkPickedGivenVolumes({})
+      setNpkPickedPrices({})
       setEditingItem(null)
       load()
     } finally { setNpkSubmitting(false) }
@@ -1427,6 +1448,9 @@ export default function DealerOrderDetailPage() {
             const renderMixedCard = (m: NPKMixed) => {
               const selected = npkSelectedMixed === m.cosh_id
               const tn = npkPickedTradeNames[m.cosh_id]
+              const defaultKg = m.kg_product_total || m.kg_product
+              const volumeStr = npkPickedGivenVolumes[m.cosh_id] ?? String(defaultKg)
+              const priceStr = npkPickedPrices[m.cosh_id] ?? ''
               return (
                 <div key={m.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
                   <button onClick={() => npkPickMixed(selected ? null : m.cosh_id)}
@@ -1445,7 +1469,7 @@ export default function DealerOrderDetailPage() {
                     </div>
                   </button>
                   {selected && (
-                    <div className="px-3 pb-2.5">
+                    <div className="px-3 pb-2.5 space-y-2">
                       {tn ? (
                         <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
                           className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
@@ -1454,8 +1478,29 @@ export default function DealerOrderDetailPage() {
                       ) : (
                         <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
                           className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
-                          {t('npk.pickBrand')}
+                          {t.has('npk.goToBrands') ? t('npk.goToBrands') : t('npk.pickBrand')}
                         </button>
+                      )}
+                      {tn && (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-[10px] text-[#7A8C7E] mb-0.5">
+                              {t.has('npk.volumeLabel') ? t('npk.volumeLabel') : 'Volume (kg)'}
+                            </p>
+                            <input type="number" inputMode="decimal" value={volumeStr}
+                              onChange={e => setNpkPickedGivenVolumes(p => ({ ...p, [m.cosh_id]: e.target.value }))}
+                              className="w-full border border-[#DDD0B8] rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-[#7A8C7E] mb-0.5">
+                              {t.has('npk.priceLabel') ? t('npk.priceLabel') : 'Price (₹)'}
+                            </p>
+                            <input type="number" inputMode="decimal" value={priceStr}
+                              onChange={e => setNpkPickedPrices(p => ({ ...p, [m.cosh_id]: e.target.value }))}
+                              placeholder="₹"
+                              className="w-full border border-[#DDD0B8] rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none" />
+                          </div>
+                        </div>
                       )}
                     </div>
                   )}
@@ -1583,6 +1628,18 @@ export default function DealerOrderDetailPage() {
                 const renderStraightCard = (s: NPKStraight) => {
                   const selected = npkPickedStraights.has(s.cosh_id)
                   const tn = npkPickedTradeNames[s.cosh_id]
+                  // Auto-computed kg for this Straight = 100 × gap /
+                  // concentration × multiplier. Backend uses the same
+                  // formula in straight_kg_for_gap.
+                  const conc = s.class === 'STRAIGHT_N' ? s.n : s.class === 'STRAIGHT_P' ? s.p : s.k
+                  const nutrientGap = s.class === 'STRAIGHT_N' ? gap.n
+                    : s.class === 'STRAIGHT_P' ? gap.p : gap.k
+                  const mult = npkOptions.applications_multiplier ?? 1
+                  const rawKg = conc > 0 && nutrientGap > 0
+                    ? (100 * nutrientGap / conc) * mult : 0
+                  const defaultKg = Math.round(rawKg * 100) / 100
+                  const volumeStr = npkPickedGivenVolumes[s.cosh_id] ?? String(defaultKg)
+                  const priceStr = npkPickedPrices[s.cosh_id] ?? ''
                   return (
                     <div key={s.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
                       <button onClick={() => npkToggleStraight(s.cosh_id)}
@@ -1595,7 +1652,7 @@ export default function DealerOrderDetailPage() {
                         </div>
                       </button>
                       {selected && (
-                        <div className="px-3 pb-2.5">
+                        <div className="px-3 pb-2.5 space-y-2">
                           {tn ? (
                             <button onClick={() => npkOpenTradeNameSheet(s.cosh_id, letter)}
                               className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
@@ -1604,8 +1661,29 @@ export default function DealerOrderDetailPage() {
                           ) : (
                             <button onClick={() => npkOpenTradeNameSheet(s.cosh_id, letter)}
                               className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
-                              {t('npk.pickBrand')}
+                              {t.has('npk.goToBrands') ? t('npk.goToBrands') : t('npk.pickBrand')}
                             </button>
+                          )}
+                          {tn && (
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <p className="text-[10px] text-[#7A8C7E] mb-0.5">
+                                  {t.has('npk.volumeLabel') ? t('npk.volumeLabel') : 'Volume (kg)'}
+                                </p>
+                                <input type="number" inputMode="decimal" value={volumeStr}
+                                  onChange={e => setNpkPickedGivenVolumes(p => ({ ...p, [s.cosh_id]: e.target.value }))}
+                                  className="w-full border border-[#DDD0B8] rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none" />
+                              </div>
+                              <div>
+                                <p className="text-[10px] text-[#7A8C7E] mb-0.5">
+                                  {t.has('npk.priceLabel') ? t('npk.priceLabel') : 'Price (₹)'}
+                                </p>
+                                <input type="number" inputMode="decimal" value={priceStr}
+                                  onChange={e => setNpkPickedPrices(p => ({ ...p, [s.cosh_id]: e.target.value }))}
+                                  placeholder="₹"
+                                  className="w-full border border-[#DDD0B8] rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none" />
+                              </div>
+                            </div>
                           )}
                         </div>
                       )}
@@ -1711,6 +1789,7 @@ export default function DealerOrderDetailPage() {
             setEditingItem(null); setNpkOptions(null)
             setNpkSelectedMixed(null); setNpkPickedTradeNames({}); setNpkPickedStraights(new Set())
             setNpkMixedExpanded(false); setNpkStraightExpanded(new Set())
+            setNpkPickedGivenVolumes({}); setNpkPickedPrices({})
           }} className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
             {tCommon('cancel')}
           </button>
