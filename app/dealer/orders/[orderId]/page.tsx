@@ -1408,11 +1408,17 @@ export default function DealerOrderDetailPage() {
     const allCoveredByMixed = !!mixedPick && npkOptions.enabled_straights.length === 0
     return (
       <div className="mt-3 space-y-3 bg-[#F5F0E8] rounded-xl p-3">
-        <div className="bg-white rounded-lg p-3 border border-[#DDD0B8]">
-          <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
+        {/* 2026-07-13 — Redesigned as a read-only info banner (was a
+            white bordered card that a tester tried to tap thinking it
+            was the same widget as the Mixed/Straight accordions
+            below). Purple-tinted background + left accent bar reads
+            as "reference / target", clearly distinct from the
+            tappable accordion cards. */}
+        <div className="rounded-lg bg-[#7D4196]/10 border-l-4 border-[#7D4196] px-3 py-2.5">
+          <p className="text-[10px] text-[#7D4196] uppercase tracking-wider font-semibold">
             {npkOptions.fertigation ? t('npk.fertigationHeader') : t('npk.dosageHeader')}
           </p>
-          <p className="text-sm font-bold text-[#6B3F1F] mt-1">
+          <p className="text-base font-bold text-[#7D4196] mt-0.5">
             {t('npk.doseLine', { n: dose.n, p: dose.p, k: dose.k })}
           </p>
           {npkOptions.fertigation && (npkOptions.applications_multiplier ?? 1) > 1 && (
