@@ -1663,6 +1663,7 @@
         "mixedHeaderV2": "கலவை உர வகையை தேர்ந்தெடு (சத்து விகிதத்தில்)",
         "mixedAccordionHeader": "கலவை உரங்கள்",
         "mixedAccordionTapHint": "வகையை தேர்ந்தெடுக்க தட்டு",
+        "mixedDisabledHint": "கலவை உரம் தேர்ந்தெடுக்க முன், நேரடி உரங்களை நீக்கவும்.",
         "straightClassHeader": "{letter} — இன்னும் {kg} கிலோ தேவை",
         "straightClassTapHint": "வகையை தேர்ந்தெடுக்க தட்டு",
         "changeMixedFertiliser": "கலவை உரத்தை மாற்று",

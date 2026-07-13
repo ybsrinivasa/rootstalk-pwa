@@ -1663,6 +1663,7 @@
         "mixedHeaderV2": "मिश्रित उर्वरक का प्रकार चुनें (पोषक अनुपात के आधार पर)",
         "mixedAccordionHeader": "मिश्रित उर्वरक",
         "mixedAccordionTapHint": "प्रकार चुनने के लिए टैप करें",
+        "mixedDisabledHint": "मिश्रित उर्वरक चुनने से पहले सीधे उर्वरकों को हटा दें।",
         "straightClassHeader": "{letter} — {kg} किग्रा अभी बाकी है",
         "straightClassTapHint": "प्रकार चुनने के लिए टैप करें",
         "changeMixedFertiliser": "मिश्रित उर्वरक बदलें",

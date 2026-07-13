@@ -1531,9 +1531,23 @@ export default function DealerOrderDetailPage() {
             }
 
             if (collapsedInitial) {
+              // 2026-07-13 — Block Mixed selection once any Straight
+              // has been picked. Adding a Mixed on top of already-
+              // picked Straights would either (a) duplicate coverage
+              // of a nutrient the Straight already fills exactly, or
+              // (b) force a silent re-sizing of the Straight's kg
+              // that the dealer already entered price for. Clear the
+              // Straights first if the dealer really wants to switch
+              // to a Mixed-led strategy.
+              const straightsPicked = npkPickedStraights.size > 0
               return (
-                <button onClick={() => setNpkMixedExpanded(true)}
-                  className="w-full rounded-lg border border-[#DDD0B8] bg-white px-3 py-3 text-left">
+                <button onClick={() => !straightsPicked && setNpkMixedExpanded(true)}
+                  disabled={straightsPicked}
+                  className={`w-full rounded-lg border px-3 py-3 text-left ${
+                    straightsPicked
+                      ? 'border-[#DDD0B8] bg-[#F5F0E8]/60 opacity-60 cursor-not-allowed'
+                      : 'border-[#DDD0B8] bg-white'
+                  }`}>
                   <div className="flex items-center justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-[#6B3F1F]">
@@ -1542,9 +1556,13 @@ export default function DealerOrderDetailPage() {
                           : 'Mixed Fertilisers'}
                       </p>
                       <p className="text-[11px] text-[#7A8C7E]">
-                        {t.has('npk.mixedAccordionTapHint')
-                          ? t('npk.mixedAccordionTapHint')
-                          : 'Tap to choose a type'}
+                        {straightsPicked
+                          ? (t.has('npk.mixedDisabledHint')
+                              ? t('npk.mixedDisabledHint')
+                              : 'Clear the Straight fertilisers first to pick a Mixed.')
+                          : (t.has('npk.mixedAccordionTapHint')
+                              ? t('npk.mixedAccordionTapHint')
+                              : 'Tap to choose a type')}
                       </p>
                     </div>
                     <span className="text-[#7A8C7E] text-xs">▼</span>

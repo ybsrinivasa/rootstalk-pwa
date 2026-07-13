@@ -1674,6 +1674,7 @@
         "mixedHeaderV2": "Pick a Mixed fertiliser type (by nutrient ratio)",
         "mixedAccordionHeader": "Mixed Fertilisers",
         "mixedAccordionTapHint": "Tap to choose a type",
+        "mixedDisabledHint": "Clear the Straight fertilisers first to pick a Mixed.",
         "straightSectionHeader": "Straight Fertilisers",
         "straightClassHeader": "{letter} — {kg} kg still needed",
         "straightClassTapHint": "Tap to choose a type",
