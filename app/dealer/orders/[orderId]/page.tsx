@@ -448,17 +448,29 @@ export default function DealerOrderDetailPage() {
     // Batch 30B — NPK detection. The two NPK L2s skip the normal
     // brand picker; the system discovers candidate common names and
     // the dealer picks one Mixed (optional) + Straights (per gap).
-    try {
-      const { data: npk } = await api.get<NPKOptions>(`/dealer/orders/${orderId}/items/${item.id}/npk-options`)
-      if (npk.is_npk_practice) {
-        setNpkOptions(npk)
-        setNpkSelectedMixed(null)
-        setNpkPickedTradeNames({})
-        setNpkPickedStraights(new Set())
-        return  // skip the brand-options path entirely
-      }
+    //
+    // 2026-07-13 — Once the dealer has committed picks via /npk-select
+    // (brand_cosh_id is set on the item), "Edit details" should open
+    // the standard volume + price editor instead of re-running the
+    // Mixed/Straight picker. The picker is reachable via
+    // "Change selection" (which resets brand_cosh_id first). Without
+    // this guard the dealer would land back on the pick screen with
+    // no way to enter price — bug reported 2026-07-13.
+    if (!item.brand_cosh_id) {
+      try {
+        const { data: npk } = await api.get<NPKOptions>(`/dealer/orders/${orderId}/items/${item.id}/npk-options`)
+        if (npk.is_npk_practice) {
+          setNpkOptions(npk)
+          setNpkSelectedMixed(null)
+          setNpkPickedTradeNames({})
+          setNpkPickedStraights(new Set())
+          return  // skip the brand-options path entirely
+        }
+        setNpkOptions(null)
+      } catch { setNpkOptions(null) }
+    } else {
       setNpkOptions(null)
-    } catch { setNpkOptions(null) }
+    }
 
     try {
       const { data } = await api.get<BrandOptions>(`/dealer/orders/${orderId}/items/${item.id}/brand-options`)
