@@ -1371,22 +1371,39 @@ export default function DealerOrderDetailPage() {
           )}
         </div>
 
+        {/* Two-hop framing: NPK practices require picking the
+            fertiliser TYPE (Common Name — e.g. NPK 19:19:19, Urea)
+            AND THEN a Brand for it. Non-NPK practices are single-hop
+            (Brand only). This tiny hint keeps the dealer's mental
+            model clear the first time they hit the form. */}
+        <div className="rounded-lg bg-[#E8DFCF]/50 px-3 py-1.5">
+          <p className="text-[11px] text-[#6B3F1F] leading-snug">
+            {t.has('npk.twoHopHint')
+              ? t('npk.twoHopHint')
+              : 'Two picks per fertiliser: type first (by nutrient ratio), then brand.'}
+          </p>
+        </div>
+
         {/* Mixed fertilisers — ranked list, single-select.
             2026-07-13: (1) sort has-all-three-NPK first, then by
-            decreasing kg_product; (2) once one is picked, collapse
-            to just that card with a "Change Mixed brand" button
-            that reopens the list. Keeps the smartphone screen
-            scannable and lets the dealer focus on Straights next. */}
+            ASCENDING kg_product within the group so the smallest
+            volume (= lowest farmer cost) heads the list;
+            (2) once one is picked, collapse to just that card with
+            a "Change Mixed brand" button that reopens the list.
+            Keeps the smartphone screen scannable and lets the dealer
+            focus on Straights next. */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-[#6B3F1F] px-1">
-            {t('npk.mixedHeader')}
+            {t.has('npk.mixedHeaderV2')
+              ? t('npk.mixedHeaderV2')
+              : t('npk.mixedHeader')}
           </p>
           {(() => {
             const mixedsSorted = [...npkOptions.ranked_mixed].sort((a, b) => {
               const aAll = (a.n > 0 && a.p > 0 && a.k > 0) ? 1 : 0
               const bAll = (b.n > 0 && b.p > 0 && b.k > 0) ? 1 : 0
               if (aAll !== bAll) return bAll - aAll
-              return b.kg_product - a.kg_product
+              return a.kg_product - b.kg_product
             })
             const collapsed = !!mixedPick && !npkMixedExpanded
             const visible = collapsed
