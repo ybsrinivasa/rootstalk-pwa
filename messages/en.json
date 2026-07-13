@@ -1682,6 +1682,7 @@
         "goToBrands": "Go to Brands",
         "volumeLabel": "Volume (kg)",
         "priceLabel": "Price (₹)",
+        "commitError": "Could not commit the NPK selection. Please try again.",
         "straightOnly": "({letter}-only)",
         "allCoveredByMixed": "All N, P, K covered by the Mixed — no Straights needed.",
         "uncoveredWarning": "Still uncovered: {nutrients}. Pick a Straight for each, or mark this item unavailable.",

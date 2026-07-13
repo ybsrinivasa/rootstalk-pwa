@@ -915,10 +915,26 @@ export default function DealerOrderDetailPage() {
           price: npkPickedPrices[cn] || '',
         }]
       })
-      await api.post(`/dealer/orders/${orderId}/items/${editingItem}/npk-select`, {
-        mixed: mixedPayload,
-        straights: straightsPayload,
-      })
+      try {
+        await api.post(`/dealer/orders/${orderId}/items/${editingItem}/npk-select`, {
+          mixed: mixedPayload,
+          straights: straightsPayload,
+        })
+      } catch (err) {
+        // 2026-07-13 — Surface the backend error instead of failing
+        // silently. Prior to this catch a 422 / 500 from /npk-select
+        // just spun the button back to "Commit NPK selection" with
+        // no visible feedback, and the dealer had no way to know why.
+        const e = err as { response?: { data?: { detail?: unknown } } }
+        const detail = e.response?.data?.detail
+        let msg = t('npk.commitError')
+        if (typeof detail === 'string') msg = detail
+        else if (detail && typeof detail === 'object' && 'message' in (detail as object)) {
+          msg = String((detail as { message?: unknown }).message ?? msg)
+        }
+        alert(msg)
+        return
+      }
       // Reset NPK state and reload.
       setNpkOptions(null)
       setNpkSelectedMixed(null)
