@@ -281,6 +281,13 @@ export default function DealerOrderDetailPage() {
   const [npkTradeNameList, setNpkTradeNameList] = useState<NPKTradeName[]>([])
   const [npkTradeNameGroups, setNpkTradeNameGroups] = useState<NPKTradeNameGroups | null>(null)
   const [npkSubmitting, setNpkSubmitting] = useState(false)
+  // 2026-07-13 — Compact-after-selection UX for the NPK picker.
+  // Mixed list collapses to the chosen card once picked; a "Change"
+  // action expands it again. Straights are split by nutrient class
+  // (STRAIGHT_N / _P / _K) into accordions — collapsed by default so
+  // the smartphone screen stays scannable.
+  const [npkMixedExpanded, setNpkMixedExpanded] = useState(true)
+  const [npkStraightExpanded, setNpkStraightExpanded] = useState<Set<string>>(new Set())
 
   // Batch 28 — draft state. Map of item_id -> {brand_cosh_id, brand_name,
   // given_volume, volume_unit, price}. On mount we read the server copy
@@ -464,6 +471,8 @@ export default function DealerOrderDetailPage() {
           setNpkSelectedMixed(null)
           setNpkPickedTradeNames({})
           setNpkPickedStraights(new Set())
+          setNpkMixedExpanded(true)
+          setNpkStraightExpanded(new Set())
           return  // skip the brand-options path entirely
         }
         setNpkOptions(null)
@@ -759,6 +768,9 @@ export default function DealerOrderDetailPage() {
 
   async function npkPickMixed(common_name_cosh_id: string | null) {
     setNpkSelectedMixed(common_name_cosh_id)
+    // 2026-07-13 — Once a Mixed is picked, collapse the list to just
+    // the chosen card. Un-picking (null) reopens the picker.
+    setNpkMixedExpanded(common_name_cosh_id === null)
     // Re-fetch options with the Mixed pick so Straights narrow to the gap.
     if (!editingItem) return
     try {
@@ -810,17 +822,35 @@ export default function DealerOrderDetailPage() {
   }
 
   function npkToggleStraight(common_name_cosh_id: string) {
+    // 2026-07-13 — Enforce one Straight per nutrient class. When the
+    // dealer picks a Straight in a class where another was already
+    // picked, replace it (the spec's "one Straight per remaining
+    // nutrient gap" reads as single-select per class).
+    const opts = npkOptions
+    const target = opts?.enabled_straights.find(s => s.cosh_id === common_name_cosh_id)
     setNpkPickedStraights(prev => {
       const next = new Set(prev)
       if (next.has(common_name_cosh_id)) {
+        // Un-picking → also drop the trade-name pick.
         next.delete(common_name_cosh_id)
-        // Also drop its trade-name pick to keep state consistent.
         setNpkPickedTradeNames(p => {
           const np = { ...p }; delete np[common_name_cosh_id]; return np
         })
-      } else {
-        next.add(common_name_cosh_id)
+        return next
       }
+      // Picking → clear any other same-class Straights first.
+      if (target && opts) {
+        for (const otherCn of prev) {
+          const other = opts.enabled_straights.find(s => s.cosh_id === otherCn)
+          if (other && other.class === target.class) {
+            next.delete(otherCn)
+            setNpkPickedTradeNames(p => {
+              const np = { ...p }; delete np[otherCn]; return np
+            })
+          }
+        }
+      }
+      next.add(common_name_cosh_id)
       return next
     })
   }
@@ -861,6 +891,8 @@ export default function DealerOrderDetailPage() {
       setNpkSelectedMixed(null)
       setNpkPickedTradeNames({})
       setNpkPickedStraights(new Set())
+      setNpkMixedExpanded(true)
+      setNpkStraightExpanded(new Set())
       setEditingItem(null)
       load()
     } finally { setNpkSubmitting(false) }
@@ -1339,59 +1371,91 @@ export default function DealerOrderDetailPage() {
           )}
         </div>
 
-        {/* Mixed fertilisers — ranked list, single-select. */}
+        {/* Mixed fertilisers — ranked list, single-select.
+            2026-07-13: (1) sort has-all-three-NPK first, then by
+            decreasing kg_product; (2) once one is picked, collapse
+            to just that card with a "Change Mixed brand" button
+            that reopens the list. Keeps the smartphone screen
+            scannable and lets the dealer focus on Straights next. */}
         <div className="space-y-2">
           <p className="text-xs font-semibold text-[#6B3F1F] px-1">
             {t('npk.mixedHeader')}
           </p>
-          {npkOptions.ranked_mixed.length === 0 ? (
-            <p className="text-xs text-[#7A8C7E] italic px-2">{t('npk.mixedEmpty')}</p>
-          ) : npkOptions.ranked_mixed.map(m => {
-            const selected = npkSelectedMixed === m.cosh_id
-            const tn = npkPickedTradeNames[m.cosh_id]
+          {(() => {
+            const mixedsSorted = [...npkOptions.ranked_mixed].sort((a, b) => {
+              const aAll = (a.n > 0 && a.p > 0 && a.k > 0) ? 1 : 0
+              const bAll = (b.n > 0 && b.p > 0 && b.k > 0) ? 1 : 0
+              if (aAll !== bAll) return bAll - aAll
+              return b.kg_product - a.kg_product
+            })
+            const collapsed = !!mixedPick && !npkMixedExpanded
+            const visible = collapsed
+              ? mixedsSorted.filter(m => m.cosh_id === mixedPick)
+              : mixedsSorted
+            if (mixedsSorted.length === 0) {
+              return <p className="text-xs text-[#7A8C7E] italic px-2">{t('npk.mixedEmpty')}</p>
+            }
             return (
-              <div key={m.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
-                <button onClick={() => npkPickMixed(selected ? null : m.cosh_id)}
-                  className="w-full text-left px-3 py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-semibold text-[#6B3F1F]">{m.name}</p>
-                      <p className="text-[11px] text-[#7A8C7E]">
-                        {t('npk.mixedSummary', { n: m.n, p: m.p, k: m.k, kg: m.kg_product })}
-                        {npkOptions.fertigation && m.kg_product_total && m.kg_product_total !== m.kg_product && (
-                          <> · <span className="font-semibold text-[#7D4196]">{t('npk.mixedTotalAffix', { kg: m.kg_product_total })}</span></>
-                        )}
-                      </p>
+              <>
+                {visible.map(m => {
+                  const selected = npkSelectedMixed === m.cosh_id
+                  const tn = npkPickedTradeNames[m.cosh_id]
+                  return (
+                    <div key={m.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
+                      <button onClick={() => npkPickMixed(selected ? null : m.cosh_id)}
+                        className="w-full text-left px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-[#6B3F1F]">{m.name}</p>
+                            <p className="text-[11px] text-[#7A8C7E]">
+                              {t('npk.mixedSummary', { n: m.n, p: m.p, k: m.k, kg: m.kg_product })}
+                              {npkOptions.fertigation && m.kg_product_total && m.kg_product_total !== m.kg_product && (
+                                <> · <span className="font-semibold text-[#7D4196]">{t('npk.mixedTotalAffix', { kg: m.kg_product_total })}</span></>
+                              )}
+                            </p>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border-2 ${selected ? 'border-[#7D4196] bg-[#7D4196]' : 'border-[#7A8C7E]'}`} />
+                        </div>
+                      </button>
+                      {selected && (
+                        <div className="px-3 pb-2.5">
+                          {tn ? (
+                            <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
+                              className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
+                              {t('npk.brandPicked', { name: tn.trade_name })}
+                            </button>
+                          ) : (
+                            <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
+                              className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
+                              {t('npk.pickBrand')}
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className={`w-4 h-4 rounded-full border-2 ${selected ? 'border-[#7D4196] bg-[#7D4196]' : 'border-[#7A8C7E]'}`} />
-                  </div>
-                </button>
-                {selected && (
-                  <div className="px-3 pb-2.5">
-                    {tn ? (
-                      <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
-                        className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
-                        {t('npk.brandPicked', { name: tn.trade_name })}
-                      </button>
-                    ) : (
-                      <button onClick={() => npkOpenTradeNameSheet(m.cosh_id)}
-                        className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
-                        {t('npk.pickBrand')}
-                      </button>
-                    )}
-                  </div>
+                  )
+                })}
+                {collapsed && (
+                  <button onClick={() => setNpkMixedExpanded(true)}
+                    className="w-full text-xs font-medium py-2 rounded-lg border border-[#DDD0B8] text-[#7A8C7E]">
+                    {t.has('npk.changeMixedFertiliser')
+                      ? t('npk.changeMixedFertiliser')
+                      : 'Change Mixed fertiliser'}
+                  </button>
                 )}
-              </div>
+                {!collapsed && (
+                  <button onClick={() => npkPickMixed(null)}
+                    className={`w-full text-xs font-medium py-2 rounded-lg border ${
+                      npkSelectedMixed === null
+                        ? 'border-[#7D4196] bg-purple-50/40 text-[#7D4196]'
+                        : 'border-[#DDD0B8] text-[#7A8C7E]'
+                    }`}>
+                    {t('npk.skipMixed')}
+                  </button>
+                )}
+              </>
             )
-          })}
-          <button onClick={() => npkPickMixed(null)}
-            className={`w-full text-xs font-medium py-2 rounded-lg border ${
-              npkSelectedMixed === null
-                ? 'border-[#7D4196] bg-purple-50/40 text-[#7D4196]'
-                : 'border-[#DDD0B8] text-[#7A8C7E]'
-            }`}>
-            {t('npk.skipMixed')}
-          </button>
+          })()}
         </div>
 
         {/* Empty-state hint — Mixed pick zeroed every gap (spec §2.3). */}
@@ -1405,46 +1469,111 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
-        {/* Straight fertilisers — gap-filtered, multi-select. */}
-        {npkOptions.enabled_straights.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-[#6B3F1F] px-1">
-              {t('npk.straightHeader', { n: gap.n, p: gap.p, k: gap.k })}
-            </p>
-            {npkOptions.enabled_straights.map(s => {
-              const selected = npkPickedStraights.has(s.cosh_id)
-              const tn = npkPickedTradeNames[s.cosh_id]
-              return (
-                <div key={s.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
-                  <button onClick={() => npkToggleStraight(s.cosh_id)}
-                    className="w-full text-left px-3 py-2.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-semibold text-[#6B3F1F]">
-                        {s.name} <span className="text-[11px] text-[#7A8C7E] font-normal">{t('npk.straightOnly', { letter: s.class.replace('STRAIGHT_', '') })}</span>
-                      </p>
-                      <div className={`w-4 h-4 rounded ${selected ? 'bg-[#7D4196]' : 'border border-[#7A8C7E]'}`} />
-                    </div>
-                  </button>
-                  {selected && (
-                    <div className="px-3 pb-2.5">
-                      {tn ? (
-                        <button onClick={() => npkOpenTradeNameSheet(s.cosh_id)}
-                          className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
-                          {t('npk.brandPicked', { name: tn.trade_name })}
-                        </button>
-                      ) : (
-                        <button onClick={() => npkOpenTradeNameSheet(s.cosh_id)}
-                          className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
-                          {t('npk.pickBrand')}
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        )}
+        {/* Straight fertilisers — grouped by nutrient class (N/P/K)
+            with per-class accordions, collapsed by default.
+            2026-07-13: split the flat list per user request so the
+            smartphone screen shows one row per unmet nutrient. Each
+            accordion header shows the class + gap + (once picked)
+            the picked brand as a compact summary. */}
+        {npkOptions.enabled_straights.length > 0 && (() => {
+          const classGaps: Record<'STRAIGHT_N' | 'STRAIGHT_P' | 'STRAIGHT_K', number> = {
+            STRAIGHT_N: gap.n, STRAIGHT_P: gap.p, STRAIGHT_K: gap.k,
+          }
+          const byClass: Record<string, NPKStraight[]> = {}
+          for (const s of npkOptions.enabled_straights) {
+            byClass[s.class] = byClass[s.class] || []
+            byClass[s.class].push(s)
+          }
+          const CLASS_ORDER: ('STRAIGHT_N' | 'STRAIGHT_P' | 'STRAIGHT_K')[] = [
+            'STRAIGHT_N', 'STRAIGHT_P', 'STRAIGHT_K',
+          ]
+          return (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-[#6B3F1F] px-1">
+                {t.has('npk.straightSectionHeader')
+                  ? t('npk.straightSectionHeader')
+                  : 'Straight fertilisers'}
+              </p>
+              {CLASS_ORDER.filter(cls => byClass[cls]?.length > 0).map(cls => {
+                const letter = cls.replace('STRAIGHT_', '') as 'N' | 'P' | 'K'
+                const need = classGaps[cls]
+                const options = byClass[cls] || []
+                const pickedInClass = options.find(o => npkPickedStraights.has(o.cosh_id))
+                const pickedTn = pickedInClass ? npkPickedTradeNames[pickedInClass.cosh_id] : null
+                // Default-collapsed unless the dealer explicitly expanded, or
+                // no brand is picked yet (open on first entry so they can pick).
+                const isExpanded = npkStraightExpanded.has(cls) || !pickedInClass
+                const toggle = () => {
+                  setNpkStraightExpanded(prev => {
+                    const next = new Set(prev)
+                    if (next.has(cls)) next.delete(cls)
+                    else next.add(cls)
+                    return next
+                  })
+                }
+                return (
+                  <div key={cls} className="rounded-lg border border-[#DDD0B8] bg-white overflow-hidden">
+                    <button onClick={toggle}
+                      className="w-full text-left px-3 py-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[#6B3F1F]">
+                            {t.has('npk.straightClassHeader')
+                              ? t('npk.straightClassHeader', { letter, kg: need })
+                              : `${letter} — ${need} kg needed`}
+                          </p>
+                          {pickedInClass && (
+                            <p className="text-[11px] text-[#7D4196] font-medium truncate">
+                              {pickedInClass.name}
+                              {pickedTn ? ` · ${pickedTn.trade_name}` : ''}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-[#7A8C7E] text-xs">{isExpanded ? '▲' : '▼'}</span>
+                      </div>
+                    </button>
+                    {isExpanded && (
+                      <div className="border-t border-[#DDD0B8] bg-[#FAF7F1] px-2 py-2 space-y-2">
+                        {options.map(s => {
+                          const selected = npkPickedStraights.has(s.cosh_id)
+                          const tn = npkPickedTradeNames[s.cosh_id]
+                          return (
+                            <div key={s.cosh_id} className={`rounded-lg border ${selected ? 'border-[#7D4196] bg-purple-50/40' : 'border-[#DDD0B8] bg-white'}`}>
+                              <button onClick={() => npkToggleStraight(s.cosh_id)}
+                                className="w-full text-left px-3 py-2.5">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-semibold text-[#6B3F1F]">
+                                    {s.name}
+                                  </p>
+                                  <div className={`w-4 h-4 rounded-full border-2 ${selected ? 'border-[#7D4196] bg-[#7D4196]' : 'border-[#7A8C7E]'}`} />
+                                </div>
+                              </button>
+                              {selected && (
+                                <div className="px-3 pb-2.5">
+                                  {tn ? (
+                                    <button onClick={() => npkOpenTradeNameSheet(s.cosh_id, letter)}
+                                      className="w-full text-xs font-medium text-[#7D4196] bg-purple-50 border border-[#7D4196]/30 rounded-lg py-1.5">
+                                      {t('npk.brandPicked', { name: tn.trade_name })}
+                                    </button>
+                                  ) : (
+                                    <button onClick={() => npkOpenTradeNameSheet(s.cosh_id, letter)}
+                                      className="w-full text-xs font-semibold text-white bg-[#7D4196] rounded-lg py-2">
+                                      {t('npk.pickBrand')}
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })()}
 
         {/* Hard-block hint — nutrients still uncovered (spec §2.3). */}
         {hasAnyPick && !isFullyCovered && (
@@ -1465,6 +1594,7 @@ export default function DealerOrderDetailPage() {
           <button onClick={() => {
             setEditingItem(null); setNpkOptions(null)
             setNpkSelectedMixed(null); setNpkPickedTradeNames({}); setNpkPickedStraights(new Set())
+            setNpkMixedExpanded(true); setNpkStraightExpanded(new Set())
           }} className="px-4 border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2.5 rounded-xl">
             {tCommon('cancel')}
           </button>
