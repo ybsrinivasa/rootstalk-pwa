@@ -44,8 +44,15 @@ interface Fulfilment {
     brand_name: string | null
     manufacturer_name: string | null
     given_volume: number | null
+    // 2026-07-13 — Per-application dose for FERTIGATION_NPK_DOSAGES
+    // (spec §5.3 "Apply 2 kg today"). When present, PurchasedSummary
+    // shows this instead of given_volume — the farmer applies per-
+    // application on each scheduled day, not the timeline total.
+    per_application_volume?: number | null
     volume_unit: string | null
   }[]
+  // 2026-07-13 — Same per-application dose on the primary fulfilment.
+  per_application_volume?: number | null
 }
 interface Practice {
   id: string; l0_type: 'INPUT' | 'NON_INPUT' | 'INSTRUCTION' | 'MEDIA'
@@ -226,7 +233,8 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
 // items — the farmer shouldn't have to expand to see what they
 // bought.
 function PurchasedSummary({
-  brand, manufacturer, elements, siblings, primaryVolume, primaryUnit, primaryRole,
+  brand, manufacturer, elements, siblings, primaryVolume, primaryUnit,
+  primaryRole, primaryPerApplicationVolume,
 }: {
   brand: string
   manufacturer: string | null
@@ -243,11 +251,13 @@ function PurchasedSummary({
     brand_name: string | null
     manufacturer_name: string | null
     given_volume: number | null
+    per_application_volume?: number | null
     volume_unit: string | null
   }[]
   primaryVolume?: number | null
   primaryUnit?: string | null
   primaryRole?: string | null
+  primaryPerApplicationVolume?: number | null
 }) {
   // Pull application method + dosage from the SE elements; merged
   // so the dosage + unit appear on one line.
@@ -278,11 +288,20 @@ function PurchasedSummary({
           brand_name: brand,
           manufacturer_name: manufacturer,
           given_volume: primaryVolume ?? null,
+          per_application_volume: primaryPerApplicationVolume ?? null,
           volume_unit: primaryUnit ?? null,
         },
         ...siblings!,
       ].sort((a, b) => rolePos(a.relation_role) - rolePos(b.relation_role))
     : null
+  // 2026-07-13 — Fertigation NPK per-day dose (spec §5.3). Per row,
+  // prefer per_application_volume when the backend attached it —
+  // that's what the farmer applies each scheduled day, not the total
+  // they procured.
+  const displayVolume = (row: {
+    given_volume: number | null
+    per_application_volume?: number | null
+  }): number | null => row.per_application_volume ?? row.given_volume
   return (
     <div className="border-t border-emerald-100 bg-emerald-50/40 px-4 py-3 space-y-1">
       {stack ? (
@@ -291,13 +310,15 @@ function PurchasedSummary({
             {tRel('applyAllTogether', { count: stack.length })}
           </p>
           <ul className="space-y-1.5">
-            {stack.map(s => (
+            {stack.map(s => {
+              const vol = displayVolume(s)
+              return (
               <li key={s.order_item_id} className="space-y-0.5">
                 <p className="text-sm font-bold text-emerald-900 truncate">
                   {s.brand_name || ''}
-                  {s.given_volume != null && s.volume_unit && (
+                  {vol != null && s.volume_unit && (
                     <span className="ml-2 text-xs font-medium text-emerald-800">
-                      · {s.given_volume} {s.volume_unit}
+                      · {vol} {s.volume_unit}
                     </span>
                   )}
                 </p>
@@ -305,7 +326,8 @@ function PurchasedSummary({
                   <p className="text-[11px] text-emerald-800">by {s.manufacturer_name}</p>
                 )}
               </li>
-            ))}
+              )
+            })}
           </ul>
         </>
       ) : (
@@ -1112,6 +1134,7 @@ function PracticeCard({
           elements={practice.elements}
           siblings={fulf.siblings}
           primaryVolume={fulf.given_volume}
+          primaryPerApplicationVolume={fulf.per_application_volume}
           primaryUnit={fulf.volume_unit}
           primaryRole={null}
         />
@@ -1766,6 +1789,7 @@ function InnerPracticeRow({
           elements={practice.elements}
           siblings={fulf.siblings}
           primaryVolume={fulf.given_volume}
+          primaryPerApplicationVolume={fulf.per_application_volume}
           primaryUnit={fulf.volume_unit}
           primaryRole={null}
         />
