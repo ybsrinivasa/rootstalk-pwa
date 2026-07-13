@@ -152,6 +152,24 @@ const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'FORMULATION',          // describes recommended product, not purchased
   'FORMULATION_AI_CONC',  // combined formulation + AI concentration
   'AI_CONCENTRATION',     // describes recommended product, not purchased
+  // 2026-07-13 — NPK Handling spec §5.3. Fertigation NPK (and its
+  // Chemical NPK sibling) authoring elements are SE-facing math the
+  // dealer needs to pick the right Mixed + Straights. Farmer sees
+  // only the practice card + (post-approval) the picked brand + volume.
+  'N_DOSAGE',             // recommended N kg — dealer sourcing math
+  'P_DOSAGE',             // recommended P kg — dealer sourcing math
+  'K_DOSAGE',             // recommended K kg — dealer sourcing math
+  'UNIT',                 // dosage unit token, folded into the volume elsewhere
+  // Spec §5.3: "Farmer never sees 'every 2 days' or 'total quantity'
+  // or 'number of applications'." Frequency-cadence tokens on
+  // frequency-based practices (Fertigation NPK, Irrigation, Repeat)
+  // are engine-side scheduling inputs — the today-advisory filter
+  // already surfaces only scheduled days, so the raw interval + count
+  // don't need to render.
+  'FERTIGATION_INTERVAL',
+  'IRRIGATION_INTERVAL',
+  'REPEAT_INTERVAL',
+  'NUMBER_OF_APPLICATIONS',
 ])
 
 // 2026-06-12 — How to apply / how much / over what cadence is only

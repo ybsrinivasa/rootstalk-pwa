@@ -103,6 +103,19 @@ const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'FORMULATION',
   'FORMULATION_AI_CONC',
   'AI_CONCENTRATION',
+  // 2026-07-13 — NPK Handling spec §5.3 mirror. Dealer's promoted-
+  // farmer view renders the farmer surface (what the farmer sees),
+  // not the dealer's ordering surface, so the same hide rules
+  // apply. Canonical rationale on each key lives in
+  // app/advisory/[subscriptionId]/page.tsx.
+  'N_DOSAGE',
+  'P_DOSAGE',
+  'K_DOSAGE',
+  'UNIT',
+  'FERTIGATION_INTERVAL',
+  'IRRIGATION_INTERVAL',
+  'REPEAT_INTERVAL',
+  'NUMBER_OF_APPLICATIONS',
 ])
 
 const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([

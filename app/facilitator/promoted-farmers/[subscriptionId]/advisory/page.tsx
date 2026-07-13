@@ -148,6 +148,13 @@ function fulfilmentToPill(f: Fulfilment): ManagePill | null {
 const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'COMMON_NAME', 'BRAND_NAME', 'MANUFACTURER',
   'FORMULATION', 'FORMULATION_AI_CONC', 'AI_CONCENTRATION',
+  // 2026-07-13 — NPK Handling spec §5.3 mirror. See
+  // app/advisory/[subscriptionId]/page.tsx for the canonical
+  // rationale on each key. Facilitator advisory renders the
+  // farmer surface, so the same hiding applies.
+  'N_DOSAGE', 'P_DOSAGE', 'K_DOSAGE', 'UNIT',
+  'FERTIGATION_INTERVAL', 'IRRIGATION_INTERVAL', 'REPEAT_INTERVAL',
+  'NUMBER_OF_APPLICATIONS',
 ])
 const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
   'APPLICATION_METHOD', 'DOSAGE', 'VOLUME_PER_PLANT', 'INSTRUCTIONS',
