@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 
 // Avatar that opens to a fullscreen lightbox on tap — WhatsApp-style.
@@ -85,60 +86,78 @@ export default function AvatarLightbox({
           className={`w-full h-full ${objectFit === 'contain' ? 'object-contain p-1' : 'object-cover'}`} />
       </button>
 
-      {open && (
+      {/* Rendered via a portal at document.body so the overlay is a
+          sibling of the whole page — not a descendant of whatever
+          card/list-item contains this avatar. That decouples both the
+          native touch-bubbling and the React synthetic bubbling from
+          the trigger's parent tree; without this, tap-to-close on
+          mobile could route the underlying card because the close
+          bubbled up through the trigger's parent chain. stopPropagation
+          on the backdrop is belt-and-braces for the React side. */}
+      {open && typeof document !== 'undefined' && createPortal(
         // WhatsApp-style centered preview. Semi-transparent backdrop
         // (not full black) so the user knows they're still on the
-        // dealer screen; tap-outside dismisses. Inner card is rounded
-        // and sized to a comfortable preview (~85vw × 80vh max) so
-        // portrait photos don't go edge-to-edge.
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
-          onClick={() => setOpen(false)}>
+        // page underneath; tap-outside dismisses.
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-6"
+          onClick={(e) => { e.stopPropagation(); setOpen(false) }}>
+          {/* Inner card gets a fixed square aspect so its size is stable
+              before the image resolves — without this the card starts
+              at (0,0) width/height, then grows once the image loads,
+              and the flexbox recenter looks like a jerk. min(85vw,
+              400px) matches the previous max while adding an aspect
+              ratio to lock the height. */}
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative bg-white rounded-2xl shadow-2xl overflow-hidden"
+            className="relative bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
             style={{
-              maxWidth: 'min(90vw, 480px)',
+              width: 'min(85vw, 400px)',
               maxHeight: '80vh',
             }}>
             <button
               type="button"
-              onClick={() => setOpen(false)}
+              onClick={(e) => { e.stopPropagation(); setOpen(false) }}
               className="absolute top-2 right-2 z-10 text-white bg-black/40 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center text-base"
               aria-label="Close">
               ✕
             </button>
-            <TransformWrapper
-              minScale={1} maxScale={5} initialScale={1}
-              centerOnInit
-              doubleClick={{ mode: 'toggle', step: 2 }}
-              wheel={{ step: 0.2 }}
-              pinch={{ step: 5 }}
-              panning={{ velocityDisabled: true }}>
-              <TransformComponent
-                wrapperStyle={{ width: 'auto', maxWidth: 'min(90vw, 480px)', maxHeight: '70vh' }}
-                contentStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photoUrl}
-                  alt={name || ''}
-                  className="select-none block"
-                  style={{
-                    maxWidth: 'min(90vw, 480px)',
-                    maxHeight: '70vh',
-                    width: 'auto',
-                    height: 'auto',
-                    objectFit: 'contain',
-                  }}
-                  draggable={false} />
-              </TransformComponent>
-            </TransformWrapper>
+            <div
+              className="w-full"
+              style={{ aspectRatio: '1 / 1' }}>
+              <TransformWrapper
+                minScale={1} maxScale={5} initialScale={1}
+                centerOnInit
+                doubleClick={{ mode: 'toggle', step: 2 }}
+                wheel={{ step: 0.2 }}
+                pinch={{ step: 5 }}
+                panning={{ velocityDisabled: true }}>
+                <TransformComponent
+                  wrapperStyle={{ width: '100%', height: '100%' }}
+                  contentStyle={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photoUrl}
+                    alt={name || ''}
+                    className="select-none block"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
+                      objectFit: 'contain',
+                    }}
+                    draggable={false} />
+                </TransformComponent>
+              </TransformWrapper>
+            </div>
             {name && (
               <div className="px-4 py-2.5 bg-white border-t border-[#DDD0B8]">
                 <p className="text-sm font-semibold text-[#6B3F1F] truncate">{name}</p>
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   )
