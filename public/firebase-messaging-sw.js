@@ -22,22 +22,30 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging()
 
-// When the browser is in the background (tab closed / minimised /
-// device locked) and the backend send includes a `notification` key,
-// the browser auto-shows the system notification and this handler is
-// NOT called. This handler is for data-only payloads (or if we ever
-// want to override the auto-rendering with a custom body). The
-// backend today sends via messaging.send() with both `notification`
-// and `data`, so the system notification renders even if this handler
-// is silent.
+// The backend sends DATA-ONLY payloads (see app/services/fcm_service.py
+// 2026-07-16). With no `notification` field on the payload, the browser
+// has no auto-render path — this handler is the single source of truth
+// for rendering, avoiding the double-notification issue Android Samsung
+// Internet exhibited when both auto-render and this handler fired.
+//
+// title / body / click_action are read from data.* (server-side keys
+// set in send_fcm), NOT from payload.notification.
+//
+// `tag` is set from data.type + data.order_id so a second push for the
+// same entity replaces the first rather than stacking — belt-and-braces
+// against any future double-send.
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || 'rootsTALK'
-  const body = (payload.notification && payload.notification.body) || ''
+  const d = payload.data || {}
+  const title = d.title || 'rootsTALK'
+  const body = d.body || ''
+  const tag = (d.type || 'default') + (d.order_id ? ':' + d.order_id : (d.query_id ? ':' + d.query_id : ''))
   self.registration.showNotification(title, {
     body,
     icon: '/icon.png',
     badge: '/icon.png',
-    data: payload.data || {},
+    data: d,
+    tag,
+    renotify: true,
   })
 })
 

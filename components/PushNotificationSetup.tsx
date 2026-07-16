@@ -102,9 +102,13 @@ export default function PushNotificationSetup() {
   useEffect(() => {
     if (permission !== 'granted') return
     const unsub = onForegroundMessage((payload) => {
-      const title = payload.notification?.title || ''
-      const body = payload.notification?.body || ''
-      const clickAction = (payload.data?.click_action as string | undefined) || undefined
+      // Backend sends data-only payloads (2026-07-16) — title/body
+      // live under data.* rather than payload.notification.*. See
+      // app/services/fcm_service.py and firebase-messaging-sw.js.
+      const d = payload.data || {}
+      const title = (d.title as string | undefined) || ''
+      const body = (d.body as string | undefined) || ''
+      const clickAction = (d.click_action as string | undefined) || undefined
       if (!title && !body) return
       if (toastTimer.current) clearTimeout(toastTimer.current)
       setToast({ title, body, clickAction })
