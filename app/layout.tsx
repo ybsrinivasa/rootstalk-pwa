@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { isRTL } from "@/lib/locales";
+import PushNotificationSetup from "@/components/PushNotificationSetup";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -61,6 +62,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="app-frame">
             <div className="app-scroll">{children}</div>
+            {/* FCM permission + token registration + foreground
+                toast. Mounted at layout scope so every authenticated
+                page picks it up; it no-ops when the user isn't
+                logged in. */}
+            <PushNotificationSetup />
           </div>
         </NextIntlClientProvider>
       </body>

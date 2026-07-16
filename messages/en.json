@@ -1,4 +1,13 @@
 {
+  "push": {
+    "banner": {
+      "title": "Turn on notifications",
+      "body": "Get alerted when today's practices are due, when your query gets a reply, and when an order needs your action.",
+      "enable": "Turn on",
+      "enabling": "Turning on…",
+      "notNow": "Not now"
+    }
+  },
   "common": {
     "translationPending": "translation pending",
     "loading": "Loading…",
