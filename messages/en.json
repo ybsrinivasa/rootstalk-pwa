@@ -573,6 +573,11 @@
       "diagnose": "We need to know when you sowed to help you diagnose any crop issues.",
       "setNow": "Set start date now",
       "later": "Maybe later"
+    },
+    "noExpertSheet": {
+      "title": "No expert on this company yet",
+      "body": "This company has not set up a Primary expert yet. You will be able to send queries once they onboard one.",
+      "ok": "OK, got it"
     }
   },
   "subscribe": {

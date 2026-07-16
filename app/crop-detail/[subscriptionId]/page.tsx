@@ -151,6 +151,11 @@ export default function CropDetailPage() {
   const [savingExpert, setSavingExpert] = useState(false)
 
   const [showNeedDateSheet, setShowNeedDateSheet] = useState<'advisory' | 'diagnose' | null>(null)
+  // 2026-07-16 — Shown when the farmer taps the Queries tile while the
+  // client has no ACTIVE Primary expert. Sheet is informational; no
+  // action available besides "OK", since the block is data-driven
+  // (waiting for the CA to onboard a Primary).
+  const [showNoExpertSheet, setShowNoExpertSheet] = useState(false)
 
   const [diagnosisEligibility, setDiagnosisEligibility] = useState<{
     eligible: boolean
@@ -809,7 +814,13 @@ export default function CropDetailPage() {
           </button>
 
           <button
-            onClick={() => router.push(`/crop-detail/${subscriptionId}/queries`)}
+            onClick={() => {
+              if (!sub.client_has_primary_expert) {
+                setShowNoExpertSheet(true)
+                return
+              }
+              router.push(`/crop-detail/${subscriptionId}/queries`)
+            }}
             className="bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95 relative">
             {/* 2026-06-20 — Badge now reads RESPONDED-only from the
                 aggregator so it aligns with the "farmer is next actor"
@@ -1294,6 +1305,33 @@ export default function CropDetailPage() {
               onClick={() => setShowNeedDateSheet(null)}
               className="w-full mt-2 py-2 text-[#7A8C7E] text-sm">
               {t('needDate.later')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* No-primary-expert sheet — surfaced when the farmer taps the
+          Queries tile before the client has onboarded a Primary. Same
+          bottom-sheet shape as needDate so the interaction is
+          consistent. */}
+      {showNoExpertSheet && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end" onClick={() => setShowNoExpertSheet(false)}>
+          <div className="bg-white rounded-t-2xl w-full pb-8 px-6 pt-6 max-w-lg mx-auto" onClick={e => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-stone-200 rounded-full mx-auto -mt-3 mb-5" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-2xl mb-4 mx-auto" style={{ background: colour + '20' }}>
+              <span className="text-2xl">🎓</span>
+            </div>
+            <h3 className="text-[#6B3F1F] font-semibold text-lg text-center">
+              {t('noExpertSheet.title')}
+            </h3>
+            <p className="text-[#7A8C7E] text-sm text-center mt-2 leading-relaxed">
+              {t('noExpertSheet.body')}
+            </p>
+            <button
+              onClick={() => setShowNoExpertSheet(false)}
+              className="w-full mt-6 py-3.5 rounded-xl text-white font-semibold text-sm"
+              style={{ background: colour }}>
+              {t('noExpertSheet.ok')}
             </button>
           </div>
         </div>
