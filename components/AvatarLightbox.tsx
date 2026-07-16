@@ -18,6 +18,12 @@ interface Props {
   ringColor?: string     // border colour when photo present
   bgColor?: string       // fallback initials-badge background
   textColor?: string     // fallback initials-badge text colour
+  // 'cover' (default) crops the image square — right for people
+  // photos. 'contain' preserves the whole image inside the circle
+  // with whitespace around — right for company logos that would
+  // otherwise get their text/marks cut off. Only affects the small
+  // avatar chip; the enlarged lightbox already uses object-contain.
+  objectFit?: 'cover' | 'contain'
 }
 
 function initials(name: string | null | undefined): string {
@@ -32,6 +38,7 @@ export default function AvatarLightbox({
   ringColor = '#DDD0B8',
   bgColor = 'rgba(8, 80, 65, 0.1)',
   textColor = '#085041',
+  objectFit = 'cover',
 }: Props) {
   const [open, setOpen] = useState(false)
 
@@ -75,7 +82,7 @@ export default function AvatarLightbox({
         <img
           src={photoUrl}
           alt=""
-          className="w-full h-full object-cover" />
+          className={`w-full h-full ${objectFit === 'contain' ? 'object-contain p-1' : 'object-cover'}`} />
       </button>
 
       {open && (

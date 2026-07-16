@@ -6,6 +6,7 @@ import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
+import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
 import { C } from '@/lib/tokens'
 
@@ -462,14 +463,26 @@ export default function HomePage() {
                   const info = clientInfos[clientId]
                   const colour = info?.primary_colour || C.primary
                   const needsStartDate = subs.some(s => !s.crop_start_date)
-                  const initials = (info?.display_name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
                   const attentionCount = attentionByClient[clientId] ?? 0
                   const urgency = urgencyByClient[clientId] ?? null
 
                   return (
-                    <button key={clientId}
+                    // 2026-07-16 — Converted from <button> to
+                    // div[role="button"] so the AvatarLightbox trigger
+                    // (also a <button>) can nest without producing
+                    // invalid HTML. Keyboard accessibility preserved
+                    // via Enter/Space handler; tap semantics unchanged.
+                    <div key={clientId}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => router.push(`/home/${clientId}`)}
-                      className="w-full rounded-2xl overflow-hidden shadow-sm text-left active:scale-[0.98] transition-transform relative"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          router.push(`/home/${clientId}`)
+                        }
+                      }}
+                      className="w-full rounded-2xl overflow-hidden shadow-sm text-left active:scale-[0.98] transition-transform relative cursor-pointer"
                       style={{ background: C.cardBg, border: `1px solid ${C.divider}` }}>
                       {(attentionCount > 0 || urgency) && (
                         <span className="absolute top-2 right-3 flex items-center gap-1 z-10">
@@ -491,16 +504,21 @@ export default function HomePage() {
                           colour. RootsTalk Crop Green only as the
                           default fallback. */}
                       <div className="px-4 py-4 flex items-center gap-3" style={{ background: colour }}>
-                        {info?.logo_url ? (
-                          <img src={info.logo_url} alt={info.display_name}
-                            className="w-9 h-9 rounded-full object-contain p-1 shrink-0"
-                            style={{ background: C.cardBg }}/>
-                        ) : (
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                            style={{ background: C.cardBg, color: colour }}>
-                            <span className="text-xs font-bold">{initials}</span>
-                          </div>
-                        )}
+                        {/* 2026-07-16 — Tap the logo to open a
+                            larger view; tap outside to dismiss.
+                            stopPropagation so the outer card's
+                            route-to-branded-space doesn't also fire. */}
+                        <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                          <AvatarLightbox
+                            photoUrl={info?.logo_url}
+                            name={info?.display_name}
+                            size={36}
+                            ringColor={C.cardBg}
+                            bgColor={C.cardBg}
+                            textColor={colour}
+                            objectFit="contain"
+                          />
+                        </div>
                         <p className="text-white font-bold text-base flex-1">
                           {info?.display_name || tCommon('loading')}
                         </p>
@@ -519,7 +537,7 @@ export default function HomePage() {
                       <p className="text-xs px-4 pb-3 pt-1" style={{ color: C.textSecond }}>
                         {t('tile.cropsSubscribed', { count: subs.length })}
                       </p>
-                    </button>
+                    </div>
                   )
                 })}
 
