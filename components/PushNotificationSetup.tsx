@@ -26,6 +26,7 @@
 // makes column-relative on desktop).
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import api from '@/lib/api'
 import { getToken as getAuthToken } from '@/lib/auth'
@@ -49,11 +50,13 @@ async function registerTokenWithBackend(token: string): Promise<void> {
 
 export default function PushNotificationSetup() {
   const t = useTranslations('push')
+  const router = useRouter()
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default')
   const [snoozed, setSnoozed] = useState<boolean>(false)
   const [asking, setAsking] = useState(false)
-  const [toast, setToast] = useState<{ title: string; body: string } | null>(null)
+  const [toast, setToast] = useState<{ title: string; body: string; clickAction?: string } | null>(null)
   const registerAttempted = useRef(false)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Detect current permission + snooze state on mount.
   useEffect(() => {
@@ -89,17 +92,40 @@ export default function PushNotificationSetup() {
   }, [permission])
 
   // Foreground-message toast. Subscription is idempotent per mount.
+  // Browsers suppress the system notification when the PWA has focus;
+  // we render a tap-through banner instead so the user still notices.
+  // Auto-dismiss is 15s (up from the earlier 5s) so a farmer has time
+  // to read a longer message like "New order from Rajesh - RT-26-000265.
+  // Review the items and share volumes and prices." before it slides
+  // away. A tap on the banner navigates to click_action; an explicit
+  // × dismisses without navigating.
   useEffect(() => {
     if (permission !== 'granted') return
     const unsub = onForegroundMessage((payload) => {
       const title = payload.notification?.title || ''
       const body = payload.notification?.body || ''
+      const clickAction = (payload.data?.click_action as string | undefined) || undefined
       if (!title && !body) return
-      setToast({ title, body })
-      setTimeout(() => setToast(null), 5000)
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+      setToast({ title, body, clickAction })
+      toastTimer.current = setTimeout(() => setToast(null), 15000)
     })
-    return () => unsub()
+    return () => {
+      unsub()
+      if (toastTimer.current) clearTimeout(toastTimer.current)
+    }
   }, [permission])
+
+  const dismissToast = useCallback(() => {
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    setToast(null)
+  }, [])
+
+  const openToastTarget = useCallback(() => {
+    const target = toast?.clickAction
+    dismissToast()
+    if (target) router.push(target)
+  }, [toast, dismissToast, router])
 
   const onEnableClick = useCallback(async () => {
     if (asking) return
@@ -167,13 +193,31 @@ export default function PushNotificationSetup() {
 
       {toast && (
         <div className="fixed left-0 right-0 top-16 z-50 px-4 pointer-events-none">
-          <div className="max-w-lg mx-auto bg-[#3A7D44] text-white rounded-2xl shadow-lg px-4 py-3 pointer-events-auto">
-            {toast.title && (
-              <p className="text-sm font-semibold">{toast.title}</p>
-            )}
-            {toast.body && (
-              <p className="text-xs text-white/85 mt-0.5">{toast.body}</p>
-            )}
+          <div className="max-w-lg mx-auto bg-[#3A7D44] text-white rounded-2xl shadow-lg pointer-events-auto flex items-start gap-2 pl-4 pr-2 py-3">
+            <button
+              type="button"
+              onClick={openToastTarget}
+              className="flex-1 min-w-0 text-left"
+              aria-label={toast.clickAction ? t('toast.tapToOpen') : undefined}>
+              {toast.title && (
+                <p className="text-sm font-semibold">{toast.title}</p>
+              )}
+              {toast.body && (
+                <p className="text-xs text-white/85 mt-0.5 break-words">{toast.body}</p>
+              )}
+              {toast.clickAction && (
+                <p className="text-[10px] text-white/70 mt-1.5 uppercase tracking-wide font-medium">
+                  {t('toast.tapToOpen')}
+                </p>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={dismissToast}
+              aria-label={t('toast.dismiss')}
+              className="shrink-0 w-7 h-7 rounded-full text-white/80 hover:text-white hover:bg-white/10 flex items-center justify-center text-base">
+              ✕
+            </button>
           </div>
         </div>
       )}

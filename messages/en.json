@@ -6,6 +6,10 @@
       "enable": "Turn on",
       "enabling": "Turning on…",
       "notNow": "Not now"
+    },
+    "toast": {
+      "tapToOpen": "Tap to open",
+      "dismiss": "Dismiss"
     }
   },
   "common": {
