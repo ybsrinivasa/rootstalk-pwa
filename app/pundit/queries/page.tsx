@@ -21,6 +21,9 @@ interface QueryItem {
   crop_name?: string | null
   crop_start_date?: string | null
   client_name?: string | null
+  // 2026-07-24 — Training Sandbox marker. Drives the "TRAINING"
+  // chip on the query card + membership of the Training tab.
+  client_is_training?: boolean
 }
 interface Company { client_id: string; role: 'PRIMARY' | 'PANEL' | 'PROMOTER_PUNDIT' }
 interface ClientInfo {
@@ -45,7 +48,7 @@ const SEVERITY_TEXT: Record<string, string> = {
   LOW: 'text-[#7A8C7E]',
 }
 
-type Tab = 'new' | 'pending' | 'returned' | 'history'
+type Tab = 'new' | 'pending' | 'returned' | 'training' | 'history'
 
 // Map the `?status=` query param values (NEW / FORWARDED / RETURNED)
 // onto the page's tab keys.
@@ -133,16 +136,31 @@ function PunditQueriesInner() {
     [history, clientFilter],
   )
 
-  const newQueries = filtered
+  // 2026-07-24 — Training queries live exclusively on the Training
+  // tab; the real tabs exclude them so a busy pundit doesn't get
+  // practice work mixed with real. History tab includes both.
+  const realFiltered = useMemo(
+    () => filtered.filter(q => !q.client_is_training),
+    [filtered],
+  )
+  const trainingActive = useMemo(
+    () => filtered.filter(
+      q => q.client_is_training && ['NEW', 'FORWARDED', 'RETURNED'].includes(q.status),
+    ),
+    [filtered],
+  )
+
+  const newQueries = realFiltered
     .filter(q => q.status === 'NEW')
     .sort((a, b) => a.days_remaining - b.days_remaining)
-  const pendingQueries = filtered.filter(q => q.status === 'FORWARDED')
-  const returnedQueries = filtered.filter(q => q.status === 'RETURNED')
+  const pendingQueries = realFiltered.filter(q => q.status === 'FORWARDED')
+  const returnedQueries = realFiltered.filter(q => q.status === 'RETURNED')
 
   const TABS: { key: Tab; label: string; count: number | null }[] = [
     { key: 'new',      label: t('tabNew'),      count: newQueries.length },
     { key: 'pending',  label: t('tabPending'),  count: pendingQueries.length },
     { key: 'returned', label: t('tabReturned'), count: returnedQueries.length },
+    { key: 'training', label: t('tabTraining'), count: trainingActive.length },
     { key: 'history',  label: t('tabHistory'),  count: null },
   ]
 
@@ -150,6 +168,7 @@ function PunditQueriesInner() {
     if (tab === 'new')      return newQueries
     if (tab === 'pending')  return pendingQueries
     if (tab === 'returned') return returnedQueries
+    if (tab === 'training') return trainingActive
     if (tab === 'history')  return filteredHistory
     return []
   }
@@ -281,6 +300,17 @@ function PunditQueriesInner() {
                           <>
                             <span className="text-[#7A8C7E]"> · </span>
                             <span className={`font-medium ${sevClass}`}>{severityText}</span>
+                          </>
+                        )}
+                        {/* 2026-07-24 — Training chip inline with the
+                            title so pundits immediately see practice
+                            queries as such and don't rush to respond. */}
+                        {q.client_is_training && (
+                          <>
+                            <span className="text-[#7A8C7E]"> · </span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded align-middle">
+                              Training
+                            </span>
                           </>
                         )}
                       </p>

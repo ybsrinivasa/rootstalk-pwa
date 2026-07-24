@@ -1413,7 +1413,8 @@
         "pending": "Pending",
         "postponed": "Postponed",
         "farmer": "With Farmer",
-        "packing": "Packing"
+        "packing": "Packing",
+        "training": "Training"
       },
       "historyChip": "📁 History",
       "emptyPill": "Nothing under {pillName}",
@@ -2356,6 +2357,7 @@
       "pillReturned": "Returned",
       "pillFarmer": "With Farmer",
       "pillPickup": "Ready for pickup",
+      "pillTraining": "Training",
       "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
       "pickupBodyWithYou": "With you — deliver to {farmer}.",
       "pickupCta": "I've picked it up",
@@ -2698,6 +2700,7 @@
       "tabNew": "New",
       "tabPending": "Pending",
       "tabReturned": "Returned",
+      "tabTraining": "Training",
       "tabHistory": "History",
       "tabCount": "({count})",
       "emptyNew": "No new queries",

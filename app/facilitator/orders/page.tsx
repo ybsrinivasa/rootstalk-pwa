@@ -52,6 +52,9 @@ interface Order {
   crop_name?: string | null
   subscription_id?: string | null
   client_name?: string | null
+  // 2026-07-24 — Training Sandbox marker. Drives the "TRAINING"
+  // chip on the card + membership of the Training pill.
+  client_is_training?: boolean
   packing_code?: string | null
   packing_list_shared_at?: string | null
   packing_picked_up_at?: string | null
@@ -98,14 +101,19 @@ interface NearbyDealer {
   shop_address: string | null; distance_km: number; sell_categories: string[]
 }
 
-type Pill = 'pending' | 'routed' | 'returned' | 'farmer' | 'pickup'
+// 2026-07-24 — 'training' pill added alongside the five real ones.
+// Real pills exclude training-client orders; training pill collects
+// every training order regardless of status. See dealer/orders for
+// the same pattern.
+type Pill = 'pending' | 'routed' | 'returned' | 'farmer' | 'pickup' | 'training'
 
-const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned' | 'pillFarmer' | 'pillPickup'> = {
+const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned' | 'pillFarmer' | 'pillPickup' | 'pillTraining'> = {
   pending: 'pillPending',
   routed: 'pillRouted',
   returned: 'pillReturned',
   farmer: 'pillFarmer',
   pickup: 'pillPickup',
+  training: 'pillTraining',
 }
 
 function subBelongsTo(o: Order, pill: Pill): boolean {
@@ -118,6 +126,15 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   // is the correct surface for that — pill predicate gates further
   // down. Same fix shipped to dealer + farmer earlier today.
   if (['CANCELLED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
+    return false
+  }
+  // 2026-07-24 — Training-client orders live exclusively on the
+  // Training pill; real pills exclude them. See dealer/orders for
+  // the mirror pattern.
+  if (pill === 'training') {
+    return !!o.client_is_training
+  }
+  if (o.client_is_training) {
     return false
   }
   // 2026-06-22 — Seed cards branch off the SeedOrderStatus enum.
@@ -241,6 +258,7 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
     crop_name: s.crop_cosh_id ? cropDisplayName(s.crop_cosh_id) : null,
     subscription_id: null,
     client_name: s.client_name,
+    client_is_training: false,
     packing_code: null,
     packing_list_shared_at: null,
     packing_picked_up_at: null,
@@ -418,7 +436,7 @@ export default function FacilitatorOrdersPage() {
   // matching the pill (not raw sub-orders) so the count matches
   // what the user sees rendered.
   const counts: Record<Pill, number> = useMemo(() => {
-    const c: Record<Pill, number> = { pending: 0, routed: 0, returned: 0, farmer: 0, pickup: 0 }
+    const c: Record<Pill, number> = { pending: 0, routed: 0, returned: 0, farmer: 0, pickup: 0, training: 0 }
     for (const list of groups.values()) {
       for (const p of Object.keys(c) as Pill[]) {
         if (list.some(o => subBelongsTo(o, p))) c[p] += 1
@@ -759,11 +777,21 @@ function CardHeader({
             )}
           </div>
           {(head?.crop_name || head?.client_name) && (
-            <p className="text-xs text-[#7A8C7E] truncate">
-              {head.crop_name && head.client_name
-                ? `${head.crop_name} · ${head.client_name}`
-                : head.crop_name || head.client_name}
-            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-xs text-[#7A8C7E] truncate">
+                {head.crop_name && head.client_name
+                  ? `${head.crop_name} · ${head.client_name}`
+                  : head.crop_name || head.client_name}
+              </p>
+              {/* 2026-07-24 — Training marker chip. Visible before
+                  tap-Accept so the facilitator knows they're
+                  routing a practice order. */}
+              {head?.client_is_training && (
+                <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded shrink-0">
+                  Training
+                </span>
+              )}
+            </div>
           )}
           <p className="text-[10px] font-mono tracking-wide text-[#7D4E00] mt-0.5">
             {orderId}

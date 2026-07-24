@@ -53,6 +53,9 @@ interface Order {
   facilitator_photo_url: string | null
   client_id: string
   client_name: string | null
+  // 2026-07-24 — Training Sandbox marker. Drives the "TRAINING"
+  // chip on the card + membership of the Training pill.
+  client_is_training?: boolean
   category: string | null
   date_from: string
   date_to: string
@@ -112,9 +115,15 @@ interface SeedOrderRaw {
 
 // 2026-06-09 — Completed dropped from active pills (Batch 2 of
 // Dealer mirroring). Terminal sub-orders live in /dealer/history.
-type Pill = 'pending' | 'postponed' | 'farmer' | 'packing'
+// 2026-07-24 — 'training' pill added. Real pills (pending / postponed
+// / farmer / packing) now exclude orders whose client is a training
+// child, so a dealer's actual work doesn't get mixed with practice
+// work. The Training pill collects every training-client order the
+// dealer holds regardless of item status — that's the whole point
+// of separating it.
+type Pill = 'pending' | 'postponed' | 'farmer' | 'packing' | 'training'
 
-const PILLS: readonly Pill[] = ['pending', 'postponed', 'farmer', 'packing'] as const
+const PILLS: readonly Pill[] = ['pending', 'postponed', 'farmer', 'packing', 'training'] as const
 
 function initials(name: string | null): string {
   if (!name) return '?'
@@ -147,6 +156,17 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   // Packing tile uses the same predicate without this guard, so this
   // alignment fixes the "tile says 1, tab shows 0" discrepancy.
   if (['CANCELLED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
+    return false
+  }
+  // 2026-07-24 — Training-client orders live exclusively on the
+  // Training pill. Real pills (pending / postponed / farmer /
+  // packing) exclude them so the dealer's actual work doesn't get
+  // mixed with practice work. The Training pill collects every
+  // active training order regardless of item status.
+  if (pill === 'training') {
+    return !!o.client_is_training
+  }
+  if (o.client_is_training) {
     return false
   }
   // 2026-06-06 — Seed orders use the SeedOrderStatus enum directly
@@ -207,6 +227,7 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
     facilitator_photo_url: null,
     client_id: s.client_id,
     client_name: s.client_name,
+    client_is_training: false,
     category: s.category || 'SEED',
     date_from: s.created_at,
     date_to: s.created_at,
@@ -318,7 +339,7 @@ function DealerOrdersInner() {
   // sub-order (matches what the user sees rendered).
   const counts: Record<Pill, number> = useMemo(() => {
     const c: Record<Pill, number> = {
-      pending: 0, postponed: 0, farmer: 0, packing: 0,
+      pending: 0, postponed: 0, farmer: 0, packing: 0, training: 0,
     }
     for (const list of groups.values()) {
       for (const p of PILLS) {
@@ -907,7 +928,18 @@ function DealerOrderCardHeader({
             {head.farmer_name || t('unknownFarmer')}
           </p>
           {head.client_name && (
-            <p className="text-xs text-[#7A8C7E] truncate">{head.client_name}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p className="text-xs text-[#7A8C7E] truncate">{head.client_name}</p>
+              {/* 2026-07-24 — Training marker. Yellow chip so the
+                  dealer sees it BEFORE tapping Accept — a training
+                  order shouldn't touch their real inventory / brand
+                  counts. */}
+              {head.client_is_training && (
+                <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded shrink-0">
+                  Training
+                </span>
+              )}
+            </div>
           )}
           <p className="text-[11px] text-[#7A8C7E] mt-0.5">
             {head.is_seed ? t('seedCategory') : (head.category?.toLowerCase() || t('categoryFallback'))}
