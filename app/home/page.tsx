@@ -38,6 +38,10 @@ type ClientInfo = {
   id: string; display_name: string; primary_colour: string
   tagline: string | null; logo_url: string | null
   support_phone: string | null; website: string | null
+  // 2026-07-24 — Training Sandbox flag. When true, the tile
+  // renders a "TRAINING" ribbon on the branded header + a
+  // subtitle noting it's a practice session.
+  is_training?: boolean
 }
 
 interface PendingAssignment {
@@ -500,6 +504,18 @@ export default function HomePage() {
                         </span>
                       )}
 
+                      {/* 2026-07-24 — Training Sandbox ribbon. Sits
+                          across the top-right corner of the card so
+                          it's readable regardless of the client's
+                          brand colour. Farmer taps the whole card
+                          into the branded space normally; the ribbon
+                          is a marker, not an action. */}
+                      {info?.is_training && (
+                        <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 shadow-sm">
+                          Training
+                        </span>
+                      )}
+
                       {/* Branded header — keeps the client's brand
                           colour. RootsTalk Crop Green only as the
                           default fallback. */}
@@ -531,7 +547,12 @@ export default function HomePage() {
                       </div>
 
                       {/* Card body */}
-                      {info?.tagline && (
+                      {info?.is_training && (
+                        <p className="text-[12px] px-4 pt-2 text-amber-800 font-medium">
+                          Practice session — accepting won&apos;t affect your real subscriptions.
+                        </p>
+                      )}
+                      {info?.tagline && !info?.is_training && (
                         <p className="text-[14px] px-4 py-2" style={{ color: C.textPrimary, opacity: 0.85 }}>{info.tagline}</p>
                       )}
                       <p className="text-xs px-4 pb-3 pt-1" style={{ color: C.textSecond }}>

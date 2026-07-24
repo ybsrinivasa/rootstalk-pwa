@@ -41,6 +41,10 @@ type ClientInfo = {
   tagline: string | null; logo_url: string | null
   support_phone: string | null; office_phone: string | null
   website: string | null; social_links: Record<string, string>
+  // 2026-07-24 — Training Sandbox flag. Drives a persistent yellow
+  // "TRAINING SESSION" banner above the crops list so the farmer
+  // never confuses this space with their real subscriptions.
+  is_training?: boolean
 }
 
 // Social handles rendered in the contact strip. Order + label match
@@ -213,6 +217,26 @@ export default function BrandedSpacePage() {
                 </a>
               )
             })}
+          </div>
+        )}
+
+        {/* 2026-07-24 — Training-session banner. When the branded
+            space is a Training Sandbox, sit a persistent yellow
+            banner above Your Crops explaining that everything under
+            this company is practice-only. Everything on this screen
+            (crops, orders, queries the farmer opens from a training
+            sub) inherits the training marker via client_id, but the
+            banner is the human-readable reminder for the farmer. */}
+        {branding?.is_training && (
+          <div className="mx-4 mt-4 mb-1 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
+            <p className="text-amber-900 font-semibold text-sm">
+              Training Session
+            </p>
+            <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
+              You&apos;re practising with this company. Orders and queries
+              here are for training only — they won&apos;t affect any of
+              your real subscriptions.
+            </p>
           </div>
         )}
 
