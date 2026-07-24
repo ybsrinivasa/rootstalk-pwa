@@ -22,6 +22,10 @@ export default function FacilitatorHomePage() {
   // 2026-06-23 — Pending Promoter invitations surfaced on the
   // dashboard via a banner, mirroring the pundit pattern.
   const [invitationCount, setInvitationCount] = useState(0)
+  // 2026-07-24 — Training Sandbox. Tile shows only when the
+  // facilitator's locked parent client has an ACTIVE training
+  // session. F-P is single-parent per §11.2 so at most one.
+  const [trainingCount, setTrainingCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
@@ -54,6 +58,9 @@ export default function FacilitatorHomePage() {
       }).catch(() => {}),
       api.get('/facilitator/promoter-invitations').then(r => {
         setInvitationCount((r.data as unknown[]).length)
+      }).catch(() => {}),
+      api.get('/promoter/training/available-clients').then(r => {
+        setTrainingCount((r.data as unknown[]).length)
       }).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
@@ -141,6 +148,17 @@ export default function FacilitatorHomePage() {
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tileAlerts')}</p>
             <p className="text-xs text-[#7A8C7E]">{loading ? '…' : t('tileAlertsHint', { count: alertCount })}</p>
           </button>
+          {/* 2026-07-24 — Training Sandbox tile. Shows only when the
+              facilitator's parent client has an ACTIVE training. F-P
+              is single-parent per §11.2 so the count is 0 or 1. */}
+          {trainingCount > 0 && (
+            <button onClick={() => router.push('/promoter-training?role=FACILITATOR')}
+              className="bg-amber-50 rounded-2xl p-4 border-2 border-amber-300 shadow-sm text-left">
+              <span className="text-2xl">🎓</span>
+              <p className="text-sm font-semibold text-amber-900 mt-2">Training Session</p>
+              <p className="text-xs text-amber-700">Invite a farmer to practise</p>
+            </button>
+          )}
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />

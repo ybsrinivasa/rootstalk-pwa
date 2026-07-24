@@ -32,6 +32,9 @@ export default function DealerHomePage() {
   const [invitationCount, setInvitationCount] = useState(0)
   const [brandFormsUnread, setBrandFormsUnread] = useState(0)
   const [onboardingClientCount, setOnboardingClientCount] = useState<number | null>(null)
+  // 2026-07-24 — Training Sandbox. Tile shows only when the dealer
+  // has at least one parent client with an ACTIVE training session.
+  const [trainingCount, setTrainingCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
@@ -121,6 +124,9 @@ export default function DealerHomePage() {
         }).catch(() => {}),
         api.get<{ count: number }>('/dealer/brand-forms/unread-count').then(r => {
           setBrandFormsUnread(r.data?.count || 0)
+        }).catch(() => {}),
+        api.get('/promoter/training/available-clients').then(r => {
+          setTrainingCount((r.data as unknown[]).length)
         }).catch(() => {}),
       ]).finally(() => setLoading(false))
     }).catch(() => setLoading(false))
@@ -285,6 +291,22 @@ export default function DealerHomePage() {
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.myFarmers')}</p>
             <p className="text-xs text-[#7A8C7E]">{t('tiles.myFarmersSubtitle')}</p>
           </button>
+          {/* 2026-07-24 — Training Sandbox tile. Renders only when
+              the dealer has ≥1 parent client with an ACTIVE training
+              session (the endpoint returns []) so the tile disappears
+              cleanly the moment training ends. Amber styling matches
+              the training frame everywhere else. */}
+          {trainingCount > 0 && (
+            <button onClick={() => router.push('/promoter-training?role=DEALER')}
+              className="relative bg-amber-50 rounded-2xl p-4 border-2 border-amber-300 shadow-sm text-left">
+              <span className="absolute top-3 right-4 text-base font-bold text-amber-800">
+                {trainingCount}
+              </span>
+              <span className="text-2xl">🎓</span>
+              <p className="text-sm font-semibold text-amber-900 mt-2">Training Session</p>
+              <p className="text-xs text-amber-700">Invite a farmer to practise</p>
+            </button>
+          )}
           {/* 2026-07-04 — Shop Details tile removed from dashboard;
               same access lives in the drawer under Personal Details.
               Replaced by Brand Submissions, an action-oriented tile
