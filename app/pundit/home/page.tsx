@@ -12,7 +12,16 @@ interface QuerySummary {
   id: string; title: string; status: string; severity: string
   client_id: string; expires_at: string; days_remaining: number
 }
-interface Company { client_id: string; role: 'PRIMARY' | 'PANEL' | 'PROMOTER_PUNDIT' }
+// 2026-07-25 — is_training + parent_client_id let the pundit home
+// render a distinct card for a training child (only when it holds
+// live queries — see backend `/pundit/profile`) alongside the parent
+// company card. Role is inherited from the parent binding.
+interface Company {
+  client_id: string
+  role: 'PRIMARY' | 'PANEL' | 'PROMOTER_PUNDIT'
+  is_training?: boolean
+  parent_client_id?: string
+}
 interface ClientInfo {
   id: string; display_name: string; primary_colour: string
   tagline: string | null; logo_url: string | null
@@ -180,6 +189,15 @@ export default function PunditHomePage() {
                         <p className="text-sm font-medium text-[#6B3F1F] truncate">{info?.display_name || c.client_id}</p>
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {/* 2026-07-25 — Training marker. Backend
+                            surfaces the training child as its own
+                            card entry when the pundit is holding at
+                            least one training query for it. */}
+                        {c.is_training && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded">
+                            Training
+                          </span>
+                        )}
                         {/* PROMOTER_PUNDIT is a first-class role (since
                             2026-06-23). Regular pundits (PRIMARY / PANEL)
                             and PPs are mutually exclusive. */}
