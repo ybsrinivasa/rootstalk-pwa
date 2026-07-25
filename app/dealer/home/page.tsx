@@ -14,6 +14,7 @@ export default function DealerHomePage() {
   const router = useRouter()
   const user = getUser()
   const t = useTranslations('dealer.home')
+  const tTrain = useTranslations('training')
   const [pendingCount, setPendingCount] = useState(0)
   const [postponedCount, setPostponedCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
@@ -303,8 +304,8 @@ export default function DealerHomePage() {
                 {trainingCount}
               </span>
               <span className="text-2xl">🎓</span>
-              <p className="text-sm font-semibold text-amber-900 mt-2">Training Session</p>
-              <p className="text-xs text-amber-700">Invite a farmer to practise</p>
+              <p className="text-sm font-semibold text-amber-900 mt-2">{tTrain('promoterTile.title')}</p>
+              <p className="text-xs text-amber-700">{tTrain('promoterTile.subtitle')}</p>
             </button>
           )}
           {/* 2026-07-04 — Shop Details tile removed from dashboard;

@@ -905,6 +905,7 @@ function DealerOrderCardHeader({
   orderId: string
 }) {
   const t = useTranslations('dealer.orders.cardHeader')
+  const tTrain = useTranslations('training')
   const locale = useLocale()
   if (!head) return null
   return (
@@ -951,7 +952,7 @@ function DealerOrderCardHeader({
                   counts. */}
               {head.client_is_training && (
                 <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded shrink-0">
-                  Training
+                  {tTrain('chip')}
                 </span>
               )}
             </div>

@@ -22,6 +22,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import api from '@/lib/api'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -80,6 +81,7 @@ export default function PromoterTrainingInvitePage() {
 function PromoterTrainingInviteInner() {
   const router = useRouter()
   const params = useSearchParams()
+  const tTrain = useTranslations('training')
   const role = (params.get('role') || 'DEALER').toUpperCase() as 'DEALER' | 'FACILITATOR'
   const activeRole = role === 'DEALER' ? 'DEALER' : 'FACILITATOR'
 
@@ -103,7 +105,7 @@ function PromoterTrainingInviteInner() {
         setSessions(r.data)
         if (r.data.length === 1) setPickedSession(r.data[0])
       })
-      .catch(() => setError('Could not load training sessions.'))
+      .catch(() => setError(tTrain('invite.genericLoadError')))
       .finally(() => setLoading(false))
   }, [router])
 
@@ -150,16 +152,16 @@ function PromoterTrainingInviteInner() {
         package_id: pickedPackage.id,
         promoter_type: role,
       })
-      setSuccess(`Invitation sent. The farmer will see it in their PWA.`)
+      setSuccess(tTrain('invite.successMessage'))
       setFarmerPhone('')
       setPickedCrop(null)
       setPickedPackage(null)
     } catch (err) {
-      setError(extractErr(err, 'Could not send the invitation.'))
+      setError(extractErr(err, tTrain('invite.genericError')))
     } finally {
       setSubmitting(false)
     }
-  }, [canSubmit, pickedSession, pickedPackage, farmerPhone, role])
+  }, [canSubmit, pickedSession, pickedPackage, farmerPhone, role, tTrain])
 
   if (loading) {
     return <div className="min-h-screen bg-[#F5F0E8]" />
@@ -167,25 +169,22 @@ function PromoterTrainingInviteInner() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title="Training Invite" activeRole={activeRole} back={role === 'DEALER' ? '/dealer/home' : '/facilitator/home'} />
+      <PWAHeader title={tTrain('invite.headerTitle')} activeRole={activeRole} back={role === 'DEALER' ? '/dealer/home' : '/facilitator/home'} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto space-y-4">
         {/* 2026-07-24 — Training frame. Whole page wears an amber
             border so the promoter always sees they're in training. */}
         <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
-          <p className="text-amber-900 font-semibold text-sm">Training Sandbox</p>
+          <p className="text-amber-900 font-semibold text-sm">{tTrain('invite.frameTitle')}</p>
           <p className="text-amber-800 text-xs mt-1 leading-relaxed">
-            Invite a real farmer into a practice session. The farmer must
-            accept before anything appears on their PWA. Nothing here
-            affects your real allocations, orders, or subscriptions.
+            {tTrain('invite.frameBody')}
           </p>
         </div>
 
         {sessions.length === 0 ? (
           <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-8 text-center">
-            <p className="text-[#6B3F1F] font-semibold">No training sessions active</p>
+            <p className="text-[#6B3F1F] font-semibold">{tTrain('invite.noSessionsTitle')}</p>
             <p className="text-xs text-[#7A8C7E] mt-2">
-              The company&apos;s CA starts a training session from the CA
-              portal. Once it&apos;s running, you&apos;ll see it here.
+              {tTrain('invite.noSessionsBody')}
             </p>
           </div>
         ) : (
@@ -193,7 +192,7 @@ function PromoterTrainingInviteInner() {
             {/* Session picker */}
             {sessions.length > 1 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                <p className="text-xs font-semibold text-[#6B3F1F] mb-2">Pick a training session</p>
+                <p className="text-xs font-semibold text-[#6B3F1F] mb-2">{tTrain('invite.pickSession')}</p>
                 <div className="space-y-2">
                   {sessions.map(s => (
                     <button key={s.id}
@@ -207,7 +206,7 @@ function PromoterTrainingInviteInner() {
                         {s.parent_display_name}
                       </p>
                       <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-                        Ends {formatDate(s.training_ends_at)}
+                        {tTrain('invite.endsPrefix', { date: formatDate(s.training_ends_at) })}
                       </p>
                     </button>
                   ))}
@@ -219,10 +218,10 @@ function PromoterTrainingInviteInner() {
             {pickedSession && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
                 <label className="text-xs font-semibold text-[#6B3F1F]" htmlFor="farmer-phone">
-                  Farmer&apos;s phone number
+                  {tTrain('invite.farmerPhoneLabel')}
                 </label>
                 <p className="text-[11px] text-[#7A8C7E] mt-1">
-                  The farmer must already be registered on RootsTalk.
+                  {tTrain('invite.farmerPhoneHint')}
                 </p>
                 <input
                   id="farmer-phone"
@@ -230,7 +229,7 @@ function PromoterTrainingInviteInner() {
                   inputMode="numeric"
                   value={farmerPhone}
                   onChange={e => setFarmerPhone(e.target.value)}
-                  placeholder="10-digit number"
+                  placeholder={tTrain('invite.farmerPhonePlaceholder')}
                   className="w-full mt-2 px-3 py-2 border border-[#DDD0B8] rounded-lg text-sm bg-[#FAFAF7]"
                 />
               </div>
@@ -239,7 +238,7 @@ function PromoterTrainingInviteInner() {
             {/* Crop picker */}
             {pickedSession && crops.length > 0 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                <p className="text-xs font-semibold text-[#6B3F1F] mb-2">Pick a crop</p>
+                <p className="text-xs font-semibold text-[#6B3F1F] mb-2">{tTrain('invite.pickCrop')}</p>
                 <div className="flex flex-wrap gap-2">
                   {crops.map(c => (
                     <button key={c.crop_cosh_id}
@@ -257,14 +256,14 @@ function PromoterTrainingInviteInner() {
             )}
             {pickedSession && crops.length === 0 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-4 text-xs text-[#7A8C7E]">
-                No crops with active packages under this training session yet.
+                {tTrain('invite.noCrops')}
               </div>
             )}
 
             {/* Package picker */}
             {pickedCrop && packages.length > 0 && (
               <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                <p className="text-xs font-semibold text-[#6B3F1F] mb-2">Pick a package</p>
+                <p className="text-xs font-semibold text-[#6B3F1F] mb-2">{tTrain('invite.pickPackage')}</p>
                 <div className="space-y-2">
                   {packages.map(p => (
                     <button key={p.id}
@@ -302,7 +301,7 @@ function PromoterTrainingInviteInner() {
                 disabled={!canSubmit}
                 className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-semibold shadow-sm"
               >
-                {submitting ? 'Sending…' : 'Send Training Invitation'}
+                {submitting ? tTrain('invite.sending') : tTrain('invite.submit')}
               </button>
             )}
           </>

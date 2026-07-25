@@ -1,4 +1,59 @@
 {
+  "training": {
+    "chip": "প্রশিক্ষণ",
+    "farmerHome": {
+      "subtitle": "অনুশীলন পর্ব — এটি গ্রহণ করলে আপনার আসল সাবস্ক্রিপশনগুলোর ওপর কোনো প্রভাব পড়বে না।"
+    },
+    "farmerBrandedSpace": {
+      "title": "প্রশিক্ষণ অধিবেশন",
+      "body": "আপনি এই কোম্পানিতে অনুশীলন করছেন। এখানকার অর্ডার এবং জিজ্ঞাসা শুধুমাত্র প্রশিক্ষণের জন্য — এগুলি আপনার কোনো আসল সাবস্ক্রিপশনকে প্রভাবিত করবে না।"
+    },
+    "farmerAssignment": {
+      "headerLabel": "অনুশীলন পরামর্শ অনুরোধ",
+      "bannerTitle": "এটি একটি প্রশিক্ষণ অধিবেশন",
+      "bannerBody": "আপনার প্রোমোটার রুটসটক অ্যাপ ব্যবহার করে অনুশীলন করাচ্ছেন। এটি গ্রহণ করলে আপনার হোম স্ক্রিনে একটি অনুশীলন সাবস্ক্রিপশন যুক্ত হবে — এটি আপনার আগে থেকে থাকা কোনো আসল সাবস্ক্রিপশনকে প্রতিস্থাপন বা প্রভাবিত করবে না। সেশনটি কয়েক দিন পর স্বয়ংক্রিয়ভাবে শেষ হয়ে যাবে।",
+      "paymentCardTitle": "প্রশিক্ষণ সাবস্ক্রিপশন — বিনামূল্যে",
+      "paymentCardBody": "কোনো অর্থপ্রদানের প্রয়োজন নেই। প্রশিক্ষণ সেশন শেষ হলে এটি স্বয়ংক্রিয়ভাবে মুছে যাবে।",
+      "confirmAcceptTraining": "{company} এর {crop} এর অনুশীলন সেশনে যোগ দেবেন? এটি একটি প্রশিক্ষণ স্যান্ডবক্স — আপনার কোনো আসল সাবস্ক্রিপশনকে প্রভাবিত করবে না।"
+    },
+    "promoterTile": {
+      "title": "প্রশিক্ষণ অধিবেশন",
+      "subtitle": "একজন কৃষককে অনুশীলনের জন্য আমন্ত্রণ জানান"
+    },
+    "invite": {
+      "headerTitle": "প্রশিক্ষণের আমন্ত্রণ",
+      "frameTitle": "প্রশিক্ষণ স্যান্ডবক্স",
+      "frameBody": "একজন প্রকৃত কৃষককে একটি অনুশীলন সেশনে আমন্ত্রণ জানান। কৃষকের PWA-তে কিছু প্রদর্শিত হওয়ার আগে তাকে অবশ্যই সম্মতি দিতে হবে। এখানকার কোনো কিছুই আপনার আসল বরাদ্দ, অর্ডার বা সাবস্ক্রিপশনকে প্রভাবিত করবে না।",
+      "noSessionsTitle": "কোন প্রশিক্ষণ সেশন সক্রিয় নেই",
+      "noSessionsBody": "কোম্পানির সিএ (CA) সিএ পোর্টাল থেকে একটি প্রশিক্ষণ সেশন শুরু করেন। এটি চালু হয়ে গেলে আপনি এখানে দেখতে পাবেন।",
+      "pickSession": "একটি প্রশিক্ষণ সেশন বেছে নিন",
+      "endsPrefix": "{date} -এ শেষ হবে।",
+      "farmerPhoneLabel": "কৃষকের ফোন নম্বর",
+      "farmerPhoneHint": "কৃষককে অবশ্যই আগে থেকেই রুটসটক-এ নিবন্ধিত থাকতে হবে।",
+      "farmerPhonePlaceholder": "১০-অঙ্কের নম্বর",
+      "pickCrop": "একটি ফসল বাছাই করুন",
+      "noCrops": "এই প্রশিক্ষণ সেশনের অধীনে এখনও কোনো ফসলের সক্রিয় প্যাকেজ নেই।",
+      "pickPackage": "একটি প্যাকেজ বেছে নিন",
+      "submit": "প্রশিক্ষণের আমন্ত্রণ পাঠান",
+      "sending": "প্রেরণ করা হচ্ছে…",
+      "successMessage": "আমন্ত্রণপত্র পাঠানো হয়েছে। কৃষক এটি তাঁর PWA-তে দেখতে পাবেন।",
+      "genericError": "আমন্ত্রণপত্রটি পাঠানো যায়নি।",
+      "genericLoadError": "প্রশিক্ষণ সেশনগুলো লোড করা যায়নি।"
+    }
+  },
+  "push": {
+    "banner": {
+      "title": "বিজ্ঞপ্তি চালু করুন",
+      "body": "আজকের কার্যক্রমগুলো সম্পন্ন করার সময় হলে, আপনার জিজ্ঞাসার উত্তর পেলে এবং কোনো অর্ডারে আপনার পদক্ষেপ নেওয়ার প্রয়োজন হলে সতর্কবার্তা পান।",
+      "enable": "চালু করুন",
+      "enabling": "চালু করা হচ্ছে…",
+      "notNow": "এখন নয়"
+    },
+    "toast": {
+      "tapToOpen": "খুলতে ট্যাপ করুন",
+      "dismiss": "খারিজ করুন"
+    }
+  },
   "common": {
     "translationPending": "অনুবাদ অপেক্ষাধীন",
     "loading": "লোড হচ্ছে…",
@@ -93,12 +148,12 @@
       "explainTitle": "এই লক্ষণটি কীভাবে পরীক্ষা করবেন",
       "explainGotIt": "বুঝেছি।",
       "explainAria": "এই প্রশ্নটি ব্যাখ্যা করুন।",
-      "removePhotoAria": "ছবিটি সরান"
+      "removePhotoAria": "ছবি সরান"
     },
     "confirming": {
       "title": "মনে হচ্ছে সমস্যাটা হলো…",
       "fallbackName": "একটি সমস্যা যা আমরা চিহ্নিত করতে পারি",
-      "subtitle": "আপনি ক্রপে যা দেখছেন, এটা কি তার সাথে মিলছে?",
+      "subtitle": "এটা কি আপনি ক্রপে যা দেখছেন তার সাথে মিলছে?",
       "claudeLabel": "এর অর্থ আপনার ফসলের জন্য কী",
       "seeImages": "🔍 {name} -এর ছবিগুলো দেখুন",
       "notThis": "✗ এটা নয়",
@@ -153,14 +208,15 @@
       "help": "আমাদেরকে সংখ্যাটি জানান, যাতে ডিলার সঠিক পরিমাণে উপকরণ প্রস্তুত করতে পারে। যেসব গাছ আক্রান্ত নয়, সেগুলোর পরিচর্যা করা অর্থ ও শ্রমের অপচয়।",
       "placeholder": "একটি সংখ্যা লিখুন",
       "range": "1 এবং {max} এর মধ্যে একটি সংখ্যা লিখুন।",
-      "min": "অন্তত ১টি লিখুন।"
+      "min": "অন্তত ১ লিখুন।"
     }
   },
   "practice": {
     "label": {
       "today": "আজ",
       "reference": "রেফারেন্স",
-      "day": "দিন"
+      "day": "দিন",
+      "coversAlso": "এছাড়াও অন্তর্ভুক্ত: {names}"
     },
     "empty": {
       "noAdviceToday": "আজকের জন্য কোনো পরামর্শ নেই",
@@ -195,6 +251,13 @@
       "confirmBody": "তুমি এটা ফেরত আনতে পারবে না। আমরা এটা তোমার জন্য লুকিয়ে রাখব।",
       "confirmCancel": "এটা রাখুন",
       "confirmYes": "হ্যাঁ, সরিয়ে ফেলুন"
+    },
+    "relations": {
+      "applyAllTogether": "{count, plural, one {একসাথে প্রয়োগ করুন} =2 {উভয় একসাথে প্রয়োগ করুন} other {সবগুলো একসাথে প্রয়োগ করুন #}}",
+      "orderAllTogether": "{count, plural, one {অর্ডার} =2 {একসাথে দুটোই অর্ডার করুন} other {সবগুলো # একসাথে অর্ডার করুন}}",
+      "orSeparator": "অথবা",
+      "andBetweenParts": "এবং",
+      "orJoin": "অথবা"
     },
     "element": {
       "APPLICATION_METHOD": "প্রয়োগ পদ্ধতি",
@@ -236,10 +299,10 @@
       "VOLUME_PER_PLANT": "প্রতি গাছের পরিমাণ"
     },
     "l2": {
-      "GENERAL_INSTRUCTIONS": "General Instructions",
-      "MEDIA_IMAGE": "Image",
-      "MEDIA_AUDIO": "Audio",
-      "MEDIA_HYPERLINK": "Link"
+      "GENERAL_INSTRUCTIONS": "সাধারণ নির্দেশাবলী",
+      "MEDIA_IMAGE": "ছবি",
+      "MEDIA_AUDIO": "অডিও",
+      "MEDIA_HYPERLINK": "লিঙ্ক"
     }
   },
   "role": {
@@ -251,6 +314,10 @@
   "roleSwitcher": {
     "close": "বন্ধ করুন",
     "activeRoleFallback": "কৃষক",
+    "personalDetails": "ব্যক্তিগত বিবরণ",
+    "shopDetails": "দোকানের বিবরণ",
+    "professionalDetails": "পেশাগত বিবরণ",
+    "onboardedCompanies": "অন্তর্ভুক্ত কোম্পানিগুলি",
     "mySubscriptions": "আমার সাবস্ক্রিপশন",
     "cropsAndCompanies": "শস্য ও কোম্পানি",
     "messageRootsTalk": "মেসেজ রুটসটক",
@@ -264,7 +331,10 @@
     "setupPundit": "বিশেষজ্ঞ হয়ে উঠুন",
     "activeBadge": "সক্রিয়",
     "setupHint": "সেট আপ করুন →",
+    "exclusivityHint": "উপলব্ধ নয় — আপনি একজন {otherRole}",
+    "exclusivityMessage": "আপনি ইতিমধ্যেই একজন {currentRole} । RootsTalk-এ একজন ব্যবহারকারী একই সাথে ডিলার এবং ফ্যাসিলিটেটর হতে পারেন না — তারা অর্ডার-রাউটিং চেইনের বিপরীত প্রান্তে অবস্থান করেন। স্বেচ্ছায় কোনো ভূমিকা শেষ করার সুবিধাটি ভবিষ্যতের একটি আপডেটে আসছে।",
     "helpAndTips": "সাহায্য ও পরামর্শ",
+    "privacyPolicy": "গোপনীয়তা নীতি",
     "aboutRootsTalk": "রুটসটক সম্পর্কে",
     "signOut": "সাইন আউট",
     "about": {
@@ -272,14 +342,7 @@
       "byOrg": "নেয়তিরি আইওয়াফার্ম এগ্রিটেক দ্বারা",
       "version": "সংস্করণ ২.০",
       "visit": "eywa.farm পরিদর্শন করুন →"
-    },
-    "personalDetails": "ব্যক্তিগত বিবরণ",
-    "shopDetails": "দোকানের বিবরণ",
-    "professionalDetails": "পেশাগত বিবরণ",
-    "privacyPolicy": "গোপনীয়তা নীতি",
-    "onboardedCompanies": "অন্তর্ভুক্ত কোম্পানিগুলি",
-    "exclusivityHint": "উপলব্ধ নয় — আপনি একজন {otherRole}",
-    "exclusivityMessage": "আপনি ইতিমধ্যেই একজন {currentRole} । RootsTalk-এ একজন ব্যবহারকারী একই সাথে ডিলার এবং ফ্যাসিলিটেটর হতে পারেন না — তারা অর্ডার-রাউটিং চেইনের বিপরীত প্রান্তে অবস্থান করেন। স্বেচ্ছায় কোনো ভূমিকা শেষ করার সুবিধাটি ভবিষ্যতের একটি আপডেটে আসছে।"
+    }
   },
   "header": {
     "aboutRootsTalk": "রুটসটক সম্পর্কে",
@@ -310,24 +373,24 @@
     "greeting": "স্বাগতম, {name} !",
     "fallbackName": "রুটসটক-এ",
     "subline": "আপনার সম্পূর্ণ কৃষি সঙ্গী",
-    "cta": "চলুন শুরু করা যাক →",
-    "alsoRoles": "আমি একজন ডিলার / ফ্যাসিলিটেটর / বিশেষজ্ঞও।",
-    "tile": {
-      "advisories": {
-        "title": "পরামর্শ",
-        "body": "বিশেষজ্ঞের তত্ত্বাবধানে মৌসুম অনুযায়ী ফসল ব্যবস্থাপনা"
+    "choicePrompt": "আপনি কোথা থেকে শুরু করতে চান?",
+    "choiceFooterHint": "আপনি পরে পাশের ড্রয়ার থেকে আরও ভূমিকা নিতে পারবেন।",
+    "role": {
+      "farmer": {
+        "title": "কৃষক ড্যাশবোর্ড",
+        "body": "আপনার ফসলের গতিবিধি পর্যবেক্ষণ করুন এবং পরামর্শ গ্রহণ করুন"
       },
-      "purchase": {
-        "title": "ক্রয়",
-        "body": "বিশ্বস্ত ডিলারদের মাধ্যমে সুপারিশকৃত উপকরণ অর্ডার করুন।"
+      "dealer": {
+        "title": "আমার দোকান খুলুন",
+        "body": "কৃষকদের কাছ থেকে আদেশ গ্রহণ করুন এবং উপকরণ সরবরাহ করুন"
       },
-      "diagnose": {
-        "title": "নির্ণয় করুন",
-        "body": "নির্দেশিত রোগনির্ণয়ের মাধ্যমে ফসলের সমস্যা শনাক্ত করুন।"
+      "facilitator": {
+        "title": "সহায়ক হিসেবে সাহায্য করুন",
+        "body": "আপনার গ্রামে সাবস্ক্রিপশন প্রচার করে আয় করুন।"
       },
-      "askExpert": {
-        "title": "বিশেষজ্ঞকে জিজ্ঞাসা করুন",
-        "body": "সনদপ্রাপ্ত কৃষিবিদদের কাছ থেকে উত্তর জানুন"
+      "pundit": {
+        "title": "বিশেষজ্ঞ হোন",
+        "body": "আপনার বিশেষজ্ঞতার ক্ষেত্রে কৃষকদের প্রশ্নের উত্তর দিন।"
       }
     }
   },
@@ -386,7 +449,7 @@
       "payMyselfCta": "পরিবর্তে নিজেকেই পরিশোধ করুন →",
       "cancelRequest": "অনুরোধ বাতিল করুন",
       "cancelRequestNote": "সাবস্ক্রিপশনটি বাতিল করতে হলে, প্রথমে এই অনুরোধটি বাতিল করুন।",
-      "confirmCancelSelf": "এই বকেয়া পেমেন্টের সাবস্ক্রিপশনটি বাতিল করতে চান? আপনি পরে আবার সাবস্ক্রাইব করতে পারবেন।",
+      "confirmCancelSelf": "এই বকেয়া সাবস্ক্রিপশনটি বাতিল করতে চান? আপনি পরে আবার সাবস্ক্রাইব করতে পারবেন।",
       "confirmCancelDelegate": "এই পেমেন্টের অনুরোধটি বাতিল করবেন? আপনার সাবস্ক্রিপশনটি চালু থাকবে — আপনি নিজে অথবা অন্য কাউকে দিয়ে পেমেন্ট করাতে পারেন।",
       "errorCancelSelf": "বাতিল করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
       "errorCancelDelegate": "অনুরোধটি বাতিল করা যায়নি।"
@@ -565,6 +628,11 @@
       "diagnose": "ফসলের যেকোনো সমস্যা নির্ণয়ে আপনাকে সাহায্য করার জন্য, আপনি কখন বীজ বপন করেছেন তা আমাদের জানা প্রয়োজন।",
       "setNow": "এখনই শুরুর তারিখ নির্ধারণ করুন",
       "later": "হয়তো পরে"
+    },
+    "noExpertSheet": {
+      "title": "এই কোম্পানি সম্পর্কে এখনও কোনো বিশেষজ্ঞ নেই",
+      "body": "এই কোম্পানি এখনও কোনো প্রধান বিশেষজ্ঞ নিয়োগ করেনি। তারা একজনকে নিয়োগ দিলেই আপনি প্রশ্ন পাঠাতে পারবেন।",
+      "ok": "ঠিক আছে, বুঝেছি।"
     }
   },
   "subscribe": {
@@ -607,9 +675,9 @@
     "delegateSent": {
       "heading": "পেমেন্টের অনুরোধ পাঠানো হয়েছে",
       "askedPrefix": "জিজ্ঞাসা করা হয়েছে",
-      "askedToPay": "to pay ₹{price} for your {crop} advisory from {company}.",
+      "askedToPay": "{company} থেকে আপনার {crop} বিষয়ক পরামর্শের জন্য ₹ {price} পরিশোধ করতে।",
       "recipientFallback": "প্রাপক",
-      "bodyWithoutName": "Your request to pay ₹{price} for the {crop} advisory from {company} has been sent.",
+      "bodyWithoutName": "{company} থেকে {crop} বিষয়ক পরামর্শের জন্য ₹ {price} পরিশোধ করার আপনার অনুরোধ পাঠানো হয়েছে।",
       "hint": "তারা অর্থ পরিশোধ করার সাথে সাথেই আপনাকে জানানো হবে। অনুরোধটির মেয়াদ ২৪ ঘণ্টা পর শেষ হয়ে যাবে; অর্থ পরিশোধ সম্পন্ন হওয়ার সাথে সাথেই আপনার বিজ্ঞপ্তিটি সক্রিয় হয়ে উঠবে।",
       "goHome": "বাড়ি যান",
       "trackRequest": "এই অনুরোধটি অনুসরণ করুন →"
@@ -650,19 +718,19 @@
       "fallbackPackageName": "{crop} পরামর্শ",
       "selectionsLabel": "আপনার পছন্দগুলি",
       "priceLabel": "সাবস্ক্রিপশন মূল্য",
-      "priceAmount": "₹{price}",
+      "priceAmount": "₹ {price}",
       "settingUp": "স্থাপন করা হচ্ছে…",
       "proceedCta": "সবকিছু ঠিক মনে হচ্ছে — পেমেন্ট করতে এগিয়ে যান →"
     },
     "payment": {
       "title": "প্রায় হয়ে এসেছে!",
       "subtitle": "আপনার পরামর্শের জন্য কীভাবে অর্থ প্রদান করবেন তা বেছে নিন।",
-      "attributionPrefix": "₹{price} is paid to",
+      "attributionPrefix": "₹ {price} পরিশোধ করা হয়",
       "attributionMiddle": "সফটওয়্যার অবকাঠামোর জন্য। এটি হলো",
       "attributionNot": "না",
       "attributionSuffix": "{company} -কে প্রদান করা হয়েছে।",
       "attributionCompanyFallback": "কোম্পানি",
-      "payNow": "Pay ₹{price} now",
+      "payNow": "এখনই ₹ {price} পরিশোধ করুন",
       "payNowBody": "পেমেন্টের পর তাৎক্ষণিক অ্যাক্টিভেশন",
       "payUpi": "UPI দিয়ে পেমেন্ট করুন →",
       "stagingBypass": "⚙ স্টেজিং: Razorpay এড়িয়ে যান, এখনই সক্রিয় করুন",
@@ -910,7 +978,7 @@
           "routed": "রুট করা হয়েছে",
           "approval": "অনুমোদনের জন্য",
           "returned": "ফেরত দেওয়া হয়েছে",
-          "pickup": "Ready for pickup"
+          "pickup": "পিকআপের জন্য প্রস্তুত"
         },
         "historyChip": "📁 ইতিহাস",
         "approvalPeek": "অনুমোদন",
@@ -1005,22 +1073,22 @@
         "fertilizer": "সার",
         "fallback": "ইনপুট"
       },
-      "tabDealers": "Dealers ({count})",
-      "tabFacilitators": "Facilitators ({count})",
-      "emptyDealers": "No dealers found nearby.",
-      "emptyFacilitators": "No facilitators found nearby.",
-      "tryPhoneHint": "Try entering a phone number below."
+      "tabDealers": "ডিলার ( {count} )",
+      "tabFacilitators": "সহায়কগণ ( {count} )",
+      "emptyDealers": "আশেপাশে কোনো ডিলার পাওয়া যায়নি।",
+      "emptyFacilitators": "আশেপাশে কোনো সহায়তাকারী পাওয়া যায়নি।",
+      "tryPhoneHint": "নিচে একটি ফোন নম্বর প্রবেশ করানোর চেষ্টা করুন।"
     },
     "forward": {
       "headerTitle": "ফেরত পাঠানো আইটেমগুলি",
       "postponeOnlyReady": "{count, plural, one {১টি স্থগিত আইটেম পাঠানোর জন্য প্রস্তুত (স্থগিত বাতিল করুন + বান্ডেল করুন)।} other {# স্থগিত আইটেমগুলো পাঠানোর জন্য প্রস্তুত (স্থগিত বাতিল করুন + বান্ডেল করুন)।}}",
       "readyToForward": "{count, plural, one {১টি আইটেম পাঠানোর জন্য প্রস্তুত।} other {# প্রেরণের জন্য প্রস্তুত আইটেমসমূহ}}",
-      "pickHint": " Enter the dealer's or facilitator's phone number below.",
+      "pickHint": " নিচে ডিলার বা সহায়তাকারীর ফোন নম্বরটি লিখুন।",
       "brandLockedTitle": "ব্র্যান্ড-লকড অর্ডার",
-      "tabDealers": "ডিলার ( {count} )",
-      "tabFacilitators": "সহায়তাকারী ( {count} )",
-      "emptyDealers": "এই মুহূর্তে কোনো ডিলার উপলব্ধ নেই।",
-      "emptyFacilitators": "এই মুহূর্তে কোনো সহায়ক উপলব্ধ নেই।",
+      "customPhoneLabel": "ডিলার / সহায়তাকারীর ফোন",
+      "customPhonePlaceholder": "১০-সংখ্যার ফোন নম্বর",
+      "phoneChecking": "যাচাই করা হচ্ছে…",
+      "sendOrder": "অর্ডার পাঠান",
       "nudgeTitle": "স্থগিত আইটেমগুলোও পাঠাবেন?",
       "nudgeBodyPrefix": "আপনার আছে",
       "nudgeBodyMiddle": "এখনও বর্তমান ডিলারের সাথেই আছি। এগুলো বাতিল করে অন্য প্যাকেজের সাথে যুক্ত করতে চাই।",
@@ -1031,20 +1099,16 @@
       "errorTitle": "এই অর্ডারটি খোলা যায়নি",
       "errorLoad": "এই অর্ডারটি এই মুহূর্তে ফরোয়ার্ড করা যাবে না। এটির মেয়াদ হয়তো শেষ হয়ে গেছে অথবা এটি ইতোমধ্যে সম্পন্ন করা হয়েছে।",
       "emptyTitle": "ফরোয়ার্ড করার কিছু নেই।",
-      "emptyBody": "এই অর্ডারে এমন কোনো ফেরত বা স্থগিত পণ্য নেই যা এই মুহূর্তে অন্য কোনো ডিলারের কাছে পাঠানো যেতে পারে।",
+      "emptyBody": "এই অর্ডারে ফেরত আসা বা স্থগিত হওয়া এমন কোনো পণ্য নেই যা এই মুহূর্তে অন্য কোনো ডিলারের কাছে পাঠানো যেতে পারে।",
       "backToManage": "ব্যবস্থাপনায় ফিরে যান",
-      "customPhoneLabel": "Dealer / Facilitator phone",
-      "customPhonePlaceholder": "10-digit phone number",
-      "phoneChecking": "Checking…",
-      "sendOrder": "Send Order",
       "lookup": {
-        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
-        "self": "You cannot send the order to yourself. Enter someone else's number.",
-        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
-        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
-        "roleDealer": "Dealer",
-        "roleFacilitator": "Facilitator",
-        "companyFallback": "the company"
+        "notRegistered": "এই নম্বরে কোনো রুটসটক ব্যবহারকারী পাওয়া যায়নি। তাদেরকে প্রথমে নিবন্ধন করতে বলুন।",
+        "self": "আপনি নিজের কাছে অর্ডারটি পাঠাতে পারবেন না। অন্য কারো নম্বর দিন।",
+        "notDealerOrFacilitator": "এই ব্যক্তি RootsTalk-এ ডিলার বা ফ্যাসিলিটেটর হিসেবে নিবন্ধিত নন। প্রথমে তাঁকে 'ডিলার হন' বা 'ফ্যাসিলিটেটর হন'-এর মাধ্যমে নিবন্ধন করতে বলুন।",
+        "dealerNotOnboarded": "এই অর্ডারে একটি ব্র্যান্ড-লক করা আইটেম রয়েছে। এই ডিলারকে {client} অনবোর্ড করেনি, তাই অর্ডারটি তাদের কাছে পাঠানো যাবে না। একজন ফ্যাসিলিটেটরের কাছে পাঠান অথবা অন্য একজন ডিলার বেছে নিন।",
+        "roleDealer": "ডিলার",
+        "roleFacilitator": "সহায়ক",
+        "companyFallback": "কোম্পানি"
       }
     },
     "pickup": {
@@ -1124,7 +1188,7 @@
   },
   "farmerHistory": {
     "headerTitle": "শস্যের ইতিহাস",
-    "errorUnsubscribe": "সদস্যতা বাতিল করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "errorUnsubscribe": "আনসাবস্ক্রাইব করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
     "empty": "এখনো কোনো ফসলের রেকর্ড নেই",
     "showingFromPrefix": "নিবন্ধিত ফসল দেখানো হচ্ছে",
     "active": "সক্রিয় সাবস্ক্রিপশন",
@@ -1166,10 +1230,10 @@
     "cropAgeLabel": "ফসলের বয়স (ঐচ্ছিক)",
     "cropAgePlaceholder": "যেমন 45 DAS, রোপণের 3 সপ্তাহ পরে",
     "describeDetailLabel": "বিস্তারিত বর্ণনা করুন (ঐচ্ছিক)",
-    "describeDetailPlaceholder": "এটা কখন শুরু হয়েছিল? গাছের কোন অংশে? মাঠের কতটুকু অংশ ক্ষতিগ্রস্ত হয়েছে?",
+    "describeDetailPlaceholder": "এটি কখন শুরু হয়েছিল? গাছের কোন অংশে? মাঠের কতটুকু অংশ ক্ষতিগ্রস্ত হয়েছে?",
     "photographsLabel": "ছবি",
     "photoCount": "( {count} / {max} ; কমপক্ষে ১ আবশ্যক)",
-    "removePhotoAria": "ছবিটি সরান",
+    "removePhotoAria": "ছবি সরান",
     "uploading": "আপলোড হচ্ছে…",
     "addPhoto": "ছবি যোগ করুন",
     "voiceNoteLabel": "ভয়েস নোট (ঐচ্ছিক)",
@@ -1219,7 +1283,7 @@
     "affectedPlantsPlaceholder": "একটি সংখ্যা লিখুন",
     "affectedPlantsHelp": "আপনার প্রশ্নটি কোনো কীটপতঙ্গ বা রোগব্যাধি সম্পর্কিত না হলে এই স্থানটি খালি রাখুন।",
     "affectedPlantsRange": "1 এবং {max} এর মধ্যে একটি সংখ্যা লিখুন।",
-    "affectedPlantsMin": "অন্তত ১টি লিখুন।"
+    "affectedPlantsMin": "অন্তত ১ লিখুন।"
   },
   "farmerQueries": {
     "headerTitle": "আমার বিশেষজ্ঞ প্রশ্নাবলী",
@@ -1246,8 +1310,8 @@
     "askedOn": "{date} -এ জিজ্ঞাসা করা হয়েছিল।",
     "awaitingReply": "একজন বিশেষজ্ঞ শীঘ্রই উত্তর দেবেন।",
     "closedNoResponse": "কোনো প্রতিক্রিয়া ছাড়াই বন্ধ করা হয়েছে।",
-    "viewOriginal": "View original",
-    "viewTranslated": "View translated"
+    "viewOriginal": "মূল দেখুন",
+    "viewTranslated": "অনুবাদ দেখুন"
   },
   "farmerProfile": {
     "headerTitle": "আমার প্রোফাইল",
@@ -1335,12 +1399,15 @@
       "onboardingBody": "আপনি আপনার দোকানের প্রোফাইল তৈরি করে ফেলেছেন — খুব ভালো। কৃষকদের কাছ থেকে অর্ডার পেতে হলে, আপনাকে অন্তত একটি রুটসটক কোম্পানির সাথে যুক্ত হতে হবে। আপনি যে কোম্পানির হয়ে বিক্রি করেন, তাদের যেকোনো একজন ফিল্ড ম্যানেজারের সাথে আপনার নিবন্ধিত ফোন নম্বরটি শেয়ার করুন। তাদের মধ্যে কেউ আপনাকে যুক্ত করলেই, আপনার নিচের টাইলগুলোতে সরাসরি কার্যকলাপ দেখানো শুরু হবে।",
       "reviewProfile": "প্রোফাইল পর্যালোচনা করুন",
       "myDealershipsBtn": "আমার ডিলারশিপ",
+      "invitationsCount": "{count, plural, one {১. প্রবর্তকের আমন্ত্রণ} other {# প্রমোটারদের আমন্ত্রণ}}",
+      "invitationsHint": "একটি কোম্পানি আপনাকে তাদের প্রোমোটার হিসেবে চায়।",
+      "invitationsViewCta": "দেখুন",
       "pendingOrders": "বিচারাধীন আদেশ",
       "tapToProcess": "প্রক্রিয়া করতে ট্যাপ করুন →",
       "postponedItems": "স্থগিত আইটেম",
       "tapToResolve": "সমাধান করতে ট্যাপ করুন →",
       "paymentRequests": "অর্থপ্রদানের অনুরোধ",
-      "farmersWaiting": "{count, plural, one {১ জন কৃষক আপনার অর্থপ্রদানের জন্য অপেক্ষা করছেন।} other {# কৃষকরা আপনার অর্থ পরিশোধের জন্য অপেক্ষা করছে}}",
+      "farmersWaiting": "{count, plural, one {১ জন কৃষক আপনার অর্থপ্রদানের জন্য অপেক্ষা করছেন।} other {# কৃষকরা আপনার অর্থ পরিশোধের অপেক্ষায় আছে}}",
       "tiles": {
         "myFarmers": "আমার কৃষকরা",
         "myFarmersSubtitle": "পদোন্নতিপ্রাপ্ত",
@@ -1362,13 +1429,10 @@
         "unreadCount": "{count} অপঠিত",
         "brandForms": "ব্র্যান্ড জমা",
         "brandFormsSubtitle": "ব্র্যান্ডটি খুঁজে পাচ্ছেন না? পাঠিয়ে দিন।"
-      },
-      "invitationsCount": "{গণনা, বহুবচন, এক {১টি প্রোমোটার আমন্ত্রণ} অন্যান্য {#টি প্রোমোটার আমন্ত্রণ}}",
-      "invitationsHint": "একটি কোম্পানি আপনাকে তাদের প্রোমোটার হিসেবে চায়।",
-      "invitationsViewCta": "দেখুন"
+      }
     },
     "payments": {
-      "headerTitle": "কৃষকদের অর্থপ্রদান",
+      "headerTitle": "কৃষকদের অর্থ প্রদান",
       "errorVerify": "পেমেন্ট যাচাইকরণ ব্যর্থ হয়েছে।",
       "errorInit": "পেমেন্ট শুরু করা যায়নি।",
       "empty": "এখনও কোনো অর্থপ্রদানের অনুরোধ আসেনি",
@@ -1391,7 +1455,8 @@
         "pending": "বিচারাধীন",
         "postponed": "স্থগিত",
         "farmer": "কৃষকের সাথে",
-        "packing": "প্যাকিং"
+        "packing": "প্যাকিং",
+        "training": "প্রশিক্ষণ"
       },
       "historyChip": "📁 ইতিহাস",
       "emptyPill": "{pillName} এর অধীনে কিছুই নেই",
@@ -1448,10 +1513,10 @@
         "callFarmerAria": "কৃষককে ডাকুন",
         "callFacilitatorAria": "কল ফ্যাসিলিটেটর",
         "cropContext": {
-          "acres": "{count, plural, one {1 acre} other {# acres}}",
-          "plants": "{count, plural, one {1 plant} other {# plants}}",
-          "ageDays": "{count, plural, one {1 day old} other {# days old}}",
-          "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+          "acres": "{count, plural, one {১ একর} other {# একর}}",
+          "plants": "{count, plural, one {১টি গাছ} other {# গাছপালা}}",
+          "ageDays": "{count, plural, one {১ দিন বয়সী} other {# দিন বয়সী}}",
+          "ageYears": "{count, plural, one {১ বছর বয়সী} other {# বছর বয়সী}}"
         }
       },
       "chunk": {
@@ -1544,6 +1609,34 @@
       "soldLine": "{sold} হয়েছে",
       "soldWithUnavailable": "{sold} বিক্রি হয়ে গেছে, {na} অনুপলব্ধ"
     },
+    "onboardedCompanies": {
+      "headerTitle": "অন্তর্ভুক্ত কোম্পানিগুলি",
+      "promoterBadge": "প্রবর্তক",
+      "stepDown": "পদত্যাগ করুন",
+      "stepDownConfirm": "এই কোম্পানিতে প্রোমোটার পদ থেকে সরে দাঁড়ালেও, আপনি ডিলার হিসেবেই তালিকাভুক্ত থাকবেন।",
+      "errorStepDown": "নিচে নামা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+      "callAria": "{company} কে কল করুন",
+      "websiteAria": "{company} ওয়েবসাইট খুলুন",
+      "emptyTitle": "এখনো কোনো কোম্পানি নেই",
+      "emptyBody": "এখনো কোনো কোম্পানি আপনাকে ডিলার হিসেবে অন্তর্ভুক্ত করেনি। আপনি যে কোম্পানিতে কাজ করতে চান, সেখানকার একজন ফিল্ড ম্যানেজারকে আপনাকে অন্তর্ভুক্ত করার জন্য বলুন।"
+    },
+    "promoterInvitations": {
+      "headerTitle": "প্রোমোটার আমন্ত্রণ",
+      "emptyTitle": "কোনো অপেক্ষমান আমন্ত্রণ নেই",
+      "invitationSent": "{date} পাঠানো হয়েছে",
+      "description": "এই কোম্পানি আপনাকে তাদের প্রোমোটার হিসেবে চায় — কৃষকদের সাবস্ক্রিপশনে যুক্ত করতে এবং আপনার নেটওয়ার্ক থেকে আয় করতে। একজন ডিলার হিসেবে, আপনি একই সাথে একাধিক কোম্পানিতে প্রোমোটার হতে পারেন।",
+      "acceptCta": "✓ গ্রহণ করুন",
+      "declineCta": "✗ প্রত্যাখ্যান",
+      "confirmAcceptTitle": "{company} তে প্রোমোটারের ভূমিকা গ্রহণ করবেন?",
+      "confirmAcceptBody": "আপনি এই কোম্পানিতে একজন প্রোমোটার হবেন। আপনি অন্য কোম্পানিতেও প্রোমোটার হতে পারেন — এখানে যোগদান করলে অন্য কোনো প্রোমোটার পদের ওপর এর কোনো প্রভাব পড়বে না।",
+      "confirmAcceptCta": "হ্যাঁ, গ্রহণ করুন",
+      "confirmRejectTitle": "{company} এর আমন্ত্রণ প্রত্যাখ্যান করবেন?",
+      "confirmRejectBody": "কোম্পানিকে জানানো হবে। তারা আপনাকে পরে আবার আমন্ত্রণ জানাতে পারে।",
+      "confirmRejectCta": "হ্যাঁ, প্রত্যাখ্যান করুন",
+      "confirmCancel": "বাতিল করুন",
+      "confirmBusy": "সঞ্চয়…",
+      "errorGeneric": "কিছু একটা ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+    },
     "postponed": {
       "headerTitle": "স্থগিত আইটেম",
       "intro": "প্রতি অর্ডারে একটি কার্ড। প্রতিটি স্থগিত আইটেমকে 'উপলব্ধ', 'অনুপলব্ধ', বা 'পরে' বিকল্পগুলির মাধ্যমে সমাধান করুন (মূল সময়সীমার মধ্যে অপেক্ষা করান)।",
@@ -1633,12 +1726,28 @@
         "mixedHeader": "মিশ্র সার (যেকোনো একটি বেছে নিন বা বাদ দিন)",
         "mixedEmpty": "এই মাত্রার জন্য কোনো মিশ্র সার উপযুক্ত নয়।",
         "mixedSummary": "{n} : {p} : {k} · প্রায় {kg} কেজি",
-        "mixedTotalAffix": "{kg} কেজি মোট",
+        "mixedTotalAffix": "{kg} মোট কেজি",
         "brandPicked": "ব্র্যান্ড: {name} · পরিবর্তন করতে ট্যাপ করুন",
         "pickBrand": "ব্র্যান্ড বাছাই করুন",
         "skipMixed": "মিশ্র এড়িয়ে যান",
         "straightHeader": "সরাসরি সার (অবশিষ্ট শূন্যস্থান: {n} N · {p} P · {k} K)",
+        "twoHopHint": "প্রতিটি সার থেকে দুটি করে বাছাই করুন: প্রথমে ধরন (পুষ্টির অনুপাত অনুযায়ী), তারপর ব্র্যান্ড।",
+        "mixedHeaderV2": "পুষ্টি উপাদানের অনুপাত অনুযায়ী একটি মিশ্র সারের ধরণ বেছে নিন।",
+        "mixedAccordionHeader": "মিশ্র সার",
+        "mixedAccordionTapHint": "ধরন বেছে নিতে ট্যাপ করুন",
+        "mixedDisabledHint": "মিশ্র সার বাছাই করার জন্য প্রথমে সাধারণ সারগুলো সরিয়ে ফেলুন।",
+        "straightSectionHeader": "সরাসরি সার",
+        "straightClassHeader": "{letter} — {kg} কেজি এখনও প্রয়োজন",
+        "straightClassTapHint": "ধরন বেছে নিতে ট্যাপ করুন",
+        "changeMixedFertiliser": "মিশ্র সার পরিবর্তন করুন",
+        "changeStraightFertiliser": "{letter} সার পরিবর্তন করুন",
+        "goToBrands": "ব্র্যান্ডগুলিতে যান",
+        "volumeLabel": "আয়তন (কেজি)",
+        "priceLabel": "মূল্য (₹)",
+        "commitError": "এনপিকে নির্বাচনটি চূড়ান্ত করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
         "straightOnly": "(শুধুমাত্র {letter} )",
+        "allCoveredByMixed": "মিক্সড ডায়েটে সব N, P, K অন্তর্ভুক্ত — কোনো স্ট্রেইট ডায়েটের প্রয়োজন নেই।",
+        "uncoveredWarning": "এখনও অনাবৃত: {nutrients} । প্রতিটির জন্য একটি করে বিকল্প বেছে নিন, অথবা এই আইটেমটি অনুপলব্ধ হিসেবে চিহ্নিত করুন।",
         "committing": "প্রতিশ্রুতিবদ্ধ হওয়া…",
         "commitCta": "এনপিকে নির্বাচন প্রতিশ্রুতিবদ্ধ করুন"
       },
@@ -1655,17 +1764,17 @@
         "checking": "যাচাই করা হচ্ছে…",
         "markOptionAvailable": "মার্ক করার বিকল্প উপলব্ধ আছে",
         "markNotAvailable": "মার্ক উপলব্ধ নয়",
-        "andApplyTogether": "এগুলি কৃষক একসাথে প্রয়োগ করেন।",
-        "orEitherOr": "যেকোনো একটি বেছে নিন — অন্যটির প্রয়োজন নেই।",
-        "changeSelection": "নির্বাচন পরিবর্তন করুন",
-        "changing": "রিসেট হচ্ছে…",
+        "andApplyTogether": "কৃষক এগুলো একসাথে প্রয়োগ করেন।",
+        "orEitherOr": "যেকোনো একটি বেছে নিন — বিকল্পটির প্রয়োজন নেই।",
         "andPrefix": "এবং",
-        "orPrefix": "বা"
+        "orPrefix": "অথবা",
+        "changeSelection": "নির্বাচন পরিবর্তন করুন",
+        "changing": "রিসেট করা হচ্ছে…"
       },
       "sections": {
         "relations": "একাধিক ধাপের সুপারিশ ( {count} )",
         "standalone": "স্বতন্ত্র আইটেম ( {count} )",
-        "resolvePostponed": "এই স্থগিত বিষয়টি সমাধান করুন",
+        "resolvePostponed": "এই স্থগিত আইটেমটি সমাধান করুন",
         "consolidatedBrands": "একত্রিত ব্র্যান্ড",
         "acrossTimelines": "সময়রেখা জুড়ে",
         "linesCount": "{count, plural, one {১ লাইন} other {# লাইন}}"
@@ -1883,7 +1992,7 @@
         "title": "পরিমাণ ও দাম লিখুন",
         "unitLabel": "ইউনিট *",
         "qtyLabel": "পরিমাণ *",
-        "qtyPlaceholder": "পরিমাণ {unit}",
+        "qtyPlaceholder": "{unit} এ পরিমাণ",
         "totalPriceLabel": "মোট মূল্য (₹)",
         "totalPricePlaceholder": "ঐচ্ছিক",
         "sending": "প্রেরণ করা হচ্ছে…",
@@ -2033,6 +2142,11 @@
       "emptyTitle": "এখনো কোনো পদোন্নতিপ্রাপ্ত কৃষক নেই",
       "emptyHint": "আপনার পৃষ্ঠপোষকতা করা কৃষকদের এখানে দেখানো হবে।",
       "unknownFarmer": "অজ্ঞাত কৃষক",
+      "acresLabel": "{count, plural, one {১ একর} other {# একর}}",
+      "plantsLabel": "{count, plural, one {১টি গাছ} other {# গাছপালা}}",
+      "startedLabel": "{date} -এ শুরু হয়েছে",
+      "plantedLabel": "{year} রোপণ করা হয়েছিল",
+      "callBtnAria": "{name} কে ফোন করুন",
       "detail": {
         "headerTitle": "কৃষক পরামর্শ",
         "errorTitleWaiting": "কৃষকের জন্য অপেক্ষা করা",
@@ -2065,49 +2179,21 @@
       "headerTitle": "আগত সতর্কতা",
       "typeStartDate": "শুরুর তারিখ",
       "typeInput": "ইনপুট",
+      "pillStartDate": "শুরুর তারিখ",
+      "pillInput": "ইনপুট",
+      "tabsAriaLabel": "ধরণ অনুযায়ী অ্যালার্ট ফিল্টার করুন",
       "alertTypeBadge": "{type} সতর্কতা",
       "errorLoad": "লোড করা যায়নি। পুনরায় চেষ্টা করতে টানুন।",
       "emptyTitle": "কোনো আগত সতর্কতা নেই",
       "emptyBody": "আপনার উদ্দেশ্যে পাঠানো সতর্কবার্তাগুলো এখানে প্রদর্শিত হয়। কৃষক তার দিক থেকে কাজটি সম্পন্ন হিসেবে চিহ্নিত করার সাথে সাথেই এগুলো অদৃশ্য হয়ে যায়।",
+      "emptyStartDate": "এই মুহূর্তে শুরুর তারিখের কোনো অ্যালার্ট নেই। অপেক্ষাধীন ইনপুট অ্যালার্টগুলো দেখতে ইনপুট-এ যান।",
+      "emptyInput": "এই মুহূর্তে কোনো ইনপুট অ্যালার্ট নেই। অপেক্ষাধীন শুরুর তারিখের অ্যালার্টগুলো দেখতে 'শুরুর তারিখ'-এ যান।",
       "countAndHint": "{count, plural, one {১টি অপেক্ষমান সতর্কতা। কৃষককে ফোন করতে ফোন নম্বরটিতে ট্যাপ করুন।} other {# অপেক্ষমান সতর্কতা। কৃষককে ফোন করতে ফোন নম্বরটিতে ট্যাপ করুন।}}",
       "unnamedFarmer": "নামহীন কৃষক",
       "cropLabel": "ফসল:",
       "callBtn": "📞 ফোন করুন {phone}",
-      "pillStartDate": "শুরুর তারিখ",
-      "pillInput": "ইনপুট",
-      "tabsAriaLabel": "ধরণ অনুযায়ী অ্যালার্ট ফিল্টার করুন",
-      "emptyStartDate": "এই মুহূর্তে শুরুর তারিখের কোনো অ্যালার্ট নেই। অপেক্ষাধীন ইনপুট অ্যালার্টগুলো দেখতে ইনপুট-এ যান।",
-      "emptyInput": "এই মুহূর্তে কোনো ইনপুট অ্যালার্ট নেই। অপেক্ষাধীন শুরুর তারিখের অ্যালার্টগুলো দেখতে 'শুরুর তারিখ'-এ যান।",
       "callBtnLabel": "কল করুন",
       "callBtnAria": "{name} কে ফোন করুন"
-    },
-    "promoterInvitations": {
-      "headerTitle": "প্রোমোটার আমন্ত্রণ",
-      "emptyTitle": "কোনো অপেক্ষমান আমন্ত্রণ নেই",
-      "invitationSent": "{date} পাঠানো হয়েছে",
-      "description": "এই কোম্পানি আপনাকে তাদের প্রোমোটার হিসেবে চায় — কৃষকদের সাবস্ক্রিপশনে যুক্ত করতে এবং আপনার নেটওয়ার্ক থেকে আয় করতে। একজন ডিলার হিসেবে, আপনি একই সাথে একাধিক কোম্পানিতে প্রোমোটার হতে পারেন।",
-      "acceptCta": "✓ গ্রহণ করুন",
-      "declineCta": "✗ প্রত্যাখ্যান",
-      "confirmAcceptTitle": "{company} তে প্রোমোটারের ভূমিকা গ্রহণ করবেন?",
-      "confirmAcceptBody": "আপনি এই কোম্পানিতে একজন প্রোমোটার হবেন। আপনি অন্য কোম্পানিতেও প্রোমোটার হতে পারেন — এখানে যোগদান করলে অন্য কোনো প্রোমোটার পদের ওপর এর কোনো প্রভাব পড়বে না।",
-      "confirmAcceptCta": "হ্যাঁ, গ্রহণ করুন",
-      "confirmRejectTitle": "{company} এর আমন্ত্রণ প্রত্যাখ্যান করবেন?",
-      "confirmRejectBody": "কোম্পানিকে জানানো হবে। তারা আপনাকে পরে আবার আমন্ত্রণ জানাতে পারে।",
-      "confirmRejectCta": "হ্যাঁ, প্রত্যাখ্যান করুন",
-      "confirmCancel": "বাতিল করুন",
-      "confirmBusy": "সঞ্চয়…",
-      "errorGeneric": "কিছু একটা ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
-    },
-    "onboardedCompanies": {
-      "headerTitle": "অন্তর্ভুক্ত কোম্পানিগুলি",
-      "promoterBadge": "প্রবর্তক",
-      "stepDown": "পদত্যাগ করুন",
-      "stepDownConfirm": "এই কোম্পানিতে প্রোমোটার পদ থেকে সরে দাঁড়ালেও, আপনি ডিলার হিসেবেই তালিকাভুক্ত থাকবেন।",
-      "errorStepDown": "নিচে নামা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-      "callAria": "{company} কে কল করুন",
-      "websiteAria": "{company} ওয়েবসাইট খুলুন",
-      "emptyTitle": "এখনো কোনো কোম্পানি নেই",
-      "emptyBody": "এখনো কোনো কোম্পানি আপনাকে ডিলার হিসেবে অন্তর্ভুক্ত করেনি। আপনি যে কোম্পানিতে কাজ করতে চান, সেখানকার একজন ফিল্ড ম্যানেজারকে আপনাকে অন্তর্ভুক্ত করার জন্য বলুন।"
     },
     "brandForms": {
       "title": "ব্র্যান্ড জমা",
@@ -2162,34 +2248,34 @@
       "tileServiceProfileHint": "আমার ঘোষণা",
       "tileAlerts": "আমি যে সতর্কতাগুলো পাই",
       "tileAlertsHint": "{count} অপঠিত",
-      "tileSeedOrders": "বীজের অর্ডার",
-      "tileSeedOrdersHint": "{count, plural, =0 {কেউ অপেক্ষা করছে না} one {১ অপেক্ষারত} other {# অপেক্ষা}}",
-      "invitationsCount": "{গণনা, বহুবচন, এক {১টি প্রোমোটার আমন্ত্রণ} অন্যান্য {#টি প্রোমোটার আমন্ত্রণ}}",
+      "invitationsCount": "{count, plural, one {১. প্রবর্তকের আমন্ত্রণ} other {# প্রমোটারদের আমন্ত্রণ}}",
       "invitationsHint": "একটি কোম্পানি আপনাকে তাদের প্রোমোটার হিসেবে চায়।",
-      "invitationsViewCta": "দেখুন"
+      "invitationsViewCta": "দেখুন",
+      "tileSeedOrders": "বীজের অর্ডার",
+      "tileSeedOrdersHint": "{count, plural, =0 {কেউ অপেক্ষা করছে না} one {১ অপেক্ষারত} other {# অপেক্ষা}}"
     },
     "alertsIncoming": {
       "headerTitle": "আগত সতর্কতা",
       "typeStartDate": "শুরুর তারিখ",
       "typeInput": "ইনপুট",
+      "pillStartDate": "শুরুর তারিখ",
+      "pillInput": "ইনপুট",
+      "tabsAriaLabel": "ধরণ অনুযায়ী অ্যালার্ট ফিল্টার করুন",
       "alertTypeBadge": "{type} সতর্কতা",
       "errorLoad": "লোড করা যায়নি। পুনরায় চেষ্টা করতে টানুন।",
       "emptyTitle": "কোনো আগত সতর্কতা নেই",
       "emptyBody": "আপনার উদ্দেশ্যে পাঠানো সতর্কবার্তাগুলো এখানে প্রদর্শিত হয়। কৃষক তার দিক থেকে কাজটি সম্পন্ন হিসেবে চিহ্নিত করার সাথে সাথেই এগুলো অদৃশ্য হয়ে যায়।",
+      "emptyStartDate": "এই মুহূর্তে শুরুর তারিখের কোনো অ্যালার্ট নেই। অপেক্ষাধীন ইনপুট অ্যালার্টগুলো দেখতে ইনপুট-এ যান।",
+      "emptyInput": "এই মুহূর্তে কোনো ইনপুট অ্যালার্ট নেই। অপেক্ষাধীন শুরুর তারিখের অ্যালার্টগুলো দেখতে 'শুরুর তারিখ'-এ যান।",
       "countAndHint": "{count, plural, one {১টি অপেক্ষমান সতর্কতা। কৃষককে ফোন করতে ফোন নম্বরটিতে ট্যাপ করুন।} other {# অপেক্ষমান সতর্কতা। কৃষককে ফোন করতে ফোন নম্বরটিতে ট্যাপ করুন।}}",
       "unnamedFarmer": "নামহীন কৃষক",
       "cropLabel": "ফসল:",
       "callBtn": "📞 ফোন করুন {phone}",
-      "pillStartDate": "শুরুর তারিখ",
-      "pillInput": "ইনপুট",
-      "tabsAriaLabel": "ধরণ অনুযায়ী অ্যালার্ট ফিল্টার করুন",
-      "emptyStartDate": "এই মুহূর্তে শুরুর তারিখের কোনো অ্যালার্ট নেই। অপেক্ষাধীন ইনপুট অ্যালার্টগুলো দেখতে ইনপুট-এ যান।",
-      "emptyInput": "এই মুহূর্তে কোনো ইনপুট অ্যালার্ট নেই। অপেক্ষাধীন শুরুর তারিখের অ্যালার্টগুলো দেখতে 'শুরুর তারিখ'-এ যান।",
       "callBtnLabel": "কল করুন",
       "callBtnAria": "{name} কে ফোন করুন"
     },
     "payments": {
-      "headerTitle": "কৃষকদের অর্থপ্রদান",
+      "headerTitle": "কৃষকদের অর্থ প্রদান",
       "errorVerify": "পেমেন্ট যাচাইকরণ ব্যর্থ হয়েছে।",
       "errorInitiate": "পেমেন্ট শুরু করা যায়নি।",
       "razorpayName": "rootsTALK.in",
@@ -2312,6 +2398,12 @@
       "pillRouted": "রুট করা হয়েছে",
       "pillReturned": "ফেরত দেওয়া হয়েছে",
       "pillFarmer": "কৃষকের সাথে",
+      "pillPickup": "পিকআপের জন্য প্রস্তুত",
+      "pillTraining": "প্রশিক্ষণ",
+      "pickupBodyFromDealer": "{dealer} এর কাছ থেকে সংগ্রহ করে {farmer} এর কাছে পৌঁছে দিন।",
+      "pickupBodyWithYou": "আপনার সাথে — {farmer} এর কাছে পৌঁছে দিন।",
+      "pickupCta": "আমি এটা তুলে নিয়েছি",
+      "pickupErrorMark": "মার্কটি গ্রহণ করা হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
       "history": "📁 ইতিহাস",
       "emptyInPill": "{pill} এর অধীনে কিছুই নেই",
       "subOrderHeader": "উপ-আদেশ · {date}",
@@ -2342,11 +2434,6 @@
       "callBtn": "📞 কল করুন",
       "forwardBtn": "ফরোয়ার্ড",
       "errorReroute": "পথ পরিবর্তন করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-      "pillPickup": "Ready for pickup",
-      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
-      "pickupBodyWithYou": "With you — deliver to {farmer}.",
-      "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
       "seedTag": "🌱 বীজ",
       "seedFarmArea": "{acres} একর",
       "seedNewOrderHint": "নতুন বীজের অর্ডার — এটি গ্রহণ করতে রাজি হন, অথবা সাহায্য করতে না পারলে প্রত্যাখ্যান করুন।",
@@ -2456,6 +2543,43 @@
       "confirmCta": "নিশ্চিত করুন এবং চালিয়ে যান",
       "backToFarmerHome": "কৃষকের বাড়িতে ফিরে যান"
     },
+    "onboardedCompanies": {
+      "headerTitle": "অন্তর্ভুক্ত কোম্পানিগুলি",
+      "invitationsTitle": "প্রোমোটার আমন্ত্রণ",
+      "invitationsBody": "এই কোম্পানিগুলো আপনাকে তাদের প্রোমোটার হওয়ার জন্য আমন্ত্রণ জানাচ্ছে। আপনি একবারে একটি কোম্পানিতেই প্রোমোটার হতে পারবেন।",
+      "invitationSent": "{date} পাঠানো হয়েছে",
+      "declineCta": "পতন",
+      "acceptCta": "গ্রহণ করুন",
+      "actionAccept": "গ্রহণ করুন",
+      "actionDecline": "পতন",
+      "errorAction": "আমন্ত্রণটি {action} যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+      "promoterBadge": "প্রবর্তক",
+      "promoterPunditBadge": "প্রোমোটার-পণ্ডিত",
+      "stepDown": "পদত্যাগ করুন",
+      "stepDownConfirm": "এই কোম্পানিতে প্রোমোটার পদ থেকে পদত্যাগ করছেন? আপনাকে ফ্যাসিলিটেটর হিসেবেই নিযুক্ত রাখা হবে।",
+      "errorStepDown": "নিচে নামা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+      "callAria": "{company} কে কল করুন",
+      "websiteAria": "{company} ওয়েবসাইট খুলুন",
+      "emptyTitle": "এখনো কোনো কোম্পানি নেই",
+      "emptyBody": "এখনো কোনো কোম্পানি আপনাকে ফ্যাসিলিটেটর হিসেবে অন্তর্ভুক্ত করেনি। আপনি যে কোম্পানিতে কাজ করতে চান, সেখানকার একজন ফিল্ড ম্যানেজারকে আপনাকে অন্তর্ভুক্ত করার জন্য বলুন।"
+    },
+    "promoterInvitations": {
+      "headerTitle": "প্রোমোটার আমন্ত্রণ",
+      "emptyTitle": "কোনো অপেক্ষমান আমন্ত্রণ নেই",
+      "invitationSent": "{date} পাঠানো হয়েছে",
+      "description": "এই কোম্পানি আপনাকে তাদের প্রোমোটার হিসেবে চায় — কৃষকদের সাবস্ক্রিপশনে যুক্ত করতে, তাদের অর্ডারগুলো সঠিক জায়গায় পৌঁছে দিতে এবং আপনার নেটওয়ার্কের মাধ্যমে আয় করতে।",
+      "acceptCta": "✓ গ্রহণ করুন",
+      "declineCta": "✗ প্রত্যাখ্যান",
+      "confirmAcceptTitle": "{company} তে প্রোমোটারের ভূমিকা গ্রহণ করবেন?",
+      "confirmAcceptBody": "আপনি এই কোম্পানিতে প্রোমোটার হবেন। একজন ফ্যাসিলিটেটর একই সময়ে কেবল একটি কোম্পানিতেই প্রোমোটার হতে পারেন — প্রথমে অন্য যেকোনো প্রোমোটারের পদ থেকে সরে দাঁড়ান।",
+      "confirmAcceptCta": "হ্যাঁ, গ্রহণ করুন",
+      "confirmRejectTitle": "{company} এর আমন্ত্রণ প্রত্যাখ্যান করবেন?",
+      "confirmRejectBody": "কোম্পানিকে জানানো হবে। তারা আপনাকে পরে আবার আমন্ত্রণ জানাতে পারে।",
+      "confirmRejectCta": "হ্যাঁ, প্রত্যাখ্যান করুন",
+      "confirmCancel": "বাতিল করুন",
+      "confirmBusy": "সঞ্চয়…",
+      "errorGeneric": "কিছু একটা ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
+    },
     "history": {
       "headerTitle": "ইতিহাস",
       "tabCompleted": "সম্পন্ন হয়েছে",
@@ -2496,6 +2620,11 @@
       "emptyTitle": "এখনো কোনো পদোন্নতিপ্রাপ্ত কৃষক নেই",
       "emptyHint": "আপনার পৃষ্ঠপোষকতা করা কৃষকদের এখানে দেখানো হবে।",
       "farmerFallback": "কৃষক",
+      "acresLabel": "{count, plural, one {১ একর} other {# একর}}",
+      "plantsLabel": "{count, plural, one {১টি গাছ} other {# গাছপালা}}",
+      "startedLabel": "{date} -এ শুরু হয়েছে",
+      "plantedLabel": "{year} রোপণ করা হয়েছিল",
+      "callBtnAria": "{name} কে ফোন করুন",
       "detail": {
         "headerTitle": "কৃষক পরামর্শ",
         "errorTitleWaiting": "কৃষকের জন্য অপেক্ষা করা",
@@ -2508,8 +2637,13 @@
         "errorLoad": "পরামর্শটি লোড করা যায়নি।",
         "readOnlyHint": "শুধুমাত্র দেখার জন্য। কৃষক এই পরামর্শ অনুযায়ী কাজ করছেন।",
         "dayHeader": "দিন {day} · {count, plural, one {১টি সক্রিয় টাইমলাইন} other {# সক্রিয় টাইমলাইন}}",
+        "dayN": "দিন {day}",
+        "activeTimelines": "সক্রিয় টাইমলাইন",
         "noneToday": "আজ কৃষক পরামর্শকালীন সময়ে কোনো কিছু বকেয়া নেই।",
         "noPracticeToday": "এই সময়সূচী অনুযায়ী আজ কোনো অনুশীলন নেই।",
+        "suppressedNote": "{count, plural, one {একটি অনুশীলন ইতিমধ্যেই অন্য একটি সক্রিয় সুপারিশের আওতাভুক্ত।} other {# অনুশীলনগুলো ইতিমধ্যেই অন্যান্য সক্রিয় সুপারিশের আওতায় রয়েছে।}}",
+        "pendingQuestionLabel": "কৃষককে জবাব দিতে হবে",
+        "pendingQuestionHint": "কৃষককে এই প্রশ্নটি করা হচ্ছে; তাঁরা উত্তর দিলে পরামর্শটি শাখায়িত হবে।",
         "l0": {
           "input": "ইনপুট প্রয়োগ করুন",
           "nonInput": "ফসলের কার্যকলাপ",
@@ -2521,7 +2655,15 @@
         "farmerPurchased": "✓ কৃষক ক্রয় করেছেন",
         "purchasePending": "ক্রয় প্রক্রিয়াধীন",
         "frequencyEvery": "{count, plural, one {প্রতিদিন ১ দিন} other {প্রতি # দিন}}",
-        "frequencyNotDueToday": " আজ জমা দেওয়ার কথা নয়"
+        "frequencyEveryDay": "প্রতিদিন",
+        "frequencyNotDueToday": " আজ জমা দেওয়ার কথা নয়",
+        "adjuvantBadge": "সহায়ক",
+        "generalAdvisory": "সাধারণ পরামর্শ",
+        "ackMarked": "কৃষক সম্পন্ন চিহ্নিত করেছেন",
+        "ackPending": "কৃষক সম্পন্ন হিসেবে চিহ্নিত করেননি।",
+        "andGroupHeader": "উভয় একসাথে প্রয়োগ করুন — এবং দলবদ্ধভাবেও প্রয়োগ করুন",
+        "partHeader": "অংশ {part}",
+        "orSeparator": "অথবা"
       }
     },
     "seedOrders": {
@@ -2566,43 +2708,6 @@
           "forwardFailed": "অর্ডারটি ফরোয়ার্ড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
         }
       }
-    },
-    "onboardedCompanies": {
-      "headerTitle": "অন্তর্ভুক্ত কোম্পানিগুলি",
-      "invitationsTitle": "প্রোমোটার আমন্ত্রণ",
-      "invitationsBody": "এই কোম্পানিগুলো আপনাকে তাদের প্রোমোটার হওয়ার জন্য আমন্ত্রণ জানাচ্ছে। আপনি একবারে একটি কোম্পানিতেই প্রোমোটার হতে পারবেন।",
-      "invitationSent": "{date} পাঠানো হয়েছে",
-      "declineCta": "পতন",
-      "acceptCta": "গ্রহণ করুন",
-      "actionAccept": "গ্রহণ করুন",
-      "actionDecline": "পতন",
-      "errorAction": "আমন্ত্রণটি {action} যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-      "promoterBadge": "প্রবর্তক",
-      "promoterPunditBadge": "প্রোমোটার-পণ্ডিত",
-      "stepDown": "পদত্যাগ করুন",
-      "stepDownConfirm": "এই কোম্পানিতে প্রোমোটার পদ থেকে পদত্যাগ করছেন? আপনাকে ফ্যাসিলিটেটর হিসেবেই নিযুক্ত রাখা হবে।",
-      "errorStepDown": "নিচে নামা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-      "callAria": "{company} কে কল করুন",
-      "websiteAria": "{company} ওয়েবসাইট খুলুন",
-      "emptyTitle": "এখনো কোনো কোম্পানি নেই",
-      "emptyBody": "এখনো কোনো কোম্পানি আপনাকে ফ্যাসিলিটেটর হিসেবে অন্তর্ভুক্ত করেনি। আপনি যে কোম্পানিতে কাজ করতে চান, সেখানকার একজন ফিল্ড ম্যানেজারকে আপনাকে অন্তর্ভুক্ত করার জন্য বলুন।"
-    },
-    "promoterInvitations": {
-      "headerTitle": "প্রোমোটার আমন্ত্রণ",
-      "emptyTitle": "কোনো অপেক্ষমান আমন্ত্রণ নেই",
-      "invitationSent": "{date} পাঠানো হয়েছে",
-      "description": "এই কোম্পানি আপনাকে তাদের প্রোমোটার হিসেবে চায় — কৃষকদের সাবস্ক্রিপশনে যুক্ত করতে, তাদের অর্ডারগুলো সঠিক জায়গায় পৌঁছে দিতে এবং আপনার নেটওয়ার্কের মাধ্যমে আয় করতে।",
-      "acceptCta": "✓ গ্রহণ করুন",
-      "declineCta": "✗ প্রত্যাখ্যান",
-      "confirmAcceptTitle": "{company} তে প্রোমোটারের ভূমিকা গ্রহণ করবেন?",
-      "confirmAcceptBody": "আপনি এই কোম্পানিতে প্রোমোটার হবেন। একজন ফ্যাসিলিটেটর একই সময়ে কেবল একটি কোম্পানিতেই প্রোমোটার হতে পারেন — প্রথমে অন্য যেকোনো প্রোমোটারের পদ থেকে সরে দাঁড়ান।",
-      "confirmAcceptCta": "হ্যাঁ, গ্রহণ করুন",
-      "confirmRejectTitle": "{company} এর আমন্ত্রণ প্রত্যাখ্যান করবেন?",
-      "confirmRejectBody": "কোম্পানিকে জানানো হবে। তারা আপনাকে পরে আবার আমন্ত্রণ জানাতে পারে।",
-      "confirmRejectCta": "হ্যাঁ, প্রত্যাখ্যান করুন",
-      "confirmCancel": "বাতিল করুন",
-      "confirmBusy": "সঞ্চয়…",
-      "errorGeneric": "কিছু একটা ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
     }
   },
   "pundit": {
@@ -2637,6 +2742,7 @@
       "tabNew": "নতুন",
       "tabPending": "বিচারাধীন",
       "tabReturned": "ফেরত দেওয়া হয়েছে",
+      "tabTraining": "প্রশিক্ষণ",
       "tabHistory": "ইতিহাস",
       "tabCount": "( {count} )",
       "emptyNew": "কোনো নতুন অনুসন্ধান নেই",
@@ -2644,6 +2750,14 @@
       "emptyReturned": "কোন ফেরত কোয়েরি নেই",
       "emptyHistory": "কোন ইতিহাস অনুসন্ধান নেই",
       "daysRemaining": "{count} দিন বাকি",
+      "daysRemainingShort": "{count, plural, one {১ দিন} other {# d}}",
+      "startedShort": "{date} -এ শুরু হয়েছে",
+      "severityInline": {
+        "CRITICAL": "সমালোচনামূলক",
+        "HIGH": "উচ্চ তীব্রতা",
+        "MODERATE": "মাঝারি তীব্রতা",
+        "LOW": "কম তীব্রতা"
+      },
       "forwardedTo": "{name} এর কাছে ফরোয়ার্ড করা হয়েছে",
       "filterChip": "{company} এর জন্য অনুসন্ধানগুলি দেখানো হচ্ছে",
       "filterChipFallback": "একটি কোম্পানিতে ফিল্টার করা হয়েছে",
@@ -2653,19 +2767,13 @@
       "headerTitle": "কোম্পানির আমন্ত্রণ",
       "emptyTitle": "কোনো অপেক্ষমান আমন্ত্রণ নেই",
       "cardTitle": "কোম্পানির আমন্ত্রণ",
+      "companyFallback": "একটি কোম্পানি",
       "rolePrimary": "প্রাথমিক বিশেষজ্ঞ",
       "rolePanel": "প্যানেল বিশেষজ্ঞ",
       "descriptionPrimary": "প্রাথমিক বিশেষজ্ঞ হিসেবে, আপনি পর্যায়ক্রমিক রাউন্ড-রবিন পদ্ধতিতে প্রশ্ন গ্রহণ করবেন এবং অন্যান্য বিশেষজ্ঞদের কাছে তা প্রেরণ করতে পারবেন।",
       "descriptionPanel": "প্যানেল বিশেষজ্ঞ হিসেবে, আপনি শুধুমাত্র পাঠানো প্রশ্নগুলোই গ্রহণ করেন এবং সেগুলোর উত্তর দিতে বা ফেরত পাঠাতে পারেন।",
       "acceptCta": "✓ গ্রহণ করুন",
       "declineCta": "✗ প্রত্যাখ্যান",
-      "modalTitle": "আমন্ত্রণ প্রত্যাখ্যান করুন",
-      "modalBody": "অনুগ্রহ করে একটি কারণ উল্লেখ করুন (বাধ্যতামূলক)।",
-      "modalPlaceholder": "আপনি এই আমন্ত্রণটি কেন প্রত্যাখ্যান করছেন?",
-      "modalCancel": "বাতিল করুন",
-      "modalConfirmIdle": "প্রত্যাখ্যান নিশ্চিত করুন",
-      "modalConfirmBusy": "হ্রাস পাচ্ছে…",
-      "companyFallback": "একটি কোম্পানি",
       "confirmAcceptTitle": "{company} এর আমন্ত্রণ গ্রহণ করবেন?",
       "confirmAcceptBody": "আপনি এই কোম্পানি থেকে অনুসন্ধান পেতে শুরু করবেন।",
       "confirmAcceptCta": "হ্যাঁ, গ্রহণ করুন",
@@ -2715,7 +2823,7 @@
         "educationLabel": "শিক্ষা",
         "experienceLabel": "বছরের অভিজ্ঞতা",
         "selectPlaceholder": "নির্বাচন করুন…",
-        "farmingMethodsLabel": "কৃষি পদ্ধতি (প্রযোজ্য সবগুলি নির্বাচন করুন)",
+        "farmingMethodsLabel": "চাষ পদ্ধতি (প্রযোজ্য সবগুলি নির্বাচন করুন)",
         "cultivationTypesLabel": "চাষের ধরণ (প্রযোজ্য সবগুলি নির্বাচন করুন)",
         "employedTitle": "আপনি কি কোনো প্রতিষ্ঠানে কর্মরত আছেন?",
         "yes": "হ্যাঁ",
@@ -2876,66 +2984,52 @@
         "cropAgnostic": "শস্য-অজ্ঞেয়"
       },
       "translation": {
-        "viewInEnglish": "View in English",
-        "viewOriginal": "View original",
-        "loading": "Translating…"
+        "viewInEnglish": "ইংরেজিতে দেখুন",
+        "viewOriginal": "মূল দেখুন",
+        "loading": "অনুবাদ করা…"
       }
     }
   },
   "mySubscriptions": {
     "headerTitle": "আমার সাবস্ক্রিপশন",
-    "backToHome": "← মূল পাতায় ফিরে যান",
     "active": "সক্রিয় ( {count} )",
-    "other": "অন্যান্য ( {count} )",
-    "openAdvisory": "উন্মুক্ত পরামর্শ",
-    "unsubscribe": "সদস্যতা বাতিল করুন",
-    "unsubscribeConfirm": "এই বিজ্ঞপ্তি থেকে সদস্যতা বাতিল করবেন?",
-    "unsubscribeError": "এই বিজ্ঞপ্তি থেকে সদস্যতা বাতিল করা যাবে না।",
-    "companyFallback": "কোম্পানি",
-    "activeBadge": "সক্রিয়",
-    "startedOn": "{date} -এ শুরু হয়েছে",
-    "awaitingStartDate": "ফসল শুরুর তারিখের অপেক্ষায়",
-    "pendingPayment": "বকেয়া অর্থপ্রদান প্রতিনিধি",
-    "cancelPending": "অপেক্ষাধীন অনুরোধ বাতিল করুন",
-    "cancelPendingConfirm": "অপেক্ষাধীন পেমেন্টের অনুরোধ বাতিল করবেন? তাহলে আপনি অন্য কাউকে বেছে নিতে পারেন অথবা নিজেই পেমেন্ট করতে পারেন।",
-    "cancelPendingError": "অনুরোধটি বাতিল করা যায়নি।",
-    "discoverHeader": "আপনার এলাকার সতর্কতা",
-    "discoverSubheader": "আপনার জেলায় পরামর্শ প্রদানকারী অন্যান্য সংস্থাগুলি",
-    "explore": "অন্বেষণ করুন →",
-    "emptyTitle": "এখনো কোনো সাবস্ক্রিপশন নেই",
-    "emptyCta": "একটি পরামর্শে সাবস্ক্রাইব করুন",
-    "unsubscribed": "Unsubscribed ({count})",
-    "completed": "Completed ({count})",
+    "unsubscribed": "সদস্যতা ত্যাগ করেছেন ( {count} )",
+    "completed": "সম্পন্ন হয়েছে ( {count} )",
     "statusBadge": {
-      "active": "Active",
-      "unsubscribed": "Unsubscribed",
-      "completed": "Completed"
+      "active": "সক্রিয়",
+      "unsubscribed": "সদস্যতা বাতিল করুন",
+      "completed": "সম্পন্ন হয়েছে"
     },
-    "shareCropQR": "↗ Share crop QR",
-    "unsubscribeBtn": "✗ Unsubscribe",
-    "errorUnsubscribe": "Could not unsubscribe. Please try again.",
-    "cropFallback": "Crop",
-    "thisCropFallback": "this crop",
-    "subscribedBySelf": "Subscribed by you",
-    "assignedBy": "Assigned by {company}",
-    "endedOn": "Ended {date}",
+    "openAdvisory": "উন্মুক্ত পরামর্শ",
+    "shareCropQR": "↗ ফসল কাটার QR শেয়ার করুন",
+    "unsubscribeBtn": "✗ সদস্যতা ত্যাগ করুন",
+    "errorUnsubscribe": "আনসাবস্ক্রাইব করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+    "companyFallback": "কোম্পানি",
+    "cropFallback": "ফসল",
+    "thisCropFallback": "এই ফসল",
+    "subscribedBySelf": "আপনার দ্বারা সাবস্ক্রাইব করা হয়েছে",
+    "assignedBy": "{company} দ্বারা নির্ধারিত",
+    "startedOn": "{date} -এ শুরু হয়েছে",
+    "endedOn": "{date} -এ শেষ হয়েছে",
     "startToEnd": "{start} → {end}",
     "qr": {
-      "title": "Crop Record QR",
-      "alt": "Crop QR",
-      "hint": "Anyone can scan this to see your crop record — no app needed.",
-      "share": "↗ Share",
-      "save": "💾 Save",
-      "shareTitle": "My crop record",
-      "shareText": "Scan this to see my crop record on rootsTALK.in"
+      "title": "শস্য রেকর্ড কিউআর",
+      "alt": "শস্য কিউআর",
+      "hint": "যে কেউ এটি স্ক্যান করে আপনার ফসলের রেকর্ড দেখতে পারেন — কোনো অ্যাপের প্রয়োজন নেই।",
+      "share": "↗ শেয়ার করুন",
+      "save": "💾 সংরক্ষণ করুন",
+      "shareTitle": "আমার শস্য রেকর্ড",
+      "shareText": "rootsTALK.in-এ আমার ফসলের রেকর্ড দেখতে এটি স্ক্যান করুন।"
     },
     "confirmUnsub": {
-      "title": "Unsubscribe from this advisory?",
-      "bodyPrefix": "You'll stop receiving advisories for",
-      "bodyMiddle": "from",
-      "bodySuffix": ". You can subscribe again later if you change your mind.",
-      "yes": "Yes, unsubscribe"
-    }
+      "title": "এই বিজ্ঞপ্তি থেকে সদস্যতা বাতিল করবেন?",
+      "bodyPrefix": "আপনি আর কোনো পরামর্শ পাবেন না",
+      "bodyMiddle": "থেকে",
+      "bodySuffix": "আপনার মন পরিবর্তন হলে আপনি পরে আবার সাবস্ক্রাইব করতে পারেন।",
+      "yes": "হ্যাঁ, আনসাবস্ক্রাইব করুন"
+    },
+    "emptyTitle": "এখনো কোনো সাবস্ক্রিপশন নেই",
+    "emptyCta": "একটি পরামর্শে সাবস্ক্রাইব করুন"
   },
   "seedOrders": {
     "headerTitle": "বীজের অর্ডার",
@@ -2943,7 +3037,7 @@
     "tabActiveCount": "সক্রিয় ( {count} )",
     "tabHistory": "ইতিহাস",
     "emptyActive": "কোন সক্রিয় বীজের অর্ডার নেই",
-    "emptyHistory": "এখনও কোনো বীজ-ক্রমের ইতিহাস নেই",
+    "emptyHistory": "এখনও কোনো বীজ-অর্ডারের ইতিহাস নেই",
     "unknownVariety": "অজানা জাত",
     "sownOn": "{date} বপন করা হয়েছে",
     "plantedIn": "{year} রোপণ করা হয়েছিল",
@@ -2987,6 +3081,13 @@
       "notAvailableBody": "ডিলার এই বীজের অর্ডারটি সরবরাহ করতে পারছেন না। এটি অন্য কোনো ডিলার বা সহায়তাকারীর কাছে পাঠাতে নিচে বাতিল করুন।",
       "cancelOrderCta": "অর্ডার বাতিল করুন",
       "deleteOrderCta": "বাতিল করা অর্ডার মুছে ফেলুন",
+      "pickupBannerBody": "আপনার ডিলারের কাছ থেকে এটি সংগ্রহ করুন। বীজটি হাতে পেলে নিচে ট্যাপ করুন।",
+      "pickupConfirmCta": "আমি এটা তুলে নিয়েছি",
+      "pickupConfirmTitle": "প্রাপ্তি নিশ্চিত করুন",
+      "pickupConfirmBody": "আপনার হাতে সিডটি আসার পরেই কেবল 'হ্যাঁ' ট্যাপ করুন। এতে অর্ডারটি সম্পন্ন হবে।",
+      "pickupYesCta": "হ্যাঁ, আমার কাছে এটা আছে।",
+      "pickupCancelCta": "বাতিল করুন",
+      "errorReceive": "নিশ্চিত করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
       "pickerTitle": "পাঠান",
       "pickerTabDealers": "ডিলার ( {count} )",
       "pickerTabFacilitators": "সহায়কগণ ( {count} )",
@@ -2995,14 +3096,7 @@
       "kmAway": "{km} কিমি দূরে",
       "promoterBadge": "প্রবর্তক",
       "sendCta": "পাঠান",
-      "sendingCta": "প্রেরণ করা হচ্ছে…",
-      "pickupBannerBody": "Pick this up from your dealer. Tap below once you have the seed in hand.",
-      "pickupConfirmCta": "I've picked it up",
-      "pickupConfirmTitle": "Confirm receipt",
-      "pickupConfirmBody": "Tap Yes only after you actually have the seed in hand. This closes the order.",
-      "pickupYesCta": "Yes, I have it",
-      "pickupCancelCta": "Cancel",
-      "errorReceive": "Could not confirm. Please try again."
+      "sendingCta": "প্রেরণ করা হচ্ছে…"
     }
   },
   "shareLink": {
@@ -3042,6 +3136,8 @@
   "privacyPolicy": {
     "title": "গোপনীয়তা নীতি",
     "lastUpdated": "সর্বশেষ হালনাগাদ: এপ্রিল ২০২৬",
+    "externalTitle": "eywa.farm-এ সম্পূর্ণ নীতিমালাটি পড়ুন।",
+    "externalSubtitle": "eywa.farm/privacy — আপনার ব্রাউজারে খুলবে",
     "sections": {
       "collectTitle": "আমরা যা সংগ্রহ করি",
       "collectBody": "আমরা আপনার মোবাইল ফোন নম্বর (লগইন এবং যাচাইকরণের জন্য), আপনার নাম, আপনার অবস্থান (রাজ্য, জেলা এবং জিপিএস স্থানাঙ্ক), এবং শস্য সাবস্ক্রিপশন ও পরামর্শমূলক রেকর্ড সহ আপনার খামার-সম্পর্কিত তথ্য সংগ্রহ করি। এছাড়াও, আপনি কৃষি বিশেষজ্ঞদের কাছে যে প্রশ্ন করেন এবং তার প্রাপ্ত উত্তরগুলোও আমরা সংগ্রহ করি।",
@@ -3059,38 +3155,6 @@
       "securityBody": "সমস্ত ডেটা আদান-প্রদান এবং সংরক্ষণের সময় এনক্রিপ্ট করা থাকে। লগইন ওটিপি যাচাইকরণের মাধ্যমে সুরক্ষিত। আমরা সাধারণ পাসওয়ার্ড সংরক্ষণ করি না। আপনার ডেটাতে প্রবেশাধিকার শুধুমাত্র নেয়তিরী আইওয়াফার্ম এগ্রিটেক প্রাইভেট লিমিটেডের অনুমোদিত কর্মীদের মধ্যেই সীমাবদ্ধ।",
       "contactTitle": "আমাদের সাথে যোগাযোগ করুন",
       "contactBody": "গোপনীয়তা-সংক্রান্ত যেকোনো জিজ্ঞাসার জন্য আমাদের সাথে যোগাযোগ করুন: support@eywa.farm অথবা ভিজিট করুন eywa.farm। নেয়তিরী আইওয়াফার্ম এগ্রিটেক প্রাইভেট লিমিটেড, ভারত।"
-    },
-    "externalTitle": "eywa.farm-এ সম্পূর্ণ নীতিমালাটি পড়ুন।",
-    "externalSubtitle": "eywa.farm/privacy — আপনার ব্রাউজারে খুলবে"
-  },
-  "location": {
-    "title": "আপনার খামারটি কোথায়?",
-    "subtitle": "এটি আমাদের কাছাকাছি ডিলার এবং পরামর্শ কেন্দ্র খুঁজে পেতে সাহায্য করে।",
-    "loadError": "অবস্থানের তালিকাটি লোড করা যায়নি। আপাতত এটি এড়িয়ে যান এবং আবার অনলাইনে এলে আপনার প্রোফাইল থেকে এটি যোগ করুন।",
-    "loading": "রাজ্য ও জেলাসমূহ লোড হচ্ছে…",
-    "stateLabel": "রাজ্য",
-    "districtLabel": "জেলা",
-    "subDistrictLabel": "উপ-জেলা / গ্রাম",
-    "searchState": "অবস্থা অনুসন্ধান করুন…",
-    "searchDistrict": "জেলা অনুসন্ধান করুন…",
-    "noStates": "কোন রাজ্য খুঁজে পাওয়া যায়নি",
-    "noDistricts": "কোন জেলা খুঁজে পাওয়া যায়নি",
-    "subDistrictPlaceholder": "গ্রাম বা উপজেলা — ঐচ্ছিক",
-    "gpsTitle": "মানচিত্রে আপনার অবস্থান",
-    "gpsSubtitle": "এটি আমাদের আপনার জন্য নিকটতম ৫টি ডিলার ও সহায়তাকারী খুঁজে পেতে সাহায্য করে।",
-    "gpsCta": "আমার অবস্থান জানুন",
-    "gpsFinding": "তোমাকে খুঁজে পাওয়া…",
-    "gpsCaptured": "অবস্থান ধারণ করা হয়েছে",
-    "gpsCouldntGet": "আপনার অবস্থান পাওয়া যায়নি।",
-    "gpsDenied": "অবস্থান অ্যাক্সেস অস্বীকার করা হয়েছে",
-    "gpsLater": "আপনি পরে আপনার প্রোফাইল থেকে এটি সেট করতে পারবেন।",
-    "gpsTryAgain": "আবার চেষ্টা করুন",
-    "errors": {
-      "saveFailed": "আপনার অবস্থান সংরক্ষণ করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-      "gpsSaveFailed": "আপনার অবস্থান নেওয়া হয়েছে কিন্তু সংরক্ষণ করা যায়নি। আপনি আপনার প্রোফাইল থেকে আবার চেষ্টা করতে পারেন।",
-      "gpsBlocked": "আপনি লোকেশন অ্যাক্সেস ব্লক করেছেন। পুনরায় চেষ্টা করতে, আপনার ব্রাউজার সেটিংসে এই সাইটের জন্য লোকেশন চালু করুন, তারপর 'আবার চেষ্টা করুন' (Try again) ট্যাপ করুন।",
-      "gpsTimeout": "আপনাকে খুঁজে পেতে অনেক বেশি সময় লেগেছে। আবার চেষ্টা করুন-এ ট্যাপ করুন।",
-      "gpsUnavailable": "এই মুহূর্তে আপনার অবস্থানটি উপলব্ধ নয়। 'আবার চেষ্টা করুন' বা 'পরে দেখার জন্য এড়িয়ে যান'-এ ট্যাপ করুন।"
     }
   },
   "helpTips": {
@@ -3101,7 +3165,7 @@
       "gettingStarted": {
         "title": "শুরু করা হচ্ছে",
         "items": [
-          "হোম-এ থাকা কোনো কোম্পানির টাইল-এ ট্যাপ করে সেই কোম্পানির সাথে আপনার সমস্ত সাবস্ক্রিপশন দেখুন। তালিকাটিতে ফসল এবং প্লটের বিবরণ (স্ব-রক্ষিত বা নির্ধারিত, একর বা গাছ, শুরুর তারিখ) দেখানো হয়, যাতে আপনি একই ফসলের একাধিক প্লট আলাদা করে চিনতে পারেন।",
+          "হোম-এ থাকা কোনো কোম্পানির টাইল-এ ট্যাপ করে সেই কোম্পানির সাথে আপনার সমস্ত সাবস্ক্রিপশন দেখতে পারেন। তালিকাটিতে ফসল এবং প্লটের বিবরণ (স্ব-রক্ষিত বা নির্ধারিত, একর বা গাছ, শুরুর তারিখ) দেখানো হয়, যাতে আপনি একই ফসলের একাধিক প্লট আলাদা করে চিনতে পারেন।",
           "এর ক্রপ ড্যাশবোর্ড দেখতে যেকোনো একটি ফসল খুলুন। শুরুর (বা বপনের) তারিখ নির্ধারণ করুন — এটি পরিবর্তন করার জন্য আপনি ১৫ দিনের একটি সময়সীমা পাবেন, এরপর এটি লক হয়ে যাবে।",
           "ডানদিকের প্যানেল → শস্য ও কোম্পানি থেকে আপনার জেলায় পরিষেবা প্রদানকারী কোম্পানিগুলো খুঁজে দেখুন। আপনি তাদের ফোন করতে পারেন, তাদের ওয়েবসাইট দেখতে পারেন এবং নিজে থেকে সাবস্ক্রাইব করতে পারবেন কিনা তা দেখতে পারেন।"
         ]
@@ -3203,10 +3267,40 @@
       }
     }
   },
+  "location": {
+    "title": "আপনার খামারটি কোথায়?",
+    "subtitle": "এটি আমাদের কাছাকাছি ডিলার এবং পরামর্শ কেন্দ্র খুঁজে পেতে সাহায্য করে।",
+    "loadError": "অবস্থানের তালিকাটি লোড করা যায়নি। আপাতত এটি এড়িয়ে যান এবং আবার অনলাইনে এলে আপনার প্রোফাইল থেকে এটি যোগ করুন।",
+    "loading": "রাজ্য ও জেলাসমূহ লোড হচ্ছে…",
+    "stateLabel": "রাজ্য",
+    "districtLabel": "জেলা",
+    "subDistrictLabel": "উপ-জেলা / গ্রাম",
+    "searchState": "অবস্থা অনুসন্ধান করুন…",
+    "searchDistrict": "জেলা অনুসন্ধান করুন…",
+    "noStates": "কোন রাজ্য খুঁজে পাওয়া যায়নি",
+    "noDistricts": "কোন জেলা খুঁজে পাওয়া যায়নি",
+    "subDistrictPlaceholder": "গ্রাম বা উপজেলা — ঐচ্ছিক",
+    "gpsTitle": "মানচিত্রে আপনার অবস্থান",
+    "gpsSubtitle": "এটি আমাদের আপনার জন্য নিকটতম ৫টি ডিলার ও সহায়তাকারী খুঁজে পেতে সাহায্য করে।",
+    "gpsCta": "আমার অবস্থান জানুন",
+    "gpsFinding": "তোমাকে খুঁজে পাওয়া…",
+    "gpsCaptured": "অবস্থান ধারণ করা হয়েছে",
+    "gpsCouldntGet": "আপনার অবস্থান পাওয়া যায়নি।",
+    "gpsDenied": "অবস্থান অ্যাক্সেস অস্বীকার করা হয়েছে",
+    "gpsLater": "আপনি পরে আপনার প্রোফাইল থেকে এটি সেট করতে পারবেন।",
+    "gpsTryAgain": "আবার চেষ্টা করুন",
+    "errors": {
+      "saveFailed": "আপনার অবস্থান সংরক্ষণ করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+      "gpsSaveFailed": "আপনার অবস্থান নেওয়া হয়েছে কিন্তু সংরক্ষণ করা যায়নি। আপনি আপনার প্রোফাইল থেকে আবার চেষ্টা করতে পারেন।",
+      "gpsBlocked": "আপনি লোকেশন অ্যাক্সেস ব্লক করেছেন। পুনরায় চেষ্টা করতে, আপনার ব্রাউজার সেটিংসে এই সাইটের জন্য লোকেশন চালু করুন, তারপর 'আবার চেষ্টা করুন' (Try again) ট্যাপ করুন।",
+      "gpsTimeout": "আপনাকে খুঁজে পেতে অনেক বেশি সময় লেগেছে। আবার চেষ্টা করুন-এ ট্যাপ করুন।",
+      "gpsUnavailable": "এই মুহূর্তে আপনার অবস্থানটি উপলব্ধ নয়। 'আবার চেষ্টা করুন' বা 'পরে দেখার জন্য এড়িয়ে যান'-এ ট্যাপ করুন।"
+    }
+  },
   "qrScan": {
     "scanButton": "যাচাই করতে স্ক্যান করুন",
     "modalTitle": "পণ্যের QR স্ক্যান করুন",
-    "modalSubtitle": "পণ্যের প্যাকেজে থাকা QR কোডটির দিকে আপনার ফোনটি তাক করুন।",
+    "modalSubtitle": "পণ্যের প্যাকেজে থাকা কিউআর কোডটির দিকে আপনার ফোনটি তাক করুন।",
     "cancel": "বাতিল করুন",
     "cameraDenied": "স্ক্যান করার জন্য ক্যামেরার অ্যাক্সেস প্রয়োজন। অনুগ্রহ করে ক্যামেরার অ্যাক্সেসের অনুমতি দিন।",
     "cameraStarting": "ক্যামেরা চালু হচ্ছে…",
@@ -3239,7 +3333,7 @@
     "cultivationNotes": "চাষাবাদ পদ্ধতি",
     "contactCompany": "কোম্পানির সাথে যোগাযোগ করুন",
     "rootstalkTagline": "আপনার কৃষি পরামর্শ নেটওয়ার্ক",
-    "rootstalkValueProp": "রুটসটক আপনাকে আপনার বীজ/ফসল উপকরণ সরবরাহকারী সংস্থার সাথে সংযুক্ত করে, যার মাধ্যমে আপনি পুরো মৌসুম জুড়ে ব্যক্তিগত পরামর্শ, যাচাইকৃত উপকরণ এবং সহায়তা পেয়ে থাকেন। এটি ব্যবহারে বিনামূল্যে — একবার ইনস্টল করুন এবং সংযুক্ত থাকুন।",
+    "rootstalkValueProp": "রুটসটক আপনাকে আপনার বীজ/ফসল উপকরণ সরবরাহকারী সংস্থার সাথে সংযুক্ত করে, যার মাধ্যমে আপনি পুরো মৌসুম জুড়ে ব্যক্তিগত পরামর্শ, যাচাইকৃত উপকরণ এবং সহায়তা পেয়ে থাকেন। এটি ব্যবহারে সম্পূর্ণ বিনামূল্যে — একবার ইনস্টল করুন এবং সংযুক্ত থাকুন।",
     "photosLabel": "বিভিন্ন ধরণের ছবি",
     "descriptionLabel": "এই জাতটি সম্পর্কে",
     "dusCharactersLabel": "স্বাতন্ত্র্য · অভিন্নতা · স্থিতিশীলতা"

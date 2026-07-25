@@ -767,6 +767,7 @@ function CardHeader({
   orderId: string
 }) {
   const t = useTranslations('facilitator.orders')
+  const tTrain = useTranslations('training')
   return (
     <div className="px-4 py-3 bg-[#F5F0E8]/40">
       <div className="flex items-start gap-3">
@@ -803,7 +804,7 @@ function CardHeader({
                   routing a practice order. */}
               {head?.client_is_training && (
                 <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded shrink-0">
-                  Training
+                  {tTrain('chip')}
                 </span>
               )}
             </div>

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -89,6 +90,7 @@ interface DashboardAttention {
 export default function BrandedSpacePage() {
   const { clientId } = useParams<{ clientId: string }>()
   const router = useRouter()
+  const tTrain = useTranslations('training')
   const [branding, setBranding] = useState<ClientInfo | null>(null)
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [attention, setAttention] = useState<Record<string, AttentionBucket>>({})
@@ -230,12 +232,10 @@ export default function BrandedSpacePage() {
         {branding?.is_training && (
           <div className="mx-4 mt-4 mb-1 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
             <p className="text-amber-900 font-semibold text-sm">
-              Training Session
+              {tTrain('farmerBrandedSpace.title')}
             </p>
             <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
-              You&apos;re practising with this company. Orders and queries
-              here are for training only — they won&apos;t affect any of
-              your real subscriptions.
+              {tTrain('farmerBrandedSpace.body')}
             </p>
           </div>
         )}

@@ -83,6 +83,7 @@ export default function HomePage() {
   const user = getUser()
   const t = useTranslations('home')
   const tCommon = useTranslations('common')
+  const tTrain = useTranslations('training')
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [clientInfos, setClientInfos] = useState<Record<string, ClientInfo>>({})
   const [attentionByClient, setAttentionByClient] = useState<Record<string, number>>({})
@@ -512,7 +513,7 @@ export default function HomePage() {
                           is a marker, not an action. */}
                       {info?.is_training && (
                         <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 shadow-sm">
-                          Training
+                          {tTrain('chip')}
                         </span>
                       )}
 
@@ -549,7 +550,7 @@ export default function HomePage() {
                       {/* Card body */}
                       {info?.is_training && (
                         <p className="text-[12px] px-4 pt-2 text-amber-800 font-medium">
-                          Practice session — accepting won&apos;t affect your real subscriptions.
+                          {tTrain('farmerHome.subtitle')}
                         </p>
                       )}
                       {info?.tagline && !info?.is_training && (

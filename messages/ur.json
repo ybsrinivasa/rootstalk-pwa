@@ -1,4 +1,59 @@
 {
+  "training": {
+    "chip": "تربیت",
+    "farmerHome": {
+      "subtitle": "پریکٹس سیشن — قبول کرنے سے آپ کی حقیقی سبسکرپشنز متاثر نہیں ہوں گی۔"
+    },
+    "farmerBrandedSpace": {
+      "title": "تربیتی سیشن",
+      "body": "آپ اس کمپنی کے ساتھ مشق کر رہے ہیں۔ یہاں آرڈرز اور استفسارات صرف تربیت کے لیے ہیں — وہ آپ کے حقیقی سبسکرپشنز کو متاثر نہیں کریں گے۔"
+    },
+    "farmerAssignment": {
+      "headerLabel": "مشورے کی درخواست پر عمل کریں۔",
+      "bannerTitle": "یہ ایک تربیتی سیشن ہے۔",
+      "bannerBody": "آپ کا پروموٹر روٹس ٹاک ایپ کے ساتھ مشق کر رہا ہے۔ قبول کرنے سے آپ کی ہوم اسکرین پر ایک پریکٹس سبسکرپشن شامل ہو جائے گی — یہ آپ کے پاس پہلے سے موجود کسی حقیقی سبسکرپشن کو تبدیل یا متاثر نہیں کرے گی۔ سیشن چند دنوں کے بعد خود بخود ختم ہو جاتا ہے۔",
+      "paymentCardTitle": "ٹریننگ سبسکرپشن - مفت",
+      "paymentCardBody": "کوئی ادائیگی شامل نہیں ہے۔ تربیتی سیشن ختم ہونے پر یہ خود بخود صاف ہو جائے گا۔",
+      "confirmAcceptTraining": "{crop} کے لیے {company} کے پریکٹس سیشن میں شامل ہوں؟ یہ ایک تربیتی سینڈ باکس ہے — آپ کی حقیقی سبسکرپشنز میں سے کسی کو متاثر نہیں کرے گا۔"
+    },
+    "promoterTile": {
+      "title": "تربیتی سیشن",
+      "subtitle": "ایک کسان کو مشق کے لیے مدعو کریں۔"
+    },
+    "invite": {
+      "headerTitle": "تربیت کی دعوت",
+      "frameTitle": "ٹریننگ سینڈ باکس",
+      "frameBody": "ایک حقیقی کسان کو پریکٹس سیشن میں مدعو کریں۔ کسان کو اپنے PWA پر کچھ ظاہر ہونے سے پہلے قبول کرنا چاہیے۔ یہاں کوئی بھی چیز آپ کے حقیقی مختص، آرڈرز، یا سبسکرپشنز کو متاثر نہیں کرتی ہے۔",
+      "noSessionsTitle": "کوئی تربیتی سیشن فعال نہیں ہے۔",
+      "noSessionsBody": "کمپنی کا CA CA پورٹل سے تربیتی سیشن شروع کرتا ہے۔ ایک بار چلنے کے بعد، آپ اسے یہاں دیکھیں گے۔",
+      "pickSession": "ایک تربیتی سیشن کا انتخاب کریں۔",
+      "endsPrefix": "ختم ہو رہی ہے {date}",
+      "farmerPhoneLabel": "کسان کا فون نمبر",
+      "farmerPhoneHint": "کسان کا پہلے سے ہی روٹس ٹاک پر رجسٹر ہونا ضروری ہے۔",
+      "farmerPhonePlaceholder": "10 ہندسوں کا نمبر",
+      "pickCrop": "فصل چنیں۔",
+      "noCrops": "ابھی تک اس تربیتی سیشن کے تحت فعال پیکیج کے ساتھ کوئی فصل نہیں ہے۔",
+      "pickPackage": "ایک پیکج چنیں۔",
+      "submit": "تربیتی دعوت نامہ بھیجیں۔",
+      "sending": "بھیج رہا ہے…",
+      "successMessage": "دعوت نامہ بھیج دیا گیا۔ کسان اسے اپنے PWA میں دیکھے گا۔",
+      "genericError": "دعوت نامہ نہیں بھیج سکا۔",
+      "genericLoadError": "تربیتی سیشن لوڈ نہیں ہو سکے۔"
+    }
+  },
+  "push": {
+    "banner": {
+      "title": "اطلاعات کو آن کریں۔",
+      "body": "جب آج کی مشقیں مقررہ ہیں، جب آپ کے استفسار کا جواب ملتا ہے، اور جب کسی آرڈر کو آپ کی کارروائی کی ضرورت ہوتی ہے تو الرٹ رہیں۔",
+      "enable": "آن کریں۔",
+      "enabling": "آن ہو رہا ہے…",
+      "notNow": "ابھی نہیں۔"
+    },
+    "toast": {
+      "tapToOpen": "کھولنے کے لیے تھپتھپائیں۔",
+      "dismiss": "برطرف کرنا"
+    }
+  },
   "common": {
     "translationPending": "ترجمہ زیر التواء",
     "loading": "لوڈ ہو رہا ہے…",
@@ -69,7 +124,7 @@
       "seeMore": "{count, plural, one {1 مزید مثال دیکھیں} other {# مزید مثالیں دیکھیں}}",
       "searchGoogle": "گوگل پر سرچ کریں۔",
       "noCuratedExamples": "اس صحیح علامت کے لیے ابھی تک کوئی کیوریٹڈ مثالیں نہیں ہیں۔",
-      "searchGoogleImages": "🔍 گوگل امیجز میں تلاش کریں۔",
+      "searchGoogleImages": "🔍 گوگل امیجز تلاش کریں۔",
       "no": "✗ نہیں",
       "yes": "✓ ہاں",
       "notSure": "یقین نہیں ہے؟",
@@ -106,7 +161,7 @@
     },
     "aiCapture": {
       "title": "تصاویر لیں یا اپ لوڈ کریں۔",
-      "bodyWithStage": "فصل کا مرحلہ: {stage} ۔ 1-5 واضح تصاویر شامل کریں جس میں متاثرہ حصے دکھائے جائیں۔ متعدد زاویے AI کو بہتر فیصلہ کرنے میں مدد کرتے ہیں۔",
+      "bodyWithStage": "فصل کا مرحلہ: {stage} 1-5 واضح تصاویر شامل کریں جس میں متاثرہ حصے دکھائے جائیں۔ متعدد زاویے AI کو بہتر فیصلہ کرنے میں مدد کرتے ہیں۔",
       "bodyNoStage": "1-5 واضح تصاویر شامل کریں جس میں متاثرہ حصے دکھائے جائیں۔ متعدد زاویے AI کو بہتر فیصلہ کرنے میں مدد کرتے ہیں۔",
       "takePhoto": "تصویر لیں یا چنیں۔",
       "tapToAdd": "شامل کرنے کے لیے تھپتھپائیں۔",
@@ -160,7 +215,8 @@
     "label": {
       "today": "آج",
       "reference": "حوالہ",
-      "day": "دن"
+      "day": "دن",
+      "coversAlso": "احاطہ بھی: {names}"
     },
     "empty": {
       "noAdviceToday": "آج کے لیے کوئی مشورہ نہیں۔",
@@ -195,6 +251,13 @@
       "confirmBody": "آپ اسے واپس نہیں لا سکیں گے۔ ہم اسے صرف آپ کے لیے چھپائیں گے۔",
       "confirmCancel": "رکھ لو",
       "confirmYes": "ہاں، ہٹا دیں۔"
+    },
+    "relations": {
+      "applyAllTogether": "{count, plural, one {ایک ساتھ درخواست دیں۔} =2 {دونوں کو ایک ساتھ لگائیں۔} other {سب # ایک ساتھ لگائیں۔}}",
+      "orderAllTogether": "{count, plural, one {آرڈر} =2 {دونوں ایک ساتھ آرڈر کریں۔} other {سب مل کر # آرڈر کریں۔}}",
+      "orSeparator": "یا",
+      "andBetweenParts": "اور",
+      "orJoin": "یا"
     },
     "element": {
       "APPLICATION_METHOD": "درخواست کا طریقہ",
@@ -236,10 +299,10 @@
       "VOLUME_PER_PLANT": "حجم فی پلانٹ"
     },
     "l2": {
-      "GENERAL_INSTRUCTIONS": "General Instructions",
-      "MEDIA_IMAGE": "Image",
-      "MEDIA_AUDIO": "Audio",
-      "MEDIA_HYPERLINK": "Link"
+      "GENERAL_INSTRUCTIONS": "عمومی ہدایات",
+      "MEDIA_IMAGE": "تصویر",
+      "MEDIA_AUDIO": "آڈیو",
+      "MEDIA_HYPERLINK": "لنک"
     }
   },
   "role": {
@@ -251,6 +314,10 @@
   "roleSwitcher": {
     "close": "بند",
     "activeRoleFallback": "کسان",
+    "personalDetails": "ذاتی تفصیلات",
+    "shopDetails": "دکان کی تفصیلات",
+    "professionalDetails": "پیشہ ورانہ تفصیلات",
+    "onboardedCompanies": "آن بورڈڈ کمپنیاں",
     "mySubscriptions": "میری سبسکرپشنز",
     "cropsAndCompanies": "فصلیں اور کمپنیاں",
     "messageRootsTalk": "میسج روٹس ٹاک",
@@ -264,7 +331,10 @@
     "setupPundit": "ماہر بنیں۔",
     "activeBadge": "فعال",
     "setupHint": "سیٹ اپ →",
+    "exclusivityHint": "دستیاب نہیں — آپ ایک {otherRole} ہیں",
+    "exclusivityMessage": "آپ پہلے سے ہی ایک {currentRole} ہیں۔ ایک واحد صارف RootsTalk پر ڈیلر اور ایک سہولت کار دونوں نہیں ہو سکتا - وہ آرڈر روٹنگ چین کے مخالف سروں پر بیٹھتے ہیں۔ رضاکارانہ طور پر کسی کردار کو ختم کرنا مستقبل کی تازہ کاری میں آ رہا ہے۔",
     "helpAndTips": "مدد اور تجاویز",
+    "privacyPolicy": "رازداری کی پالیسی",
     "aboutRootsTalk": "روٹس ٹاک کے بارے میں",
     "signOut": "سائن آؤٹ کریں۔",
     "about": {
@@ -272,14 +342,7 @@
       "byOrg": "Neytiri Eywafarm Agritech کی طرف سے",
       "version": "ورژن 2.0",
       "visit": "eywa.farm → ملاحظہ کریں۔"
-    },
-    "personalDetails": "ذاتی تفصیلات",
-    "shopDetails": "دکان کی تفصیلات",
-    "professionalDetails": "پیشہ ورانہ تفصیلات",
-    "privacyPolicy": "رازداری کی پالیسی",
-    "onboardedCompanies": "آن بورڈڈ کمپنیاں",
-    "exclusivityHint": "دستیاب نہیں — آپ ایک {otherRole} ہیں",
-    "exclusivityMessage": "آپ پہلے سے ہی ایک {currentRole} ہیں۔ ایک واحد صارف RootsTalk پر ڈیلر اور ایک سہولت کار دونوں نہیں ہو سکتا - وہ آرڈر روٹنگ چین کے مخالف سروں پر بیٹھتے ہیں۔ رضاکارانہ طور پر کسی کردار کو ختم کرنا مستقبل کی تازہ کاری میں آ رہا ہے۔"
+    }
   },
   "header": {
     "aboutRootsTalk": "rootsTALK کے بارے میں",
@@ -309,25 +372,25 @@
   "welcome": {
     "greeting": "خوش آمدید، {name} !",
     "fallbackName": "rootsTALK پر",
-    "subline": "آپ کا مکمل کاشتکاری ساتھی",
-    "cta": "آئیے شروع کرتے ہیں →",
-    "alsoRoles": "میں ایک ڈیلر / سہولت کار / ماہر بھی ہوں۔",
-    "tile": {
-      "advisories": {
-        "title": "مشورے",
-        "body": "ماہرین کی رہنمائی میں فصل کا انتظام، موسم بہ موسم"
+    "subline": "آپ کا مکمل کاشتکاری کا ساتھی",
+    "choicePrompt": "آپ کہاں سے شروع کرنا چاہیں گے؟",
+    "choiceFooterHint": "آپ بعد میں سائیڈ ڈراور سے مزید کردار ادا کر سکتے ہیں۔",
+    "role": {
+      "farmer": {
+        "title": "کسان ڈیش بورڈ",
+        "body": "اپنی فصلوں کو ٹریک کریں اور مشورے حاصل کریں۔"
       },
-      "purchase": {
-        "title": "خریداری",
-        "body": "قابل اعتماد ڈیلرز کے ذریعے تجویز کردہ ان پٹ آرڈر کریں۔"
+      "dealer": {
+        "title": "میری دکان کھولو",
+        "body": "کسانوں سے آرڈر وصول کریں اور آدانوں کی فراہمی کریں۔"
       },
-      "diagnose": {
-        "title": "تشخیص کریں۔",
-        "body": "گائیڈڈ تشخیص کے ساتھ فصل کے مسائل کی نشاندہی کریں۔"
+      "facilitator": {
+        "title": "سہولت کار کے طور پر مدد کریں۔",
+        "body": "اپنے گاؤں میں سبسکرپشن کو فروغ دے کر کمائیں۔"
       },
-      "askExpert": {
-        "title": "ماہر سے پوچھیں۔",
-        "body": "تصدیق شدہ زرعی ماہرین سے جوابات حاصل کریں۔"
+      "pundit": {
+        "title": "ماہر بنیں۔",
+        "body": "اپنی مہارت کے شعبے میں کسانوں کے سوالات کے جواب دیں۔"
       }
     }
   },
@@ -389,7 +452,7 @@
       "confirmCancelSelf": "اس زیر التواء ادائیگی سبسکرپشن کو منسوخ کریں؟ آپ بعد میں دوبارہ سبسکرائب کر سکتے ہیں۔",
       "confirmCancelDelegate": "ادائیگی کی اس درخواست کو منسوخ کریں؟ آپ کا سبسکرپشن برقرار ہے - آپ خود ادائیگی کر سکتے ہیں یا کسی اور سے پوچھ سکتے ہیں۔",
       "errorCancelSelf": "منسوخ نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-      "errorCancelDelegate": "درخواست کو منسوخ نہیں کیا جا سکا۔"
+      "errorCancelDelegate": "درخواست منسوخ نہیں ہو سکی۔"
     },
     "assignment": {
       "title": "مشاورتی تفویض کی درخواست",
@@ -432,7 +495,7 @@
       "userNotFoundForExpert": "روٹس ٹاک کا کوئی صارف اس نمبر کے ساتھ رجسٹرڈ نہیں ہے۔ ہندسوں کو چیک کریں۔",
       "notPromoterPundit": "یہ نمبر اس کمپنی کے پروموٹر پنڈت کا نہیں ہے۔ اپنے پروموٹر یا RM سے صحیح نمبر کے لیے پوچھیں۔",
       "expertSaveFailed": "بچا نہیں سکا۔ دوبارہ کوشش کریں۔",
-      "revertedToDefault": "ڈیفالٹ پر لوٹا گیا۔",
+      "revertedToDefault": "ڈیفالٹ پر واپس کر دیا گیا۔",
       "noPrimaryExpert": "اس کمپنی نے ابھی تک پرائمری ماہر کو شامل نہیں کیا ہے۔ ماہرین سے پوچھیں ایک بار وہ دستیاب ہوں گے۔",
       "diagnoseUnavailable": "اس فصل کے لیے ابھی تشخیص دستیاب نہیں ہے۔"
     },
@@ -475,7 +538,7 @@
       "editWindowUntil": "آپ اسے {date} تک تبدیل کر سکتے ہیں۔",
       "lockedNote": "{date} کو مقفل کر دیا گیا۔",
       "changeBtn": "تبدیلی",
-      "updateCta": "اپ ڈیٹ کریں۔"
+      "updateCta": "اپڈیٹ کریں۔"
     },
     "tiles": {
       "advisoryTitle": "ایڈوائزری",
@@ -490,14 +553,14 @@
       "noExpertYet": "ابھی تک کوئی ماہر نہیں۔"
     },
     "missedItems": {
-      "label": "{count, plural, one {1 مس ہوئی آئٹم — ایپلیکیشن ونڈو گزر گئی۔} other {# مس شدہ آئٹمز — ایپلیکیشن ونڈو گزر گئی۔}}",
+      "label": "{count, plural, one {1 چھوٹی ہوئی شے — درخواست کی ونڈو گزر گئی۔} other {# مس ہوئی آئٹمز — ایپلیکیشن ونڈو گزر گئی۔}}",
       "cta": "دیکھیں →"
     },
     "preStart": {
       "sectionHeader": "بوائی کی تیاری کریں۔",
       "seedsTitle": "بیج اور بیج",
       "seedsBody": "تجویز کردہ اقسام کو براؤز کریں اور آرڈر کریں۔",
-      "itemsRecommended": "{count, plural, one {بوائی سے پہلے 1 چیز تجویز کی جاتی ہے۔} other {بوائی سے پہلے # اشیاء کی سفارش کی جاتی ہے۔}}",
+      "itemsRecommended": "{count, plural, one {بوائی سے پہلے 1 شے تجویز کی جاتی ہے۔} other {بوائی سے پہلے # اشیاء کی سفارش کی جاتی ہے۔}}",
       "pesticidesTitle": "کیڑے مار دوائیں پہلے سے شروع کریں۔",
       "pesticidesCta": "تمام کیڑے مار ادویات کا آرڈر دیں →",
       "fertilisersTitle": "کھادیں پہلے سے شروع کریں۔",
@@ -521,7 +584,7 @@
       "specificHint": "آپ کے سوالات براہ راست اس ماہر کے پاس جاتے ہیں۔",
       "revertToDefault": "ڈیفالٹ پر واپس جائیں۔",
       "promoterFallback": "پروموٹر-ماہر",
-      "promoterHint": "آپ کا پروموٹر بھی ایک ماہر ہے۔ سوالات ان کے پاس بطور ڈیفالٹ جاتے ہیں۔",
+      "promoterHint": "آپ کا پروموٹر بھی ایک ماہر ہے۔ سوالات بطور ڈیفالٹ ان کے پاس جاتے ہیں۔",
       "chooseDifferent": "ایک مختلف ماہر کا انتخاب کریں۔",
       "teamLabel": "ٹیم کی باقاعدہ روٹنگ",
       "teamHint": "سوالات آپ کی کمپنی کی باقاعدہ ماہر ٹیم کے پاس جاتے ہیں۔",
@@ -552,7 +615,7 @@
       "optOut": "کسی اور کو الرٹ نہ بھیجیں۔",
       "phoneLabel": "فون نمبر",
       "phonePlaceholder": "+91 XXXXX XXXXX",
-      "assignedHint": "اپنے پروموٹر کے نمبر پر خود بخود واپس آنے کے لیے خالی چھوڑ دیں۔"
+      "assignedHint": "اپنے پروموٹر کے نمبر پر خودکار طور پر واپس آنے کے لیے خالی چھوڑ دیں۔"
     },
     "expertSheet": {
       "title": "اپنے ماہر کا انتخاب کریں۔",
@@ -565,6 +628,11 @@
       "diagnose": "ہمیں یہ جاننے کی ضرورت ہے کہ آپ نے فصل کے مسائل کی تشخیص میں مدد کے لیے کب بوائی تھی۔",
       "setNow": "ابھی شروع کی تاریخ مقرر کریں۔",
       "later": "شاید بعد میں"
+    },
+    "noExpertSheet": {
+      "title": "اس کمپنی میں ابھی تک کوئی ماہر نہیں ہے۔",
+      "body": "اس کمپنی نے ابھی تک کوئی بنیادی ماہر قائم نہیں کیا ہے۔ آپ سوالات بھیجنے کے قابل ہو جائیں گے ایک بار جب وہ جہاز میں شامل ہوں گے۔",
+      "ok": "ٹھیک ہے، سمجھ گیا۔"
     }
   },
   "subscribe": {
@@ -607,10 +675,10 @@
     "delegateSent": {
       "heading": "ادائیگی کی درخواست بھیج دی گئی۔",
       "askedPrefix": "پوچھا",
-      "askedToPay": "{company} سے اپنی {crop} ایڈوائزری کے لیے ₹{price} ادا کرنے کے لیے۔",
+      "askedToPay": "{company} سے اپنی {crop} ایڈوائزری کے لیے ₹ {price} ادا کرنے کے لیے۔",
       "recipientFallback": "وصول کنندہ",
-      "bodyWithoutName": "{company} سے {crop} ایڈوائزری کے لیے ₹{price} ادا کرنے کی آپ کی درخواست بھیج دی گئی ہے۔",
-      "hint": "جب وہ ادائیگی کریں گے تو آپ کو مطلع کر دیا جائے گا۔ درخواست کی میعاد 24 گھنٹے میں ختم ہو جائے گی۔ ادائیگی مکمل ہوتے ہی آپ کی ایڈوائزری فعال ہو جاتی ہے۔",
+      "bodyWithoutName": "{company} سے {crop} ایڈوائزری کے لیے ₹ {price} ادا کرنے کی آپ کی درخواست بھیج دی گئی ہے۔",
+      "hint": "جب وہ ادائیگی کریں گے تو آپ کو مطلع کر دیا جائے گا۔ درخواست کی میعاد 24 گھنٹے میں ختم ہو جاتی ہے۔ ادائیگی مکمل ہوتے ہی آپ کی ایڈوائزری فعال ہو جاتی ہے۔",
       "goHome": "گھر جاؤ",
       "trackRequest": "اس درخواست کو ٹریک کریں →"
     },
@@ -637,7 +705,7 @@
     },
     "guided": {
       "firstTitle": "ہمیں اپنے فارم کے بارے میں بتائیں",
-      "followupTitle": "ایک بات اور",
+      "followupTitle": "ایک اور بات",
       "subtitle": "ہم آپ کے لیے صحیح ایڈوائزری تلاش کریں گے۔",
       "narrowingFrom": "{count} اختیارات سے تنگ کیا جا رہا ہے۔",
       "startOver": "↺ دوبارہ شروع کریں۔",
@@ -650,19 +718,19 @@
       "fallbackPackageName": "{crop} ایڈوائزری",
       "selectionsLabel": "آپ کے انتخاب",
       "priceLabel": "سبسکرپشن کی قیمت",
-      "priceAmount": "روپے {price}",
+      "priceAmount": "₹ {price}",
       "settingUp": "ترتیب دیا جا رہا ہے…",
       "proceedCta": "ٹھیک لگ رہا ہے — ادائیگی کے لیے آگے بڑھیں →"
     },
     "payment": {
       "title": "تقریباً وہاں!",
       "subtitle": "اپنی ایڈوائزری کی ادائیگی کا طریقہ منتخب کریں۔",
-      "attributionPrefix": "{price} روپے ادا کیے جاتے ہیں۔",
+      "attributionPrefix": "₹ {price} کو ادا کیا جاتا ہے۔",
       "attributionMiddle": "سافٹ ویئر کے بنیادی ڈھانچے کے لیے۔ یہ ہے",
       "attributionNot": "نہیں",
       "attributionSuffix": "{company} کو ادائیگی کی گئی",
       "attributionCompanyFallback": "کمپنی",
-      "payNow": "روپے ادا کریں۔ {price} اب",
+      "payNow": "ابھی ₹ {price} ادا کریں۔",
       "payNowBody": "ادائیگی کے بعد فوری ایکٹیویشن",
       "payUpi": "UPI کے ساتھ ادائیگی کریں →",
       "stagingBypass": "⚙ سٹیجنگ: Razorpay کو چھوڑیں، ابھی فعال کریں۔",
@@ -782,7 +850,7 @@
       },
       "facilitatorOwned": {
         "returnedHandling": "{count, plural, one {1 لوٹا ہوا آئٹم · آپ کا سہولت کار ہینڈل کر رہا ہے۔} other {# لوٹائی گئی اشیاء · آپ کا سہولت کار ہینڈل کر رہا ہے۔}}",
-        "facilitatorWillForward": "آپ کا سہولت کار انہیں کسی دوسرے ڈیلر کو بھیج دے گا یا آپ کو واپس دے گا۔ آپ سے کسی کارروائی کی ضرورت نہیں۔"
+        "facilitatorWillForward": "آپ کا سہولت کار انہیں کسی دوسرے ڈیلر کو بھیجے گا یا آپ کو واپس دے گا۔ آپ سے کسی کارروائی کی ضرورت نہیں۔"
       },
       "approvalSection": {
         "title": "آپ کی منظوری کا انتظار ہے ( {count} )",
@@ -879,7 +947,7 @@
       },
       "category": {
         "headerPesticide": "تاریخ کی حد کے مطابق کیڑے مار ادویات کا آرڈر دیں۔",
-        "headerFertilizer": "تاریخ کی حد کے مطابق کھاد کا آرڈر دیں۔",
+        "headerFertilizer": "تاریخ کی حد کے لحاظ سے کھاد کا آرڈر دیں۔",
         "fromLabel": "سے",
         "toLabel": "کو",
         "todayPill": "آج",
@@ -910,7 +978,7 @@
           "routed": "روٹ",
           "approval": "منظوری کے لیے",
           "returned": "واپس آ گیا۔",
-          "pickup": "Ready for pickup"
+          "pickup": "پک اپ کے لیے تیار"
         },
         "historyChip": "📁 تاریخ",
         "approvalPeek": "منظوری",
@@ -1005,22 +1073,22 @@
         "fertilizer": "کھاد",
         "fallback": "ان پٹ"
       },
-      "tabDealers": "Dealers ({count})",
-      "tabFacilitators": "Facilitators ({count})",
-      "emptyDealers": "No dealers found nearby.",
-      "emptyFacilitators": "No facilitators found nearby.",
-      "tryPhoneHint": "Try entering a phone number below."
+      "tabDealers": "ڈیلرز ( {count} )",
+      "tabFacilitators": "سہولت کار ( {count} )",
+      "emptyDealers": "آس پاس کوئی ڈیلر نہیں ملا۔",
+      "emptyFacilitators": "آس پاس کوئی سہولت کار نہیں ملا۔",
+      "tryPhoneHint": "نیچے ایک فون نمبر درج کرنے کی کوشش کریں۔"
     },
     "forward": {
       "headerTitle": "واپس کی گئی اشیاء کو آگے بھیجیں۔",
       "postponeOnlyReady": "{count, plural, one {1 ملتوی آئٹم آگے بھیجنے کے لیے تیار ہے (منسوخ ملتوی + بنڈل)۔} other {# ملتوی آئٹمز آگے بھیجنے کے لیے تیار ہیں (منسوخ ملتوی + بنڈل)۔}}",
       "readyToForward": "{count, plural, one {1 آئٹم آگے بھیجنے کے لیے تیار ہے۔} other {# آئٹمز آگے بھیجنے کے لیے تیار ہیں۔}}",
-      "pickHint": " Enter the dealer's or facilitator's phone number below.",
+      "pickHint": " ذیل میں ڈیلر یا سہولت کار کا فون نمبر درج کریں۔",
       "brandLockedTitle": "برانڈ مقفل آرڈر",
-      "tabDealers": "ڈیلر ( {count} )",
-      "tabFacilitators": "سہولت کار ( {count} )",
-      "emptyDealers": "ابھی کوئی ڈیلر دستیاب نہیں ہے۔",
-      "emptyFacilitators": "ابھی کوئی سہولت کار دستیاب نہیں ہے۔",
+      "customPhoneLabel": "ڈیلر / سہولت کار فون",
+      "customPhonePlaceholder": "10 ہندسوں کا فون نمبر",
+      "phoneChecking": "چیک کیا جا رہا ہے…",
+      "sendOrder": "آرڈر بھیجیں۔",
       "nudgeTitle": "ملتوی اشیاء بھی بھیجیں؟",
       "nudgeBodyPrefix": "آپ کے پاس ہے۔",
       "nudgeBodyMiddle": "اب بھی موجودہ ڈیلر کے ساتھ۔ ان کو منسوخ کرنا چاہتے ہیں اور کے ساتھ بنڈل کرنا چاہتے ہیں۔",
@@ -1033,18 +1101,14 @@
       "emptyTitle": "آگے کرنے کے لیے کچھ نہیں۔",
       "emptyBody": "اس آرڈر میں کوئی واپس یا ملتوی آئٹمز نہیں ہیں جو ابھی کسی دوسرے ڈیلر کو بھیجے جا سکتے ہیں۔",
       "backToManage": "انتظام پر واپس جائیں۔",
-      "customPhoneLabel": "Dealer / Facilitator phone",
-      "customPhonePlaceholder": "10-digit phone number",
-      "phoneChecking": "Checking…",
-      "sendOrder": "Send Order",
       "lookup": {
-        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
-        "self": "You cannot send the order to yourself. Enter someone else's number.",
-        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
-        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
-        "roleDealer": "Dealer",
-        "roleFacilitator": "Facilitator",
-        "companyFallback": "the company"
+        "notRegistered": "اس نمبر کے ساتھ کوئی RootsTalk صارف نہیں ملا۔ ان سے پہلے رجسٹر کرنے کو کہیں۔",
+        "self": "آپ اپنے آپ کو آرڈر نہیں بھیج سکتے۔ کسی اور کا نمبر درج کریں۔",
+        "notDealerOrFacilitator": "یہ شخص RootsTalk پر بطور ڈیلر یا سہولت کار رجسٹرڈ نہیں ہے۔ ان سے پہلے 'ڈیلر بنیں' یا 'ایک سہولت کار بنیں' کے ذریعے اندراج کرنے کو کہیں۔",
+        "dealerNotOnboarded": "اس آرڈر میں ایک برانڈ لاک آئٹم ہے۔ یہ ڈیلر {client} کے ذریعے آن بورڈ نہیں ہے، اس لیے انہیں آرڈر نہیں بھیجا جا سکتا ہے۔ کسی سہولت کار کو بھیجیں یا کوئی مختلف ڈیلر چنیں۔",
+        "roleDealer": "ڈیلر",
+        "roleFacilitator": "سہولت کار",
+        "companyFallback": "کمپنی"
       }
     },
     "pickup": {
@@ -1158,7 +1222,7 @@
     "headerTitle": "کسی ماہر سے پوچھیں۔",
     "describeYourIssue": "اپنی فصل کا مسئلہ بیان کریں۔",
     "expertWithin2Days": "فارم پنڈٹ ماہر 2 دن کے اندر جواب دے گا۔",
-    "quotaPaidTitle": "{client} کے لیے آپ کے {limit} مفت استفسارات استعمال ہو چکے ہیں۔",
+    "quotaPaidTitle": "{client} کے لیے آپ کے {limit} مفت استفسارات استعمال ہو گئے ہیں۔",
     "quotaPaidBody": "اس استفسار پر ₹ {price} لاگت آئے گی، جو سافٹ ویئر انفراسٹرکچر کے لیے <strong>rootsTALK.in</strong> کو ادا کی گئی ہے۔ یہ {client} کو ادا <em>نہیں</em> کیا جاتا ہے۔",
     "quotaFreeRemaining": "آپ کے پاس {client} کے لیے <strong>{limit} مفت سوالات میں سے {remaining}</strong> ہیں۔",
     "natureOfQueryLabel": "سوال کی نوعیت",
@@ -1214,7 +1278,7 @@
       "needOnePhoto": "براہ کرم کم از کم ایک تصویر شامل کریں۔",
       "bypassFailed": "بائی پاس جمع کرانے میں ناکام۔"
     },
-    "razorpayDescription": "ماہر کا سوال (rootsTALK.in کو ادا کیا گیا، {client} کو نہیں)",
+    "razorpayDescription": "ماہر کا استفسار (rootsTALK.in کو ادا کیا گیا، {client} کو نہیں)",
     "affectedPlantsLabel": "آپ کے {total} پودوں میں سے کتنے متاثر ہوئے ہیں؟ (اختیاری)",
     "affectedPlantsPlaceholder": "ایک نمبر درج کریں۔",
     "affectedPlantsHelp": "اگر آپ کا سوال کسی کیڑوں یا بیماری کے بارے میں نہیں ہے تو اسے خالی چھوڑ دیں۔",
@@ -1245,9 +1309,9 @@
     "yourVoiceNote": "🎙 آپ کا صوتی نوٹ",
     "askedOn": "{date} کو پوچھا گیا",
     "awaitingReply": "ایک ماہر جلد ہی جواب دے گا۔",
-    "closedNoResponse": "بغیر کسی جواب کے بند کر دیا گیا۔",
-    "viewOriginal": "View original",
-    "viewTranslated": "View translated"
+    "closedNoResponse": "جواب کے بغیر بند کر دیا گیا۔",
+    "viewOriginal": "اصل دیکھیں",
+    "viewTranslated": "ترجمہ شدہ دیکھیں"
   },
   "farmerProfile": {
     "headerTitle": "میرا پروفائل",
@@ -1291,7 +1355,7 @@
       },
       "pundit": {
         "label": "ماہر بنیں۔",
-        "tagline": "اپنی مہارت کے شعبے میں کسانوں کے سوالات کے جوابات دیں۔"
+        "tagline": "اپنی مہارت کے شعبے میں کسانوں کے سوالات کے جواب دیں۔"
       }
     },
     "prefs": {
@@ -1299,14 +1363,14 @@
       "languageLabel": "زبان",
       "change": "تبدیلی",
       "alertsLabel": "الرٹ کی ترجیحات",
-      "alertsBody": "سیٹ کریں کہ ہر فصل کے صفحہ پر اور کس کو الرٹس ملتے ہیں — فصل کو کھولیں اور الرٹ وصول کنندہ کی شیٹ کو تھپتھپائیں۔",
+      "alertsBody": "سیٹ کریں کہ ہر فصل کے صفحہ پر اور کون الرٹس حاصل کرتا ہے — فصل کو کھولیں اور الرٹ وصول کنندہ شیٹ کو تھپتھپائیں۔",
       "openMyCrops": "میری فصلیں کھولیں →"
     },
     "language": {
       "selectorTitle": "زبان منتخب کریں۔"
     },
     "deleteAccount": {
-      "trigger": "میرا اکاؤنٹ ڈیلیٹ کر دیں۔",
+      "trigger": "میرا اکاؤنٹ حذف کر دیں۔",
       "confirmTitle": "اپنا اکاؤنٹ حذف کریں؟",
       "bullets": {
         "advisoriesCancelled": "آپ کی فعال مشورے منسوخ کر دی جائیں گی۔",
@@ -1335,6 +1399,9 @@
       "onboardingBody": "آپ نے اپنی دکان کا پروفائل ترتیب دیا ہے — بہت اچھا۔ کسانوں کے آرڈرز وصول کرنا شروع کرنے کے لیے، آپ کو کم از کم ایک RootsTalk کمپنی کے ذریعے آن بورڈ ہونے کی ضرورت ہے۔ اپنا رجسٹرڈ فون نمبر کسی بھی کمپنی کے فیلڈ مینیجر کے ساتھ شیئر کریں جس کے لیے آپ فروخت کرتے ہیں۔ ایک بار جب ان میں سے کوئی بھی آپ کو شامل کر لیتا ہے، تو نیچے دی گئی آپ کی ٹائلز لائیو سرگرمی دکھانا شروع کر دیں گی۔",
       "reviewProfile": "پروفائل کا جائزہ لیں۔",
       "myDealershipsBtn": "میری ڈیلرشپ",
+      "invitationsCount": "{count, plural, one {1 پروموٹر کی دعوت} other {# پروموٹر کے دعوت نامے۔}}",
+      "invitationsHint": "ایک کمپنی آپ کو اپنے پروموٹر کے طور پر چاہتی ہے۔",
+      "invitationsViewCta": "دیکھیں",
       "pendingOrders": "زیر التواء احکامات",
       "tapToProcess": "کارروائی کرنے کے لیے تھپتھپائیں →",
       "postponedItems": "ملتوی اشیاء",
@@ -1362,16 +1429,13 @@
         "unreadCount": "{count} بغیر پڑھے ہوئے",
         "brandForms": "برانڈ کی گذارشات",
         "brandFormsSubtitle": "ایک برانڈ نہیں مل سکتا؟ اسے اندر بھیج دو"
-      },
-      "invitationsCount": "{شمار، جمع، ایک {1 پروموٹر کی دعوت} دوسری {# پروموٹر دعوتیں}}",
-      "invitationsHint": "ایک کمپنی آپ کو اپنے پروموٹر کے طور پر چاہتی ہے۔",
-      "invitationsViewCta": "دیکھیں"
+      }
     },
     "payments": {
       "headerTitle": "کسانوں کی ادائیگی",
       "errorVerify": "ادائیگی کی توثیق ناکام ہو گئی۔",
       "errorInit": "ادائیگی شروع نہیں کی جا سکی۔",
-      "empty": "ابھی تک ادائیگی کی کوئی درخواست نہیں ہے۔",
+      "empty": "ابھی تک کوئی ادائیگی کی درخواستیں نہیں ہیں۔",
       "pendingHeader": "زیر التواء ( {count} )",
       "attributionPrefix": "آپ ادائیگی کرتے ہیں۔",
       "attributionMiddle": "سافٹ ویئر انفراسٹرکچر کے لیے جو کسانوں کے مشورے کو طاقت دیتا ہے۔ یہ ہے",
@@ -1383,7 +1447,7 @@
       "opening": "کھل رہا ہے…",
       "payAmount": "₹ {amount} ادا کریں",
       "decline": "رد کرنا",
-      "razorpayDescription": "کسان کی جانب سے مشاورتی رکنیت · rootsTALK.in کو ادا کی گئی۔"
+      "razorpayDescription": "کسان کی جانب سے ایڈوائزری سبسکرپشن · rootsTALK.in کو ادا کی گئی۔"
     },
     "orders": {
       "headerTitle": "احکامات",
@@ -1391,7 +1455,8 @@
         "pending": "زیر التواء",
         "postponed": "ملتوی",
         "farmer": "کسان کے ساتھ",
-        "packing": "پیکنگ"
+        "packing": "پیکنگ",
+        "training": "تربیت"
       },
       "historyChip": "📁 تاریخ",
       "emptyPill": "{pillName} کے تحت کچھ نہیں",
@@ -1427,7 +1492,7 @@
       },
       "pickup": {
         "receivedByFarmer": "✓ کسان کی طرف سے موصول ہوا · {date} {time}",
-        "pickedUpByFarmer": "📦 کسان نے اٹھایا · {date} {time}",
+        "pickedUpByFarmer": "📦 کسان کے ذریعے اٹھایا گیا · {date} {time}",
         "pickedUpByFacilitatorNamed": "📦 سہولت کار کے ذریعے اٹھایا گیا ( {name} ) · {date} {time} · کسان کی رسید کا انتظار",
         "pickedUpByFacilitator": "📦 سہولت کار کے ذریعے اٹھایا گیا · {date} {time} · کسان کی رسید کا انتظار",
         "awaitingPickup": "پک اپ کا انتظار ہے۔"
@@ -1448,10 +1513,10 @@
         "callFarmerAria": "کسان کو بلاؤ",
         "callFacilitatorAria": "سہولت کار کو کال کریں۔",
         "cropContext": {
-          "acres": "{count, plural, one {1 acre} other {# acres}}",
-          "plants": "{count, plural, one {1 plant} other {# plants}}",
-          "ageDays": "{count, plural, one {1 day old} other {# days old}}",
-          "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+          "acres": "{count, plural, one {1 ایکڑ} other {# ایکڑ}}",
+          "plants": "{count, plural, one {1 پودا} other {# پودے}}",
+          "ageDays": "{count, plural, one {1 دن پرانا} other {# دن پرانا}}",
+          "ageYears": "{count, plural, one {1 سال پرانا} other {# سال کا}}"
         }
       },
       "chunk": {
@@ -1498,7 +1563,7 @@
         "errorPostponeWindow": "اس بیج آرڈر کو فی الحال ملتوی نہیں کیا جا سکتا۔",
         "errorDecline": "انکار نہ کر سکا۔ براہ کرم دوبارہ کوشش کریں۔",
         "form": {
-          "title": "یہ آرڈر کسان کی منظوری کے لیے بھیجیں۔",
+          "title": "اس آرڈر کو کسان کی منظوری کے لیے بھیجیں۔",
           "unitLabel": "یونٹ",
           "qtyLabel": "مقدار",
           "qtyPlaceholder": "مقدار {unit} میں",
@@ -1515,7 +1580,7 @@
         "postponeSheet": {
           "title": "اس بیج آرڈر کو ملتوی کریں۔",
           "howManyDays": "کتنے دن؟",
-          "pickRange": "1 سے {max} چنیں۔ اس ونڈو کے بعد آرڈر خود کار طریقے سے کسان کو واپس کر دیتا ہے۔",
+          "pickRange": "1 سے {max} چنیں۔ اس ونڈو کے بعد آرڈر خود کار طریقے سے کسان کو واپس آ جاتا ہے۔",
           "dayUnit": "{count, plural, one {دن} other {دن}}",
           "postponing": "ملتوی ہو رہا ہے…",
           "postponeCta": "کے لیے ملتوی کر دیں۔ {count, plural, one {1 دن} other {# دن}}"
@@ -1543,6 +1608,34 @@
       "categoryFallback": "حکم",
       "soldLine": "{sold} فروخت ہوا۔",
       "soldWithUnavailable": "{sold} فروخت، {na} دستیاب نہیں ہے۔"
+    },
+    "onboardedCompanies": {
+      "headerTitle": "آن بورڈڈ کمپنیاں",
+      "promoterBadge": "پروموٹر",
+      "stepDown": "نیچے اتریں۔",
+      "stepDownConfirm": "اس کمپنی میں پروموٹر کے طور پر سبکدوش ہوں؟ آپ ایک ڈیلر کے طور پر آن بورڈ رہیں گے۔",
+      "errorStepDown": "عہدہ نہیں چھوڑ سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+      "callAria": "{company} کو کال کریں",
+      "websiteAria": "{company} ویب سائٹ کھولیں۔",
+      "emptyTitle": "ابھی تک کوئی کمپنیاں نہیں ہیں۔",
+      "emptyBody": "ابھی تک کسی کمپنی نے آپ کو بطور ڈیلر شامل نہیں کیا ہے۔ آپ جس کمپنی کے ساتھ کام کرنا چاہتے ہیں اس کے فیلڈ مینیجر سے پوچھیں"
+    },
+    "promoterInvitations": {
+      "headerTitle": "پروموٹر کے دعوت نامے",
+      "emptyTitle": "کوئی زیر التوا دعوت نامے نہیں ہیں۔",
+      "invitationSent": "بھیجی گئی {date}",
+      "description": "یہ کمپنی آپ کو اپنے پروموٹر کے طور پر چاہتی ہے — کسانوں کو سبسکرپشنز کے لیے تفویض کریں اور آپ کے نیٹ ورک سے کمائیں۔ ایک ڈیلر کے طور پر، آپ ایک ہی وقت میں متعدد کمپنیوں میں پروموٹر بن سکتے ہیں۔",
+      "acceptCta": "✓ قبول کریں۔",
+      "declineCta": "✗ انکار",
+      "confirmAcceptTitle": "{company} میں پروموٹر کا کردار قبول کریں؟",
+      "confirmAcceptBody": "آپ اس کمپنی میں پروموٹر ہوں گے۔ آپ دوسری کمپنیوں میں بھی پروموٹر بن سکتے ہیں — یہاں قبول کرنے سے کسی دوسرے پروموٹر کے کردار پر اثر نہیں پڑتا ہے۔",
+      "confirmAcceptCta": "ہاں، قبول ہے۔",
+      "confirmRejectTitle": "{company} کی دعوت کو مسترد کریں؟",
+      "confirmRejectBody": "کمپنی کو آگاہ کیا جائے گا۔ وہ آپ کو بعد میں دوبارہ مدعو کر سکتے ہیں۔",
+      "confirmRejectCta": "ہاں، انکار",
+      "confirmCancel": "منسوخ کریں۔",
+      "confirmBusy": "محفوظ ہو رہا ہے…",
+      "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
     },
     "postponed": {
       "headerTitle": "ملتوی اشیاء",
@@ -1638,7 +1731,23 @@
         "pickBrand": "برانڈ چنیں۔",
         "skipMixed": "مکسڈ کو چھوڑیں۔",
         "straightHeader": "سیدھی کھادیں (بقیہ خلا: {n} N · {p} P · {k} K)",
+        "twoHopHint": "فی کھاد دو چنیں: پہلے ٹائپ کریں (غذائیت کے تناسب سے)، پھر برانڈ۔",
+        "mixedHeaderV2": "مخلوط کھاد کی قسم چنیں (غذائیت کے تناسب سے)",
+        "mixedAccordionHeader": "مخلوط کھاد",
+        "mixedAccordionTapHint": "ایک قسم منتخب کرنے کے لیے تھپتھپائیں۔",
+        "mixedDisabledHint": "مکسڈ چننے کے لیے پہلے سیدھی کھاد کو صاف کریں۔",
+        "straightSectionHeader": "سیدھی کھاد",
+        "straightClassHeader": "{letter} — {kg} kg اب بھی درکار ہے۔",
+        "straightClassTapHint": "ایک قسم منتخب کرنے کے لیے تھپتھپائیں۔",
+        "changeMixedFertiliser": "مخلوط کھاد کو تبدیل کریں۔",
+        "changeStraightFertiliser": "{letter} کھاد کو تبدیل کریں۔",
+        "goToBrands": "برانڈز پر جائیں۔",
+        "volumeLabel": "حجم (کلوگرام)",
+        "priceLabel": "قیمت (₹)",
+        "commitError": "NPK انتخاب کا ارتکاب نہیں کیا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔",
         "straightOnly": "(صرف {letter} )",
+        "allCoveredByMixed": "تمام N, P, K مکسڈ کے ذریعے احاطہ کرتا ہے — کسی سیدھی کی ضرورت نہیں ہے۔",
+        "uncoveredWarning": "ابھی تک بے نقاب: {nutrients} ۔ ہر ایک کے لیے سیدھا منتخب کریں، یا اس آئٹم کو دستیاب نہیں ہے۔",
         "committing": "عزم کر رہا ہے…",
         "commitCta": "NPK انتخاب کا ارتکاب کریں۔"
       },
@@ -1655,12 +1764,12 @@
         "checking": "چیک کیا جا رہا ہے…",
         "markOptionAvailable": "مارک آپشن دستیاب ہے۔",
         "markNotAvailable": "نشان زد دستیاب نہیں ہے۔",
-        "andApplyTogether": "کسان انہیں ایک ساتھ استعمال کرتا ہے۔",
-        "orEitherOr": "کوئی ایک منتخب کریں — دوسرے کی ضرورت نہیں۔",
-        "changeSelection": "انتخاب تبدیل کریں",
-        "changing": "ری سیٹ ہو رہا ہے…",
+        "andApplyTogether": "یہ کسان ایک ساتھ لگاتے ہیں۔",
+        "orEitherOr": "کسی ایک کو منتخب کریں - متبادل کی ضرورت نہیں ہے۔",
         "andPrefix": "اور",
-        "orPrefix": "یا"
+        "orPrefix": "یا",
+        "changeSelection": "انتخاب کو تبدیل کریں۔",
+        "changing": "ری سیٹ ہو رہا ہے…"
       },
       "sections": {
         "relations": "متعدد قدمی تجاویز ( {count} )",
@@ -1873,7 +1982,7 @@
       "qtyLabel": "مقدار:",
       "qtyValue": "{quantity} {unit}",
       "priceSuffix": " · ₹ {price}",
-      "blindAcceptHint": "نیا آرڈر - آپ کی کال۔ آپ کے قبول کرنے کے بعد آئٹم کی تفصیلات ظاہر ہوتی ہیں۔",
+      "blindAcceptHint": "نیا آرڈر - آپ کی کال۔ آئٹم کی تفصیلات آپ کے قبول کرنے کے بعد ظاہر ہوتی ہیں۔",
       "acceptCta": "✓ قبول کریں۔",
       "declineCta": "✗ انکار",
       "enterQtyPrice": "مقدار اور قیمت درج کریں۔",
@@ -1881,7 +1990,7 @@
       "notAvailable": "✗ دستیاب نہیں ہے۔",
       "form": {
         "title": "مقدار اور قیمت درج کریں۔",
-        "unitLabel": "یونٹ *",
+        "unitLabel": "یونٹ*",
         "qtyLabel": "مقدار*",
         "qtyPlaceholder": "{unit} میں رقم",
         "totalPriceLabel": "کل قیمت (₹)",
@@ -1912,7 +2021,7 @@
       "postponeSheet": {
         "title": "اس بیج آرڈر کو ملتوی کریں۔",
         "howManyDays": "کتنے دن؟",
-        "pickRange": "1 سے {max} چنیں۔ اس ونڈو کے بعد آرڈر خود کار طریقے سے کسان کو واپس کر دیتا ہے۔",
+        "pickRange": "1 سے {max} چنیں۔ اس ونڈو کے بعد آرڈر خود کار طریقے سے کسان کو واپس آ جاتا ہے۔",
         "dayUnit": "{count, plural, one {دن} other {دن}}",
         "postponing": "ملتوی ہو رہا ہے…",
         "postponeCta": "{count, plural, one {1 دن کے لیے ملتوی کریں۔} other {# دن کے لیے ملتوی کریں۔}}"
@@ -1943,7 +2052,7 @@
       "kittyChipLink": "زیر التواء بھیج دیا گیا۔",
       "company": {
         "title": "کس کمپنی کی ایڈوائزری؟",
-        "subtitle": "وہ کمپنی چنیں جس کے لیے آپ اس کسان کو سبسکرپشن تفویض کرنا چاہتے ہیں۔ صرف آپ کی کٹی میں یونٹ والی کمپنیاں دکھائی جاتی ہیں۔",
+        "subtitle": "وہ کمپنی منتخب کریں جس کے لیے آپ اس کسان کو سبسکرپشن تفویض کرنا چاہتے ہیں۔ صرف آپ کی کٹی میں یونٹ والی کمپنیاں دکھائی جاتی ہیں۔",
         "subsLeft": "{count, plural, one {1 رکنیت باقی ہے۔} other {# سبسکرپشنز باقی ہیں۔}}",
         "pendingSentCta": "زیر التواء بھیجا گیا →"
       },
@@ -1976,7 +2085,7 @@
       "crop": {
         "title": "فصل کا انتخاب کریں۔",
         "subtitle": "{district} میں {company} کے لیے فصلیں دستیاب ہیں",
-        "empty": "اس ضلع میں {company} کے لیے کوئی فصل دستیاب نہیں ہے۔",
+        "empty": "{company} کے لیے اس ضلع میں کوئی فصل دستیاب نہیں ہے۔",
         "back": "← واپس"
       },
       "guided": {
@@ -2033,6 +2142,11 @@
       "emptyTitle": "ابھی تک کوئی ترقی یافتہ کسان نہیں ہے۔",
       "emptyHint": "جن کسانوں کو آپ سپانسر کرتے ہیں وہ یہاں نظر آئیں گے۔",
       "unknownFarmer": "نامعلوم کسان",
+      "acresLabel": "{count, plural, one {1 ایکڑ} other {# ایکڑ}}",
+      "plantsLabel": "{count, plural, one {1 پودا} other {# پودے}}",
+      "startedLabel": "شروع ہوا {date}",
+      "plantedLabel": "لگایا گیا {year}",
+      "callBtnAria": "{name} کو کال کریں",
       "detail": {
         "headerTitle": "کسانوں سے متعلق مشورہ",
         "errorTitleWaiting": "کسان کا انتظار کر رہے ہیں۔",
@@ -2065,56 +2179,28 @@
       "headerTitle": "آنے والے انتباہات",
       "typeStartDate": "آغاز کی تاریخ",
       "typeInput": "ان پٹ",
+      "pillStartDate": "آغاز کی تاریخ",
+      "pillInput": "ان پٹ",
+      "tabsAriaLabel": "قسم کے لحاظ سے الرٹس کو فلٹر کریں۔",
       "alertTypeBadge": "{type} الرٹ",
       "errorLoad": "لوڈ نہیں ہو سکا۔ دوبارہ کوشش کرنے کے لیے کھینچیں۔",
       "emptyTitle": "کوئی آنے والے انتباہات نہیں۔",
       "emptyBody": "آپ کو مخاطب کیے گئے انتباہات یہاں ظاہر ہوتے ہیں۔ جیسے ہی کسان اپنے اختتام پر کام مکمل ہونے کا نشان لگاتا ہے تو وہ غائب ہو جاتے ہیں۔",
+      "emptyStartDate": "ابھی شروع ہونے کی تاریخ کے انتباہات نہیں ہیں۔ زیر التواء ان پٹ الرٹس دیکھنے کے لیے ان پٹ پر سوئچ کریں۔",
+      "emptyInput": "ابھی کوئی ان پٹ الرٹس نہیں۔ شروع کی تاریخ کے زیر التواء انتباہات دیکھنے کے لیے تاریخ آغاز پر سوئچ کریں۔",
       "countAndHint": "{count, plural, one {1 زیر التواء الرٹ۔ کسان کو کال کرنے کے لیے فون نمبر پر ٹیپ کریں۔} other {# زیر التواء الرٹس۔ کسان کو کال کرنے کے لیے فون نمبر پر ٹیپ کریں۔}}",
       "unnamedFarmer": "بے نام کسان",
       "cropLabel": "فصل:",
       "callBtn": "📞 {phone} پر کال کریں",
-      "pillStartDate": "آغاز کی تاریخ",
-      "pillInput": "ان پٹ",
-      "tabsAriaLabel": "قسم کے لحاظ سے الرٹس کو فلٹر کریں۔",
-      "emptyStartDate": "ابھی شروع ہونے کی تاریخ کے انتباہات نہیں ہیں۔ زیر التواء ان پٹ الرٹس دیکھنے کے لیے ان پٹ پر سوئچ کریں۔",
-      "emptyInput": "ابھی کوئی ان پٹ الرٹس نہیں۔ شروع کی تاریخ کے زیر التواء انتباہات دیکھنے کے لیے تاریخ آغاز پر سوئچ کریں۔",
       "callBtnLabel": "کال کریں۔",
       "callBtnAria": "{name} کو کال کریں"
-    },
-    "promoterInvitations": {
-      "headerTitle": "پروموٹر کے دعوت نامے",
-      "emptyTitle": "کوئی زیر التوا دعوت نامے نہیں ہیں۔",
-      "invitationSent": "بھیجی گئی {date}",
-      "description": "یہ کمپنی آپ کو اپنے پروموٹر کے طور پر چاہتی ہے — کسانوں کو سبسکرپشنز کے لیے تفویض کریں اور آپ کے نیٹ ورک سے کمائیں۔ ایک ڈیلر کے طور پر، آپ ایک ہی وقت میں متعدد کمپنیوں میں پروموٹر بن سکتے ہیں۔",
-      "acceptCta": "✓ قبول کریں۔",
-      "declineCta": "✗ انکار",
-      "confirmAcceptTitle": "{company} میں پروموٹر کا کردار قبول کریں؟",
-      "confirmAcceptBody": "آپ اس کمپنی میں پروموٹر ہوں گے۔ آپ دوسری کمپنیوں میں بھی پروموٹر بن سکتے ہیں — یہاں قبول کرنے سے کسی دوسرے پروموٹر کے کردار پر اثر نہیں پڑتا ہے۔",
-      "confirmAcceptCta": "ہاں، قبول ہے۔",
-      "confirmRejectTitle": "{company} کی دعوت کو مسترد کریں؟",
-      "confirmRejectBody": "کمپنی کو آگاہ کیا جائے گا۔ وہ آپ کو بعد میں دوبارہ مدعو کر سکتے ہیں۔",
-      "confirmRejectCta": "ہاں، انکار",
-      "confirmCancel": "منسوخ کریں۔",
-      "confirmBusy": "محفوظ ہو رہا ہے…",
-      "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
-    },
-    "onboardedCompanies": {
-      "headerTitle": "آن بورڈڈ کمپنیاں",
-      "promoterBadge": "پروموٹر",
-      "stepDown": "نیچے اتریں۔",
-      "stepDownConfirm": "اس کمپنی میں پروموٹر کے طور پر سبکدوش ہوں؟ آپ ایک ڈیلر کے طور پر آن بورڈ رہیں گے۔",
-      "errorStepDown": "عہدہ نہیں چھوڑ سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-      "callAria": "{company} کو کال کریں",
-      "websiteAria": "{company} ویب سائٹ کھولیں۔",
-      "emptyTitle": "ابھی تک کوئی کمپنیاں نہیں۔",
-      "emptyBody": "ابھی تک کسی کمپنی نے آپ کو بطور ڈیلر شامل نہیں کیا ہے۔ آپ جس کمپنی کے ساتھ کام کرنا چاہتے ہیں اس کے فیلڈ مینیجر سے پوچھیں۔"
     },
     "brandForms": {
       "title": "برانڈ کی گذارشات",
       "newCta": "+ نئی جمع کروانا",
       "loading": "لوڈ ہو رہا ہے…",
       "emptyTitle": "ابھی تک کوئی گذارشات نہیں ہیں۔",
-      "emptyBody": "جب آپ کو کوئی ایسا برانڈ نہیں ملتا جو آپ فروخت کرتے ہیں، تو ہمیں بتائیں — اوپر نئی جمع آوری پر ٹیپ کریں۔",
+      "emptyBody": "جب آپ کو کوئی ایسا برانڈ نہیں ملتا ہے جسے آپ فروخت کرتے ہیں، تو ہمیں بتائیں — اوپر نئی جمع کرانے پر ٹیپ کریں۔",
       "statusSubmitted": "جمع کرایا",
       "statusIncluded": "شامل",
       "statusRejected": "مسترد",
@@ -2136,7 +2222,7 @@
         "photosHint": "{count} از 2-4",
         "addPhoto": "+ تصویر شامل کریں۔",
         "uploading": "اپ لوڈ ہو رہا ہے…",
-        "notesLabel": "اور کچھ؟ (اختیاری)",
+        "notesLabel": "کچھ اور؟ (اختیاری)",
         "notesPlaceholder": "بیچ کوڈ، پیک سائز، یا کوئی بھی چیز جو پروڈکٹ کی شناخت میں ہماری مدد کرتی ہے۔",
         "submit": "روٹس ٹاک کو بھیجیں۔",
         "submitting": "بھیج رہا ہے…",
@@ -2162,29 +2248,29 @@
       "tileServiceProfileHint": "میرا اعلان",
       "tileAlerts": "مجھے موصول ہونے والے انتباہات",
       "tileAlertsHint": "{count} بغیر پڑھے ہوئے",
-      "tileSeedOrders": "بیج کے آرڈر",
-      "tileSeedOrdersHint": "{count, plural, =0 {کوئی انتظار نہیں کرتا} one {1 انتظار کر رہا ہے۔} other {# انتظار}}",
-      "invitationsCount": "{شمار، جمع، ایک {1 پروموٹر کی دعوت} دوسری {# پروموٹر دعوتیں}}",
+      "invitationsCount": "{count, plural, one {1 پروموٹر کی دعوت} other {# پروموٹر کے دعوت نامے۔}}",
       "invitationsHint": "ایک کمپنی آپ کو اپنے پروموٹر کے طور پر چاہتی ہے۔",
-      "invitationsViewCta": "دیکھیں"
+      "invitationsViewCta": "دیکھیں",
+      "tileSeedOrders": "بیج کے آرڈر",
+      "tileSeedOrdersHint": "{count, plural, =0 {کوئی انتظار نہیں کرتا} one {1 انتظار کر رہا ہے۔} other {# انتظار}}"
     },
     "alertsIncoming": {
       "headerTitle": "آنے والے انتباہات",
       "typeStartDate": "آغاز کی تاریخ",
       "typeInput": "ان پٹ",
+      "pillStartDate": "آغاز کی تاریخ",
+      "pillInput": "ان پٹ",
+      "tabsAriaLabel": "قسم کے لحاظ سے الرٹس کو فلٹر کریں۔",
       "alertTypeBadge": "{type} الرٹ",
       "errorLoad": "لوڈ نہیں ہو سکا۔ دوبارہ کوشش کرنے کے لیے کھینچیں۔",
       "emptyTitle": "کوئی آنے والے انتباہات نہیں۔",
       "emptyBody": "آپ کو مخاطب کیے گئے انتباہات یہاں ظاہر ہوتے ہیں۔ جیسے ہی کسان اپنے اختتام پر کام مکمل ہونے کا نشان لگاتا ہے تو وہ غائب ہو جاتے ہیں۔",
+      "emptyStartDate": "ابھی شروع ہونے کی تاریخ کے انتباہات نہیں ہیں۔ زیر التواء ان پٹ الرٹس دیکھنے کے لیے ان پٹ پر سوئچ کریں۔",
+      "emptyInput": "ابھی کوئی ان پٹ الرٹس نہیں۔ شروع کی تاریخ کے زیر التواء انتباہات دیکھنے کے لیے تاریخ آغاز پر سوئچ کریں۔",
       "countAndHint": "{count, plural, one {1 زیر التواء الرٹ۔ کسان کو کال کرنے کے لیے فون نمبر پر ٹیپ کریں۔} other {# زیر التواء الرٹس۔ کسان کو کال کرنے کے لیے فون نمبر پر ٹیپ کریں۔}}",
       "unnamedFarmer": "بے نام کسان",
       "cropLabel": "فصل:",
       "callBtn": "📞 {phone} پر کال کریں",
-      "pillStartDate": "آغاز کی تاریخ",
-      "pillInput": "ان پٹ",
-      "tabsAriaLabel": "قسم کے لحاظ سے الرٹس کو فلٹر کریں۔",
-      "emptyStartDate": "ابھی شروع ہونے کی تاریخ کے انتباہات نہیں ہیں۔ زیر التواء ان پٹ الرٹس دیکھنے کے لیے ان پٹ پر سوئچ کریں۔",
-      "emptyInput": "ابھی کوئی ان پٹ الرٹس نہیں۔ شروع کی تاریخ کے زیر التواء انتباہات دیکھنے کے لیے تاریخ آغاز پر سوئچ کریں۔",
       "callBtnLabel": "کال کریں۔",
       "callBtnAria": "{name} کو کال کریں"
     },
@@ -2193,9 +2279,9 @@
       "errorVerify": "ادائیگی کی توثیق ناکام ہو گئی۔",
       "errorInitiate": "ادائیگی شروع نہیں کی جا سکی۔",
       "razorpayName": "rootsTALK.in",
-      "razorpayDescription": "کسان کی جانب سے مشاورتی رکنیت · rootsTALK.in کو ادا کی گئی۔",
+      "razorpayDescription": "کسان کی جانب سے ایڈوائزری سبسکرپشن · rootsTALK.in کو ادا کی گئی۔",
       "loadingSkeleton": "",
-      "emptyTitle": "ابھی تک ادائیگی کی کوئی درخواست نہیں ہے۔",
+      "emptyTitle": "ابھی تک کوئی ادائیگی کی درخواستیں نہیں ہیں۔",
       "pendingHeader": "زیر التواء ( {count} )",
       "attributionPrefix": "آپ ادائیگی کرتے ہیں۔ ",
       "attributionMiddle": " سافٹ ویئر انفراسٹرکچر کے لیے جو کسانوں کے مشورے کو طاقت دیتا ہے۔ یہ ہے ",
@@ -2256,7 +2342,7 @@
       "crop": {
         "title": "فصل کا انتخاب کریں۔",
         "subtitle": "{district} میں {company} کے لیے فصلیں دستیاب ہیں",
-        "empty": "اس ضلع میں {company} کے لیے کوئی فصل دستیاب نہیں ہے۔",
+        "empty": "{company} کے لیے اس ضلع میں کوئی فصل دستیاب نہیں ہے۔",
         "back": "← واپس"
       },
       "guided": {
@@ -2312,6 +2398,12 @@
       "pillRouted": "روٹ",
       "pillReturned": "واپس آ گیا۔",
       "pillFarmer": "کسان کے ساتھ",
+      "pillPickup": "پک اپ کے لیے تیار",
+      "pillTraining": "تربیت",
+      "pickupBodyFromDealer": "{dealer} سے پک اپ کریں اور {farmer} کو ڈیلیور کریں۔",
+      "pickupBodyWithYou": "آپ کے ساتھ — {farmer} کو ڈیلیور کریں۔",
+      "pickupCta": "میں نے اسے اٹھا لیا ہے۔",
+      "pickupErrorMark": "پک اپ کو نشان زد نہیں کیا جا سکا۔ براہ کرم دوبارہ کوشش کریں۔",
       "history": "📁 تاریخ",
       "emptyInPill": "{pill} کے تحت کچھ نہیں",
       "subOrderHeader": "ذیلی آرڈر · {date}",
@@ -2342,11 +2434,6 @@
       "callBtn": "📞 کال کریں۔",
       "forwardBtn": "آگے",
       "errorReroute": "ری روٹ نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-      "pillPickup": "Ready for pickup",
-      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
-      "pickupBodyWithYou": "With you — deliver to {farmer}.",
-      "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
       "seedTag": "🌱 بیج",
       "seedFarmArea": "{acres} ایکڑ",
       "seedNewOrderHint": "بیج کا نیا آرڈر — اسے لینے کو قبول کریں، یا اگر آپ مدد نہیں کر سکتے تو مسترد کریں۔",
@@ -2373,7 +2460,7 @@
       "viewDeliveryList": "ڈیلیوری کی فہرست دیکھیں",
       "forwardToDealer": "→ ڈیلر کو آگے بھیجیں۔",
       "forwardedTitle": "آرڈر ڈیلر کو بھیج دیا گیا۔",
-      "forwardedBody": "ڈیلر پر کارروائی کرنے اور منظوری کے لیے بھیجنے کا انتظار کر رہے ہیں۔",
+      "forwardedBody": "ڈیلر پر کارروائی کرنے اور منظوری کے لیے بھیجنے کا انتظار کر رہا ہے۔",
       "notAvailableTitle": "{count, plural, one {1 آئٹم دستیاب نہیں ہے۔} other {# آئٹمز دستیاب نہیں ہیں۔}}",
       "tryAnotherDealer": "دوسرے ڈیلر کو آزمائیں۔",
       "returnToFarmer": "کسان پر واپس جائیں۔",
@@ -2444,7 +2531,7 @@
       "stepDown": "نیچے اتریں۔",
       "stepDownConfirm": "اس کمپنی میں پروموٹر کے طور پر سبکدوش ہوں؟ آپ ایک سہولت کار کے طور پر آن بورڈ رہیں گے۔",
       "errorStepDown": "عہدہ نہیں چھوڑ سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-      "noCompaniesTitle": "ابھی تک کوئی کمپنیاں نہیں۔",
+      "noCompaniesTitle": "ابھی تک کوئی کمپنیاں نہیں ہیں۔",
       "noCompaniesBody": "آپ کو ابھی تک کسی کمپنی نے بطور سہولت کار شامل نہیں کیا ہے۔ آپ جس کمپنی کے ساتھ کام کرنا چاہتے ہیں اس کے فیلڈ مینیجر سے پوچھیں",
       "companyFallback": "کمپنی",
       "declarationTitle": "اعلامیہ",
@@ -2455,6 +2542,43 @@
       "saved": "✓ محفوظ کیا گیا!",
       "confirmCta": "تصدیق کریں اور جاری رکھیں",
       "backToFarmerHome": "فارمر ہوم پر واپس جائیں۔"
+    },
+    "onboardedCompanies": {
+      "headerTitle": "آن بورڈڈ کمپنیاں",
+      "invitationsTitle": "پروموٹر کے دعوت نامے",
+      "invitationsBody": "یہ کمپنیاں آپ کو اپنے پروموٹر بننے کی دعوت دے رہی ہیں۔ آپ ایک وقت میں ایک کمپنی میں پروموٹر بن سکتے ہیں۔",
+      "invitationSent": "بھیجی گئی {date}",
+      "declineCta": "رد کرنا",
+      "acceptCta": "قبول کریں۔",
+      "actionAccept": "قبول کریں",
+      "actionDecline": "کمی",
+      "errorAction": "دعوت نامہ {action} نہیں کر سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+      "promoterBadge": "پروموٹر",
+      "promoterPunditBadge": "پروموٹر-پنڈت",
+      "stepDown": "نیچے اتریں۔",
+      "stepDownConfirm": "اس کمپنی میں پروموٹر کے طور پر سبکدوش ہوں؟ آپ ایک سہولت کار کے طور پر آن بورڈ رہیں گے۔",
+      "errorStepDown": "عہدہ نہیں چھوڑ سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+      "callAria": "{company} کو کال کریں",
+      "websiteAria": "{company} ویب سائٹ کھولیں۔",
+      "emptyTitle": "ابھی تک کوئی کمپنیاں نہیں ہیں۔",
+      "emptyBody": "ابھی تک کسی کمپنی نے آپ کو بطور سہولت کار شامل نہیں کیا ہے۔ آپ جس کمپنی کے ساتھ کام کرنا چاہتے ہیں اس کے فیلڈ مینیجر سے پوچھیں"
+    },
+    "promoterInvitations": {
+      "headerTitle": "پروموٹر کے دعوت نامے",
+      "emptyTitle": "کوئی زیر التوا دعوت نامے نہیں ہیں۔",
+      "invitationSent": "بھیجی گئی {date}",
+      "description": "یہ کمپنی آپ کو اپنے پروموٹر کے طور پر چاہتی ہے — کسانوں کو سبسکرپشنز کے لیے تفویض کریں، ان کے آرڈرز کو روٹ کریں، اور آپ کے نیٹ ورک سے کمائیں۔",
+      "acceptCta": "✓ قبول کریں۔",
+      "declineCta": "✗ انکار",
+      "confirmAcceptTitle": "{company} میں پروموٹر کا کردار قبول کریں؟",
+      "confirmAcceptBody": "آپ اس کمپنی میں پروموٹر ہوں گے۔ ایک سہولت کار ایک وقت میں صرف ایک کمپنی میں پروموٹر ہو سکتا ہے — پہلے کسی دوسرے پروموٹر کے کردار سے دستبردار ہو جائیں۔",
+      "confirmAcceptCta": "ہاں، قبول ہے۔",
+      "confirmRejectTitle": "{company} کی دعوت کو مسترد کریں؟",
+      "confirmRejectBody": "کمپنی کو آگاہ کیا جائے گا۔ وہ آپ کو بعد میں دوبارہ مدعو کر سکتے ہیں۔",
+      "confirmRejectCta": "ہاں، انکار",
+      "confirmCancel": "منسوخ کریں۔",
+      "confirmBusy": "محفوظ ہو رہا ہے…",
+      "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
     },
     "history": {
       "headerTitle": "تاریخ",
@@ -2496,6 +2620,11 @@
       "emptyTitle": "ابھی تک کوئی ترقی یافتہ کسان نہیں ہے۔",
       "emptyHint": "جن کسانوں کو آپ سپانسر کرتے ہیں وہ یہاں نظر آئیں گے۔",
       "farmerFallback": "کسان",
+      "acresLabel": "{count, plural, one {1 ایکڑ} other {# ایکڑ}}",
+      "plantsLabel": "{count, plural, one {1 پودا} other {# پودے}}",
+      "startedLabel": "شروع ہوا {date}",
+      "plantedLabel": "لگایا گیا {year}",
+      "callBtnAria": "{name} کو کال کریں",
       "detail": {
         "headerTitle": "کسانوں سے متعلق مشورہ",
         "errorTitleWaiting": "کسان کا انتظار کر رہے ہیں۔",
@@ -2508,8 +2637,13 @@
         "errorLoad": "ایڈوائزری لوڈ نہیں ہو سکی۔",
         "readOnlyHint": "صرف پڑھنے کا منظر۔ اس ایڈوائزری پر عمل کرنے والا کسان ہے۔",
         "dayHeader": "دن {day} · {count, plural, one {1 فعال ٹائم لائن} other {# فعال ٹائم لائنز}}",
+        "dayN": "دن {day}",
+        "activeTimelines": "فعال ٹائم لائنز",
         "noneToday": "کسانوں کی مشاورتی ونڈو میں آج کچھ نہیں ہے۔",
         "noPracticeToday": "اس ٹائم لائن پر آج کوئی مشق باقی نہیں ہے۔",
+        "suppressedNote": "{count, plural, one {1 پریکٹس پہلے سے ہی ایک اور فعال سفارش کے ذریعے احاطہ کرتا ہے۔} other {# مشقیں پہلے سے ہی دیگر فعال سفارشات میں شامل ہیں۔}}",
+        "pendingQuestionLabel": "کسان کو جواب دینا چاہیے۔",
+        "pendingQuestionHint": "کسان سے یہ سوال پوچھا جا رہا ہے۔ جب وہ جواب دیں گے تو ایڈوائزری برانچ کرے گی۔",
         "l0": {
           "input": "ان پٹ کا اطلاق کریں۔",
           "nonInput": "فصل کی سرگرمی",
@@ -2521,7 +2655,15 @@
         "farmerPurchased": "✓ کسان نے خرید لیا ہے۔",
         "purchasePending": "خریداری زیر التواء ہے۔",
         "frequencyEvery": "{count, plural, one {ہر 1 دن} other {ہر # دن میں}}",
-        "frequencyNotDueToday": " آج واجب الادا نہیں۔"
+        "frequencyEveryDay": "ہر روز",
+        "frequencyNotDueToday": " آج واجب الادا نہیں۔",
+        "adjuvantBadge": "معاون",
+        "generalAdvisory": "جنرل ایڈوائزری",
+        "ackMarked": "کسان کو ہو گیا نشان زد کر دیا گیا۔",
+        "ackPending": "کسان نے مکمل نشان زد نہیں کیا ہے۔",
+        "andGroupHeader": "دونوں کو ایک ساتھ لاگو کریں — اور گروپ",
+        "partHeader": "حصہ {part}",
+        "orSeparator": "یا"
       }
     },
     "seedOrders": {
@@ -2566,43 +2708,6 @@
           "forwardFailed": "آرڈر آگے نہیں بڑھا سکا۔ براہ کرم دوبارہ کوشش کریں۔"
         }
       }
-    },
-    "onboardedCompanies": {
-      "headerTitle": "آن بورڈڈ کمپنیاں",
-      "invitationsTitle": "پروموٹر کے دعوت نامے",
-      "invitationsBody": "یہ کمپنیاں آپ کو اپنے پروموٹر بننے کی دعوت دے رہی ہیں۔ آپ ایک وقت میں ایک کمپنی میں پروموٹر بن سکتے ہیں۔",
-      "invitationSent": "بھیجی گئی {date}",
-      "declineCta": "رد کرنا",
-      "acceptCta": "قبول کریں۔",
-      "actionAccept": "قبول کریں",
-      "actionDecline": "کمی",
-      "errorAction": "دعوت نامہ {action} نہیں کر سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-      "promoterBadge": "پروموٹر",
-      "promoterPunditBadge": "پروموٹر-پنڈت",
-      "stepDown": "نیچے اتریں۔",
-      "stepDownConfirm": "اس کمپنی میں پروموٹر کی حیثیت سے دستبردار ہو جائیں؟ آپ ایک سہولت کار کے طور پر آن بورڈ رہیں گے۔",
-      "errorStepDown": "عہدہ نہیں چھوڑ سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-      "callAria": "{company} کو کال کریں",
-      "websiteAria": "{company} ویب سائٹ کھولیں۔",
-      "emptyTitle": "ابھی تک کوئی کمپنیاں نہیں ہیں۔",
-      "emptyBody": "ابھی تک کسی کمپنی نے آپ کو بطور سہولت کار شامل نہیں کیا ہے۔ آپ جس کمپنی کے ساتھ کام کرنا چاہتے ہیں اس کے فیلڈ مینیجر سے پوچھیں۔"
-    },
-    "promoterInvitations": {
-      "headerTitle": "پروموٹر کے دعوت نامے",
-      "emptyTitle": "کوئی زیر التوا دعوت نامے نہیں ہیں۔",
-      "invitationSent": "بھیجی گئی {date}",
-      "description": "یہ کمپنی آپ کو اپنے پروموٹر کے طور پر چاہتی ہے — کسانوں کو سبسکرپشنز کے لیے تفویض کریں، ان کے آرڈرز کو روٹ کریں، اور آپ کے نیٹ ورک سے کمائیں۔",
-      "acceptCta": "✓ قبول کریں۔",
-      "declineCta": "✗ انکار",
-      "confirmAcceptTitle": "{company} میں پروموٹر کا کردار قبول کریں؟",
-      "confirmAcceptBody": "آپ اس کمپنی میں پروموٹر ہوں گے۔ ایک سہولت کار ایک وقت میں صرف ایک کمپنی میں پروموٹر ہو سکتا ہے — پہلے کسی دوسرے پروموٹر کے کردار سے دستبردار ہو جائیں۔",
-      "confirmAcceptCta": "ہاں، قبول ہے۔",
-      "confirmRejectTitle": "{company} کی دعوت کو مسترد کریں؟",
-      "confirmRejectBody": "کمپنی کو آگاہ کیا جائے گا۔ وہ آپ کو بعد میں دوبارہ مدعو کر سکتے ہیں۔",
-      "confirmRejectCta": "ہاں، انکار",
-      "confirmCancel": "منسوخ کریں۔",
-      "confirmBusy": "محفوظ ہو رہا ہے…",
-      "errorGeneric": "کچھ غلط ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔"
     }
   },
   "pundit": {
@@ -2637,6 +2742,7 @@
       "tabNew": "نیا",
       "tabPending": "زیر التواء",
       "tabReturned": "واپس آ گیا۔",
+      "tabTraining": "تربیت",
       "tabHistory": "تاریخ",
       "tabCount": "( {count} )",
       "emptyNew": "کوئی نیا سوال نہیں۔",
@@ -2644,6 +2750,14 @@
       "emptyReturned": "کوئی سوالات واپس نہیں کیے گئے۔",
       "emptyHistory": "تاریخ کے کوئی سوالات نہیں۔",
       "daysRemaining": "{count} d باقی ہے۔",
+      "daysRemainingShort": "{count, plural, one {1 ڈی} other {# ڈی}}",
+      "startedShort": "شروع ہوا {date}",
+      "severityInline": {
+        "CRITICAL": "تنقیدی",
+        "HIGH": "اعلی شدت",
+        "MODERATE": "اعتدال پسند شدت",
+        "LOW": "کم شدت"
+      },
       "forwardedTo": "{name} کو آگے بھیج دیا گیا",
       "filterChip": "{company} کے لیے سوالات دکھا رہا ہے",
       "filterChipFallback": "ایک کمپنی کو فلٹر کیا گیا۔",
@@ -2653,23 +2767,17 @@
       "headerTitle": "کمپنی کے دعوت نامے",
       "emptyTitle": "کوئی زیر التوا دعوت نامے نہیں ہیں۔",
       "cardTitle": "کمپنی کی دعوت",
+      "companyFallback": "ایک کمپنی",
       "rolePrimary": "بنیادی ماہر",
       "rolePanel": "پینل ماہر",
       "descriptionPrimary": "ایک بنیادی ماہر کے طور پر، آپ کو ترتیب وار راؤنڈ رابن کے ذریعے سوالات موصول ہوں گے اور دوسرے ماہرین کو بھیج سکتے ہیں۔",
       "descriptionPanel": "پینل کے ماہر کے طور پر، آپ کو صرف آگے بھیجے گئے سوالات موصول ہوتے ہیں اور آپ ان کا جواب دے سکتے ہیں یا واپس کر سکتے ہیں۔",
       "acceptCta": "✓ قبول کریں۔",
       "declineCta": "✗ انکار",
-      "modalTitle": "دعوت نامے کو مسترد کریں۔",
-      "modalBody": "براہ کرم ایک وجہ فراہم کریں (لازمی)",
-      "modalPlaceholder": "آپ اس دعوت کو کیوں ٹھکرا رہے ہیں؟",
-      "modalCancel": "منسوخ کریں۔",
-      "modalConfirmIdle": "انکار کی تصدیق کریں۔",
-      "modalConfirmBusy": "رد ہو رہا ہے…",
-      "companyFallback": "ایک کمپنی",
       "confirmAcceptTitle": "{company} کی طرف سے دعوت قبول کریں؟",
       "confirmAcceptBody": "آپ کو اس کمپنی سے سوالات موصول ہونا شروع ہو جائیں گے۔",
       "confirmAcceptCta": "ہاں، قبول ہے۔",
-      "confirmRejectTitle": "{company} کی طرف سے دعوت نامے کو مسترد کریں؟",
+      "confirmRejectTitle": "{company} کی دعوت کو مسترد کریں؟",
       "confirmRejectBody": "کمپنی کو آگاہ کیا جائے گا۔ آپ کو بعد میں دوبارہ مدعو کیا جا سکتا ہے۔",
       "confirmRejectCta": "ہاں، انکار",
       "confirmCancel": "منسوخ کریں۔",
@@ -2749,7 +2857,7 @@
         "title": "اعلامیہ",
         "subtitle": "تقریباً ہو چکا ہے۔",
         "intro": "RootsTalk پر فارم پنڈت کے طور پر رجسٹر ہو کر، میں اعلان کرتا ہوں کہ:",
-        "bullet1": "فراہم کردہ تمام معلومات درست اور سچی ہیں۔",
+        "bullet1": "فراہم کردہ تمام معلومات درست اور درست ہیں۔",
         "bullet2": "میرے پاس میرے پروفائل میں دعوی کردہ قابلیت اور تجربہ ہے۔",
         "bullet3": "میں تفویض کردہ سوالات کا 7 دن کی ونڈو میں اپنی بہترین صلاحیت کے مطابق جواب دوں گا۔",
         "bullet4": "میں وہ مشورہ دوں گا جو کسانوں کے بہترین مفاد میں ہو۔",
@@ -2795,7 +2903,7 @@
       "photographAlt": "تصویر",
       "errors": {
         "uploadFailed": "اپ لوڈ ناکام ہو گیا۔ براہ کرم دوبارہ کوشش کریں۔",
-        "respondMissing": "فصل کی صحت کا مسئلہ منتخب کریں، ایک معیاری جواب، یا مفت فارم ٹیکسٹ جواب لکھیں۔ تشکیل شدہ اختیارات کسان کے مشورے میں ضم ہو جاتے ہیں۔ مفت فارم کا متن صرف فال بیک ہے۔",
+        "respondMissing": "فصل کی صحت کا مسئلہ منتخب کریں، ایک معیاری جواب، یا مفت فارم ٹیکسٹ جواب لکھیں۔ تشکیل شدہ اختیارات کسان کی مشاورت میں ضم ہو جاتے ہیں۔ مفت فارم کا متن صرف فال بیک ہے۔",
         "submitResponse": "جواب جمع کرانے میں ناکام۔",
         "forward": "استفسار آگے بڑھانے میں ناکام۔",
         "return": "استفسار واپس کرنے میں ناکام۔",
@@ -2876,66 +2984,52 @@
         "cropAgnostic": "فصل اجناسٹک"
       },
       "translation": {
-        "viewInEnglish": "View in English",
-        "viewOriginal": "View original",
-        "loading": "Translating…"
+        "viewInEnglish": "انگریزی میں دیکھیں",
+        "viewOriginal": "اصل دیکھیں",
+        "loading": "ترجمہ ہو رہا ہے…"
       }
     }
   },
   "mySubscriptions": {
     "headerTitle": "میری سبسکرپشنز",
-    "backToHome": "← واپس گھر پر",
     "active": "فعال ( {count} )",
-    "other": "دیگر ( {count} )",
-    "openAdvisory": "ایڈوائزری کھولیں۔",
-    "unsubscribe": "ان سبسکرائب کریں۔",
-    "unsubscribeConfirm": "اس ایڈوائزری سے ان سبسکرائب کریں؟",
-    "unsubscribeError": "اس ایڈوائزری سے ان سبسکرائب نہیں کر سکتے۔",
-    "companyFallback": "کمپنی",
-    "activeBadge": "فعال",
-    "startedOn": "شروع ہوا {date}",
-    "awaitingStartDate": "فصل شروع ہونے کی تاریخ کا انتظار ہے۔",
-    "pendingPayment": "زیر التواء ادائیگی کا وفد",
-    "cancelPending": "زیر التواء درخواست منسوخ کریں۔",
-    "cancelPendingConfirm": "زیر التواء ادائیگی کی درخواست منسوخ کریں؟ اس کے بعد آپ کسی اور کا انتخاب کر سکتے ہیں یا خود ادائیگی کر سکتے ہیں۔",
-    "cancelPendingError": "درخواست کو منسوخ نہیں کیا جا سکا۔",
-    "discoverHeader": "آپ کے علاقے میں مشورے",
-    "discoverSubheader": "دیگر کمپنیاں جو آپ کے ضلع میں مشورے پیش کرتی ہیں۔",
-    "explore": "دریافت کریں →",
-    "emptyTitle": "ابھی تک کوئی رکنیت نہیں ہے۔",
-    "emptyCta": "ایک ایڈوائزری کو سبسکرائب کریں۔",
-    "unsubscribed": "Unsubscribed ({count})",
-    "completed": "Completed ({count})",
+    "unsubscribed": "ان سبسکرائب شدہ ( {count} )",
+    "completed": "مکمل ہوا ( {count} )",
     "statusBadge": {
-      "active": "Active",
-      "unsubscribed": "Unsubscribed",
-      "completed": "Completed"
+      "active": "فعال",
+      "unsubscribed": "رکنیت ختم کر دی گئی۔",
+      "completed": "مکمل"
     },
-    "shareCropQR": "↗ Share crop QR",
-    "unsubscribeBtn": "✗ Unsubscribe",
-    "errorUnsubscribe": "Could not unsubscribe. Please try again.",
-    "cropFallback": "Crop",
-    "thisCropFallback": "this crop",
-    "subscribedBySelf": "Subscribed by you",
-    "assignedBy": "Assigned by {company}",
-    "endedOn": "Ended {date}",
+    "openAdvisory": "ایڈوائزری کھولیں۔",
+    "shareCropQR": "↗ فصل کیو آر کا اشتراک کریں۔",
+    "unsubscribeBtn": "✗ ان سبسکرائب کریں۔",
+    "errorUnsubscribe": "اَن سبسکرائب نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+    "companyFallback": "کمپنی",
+    "cropFallback": "فصل",
+    "thisCropFallback": "یہ فصل",
+    "subscribedBySelf": "آپ کے ذریعہ سبسکرائب کیا گیا۔",
+    "assignedBy": "{company} کے ذریعے تفویض کردہ",
+    "startedOn": "شروع ہوا {date}",
+    "endedOn": "ختم ہوا {date}",
     "startToEnd": "{start} → {end}",
     "qr": {
-      "title": "Crop Record QR",
-      "alt": "Crop QR",
-      "hint": "Anyone can scan this to see your crop record — no app needed.",
-      "share": "↗ Share",
-      "save": "💾 Save",
-      "shareTitle": "My crop record",
-      "shareText": "Scan this to see my crop record on rootsTALK.in"
+      "title": "فصل کا ریکارڈ QR",
+      "alt": "QR کاٹیں۔",
+      "hint": "آپ کے کراپ ریکارڈ کو دیکھنے کے لیے کوئی بھی اسے اسکین کر سکتا ہے — کسی ایپ کی ضرورت نہیں ہے۔",
+      "share": "↗ شیئر کریں۔",
+      "save": "💾 محفوظ کریں۔",
+      "shareTitle": "میرا فصل ریکارڈ",
+      "shareText": "rootsTALK.in پر میرا کراپ ریکارڈ دیکھنے کے لیے اسے اسکین کریں۔"
     },
     "confirmUnsub": {
-      "title": "Unsubscribe from this advisory?",
-      "bodyPrefix": "You'll stop receiving advisories for",
-      "bodyMiddle": "from",
-      "bodySuffix": ". You can subscribe again later if you change your mind.",
-      "yes": "Yes, unsubscribe"
-    }
+      "title": "اس ایڈوائزری سے ان سبسکرائب کریں؟",
+      "bodyPrefix": "آپ کو مشورے موصول ہونا بند ہو جائیں گے۔",
+      "bodyMiddle": "سے",
+      "bodySuffix": ". اگر آپ اپنا ارادہ بدلتے ہیں تو آپ بعد میں دوبارہ سبسکرائب کر سکتے ہیں۔",
+      "yes": "ہاں، ان سبسکرائب کریں۔"
+    },
+    "emptyTitle": "ابھی تک کوئی رکنیت نہیں ہے۔",
+    "emptyCta": "ایک ایڈوائزری کو سبسکرائب کریں۔"
   },
   "seedOrders": {
     "headerTitle": "بیج کے آرڈر",
@@ -2958,7 +3052,7 @@
       "POSTPONED": "تاخیر",
       "NOT_AVAILABLE": "واپس آ گیا — کارروائی کی ضرورت ہے۔",
       "SENT_FOR_APPROVAL": "آپ کی منظوری کے لیے تیار ہیں۔",
-      "READY_FOR_PICKUP": "منظور شدہ — ڈیلر سے حوالے کا انتظار کر رہا ہے۔",
+      "READY_FOR_PICKUP": "منظور شدہ — ڈیلر سے حوالگی کا انتظار ہے۔",
       "PURCHASED": "خریدا گیا۔",
       "REJECTED": "آپ نے مسترد کر دیا۔",
       "CANCELLED": "منسوخ",
@@ -2984,9 +3078,16 @@
       "draftBody": "جب آپ نے پچھلا آرڈر منسوخ کیا تو یہ مختلف قسم + مقدار محفوظ ہوگئی۔ ایک نیا ڈیلر یا سہولت کار چنیں اور بھیجیں۔",
       "pickRecipientCta": "ایک وصول کنندہ کا انتخاب کریں →",
       "postponedBody": "ڈیلر نے اس بیج کے آرڈر میں تاخیر کی ہے۔ ونڈو کی میعاد ختم ہونے پر یہ خود بخود آپ کے پاس واپس آجائے گا۔ آپ اسے ابھی کسی اور کو بھیجنے کے لیے نیچے منسوخ بھی کر سکتے ہیں۔",
-      "notAvailableBody": "ڈیلر اس بیج کے آرڈر کو پورا نہیں کر سکتا۔ اسے کسی دوسرے ڈیلر یا سہولت کار کو بھیجنے کے لیے نیچے منسوخ کریں۔",
+      "notAvailableBody": "ڈیلر اس بیج آرڈر کو پورا نہیں کر سکتا۔ اسے کسی دوسرے ڈیلر یا سہولت کار کو بھیجنے کے لیے نیچے منسوخ کریں۔",
       "cancelOrderCta": "آرڈر منسوخ کریں۔",
       "deleteOrderCta": "منسوخ شدہ آرڈر کو حذف کریں۔",
+      "pickupBannerBody": "اسے اپنے ڈیلر سے اٹھاو۔ ایک بار جب آپ کے ہاتھ میں بیج ہو تو نیچے کو تھپتھپائیں۔",
+      "pickupConfirmCta": "میں نے اسے اٹھا لیا ہے۔",
+      "pickupConfirmTitle": "رسید کی تصدیق کریں۔",
+      "pickupConfirmBody": "ہاں پر ٹیپ کریں تب ہی جب آپ کے پاس بیج ہاتھ میں ہو۔ اس سے آرڈر بند ہو جاتا ہے۔",
+      "pickupYesCta": "ہاں، میرے پاس ہے۔",
+      "pickupCancelCta": "منسوخ کریں۔",
+      "errorReceive": "تصدیق نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔",
       "pickerTitle": "کو بھیجیں۔",
       "pickerTabDealers": "ڈیلرز ( {count} )",
       "pickerTabFacilitators": "سہولت کار ( {count} )",
@@ -2995,14 +3096,7 @@
       "kmAway": "{km} کلومیٹر دور",
       "promoterBadge": "پروموٹر",
       "sendCta": "بھیجیں۔",
-      "sendingCta": "بھیج رہا ہے…",
-      "pickupBannerBody": "Pick this up from your dealer. Tap below once you have the seed in hand.",
-      "pickupConfirmCta": "I've picked it up",
-      "pickupConfirmTitle": "Confirm receipt",
-      "pickupConfirmBody": "Tap Yes only after you actually have the seed in hand. This closes the order.",
-      "pickupYesCta": "Yes, I have it",
-      "pickupCancelCta": "Cancel",
-      "errorReceive": "Could not confirm. Please try again."
+      "sendingCta": "بھیج رہا ہے…"
     }
   },
   "shareLink": {
@@ -3017,7 +3111,7 @@
     "inactiveBody": "یہ ادائیگی کا لنک {status} ہے۔ آپ ایک نیا بنا سکتے ہیں یا خود ادائیگی کر سکتے ہیں۔",
     "heading": "کسی کے ساتھ بھی اس کا اشتراک کریں۔",
     "expiringSoon": "جلد ہی میعاد ختم ہو رہی ہے۔",
-    "activeFor": "{count, plural, one {لنک مزید {count} گھنٹے کے لیے فعال ہے۔} other {لنک مزید {count} گھنٹے تک فعال ہے۔}}",
+    "activeFor": "{count, plural, one {لنک مزید {count} گھنٹے کے لیے فعال ہے۔} other {لنک مزید {count} گھنٹے کے لیے فعال ہے۔}}",
     "qrAlt": "ادائیگی کیو آر",
     "generating": "QR تیار ہو رہا ہے…",
     "qrFooter": "کوئی بھی UPI ایپ — PhonePe، Google Pay، Paytm، BHIM، بینک",
@@ -3042,6 +3136,8 @@
   "privacyPolicy": {
     "title": "رازداری کی پالیسی",
     "lastUpdated": "آخری بار اپ ڈیٹ کیا گیا: اپریل 2026",
+    "externalTitle": "eywa.farm پر مکمل پالیسی پڑھیں",
+    "externalSubtitle": "eywa.farm/privacy — آپ کے براؤزر میں کھلتا ہے۔",
     "sections": {
       "collectTitle": "جو ہم جمع کرتے ہیں۔",
       "collectBody": "ہم آپ کا موبائل فون نمبر (لاگ ان اور تصدیق کے لیے)، آپ کا نام، آپ کا مقام (ریاست، ضلع، اور GPS کوآرڈینیٹس)، اور آپ کی فارم سے متعلق معلومات بشمول فصل کی رکنیت اور مشاورتی ریکارڈ جمع کرتے ہیں۔ ہم آپ کے زرعی ماہرین سے پوچھے گئے سوالات اور موصول ہونے والے جوابات بھی جمع کرتے ہیں۔",
@@ -3056,41 +3152,9 @@
       "rightsTitle": "آپ کے حقوق",
       "rightsBody": "ڈیجیٹل پرسنل ڈیٹا پروٹیکشن ایکٹ 2023 (انڈیا) کے تحت، آپ کو اپنے ڈیٹا تک رسائی، غلط معلومات کو درست کرنے، اور اپنے اکاؤنٹ اور ڈیٹا کو حذف کرنے کی درخواست کرنے کا حق ہے۔ آپ پروفائل اسکرین سے کسی بھی وقت اپنا اکاؤنٹ حذف کر سکتے ہیں۔",
       "securityTitle": "سیکورٹی",
-      "securityBody": "تمام ڈیٹا کو ٹرانزٹ اور آرام میں خفیہ کیا جاتا ہے۔ لاگ ان OTP تصدیق کے ساتھ محفوظ ہے۔ ہم سادہ متن کے پاس ورڈ محفوظ نہیں کرتے ہیں۔ آپ کے ڈیٹا تک رسائی Neytiri Eywafarm Agritech Private Limited کے مجاز اہلکاروں تک محدود ہے۔",
+      "securityBody": "تمام ڈیٹا کو ٹرانزٹ اور آرام میں خفیہ کیا جاتا ہے۔ لاگ ان OTP تصدیق کے ساتھ محفوظ ہے۔ ہم سادہ متن کے پاس ورڈز کو ذخیرہ نہیں کرتے ہیں۔ آپ کے ڈیٹا تک رسائی Neytiri Eywafarm Agritech Private Limited کے مجاز اہلکاروں تک محدود ہے۔",
       "contactTitle": "ہم سے رابطہ کریں۔",
       "contactBody": "رازداری سے متعلق کسی بھی سوالات کے لیے، ہم سے اس پر رابطہ کریں: support@eywa.farm یا eywa.farm ملاحظہ کریں۔ Neytiri Eywafarm Agritech Private Limited، India۔"
-    },
-    "externalTitle": "eywa.farm پر مکمل پالیسی پڑھیں",
-    "externalSubtitle": "eywa.farm/privacy — آپ کے براؤزر میں کھلتا ہے۔"
-  },
-  "location": {
-    "title": "آپ کا فارم کہاں ہے؟",
-    "subtitle": "اس سے ہمیں قریبی ڈیلر اور مشورے تلاش کرنے میں مدد ملتی ہے۔",
-    "loadError": "مقام کی فہرست لوڈ نہیں ہو سکی۔ اسے ابھی کے لیے چھوڑ دیں اور جب آپ واپس آن لائن ہوں تو اسے اپنے پروفائل سے شامل کریں۔",
-    "loading": "ریاستیں اور اضلاع لوڈ ہو رہے ہیں…",
-    "stateLabel": "ریاست",
-    "districtLabel": "ضلع",
-    "subDistrictLabel": "ذیلی ضلع / گاؤں",
-    "searchState": "حالت تلاش کریں…",
-    "searchDistrict": "ضلع تلاش کریں…",
-    "noStates": "کوئی ریاستیں نہیں ملیں۔",
-    "noDistricts": "کوئی ضلع نہیں ملا",
-    "subDistrictPlaceholder": "گاؤں یا ذیلی ضلع — اختیاری",
-    "gpsTitle": "نقشے پر آپ کا مقام",
-    "gpsSubtitle": "آپ کے لیے 5 قریبی ڈیلر اور سہولت کار تلاش کرنے میں ہماری مدد کرتا ہے۔",
-    "gpsCta": "میرا مقام حاصل کریں۔",
-    "gpsFinding": "آپ کو ڈھونڈ رہا ہے…",
-    "gpsCaptured": "مقام حاصل کر لیا گیا۔",
-    "gpsCouldntGet": "آپ کا مقام حاصل نہیں ہو سکا",
-    "gpsDenied": "مقام تک رسائی سے انکار کر دیا گیا تھا۔",
-    "gpsLater": "آپ اسے بعد میں اپنے پروفائل سے سیٹ کر سکتے ہیں۔",
-    "gpsTryAgain": "دوبارہ کوشش کریں۔",
-    "errors": {
-      "saveFailed": "آپ کا مقام محفوظ نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-      "gpsSaveFailed": "آپ کا مقام کیپچر کر لیا لیکن اسے محفوظ نہیں کر سکا۔ آپ اپنے پروفائل سے دوبارہ کوشش کر سکتے ہیں۔",
-      "gpsBlocked": "آپ نے مقام تک رسائی کو مسدود کر دیا۔ دوبارہ کوشش کرنے کے لیے، اپنے براؤزر کی ترتیبات میں اس سائٹ کے لیے مقام کو فعال کریں، پھر دوبارہ کوشش کریں پر ٹیپ کریں۔",
-      "gpsTimeout": "آپ کو ڈھونڈنے میں کافی وقت لگا۔ دوبارہ کوشش کریں پر ٹیپ کریں۔",
-      "gpsUnavailable": "آپ کا مقام ابھی دستیاب نہیں ہے۔ دوبارہ کوشش کریں پر ٹیپ کریں یا بعد میں نظر انداز کریں۔"
     }
   },
   "helpTips": {
@@ -3136,7 +3200,7 @@
       "dayToDay": {
         "title": "دن بہ دن",
         "items": [
-          "ہر زیر التواء آرڈر پر، قبول کریں جو آپ پورا کر سکتے ہیں اور مقدار اور قیمت مقرر کریں۔ کوئی بھی چیز جو آپ ابھی فراہم نہیں کر سکتے ہیں اسے ملتوی کا نشان لگایا جا سکتا ہے — برانڈ واپس آنے پر آرڈر آپ کو واپس آتا ہے۔",
+          "ہر زیر التواء آرڈر پر، قبول کریں جو آپ پورا کر سکتے ہیں اور مقدار اور قیمت مقرر کریں۔ کوئی بھی چیز جسے آپ ابھی فراہم نہیں کر سکتے ہیں اسے ملتوی کا نشان لگایا جا سکتا ہے — برانڈ واپس آنے پر آرڈر آپ کو واپس آ جاتا ہے۔",
           "اگر آپ بالکل بھی سپلائی نہیں کر سکتے ہیں تو انکار کر دیں تاکہ کسان یا سہولت کار تیزی سے دوبارہ راستہ بنا سکے۔",
           "کسان کی جانب سے قیمتوں کی منظوری کے بعد، آرڈر پیک کریں اور پک اپ کے لیے تیار نشان زد کریں۔ کسان آپ کی دکان سے جمع کرتا ہے۔",
           "بیج آرڈرز ایک ہی بہاؤ کی پیروی کرتے ہیں لیکن برانڈ بند ہیں: آپ قبولیت سے پہلے اقسام کو تبدیل نہیں کرسکتے ہیں۔"
@@ -3203,6 +3267,36 @@
       }
     }
   },
+  "location": {
+    "title": "آپ کا فارم کہاں ہے؟",
+    "subtitle": "اس سے ہمیں قریبی ڈیلر اور مشورے تلاش کرنے میں مدد ملتی ہے۔",
+    "loadError": "مقام کی فہرست لوڈ نہیں ہو سکی۔ اسے ابھی کے لیے چھوڑ دیں اور جب آپ واپس آن لائن ہوں تو اسے اپنے پروفائل سے شامل کریں۔",
+    "loading": "ریاستیں اور اضلاع لوڈ ہو رہے ہیں…",
+    "stateLabel": "ریاست",
+    "districtLabel": "ضلع",
+    "subDistrictLabel": "ذیلی ضلع / گاؤں",
+    "searchState": "حالت تلاش کریں…",
+    "searchDistrict": "ضلع تلاش کریں…",
+    "noStates": "کوئی ریاستیں نہیں ملیں۔",
+    "noDistricts": "کوئی ضلع نہیں ملا",
+    "subDistrictPlaceholder": "گاؤں یا ذیلی ضلع — اختیاری",
+    "gpsTitle": "نقشے پر آپ کا مقام",
+    "gpsSubtitle": "آپ کے لیے 5 قریبی ڈیلر اور سہولت کار تلاش کرنے میں ہماری مدد کرتا ہے۔",
+    "gpsCta": "میرا مقام حاصل کریں۔",
+    "gpsFinding": "آپ کو ڈھونڈ رہا ہے…",
+    "gpsCaptured": "مقام حاصل کر لیا گیا۔",
+    "gpsCouldntGet": "آپ کا مقام حاصل نہیں ہو سکا",
+    "gpsDenied": "مقام تک رسائی سے انکار کر دیا گیا تھا۔",
+    "gpsLater": "آپ اسے بعد میں اپنے پروفائل سے سیٹ کر سکتے ہیں۔",
+    "gpsTryAgain": "دوبارہ کوشش کریں۔",
+    "errors": {
+      "saveFailed": "آپ کا مقام محفوظ نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+      "gpsSaveFailed": "آپ کا مقام کیپچر کیا لیکن اسے محفوظ نہیں کیا جا سکا۔ آپ اپنے پروفائل سے دوبارہ کوشش کر سکتے ہیں۔",
+      "gpsBlocked": "آپ نے مقام تک رسائی کو مسدود کر دیا۔ دوبارہ کوشش کرنے کے لیے، اپنے براؤزر کی ترتیبات میں اس سائٹ کے لیے مقام کو فعال کریں، پھر دوبارہ کوشش کریں پر ٹیپ کریں۔",
+      "gpsTimeout": "آپ کو ڈھونڈنے میں کافی وقت لگا۔ دوبارہ کوشش کریں پر ٹیپ کریں۔",
+      "gpsUnavailable": "آپ کا مقام ابھی دستیاب نہیں ہے۔ دوبارہ کوشش کریں پر ٹیپ کریں یا بعد میں نظر انداز کریں۔"
+    }
+  },
   "qrScan": {
     "scanButton": "تصدیق کے لیے اسکین کریں۔",
     "modalTitle": "پروڈکٹ کیو آر اسکین کریں۔",
@@ -3219,7 +3313,7 @@
     "retry": "دوبارہ کوشش کریں۔",
     "close": "بند",
     "verified": "تصدیق شدہ",
-    "batchNotice": "یہ بیچ کی تصدیق کرتا ہے۔ اسی بیچ کے دیگر پیکٹوں کو دوبارہ اسکین کرنے کی ضرورت نہیں ہے۔"
+    "batchNotice": "یہ بیچ کی تصدیق کرتا ہے۔ اسی بیچ کے دوسرے پیکٹوں کو دوبارہ اسکین کرنے کی ضرورت نہیں ہے۔"
   },
   "publicVerify": {
     "productAuthentication": "پروڈکٹ کی تصدیق",

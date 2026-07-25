@@ -1,4 +1,46 @@
 {
+  "training": {
+    "chip": "Training",
+    "farmerHome": {
+      "subtitle": "Practice session — accepting won't affect your real subscriptions."
+    },
+    "farmerBrandedSpace": {
+      "title": "Training Session",
+      "body": "You're practising with this company. Orders and queries here are for training only — they won't affect any of your real subscriptions."
+    },
+    "farmerAssignment": {
+      "headerLabel": "Practice Advisory Request",
+      "bannerTitle": "This is a training session",
+      "bannerBody": "Your promoter is practising with the RootsTalk app. Accepting will add a practice subscription to your Home screen — it won't replace or affect any real subscriptions you already have. The session ends automatically after a few days.",
+      "paymentCardTitle": "Training subscription — free",
+      "paymentCardBody": "No payment involved. This will be cleared automatically when the training session ends.",
+      "confirmAcceptTraining": "Join {company}'s practice session for {crop}? This is a training sandbox — won't affect any of your real subscriptions."
+    },
+    "promoterTile": {
+      "title": "Training Session",
+      "subtitle": "Invite a farmer to practise"
+    },
+    "invite": {
+      "headerTitle": "Training Invite",
+      "frameTitle": "Training Sandbox",
+      "frameBody": "Invite a real farmer into a practice session. The farmer must accept before anything appears on their PWA. Nothing here affects your real allocations, orders, or subscriptions.",
+      "noSessionsTitle": "No training sessions active",
+      "noSessionsBody": "The company's CA starts a training session from the CA portal. Once it's running, you'll see it here.",
+      "pickSession": "Pick a training session",
+      "endsPrefix": "Ends {date}",
+      "farmerPhoneLabel": "Farmer's phone number",
+      "farmerPhoneHint": "The farmer must already be registered on RootsTalk.",
+      "farmerPhonePlaceholder": "10-digit number",
+      "pickCrop": "Pick a crop",
+      "noCrops": "No crops with active packages under this training session yet.",
+      "pickPackage": "Pick a package",
+      "submit": "Send Training Invitation",
+      "sending": "Sending…",
+      "successMessage": "Invitation sent. The farmer will see it in their PWA.",
+      "genericError": "Could not send the invitation.",
+      "genericLoadError": "Could not load training sessions."
+    }
+  },
   "push": {
     "banner": {
       "title": "Turn on notifications",

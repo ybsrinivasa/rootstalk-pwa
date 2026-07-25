@@ -13,6 +13,7 @@ const COLOUR = '#7D4E00'
 export default function FacilitatorHomePage() {
   const router = useRouter()
   const t = useTranslations('facilitator.home')
+  const tTrain = useTranslations('training')
   const user = getUser()
   const [pendingCount, setPendingCount] = useState(0)
   const [paymentCount, setPaymentCount] = useState(0)
@@ -155,8 +156,8 @@ export default function FacilitatorHomePage() {
             <button onClick={() => router.push('/promoter-training?role=FACILITATOR')}
               className="bg-amber-50 rounded-2xl p-4 border-2 border-amber-300 shadow-sm text-left">
               <span className="text-2xl">🎓</span>
-              <p className="text-sm font-semibold text-amber-900 mt-2">Training Session</p>
-              <p className="text-xs text-amber-700">Invite a farmer to practise</p>
+              <p className="text-sm font-semibold text-amber-900 mt-2">{tTrain('promoterTile.title')}</p>
+              <p className="text-xs text-amber-700">{tTrain('promoterTile.subtitle')}</p>
             </button>
           )}
         </div>

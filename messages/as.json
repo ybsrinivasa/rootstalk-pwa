@@ -1,4 +1,59 @@
 {
+  "training": {
+    "chip": "প্ৰশিক্ষণ",
+    "farmerHome": {
+      "subtitle": "অনুশীলন অধিবেশন — গ্ৰহণ কৰিলে আপোনাৰ প্ৰকৃত স্বাক্ষৰণসমূহত কোনো প্ৰভাৱ নপৰে।"
+    },
+    "farmerBrandedSpace": {
+      "title": "প্ৰশিক্ষণ অধিবেশন",
+      "body": "এই কোম্পানীটোৰ লগত প্ৰেকটিছ কৰি আছা। ইয়াত অৰ্ডাৰ আৰু প্ৰশ্নসমূহ কেৱল প্ৰশিক্ষণৰ বাবে — ই আপোনাৰ কোনো প্ৰকৃত চাবস্ক্ৰিপচনক প্ৰভাৱিত নকৰে।"
+    },
+    "farmerAssignment": {
+      "headerLabel": "পৰামৰ্শদাতা অনুৰোধ অনুশীলন কৰক",
+      "bannerTitle": "এইটো এটা প্ৰশিক্ষণৰ অধিবেশন",
+      "bannerBody": "আপোনাৰ প্ৰমোটাৰে RootsTalk এপৰ সৈতে অনুশীলন কৰি আছে। গ্ৰহণ কৰিলে আপোনাৰ হোম পৰ্দাত এটা অনুশীলন স্বাক্ষৰণ যোগ হ'ব — ই আপোনাৰ ইতিমধ্যে থকা কোনো প্ৰকৃত স্বাক্ষৰণক প্ৰতিস্থাপন বা প্ৰভাৱিত নকৰে। কেইদিনমানৰ পিছত অধিবেশনটো স্বয়ংক্ৰিয়ভাৱে শেষ হয়।",
+      "paymentCardTitle": "প্ৰশিক্ষণ চাবস্ক্ৰিপচন — বিনামূলীয়া",
+      "paymentCardBody": "কোনো ধৰণৰ পেমেণ্ট জড়িত নহয়। প্ৰশিক্ষণ শেষ হ’লে এইটো স্বয়ংক্ৰিয়ভাৱে ক্লিয়াৰ হ’ব।",
+      "confirmAcceptTraining": "{crop} ৰ বাবে {company} ৰ অনুশীলন অধিবেশনত যোগদান কৰক ? এইটো এটা প্ৰশিক্ষণ ছেণ্ডবক্স — আপোনাৰ কোনো প্ৰকৃত চাবস্ক্ৰিপচনক প্ৰভাৱিত নকৰে।"
+    },
+    "promoterTile": {
+      "title": "প্ৰশিক্ষণ অধিবেশন",
+      "subtitle": "এজন কৃষকক অনুশীলন কৰিবলৈ মাতিব"
+    },
+    "invite": {
+      "headerTitle": "প্ৰশিক্ষণ আমন্ত্ৰণ",
+      "frameTitle": "প্ৰশিক্ষণ ছেণ্ডবক্স",
+      "frameBody": "এজন প্ৰকৃত কৃষকক অনুশীলন অধিবেশনলৈ নিমন্ত্ৰণ কৰক। তেওঁলোকৰ পিডব্লিউএত কোনো কথা ওলোৱাৰ আগতে কৃষকে মানি ল’ব লাগিব। ইয়াত একোৱেই আপোনাৰ প্ৰকৃত আবণ্টন, অৰ্ডাৰ, বা চাবস্ক্ৰিপচনসমূহক প্ৰভাৱিত নকৰে।",
+      "noSessionsTitle": "কোনো প্ৰশিক্ষণ অধিবেশন সক্ৰিয় নহয়",
+      "noSessionsBody": "কোম্পানীটোৰ CA য়ে CA পৰ্টেলৰ পৰা প্ৰশিক্ষণ আৰম্ভ কৰে। এবাৰ চলিলেই ইয়াত দেখা পাব।",
+      "pickSession": "এটা প্ৰশিক্ষণ অধিবেশন বাছি লওক",
+      "endsPrefix": "শেষ {date}",
+      "farmerPhoneLabel": "কৃষকৰ ফোন নম্বৰ",
+      "farmerPhoneHint": "কৃষকজন ইতিমধ্যে ৰুটছটকত পঞ্জীয়ন হ’ব লাগিব।",
+      "farmerPhonePlaceholder": "১০ অংকৰ সংখ্যা",
+      "pickCrop": "এটা শস্য ছিঙি লওক",
+      "noCrops": "এই প্ৰশিক্ষণ অধিবেশনৰ অধীনত এতিয়াও সক্ৰিয় পেকেজ থকা কোনো শস্য নাই।",
+      "pickPackage": "এটা পেকেজ বাছি লওক",
+      "submit": "প্ৰশিক্ষণৰ আমন্ত্ৰণ পত্ৰ প্ৰেৰণ কৰক",
+      "sending": "Sending...",
+      "successMessage": "নিমন্ত্ৰণী পত্ৰ প্ৰেৰণ কৰা হৈছে। কৃষকে তেওঁলোকৰ পি ডব্লিউ এত দেখিব।",
+      "genericError": "নিমন্ত্ৰণী পত্ৰ প্ৰেৰণ কৰিব পৰা নগ'ল।",
+      "genericLoadError": "প্ৰশিক্ষণ অধিবেশন লোড কৰিব পৰা নগ'ল।"
+    }
+  },
+  "push": {
+    "banner": {
+      "title": "জাননীসমূহ অন কৰক",
+      "body": "আজিৰ অনুশীলন কেতিয়া হ'ব, আপোনাৰ প্ৰশ্নৰ উত্তৰ কেতিয়া, আৰু কেতিয়া এটা অৰ্ডাৰত আপোনাৰ ব্যৱস্থাৰ প্ৰয়োজন হয়, সতৰ্ক হওক।",
+      "enable": "অন কৰক",
+      "enabling": "অন...",
+      "notNow": "এতিয়া নহয়"
+    },
+    "toast": {
+      "tapToOpen": "খোলিবলৈ টেপ কৰক",
+      "dismiss": "বৰ্খাস্ত"
+    }
+  },
   "common": {
     "translationPending": "অনুবাদ বাকী আছে",
     "loading": "লোড হচ্ছে...",
@@ -30,7 +85,7 @@
     "alerts": "সতৰ্কবাণী",
     "pickup": "উঠাওক",
     "dashboard": "ডেচব'ৰ্ড",
-    "subscriptions": "সদস্যতা"
+    "subscriptions": "চাবস্ক্ৰিপচন"
   },
   "diagnose": {
     "headerTitle": "শস্যৰ সমস্যা নিৰ্ণয় কৰা",
@@ -160,7 +215,8 @@
     "label": {
       "today": "আজি",
       "reference": "সন্দৰ্ভ",
-      "day": "দিন"
+      "day": "দিন",
+      "coversAlso": "ইয়াৰ উপৰিও: {names}"
     },
     "empty": {
       "noAdviceToday": "আজিৰ বাবে কোনো পৰামৰ্শ নাই",
@@ -169,7 +225,7 @@
       "allDone": "এই ছিজনৰ বাবে আপুনি সকলো পৰামৰ্শদাতা অনুশীলন সম্পূৰ্ণ কৰিছে।",
       "checkBack": "কাইলৈ পুনৰ পৰীক্ষা কৰক।",
       "quickCheck": "আজিৰ পৰামৰ্শৰ আগতে দ্ৰুত পৰীক্ষা কৰক",
-      "coveredElsewhere": "এই সমস্যাৰ বাবে পৰিচালনা পৰিকল্পনা ইতিমধ্যে আপোনাৰ পৰামৰ্শদাতাত শাৰীবদ্ধ কৰা হৈছে আৰু ইয়াক ফলপ্ৰসূভাৱে চম্ভালিব।",
+      "coveredElsewhere": "এই সমস্যাৰ বাবে পৰিচালনা পৰিকল্পনা ইতিমধ্যে আপোনাৰ পৰামৰ্শদাতাত শাৰী পাতি আছে আৰু ইয়াক ফলপ্ৰসূভাৱে চম্ভালিব।",
       "noPlansYet": "এই সমস্যাৰ বাবে এতিয়াও কোনো নিৰ্দিষ্ট পৰিচালনা পদ্ধতি নিৰ্ধাৰণ কৰা হোৱা নাই। আমি কাইলৈ পুনৰ পৰীক্ষা কৰিম।",
       "askAgainTomorrow": "আমি কাইলৈ আপোনালোকক এই প্ৰশ্নটো পুনৰ সুধিম।",
       "youAnsweredQuestion": "আপুনি উত্তৰ দিলে <strong>{answer}</strong> : “ {question} ” ৷"
@@ -195,6 +251,13 @@
       "confirmBody": "ঘূৰাই আনিব নোৱাৰিবা। আমি মাত্ৰ তোমাৰ বাবে লুকুৱাই ৰাখিম।",
       "confirmCancel": "ৰাখক",
       "confirmYes": "হয়, আঁতৰাই পেলাওক"
+    },
+    "relations": {
+      "applyAllTogether": "{count, plural, one {একেলগে প্ৰয়োগ কৰক} =2 {দুয়োটা একেলগে প্ৰয়োগ কৰক} other {সকলো # একেলগে প্ৰয়োগ কৰক}}",
+      "orderAllTogether": "{count, plural, one {ক্ৰম} =2 {দুয়োটাকে একেলগে অৰ্ডাৰ কৰক} other {সকলোকে # একেলগে অৰ্ডাৰ কৰক}}",
+      "orSeparator": "অথবা",
+      "andBetweenParts": "আৰু",
+      "orJoin": "অথবা"
     },
     "element": {
       "APPLICATION_METHOD": "প্ৰয়োগ পদ্ধতি",
@@ -236,10 +299,10 @@
       "VOLUME_PER_PLANT": "প্ৰতি উদ্ভিদৰ আয়তন"
     },
     "l2": {
-      "GENERAL_INSTRUCTIONS": "General Instructions",
-      "MEDIA_IMAGE": "Image",
-      "MEDIA_AUDIO": "Audio",
-      "MEDIA_HYPERLINK": "Link"
+      "GENERAL_INSTRUCTIONS": "সাধাৰণ নিৰ্দেশনা",
+      "MEDIA_IMAGE": "ছৱি",
+      "MEDIA_AUDIO": "অডিঅ'",
+      "MEDIA_HYPERLINK": "লিংক"
     }
   },
   "role": {
@@ -251,6 +314,10 @@
   "roleSwitcher": {
     "close": "বন্ধ",
     "activeRoleFallback": "খেতিয়ক",
+    "personalDetails": "ব্যক্তিগত বিৱৰণ",
+    "shopDetails": "দোকানৰ বিৱৰণ",
+    "professionalDetails": "পেছাদাৰী বিৱৰণ",
+    "onboardedCompanies": "অনবৰ্ড কৰা কোম্পানী",
     "mySubscriptions": "মোৰ চাবস্ক্ৰিপচনসমূহ",
     "cropsAndCompanies": "শস্য আৰু কোম্পানী",
     "messageRootsTalk": "বাৰ্তা RootsTalk",
@@ -264,7 +331,10 @@
     "setupPundit": "এজন বিশেষজ্ঞ হওক",
     "activeBadge": "সক্ৰিয়",
     "setupHint": "ছেট আপ কৰক →",
+    "exclusivityHint": "উপলব্ধ নহয় — আপুনি এজন {otherRole}",
+    "exclusivityMessage": "আপুনি ইতিমধ্যে এটা {currentRole} । এটা ব্যৱহাৰকাৰী RootsTalk ত এজন ডিলাৰ আৰু এটা সুবিধা প্ৰদানকাৰী দুয়োটা হ'ব নোৱাৰে — সিহঁতে অৰ্ডাৰ-ৰুটিং শৃংখলৰ বিপৰীত মূৰত বহি থাকে। স্বেচ্ছাই এটা ভূমিকা শেষ কৰাটো ভৱিষ্যতৰ এটা আপডেটত আহি আছে।",
     "helpAndTips": "সহায় আৰু টিপছ",
+    "privacyPolicy": "গোপনীয়তা নীতি",
     "aboutRootsTalk": "RootsTalk ৰ বিষয়ে",
     "signOut": "চাইন আউট কৰক",
     "about": {
@@ -272,14 +342,7 @@
       "byOrg": "নেইটিৰি আইৱাফাৰ্ম এগ্ৰিটেকৰ দ্বাৰা",
       "version": "সংস্কৰণ ২.০",
       "visit": "eywa.farm → চাওক"
-    },
-    "personalDetails": "ব্যক্তিগত বিৱৰণ",
-    "shopDetails": "দোকানৰ বিৱৰণ",
-    "professionalDetails": "পেছাগত বিৱৰণ",
-    "privacyPolicy": "গোপনীয়তা নীতি",
-    "onboardedCompanies": "অনবৰ্ড কৰা কোম্পানী",
-    "exclusivityHint": "উপলব্ধ নহয় — আপুনি এজন {otherRole}",
-    "exclusivityMessage": "আপুনি ইতিমধ্যে এটা {currentRole} । এটা ব্যৱহাৰকাৰী RootsTalk ত এজন ডিলাৰ আৰু এটা সুবিধা প্ৰদানকাৰী দুয়োটা হ'ব নোৱাৰে — সিহঁতে অৰ্ডাৰ-ৰুটিং শৃংখলৰ বিপৰীত মূৰত বহি থাকে। স্বেচ্ছাই এটা ভূমিকা শেষ কৰাটো ভৱিষ্যতৰ এটা আপডেটত আহি আছে।"
+    }
   },
   "header": {
     "aboutRootsTalk": "rootsTALK ৰ বিষয়ে",
@@ -310,24 +373,24 @@
     "greeting": "স্বাগতম, {name} !",
     "fallbackName": "rootsTALK লৈ",
     "subline": "আপোনাৰ সম্পূৰ্ণ খেতিৰ সংগী",
-    "cta": "আৰম্ভ কৰোঁ আহক →",
-    "alsoRoles": "মইও এজন ডিলাৰ / ফেচিলিটেটৰ / এক্সপাৰ্ট",
-    "tile": {
-      "advisories": {
-        "title": "পৰামৰ্শ",
-        "body": "বিশেষজ্ঞৰ দ্বাৰা পৰিচালিত শস্য ব্যৱস্থাপনা, ঋতু অনুসৰি"
+    "choicePrompt": "আপুনি ক’ৰ পৰা আৰম্ভ কৰিব বিচাৰে?",
+    "choiceFooterHint": "পিছত কাষৰ ড্ৰয়াৰৰ পৰা অধিক ভূমিকা ল’ব পাৰিব।",
+    "role": {
+      "farmer": {
+        "title": "কৃষক ডেচব'ৰ্ড",
+        "body": "আপোনাৰ শস্যসমূহ অনুসৰণ কৰক আৰু পৰামৰ্শ লওক"
       },
-      "purchase": {
-        "title": "ক্ৰয় কৰা",
-        "body": "বিশ্বাসযোগ্য ডিলাৰৰ জৰিয়তে পৰামৰ্শ দিয়া ইনপুটসমূহ অৰ্ডাৰ কৰক"
+      "dealer": {
+        "title": "মোৰ দোকানখন খুলিব",
+        "body": "কৃষকৰ পৰা অৰ্ডাৰ লাভ কৰা আৰু ইনপুট যোগান ধৰা"
       },
-      "diagnose": {
-        "title": "ৰোগ নিৰ্ণয় কৰা",
-        "body": "নিৰ্দেশিত নিদানৰ দ্বাৰা শস্যৰ সমস্যা চিনাক্ত কৰা"
+      "facilitator": {
+        "title": "সুবিধা প্ৰদানকাৰী হিচাপে সহায় কৰক",
+        "body": "আপোনাৰ গাঁৱত চাবস্ক্ৰিপচনৰ প্ৰচাৰ কৰি উপাৰ্জন কৰক"
       },
-      "askExpert": {
-        "title": "বিশেষজ্ঞক সুধিব",
-        "body": "প্ৰমাণিত কৃষি বিশেষজ্ঞৰ পৰা উত্তৰ লাভ কৰক"
+      "pundit": {
+        "title": "এজন বিশেষজ্ঞ হওক",
+        "body": "আপোনাৰ বিশেষজ্ঞতাৰ ক্ষেত্ৰত কৃষকৰ প্ৰশ্নৰ উত্তৰ দিয়ক"
       }
     }
   },
@@ -434,7 +497,7 @@
       "expertSaveFailed": "সংৰক্ষণ কৰিব পৰা নগ'ল। আকৌ এবাৰ চেষ্টা কৰক।",
       "revertedToDefault": "অবিকল্পিতলৈ ঘূৰাই অনা হৈছে",
       "noPrimaryExpert": "এই কোম্পানীয়ে এতিয়াও কোনো Primary expert onboarded কৰা নাই। তেওঁলোকে এবাৰ কৰিলেই আস্ক এক্সপাৰ্ট উপলব্ধ হ’ব।",
-      "diagnoseUnavailable": "এই শস্যৰ নিদান বৰ্তমান উপলব্ধ নহয়।"
+      "diagnoseUnavailable": "এই শস্যৰ বাবে বৰ্তমান নিদান পোৱা নাই।"
     },
     "age": {
       "label": "শস্যৰ বয়স",
@@ -466,7 +529,7 @@
     "startDate": {
       "sectionHeader": "আৰম্ভণিৰ তাৰিখ",
       "title": "আপোনাৰ আৰম্ভণিৰ তাৰিখ নিৰ্ধাৰণ কৰক",
-      "unlockPlantWise": "আপুনি ঋতু আৰম্ভ হোৱাৰ তাৰিখ নিৰ্ধাৰণ কৰিলেই পৰামৰ্শ আৰু নিদান আনলক।",
+      "unlockPlantWise": "আপুনি ঋতু আৰম্ভ হোৱাৰ তাৰিখ নিৰ্ধাৰণ কৰাৰ পিছত পৰামৰ্শ আৰু নিদান আনলক।",
       "unlockAreaWise": "আপুনি এবাৰ বীজ সিঁচাৰ তাৰিখ নিৰ্ধাৰণ কৰিলেই পৰামৰ্শ আৰু নিদান আনলক।",
       "setCta": "আৰম্ভণিৰ তাৰিখ নিৰ্ধাৰণ কৰক",
       "setShort": "স্থাপন কৰা",
@@ -562,9 +625,14 @@
     "needDate": {
       "title": "আপোনাৰ আৰম্ভণিৰ তাৰিখ নিৰ্ধাৰণ কৰক",
       "advisory": "আপুনি এবাৰ বীজ সিঁচা বা ৰোপণ কৰাৰ সময়ত ছেট কৰিলে আমি আপোনাক আজিৰ পৰামৰ্শ দিয়া পদ্ধতিসমূহ দেখুৱাম।",
-      "diagnose": "আপুনি কেতিয়া বীজ সিঁচিছিল আমি জানিব লাগিব যাতে আপুনি যিকোনো শস্যৰ সমস্যা নিৰ্ণয় কৰাত সহায় কৰিব পাৰে।",
+      "diagnose": "আপুনি কেতিয়া বীজ সিঁচিলে আমি জানিব লাগিব যাতে আপুনি যিকোনো শস্যৰ সমস্যা নিৰ্ণয় কৰাত সহায় কৰিব পাৰে।",
       "setNow": "এতিয়াই আৰম্ভণিৰ তাৰিখ নিৰ্ধাৰণ কৰক",
       "later": "হয়তো পিছত"
+    },
+    "noExpertSheet": {
+      "title": "এই কোম্পানীটোৰ কোনো বিশেষজ্ঞ এতিয়াও নাই",
+      "body": "এই কোম্পানীয়ে এতিয়াও কোনো Primary expert স্থাপন কৰা নাই। আপুনি প্ৰশ্ন প্ৰেৰণ কৰিব পাৰিব এবাৰ তেওঁলোকে এটা অনবৰ্ড কৰিলে।",
+      "ok": "ঠিক আছে, পাইছো"
     }
   },
   "subscribe": {
@@ -607,17 +675,17 @@
     "delegateSent": {
       "heading": "পেমেন্টৰ অনুৰোধ প্ৰেৰণ কৰা হৈছে",
       "askedPrefix": "সুধিছিল",
-      "askedToPay": "{company} ৰ পৰা আপোনাৰ {crop} পৰামৰ্শৰ বাবে ₹{price} দিবলৈ।",
+      "askedToPay": "{company} ৰ পৰা আপোনাৰ {crop} পৰামৰ্শৰ বাবে ₹ {price} দিবলৈ।",
       "recipientFallback": "গ্ৰাহকক",
-      "bodyWithoutName": "{company} ৰ পৰা {crop} এডভাইজাৰীৰ বাবে ₹{price} দিবলৈ আপোনাৰ অনুৰোধ প্ৰেৰণ কৰা হৈছে।",
-      "hint": "তেওঁলোকে ধন দিয়াৰ মুহূৰ্ততে আপোনাক অৱগত কৰা হ’ব। অনুৰোধৰ ম্যাদ ২৪ ঘণ্টাৰ ভিতৰত শেষ হ’ব; পেমেণ্ট সম্পূৰ্ণ হোৱাৰ লগে লগে আপোনাৰ পৰামৰ্শ সক্ৰিয় হৈ পৰে।",
+      "bodyWithoutName": "{company} ৰ পৰা {crop} পৰামৰ্শৰ বাবে ₹ {price} দিবলৈ আপোনাৰ অনুৰোধ প্ৰেৰণ কৰা হৈছে।",
+      "hint": "তেওঁলোকে ধন দিয়াৰ মুহূৰ্ততে আপোনাক অৱগত কৰা হ’ব। অনুৰোধৰ ম্যাদ ২৪ ঘণ্টাৰ পিছত শেষ হ’ব; পেমেণ্ট সম্পূৰ্ণ হোৱাৰ লগে লগে আপোনাৰ পৰামৰ্শ সক্ৰিয় হৈ পৰে।",
       "goHome": "ঘৰলৈ যাওক",
       "trackRequest": "এই অনুৰোধ অনুসৰণ কৰক →"
     },
     "location": {
       "title": "আপোনাৰ খেতিপথাৰ ক'ত?",
       "subtitle": "আমি আপোনাৰ অঞ্চলত উপলব্ধ পৰামৰ্শ বিচাৰি পাম",
-      "savedLabel": "আপোনাৰ অৱস্থান",
+      "savedLabel": "আপোনাৰ স্থান",
       "unnamed": "(নামহীন)",
       "useSaved": "↺ ইয়াৰ পৰিৱৰ্তে মোৰ সংৰক্ষিত স্থান ব্যৱহাৰ কৰক",
       "loadingShort": "লোড হচ্ছে...",
@@ -650,19 +718,19 @@
       "fallbackPackageName": "{crop} পৰামৰ্শদাতা",
       "selectionsLabel": "আপোনাৰ নিৰ্বাচনসমূহ",
       "priceLabel": "চাবস্ক্ৰিপচনৰ মূল্য",
-      "priceAmount": "₹{price}",
+      "priceAmount": "₹ {price}",
       "settingUp": "ছেট আপ...",
       "proceedCta": "সঠিক দেখা গৈছে — পেমেণ্টলৈ আগবাঢ়ক →"
     },
     "payment": {
       "title": "প্ৰায় তাতেই!",
       "subtitle": "আপোনাৰ পৰামৰ্শৰ বাবে কেনেকৈ ধন দিব লাগে বাছি লওক",
-      "attributionPrefix": "₹{price} টকা দিয়া হয়",
+      "attributionPrefix": "₹ {price} দিয়া হয়",
       "attributionMiddle": "চফ্টৱেৰ আন্তঃগাঁথনিৰ বাবে। এইটো হয়",
       "attributionNot": "নহয়",
       "attributionSuffix": "{company} ক দিয়া হৈছে।",
       "attributionCompanyFallback": "কোম্পানীটো",
-      "payNow": "Pay ₹{price} now",
+      "payNow": "এতিয়াই ₹ {price} দিয়ক",
       "payNowBody": "পেমেণ্টৰ পিছত তৎক্ষণাত সক্ৰিয়কৰণ",
       "payUpi": "UPI ৰ সৈতে ধন পৰিশোধ কৰক →",
       "stagingBypass": "⚙ মঞ্চায়ন: Razorpay এৰি দিয়ক, এতিয়া সক্ৰিয় কৰক",
@@ -724,7 +792,7 @@
     "noRecipientBack": "পিছলৈ",
     "unknown": "অজ্ঞাত",
     "brandLockDealer": "বীজৰ জাতবোৰ ব্ৰেণ্ড-লক কৰা হয়। এই ডিলাৰজনক বীজ কোম্পানীয়ে অনবৰ্ড কৰা নাই, গতিকে তেওঁলোকলৈ অৰ্ডাৰ পঠিয়াব নোৱাৰি। কোম্পানীয়ে অনবৰ্ড কৰা এজন ডিলাৰ বাছি লওক, বা অৰ্ডাৰটো কোনো সুবিধা প্ৰদানকাৰীলৈ পঠাওক।",
-    "sendOrderFailed": "অৰ্ডাৰ পঠিয়াব পৰা নাই। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+    "sendOrderFailed": "অৰ্ডাৰ পঠাব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
     "phoneEntryLabel": "কোনো ডিলাৰ বা সুবিধা প্ৰদানকাৰীৰ ফোন নম্বৰ প্ৰৱেশ কৰক",
     "phoneEntryPlaceholder": "১০ অংকৰ মোবাইল নম্বৰ",
     "phoneChecking": "চেক কৰি আছে...",
@@ -755,7 +823,7 @@
         "removed": "আঁতৰোৱা হৈছে"
       },
       "errors": {
-        "sendFailed": "অৰ্ডাৰ পঠিয়াব পৰা নাই। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+        "sendFailed": "অৰ্ডাৰ পঠাব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
         "deleteFailed": "অৰ্ডাৰটো মচি পেলাব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
         "cancelFirst": "প্ৰথমে অৰ্ডাৰ বাতিল কৰক।",
         "cancelFailed": "অৰ্ডাৰ বাতিল কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
@@ -910,7 +978,7 @@
           "routed": "ৰুট কৰা হৈছে",
           "approval": "অনুমোদনৰ বাবে",
           "returned": "উভতি আহিল",
-          "pickup": "Ready for pickup"
+          "pickup": "পিকআপৰ বাবে সাজু"
         },
         "historyChip": "📁 ইতিহাস",
         "approvalPeek": "অনুমোদন",
@@ -936,7 +1004,7 @@
         "pickRecipientCta": "এজন প্ৰাপক বাছি লওক →",
         "itemsCountPrefix": "{count, plural, one {1 আইটেম · } other {# সামগ্ৰী · }}",
         "dealerProcessing": "ডিলাৰে প্ৰক্ৰিয়া কৰি আছে",
-        "awaitingApproval": "{count, plural, one {আপোনাৰ অনুমোদনৰ বাবে অপেক্ষা কৰি আছে ১টা বস্তু} other {আপোনাৰ অনুমোদনৰ অপেক্ষাত # বস্তু}}",
+        "awaitingApproval": "{count, plural, one {আপোনাৰ অনুমোদনৰ বাবে অপেক্ষা কৰি আছে ১টা বস্তু} other {আপোনাৰ অনুমোদনৰ বাবে অপেক্ষা কৰি থকা # বস্তু}}",
         "approveCta": "অনুমোদন →",
         "returnedFacilitatorHandling": "{count, plural, one {1 ঘূৰাই দিয়া বস্তু · আপোনাৰ সুবিধা প্ৰদানকাৰীয়ে নিয়ন্ত্ৰণ কৰি আছে} other {# ঘূৰাই দিয়া বস্তু · আপোনাৰ সুবিধা প্ৰদানকাৰীয়ে চম্ভালি আছে}}",
         "returnedCount": "{count, plural, one {১ টা ঘূৰাই দিয়া বস্তু} other {# ঘূৰাই দিয়া বস্তু}}",
@@ -1005,22 +1073,22 @@
         "fertilizer": "সাৰ",
         "fallback": "ইনপুট"
       },
-      "tabDealers": "Dealers ({count})",
-      "tabFacilitators": "Facilitators ({count})",
-      "emptyDealers": "No dealers found nearby.",
-      "emptyFacilitators": "No facilitators found nearby.",
-      "tryPhoneHint": "Try entering a phone number below."
+      "tabDealers": "ডিলাৰ ( {count} )",
+      "tabFacilitators": "সুবিধা প্ৰদানকাৰী ( {count} )",
+      "emptyDealers": "ওচৰত কোনো ডিলাৰ পোৱা নগ’ল।",
+      "emptyFacilitators": "ওচৰত কোনো সুবিধা প্ৰদানকাৰী পোৱা নগ’ল।",
+      "tryPhoneHint": "তলত এটা ফোন নম্বৰ দিব চেষ্টা কৰক।"
     },
     "forward": {
       "headerTitle": "ঘূৰাই দিয়া বস্তুবোৰ ফৰৱাৰ্ড কৰক",
-      "postponeOnlyReady": "{count, plural, one {1 টা পিছুৱাই দিয়া বস্তুটো আগবঢ়াবলৈ সাজু (স্থগিত ৰখা + বাণ্ডিল বাতিল কৰক)।} other {# পিছুৱাই দিয়া বস্তুবোৰ আগবঢ়াবলৈ সাজু (স্থগিত ৰখা + বাণ্ডিল বাতিল কৰক)।}}",
+      "postponeOnlyReady": "{count, plural, one {1 টা পিছুৱাই দিয়া বস্তুটো আগবঢ়াবলৈ সাজু (স্থগিত ৰখা + বাণ্ডিল বাতিল কৰক)।} other {# পিছুৱাই দিয়া বস্তুবোৰ ফৰৱাৰ্ড কৰিবলৈ সাজু (বাতিল কৰা পিছুৱাই দিয়া + বাণ্ডিল)।}}",
       "readyToForward": "{count, plural, one {১ টা বস্তু আগবঢ়াবলৈ সাজু।} other {# ফৰৱাৰ্ড কৰিবলৈ সাজু বস্তু।}}",
-      "pickHint": " Enter the dealer's or facilitator's phone number below.",
+      "pickHint": " তলত ডিলাৰ বা সুবিধা প্ৰদানকাৰীৰ ফোন নম্বৰ লিখক।",
       "brandLockedTitle": "ব্ৰেণ্ড-লক কৰা অৰ্ডাৰ",
-      "tabDealers": "ডিলাৰ ( {count} )",
-      "tabFacilitators": "সুবিধা প্ৰদানকাৰী ( {count} )",
-      "emptyDealers": "বৰ্তমান কোনো ডিলাৰ উপলব্ধ নহয়।",
-      "emptyFacilitators": "বৰ্তমান কোনো সুবিধা প্ৰদানকাৰী উপলব্ধ নহয়।",
+      "customPhoneLabel": "ডিলাৰ / সুবিধা প্ৰদানকাৰীৰ ফোন",
+      "customPhonePlaceholder": "১০ অংকৰ ফোন নম্বৰ",
+      "phoneChecking": "চেক কৰি আছে...",
+      "sendOrder": "অৰ্ডাৰ পঠাওক",
       "nudgeTitle": "পিছুৱাই দিয়া বস্তুও পঠাব?",
       "nudgeBodyPrefix": "তোমাৰ আছে",
       "nudgeBodyMiddle": "এতিয়াও বৰ্তমানৰ ডিলাৰৰ লগত। সেইবোৰ বাতিল কৰিব বিচাৰে আৰু ৰ সৈতে বাণ্ডিল কৰিব বিচাৰে",
@@ -1033,18 +1101,14 @@
       "emptyTitle": "আগবঢ়াবলৈ একো নাই",
       "emptyBody": "এই অৰ্ডাৰত কোনো ঘূৰাই দিয়া বা পিছুৱাই দিয়া বস্তু নাই যিবোৰ এতিয়াই আন এজন ডিলাৰলৈ পঠিয়াব পাৰি।",
       "backToManage": "পৰিচালনালৈ উভতি যাওক",
-      "customPhoneLabel": "Dealer / Facilitator phone",
-      "customPhonePlaceholder": "10-digit phone number",
-      "phoneChecking": "Checking…",
-      "sendOrder": "Send Order",
       "lookup": {
-        "notRegistered": "No RootsTalk user found with this number. Ask them to register first.",
-        "self": "You cannot send the order to yourself. Enter someone else's number.",
-        "notDealerOrFacilitator": "This person is not registered as a dealer or facilitator on RootsTalk.",
-        "dealerNotOnboarded": "This order has a brand-locked item. This dealer is not onboarded by {client}.",
-        "roleDealer": "Dealer",
-        "roleFacilitator": "Facilitator",
-        "companyFallback": "the company"
+        "notRegistered": "এই নম্বৰৰ সৈতে কোনো RootsTalk ব্যৱহাৰকাৰী পোৱা নগ'ল। প্ৰথমে পঞ্জীয়ন কৰিবলৈ কওক।",
+        "self": "অৰ্ডাৰটো নিজৰ ওচৰলৈ পঠিয়াব নোৱাৰিব। আন কাৰোবাৰ নম্বৰ লিখক।",
+        "notDealerOrFacilitator": "এই ব্যক্তিজন RootsTalk ত ডিলাৰ বা সুবিধা প্ৰদানকাৰী হিচাপে পঞ্জীয়ন কৰা হোৱা নাই। প্ৰথমে ‘বিকাম এ ডিলাৰ’ বা ‘বিকাম এ ফেচিলিটেটৰ’ৰ জৰিয়তে পঞ্জীয়ন কৰিবলৈ কওক।",
+        "dealerNotOnboarded": "এই অৰ্ডাৰত ব্ৰেণ্ড লক কৰা বস্তু এটা আছে। এই ডিলাৰক {client} দ্বাৰা অনবৰ্ড কৰা হোৱা নাই, গতিকে অৰ্ডাৰ তেওঁলোকলৈ পঠিয়াব নোৱাৰি। কোনো সুবিধা প্ৰদানকাৰীলৈ পঠাওক বা বেলেগ ডিলাৰ বাছি লওক।",
+        "roleDealer": "ডিলাৰ",
+        "roleFacilitator": "সুবিধা প্ৰদানকাৰী",
+        "companyFallback": "কোম্পানীটো"
       }
     },
     "pickup": {
@@ -1214,7 +1278,7 @@
       "needOnePhoto": "অনুগ্ৰহ কৰি অন্ততঃ এখন ফটো যোগ কৰক।",
       "bypassFailed": "বাইপাছ জমা দিয়া বিফল।"
     },
-    "razorpayDescription": "বিশেষজ্ঞ প্ৰশ্ন (rootsTALK.in লৈ পৰিশোধ কৰা হৈছে, {client} নহয়)",
+    "razorpayDescription": "বিশেষজ্ঞ প্ৰশ্ন (rootsTALK.in লৈ দিয়া হৈছে, {client} লৈ নহয়)",
     "affectedPlantsLabel": "আপোনাৰ {total} উদ্ভিদৰ ভিতৰত কিমানজন আক্ৰান্ত হয়? (বৈকল্পিক)",
     "affectedPlantsPlaceholder": "এটা নম্বৰ দিয়ক",
     "affectedPlantsHelp": "যদি আপোনাৰ প্ৰশ্নটো কোনো কীট-পতংগ বা ৰোগৰ বিষয়ে নহয় তেন্তে খালীকৈ ৰাখক।",
@@ -1246,8 +1310,8 @@
     "askedOn": "{date} ত সোধা হৈছে।",
     "awaitingReply": "এজন বিশেষজ্ঞই অতি সোনকালে ইয়াৰ উত্তৰ দিব।",
     "closedNoResponse": "কোনো সঁহাৰি নোহোৱাকৈ বন্ধ।",
-    "viewOriginal": "View original",
-    "viewTranslated": "View translated"
+    "viewOriginal": "মূল চাওক",
+    "viewTranslated": "অনুবাদ কৰা চাওক"
   },
   "farmerProfile": {
     "headerTitle": "মোৰ প্ৰফাইল",
@@ -1299,7 +1363,7 @@
       "languageLabel": "ভাষা",
       "change": "সলনি কৰা",
       "alertsLabel": "সতৰ্কতা পছন্দসমূহ",
-      "alertsBody": "প্ৰতিটো শস্যৰ পৃষ্ঠাত আৰু কোনে সতৰ্কবাণী পায় নিৰ্ধাৰণ কৰক — শস্য খোলক আৰু সতৰ্কতা গ্ৰাহক পত্ৰিকা টেপ কৰক।",
+      "alertsBody": "প্ৰতিটো শস্যৰ পৃষ্ঠাত আৰু কোনে সতৰ্কবাণী পায় নিৰ্ধাৰণ কৰক — শস্য খোলক আৰু সতৰ্কবাণী গ্ৰহণকাৰী পত্ৰিকা টেপ কৰক।",
       "openMyCrops": "মোৰ শস্যবোৰ খুলিব →"
     },
     "language": {
@@ -1335,6 +1399,9 @@
       "onboardingBody": "আপুনি আপোনাৰ দোকানৰ প্ৰফাইল ছেট আপ কৰিছে — ভাল কাম কৰিছে। কৃষকৰ অৰ্ডাৰ লাভ কৰিবলৈ আৰম্ভ কৰিবলৈ হ’লে আপুনি অন্ততঃ এটা ৰুটছটক কোম্পানীয়ে অনব’ৰ্ড কৰিব লাগিব। আপুনি বিক্ৰী কৰা যিকোনো কোম্পানীৰে ফিল্ড মেনেজাৰৰ সৈতে আপোনাৰ পঞ্জীয়নভুক্ত ফোন নম্বৰটো শ্বেয়াৰ কৰক। এবাৰ তেওঁলোকৰ যিকোনো এটাই আপোনাক যোগ কৰিলে, তলৰ আপোনাৰ টাইলবোৰে লাইভ এক্টিভিটি দেখুৱাবলৈ আৰম্ভ কৰিব।",
       "reviewProfile": "প্ৰফাইল পৰ্যালোচনা কৰক",
       "myDealershipsBtn": "মোৰ ডিলাৰশ্বিপবোৰ",
+      "invitationsCount": "{count, plural, one {১ প্ৰমোটাৰৰ আমন্ত্ৰণ} other {# প্ৰমোটাৰৰ নিমন্ত্ৰণী পত্ৰ}}",
+      "invitationsHint": "এটা কোম্পানীয়ে আপোনাক তেওঁলোকৰ প্ৰমোটাৰ হিচাপে বিচাৰে",
+      "invitationsViewCta": "দৰ্শন",
       "pendingOrders": "বাকী থকা অৰ্ডাৰ",
       "tapToProcess": "প্ৰক্ৰিয়া কৰিবলৈ টেপ কৰক →",
       "postponedItems": "পিছুৱাই দিয়া বস্তু",
@@ -1362,10 +1429,7 @@
         "unreadCount": "{count} অপঠন",
         "brandForms": "ব্ৰেণ্ড জমা দিয়া",
         "brandFormsSubtitle": "ব্ৰেণ্ড বিচাৰি পোৱা নাই? ভিতৰলৈ পঠাওক"
-      },
-      "invitationsCount": "{গণনা, বহুবচন, এটা {১ প্ৰমোটাৰ আমন্ত্ৰণ} অন্য {# প্ৰমোটাৰ আমন্ত্ৰণ}}",
-      "invitationsHint": "এটা কোম্পানীয়ে আপোনাক তেওঁলোকৰ প্ৰমোটাৰ হিচাপে বিচাৰে",
-      "invitationsViewCta": "দৰ্শন"
+      }
     },
     "payments": {
       "headerTitle": "কৃষকৰ পেমেণ্ট",
@@ -1391,7 +1455,8 @@
         "pending": "বাকী থকা",
         "postponed": "পিছুৱাই দিয়া হ’ল",
         "farmer": "কৃষকৰ সৈতে",
-        "packing": "পেকিং"
+        "packing": "পেকিং",
+        "training": "প্ৰশিক্ষণ"
       },
       "historyChip": "📁 ইতিহাস",
       "emptyPill": "{pillName} ৰ অধীনত একো নাই",
@@ -1448,10 +1513,10 @@
         "callFarmerAria": "খেতিয়কক ফোন কৰক",
         "callFacilitatorAria": "কল ফেচিলিটেটৰ",
         "cropContext": {
-          "acres": "{count, plural, one {1 acre} other {# acres}}",
-          "plants": "{count, plural, one {1 plant} other {# plants}}",
-          "ageDays": "{count, plural, one {1 day old} other {# days old}}",
-          "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+          "acres": "{count, plural, one {১ একৰ} other {# একৰ}}",
+          "plants": "{count, plural, one {১ টা উদ্ভিদ} other {# উদ্ভিদ}}",
+          "ageDays": "{count, plural, one {১ দিনীয়া} other {# দিন পুৰণি}}",
+          "ageYears": "{count, plural, one {১ বছৰীয়া} other {# বছৰ বয়সৰ}}"
         }
       },
       "chunk": {
@@ -1522,7 +1587,7 @@
         },
         "declineSheet": {
           "title": "এই বীজৰ ক্ৰম অস্বীকাৰ কৰক?",
-          "body": "কৃষকে ইয়াক উপলব্ধ নোহোৱা বুলি দেখি বেলেগ ডিলাৰলৈ পঠিয়াব পাৰিব।",
+          "body": "কৃষকে ইয়াক উপলব্ধ নহয় বুলি দেখি বেলেগ ডিলাৰলৈ পঠিয়াব পাৰিব।",
           "yes": "হয়, অস্বীকাৰ কৰক"
         }
       },
@@ -1543,6 +1608,34 @@
       "categoryFallback": "ক্ৰম",
       "soldLine": "{sold} বিক্ৰী কৰা",
       "soldWithUnavailable": "{sold} বিক্ৰী কৰা, {na} উপলব্ধ নহয়"
+    },
+    "onboardedCompanies": {
+      "headerTitle": "অনবৰ্ড কৰা কোম্পানী",
+      "promoterBadge": "প্ৰমোটাৰ",
+      "stepDown": "তললৈ নামি যাওক",
+      "stepDownConfirm": "এই কোম্পানীত প্ৰমোটাৰ হিচাপে পদত্যাগ কৰক? আপুনি ডিলাৰ হিচাপে অনবৰ্ড হৈ থাকিব।",
+      "errorStepDown": "পদত্যাগ কৰিব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+      "callAria": "{company} কল কৰক",
+      "websiteAria": "{company} ৱেবছাইট খোলক",
+      "emptyTitle": "এতিয়াও কোনো কোম্পানী নাই",
+      "emptyBody": "কোনো কোম্পানীয়ে আপোনাক এতিয়াও ডিলাৰ হিচাপে অনবৰ্ড কৰা নাই। আপুনি কাম কৰিব বিচৰা কোম্পানীটোৰ এজন ফিল্ড মেনেজাৰক আপোনাক অনব’ৰ্ড কৰিবলৈ কওক।"
+    },
+    "promoterInvitations": {
+      "headerTitle": "প্ৰমোটাৰৰ আমন্ত্ৰণ পত্ৰ",
+      "emptyTitle": "কোনো বাকী থকা নিমন্ত্ৰণী পত্ৰ নাই",
+      "invitationSent": "প্ৰেৰণ কৰা হৈছে {date}",
+      "description": "এই কোম্পানীয়ে আপোনাক তেওঁলোকৰ প্ৰমোটাৰ হিচাপে বিচাৰে — কৃষকসকলক চাবস্ক্ৰিপচনৰ বাবে নিযুক্তি দিবলৈ আৰু আপোনাৰ নেটৱৰ্কৰ পৰা উপাৰ্জন কৰিবলৈ। এজন ডিলাৰ হিচাপে আপুনি একেলগে একাধিক কোম্পানীত প্ৰমোটাৰ হ’ব পাৰে।",
+      "acceptCta": "✓ গ্ৰহণ কৰক",
+      "declineCta": "✗ অৱনতি ঘটে",
+      "confirmAcceptTitle": "{company} ত প্ৰমোটাৰৰ ভূমিকা গ্ৰহণ কৰক ?",
+      "confirmAcceptBody": "এই কোম্পানীত আপুনি প্ৰমোটাৰ হ’ব। আপুনি আন কোম্পানীতো প্ৰমোটাৰ হ’ব পাৰে — ইয়াত গ্ৰহণ কৰিলে আন কোনো প্ৰমোটাৰ ভূমিকাত কোনো প্ৰভাৱ নপৰে।",
+      "confirmAcceptCta": "হয়, মানি লওক",
+      "confirmRejectTitle": "{company} ৰ পৰা আমন্ত্ৰণ অস্বীকাৰ কৰক ?",
+      "confirmRejectBody": "কোম্পানীটোক অৱগত কৰা হ’ব। পিছত পুনৰ নিমন্ত্ৰণ কৰিব পাৰে।",
+      "confirmRejectCta": "হয়, অস্বীকাৰ কৰক",
+      "confirmCancel": "বাতিল কৰক",
+      "confirmBusy": "সঞ্চয়...",
+      "errorGeneric": "কিবা এটা ভুল হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
     },
     "postponed": {
       "headerTitle": "পিছুৱাই দিয়া বস্তু",
@@ -1607,14 +1700,14 @@
         "later": "⏰ পিছত",
         "na": "✗ N/A",
         "affectedPlants": "{total} উদ্ভিদৰ {affected} চিকিৎসা",
-        "checkWithFarmer": "অনুগ্ৰহ কৰি কৃষকৰ লগত কিমান গছ-গছনি ক্ষতিগ্ৰস্ত হৈছে সেই বিষয়ে জানি লওক"
+        "checkWithFarmer": "অনুগ্ৰহ কৰি কৃষকৰ লগত কিমান গছ-গছনি ক্ষতিগ্ৰস্ত হৈছে সেই বিষয়ে পৰীক্ষা কৰক"
       },
       "form": {
         "lockedBrandLabel": "লক কৰা ব্ৰেণ্ড (পূৰ্ব-নিৰ্দিষ্ট)",
         "selectBrandPlaceholder": "ব্র্যান্ড নির্বাচন করুন...",
         "qtyPlaceholder": "পৰিমাণ *",
         "pricePlaceholder": "₹ মূল্য",
-        "pickBrandBeforeSaving": "সঞ্চয় কৰাৰ আগতে তালিকাৰ পৰা এটা ব্ৰেণ্ড বাছি লওক।",
+        "pickBrandBeforeSaving": "সংৰক্ষণ কৰাৰ আগতে তালিকাৰ পৰা এটা ব্ৰেণ্ড বাছি লওক।",
         "saving": "সঞ্চয়...",
         "saveDetails": "বিৱৰণ সংৰক্ষণ কৰক"
       },
@@ -1638,7 +1731,23 @@
         "pickBrand": "ব্ৰেণ্ড বাছি লওক",
         "skipMixed": "মিশ্ৰিত এৰি দিয়ক",
         "straightHeader": "পোন সাৰ (বাকী থকা ফাঁক: {n} N · {p} P · {k} K)",
+        "twoHopHint": "প্ৰতিটো সাৰত দুটা পিক: প্ৰথমে টাইপ কৰক (পুষ্টিকৰ অনুপাত অনুসৰি), তাৰ পিছত ব্ৰেণ্ড।",
+        "mixedHeaderV2": "মিশ্ৰিত সাৰৰ প্ৰকাৰ বাছি লওক (পুষ্টিকৰ অনুপাত অনুসৰি)",
+        "mixedAccordionHeader": "মিশ্ৰিত সাৰ",
+        "mixedAccordionTapHint": "এটা ধৰণ বাছনি কৰিবলৈ টেপ কৰক",
+        "mixedDisabledHint": "প্ৰথমে Straight সাৰবোৰ পৰিষ্কাৰ কৰি এটা Mixed বাছি লওক।",
+        "straightSectionHeader": "ষ্ট্ৰেইট সাৰ",
+        "straightClassHeader": "{letter} — {kg} কিলোগ্ৰাম এতিয়াও প্ৰয়োজন",
+        "straightClassTapHint": "এটা ধৰণ বাছনি কৰিবলৈ টেপ কৰক",
+        "changeMixedFertiliser": "মিশ্ৰিত সাৰ সলনি কৰক",
+        "changeStraightFertiliser": "{letter} সাৰ সলনি কৰক",
+        "goToBrands": "ব্ৰেণ্ডছলৈ যাওক",
+        "volumeLabel": "আয়তন (কিলোগ্ৰাম)",
+        "priceLabel": "মূল্য (₹)",
+        "commitError": "এন পি কে নিৰ্বাচন কমিট কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
         "straightOnly": "( {letter} -কেৱল)",
+        "allCoveredByMixed": "মিশ্ৰিত দ্বাৰা আবৃত সকলো N, P, K — কোনো ষ্ট্ৰেইটৰ প্ৰয়োজন নাই।",
+        "uncoveredWarning": "এতিয়াও উন্মোচিত হৈছে: {nutrients} . প্ৰতিটোৰ বাবে এটা ষ্ট্ৰেইট বাছক, বা এই বস্তুটো অনুপলব্ধ বুলি চিহ্নিত কৰক।",
         "committing": "কমিটিং...",
         "commitCta": "এন পি কে নিৰ্বাচন কমিট কৰক"
       },
@@ -1655,12 +1764,12 @@
         "checking": "চেক কৰি আছে...",
         "markOptionAvailable": "চিহ্নিত বিকল্প উপলব্ধ",
         "markNotAvailable": "মাৰ্ক উপলব্ধ নহয়",
-        "andApplyTogether": "এইবোৰ কৃষকে একেলগে প্ৰয়োগ কৰে।",
-        "orEitherOr": "যিকোনো এটা বাছনি কৰক — আনটোৰ প্ৰয়োজন নাই।",
-        "changeSelection": "নিৰ্বাচন সলনি কৰক",
-        "changing": "ৰিছেট কৰি আছে…",
+        "andApplyTogether": "এইবোৰ একেলগে কৃষকে প্ৰয়োগ কৰে।",
+        "orEitherOr": "যিকোনো এটা বাছি লওক — বিকল্পৰ প্ৰয়োজন নাই।",
         "andPrefix": "আৰু",
-        "orPrefix": "বা"
+        "orPrefix": "অথবা",
+        "changeSelection": "নিৰ্বাচন সলনি কৰক",
+        "changing": "ৰিছেটিং..."
       },
       "sections": {
         "relations": "বহু-পদক্ষেপৰ পৰামৰ্শ ( {count} )",
@@ -1743,7 +1852,7 @@
       "postponeSheet": {
         "title": "এই বস্তুটো পিছুৱাই দিয়ক",
         "howManyDays": "কিমান দিন?",
-        "pickRange": "১ ৰ পৰা {max} বাছি লওক — পিছুৱাই দিয়াৰ সময় পাৰ হোৱাৰ পিছত পুনৰ পথ নিৰ্ধাৰণ কৰিবলৈ কৃষকক অন্ততঃ এটা স্পষ্ট দিনৰ প্ৰয়োজন।",
+        "pickRange": "১ ৰ পৰা {max} বাছি লওক — পিছুৱাই দিয়াৰ পিছত পুনৰ পথ নিৰ্ধাৰণ কৰিবলৈ কৃষকক অন্ততঃ এটা স্পষ্ট দিনৰ প্ৰয়োজন।",
         "dayUnit": "{count, plural, one {দিন} other {দিন}}",
         "postponing": "পিছুৱাই দিয়া হৈছে...",
         "postponeCta": "{count, plural, one {১ দিনৰ বাবে পিছুৱাই দিব} other {# দিনৰ বাবে পিছুৱাই দিয়ক}}"
@@ -1831,7 +1940,7 @@
         "upload": "আপলোড প্ৰমাণপত্ৰ (PDF বা ফটো)"
       },
       "uploadError": {
-        "title": "আপলোড বিফল হ'ল"
+        "title": "আপলোড বিফল"
       },
       "save": {
         "saving": "সঞ্চয়...",
@@ -2033,13 +2142,18 @@
       "emptyTitle": "এতিয়ালৈকে কোনো পদোন্নতিপ্ৰাপ্ত কৃষক নাই",
       "emptyHint": "আপুনি পৃষ্ঠপোষকতা কৰা কৃষকসকল ইয়াত উপস্থিত হ’ব",
       "unknownFarmer": "অচিনাকি কৃষক",
+      "acresLabel": "{count, plural, one {১ একৰ} other {# একৰ}}",
+      "plantsLabel": "{count, plural, one {১ টা উদ্ভিদ} other {# উদ্ভিদ}}",
+      "startedLabel": "আৰম্ভ কৰা হৈছে {date}",
+      "plantedLabel": "ৰোপণ কৰা {year}",
+      "callBtnAria": "{name} কল কৰক",
       "detail": {
         "headerTitle": "কৃষকৰ পৰামৰ্শ",
         "errorTitleWaiting": "খেতিয়কৰ ওপৰত ৰৈ আছে",
         "errorTitlePending": "কৃষকৰ অনুমোদনৰ বাবে অপেক্ষা",
         "errorTitleNotAvailable": "উপলব্ধ নহয়",
         "errorBodyNoAdvisory": "খেতিয়কে শস্য আৰম্ভ হোৱাৰ তাৰিখ এতিয়াও নিৰ্ধাৰণ কৰা নাই। তেওঁলোকে এবাৰ কৰিলেই ইয়াত এডভাইজাৰী উপস্থিত হ’ব।",
-        "errorBodyPending": "খেতিয়কে এই প্ৰস্তাৱ এতিয়াও গ্ৰহণ কৰা নাই। তেওঁলোকে অনুমোদন দিয়াৰ পিছত পৰামৰ্শদাতা দৃশ্যমান হৈ পৰে।",
+        "errorBodyPending": "খেতিয়কে এই প্ৰস্তাৱ এতিয়াও গ্ৰহণ কৰা নাই। তেওঁলোকে অনুমোদন জনোৱাৰ পিছত পৰামৰ্শদাতা দৃশ্যমান হৈ পৰে।",
         "errorBodyUnknown": "এই নিযুক্তিৰ বাবে পৰামৰ্শদাতা লোড কৰিব পৰা নগ'ল।",
         "errorNotFound": "এচাইনমেণ্ট পোৱা নগ’ল।",
         "errorLoad": "এডভাইজাৰী লোড কৰিব পৰা নগ'ল।",
@@ -2065,49 +2179,21 @@
       "headerTitle": "অহা সতৰ্কবাণী",
       "typeStartDate": "আৰম্ভণিৰ তাৰিখ",
       "typeInput": "ইনপুট",
+      "pillStartDate": "আৰম্ভণিৰ তাৰিখ",
+      "pillInput": "ইনপুট",
+      "tabsAriaLabel": "ধৰণ অনুসৰি সতৰ্কবাণীসমূহ ফিল্টাৰ কৰক",
       "alertTypeBadge": "{type} সতৰ্কবাণী",
       "errorLoad": "লোড কৰিব পৰা নগ'ল। পুনৰ চেষ্টা কৰিবলৈ টানিব।",
       "emptyTitle": "কোনো অহা সতৰ্কবাণী নাই",
-      "emptyBody": "আপোনাক উদ্দেশ্য কৰা সতৰ্কবাণীসমূহ ইয়াত দেখা যায়। কৃষকে তেওঁলোকৰ শেষত কামটো সম্পূৰ্ণ বুলি চিহ্নিত কৰাৰ লগে লগে ইহঁত অদৃশ্য হৈ যায়।",
+      "emptyBody": "আপোনাক সম্বোধন কৰা সতৰ্কবাণীসমূহ ইয়াত দেখা যায়। কৃষকে তেওঁলোকৰ শেষত কামটো সম্পূৰ্ণ বুলি চিহ্নিত কৰাৰ লগে লগে ইহঁত অদৃশ্য হৈ যায়।",
+      "emptyStartDate": "এতিয়াই কোনো আৰম্ভণি তাৰিখৰ সতৰ্কবাণী নাই। বাকী থকা ইনপুট সতৰ্কবাণীসমূহ চাবলৈ ইনপুটলৈ সলনি কৰক।",
+      "emptyInput": "এতিয়াই কোনো ইনপুট সতৰ্কবাণী নাই। বাকী থকা আৰম্ভণি-তাৰিখ সতৰ্কবাণীসমূহ চাবলৈ আৰম্ভ তাৰিখলৈ সলনি কৰক।",
       "countAndHint": "{count, plural, one {১ পেণ্ডিং এলাৰ্ট। কৃষকজনক ফোন কৰিবলৈ ফোন নম্বৰটো টেপ কৰক।} other {# বাকী থকা সতৰ্কবাণী। কৃষকজনক ফোন কৰিবলৈ ফোন নম্বৰটো টেপ কৰক।}}",
       "unnamedFarmer": "নামহীন কৃষক",
       "cropLabel": "শস্য:",
       "callBtn": "📞 ফোন কৰক {phone}",
-      "pillStartDate": "আৰম্ভণিৰ তাৰিখ",
-      "pillInput": "ইনপুট",
-      "tabsAriaLabel": "ধৰণ অনুসৰি সতৰ্কবাণীসমূহ ফিল্টাৰ কৰক",
-      "emptyStartDate": "এতিয়াই কোনো আৰম্ভণি তাৰিখৰ সতৰ্কবাণী নাই। বাকী থকা ইনপুট সতৰ্কবাণীসমূহ চাবলৈ ইনপুটলৈ সলনি কৰক।",
-      "emptyInput": "এতিয়াই কোনো ইনপুট সতৰ্কবাণী নাই। বাকী থকা আৰম্ভণি-তাৰিখ সতৰ্কবাণীসমূহ চাবলৈ আৰম্ভ তাৰিখলৈ সলনি কৰক।",
       "callBtnLabel": "কল কৰা",
       "callBtnAria": "{name} কল কৰক"
-    },
-    "promoterInvitations": {
-      "headerTitle": "প্ৰমোটাৰৰ আমন্ত্ৰণ পত্ৰ",
-      "emptyTitle": "কোনো বাকী থকা নিমন্ত্ৰণী পত্ৰ নাই",
-      "invitationSent": "প্ৰেৰণ কৰা হৈছে {date}",
-      "description": "এই কোম্পানীয়ে আপোনাক তেওঁলোকৰ প্ৰমোটাৰ হিচাপে বিচাৰে — কৃষকসকলক চাবস্ক্ৰিপচনৰ বাবে নিযুক্তি দিবলৈ আৰু আপোনাৰ নেটৱৰ্কৰ পৰা উপাৰ্জন কৰিবলৈ। এজন ডিলাৰ হিচাপে আপুনি একেলগে একাধিক কোম্পানীত প্ৰমোটাৰ হ’ব পাৰে।",
-      "acceptCta": "✓ গ্ৰহণ কৰক",
-      "declineCta": "✗ অৱনতি ঘটে",
-      "confirmAcceptTitle": "{company} ত প্ৰমোটাৰৰ ভূমিকা গ্ৰহণ কৰক ?",
-      "confirmAcceptBody": "এই কোম্পানীত আপুনি প্ৰমোটাৰ হ’ব। আপুনি আন কোম্পানীতো প্ৰমোটাৰ হ’ব পাৰে — ইয়াত গ্ৰহণ কৰিলে আন কোনো প্ৰমোটাৰ ভূমিকাত কোনো প্ৰভাৱ নপৰে।",
-      "confirmAcceptCta": "হয়, গ্ৰহণ কৰক",
-      "confirmRejectTitle": "{company} ৰ পৰা আমন্ত্ৰণ অস্বীকাৰ কৰক ?",
-      "confirmRejectBody": "কোম্পানীটোক অৱগত কৰা হ’ব। পিছত পুনৰ নিমন্ত্ৰণ কৰিব পাৰে।",
-      "confirmRejectCta": "হয়, অস্বীকাৰ কৰক",
-      "confirmCancel": "বাতিল কৰক",
-      "confirmBusy": "সঞ্চয়...",
-      "errorGeneric": "কিবা এটা ভুল হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
-    },
-    "onboardedCompanies": {
-      "headerTitle": "অনবৰ্ড কৰা কোম্পানী",
-      "promoterBadge": "প্ৰমোটাৰ",
-      "stepDown": "তললৈ নামি যাওক",
-      "stepDownConfirm": "এই কোম্পানীত প্ৰমোটাৰ হিচাপে পদত্যাগ কৰক? আপুনি ডিলাৰ হিচাপে অনবৰ্ড হৈ থাকিব।",
-      "errorStepDown": "পদত্যাগ কৰিব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
-      "callAria": "{company} কল কৰক",
-      "websiteAria": "{company} ৱেবছাইট খোলক",
-      "emptyTitle": "এতিয়াও কোনো কোম্পানী নাই",
-      "emptyBody": "কোনো কোম্পানীয়ে আপোনাক এতিয়াও ডিলাৰ হিচাপে অনবৰ্ড কৰা নাই। আপুনি কাম কৰিব বিচৰা কোম্পানীটোৰ এজন ফিল্ড মেনেজাৰক আপোনাক অনব’ৰ্ড কৰিবলৈ কওক।"
     },
     "brandForms": {
       "title": "ব্ৰেণ্ড জমা দিয়া",
@@ -2162,29 +2248,29 @@
       "tileServiceProfileHint": "মোৰ ঘোষণা",
       "tileAlerts": "মই লাভ কৰা সতৰ্কবাণী",
       "tileAlertsHint": "{count} অপঠন",
-      "tileSeedOrders": "বীজৰ অৰ্ডাৰ",
-      "tileSeedOrdersHint": "{count, plural, =0 {কোনোৱেই অপেক্ষা কৰি থকা নাই} one {১ ৰৈ আছে} other {# অপেক্ষা কৰি আছে}}",
-      "invitationsCount": "{গণনা, বহুবচন, এটা {১ প্ৰমোটাৰ আমন্ত্ৰণ} অন্য {# প্ৰমোটাৰ আমন্ত্ৰণ}}",
+      "invitationsCount": "{count, plural, one {১ প্ৰমোটাৰৰ আমন্ত্ৰণ} other {# প্ৰমোটাৰৰ নিমন্ত্ৰণী পত্ৰ}}",
       "invitationsHint": "এটা কোম্পানীয়ে আপোনাক তেওঁলোকৰ প্ৰমোটাৰ হিচাপে বিচাৰে",
-      "invitationsViewCta": "দৰ্শন"
+      "invitationsViewCta": "দৰ্শন",
+      "tileSeedOrders": "বীজৰ অৰ্ডাৰ",
+      "tileSeedOrdersHint": "{count, plural, =0 {কোনোৱেই অপেক্ষা কৰি থকা নাই} one {১ ৰৈ আছে} other {# অপেক্ষা কৰি আছে}}"
     },
     "alertsIncoming": {
       "headerTitle": "অহা সতৰ্কবাণী",
       "typeStartDate": "আৰম্ভণিৰ তাৰিখ",
       "typeInput": "ইনপুট",
+      "pillStartDate": "আৰম্ভণিৰ তাৰিখ",
+      "pillInput": "ইনপুট",
+      "tabsAriaLabel": "ধৰণ অনুসৰি সতৰ্কবাণীসমূহ ফিল্টাৰ কৰক",
       "alertTypeBadge": "{type} সতৰ্কবাণী",
       "errorLoad": "লোড কৰিব পৰা নগ'ল। পুনৰ চেষ্টা কৰিবলৈ টানিব।",
       "emptyTitle": "কোনো অহা সতৰ্কবাণী নাই",
-      "emptyBody": "আপোনাক উদ্দেশ্য কৰা সতৰ্কবাণীসমূহ ইয়াত দেখা যায়। কৃষকে তেওঁলোকৰ শেষত কামটো সম্পূৰ্ণ বুলি চিহ্নিত কৰাৰ লগে লগে ইহঁত অদৃশ্য হৈ যায়।",
+      "emptyBody": "আপোনাক সম্বোধন কৰা সতৰ্কবাণীসমূহ ইয়াত দেখা যায়। কৃষকে তেওঁলোকৰ শেষত কামটো সম্পূৰ্ণ বুলি চিহ্নিত কৰাৰ লগে লগে ইহঁত অদৃশ্য হৈ যায়।",
+      "emptyStartDate": "এতিয়াই কোনো আৰম্ভণি তাৰিখৰ সতৰ্কবাণী নাই। বাকী থকা ইনপুট সতৰ্কবাণীসমূহ চাবলৈ ইনপুটলৈ সলনি কৰক।",
+      "emptyInput": "এতিয়াই কোনো ইনপুট সতৰ্কবাণী নাই। বাকী থকা আৰম্ভণি-তাৰিখ সতৰ্কবাণীসমূহ চাবলৈ আৰম্ভ তাৰিখলৈ সলনি কৰক।",
       "countAndHint": "{count, plural, one {১ পেণ্ডিং এলাৰ্ট। কৃষকজনক ফোন কৰিবলৈ ফোন নম্বৰটো টেপ কৰক।} other {# বাকী থকা সতৰ্কবাণী। কৃষকজনক ফোন কৰিবলৈ ফোন নম্বৰটো টেপ কৰক।}}",
       "unnamedFarmer": "নামহীন কৃষক",
       "cropLabel": "শস্য:",
       "callBtn": "📞 ফোন কৰক {phone}",
-      "pillStartDate": "আৰম্ভণিৰ তাৰিখ",
-      "pillInput": "ইনপুট",
-      "tabsAriaLabel": "ধৰণ অনুসৰি সতৰ্কবাণীসমূহ ফিল্টাৰ কৰক",
-      "emptyStartDate": "এতিয়াই কোনো আৰম্ভণি তাৰিখৰ সতৰ্কবাণী নাই। বাকী থকা ইনপুট সতৰ্কবাণীসমূহ চাবলৈ ইনপুটলৈ সলনি কৰক।",
-      "emptyInput": "এতিয়াই কোনো ইনপুট সতৰ্কবাণী নাই। বাকী থকা আৰম্ভণি-তাৰিখ সতৰ্কবাণীসমূহ চাবলৈ আৰম্ভ তাৰিখলৈ সলনি কৰক।",
       "callBtnLabel": "কল কৰা",
       "callBtnAria": "{name} কল কৰক"
     },
@@ -2312,6 +2398,12 @@
       "pillRouted": "ৰুট কৰা হৈছে",
       "pillReturned": "উভতি আহিল",
       "pillFarmer": "কৃষকৰ সৈতে",
+      "pillPickup": "পিকআপৰ বাবে সাজু",
+      "pillTraining": "প্ৰশিক্ষণ",
+      "pickupBodyFromDealer": "{dealer} ৰ পৰা তুলি লওক আৰু {farmer} লৈ ডেলিভাৰী কৰক।",
+      "pickupBodyWithYou": "আপোনাৰ লগত — {farmer} লৈ ডেলিভাৰী দিব।",
+      "pickupCta": "মই তুলি লৈছো",
+      "pickupErrorMark": "মাৰ্ক পিক আপ কৰিব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
       "history": "📁 ইতিহাস",
       "emptyInPill": "{pill} ৰ তলত একো নাই।",
       "subOrderHeader": "উপ-অৰ্ডাৰ · {date}",
@@ -2342,11 +2434,6 @@
       "callBtn": "📞 ফোন কৰক",
       "forwardBtn": "আগলৈ",
       "errorReroute": "পুনৰ ৰুট কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
-      "pillPickup": "Ready for pickup",
-      "pickupBodyFromDealer": "Pick up from {dealer} and deliver to {farmer}.",
-      "pickupBodyWithYou": "With you — deliver to {farmer}.",
-      "pickupCta": "I've picked it up",
-      "pickupErrorMark": "Couldn't mark picked up. Please try again.",
       "seedTag": "🌱 বীজ",
       "seedFarmArea": "{acres} একৰ",
       "seedNewOrderHint": "নতুন বীজৰ অৰ্ডাৰ — ল’বলৈ মানি লওক, বা সহায় কৰিব নোৱাৰিলে নাকচ কৰক।",
@@ -2456,6 +2543,43 @@
       "confirmCta": "নিশ্চিত কৰক আৰু অব্যাহত ৰাখক",
       "backToFarmerHome": "কৃষকৰ ঘৰলৈ উভতি যাওক"
     },
+    "onboardedCompanies": {
+      "headerTitle": "অনবৰ্ড কৰা কোম্পানী",
+      "invitationsTitle": "প্ৰমোটাৰৰ আমন্ত্ৰণ পত্ৰ",
+      "invitationsBody": "এই কোম্পানীবোৰে আপোনাক তেওঁলোকৰ Promoter হ’বলৈ আমন্ত্ৰণ জনাইছে। এটা এটাকৈ কোম্পানীত Promoter হব পাৰে।",
+      "invitationSent": "প্ৰেৰণ কৰা হৈছে {date}",
+      "declineCta": "অস্বীকাৰ কৰা",
+      "acceptCta": "গ্ৰহণ কৰা",
+      "actionAccept": "গ্ৰহণ কৰা",
+      "actionDecline": "অস্বীকাৰ কৰা",
+      "errorAction": "আমন্ত্ৰণ {action} কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+      "promoterBadge": "প্ৰমোটাৰ",
+      "promoterPunditBadge": "প্ৰমোটাৰ-পণ্ডিত",
+      "stepDown": "তললৈ নামি যাওক",
+      "stepDownConfirm": "এই কোম্পানীত প্ৰমোটাৰ হিচাপে পদত্যাগ কৰক? আপুনি এজন Facilitator হিচাপে অনবৰ্ড হৈ থাকিব।",
+      "errorStepDown": "পদত্যাগ কৰিব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+      "callAria": "{company} কল কৰক",
+      "websiteAria": "{company} ৱেবছাইট খোলক",
+      "emptyTitle": "এতিয়াও কোনো কোম্পানী নাই",
+      "emptyBody": "কোনো কোম্পানীয়ে আপোনাক এতিয়াও Facilitator হিচাপে onboarded কৰা নাই। আপুনি কাম কৰিব বিচৰা কোম্পানীটোৰ এজন ফিল্ড মেনেজাৰক আপোনাক অনব’ৰ্ড কৰিবলৈ কওক।"
+    },
+    "promoterInvitations": {
+      "headerTitle": "প্ৰমোটাৰৰ আমন্ত্ৰণ পত্ৰ",
+      "emptyTitle": "কোনো বাকী থকা নিমন্ত্ৰণী পত্ৰ নাই",
+      "invitationSent": "প্ৰেৰণ কৰা হৈছে {date}",
+      "description": "এই কোম্পানীয়ে আপোনাক তেওঁলোকৰ প্ৰমোটাৰ হিচাপে বিচাৰে — কৃষকসকলক চাবস্ক্ৰিপচনত নিযুক্ত কৰিবলৈ, তেওঁলোকৰ অৰ্ডাৰসমূহ ৰুট কৰিবলৈ, আৰু আপোনাৰ নেটৱৰ্কৰ পৰা উপাৰ্জন কৰিবলৈ।",
+      "acceptCta": "✓ গ্ৰহণ কৰক",
+      "declineCta": "✗ অৱনতি ঘটে",
+      "confirmAcceptTitle": "{company} ত প্ৰমোটাৰৰ ভূমিকা গ্ৰহণ কৰক ?",
+      "confirmAcceptBody": "এই কোম্পানীত আপুনি প্ৰমোটাৰ হ’ব। এজন সুবিধা প্ৰদানকাৰীয়ে এটা সময়ত এটা কোম্পানীতহে প্ৰমোটাৰ হ’ব পাৰে — প্ৰথমে আন যিকোনো প্ৰমোটাৰৰ ভূমিকাৰ পৰা আঁতৰি যাওক।",
+      "confirmAcceptCta": "হয়, মানি লওক",
+      "confirmRejectTitle": "{company} ৰ পৰা আমন্ত্ৰণ অস্বীকাৰ কৰক ?",
+      "confirmRejectBody": "কোম্পানীটোক অৱগত কৰা হ’ব। পিছত পুনৰ নিমন্ত্ৰণ কৰিব পাৰে।",
+      "confirmRejectCta": "হয়, অস্বীকাৰ কৰক",
+      "confirmCancel": "বাতিল কৰক",
+      "confirmBusy": "সঞ্চয়...",
+      "errorGeneric": "কিবা এটা ভুল হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
+    },
     "history": {
       "headerTitle": "ইতিহাস",
       "tabCompleted": "সম্পূৰ্ণ হ’ল",
@@ -2496,20 +2620,30 @@
       "emptyTitle": "এতিয়ালৈকে কোনো পদোন্নতিপ্ৰাপ্ত কৃষক নাই",
       "emptyHint": "আপুনি পৃষ্ঠপোষকতা কৰা কৃষকসকল ইয়াত উপস্থিত হ’ব",
       "farmerFallback": "খেতিয়ক",
+      "acresLabel": "{count, plural, one {১ একৰ} other {# একৰ}}",
+      "plantsLabel": "{count, plural, one {১ টা উদ্ভিদ} other {# উদ্ভিদ}}",
+      "startedLabel": "আৰম্ভ কৰা হৈছে {date}",
+      "plantedLabel": "ৰোপণ কৰা {year}",
+      "callBtnAria": "{name} কল কৰক",
       "detail": {
         "headerTitle": "কৃষকৰ পৰামৰ্শ",
         "errorTitleWaiting": "খেতিয়কৰ ওপৰত ৰৈ আছে",
         "errorTitlePending": "কৃষকৰ অনুমোদনৰ বাবে অপেক্ষা",
         "errorTitleNotAvailable": "উপলব্ধ নহয়",
         "errorBodyNoAdvisory": "খেতিয়কে শস্য আৰম্ভ হোৱাৰ তাৰিখ এতিয়াও নিৰ্ধাৰণ কৰা নাই। তেওঁলোকে এবাৰ কৰিলেই ইয়াত এডভাইজাৰী উপস্থিত হ’ব।",
-        "errorBodyPending": "খেতিয়কে এই প্ৰস্তাৱ এতিয়াও গ্ৰহণ কৰা নাই। তেওঁলোকে অনুমোদন দিয়াৰ পিছত পৰামৰ্শদাতা দৃশ্যমান হৈ পৰে।",
+        "errorBodyPending": "খেতিয়কে এই প্ৰস্তাৱ এতিয়াও গ্ৰহণ কৰা নাই। তেওঁলোকে অনুমোদন জনোৱাৰ পিছত পৰামৰ্শদাতা দৃশ্যমান হৈ পৰে।",
         "errorBodyUnknown": "এই নিযুক্তিৰ বাবে পৰামৰ্শদাতা লোড কৰিব পৰা নগ'ল।",
         "errorNotFound": "এচাইনমেণ্ট পোৱা নগ’ল।",
         "errorLoad": "এডভাইজাৰী লোড কৰিব পৰা নগ'ল।",
         "readOnlyHint": "কেৱল পঢ়িব পৰা দৃশ্য। এই পৰামৰ্শৰ ভিত্তিত কাম কৰাজনেই কৃষক।",
         "dayHeader": "দিন {day} · {count, plural, one {১ সক্ৰিয় সময়ৰেখা} other {# সক্ৰিয় সময়সীমা}}",
+        "dayN": "দিন {day}",
+        "activeTimelines": "সক্ৰিয় সময়সীমা",
         "noneToday": "আজি কৃষকৰ পৰামৰ্শদাতা খিৰিকীত একোৱেই দিবলগীয়া হোৱা নাই।",
         "noPracticeToday": "এই টাইমলাইনত আজি কোনো অনুশীলন নহয়।",
+        "suppressedNote": "{count, plural, one {১টা প্ৰেকটিছ ইতিমধ্যে আন এটা সক্ৰিয় পৰামৰ্শৰ দ্বাৰা সামৰি লোৱা হৈছে।} other {# প্ৰথাসমূহ ইতিমধ্যে অন্যান্য সক্ৰিয় পৰামৰ্শৰ দ্বাৰা সামৰি লোৱা হৈছে।}}",
+        "pendingQuestionLabel": "কৃষকে উত্তৰ দিয়াৰ প্ৰয়োজন",
+        "pendingQuestionHint": "কৃষকক এই প্ৰশ্ন সোধা হৈছে; তেওঁলোকে সঁহাৰি জনোৱাৰ পিছত পৰামৰ্শদাতাই শাখা-প্ৰশাখা কৰিব।",
         "l0": {
           "input": "ইনপুট প্ৰয়োগ কৰক",
           "nonInput": "শস্যৰ কাৰ্য্যকলাপ",
@@ -2521,7 +2655,15 @@
         "farmerPurchased": "✓ কৃষকে ক্ৰয় কৰিছে",
         "purchasePending": "ক্ৰয় বাকী আছে",
         "frequencyEvery": "{count, plural, one {প্ৰতি ১ দিনৰ মূৰে মূৰে} other {প্ৰতি # দিন}}",
-        "frequencyNotDueToday": " · আজিৰ দিনত নহয়"
+        "frequencyEveryDay": "প্ৰতিদিনে",
+        "frequencyNotDueToday": " · আজিৰ দিনত নহয়",
+        "adjuvantBadge": "এডজুভেণ্ট",
+        "generalAdvisory": "সাধাৰণ পৰামৰ্শদাতা",
+        "ackMarked": "কৃষক চিহ্নিত কৰা হৈছে",
+        "ackPending": "কৃষকে মাৰ্ক কৰা নাই কৰা",
+        "andGroupHeader": "দুয়োটা একেলগে প্ৰয়োগ কৰক — আৰু গোট",
+        "partHeader": "অংশ {part}",
+        "orSeparator": "অথবা"
       }
     },
     "seedOrders": {
@@ -2566,43 +2708,6 @@
           "forwardFailed": "অৰ্ডাৰটো ফৰৱাৰ্ড কৰিব পৰা নগ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
         }
       }
-    },
-    "onboardedCompanies": {
-      "headerTitle": "অনবৰ্ড কৰা কোম্পানী",
-      "invitationsTitle": "প্ৰমোটাৰৰ আমন্ত্ৰণ পত্ৰ",
-      "invitationsBody": "এই কোম্পানীবোৰে আপোনাক তেওঁলোকৰ Promoter হ’বলৈ আমন্ত্ৰণ জনাইছে। এটা এটাকৈ কোম্পানীত Promoter হব পাৰে।",
-      "invitationSent": "প্ৰেৰণ কৰা হৈছে {date}",
-      "declineCta": "অস্বীকাৰ কৰা",
-      "acceptCta": "গ্ৰহণ কৰা",
-      "actionAccept": "গ্ৰহণ কৰা",
-      "actionDecline": "অস্বীকাৰ কৰা",
-      "errorAction": "আমন্ত্ৰণ {action} কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
-      "promoterBadge": "প্ৰমোটাৰ",
-      "promoterPunditBadge": "প্ৰমোটাৰ-পণ্ডিত",
-      "stepDown": "তললৈ নামি যাওক",
-      "stepDownConfirm": "এই কোম্পানীত প্ৰমোটাৰ হিচাপে পদত্যাগ কৰক? আপুনি এজন Facilitator হিচাপে অনবৰ্ড হৈ থাকিব।",
-      "errorStepDown": "পদত্যাগ কৰিব নোৱাৰিলে। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
-      "callAria": "{company} কল কৰক",
-      "websiteAria": "{company} ৱেবছাইট খোলক",
-      "emptyTitle": "এতিয়াও কোনো কোম্পানী নাই",
-      "emptyBody": "কোনো কোম্পানীয়ে আপোনাক এতিয়াও Facilitator হিচাপে onboarded কৰা নাই। আপুনি কাম কৰিব বিচৰা কোম্পানীটোৰ এজন ফিল্ড মেনেজাৰক আপোনাক অনব’ৰ্ড কৰিবলৈ কওক।"
-    },
-    "promoterInvitations": {
-      "headerTitle": "প্ৰমোটাৰৰ আমন্ত্ৰণ পত্ৰ",
-      "emptyTitle": "কোনো বাকী থকা নিমন্ত্ৰণী পত্ৰ নাই",
-      "invitationSent": "প্ৰেৰণ কৰা হৈছে {date}",
-      "description": "এই কোম্পানীয়ে আপোনাক তেওঁলোকৰ প্ৰমোটাৰ হিচাপে বিচাৰে — কৃষকসকলক চাবস্ক্ৰিপচনত নিযুক্ত কৰিবলৈ, তেওঁলোকৰ অৰ্ডাৰসমূহ ৰুট কৰিবলৈ, আৰু আপোনাৰ নেটৱৰ্কৰ পৰা উপাৰ্জন কৰিবলৈ।",
-      "acceptCta": "✓ গ্ৰহণ কৰক",
-      "declineCta": "✗ অৱনতি ঘটে",
-      "confirmAcceptTitle": "{company} ত প্ৰমোটাৰৰ ভূমিকা গ্ৰহণ কৰক ?",
-      "confirmAcceptBody": "এই কোম্পানীত আপুনি প্ৰমোটাৰ হ’ব। এজন সুবিধা প্ৰদানকাৰীয়ে এটা সময়ত এটা কোম্পানীতহে প্ৰমোটাৰ হ’ব পাৰে — প্ৰথমে আন যিকোনো প্ৰমোটাৰৰ ভূমিকাৰ পৰা আঁতৰি যাওক।",
-      "confirmAcceptCta": "হয়, গ্ৰহণ কৰক",
-      "confirmRejectTitle": "{company} ৰ পৰা আমন্ত্ৰণ অস্বীকাৰ কৰক ?",
-      "confirmRejectBody": "কোম্পানীটোক অৱগত কৰা হ’ব। পিছত পুনৰ নিমন্ত্ৰণ কৰিব পাৰে।",
-      "confirmRejectCta": "হয়, অস্বীকাৰ কৰক",
-      "confirmCancel": "বাতিল কৰক",
-      "confirmBusy": "সঞ্চয়...",
-      "errorGeneric": "কিবা এটা ভুল হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
     }
   },
   "pundit": {
@@ -2637,6 +2742,7 @@
       "tabNew": "নতুন",
       "tabPending": "বাকী থকা",
       "tabReturned": "উভতি আহিল",
+      "tabTraining": "প্ৰশিক্ষণ",
       "tabHistory": "ইতিহাস",
       "tabCount": "( {count} )",
       "emptyNew": "নতুন প্ৰশ্ন নাই",
@@ -2644,6 +2750,14 @@
       "emptyReturned": "কোনো ঘূৰাই দিয়া প্ৰশ্ন নাই",
       "emptyHistory": "কোনো ইতিহাসৰ প্ৰশ্ন নাই",
       "daysRemaining": "{count} ঘ বাকী",
+      "daysRemainingShort": "{count, plural, one {১ঘ} other {# ঘ}}",
+      "startedShort": "আৰম্ভ কৰা হৈছে {date}",
+      "severityInline": {
+        "CRITICAL": "জটিল অৱস্থা",
+        "HIGH": "উচ্চ তীব্ৰতা",
+        "MODERATE": "মধ্যমীয়া তীব্ৰতা",
+        "LOW": "কম তীব্ৰতা"
+      },
       "forwardedTo": "{name} লৈ প্ৰেৰণ কৰা হৈছে",
       "filterChip": "{company} ৰ বাবে প্ৰশ্ন দেখুৱা হৈছে",
       "filterChipFallback": "এটা কোম্পানীলৈ ফিল্টাৰ কৰা হৈছে",
@@ -2653,22 +2767,16 @@
       "headerTitle": "কোম্পানী নিমন্ত্ৰণী পত্ৰ",
       "emptyTitle": "কোনো বাকী থকা নিমন্ত্ৰণী পত্ৰ নাই",
       "cardTitle": "কোম্পানীৰ নিমন্ত্ৰণী পত্ৰ",
+      "companyFallback": "এটা কোম্পানী",
       "rolePrimary": "প্ৰাথমিক বিশেষজ্ঞ",
       "rolePanel": "পেনেল বিশেষজ্ঞ",
       "descriptionPrimary": "এজন প্ৰাথমিক বিশেষজ্ঞ হিচাপে আপুনি ক্ৰমিক ৰাউণ্ড-ৰবিনৰ জৰিয়তে প্ৰশ্ন লাভ কৰিব আৰু অন্য বিশেষজ্ঞলৈ প্ৰেৰণ কৰিব পাৰিব।",
       "descriptionPanel": "এজন পেনেল বিশেষজ্ঞ হিচাপে, আপুনি কেৱল ফৰৱাৰ্ড কৰা প্ৰশ্নসমূহহে লাভ কৰে আৰু সেইবোৰৰ উত্তৰ বা ঘূৰাই দিব পাৰে।",
       "acceptCta": "✓ গ্ৰহণ কৰক",
       "declineCta": "✗ অৱনতি ঘটে",
-      "modalTitle": "আমন্ত্ৰণ অস্বীকাৰ কৰক",
-      "modalBody": "অনুগ্ৰহ কৰি এটা কাৰণ দিয়ক (বাধ্যতামূলক)",
-      "modalPlaceholder": "এই নিমন্ত্ৰণ কিয় নাকচ কৰিছে?",
-      "modalCancel": "বাতিল কৰক",
-      "modalConfirmIdle": "অস্বীকাৰ নিশ্চিত কৰক",
-      "modalConfirmBusy": "হ্ৰাস পাইছে...",
-      "companyFallback": "এটা কোম্পানী",
       "confirmAcceptTitle": "{company} ৰ পৰা আমন্ত্ৰণ গ্ৰহণ কৰক ?",
       "confirmAcceptBody": "এই কোম্পানীটোৰ পৰা আপুনি প্ৰশ্ন লাভ কৰিবলৈ আৰম্ভ কৰিব।",
-      "confirmAcceptCta": "হয়, গ্ৰহণ কৰক",
+      "confirmAcceptCta": "হয়, মানি লওক",
       "confirmRejectTitle": "{company} ৰ পৰা আমন্ত্ৰণ অস্বীকাৰ কৰক ?",
       "confirmRejectBody": "কোম্পানীটোক অৱগত কৰা হ’ব। পিছত পুনৰ নিমন্ত্ৰণ কৰিব পাৰিব।",
       "confirmRejectCta": "হয়, অস্বীকাৰ কৰক",
@@ -2876,66 +2984,52 @@
         "cropAgnostic": "শস্য-অজ্ঞান"
       },
       "translation": {
-        "viewInEnglish": "View in English",
-        "viewOriginal": "View original",
-        "loading": "Translating…"
+        "viewInEnglish": "ইংৰাজীত চাওক",
+        "viewOriginal": "মূল চাওক",
+        "loading": "অনুবাদ..."
       }
     }
   },
   "mySubscriptions": {
     "headerTitle": "মোৰ চাবস্ক্ৰিপচনসমূহ",
-    "backToHome": "← ঘৰলৈ উভতি",
     "active": "সক্ৰিয় ( {count} )",
-    "other": "অন্যান্য ( {count} )",
-    "openAdvisory": "মুকলি পৰামৰ্শদাতা",
-    "unsubscribe": "আনচাবস্ক্ৰাইব কৰক",
-    "unsubscribeConfirm": "এই পৰামৰ্শৰ পৰা আনচাবস্ক্ৰাইব কৰক?",
-    "unsubscribeError": "এই পৰামৰ্শৰ পৰা আনচাবস্ক্ৰাইব কৰিব নোৱাৰিব।",
-    "companyFallback": "কোম্পানী",
-    "activeBadge": "সক্ৰিয়",
-    "startedOn": "আৰম্ভ কৰা হৈছে {date}",
-    "awaitingStartDate": "শস্য আৰম্ভ হোৱাৰ তাৰিখৰ বাবে অপেক্ষা কৰি আছে",
-    "pendingPayment": "পেণ্ডিং ডেলিগেচনৰ বাকী আছে",
-    "cancelPending": "অনুৰোধ বাকী থকা অৱস্থাত বাতিল কৰক",
-    "cancelPendingConfirm": "বাকী থকা পেমেণ্ট অনুৰোধ বাতিল কৰক? তাৰ পিছত আপুনি আন কাৰোবাক বাছি ল’ব পাৰে বা নিজেই ধন দিব পাৰে।",
-    "cancelPendingError": "অনুৰোধ বাতিল কৰিব পৰা নগ'ল।",
-    "discoverHeader": "আপোনাৰ অঞ্চলৰ পৰামৰ্শ",
-    "discoverSubheader": "আপোনাৰ জিলাত পৰামৰ্শ আগবঢ়োৱা আন কোম্পানী",
-    "explore": "অন্বেষণ →",
-    "emptyTitle": "এতিয়াও কোনো চাবস্ক্ৰিপচন নাই",
-    "emptyCta": "এটা পৰামৰ্শৰ বাবে চাবস্ক্ৰাইব কৰক",
-    "unsubscribed": "Unsubscribed ({count})",
-    "completed": "Completed ({count})",
+    "unsubscribed": "আনচাবস্ক্ৰাইব কৰা হৈছে ( {count} )",
+    "completed": "সম্পূৰ্ণ কৰা হৈছে ( {count} )",
     "statusBadge": {
-      "active": "Active",
-      "unsubscribed": "Unsubscribed",
-      "completed": "Completed"
+      "active": "সক্ৰিয়",
+      "unsubscribed": "আনচাবস্ক্ৰাইব কৰা হৈছে",
+      "completed": "সম্পূৰ্ণ হ’ল"
     },
-    "shareCropQR": "↗ Share crop QR",
-    "unsubscribeBtn": "✗ Unsubscribe",
-    "errorUnsubscribe": "Could not unsubscribe. Please try again.",
-    "cropFallback": "Crop",
-    "thisCropFallback": "this crop",
-    "subscribedBySelf": "Subscribed by you",
-    "assignedBy": "Assigned by {company}",
-    "endedOn": "Ended {date}",
+    "openAdvisory": "মুকলি পৰামৰ্শদাতা",
+    "shareCropQR": "↗ শস্য QR শ্বেয়াৰ কৰক",
+    "unsubscribeBtn": "✗ আনচাবস্ক্ৰাইব",
+    "errorUnsubscribe": "আনচাবস্ক্ৰাইব কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+    "companyFallback": "কোম্পানী",
+    "cropFallback": "শস্য",
+    "thisCropFallback": "এই শস্য",
+    "subscribedBySelf": "আপোনাৰ দ্বাৰা চাবস্ক্ৰাইব কৰা হৈছে",
+    "assignedBy": "{company} দ্বাৰা নিযুক্ত কৰা হৈছে",
+    "startedOn": "আৰম্ভ কৰা হৈছে {date}",
+    "endedOn": "সমাপ্ত {date}",
     "startToEnd": "{start} → {end}",
     "qr": {
-      "title": "Crop Record QR",
-      "alt": "Crop QR",
-      "hint": "Anyone can scan this to see your crop record — no app needed.",
-      "share": "↗ Share",
-      "save": "💾 Save",
-      "shareTitle": "My crop record",
-      "shareText": "Scan this to see my crop record on rootsTALK.in"
+      "title": "ক্ৰপ ৰেকৰ্ড QR",
+      "alt": "শস্য QR",
+      "hint": "যিকোনো ব্যক্তিয়ে আপোনাৰ ক্ৰপ ৰেকৰ্ড চাবলৈ এইটো স্কেন কৰিব পাৰে — কোনো এপৰ প্ৰয়োজন নাই।",
+      "share": "↗ শ্বেয়াৰ কৰক",
+      "save": "💾 সংৰক্ষণ কৰক",
+      "shareTitle": "মোৰ শস্যৰ অভিলেখ",
+      "shareText": "rootsTALK.in ত মোৰ শস্যৰ ৰেকৰ্ড চাবলৈ এইটো স্কেন কৰক"
     },
     "confirmUnsub": {
-      "title": "Unsubscribe from this advisory?",
-      "bodyPrefix": "You'll stop receiving advisories for",
-      "bodyMiddle": "from",
-      "bodySuffix": ". You can subscribe again later if you change your mind.",
-      "yes": "Yes, unsubscribe"
-    }
+      "title": "এই পৰামৰ্শৰ পৰা আনচাবস্ক্ৰাইব কৰক?",
+      "bodyPrefix": "ৰ বাবে পৰামৰ্শ পোৱা বন্ধ কৰি দিব",
+      "bodyMiddle": "পৰা",
+      "bodySuffix": ". মন সলনি কৰিলে পিছত আকৌ subscribe কৰিব পাৰিব।",
+      "yes": "হয়, আনচাবস্ক্ৰাইব কৰক"
+    },
+    "emptyTitle": "এতিয়াও কোনো চাবস্ক্ৰিপচন নাই",
+    "emptyCta": "এটা পৰামৰ্শৰ বাবে চাবস্ক্ৰাইব কৰক"
   },
   "seedOrders": {
     "headerTitle": "বীজৰ অৰ্ডাৰ",
@@ -2987,6 +3081,13 @@
       "notAvailableBody": "ডিলাৰে এই বীজৰ অৰ্ডাৰ পূৰণ কৰিব নোৱাৰে। তলত বাতিল কৰি বেলেগ ডিলাৰ বা সুবিধা প্ৰদানকাৰীলৈ প্ৰেৰণ কৰক।",
       "cancelOrderCta": "অৰ্ডাৰ বাতিল কৰক",
       "deleteOrderCta": "বাতিল কৰা অৰ্ডাৰ মচি পেলাওক",
+      "pickupBannerBody": "এইটো আপোনাৰ ডিলাৰৰ পৰা তুলি লওক। হাতত বীজটো পালেই তলত টিপক।",
+      "pickupConfirmCta": "মই তুলি লৈছো",
+      "pickupConfirmTitle": "ৰচিদ নিশ্চিত কৰক",
+      "pickupConfirmBody": "প্ৰকৃততে হাতত বীজটো থকাৰ পিছতহে হয় বুলি টিপক। ইয়াৰ ফলত অৰ্ডাৰ বন্ধ হৈ যায়।",
+      "pickupYesCta": "হয়, মোৰ আছে",
+      "pickupCancelCta": "বাতিল কৰক",
+      "errorReceive": "নিশ্চিত কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
       "pickerTitle": "লৈ পঠাওক",
       "pickerTabDealers": "ডিলাৰ ( {count} )",
       "pickerTabFacilitators": "সুবিধা প্ৰদানকাৰী ( {count} )",
@@ -2995,14 +3096,7 @@
       "kmAway": "{km} কিলোমিটাৰ দূৰত",
       "promoterBadge": "প্ৰমোটাৰ",
       "sendCta": "পঠোৱা",
-      "sendingCta": "Sending...",
-      "pickupBannerBody": "Pick this up from your dealer. Tap below once you have the seed in hand.",
-      "pickupConfirmCta": "I've picked it up",
-      "pickupConfirmTitle": "Confirm receipt",
-      "pickupConfirmBody": "Tap Yes only after you actually have the seed in hand. This closes the order.",
-      "pickupYesCta": "Yes, I have it",
-      "pickupCancelCta": "Cancel",
-      "errorReceive": "Could not confirm. Please try again."
+      "sendingCta": "Sending..."
     }
   },
   "shareLink": {
@@ -3042,6 +3136,8 @@
   "privacyPolicy": {
     "title": "গোপনীয়তা নীতি",
     "lastUpdated": "শেষবাৰৰ বাবে আপডেট কৰা হৈছে: এপ্ৰিল ২০২৬",
+    "externalTitle": "eywa.farm ত পঢ়ক সম্পূৰ্ণ নীতি",
+    "externalSubtitle": "eywa.farm/privacy — আপোনাৰ ব্ৰাউজাৰত খোল খায়",
     "sections": {
       "collectTitle": "আমি যি সংগ্ৰহ কৰো",
       "collectBody": "আমি আপোনাৰ মোবাইল ফোন নম্বৰ (লগইন আৰু পৰীক্ষণৰ বাবে), আপোনাৰ নাম, আপোনাৰ অৱস্থান (ৰাজ্য, জিলা, আৰু জিপিএছ স্থানাংক), আৰু শস্যৰ চাবস্ক্ৰিপচন আৰু পৰামৰ্শদাতা ৰেকৰ্ডকে ধৰি আপোনাৰ ফাৰ্ম-সম্পৰ্কীয় তথ্য সংগ্ৰহ কৰোঁ। আপুনি কৃষি বিশেষজ্ঞসকলক উত্থাপন কৰা প্ৰশ্ন আৰু লাভ কৰা সঁহাৰিও আমি সংগ্ৰহ কৰোঁ।",
@@ -3050,7 +3146,7 @@
       "shareTitle": "ডাটা শ্বেয়াৰিং",
       "shareBody": "এপৰ জৰিয়তে অৰ্ডাৰ দিলে আপোনাৰ নাম আৰু ফোন নম্বৰ ডিলাৰ আৰু সুবিধা প্ৰদানকাৰীৰ বাবে দেখা যাব পাৰে। আপোনাৰ শস্যৰ ৰেকৰ্ড আপোনাৰ কোম্পানীৰ পৰামৰ্শদাতা দলৰ বাবে দৃশ্যমান। আপুনি জমা দিয়া প্ৰশ্নসমূহ সেইবোৰ নিয়ন্ত্ৰণ কৰিবলৈ নিযুক্ত FarmPundit বিশেষজ্ঞৰ বাবে দৃশ্যমান। আপোনাৰ সন্মতি অবিহনে RootsTalk ৰ বাহিৰত কোনো তথ্য অংশীদাৰী কৰা নহয়।",
       "locationTitle": "স্থানৰ তথ্য",
-      "locationBody": "আপুনি যেতিয়া সিহতক শ্বেয়াৰ কৰিবলৈ বাছি লয় তেতিয়া GPS স্থানাংক সংগ্ৰহ কৰা হয়। ওচৰৰ ডিলাৰ আৰু সুবিধা প্ৰদানকাৰী বিচাৰিবলৈ ব্যৱহাৰ কৰা হয়। আপুনি জিপিএছ প্ৰৱেশ অস্বীকাৰ কৰিব পাৰে — এপটোৱে ইয়াৰ পৰিৱৰ্তে আপোনাৰ পঞ্জীয়নভুক্ত জিলাখন ব্যৱহাৰ কৰিব। আপুনি আপোনাৰ প্ৰফাইলৰ পৰা যিকোনো সময়তে আপোনাৰ জিপিএছ ডাটা আপডেট বা ক্লিয়াৰ কৰিব পাৰে।",
+      "locationBody": "আপুনি যেতিয়া সিহতক শ্বেয়াৰ কৰিবলৈ বাছি লয় তেতিয়া GPS স্থানাংক সংগ্ৰহ কৰা হয়। ওচৰৰ ডিলাৰ আৰু সুবিধা প্ৰদানকাৰী বিচাৰিবলৈ ব্যৱহাৰ কৰা হয়। আপুনি জিপিএছৰ প্ৰৱেশ অস্বীকাৰ কৰিব পাৰে — এপটোৱে ইয়াৰ পৰিৱৰ্তে আপোনাৰ পঞ্জীয়নভুক্ত জিলাখন ব্যৱহাৰ কৰিব। আপুনি আপোনাৰ প্ৰফাইলৰ পৰা যিকোনো সময়তে আপোনাৰ জিপিএছ ডাটা আপডেট বা ক্লিয়াৰ কৰিব পাৰে।",
       "retentionTitle": "তথ্য ধৰি ৰখা",
       "retentionBody": "আপোনাৰ একাউণ্ট সক্ৰিয় হৈ থকালৈকে আপোনাৰ তথ্য ৰখা হয়। যদি আপুনি আপোনাৰ একাউণ্টটো মচি পেলায়, তেন্তে ৩০ দিনৰ ভিতৰত আপোনাৰ ব্যক্তিগত তথ্য বেনামী হৈ পৰে। কৃষি গৱেষণাৰ উদ্দেশ্যে শস্যৰ পৰামৰ্শদাতা ৰেকৰ্ড বেনামী ৰূপত ৰাখিব পাৰি।",
       "rightsTitle": "আপোনাৰ অধিকাৰ",
@@ -3059,38 +3155,6 @@
       "securityBody": "সকলো তথ্য ট্ৰেনজিট আৰু জিৰণি লোৱাৰ সময়ত এনক্ৰিপ্ট কৰা হয়। লগইন OTP সত্যাপনৰ সৈতে সুৰক্ষিত কৰা হৈছে। আমি প্লেইন-টেক্সট পাছৱৰ্ড সংৰক্ষণ নকৰো। আপোনাৰ তথ্যৰ প্ৰৱেশ Neytiri Eywafarm Agritech Private Limited ৰ অনুমোদিত কৰ্মীসকলৰ মাজত সীমাবদ্ধ।",
       "contactTitle": "আমাৰ সৈতে যোগাযোগ কৰক",
       "contactBody": "কোনো গোপনীয়তা-সম্পৰ্কীয় প্ৰশ্নৰ বাবে, আমাৰ সৈতে যোগাযোগ কৰক: support@eywa.farm বা eywa.farm চাওক. নেইতিৰি আইৱাফাৰ্ম এগ্ৰিটেক প্ৰাইভেট লিমিটেড, ভাৰত।"
-    },
-    "externalTitle": "eywa.farm ত পঢ়ক সম্পূৰ্ণ নীতি",
-    "externalSubtitle": "eywa.farm/privacy — আপোনাৰ ব্ৰাউজাৰত খোল খায়"
-  },
-  "location": {
-    "title": "আপোনাৰ খেতিপথাৰ ক'ত?",
-    "subtitle": "ইয়াৰ ফলত ওচৰৰ ডিলাৰ আৰু এডভাইজাৰী বিচাৰি পোৱাত সহায় হয়",
-    "loadError": "অৱস্থান তালিকা লোড কৰিব পৰা নগ'ল। এতিয়াৰ বাবে এইটো এৰি দিয়ক আৰু আপুনি অনলাইন হ'লে আপোনাৰ প্ৰ'ফাইলৰ পৰা ইয়াক যোগ কৰক।",
-    "loading": "ৰাজ্য আৰু জিলাসমূহ লোড কৰি আছে...",
-    "stateLabel": "ৰাজ্য",
-    "districtLabel": "জিলা",
-    "subDistrictLabel": "মহকুমা / গাঁও",
-    "searchState": "রাজ্য অনুসন্ধান...",
-    "searchDistrict": "Search district...",
-    "noStates": "কোনো ৰাজ্য পোৱা নগ’ল",
-    "noDistricts": "কোনো জিলা পোৱা নগ'ল",
-    "subDistrictPlaceholder": "গাঁও বা মহকুমা — ঐচ্ছিক",
-    "gpsTitle": "মানচিত্ৰত আপোনাৰ অৱস্থান",
-    "gpsSubtitle": "আপোনাৰ বাবে ওচৰৰ ৫ জন ডিলাৰ আৰু সুবিধা প্ৰদানকাৰী বিচাৰি উলিওৱাত আমাক সহায় কৰে",
-    "gpsCta": "মোৰ স্থান লাভ কৰক",
-    "gpsFinding": "আপোনাক বিচাৰি পাইছো...",
-    "gpsCaptured": "স্থান ধৰা পৰিছে",
-    "gpsCouldntGet": "আপোনাৰ স্থান পাব পৰা নাই",
-    "gpsDenied": "স্থানৰ প্ৰৱেশৰ পৰা বঞ্চিত কৰা হৈছিল",
-    "gpsLater": "আপুনি ইয়াক পিছত আপোনাৰ আলেখ্যনৰ পৰা সংহতি কৰিব পাৰে।",
-    "gpsTryAgain": "আকৌ এবাৰ চেষ্টা কৰক",
-    "errors": {
-      "saveFailed": "আপোনাৰ অৱস্থান সংৰক্ষণ কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
-      "gpsSaveFailed": "আপোনাৰ অৱস্থান বন্দী কৰিলোঁ কিন্তু সংৰক্ষণ কৰিব নোৱাৰিলোঁ। আপুনি আপোনাৰ প্ৰফাইলৰ পৰা পুনৰ চেষ্টা কৰিব পাৰে।",
-      "gpsBlocked": "আপুনি অৱস্থানৰ অভিগম বন্ধ কৰি দিলে। পুনৰ চেষ্টা কৰিবলৈ, আপোনাৰ ব্ৰাউজাৰ ছেটিংছত এই চাইটৰ বাবে অৱস্থান সামৰ্থবান কৰক, তাৰ পিছত পুনৰ চেষ্টা কৰক টেপ কৰক।",
-      "gpsTimeout": "তোমাক বিচাৰি পাবলৈ বহুত সময় লাগিল। আকৌ চেষ্টা কৰক টেপ কৰক।",
-      "gpsUnavailable": "আপোনাৰ স্থান এতিয়া উপলব্ধ নহয়। পুনৰ চেষ্টা কৰক টেপ কৰক বা পিছৰ বাবে এৰি দিয়ক।"
     }
   },
   "helpTips": {
@@ -3118,7 +3182,7 @@
       "gettingHelp": {
         "title": "যেতিয়া আপোনাক সহায়ৰ প্ৰয়োজন হয়",
         "items": [
-          "গছজোপাৰ ওপৰত কোনো সমস্যা ধৰা পেলাবনে? ক্ৰপ ডেচব'ৰ্ডৰ পৰা নিদান ব্যৱহাৰ কৰক — এটা ফটো লওক, কেইটামান প্ৰশ্নৰ উত্তৰ দিয়ক, আৰু এটা সম্ভাৱ্য কাৰণ পাওক।",
+          "গছজোপাৰ ওপৰত কোনো সমস্যা ধৰা পেলাবনে? ক্ৰপ ডেচব'ৰ্ডৰ পৰা নিদান ব্যৱহাৰ কৰক — এটা ফটো লওক, কেইটামান প্ৰশ্নৰ উত্তৰ দিয়ক, আৰু এটা সম্ভাৱ্য কাৰণ লওক।",
           "এতিয়াও নিশ্চিত নহয়নে? এজন বিশেষজ্ঞক সুধিব। প্ৰথম ছটা প্ৰশ্ন বিনামূলীয়া; তাৰ পিছত সৰু মাচুল প্ৰযোজ্য। ২ দিনৰ ভিতৰত উত্তৰ আহিব।",
           "স্বাক্ষৰণসমূহ টেবে আপোনাৰ সকলো সক্ৰিয় আৰু অতীতৰ স্বাক্ষৰণ দেখুৱায়, আপুনি অংশীদাৰী কৰিব পৰা QR ক'ডৰ সৈতে।"
         ]
@@ -3146,7 +3210,7 @@
         "title": "কামবোৰ মসৃণ কৰি ৰখা",
         "items": [
           "ষ্টক সাময়িকভাৱে বন্ধ হ'লে Decline ৰ পৰিৱৰ্তে Postpone ব্যৱহাৰ কৰক — আপুনি কৃষকক ৰখাই নিদিয়াকৈ আপোনাৰ শাৰীত অৰ্ডাৰ ৰাখে।",
-          "কোনে কোনটো অৰ্ডাৰৰ বাবে ধন দিছে তাৰ মাজত মিল ৰাখিবলৈ পেমেণ্টছ টেবটো পৰীক্ষা কৰক।",
+          "কোনে কোনটো অৰ্ডাৰৰ বাবে ধন দিছে সেইটো মিলাই ল'বলৈ পেমেণ্টসমূহ টেব পৰীক্ষা কৰক।",
           "সতৰ্কবাণীয়ে আপোনাক জনায় যেতিয়া কোনো অৰ্ডাৰ আপোনাৰ ওপৰত অপেক্ষা কৰি আছে।"
         ]
       }
@@ -3164,7 +3228,7 @@
         "title": "দিনে দিনে",
         "items": [
           "ৰুট কৰা অৰ্ডাৰৰ প্ৰতিটো বস্তুৰ বাবে এজন ডিলাৰ বাছক। ডিলাৰে যোগান ধৰিব নোৱাৰিলে পুনৰ ৰুট কৰিব পাৰে।",
-          "ডিলাৰসকলে গ্ৰহণ কৰিলে আৰু কৃষকে দাম অনুমোদন দিলে অৰ্ডাৰটো পিকআপ টেবলৈ যায়। সকলো বস্তু একেলগে আনি কৃষকে একেটা ভ্ৰমণতে সংগ্ৰহ কৰিব পাৰে।",
+          "ডিলাৰসকলে গ্ৰহণ কৰিলে আৰু কৃষকে দাম অনুমোদন দিলে অৰ্ডাৰটো পিকআপ টেবলৈ যায়। সকলো বস্তু একেলগে আনিব লাগে যাতে কৃষকে একেটা ভ্ৰমণতে সংগ্ৰহ কৰিব পাৰে।",
           "এজন কৃষকৰ হৈ ধন পৰিশোধ কৰিবলৈ আৰু পিছত মিলন কৰিবলৈ পেমেণ্ট ৰিকুৱেষ্ট ফ্ল’ ব্যৱহাৰ কৰক। ২৪ ঘণ্টাৰ পিছত পেমেণ্ট লিংকৰ ম্যাদ উকলি যায়।",
           "সতৰ্কবাণীসমূহে আপোনাক অৱগত কৰে যেতিয়া কিবা এটাই আপোনাৰ মনোযোগৰ প্ৰয়োজন হয় — নতুন অৰ্ডাৰ, অনুমোদন, বা মেয়াদ উকলি যোৱা অনুৰোধ।"
         ]
@@ -3201,6 +3265,36 @@
           "কোম্পানীসমূহৰ পৰা নিমন্ত্ৰণী পত্ৰ (প্ৰাইমাৰী বা প্ৰমোটাৰ-পণ্ডিত হ’বলৈ) আমন্ত্ৰণ পত্ৰ এলেকাত উপস্থিত হয়।"
         ]
       }
+    }
+  },
+  "location": {
+    "title": "আপোনাৰ খেতিপথাৰ ক'ত?",
+    "subtitle": "ইয়াৰ ফলত ওচৰৰ ডিলাৰ আৰু এডভাইজাৰী বিচাৰি পোৱাত সহায় হয়",
+    "loadError": "অৱস্থান তালিকা লোড কৰিব পৰা নগ'ল। এতিয়াৰ বাবে এইটো এৰি দিয়ক আৰু আপুনি অনলাইন হ'লে আপোনাৰ প্ৰ'ফাইলৰ পৰা ইয়াক যোগ কৰক।",
+    "loading": "ৰাজ্য আৰু জিলাসমূহ লোড কৰি আছে...",
+    "stateLabel": "ৰাজ্য",
+    "districtLabel": "জিলা",
+    "subDistrictLabel": "মহকুমা / গাঁও",
+    "searchState": "রাজ্য অনুসন্ধান...",
+    "searchDistrict": "Search district...",
+    "noStates": "কোনো ৰাজ্য পোৱা নগ’ল",
+    "noDistricts": "কোনো জিলা পোৱা নগ'ল",
+    "subDistrictPlaceholder": "গাঁও বা মহকুমা — ঐচ্ছিক",
+    "gpsTitle": "মানচিত্ৰত আপোনাৰ অৱস্থান",
+    "gpsSubtitle": "আপোনাৰ বাবে ওচৰৰ ৫ জন ডিলাৰ আৰু সুবিধা প্ৰদানকাৰী বিচাৰি উলিওৱাত আমাক সহায় কৰে",
+    "gpsCta": "মোৰ স্থান লাভ কৰক",
+    "gpsFinding": "আপোনাক বিচাৰি পাইছো...",
+    "gpsCaptured": "স্থান ধৰা পৰিছে",
+    "gpsCouldntGet": "আপোনাৰ স্থান পাব পৰা নাই",
+    "gpsDenied": "স্থানৰ প্ৰৱেশৰ পৰা বঞ্চিত কৰা হৈছিল",
+    "gpsLater": "আপুনি ইয়াক পিছত আপোনাৰ আলেখ্যনৰ পৰা সংহতি কৰিব পাৰে।",
+    "gpsTryAgain": "আকৌ এবাৰ চেষ্টা কৰক",
+    "errors": {
+      "saveFailed": "আপোনাৰ অৱস্থান সংৰক্ষণ কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+      "gpsSaveFailed": "আপোনাৰ অৱস্থান বন্দী কৰিলোঁ কিন্তু সংৰক্ষণ কৰিব নোৱাৰিলোঁ। আপুনি আপোনাৰ প্ৰফাইলৰ পৰা পুনৰ চেষ্টা কৰিব পাৰে।",
+      "gpsBlocked": "আপুনি অৱস্থানৰ অভিগম বন্ধ কৰি দিলে। পুনৰ চেষ্টা কৰিবলৈ, আপোনাৰ ব্ৰাউজাৰ ছেটিংছত এই চাইটৰ বাবে অৱস্থান সামৰ্থবান কৰক, তাৰ পিছত পুনৰ চেষ্টা কৰক টেপ কৰক।",
+      "gpsTimeout": "তোমাক বিচাৰি পাবলৈ বহুত সময় লাগিল। আকৌ চেষ্টা কৰক টেপ কৰক।",
+      "gpsUnavailable": "আপোনাৰ স্থান এতিয়া উপলব্ধ নহয়। পুনৰ চেষ্টা কৰক টেপ কৰক বা পিছৰ বাবে এৰি দিয়ক।"
     }
   },
   "qrScan": {

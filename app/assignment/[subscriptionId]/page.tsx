@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import api from '@/lib/api'
 
@@ -43,6 +44,7 @@ function formatCropName(detail: AssignmentDetail | null): string {
 
 export default function AssignmentReviewPage() {
   const router = useRouter()
+  const tTrain = useTranslations('training')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [detail, setDetail] = useState<AssignmentDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -61,7 +63,10 @@ export default function AssignmentReviewPage() {
     const isTraining = !!detail?.company?.is_training
     const message = approved
       ? (isTraining
-          ? `Join ${detail?.company?.name}'s practice session for ${formatCropName(detail)}? This is a training sandbox — won't affect any of your real subscriptions.`
+          ? tTrain('farmerAssignment.confirmAcceptTraining', {
+              company: detail?.company?.name || '',
+              crop: formatCropName(detail),
+            })
           : `Subscribe to ${detail?.company?.name}'s ${formatCropName(detail)} advisory? You won't be able to unsubscribe — your company has paid for this.`)
       : `Decline this advisory request from ${detail?.promoter?.name}?`
     if (!confirm(message)) return
@@ -93,7 +98,7 @@ export default function AssignmentReviewPage() {
             reads the copy below. */}
         {detail.company?.is_training && (
           <span className="absolute top-3 right-3 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 shadow-sm">
-            Training
+            {tTrain('chip')}
           </span>
         )}
         <button onClick={() => router.push('/home')}
@@ -102,7 +107,7 @@ export default function AssignmentReviewPage() {
           ‹
         </button>
         <p className="text-white/70 text-xs uppercase tracking-widest">
-          {detail.company?.is_training ? 'Practice Advisory Request' : 'Advisory Request'}
+          {detail.company?.is_training ? tTrain('farmerAssignment.headerLabel') : 'Advisory Request'}
         </p>
         <h1 className="text-white text-2xl font-bold mt-1">{detail.company?.name}</h1>
         {detail.company?.tagline && <p className="text-white/60 text-sm mt-1">{detail.company.tagline}</p>}
@@ -115,14 +120,10 @@ export default function AssignmentReviewPage() {
         {detail.company?.is_training && (
           <div className="mb-4 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
             <p className="text-amber-900 font-semibold text-sm">
-              This is a training session
+              {tTrain('farmerAssignment.bannerTitle')}
             </p>
             <p className="text-amber-800 text-xs mt-1 leading-relaxed">
-              Your promoter is practising with the RootsTalk app.
-              Accepting will add a practice subscription to your Home
-              screen — it won&apos;t replace or affect any real
-              subscriptions you already have. The session ends
-              automatically after a few days.
+              {tTrain('farmerAssignment.bannerBody')}
             </p>
           </div>
         )}
@@ -172,8 +173,8 @@ export default function AssignmentReviewPage() {
             "Paid by" copy would be misleading. */}
         {detail.company?.is_training ? (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <p className="text-amber-900 text-sm font-medium">Training subscription — free</p>
-            <p className="text-amber-800 text-xs mt-1">No payment involved. This will be cleared automatically when the training session ends.</p>
+            <p className="text-amber-900 text-sm font-medium">{tTrain('farmerAssignment.paymentCardTitle')}</p>
+            <p className="text-amber-800 text-xs mt-1">{tTrain('farmerAssignment.paymentCardBody')}</p>
           </div>
         ) : (
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
