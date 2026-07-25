@@ -136,6 +136,29 @@ function shortDate(iso: string | null, locale: string): string {
   return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
 }
 
+// 2026-07-25 — Training-order render routing. Training-pill orders
+// need the SAME action UI (Accept / Packing / Handover / etc.) that
+// a real order of the equivalent status gets, or the dealer sees the
+// card and can't proceed (screenshot from user 2026-07-25). Pick the
+// "most action-needed" real pill for the given item state — same
+// order the dealer would tap through in the real flow: pending →
+// packing → postponed → farmer.
+function effectivePillForTraining(o: Order): Pill {
+  if (o.is_seed) {
+    if (['SENT', 'ACCEPTED'].includes(o.status)) return 'pending'
+    if (o.status === 'READY_FOR_PICKUP') return 'packing'
+    if (o.status === 'POSTPONED') return 'postponed'
+    if (o.status === 'SENT_FOR_APPROVAL') return 'farmer'
+    return 'pending'
+  }
+  if (['SENT', 'ACCEPTED', 'PROCESSING'].includes(o.status)) return 'pending'
+  const c = o.item_status_counts
+  if (c.approved > 0 && !o.packing_list_removed_at && !o.packing_farmer_received_at) return 'packing'
+  if (c.postponed > 0) return 'postponed'
+  if (c.sent_for_approval > 0) return 'farmer'
+  return 'pending'
+}
+
 // Per-pill membership rules. An order can appear in multiple pills
 // when it has items in multiple buckets — e.g. some Approved (Packing)
 // + some Postponed (Postponed) — because the dealer's next action
@@ -855,11 +878,13 @@ function DealerOrderIdCard({
 }) {
   const head = subs[0]
   const renderRows = matching.length > 1
-  const borderClass = pill === 'packing'
-    ? 'border-purple-200'
-    : pill === 'farmer' || pill === 'postponed'
-      ? 'border-amber-200'
-      : 'border-[#DDD0B8]'
+  const borderClass = pill === 'training'
+    ? 'border-amber-300'
+    : pill === 'packing'
+      ? 'border-purple-200'
+      : pill === 'farmer' || pill === 'postponed'
+        ? 'border-amber-200'
+        : 'border-[#DDD0B8]'
   return (
     <div className={`bg-white rounded-2xl border ${borderClass} shadow-sm overflow-hidden`}>
       <DealerOrderCardHeader head={head} subCount={subs.length} expanded={expanded}
@@ -1074,6 +1099,11 @@ function DealerPillChunk({
   const router = useRouter()
   const t = useTranslations('dealer.orders.chunk')
   const locale = useLocale()
+  // 2026-07-25 — Under the Training pill, delegate to whichever real
+  // pill would render this order's current action state. Training is
+  // a status-agnostic bucket; without this, SENT orders (etc.) would
+  // show only the card header with no Accept/Decline surface.
+  const renderPill: Pill = pill === 'training' ? effectivePillForTraining(sub) : pill
   return (
     <div>
       {showSubHeader && (
@@ -1081,7 +1111,7 @@ function DealerPillChunk({
           {t('subOrderPrefix', { date: new Date(sub.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
         </p>
       )}
-      {pill === 'pending' && (
+      {renderPill === 'pending' && (
         sub.is_seed ? (
           // 2026-06-19 — Inline seed accept + qty/price form. Migrated
           // from the retired /dealer/seed-orders page. SENT shows
@@ -1105,7 +1135,7 @@ function DealerPillChunk({
           </button>
         )
       )}
-      {pill === 'postponed' && (
+      {renderPill === 'postponed' && (
         sub.is_seed ? (
           // POSTPONED seed — single inline action: Not Available.
           // (Lifting the postpone-bottom-sheet from the legacy page;
@@ -1129,7 +1159,7 @@ function DealerPillChunk({
           </button>
         )
       )}
-      {pill === 'farmer' && (
+      {renderPill === 'farmer' && (
         <div className="px-4 py-3">
           <p className="text-[11px] text-amber-700 font-medium">
             {sub.is_seed
@@ -1138,7 +1168,7 @@ function DealerPillChunk({
           </p>
         </div>
       )}
-      {pill === 'packing' && (
+      {renderPill === 'packing' && (
         sub.is_seed ? (
           // 2026-06-19 — Inline seed handover. Pre-fix this tile linked
           // to /dealer/seed-orders which dumped the dealer onto the

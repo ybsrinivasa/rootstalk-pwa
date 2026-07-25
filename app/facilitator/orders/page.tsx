@@ -116,6 +116,24 @@ const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned'
   training: 'pillTraining',
 }
 
+// 2026-07-25 — Training-pill orders need the same action UI as the
+// underlying status would render on the real pill (mirror of the fix
+// added to dealer/orders same day). Priority follows the facilitator's
+// tap-through order: pending → returned → farmer → pickup → routed.
+function effectivePillForTraining(o: Order): Pill {
+  if (o.is_seed) {
+    if (['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id) return 'pending'
+    if (o.dealer_user_id) return 'routed'
+    return 'pending'
+  }
+  if (['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id) return 'pending'
+  const c = o.item_status_counts
+  if ((c?.not_available ?? 0) > 0) return 'returned'
+  if ((c?.sent_for_approval ?? 0) > 0) return 'farmer'
+  if ((c?.approved ?? 0) > 0 && !o.packing_farmer_received_at) return 'pickup'
+  return 'routed'
+}
+
 function subBelongsTo(o: Order, pill: Pill): boolean {
   // 2026-06-20 — Defence-in-depth: terminal statuses never on active
   // pills regardless of backend payload. Matches the farmer + dealer
@@ -844,6 +862,10 @@ function PillChunk({
 }) {
   const t = useTranslations('facilitator.orders')
   const locale = useLocale()
+  // 2026-07-25 — Delegate training pill rendering to whichever real
+  // pill matches this order's action state; otherwise the chunk
+  // renders just the header with no Accept/Reject/Pickup surface.
+  const renderPill: Pill = pill === 'training' ? effectivePillForTraining(sub) : pill
   return (
     <div className="px-4 py-3 space-y-2">
       {showSubHeader && (
@@ -853,7 +875,7 @@ function PillChunk({
       )}
 
       {/* ── Seed-order branches (variety-blind; facilitator-only). ── */}
-      {sub.is_seed && pill === 'pending' && sub.status === 'SENT' && (
+      {sub.is_seed && renderPill === 'pending' && sub.status === 'SENT' && (
         <>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
@@ -879,7 +901,7 @@ function PillChunk({
           </div>
         </>
       )}
-      {sub.is_seed && pill === 'pending' && sub.status === 'ACCEPTED' && (
+      {sub.is_seed && renderPill === 'pending' && sub.status === 'ACCEPTED' && (
         <>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
@@ -899,7 +921,7 @@ function PillChunk({
           </button>
         </>
       )}
-      {sub.is_seed && pill === 'routed' && (
+      {sub.is_seed && renderPill === 'routed' && (
         <>
           <div className="flex items-center gap-2">
             <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
@@ -916,7 +938,7 @@ function PillChunk({
       )}
 
       {/* ── Regular order branches (unchanged). ── */}
-      {!sub.is_seed && pill === 'pending' && sub.status === 'SENT' && (
+      {!sub.is_seed && renderPill === 'pending' && sub.status === 'SENT' && (
         <>
           <p className="text-xs text-amber-700">
             {t('newOrderHint', { count: sub.item_count })}
@@ -939,7 +961,7 @@ function PillChunk({
           chosen dealer declined (server auto-routes the items back
           here). Either way: pick a dealer. No Accept/Reject — the
           facilitator already committed. */}
-      {!sub.is_seed && pill === 'pending' && sub.status === 'ACCEPTED' && (
+      {!sub.is_seed && renderPill === 'pending' && sub.status === 'ACCEPTED' && (
         <>
           <p className="text-xs text-amber-700">
             {t('forwardToDealerHint', { count: sub.item_count })}
@@ -954,14 +976,14 @@ function PillChunk({
           </button>
         </>
       )}
-      {!sub.is_seed && pill === 'routed' && (
+      {!sub.is_seed && renderPill === 'routed' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <PostponedStrip sub={sub} />
           <ApprovedHintStrip sub={sub} />
         </>
       )}
-      {!sub.is_seed && pill === 'returned' && (
+      {!sub.is_seed && renderPill === 'returned' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2 mt-2">
@@ -976,7 +998,7 @@ function PillChunk({
           <PostponedStrip sub={sub} />
         </>
       )}
-      {!sub.is_seed && pill === 'farmer' && (
+      {!sub.is_seed && renderPill === 'farmer' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <p className="text-xs text-amber-700 font-medium mt-2">
@@ -985,7 +1007,7 @@ function PillChunk({
           <PostponedStrip sub={sub} />
         </>
       )}
-      {!sub.is_seed && pill === 'pickup' && (
+      {!sub.is_seed && renderPill === 'pickup' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail}
             itemCountOverride={sub.packing_items?.length ?? sub.item_status_counts?.approved ?? 0} />
