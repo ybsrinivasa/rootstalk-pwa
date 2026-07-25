@@ -29,6 +29,9 @@ interface Company { client_id: string; role: 'PRIMARY' | 'PANEL' | 'PROMOTER_PUN
 interface ClientInfo {
   id: string; display_name: string; primary_colour: string
   tagline: string | null; logo_url: string | null
+  // 2026-07-25 — Drives the top-of-page Training banner when the
+  // pundit lands here filtered to a training client's queries.
+  is_training?: boolean
 }
 
 const COLOUR = '#3C3489'
@@ -48,7 +51,15 @@ const SEVERITY_TEXT: Record<string, string> = {
   LOW: 'text-[#7A8C7E]',
 }
 
-type Tab = 'new' | 'pending' | 'returned' | 'training' | 'history'
+// 2026-07-25 — Training tab removed. Rationale: training queries
+// now surface via a dedicated Training organisation card on the
+// pundit dashboard (backend `/pundit/profile`). Tapping any of that
+// card's count pills lands here with `?client=<training_child_id>`,
+// filtering the list to just that session's queries — and a
+// persistent banner at the top of this page tells the pundit the
+// current context is training. Real (cross-org) tabs continue to
+// exclude training so a busy pundit's day isn't polluted.
+type Tab = 'new' | 'pending' | 'returned' | 'history'
 
 // Map the `?status=` query param values (NEW / FORWARDED / RETURNED)
 // onto the page's tab keys.
@@ -136,31 +147,26 @@ function PunditQueriesInner() {
     [history, clientFilter],
   )
 
-  // 2026-07-24 — Training queries live exclusively on the Training
-  // tab; the real tabs exclude them so a busy pundit doesn't get
-  // practice work mixed with real. History tab includes both.
-  const realFiltered = useMemo(
-    () => filtered.filter(q => !q.client_is_training),
-    [filtered],
-  )
-  const trainingActive = useMemo(
-    () => filtered.filter(
-      q => q.client_is_training && ['NEW', 'FORWARDED', 'RETURNED'].includes(q.status),
-    ),
-    [filtered],
+  // 2026-07-25 — Cross-org view (no client filter) continues to
+  // hide training queries from the real tabs. Client-filtered view
+  // (arrived via a dashboard count pill — real OR training) shows
+  // exactly what the filter says, and the top-of-page banner tells
+  // the pundit whether they're in a training context.
+  const tabFiltered = useMemo(
+    () => clientFilter ? filtered : filtered.filter(q => !q.client_is_training),
+    [filtered, clientFilter],
   )
 
-  const newQueries = realFiltered
+  const newQueries = tabFiltered
     .filter(q => q.status === 'NEW')
     .sort((a, b) => a.days_remaining - b.days_remaining)
-  const pendingQueries = realFiltered.filter(q => q.status === 'FORWARDED')
-  const returnedQueries = realFiltered.filter(q => q.status === 'RETURNED')
+  const pendingQueries = tabFiltered.filter(q => q.status === 'FORWARDED')
+  const returnedQueries = tabFiltered.filter(q => q.status === 'RETURNED')
 
   const TABS: { key: Tab; label: string; count: number | null }[] = [
     { key: 'new',      label: t('tabNew'),      count: newQueries.length },
     { key: 'pending',  label: t('tabPending'),  count: pendingQueries.length },
     { key: 'returned', label: t('tabReturned'), count: returnedQueries.length },
-    { key: 'training', label: t('tabTraining'), count: trainingActive.length },
     { key: 'history',  label: t('tabHistory'),  count: null },
   ]
 
@@ -168,7 +174,6 @@ function PunditQueriesInner() {
     if (tab === 'new')      return newQueries
     if (tab === 'pending')  return pendingQueries
     if (tab === 'returned') return returnedQueries
-    if (tab === 'training') return trainingActive
     if (tab === 'history')  return filteredHistory
     return []
   }
@@ -194,6 +199,10 @@ function PunditQueriesInner() {
 
   const list = getActiveList()
   const filterInfo = clientFilter ? clientInfos[clientFilter] : null
+  // 2026-07-25 — Training banner is on when the filtered client is
+  // a training child. Under this banner every card + composer +
+  // response IS training, so we don't also render per-card chips.
+  const trainingContext = !!(filterInfo?.is_training)
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -219,6 +228,23 @@ function PunditQueriesInner() {
                 ×
               </button>
             </div>
+          </div>
+        )}
+
+        {/* 2026-07-25 — Training banner. When the pundit is viewing
+            a training organisation's queries, every card + response
+            + composer on this screen is practice work. A persistent
+            banner up top avoids the mid-flow confusion the team saw
+            when the training marker sat only on the query card. */}
+        {trainingContext && (
+          <div className="mx-4 mt-3 rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3">
+            <p className="text-amber-900 font-semibold text-sm">
+              Training session
+            </p>
+            <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
+              These queries are from a practice session. Your responses
+              here won&apos;t affect any real farmer subscription.
+            </p>
           </div>
         )}
 
@@ -302,10 +328,12 @@ function PunditQueriesInner() {
                             <span className={`font-medium ${sevClass}`}>{severityText}</span>
                           </>
                         )}
-                        {/* 2026-07-24 — Training chip inline with the
-                            title so pundits immediately see practice
-                            queries as such and don't rush to respond. */}
-                        {q.client_is_training && (
+                        {/* 2026-07-25 — Per-card training chip is
+                            only useful in the cross-org view, where
+                            training queries could mix with real. In
+                            a client-filtered training context the
+                            top-of-page banner already signals it. */}
+                        {q.client_is_training && !trainingContext && (
                           <>
                             <span className="text-[#7A8C7E]"> · </span>
                             <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded align-middle">

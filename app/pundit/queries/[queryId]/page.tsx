@@ -134,6 +134,10 @@ interface QueryDetail {
   description: string | null; severity: string
   description_locale: string | null
   client_id: string
+  // 2026-07-25 — Drives the persistent Training banner up top so
+  // the pundit sees "practice work" consistently through detail →
+  // composer → forward → send.
+  client_is_training?: boolean
   crop_cosh_id: string | null
   crop_name: string | null
   crop_measure: 'AREA_WISE' | 'PLANT_WISE'
@@ -428,6 +432,21 @@ export default function PunditQueryDetailPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={t('headerTitle')} activeRole="FARM_PUNDIT" back="/pundit/queries" />
       <div className="pt-16 pb-28 px-4 space-y-4">
+        {/* 2026-07-25 — Training banner. Sits at the top of the
+            detail + composer view so the pundit reads it before
+            farmer card, description, response draft, or forward
+            sheet. Prevents mid-flow confusion (team feedback). */}
+        {query.client_is_training && (
+          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 mt-4">
+            <p className="text-amber-900 font-semibold text-sm">
+              Training session
+            </p>
+            <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
+              This query and your response are part of a practice
+              session. Nothing here reaches a real farmer subscription.
+            </p>
+          </div>
+        )}
         {/* Farmer card — name + tap-to-call phone + address.
             Pundit's first action is often a call; the phone is a
             `tel:` link so a single tap dials. */}
