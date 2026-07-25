@@ -28,14 +28,55 @@
       "noSessionsBody": "The company's CA starts a training session from the CA portal. Once it's running, you'll see it here.",
       "pickSession": "Pick a training session",
       "endsPrefix": "Ends {date}",
-      "farmerPhoneLabel": "Farmer's phone number",
-      "farmerPhoneHint": "The farmer must already be registered on RootsTalk.",
-      "farmerPhonePlaceholder": "10-digit number",
-      "pickCrop": "Pick a crop",
-      "noCrops": "No crops with active packages under this training session yet.",
-      "pickPackage": "Pick a package",
-      "submit": "Send Training Invitation",
-      "sending": "Sending…",
+      "phone": {
+        "title": "Farmer's phone number",
+        "subtitle": "The farmer must already be registered on RootsTalk.",
+        "placeholder": "10-digit number",
+        "verifyCta": "Continue",
+        "checking": "Checking…"
+      },
+      "farmerCard": {
+        "title": "Farmer",
+        "districtLabel": "District on file",
+        "districtMissing": "This farmer hasn't set their district yet. Ask them to add it under Profile in the RootsTalk app, then invite them again — training uses their real district to load the right advisory options.",
+        "continueCta": "Continue to crops",
+        "loadingCrops": "Loading crops…",
+        "back": "Back"
+      },
+      "crop": {
+        "title": "Pick a crop",
+        "subtitleWith": "{company} in {district}",
+        "empty": "{company} has no active packages in {district}.",
+        "back": "Back"
+      },
+      "guided": {
+        "remaining": "{count} packages remaining",
+        "fallbackTitle": "Pick an option",
+        "startOver": "Start over"
+      },
+      "confirm": {
+        "title": "Review & send",
+        "subtitle": "The farmer will see this as a training invitation and must accept before it appears on their Home.",
+        "farmerLabel": "Farmer",
+        "sessionLabel": "Training session",
+        "cropLabel": "Crop",
+        "selectionsLabel": "Answers",
+        "sendRequest": "Send Training Invitation",
+        "sending": "Sending…",
+        "startOver": "Start over"
+      },
+      "done": {
+        "title": "Sent!",
+        "bodySuffix": "will get a training invitation in their app. Once they accept, the practice subscription lands on their Home.",
+        "backHome": "Back"
+      },
+      "errors": {
+        "phoneInvalid": "Enter a 10-digit phone number.",
+        "phoneNotRegistered": "This phone number isn't registered on RootsTalk. Ask the farmer to install the app first.",
+        "cropsLoad": "Could not load crops. Please try again.",
+        "guidedStart": "Could not start the advisory questions. Please try again.",
+        "guidedNext": "Could not load the next question. Please try again."
+      },
       "successMessage": "Invitation sent. The farmer will see it in their PWA.",
       "genericError": "Could not send the invitation.",
       "genericLoadError": "Could not load training sessions."
