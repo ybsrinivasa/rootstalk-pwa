@@ -349,6 +349,16 @@ function DealerOrdersInner() {
     return c
   }, [groups])
 
+  // 2026-07-25 — If the pill is 'training' but no training orders
+  // exist, fall back to 'pending' so the dealer isn't stuck on an
+  // empty view when a session ends mid-page. Runs once per counts
+  // change; harmless when counts.training > 0.
+  useEffect(() => {
+    if (pill === 'training' && counts.training === 0) {
+      setPill('pending')
+    }
+  }, [pill, counts.training])
+
   const visibleGroups = useMemo(() => {
     const out: { key: string; subs: Order[]; matching: Order[] }[] = []
     for (const [key, list] of groups.entries()) {
@@ -568,7 +578,12 @@ function DealerOrdersInner() {
               on row 2's right via absolute position — safe because
               Packing leaves plenty of empty space on that row. */}
           <div className="flex flex-wrap gap-2">
-            {PILLS.map(p => {
+            {PILLS.filter(p => p !== 'training' || counts.training > 0).map(p => {
+              // 2026-07-25 — Hide the Training pill entirely when no
+              // training orders exist. Real pills always render (a
+              // count of 0 there is meaningful — "you have nothing
+              // pending" is worth surfacing); Training is opt-in and
+              // only appears when a session is actually going.
               const active = pill === p
               const n = counts[p]
               return (

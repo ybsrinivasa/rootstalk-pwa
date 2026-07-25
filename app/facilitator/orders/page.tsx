@@ -445,6 +445,15 @@ export default function FacilitatorOrdersPage() {
     return c
   }, [groups])
 
+  // 2026-07-25 — Fallback when the pill is 'training' but no
+  // training orders exist (e.g. session ended mid-page). Mirror
+  // of the dealer/orders guard.
+  useEffect(() => {
+    if (pill === 'training' && counts.training === 0) {
+      setPill('pending')
+    }
+  }, [pill, counts.training])
+
   const visibleGroups = useMemo(() => {
     const out: { key: string; subs: Order[]; matching: Order[] }[] = []
     for (const [key, list] of groups.entries()) {
@@ -474,7 +483,13 @@ export default function FacilitatorOrdersPage() {
         <div className="px-4 pt-3">
           <div className="relative">
             <div className="flex flex-wrap gap-2">
-              {(Object.keys(PILL_LABEL_KEY) as Pill[]).map(p => {
+              {(Object.keys(PILL_LABEL_KEY) as Pill[])
+                .filter(p => p !== 'training' || counts.training > 0)
+                .map(p => {
+                // 2026-07-25 — Training pill hidden entirely when no
+                // training orders exist. Real pills always render
+                // (a zero there is meaningful signal); Training is
+                // opt-in and appears only when a session is going.
                 const active = pill === p
                 const n = counts[p]
                 return (
