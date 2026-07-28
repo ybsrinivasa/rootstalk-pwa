@@ -62,6 +62,7 @@ interface VerifyResponse {
   description_points: string[]
   photos: string[]
   dus_characters: DusRow[]
+  cultivation_practice: string | null
 }
 
 function formatDate(iso: string, locale: string): string {
@@ -315,6 +316,20 @@ export default function PublicVerifyPage() {
             </p>
             <p className="text-sm text-[#6B3F1F] whitespace-pre-line leading-relaxed">
               {record.cultivation_notes}
+            </p>
+          </div>
+        )}
+
+        {/* Per-QR cultivation practice authored by the Client at
+            batch level. Non-seed products only — seeds already have
+            the variety-level card above. */}
+        {!isSeed && record.cultivation_practice && (
+          <div className="bg-white rounded-2xl p-4 mb-3 border border-[#DDD0B8]">
+            <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider mb-2">
+              {t('cultivationPractice')}
+            </p>
+            <p className="text-sm text-[#6B3F1F] whitespace-pre-line leading-relaxed">
+              {record.cultivation_practice}
             </p>
           </div>
         )}
