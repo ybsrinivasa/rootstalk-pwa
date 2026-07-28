@@ -740,20 +740,7 @@ function ManageTab({
   }
 
   if (orders === null) return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
-  if (orders.length === 0) {
-    return (
-      <div className="p-4">
-        <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
-          <p className="text-sm text-[#7A8C7E]">{t('emptyAwaiting')}</p>
-        </div>
-      </div>
-    )
-  }
-
-  // 2026-06-09 — Group sub-orders by reference_number (Order ID).
-  // Pre-batch-1 rows may have null reference_number; fall back to
-  // lineage_root_id, then to the row id. Sub-orders within a group
-  // sort by created_at ascending so the first is the original root.
+  // Keep pills + History visible even with zero orders — per-pill empty state handles the copy.
   const groups = (() => {
     const map = new Map<string, SubOrder[]>()
     for (const o of orders || []) {
