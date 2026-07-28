@@ -881,11 +881,13 @@ function PillChunk({
             <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
               {t('seedTag')}
             </span>
-            {sub.farm_area_acres != null && (
-              <span className="text-[11px] text-[#7A8C7E]">
-                {t('seedFarmArea', { acres: sub.farm_area_acres })}
-              </span>
-            )}
+            {/* 2026-07-28 — Acreage deliberately hidden from
+                facilitators. Facilitators route seed orders to
+                dealers; giving them variety + acreage creates
+                anti-fraud risk (they could substitute varieties
+                or divert stock). Variety was already blind by
+                design; acreage now too. Farmer + dealer still see
+                everything. */}
           </div>
           <p className="text-xs text-amber-700">{t('seedNewOrderHint')}</p>
           <div className="flex gap-2">
@@ -907,11 +909,13 @@ function PillChunk({
             <span className="text-[10px] font-semibold text-[#5b3d8a] bg-purple-50 border border-purple-200 px-1.5 py-0.5 rounded-full">
               {t('seedTag')}
             </span>
-            {sub.farm_area_acres != null && (
-              <span className="text-[11px] text-[#7A8C7E]">
-                {t('seedFarmArea', { acres: sub.farm_area_acres })}
-              </span>
-            )}
+            {/* 2026-07-28 — Acreage deliberately hidden from
+                facilitators. Facilitators route seed orders to
+                dealers; giving them variety + acreage creates
+                anti-fraud risk (they could substitute varieties
+                or divert stock). Variety was already blind by
+                design; acreage now too. Farmer + dealer still see
+                everything. */}
           </div>
           <p className="text-xs text-amber-700">{t('seedAcceptedHint')}</p>
           <button onClick={() => onForwardSeed(sub.id)}
