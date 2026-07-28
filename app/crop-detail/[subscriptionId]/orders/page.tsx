@@ -154,17 +154,18 @@ export default function CropOrdersPage() {
       const { data } = await api.get<{ orders: SubOrder[] }>(
         `/farmer/subscriptions/${subscriptionId}/orders`,
       )
-      // Same filter ManageTab applied internally pre-hoist: drop
-      // PURCHASED outright, and drop COMPLETED orders that have no
-      // outstanding returned / postponed / pickup-ready items.
-      setManageOrders((data.orders || []).filter(o => {
-        if (o.status === 'PURCHASED') return false
-        if (o.status === 'COMPLETED' &&
-            !(o.returned_count || 0) &&
-            !(o.postponed_count || 0) &&
-            !(o.pickup_ready_count || 0)) return false
-        return true
-      }))
+      // 2026-07-28 — Manage-tab inclusion is now derived from
+      // subBelongsToPill: an order belongs in Manage iff it renders
+      // in at least one of the four pills. Ties the badge count and
+      // the pill counts to the same source of truth so terminal
+      // statuses (CANCELLED / REJECTED / REROUTED / EXPIRED /
+      // PURCHASED) and empty-COMPLETED orders can't inflate the
+      // badge while showing 0 in every pill (user bug 2026-07-28:
+      // badge 1, all pills 0 — a REJECTED/CANCELLED order was
+      // slipping through the old two-source filter).
+      setManageOrders((data.orders || []).filter(o =>
+        PILLS.some(p => subBelongsToPill(o, p)),
+      ))
     } catch {
       setManageOrders([])
     }
