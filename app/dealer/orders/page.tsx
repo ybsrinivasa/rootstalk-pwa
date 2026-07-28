@@ -1032,25 +1032,35 @@ function DealerOrderCardHeader({
           card compact when data is missing (e.g. pre-Cosh-resolve
           orders with no measure). Dot separators drop naturally when
           adjacent segments are absent. */}
-      {head.is_seed && (head.crop_name || head.farm_area_acres || head.number_of_plants || head.computed_crop_age) && (
+      {head.is_seed && (head.crop_name || head.variety_name || head.farm_area_acres || head.number_of_plants || head.computed_crop_age) && (
         <div className="mt-2 pt-2 border-t border-[#F0E8D6] text-[11px] text-[#6B3F1F] flex flex-wrap items-center gap-x-2 gap-y-0.5">
           {head.crop_name && (
             <span className="font-semibold">{head.crop_name}</span>
           )}
-          {head.crop_measure === 'PLANT_WISE' && head.number_of_plants ? (
+          {/* 2026-07-28 — Variety name (critical for dealer: a
+              seed sale needs the specific variety, not just the
+              crop). Rendered as bold accent so it reads distinct
+              from the crop name and the numeric context. */}
+          {head.variety_name && (
             <>
               {head.crop_name && <span className="text-[#7A8C7E]">·</span>}
+              <span className="font-semibold text-[#2C4A2A]">{head.variety_name}</span>
+            </>
+          )}
+          {head.crop_measure === 'PLANT_WISE' && head.number_of_plants ? (
+            <>
+              {(head.crop_name || head.variety_name) && <span className="text-[#7A8C7E]">·</span>}
               <span>{t('cropContext.plants', { count: head.number_of_plants })}</span>
             </>
           ) : head.farm_area_acres ? (
             <>
-              {head.crop_name && <span className="text-[#7A8C7E]">·</span>}
+              {(head.crop_name || head.variety_name) && <span className="text-[#7A8C7E]">·</span>}
               <span>{t('cropContext.acres', { count: head.farm_area_acres })}</span>
             </>
           ) : null}
           {head.computed_crop_age && (
             <>
-              {(head.crop_name || head.farm_area_acres || head.number_of_plants) && (
+              {(head.crop_name || head.variety_name || head.farm_area_acres || head.number_of_plants) && (
                 <span className="text-[#7A8C7E]">·</span>
               )}
               <span>
