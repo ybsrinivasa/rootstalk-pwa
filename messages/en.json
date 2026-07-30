@@ -581,6 +581,10 @@
       "changeBtn": "change",
       "updateCta": "Update"
     },
+    "authors": {
+      "label": "Authored by",
+      "andOthers": "{count, plural, one {& 1 other} other {& # others}}"
+    },
     "tiles": {
       "advisoryTitle": "Advisory",
       "diagnoseTitle": "Diagnose",
