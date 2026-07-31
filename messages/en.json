@@ -829,7 +829,7 @@
     "nearbyDealers": "Nearby Dealers",
     "nearbyFacilitators": "Nearby Facilitators",
     "yourPromoter": "Your Promoter",
-    "kmAway": "{distance} km away",
+    "kmAway": "{distance, plural, =0 {< 1 km away} other {# km away}}",
     "call": "📞 Call",
     "sendOrder": "Send Order",
     "noRecipientTitle": "No dealer or facilitator nearby",
@@ -938,7 +938,7 @@
         "promoterBadge": "Promoter",
         "sending": "Sending…",
         "sendBtn": "Send",
-        "distanceKm": "{km} km away"
+        "distanceKm": "{km, plural, =0 {< 1 km away} other {# km away}}"
       },
       "confirmDelete": {
         "title": "Delete this item?",
@@ -1096,7 +1096,7 @@
     "common": {
       "unknownRecipient": "Unknown",
       "promoterBadge": "Your Promoter",
-      "distanceKm": "{km} km away",
+      "distanceKm": "{km, plural, =0 {< 1 km away} other {# km away}}",
       "send": "Send →",
       "callBtn": "📞 Call",
       "noRecipient": "No recipient",
@@ -2475,7 +2475,7 @@
       "rejectSheetConfirm": "Yes, reject",
       "rerouteSheetTitle": "Forward returned items to",
       "rerouteEmpty": "No nearby dealers found",
-      "kmAway": "{km} km away",
+      "kmAway": "{km, plural, =0 {< 1 km away} other {# km away}}",
       "callBtn": "📞 Call",
       "forwardBtn": "Forward",
       "errorReroute": "Could not re-route. Please try again.",
@@ -2516,7 +2516,7 @@
       "completedBody": "All items delivered to farmer",
       "dealerSelectTitle": "Select a Dealer",
       "noDealersFound": "No nearby dealers found",
-      "kmAway": "{km} km away",
+      "kmAway": "{km, plural, =0 {< 1 km away} other {# km away}}",
       "callBtn": "📞 Call",
       "forwardBtn": "Forward",
       "phoneEntryLabel": "Or enter a dealer's phone number",
@@ -2733,7 +2733,7 @@
         "helpText": "Pick a seed dealer onboarded by the seed company. Only onboarded dealers are shown.",
         "noDealersTitle": "No eligible dealer nearby",
         "noDealersBody": "The seed company has no dealer onboarded near you. Ask the company to onboard a dealer in your area, or reject the order so the farmer can route it elsewhere.",
-        "kmAway": "{distance} km away",
+        "kmAway": "{distance, plural, =0 {< 1 km away} other {# km away}}",
         "forward": "Forward",
         "phoneEntryLabel": "Or enter a dealer's phone number",
         "phoneEntryPlaceholder": "10-digit mobile number",
@@ -3138,7 +3138,7 @@
       "pickerTabFacilitators": "Facilitators ({count})",
       "emptyDealers": "No dealers found nearby.",
       "emptyFacilitators": "No facilitators found nearby.",
-      "kmAway": "{km} km away",
+      "kmAway": "{km, plural, =0 {< 1 km away} other {# km away}}",
       "promoterBadge": "Promoter",
       "sendCta": "Send",
       "sendingCta": "Sending…"
