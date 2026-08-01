@@ -192,7 +192,7 @@ export default function FarmerSeedOrderDetailPage() {
     setPickerLoading(true)
     try {
       const [d, f] = await Promise.allSettled([
-        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-dealers?order_type=SEED`),
+        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-dealers?order_type=SEED&variety_id=${encodeURIComponent(order.variety_id)}`),
         api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-facilitators`),
       ])
       setDealers(d.status === 'fulfilled' ? d.value.data : [])
