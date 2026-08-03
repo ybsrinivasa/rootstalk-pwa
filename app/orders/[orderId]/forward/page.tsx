@@ -6,6 +6,10 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
 import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
+import RecipientMap, { type MapPoint } from '@/components/orders/RecipientMap'
+import LocationSourceToggle, { type LocationSource } from '@/components/orders/LocationSourceToggle'
+import { googleMapsDirections } from '@/lib/directions'
+import { getUser } from '@/lib/auth'
 import api from '@/lib/api'
 
 // 2026-06-06 — Focused forward-the-returned-items surface. Routes from
@@ -37,6 +41,10 @@ interface Person {
   shop_name?: string | null
   shop_address?: string | null
   sell_categories?: string[]
+  shop_gps_lat?: number
+  shop_gps_lng?: number
+  gps_lat?: number
+  gps_lng?: number
 }
 
 interface EligibleRecipientsResult {
@@ -83,15 +91,27 @@ export default function FarmerForwardPage() {
   const [facilitators, setFacilitators] = useState<Person[]>([])
   const [lockedBrandExplainer, setLockedBrandExplainer] = useState<string | null>(null)
 
+  // Map + location toggle state.
+  const [locSource, setLocSource] = useState<LocationSource>('profile')
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [showMap, setShowMap] = useState(false)
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null)
+  const [refetchingRecipients, setRefetchingRecipients] = useState(false)
+
   const backHref = order?.subscription_id
     ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
     : '/orders'
+
+  function buildRecipientsUrl(coords?: { lat: number; lng: number } | null): string {
+    const base = `/farmer/orders/${orderId}/eligible-recipients`
+    return coords ? `${base}?lat=${coords.lat}&lng=${coords.lng}` : base
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     Promise.allSettled([
       api.get<ForwardOrder>(`/farmer/orders/${orderId}`),
-      api.get<EligibleRecipientsResult>(`/farmer/orders/${orderId}/eligible-recipients`),
+      api.get<EligibleRecipientsResult>(buildRecipientsUrl()),
     ]).then(([orderRes, eligibleRes]) => {
       if (orderRes.status === 'fulfilled') {
         setOrder(orderRes.value.data)
@@ -193,9 +213,61 @@ export default function FarmerForwardPage() {
     }
   }
 
+  async function handleLocationChange(next: LocationSource, coords?: { lat: number; lng: number }) {
+    setLocSource(next)
+    if (next === 'current' && coords) {
+      setCurrentCoords(coords)
+    }
+    // Refetch with the new origin. Backend re-ranks + re-computes
+    // distances relative to the new point.
+    const useCoords = next === 'current' ? (coords || currentCoords) : null
+    setRefetchingRecipients(true)
+    try {
+      const { data } = await api.get<EligibleRecipientsResult>(buildRecipientsUrl(useCoords))
+      setDealers(data.dealers || [])
+      setFacilitators(data.facilitators || [])
+      setSelectedRecipientId(null)
+    } catch {
+      // Fetch failed — leave previous list in place.
+    } finally {
+      setRefetchingRecipients(false)
+    }
+  }
+
+  const farmerUser = getUser()
+  const mapOrigin = (() => {
+    if (locSource === 'current' && currentCoords) return currentCoords
+    if (farmerUser?.gps_lat && farmerUser?.gps_lng) {
+      return { lat: Number(farmerUser.gps_lat), lng: Number(farmerUser.gps_lng) }
+    }
+    return null
+  })()
+
+  const activeList = tab === 'dealers' ? dealers : facilitators
+  const mapPoints: MapPoint[] = activeList.reduce<MapPoint[]>((acc, p) => {
+    const lat = tab === 'dealers' ? p.shop_gps_lat : p.gps_lat
+    const lng = tab === 'dealers' ? p.shop_gps_lng : p.gps_lng
+    if (lat != null && lng != null) {
+      acc.push({
+        user_id: p.user_id,
+        name: p.name,
+        shop_name: p.shop_name || null,
+        lat, lng,
+        distance_km: p.distance_km,
+      })
+    }
+    return acc
+  }, [])
+
   function PersonCard({ person, isDealer }: { person: Person; isDealer: boolean }) {
+    const lat = isDealer ? person.shop_gps_lat : person.gps_lat
+    const lng = isDealer ? person.shop_gps_lng : person.gps_lng
+    const highlight = selectedRecipientId === person.user_id
     return (
-      <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
+      <div id={`recipient-${person.user_id}`}
+        className={`bg-white rounded-2xl border shadow-sm p-4 transition-all ${
+          highlight ? 'border-[#3A7D44] ring-2 ring-[#3A7D44]/30' : 'border-[#DDD0B8]'
+        }`}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -210,6 +282,15 @@ export default function FarmerForwardPage() {
             <p className="text-xs text-[#7A8C7E] mt-0.5">{tOrdersCommon('distanceKm', { km: person.distance_km })}</p>
             {isDealer && person.shop_address && (
               <p className="text-xs text-[#7A8C7E] truncate">{person.shop_address}</p>
+            )}
+            {lat != null && lng != null && (
+              <a
+                href={googleMapsDirections(lat, lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-[#3A7D44] font-medium mt-1.5">
+                <span aria-hidden>📍</span>{tOrdersCommon('map.directionsBtn')}
+              </a>
             )}
           </div>
           <div className="flex flex-col gap-2 shrink-0">
@@ -294,6 +375,52 @@ export default function FarmerForwardPage() {
             : t('readyToForward', { count: totalForwardable })}
           {t('pickHint')}
         </p>
+
+        {/* Location toggle + collapsible map. Only rendered once
+            the postpone-nudge has been resolved and there's at
+            least one candidate to show. */}
+        {includePostponed !== null && (dealers.length + facilitators.length > 0) && (
+          <div className="mb-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-[#7A8C7E]">{tOrdersCommon('map.locationSourceLabel')}</span>
+              <LocationSourceToggle
+                source={locSource}
+                currentCoords={currentCoords}
+                onChange={handleLocationChange}
+                busy={refetchingRecipients}
+                labels={{
+                  profile: tOrdersCommon('map.locationProfile'),
+                  current: tOrdersCommon('map.locationCurrent'),
+                  requesting: tOrdersCommon('map.locationRequesting'),
+                  denied: tOrdersCommon('map.locationDenied'),
+                }}
+              />
+            </div>
+            {mapOrigin && mapPoints.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowMap(v => !v)}
+                  className="w-full text-xs text-[#3A7D44] font-medium py-2 rounded-lg border border-[#DDD0B8] bg-white active:bg-[#F7F0E0]">
+                  {showMap ? tOrdersCommon('map.hideBtn') : tOrdersCommon('map.showBtn')}
+                </button>
+                {showMap && (
+                  <RecipientMap
+                    origin={mapOrigin}
+                    points={mapPoints}
+                    selectedUserId={selectedRecipientId}
+                    onSelect={uid => {
+                      setSelectedRecipientId(uid)
+                      setTimeout(() => {
+                        const el = document.getElementById(`recipient-${uid}`)
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }, 50)
+                    }}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         {/* 2026-07-11 — Locked-brand explainer + tabs + list, mirrors
             /order/new picker. Only rendered once the postpone-nudge

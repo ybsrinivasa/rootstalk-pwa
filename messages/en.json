@@ -1112,6 +1112,16 @@
       "send": "Send →",
       "callBtn": "📞 Call",
       "noRecipient": "No recipient",
+      "map": {
+        "showBtn": "Show on map",
+        "hideBtn": "Hide map",
+        "directionsBtn": "Directions",
+        "locationProfile": "Profile",
+        "locationCurrent": "Current",
+        "locationRequesting": "Locating…",
+        "locationDenied": "Couldn't get current location — using profile.",
+        "locationSourceLabel": "Distances from:"
+      },
       "itemsCount": "{count, plural, one {1 item} other {# items}}",
       "errors": {
         "forwardFailed": "Could not forward. Please try again.",
