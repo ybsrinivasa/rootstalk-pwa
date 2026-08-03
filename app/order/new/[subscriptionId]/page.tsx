@@ -2,16 +2,21 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { getToken } from '@/lib/auth'
+import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RecipientLookupCard, { type RecipientLookupResult } from '@/components/RecipientLookupCard'
 import ClientCropChip from '@/components/ClientCropChip'
 import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
+import RecipientMap, { type MapPoint } from '@/components/orders/RecipientMap'
+import LocationSourceToggle, { type LocationSource } from '@/components/orders/LocationSourceToggle'
+import { googleMapsDirections } from '@/lib/directions'
 import api from '@/lib/api'
 
 interface Person {
   user_id: string; name: string | null; phone: string | null; distance_km: number; is_promoter: boolean
   shop_name?: string | null; shop_address?: string | null; sell_categories?: string[]
+  shop_gps_lat?: number; shop_gps_lng?: number
+  gps_lat?: number; gps_lng?: number
 }
 interface Subscription {
   id: string; crop_start_date: string | null; client_id: string; package_id: string
@@ -62,6 +67,20 @@ export default function OrderingScreenPage() {
   const [editingArea, setEditingArea] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  // Map + location toggle state.
+  const [locSource, setLocSource] = useState<LocationSource>('profile')
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [showMap, setShowMap] = useState(false)
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null)
+  const [refetchingRecipients, setRefetchingRecipients] = useState(false)
+
+  function buildEligibleUrl(coords?: { lat: number; lng: number } | null): string {
+    const pidsParam = practiceIds.length ? `&practice_ids=${encodeURIComponent(practiceIds.join(','))}` : ''
+    const geoParam = coords ? `&lat=${coords.lat}&lng=${coords.lng}` : ''
+    return `/farmer/subscriptions/${subscriptionId}/eligible-recipients-for-new-order`
+      + `?category=${encodeURIComponent(orderType)}${pidsParam}${geoParam}`
+  }
+
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
@@ -69,11 +88,6 @@ export default function OrderingScreenPage() {
 
   async function load() {
     try {
-      // Batch 9 — one server-filtered endpoint replaces the two
-      // nearby-* calls. The server applies licence-category AND
-      // locked-brand filtering, identical to the cancel→re-send
-      // picker on /orders/[id]. Inconsistency was a real gap.
-      const pidsParam = practiceIds.length ? `&practice_ids=${encodeURIComponent(practiceIds.join(','))}` : ''
       const [subsRes, eligibleRes] = await Promise.allSettled([
         api.get<Subscription[]>('/farmer/my-subscriptions'),
         api.get<{
@@ -81,21 +95,58 @@ export default function OrderingScreenPage() {
           facilitators: Person[]
           has_locked_brand: boolean
           locked_brand_explainer: string | null
-        }>(
-          `/farmer/subscriptions/${subscriptionId}/eligible-recipients-for-new-order`
-          + `?category=${encodeURIComponent(orderType)}${pidsParam}`,
-        ),
+        }>(buildEligibleUrl()),
       ])
       if (subsRes.status === 'fulfilled') setSub(subsRes.value.data.find(s => s.id === subscriptionId) || null)
       if (eligibleRes.status === 'fulfilled') {
         setDealers(eligibleRes.value.data.dealers || [])
         setFacilitators(eligibleRes.value.data.facilitators || [])
         setLockedBrandExplainer(eligibleRes.value.data.locked_brand_explainer)
-        // Force the dealers tab when only dealers are eligible.
         if (eligibleRes.value.data.has_locked_brand) setTab('dealers')
       }
     } finally { setLoading(false) }
   }
+
+  async function handleLocationChange(next: LocationSource, coords?: { lat: number; lng: number }) {
+    setLocSource(next)
+    if (next === 'current' && coords) setCurrentCoords(coords)
+    const useCoords = next === 'current' ? (coords || currentCoords) : null
+    setRefetchingRecipients(true)
+    try {
+      const { data } = await api.get<{
+        dealers: Person[]
+        facilitators: Person[]
+        has_locked_brand: boolean
+        locked_brand_explainer: string | null
+      }>(buildEligibleUrl(useCoords))
+      setDealers(data.dealers || [])
+      setFacilitators(data.facilitators || [])
+      setSelectedRecipientId(null)
+    } catch { /* leave previous list in place */ }
+    finally { setRefetchingRecipients(false) }
+  }
+
+  const farmerUser = getUser()
+  const mapOrigin = (() => {
+    if (locSource === 'current' && currentCoords) return currentCoords
+    if (farmerUser?.gps_lat && farmerUser?.gps_lng) {
+      return { lat: Number(farmerUser.gps_lat), lng: Number(farmerUser.gps_lng) }
+    }
+    return null
+  })()
+
+  const activeList = tab === 'dealers' ? dealers : facilitators
+  const mapPoints: MapPoint[] = activeList.reduce<MapPoint[]>((acc, p) => {
+    const lat = tab === 'dealers' ? p.shop_gps_lat : p.gps_lat
+    const lng = tab === 'dealers' ? p.shop_gps_lng : p.gps_lng
+    if (lat != null && lng != null) {
+      acc.push({
+        user_id: p.user_id, name: p.name, shop_name: p.shop_name || null,
+        lat, lng, distance_km: p.distance_km,
+      })
+    }
+    return acc
+  }, [])
 
   // Debounced lookup against the new backend endpoint. Same shape
   // as the seed-orders lookup so RecipientLookupCard renders all
@@ -239,8 +290,14 @@ export default function OrderingScreenPage() {
   }[orderType] || 'bg-slate-100 text-[#6B3F1F]'
 
   function PersonCard({ person, isDealer }: { person: Person; isDealer: boolean }) {
+    const lat = isDealer ? person.shop_gps_lat : person.gps_lat
+    const lng = isDealer ? person.shop_gps_lng : person.gps_lng
+    const highlight = selectedRecipientId === person.user_id
     return (
-      <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm p-4">
+      <div id={`recipient-${person.user_id}`}
+        className={`bg-white rounded-2xl border shadow-sm p-4 transition-all ${
+          highlight ? 'border-[#3A7D44] ring-2 ring-[#3A7D44]/30' : 'border-[#DDD0B8]'
+        }`}>
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -255,6 +312,13 @@ export default function OrderingScreenPage() {
             <p className="text-xs text-[#7A8C7E] mt-0.5">{tOrdersCommon('distanceKm', { km: person.distance_km })}</p>
             {isDealer && person.shop_address && (
               <p className="text-xs text-[#7A8C7E] truncate">{person.shop_address}</p>
+            )}
+            {lat != null && lng != null && (
+              <a href={googleMapsDirections(lat, lng)}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-[#3A7D44] font-medium mt-1.5">
+                <span aria-hidden>📍</span>{tOrdersCommon('map.directionsBtn')}
+              </a>
             )}
           </div>
           <div className="flex flex-col gap-2 shrink-0">
@@ -303,6 +367,51 @@ export default function OrderingScreenPage() {
           <div className="mt-3 bg-purple-50 border border-purple-200 rounded-xl px-3 py-2.5 text-xs text-purple-800 leading-relaxed">
             <p className="font-semibold mb-0.5">{t('brandLockedTitle')}</p>
             <p>{lockedBrandExplainer}</p>
+          </div>
+        )}
+
+        {/* Location toggle + collapsible map. Only when there's a
+            candidate to show. */}
+        {(dealers.length + facilitators.length > 0) && (
+          <div className="mt-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-[#7A8C7E]">{tOrdersCommon('map.locationSourceLabel')}</span>
+              <LocationSourceToggle
+                source={locSource}
+                currentCoords={currentCoords}
+                onChange={handleLocationChange}
+                busy={refetchingRecipients}
+                labels={{
+                  profile: tOrdersCommon('map.locationProfile'),
+                  current: tOrdersCommon('map.locationCurrent'),
+                  requesting: tOrdersCommon('map.locationRequesting'),
+                  denied: tOrdersCommon('map.locationDenied'),
+                }}
+              />
+            </div>
+            {mapOrigin && mapPoints.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowMap(v => !v)}
+                  className="w-full text-xs text-[#3A7D44] font-medium py-2 rounded-lg border border-[#DDD0B8] bg-white active:bg-[#F7F0E0]">
+                  {showMap ? tOrdersCommon('map.hideBtn') : tOrdersCommon('map.showBtn')}
+                </button>
+                {showMap && (
+                  <RecipientMap
+                    origin={mapOrigin}
+                    points={mapPoints}
+                    selectedUserId={selectedRecipientId}
+                    onSelect={uid => {
+                      setSelectedRecipientId(uid)
+                      setTimeout(() => {
+                        const el = document.getElementById(`recipient-${uid}`)
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }, 50)
+                    }}
+                  />
+                )}
+              </>
+            )}
           </div>
         )}
 

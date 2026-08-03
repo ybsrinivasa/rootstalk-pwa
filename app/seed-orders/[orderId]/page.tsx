@@ -2,12 +2,15 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { getToken } from '@/lib/auth'
+import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 import ConfirmSendOrderSheet, { recipientLabel } from '@/components/ConfirmSendOrderSheet'
 import QRScannerModal from '@/components/QRScannerModal'
+import RecipientMap, { type MapPoint } from '@/components/orders/RecipientMap'
+import LocationSourceToggle, { type LocationSource } from '@/components/orders/LocationSourceToggle'
+import { googleMapsDirections } from '@/lib/directions'
 
 // Orders V2 Batch 14 — farmer-side seed order detail. Same
 // affordances as the pesticide/fertiliser detail
@@ -42,6 +45,10 @@ interface Recipient {
   shop_address?: string | null
   distance_km?: number
   is_promoter?: boolean
+  shop_gps_lat?: number
+  shop_gps_lng?: number
+  gps_lat?: number
+  gps_lng?: number
 }
 
 const STATUS_TONE: Record<string, string> = {
@@ -78,6 +85,13 @@ export default function FarmerSeedOrderDetailPage() {
   const [facilitators, setFacilitators] = useState<Recipient[]>([])
   const [pickerLoading, setPickerLoading] = useState(false)
   const [sending, setSending] = useState<string | null>(null)
+
+  // Map + location toggle state.
+  const [locSource, setLocSource] = useState<LocationSource>('profile')
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [showMap, setShowMap] = useState(false)
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null)
+  const [refetchingRecipients, setRefetchingRecipients] = useState(false)
 
   // 2026-06-21 — Receipt confirmation modal (mirrors regular-order
   // ReceiveBanner). READY_FOR_PICKUP is the only state where this fires.
@@ -190,15 +204,53 @@ export default function FarmerSeedOrderDetailPage() {
     if (!order) return
     setPickerOpen(true)
     setPickerLoading(true)
-    try {
-      const [d, f] = await Promise.allSettled([
-        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-dealers?order_type=SEED&variety_id=${encodeURIComponent(order.variety_id)}`),
-        api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-facilitators`),
-      ])
-      setDealers(d.status === 'fulfilled' ? d.value.data : [])
-      setFacilitators(f.status === 'fulfilled' ? f.value.data : [])
-    } finally { setPickerLoading(false) }
+    await fetchRecipients(null)
+    setPickerLoading(false)
   }
+
+  async function fetchRecipients(coords: { lat: number; lng: number } | null) {
+    if (!order) return
+    const geo = coords ? `&lat=${coords.lat}&lng=${coords.lng}` : ''
+    const [d, f] = await Promise.allSettled([
+      api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-dealers?order_type=SEED&variety_id=${encodeURIComponent(order.variety_id)}${geo}`),
+      api.get<Recipient[]>(`/farmer/subscriptions/${order.subscription_id}/nearby-facilitators${geo ? '?' + geo.slice(1) : ''}`),
+    ])
+    setDealers(d.status === 'fulfilled' ? d.value.data : [])
+    setFacilitators(f.status === 'fulfilled' ? f.value.data : [])
+  }
+
+  async function handleLocationChange(next: LocationSource, coords?: { lat: number; lng: number }) {
+    setLocSource(next)
+    if (next === 'current' && coords) setCurrentCoords(coords)
+    const useCoords = next === 'current' ? (coords || currentCoords) : null
+    setRefetchingRecipients(true)
+    try {
+      await fetchRecipients(useCoords)
+      setSelectedRecipientId(null)
+    } finally { setRefetchingRecipients(false) }
+  }
+
+  const farmerUser = getUser()
+  const mapOrigin = (() => {
+    if (locSource === 'current' && currentCoords) return currentCoords
+    if (farmerUser?.gps_lat && farmerUser?.gps_lng) {
+      return { lat: Number(farmerUser.gps_lat), lng: Number(farmerUser.gps_lng) }
+    }
+    return null
+  })()
+
+  const activeList = pickerTab === 'dealers' ? dealers : facilitators
+  const mapPoints: MapPoint[] = activeList.reduce<MapPoint[]>((acc, r) => {
+    const lat = pickerTab === 'dealers' ? r.shop_gps_lat : r.gps_lat
+    const lng = pickerTab === 'dealers' ? r.shop_gps_lng : r.gps_lng
+    if (lat != null && lng != null) {
+      acc.push({
+        user_id: r.user_id, name: r.name, shop_name: r.shop_name || null,
+        lat, lng, distance_km: r.distance_km ?? 0,
+      })
+    }
+    return acc
+  }, [])
 
   // 2026-06-19 — Picker → ConfirmSendOrderSheet → actual send. The
   // tap on a recipient row stashes the pending send; the sheet shows
@@ -395,6 +447,48 @@ export default function FarmerSeedOrderDetailPage() {
                 </button>
               ))}
             </div>
+            {(dealers.length + facilitators.length > 0) && (
+              <div className="px-4 pt-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-[#7A8C7E]">{tCommon('map.locationSourceLabel')}</span>
+                  <LocationSourceToggle
+                    source={locSource}
+                    currentCoords={currentCoords}
+                    onChange={handleLocationChange}
+                    busy={refetchingRecipients}
+                    labels={{
+                      profile: tCommon('map.locationProfile'),
+                      current: tCommon('map.locationCurrent'),
+                      requesting: tCommon('map.locationRequesting'),
+                      denied: tCommon('map.locationDenied'),
+                    }}
+                  />
+                </div>
+                {mapOrigin && mapPoints.length > 0 && (
+                  <>
+                    <button
+                      onClick={() => setShowMap(v => !v)}
+                      className="w-full text-xs text-[#3A7D44] font-medium py-2 rounded-lg border border-[#DDD0B8] bg-white active:bg-[#F7F0E0]">
+                      {showMap ? tCommon('map.hideBtn') : tCommon('map.showBtn')}
+                    </button>
+                    {showMap && (
+                      <RecipientMap
+                        origin={mapOrigin}
+                        points={mapPoints}
+                        selectedUserId={selectedRecipientId}
+                        onSelect={uid => {
+                          setSelectedRecipientId(uid)
+                          setTimeout(() => {
+                            const el = document.getElementById(`recipient-${uid}`)
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                          }, 50)
+                        }}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
+            )}
             <div className="p-4 space-y-3">
               {pickerLoading ? (
                 [1, 2, 3].map(i => <div key={i} className="h-20 bg-slate-100 rounded-xl animate-pulse" />)
@@ -406,13 +500,26 @@ export default function FarmerSeedOrderDetailPage() {
                 (pickerTab === 'dealers' ? dealers : facilitators).map(r => {
                   const isDealer = pickerTab === 'dealers'
                   const busy = sending === r.user_id
+                  const lat = isDealer ? r.shop_gps_lat : r.gps_lat
+                  const lng = isDealer ? r.shop_gps_lng : r.gps_lng
+                  const highlight = selectedRecipientId === r.user_id
                   return (
-                    <div key={r.user_id} className="bg-white border border-[#DDD0B8] rounded-xl p-3 flex items-center justify-between">
+                    <div id={`recipient-${r.user_id}`} key={r.user_id}
+                      className={`bg-white border rounded-xl p-3 flex items-center justify-between transition-all ${
+                        highlight ? 'border-[#3A7D44] ring-2 ring-[#3A7D44]/30' : 'border-[#DDD0B8]'
+                      }`}>
                       <div className="min-w-0 mr-3">
                         <p className="font-semibold text-[#6B3F1F] text-sm truncate">{r.name}</p>
                         {isDealer && r.shop_name && <p className="text-xs text-[#7A8C7E] truncate">{r.shop_name}</p>}
                         {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{tDetail('kmAway', { km: r.distance_km })}</p>}
                         {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">{tDetail('promoterBadge')}</span>}
+                        {lat != null && lng != null && (
+                          <a href={googleMapsDirections(lat, lng)}
+                            target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-[#3A7D44] font-medium mt-1">
+                            <span aria-hidden>📍</span>{tCommon('map.directionsBtn')}
+                          </a>
+                        )}
                       </div>
                       <button onClick={() => requestSend(r, isDealer)}
                         disabled={!!sending}
