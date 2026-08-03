@@ -387,7 +387,19 @@
   },
   "header": {
     "aboutRootsTalk": "About rootsTALK",
-    "selectLanguage": "Select language"
+    "selectLanguage": "Select language",
+    "sharePwaQr": "Share rootsTALK.in"
+  },
+  "shareQr": {
+    "pageTitle": "Share rootsTALK.in",
+    "scanHint": "Have the farmer scan this with their camera to open rootsTALK.in",
+    "urlLine": "rootstalk.in",
+    "shareTagline": "RootsTalk connects farmers, dealers, facilitators and subject experts into one living crop-advisory network. Scan the QR code to join.",
+    "shareBtn": "Share",
+    "saveBtn": "Save image",
+    "copiedToast": "Link copied",
+    "savedToast": "Image saved",
+    "shareUnavailable": "Sharing isn't supported on this device — use Save image instead."
   },
   "about": {
     "tagline": "Your agricultural advisory network — connecting farmers, experts, and companies across India.",

@@ -152,6 +152,14 @@ export default function PWAHeader({
               <span className="text-[#D4682E] text-sm font-bold">{urgencyBadges.returned}</span>
             </div>
           )}
+          <button
+            onClick={() => router.push('/share')}
+            aria-label={tHeader('sharePwaQr')}
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/30 text-white active:bg-white/20">
+            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden>
+              <path d="M3 3h7v7H3V3zm2 2v3h3V5H5zm9-2h7v7h-7V3zm2 2v3h3V5h-3zM3 14h7v7H3v-7zm2 2v3h3v-3H5zm11-2h2v2h-2v-2zm3 0h2v2h-2v-2zm-3 3h2v2h-2v-2zm3 0h2v2h-2v-2zm-3 3h2v2h-2v-2zm3 0h2v2h-2v-2z"/>
+            </svg>
+          </button>
           <button onClick={() => setShowLang(!showLang)}
             className="text-white text-xs border border-white/30 rounded-full px-2.5 py-1 font-medium">
             {currentLang.toUpperCase()}
