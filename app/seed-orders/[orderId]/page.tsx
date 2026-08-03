@@ -45,6 +45,7 @@ interface Recipient {
   shop_address?: string | null
   distance_km?: number
   is_promoter?: boolean
+  is_training_dealer?: boolean
   shop_gps_lat?: number
   shop_gps_lng?: number
   gps_lat?: number
@@ -512,6 +513,7 @@ export default function FarmerSeedOrderDetailPage() {
                         <p className="font-semibold text-[#6B3F1F] text-sm truncate">{r.name}</p>
                         {isDealer && r.shop_name && <p className="text-xs text-[#7A8C7E] truncate">{r.shop_name}</p>}
                         {typeof r.distance_km === 'number' && <p className="text-xs text-[#7A8C7E]">{tDetail('kmAway', { km: r.distance_km })}</p>}
+                        {r.is_training_dealer && <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded-full font-medium">{tCommon('trainingDealerBadge')}</span>}
                         {r.is_promoter && <span className="text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded-full font-medium">{tDetail('promoterBadge')}</span>}
                         {lat != null && lng != null && (
                           <a href={googleMapsDirections(lat, lng)}

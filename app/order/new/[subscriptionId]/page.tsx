@@ -14,6 +14,7 @@ import api from '@/lib/api'
 
 interface Person {
   user_id: string; name: string | null; phone: string | null; distance_km: number; is_promoter: boolean
+  is_training_dealer?: boolean
   shop_name?: string | null; shop_address?: string | null; sell_categories?: string[]
   shop_gps_lat?: number; shop_gps_lng?: number
   gps_lat?: number; gps_lng?: number
@@ -302,6 +303,9 @@ export default function OrderingScreenPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
               <p className="font-bold text-[#6B3F1F]">{(isDealer ? person.shop_name : null) || person.name || tOrdersCommon('unknownRecipient')}</p>
+              {person.is_training_dealer && (
+                <span className="text-xs bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded-full font-medium">{tOrdersCommon('trainingDealerBadge')}</span>
+              )}
               {person.is_promoter && (
                 <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">{tOrdersCommon('promoterBadge')}</span>
               )}

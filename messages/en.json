@@ -1108,6 +1108,7 @@
     "common": {
       "unknownRecipient": "Unknown",
       "promoterBadge": "Your Promoter",
+      "trainingDealerBadge": "Training",
       "distanceKm": "{km, plural, =0 {< 1 km away} other {# km away}}",
       "send": "Send →",
       "callBtn": "📞 Call",
