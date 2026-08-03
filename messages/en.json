@@ -1990,7 +1990,8 @@
         "viewMap": "📍 View on Map",
         "accuracyGood": "📍 Accurate to about {metres} m. Looks good.",
         "accuracyOk": "📍 Accurate to about {metres} m. OK, but step outside and recapture if your shop entrance is across the road.",
-        "accuracyPoor": "⚠ Accuracy is poor (about {metres} m). Please step outside and tap Recapture — a rooftop view of the sky gives a far better fix."
+        "accuracyPoor": "⚠ Accuracy is poor (about {metres} m). Please step outside and tap Recapture — a rooftop view of the sky gives a far better fix.",
+        "autoSaved": "✓ Location saved"
       },
       "sellCard": {
         "title": "What Do You Sell? *",

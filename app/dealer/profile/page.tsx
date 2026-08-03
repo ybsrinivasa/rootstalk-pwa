@@ -62,6 +62,7 @@ export default function DealerProfilePage() {
   const [saved, setSaved] = useState(false)
   const [gpsLoading, setGpsLoading] = useState(false)
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null)
+  const [gpsAutoSaved, setGpsAutoSaved] = useState(false)
   const [uploadingField, setUploadingField] = useState<string | null>(null)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -96,16 +97,33 @@ export default function DealerProfilePage() {
     }))
   }
 
+  // Mirrors the missingFields check below — the auto-save on
+  // recapture skips the PUT when any mandatory field is missing
+  // (the backend would 422 and the dealer wouldn't see it).
+  function isProfileCompleteFor(f: FormState): boolean {
+    return !!(
+      f.shop_name.trim() &&
+      f.shop_address.trim() &&
+      f.sell_categories.length > 0 &&
+      f.shop_gps_lat != null && f.shop_gps_lng != null &&
+      f.shop_registration_url.trim() &&
+      f.shop_photo_url.trim()
+    )
+  }
+
   function captureShopGps() {
     if (!navigator.geolocation) return
     setGpsLoading(true)
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        setForm(f => ({
-          ...f,
+      async pos => {
+        // Compose the new form inline so both the state update AND
+        // the auto-save PUT see the fresh coords (setForm is async).
+        const nextForm: FormState = {
+          ...form,
           shop_gps_lat: pos.coords.latitude,
           shop_gps_lng: pos.coords.longitude,
-        }))
+        }
+        setForm(nextForm)
         // coords.accuracy is the 68% confidence radius in metres
         // per W3C Geolocation. We surface it so the dealer can
         // judge whether to retry from outdoors. The reading isn't
@@ -113,6 +131,20 @@ export default function DealerProfilePage() {
         // not a stored attribute of the shop.
         setGpsAccuracy(typeof pos.coords.accuracy === 'number' ? pos.coords.accuracy : null)
         setGpsLoading(false)
+        // Auto-save if the rest of the profile is already complete.
+        // Dealers were repeatedly recapturing GPS then forgetting to
+        // tap Save at the bottom of the scroll — silent save fixes
+        // it without changing behaviour when other fields are still
+        // pending (in which case the Save button gates it as before).
+        if (isProfileCompleteFor(nextForm)) {
+          try {
+            setSaving(true)
+            await api.put('/dealer/profile', nextForm)
+            setGpsAutoSaved(true)
+            setTimeout(() => setGpsAutoSaved(false), 2500)
+          } catch { /* swallow — user can retry via Save button */ }
+          finally { setSaving(false) }
+        }
       },
       () => setGpsLoading(false),
       { enableHighAccuracy: true, timeout: 10000 },
@@ -315,11 +347,14 @@ export default function DealerProfilePage() {
                   </p>
                   <p className="text-xs text-[#7D4196] mt-0.5">{t('gpsCard.captured')}</p>
                 </div>
-                <button onClick={captureShopGps} disabled={gpsLoading}
+                <button onClick={captureShopGps} disabled={gpsLoading || saving}
                   className="text-xs text-[#7A8C7E] border border-[#DDD0B8] rounded-lg px-3 py-1.5">
                   {gpsLoading ? t('gpsCard.gettingShort') : t('gpsCard.recapture')}
                 </button>
               </div>
+              {gpsAutoSaved && (
+                <p className="text-xs text-green-700 mt-1">{t('gpsCard.autoSaved')}</p>
+              )}
               {gpsAccuracy != null && (() => {
                 const m = Math.round(gpsAccuracy)
                 const good = m <= GPS_ACCURACY_GOOD_METRES
