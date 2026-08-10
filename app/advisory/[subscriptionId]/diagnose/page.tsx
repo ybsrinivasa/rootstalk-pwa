@@ -182,7 +182,11 @@ export default function DiagnosisPage() {
   // above them. Terminal states (outside_list, aborted) fold to the
   // nearest sensible previous screen.
   async function goBack() {
-    const goToDashboard = () => router.push(`/advisory/${subscriptionId}`)
+    // 2026-08-11 — the diagnose page lives at /advisory/[sid]/diagnose
+    // so its "parent" URL is the advisory screen. Farmers reach it
+    // from the Crop Dashboard, though, so back from the initial
+    // screen skips advisory and lands on the dashboard itself.
+    const goToDashboard = () => router.push(`/crop-detail/${subscriptionId}`)
 
     if (stage === 'select_stage') {
       goToDashboard()
@@ -273,6 +277,34 @@ export default function DiagnosisPage() {
     // Fallback — leave the page.
     goToDashboard()
   }
+
+  // 2026-08-11 — Device / browser back button trap.
+  // Without this, tapping the Android back button (or the browser's
+  // back arrow) leaves the page abruptly and lands on advisory/crop-
+  // dashboard, defeating the whole state-machine back design above.
+  // We push a sentinel history entry on mount so a device-back fires
+  // popstate ON our page, then run goBack() from the handler. If
+  // goBack navigates away (router.push), this component unmounts and
+  // the listener is cleaned up automatically.
+  //
+  // goBackRef keeps the closure fresh across renders without re-arming
+  // the popstate listener on every state change.
+  const goBackRef = useRef(goBack)
+  goBackRef.current = goBack
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.history.pushState({ diagnoseSentinel: true }, '')
+    const onPop = () => {
+      // Re-push the sentinel so a rapid second-back doesn't leak out
+      // of the trap before goBack finishes deciding where to land.
+      window.history.pushState({ diagnoseSentinel: true }, '')
+      void goBackRef.current()
+    }
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+    }
+  }, [])
 
   async function loadCropStages(crop_cosh_id: string) {
     try {
