@@ -172,6 +172,108 @@ export default function DiagnosisPage() {
     router.push(`/ask-expert/${subscriptionId}`)
   }
 
+  // Back navigation for the whole Diagnosis flow (2026-08-11 redesign):
+  //   Problem            → last symptom node (rewind 1)
+  //   Any symptom node   → first symptom node (rewind all)
+  //   First symptom node → Plant Parts
+  //   Plant Parts        → Crop Stage (skip the auto/self picker)
+  //   Crop Stage         → Crop Dashboard (leave the page)
+  // Transient screens (select_method, ai_*) fall back to the picker
+  // above them. Terminal states (outside_list, aborted) fold to the
+  // nearest sensible previous screen.
+  async function goBack() {
+    const goToDashboard = () => router.push(`/advisory/${subscriptionId}`)
+
+    if (stage === 'select_stage') {
+      goToDashboard()
+      return
+    }
+    if (
+      stage === 'select_method'
+      || stage === 'ai_capture'
+      || stage === 'ai_needs_expert'
+      || stage === 'know_problem'
+    ) {
+      setAiImages([])
+      setImageAnalysis(null)
+      setStage('select_stage')
+      return
+    }
+    if (stage === 'select_part') {
+      // Skip the method picker — go straight to the stage picker.
+      setStage('select_stage')
+      return
+    }
+    if (
+      (stage === 'questioning' || stage === 'confirming' || stage === 'outside_list')
+      && sessionId
+    ) {
+      // In symptom-land. If we're already at the first question (no
+      // history), go back to plant-part picker; otherwise collapse to
+      // the first question via the rewind endpoint (fresh symptom
+      // traversal without re-picking the plant part).
+      if (questionHistory.length === 0) {
+        setSessionId(null)
+        setCurrentQuestion(null)
+        setQuestionHistory([])
+        setStage('select_part')
+        return
+      }
+      try {
+        const { data } = await api.post<DiagnosisStep>(
+          `/diagnosis/${sessionId}/rewind`,
+          { steps: questionHistory.length },
+        )
+        setCurrentQuestion(data.question || null)
+        setQuestionHistory([])
+        setDiagnosis(null)
+        setStage(data.question ? 'questioning' : 'select_part')
+      } catch {
+        // If rewind fails, fall back to a clean restart at plant-part.
+        setSessionId(null)
+        setCurrentQuestion(null)
+        setQuestionHistory([])
+        setStage('select_part')
+      }
+      return
+    }
+    if (stage === 'diagnosed' && sessionId) {
+      // Back from Problem → last symptom node. Rewind 1 to bring the
+      // last-answered question back on screen for re-answer.
+      if (questionHistory.length === 0) {
+        // AI-direct diagnosis path (or CONFIRMATION at start) — no
+        // questions were answered, so "back" folds to plant-part.
+        setDiagnosis(null)
+        setCurrentQuestion(null)
+        setStage('select_part')
+        return
+      }
+      try {
+        const { data } = await api.post<DiagnosisStep>(
+          `/diagnosis/${sessionId}/rewind`,
+          { steps: 1 },
+        )
+        setCurrentQuestion(data.question || null)
+        setQuestionHistory(h => h.slice(0, -1))
+        setDiagnosis(null)
+        setStage(data.question ? 'questioning' : 'select_part')
+      } catch {
+        setSessionId(null)
+        setCurrentQuestion(null)
+        setQuestionHistory([])
+        setDiagnosis(null)
+        setStage('select_part')
+      }
+      return
+    }
+    if (stage === 'aborted') {
+      setStage('select_stage')
+      return
+    }
+    // Fallback — leave the page.
+    goToDashboard()
+  }
+
   async function loadCropStages(crop_cosh_id: string) {
     try {
       const { data } = await api.get<CropStage[]>(
@@ -528,7 +630,7 @@ export default function DiagnosisPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={`/advisory/${subscriptionId}`} />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={{ onClick: goBack }} />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>
@@ -558,7 +660,7 @@ export default function DiagnosisPage() {
                 ))}
               </div>
             )}
-            <button onClick={() => router.back()}
+            <button onClick={goBack}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
               {t('stagePicker.cancel')}
             </button>
@@ -604,7 +706,7 @@ export default function DiagnosisPage() {
                 </div>
               </div>
             </button>
-            <button onClick={() => { setSelectedStage(null); setStage('select_stage') }}
+            <button onClick={goBack}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
               {t('methodPicker.backToStage')}
             </button>
@@ -729,13 +831,7 @@ export default function DiagnosisPage() {
                 ))}
               </div>
             )}
-            <button onClick={() => {
-                if (stages.length > 0) {
-                  setStage('select_method')
-                } else {
-                  router.back()
-                }
-              }}
+            <button onClick={goBack}
               className="w-full py-3 border border-[#DDD0B8] text-[#6B3F1F] rounded-2xl text-sm">
               {stages.length > 0 ? t('partPicker.back') : t('stagePicker.cancel')}
             </button>
