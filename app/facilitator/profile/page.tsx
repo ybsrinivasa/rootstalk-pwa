@@ -21,6 +21,7 @@ interface OnboardingClient {
   logo_url: string | null
   primary_colour: string | null
   is_promoter: boolean
+  promoter_request_status: 'NONE' | 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'STEPDOWN_REQUESTED'
   onboarded_at: string
 }
 
@@ -30,6 +31,10 @@ interface CompanySummary {
   client_colour: string
   farmer_count: number
   is_promoter: boolean
+  // 2026-08-10 — same STEPDOWN_REQUESTED lifecycle as the dedicated
+  // onboarded-companies page. When set, the button becomes a pending
+  // pill so the user knows the ball's in the company's court.
+  promoter_request_status: 'NONE' | 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'STEPDOWN_REQUESTED'
   client_promoter_id: string  // for the "Step down" button on the Promoter card
 }
 
@@ -87,6 +92,7 @@ export default function FacilitatorProfilePage() {
       client_colour: c.primary_colour || COLOUR,
       farmer_count: farmerCountByClient[c.client_id] || 0,
       is_promoter: c.is_promoter,
+      promoter_request_status: c.promoter_request_status,
     })))
     setInvitations(pending)
   }
@@ -267,7 +273,12 @@ export default function FacilitatorProfilePage() {
                     </div>
                     <p className="text-xs text-[#7A8C7E]">{t('farmerCount', { count: c.farmer_count })}</p>
                   </div>
-                  {c.is_promoter && (
+                  {c.is_promoter && c.promoter_request_status === 'STEPDOWN_REQUESTED' && (
+                    <span className="text-[11px] text-amber-800 bg-amber-50 border border-amber-300 px-2 py-1 rounded-full flex-shrink-0">
+                      {t('stepDownPending')}
+                    </span>
+                  )}
+                  {c.is_promoter && c.promoter_request_status !== 'STEPDOWN_REQUESTED' && (
                     <button
                       onClick={() => stepDownAsPromoter(c.client_promoter_id)}
                       disabled={actingId === c.client_promoter_id}

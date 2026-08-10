@@ -15,6 +15,9 @@ interface OnboardingClient {
   logo_url: string | null
   primary_colour: string | null
   is_promoter: boolean
+  // 2026-08-10 — see facilitator/onboarded-companies for the
+  // STEPDOWN_REQUESTED pending-pill treatment.
+  promoter_request_status: 'NONE' | 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'STEPDOWN_REQUESTED'
   website: string | null
   phone: string | null
   onboarded_at: string
@@ -127,7 +130,12 @@ export default function DealerOnboardedCompaniesPage() {
                         </svg>
                       </a>
                     )}
-                    {c.is_promoter && (
+                    {c.is_promoter && c.promoter_request_status === 'STEPDOWN_REQUESTED' && (
+                      <span className="ml-auto text-xs font-medium px-3 py-2 rounded-lg border bg-amber-50 border-amber-300 text-amber-800">
+                        {t('stepDownPending')}
+                      </span>
+                    )}
+                    {c.is_promoter && c.promoter_request_status !== 'STEPDOWN_REQUESTED' && (
                       <button onClick={() => stepDown(c.client_promoter_id)}
                         disabled={actingId === c.client_promoter_id}
                         className="ml-auto text-xs font-medium px-3 py-2 rounded-lg border disabled:opacity-50"
