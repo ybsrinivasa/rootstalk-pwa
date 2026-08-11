@@ -560,7 +560,12 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   // 2026-06-20 — EXPIRED added: an order whose window lapsed without
   // farmer-receipt is terminal too. Pre-fix it leaked into Routed and
   // its tap-target crashed (user report).
-  if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(o.status)) {
+  // 2026-08-11 — COMPLETED added: a fully-delivered order was leaking
+  // into the Routed pill (awaiting=0, returned=0, pickup=0 → all
+  // false, so the routed switch matched) and mis-implied that it was
+  // still in flight. History already treats COMPLETED as a positive
+  // terminal (see history/page.tsx:51).
+  if (['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(o.status)) {
     return false
   }
 
