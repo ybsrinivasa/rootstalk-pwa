@@ -142,14 +142,21 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
     !!user?.facilitator_declared_at
 
   function isBlockedByExclusivity(candidate: string): 'DEALER' | 'FACILITATOR' | null {
-    // "Already holds candidate role" check is STRICT — only userRoles
-    // satisfies it. If the legacy/widened signal (declared_at,
-    // dealer_profile_complete) were enough, a user with leftover
-    // facilitator_declared_at but no current FACILITATOR role would
-    // early-return as null on candidate=FACILITATOR, defeating the
-    // dealer-side block. The drawer's roleIsSetUp also gates on
-    // userRoles, so this stays consistent with the row label.
-    if (userRoles.includes(candidate)) return null
+    // "Already holds candidate role" bypass only applies when the
+    // candidate role is FULLY SET UP. If it's granted (userRoles has
+    // it) but not yet complete (facilitator_declared_at is null OR
+    // dealer_profile_complete is false), the exclusivity block still
+    // applies — otherwise a legacy dual-role user sees "Set up →"
+    // for a role that conflicts with the one they already run.
+    // The old strict check (userRoles.includes alone) let YB's case
+    // through: DEALER complete + FACILITATOR user_role present but
+    // facilitator_declared_at null → drawer nudged him to set up
+    // Facilitator even though Dealer + Facilitator is disallowed.
+    const candidateIsComplete =
+      (candidate === 'FACILITATOR' && !!user?.facilitator_declared_at) ||
+      (candidate === 'DEALER' && user?.dealer_profile_complete === true) ||
+      (candidate === 'FARM_PUNDIT' && userRoles.includes('FARM_PUNDIT'))
+    if (candidateIsComplete) return null
     // "Conflicting role exists" check is LENIENT — any signal of the
     // other role triggers the block, including the legacy signals.
     if (candidate === 'DEALER' && isEffectiveFacilitator) return 'FACILITATOR'
