@@ -181,12 +181,33 @@ export default function DiagnosisPage() {
   // Transient screens (select_method, ai_*) fall back to the picker
   // above them. Terminal states (outside_list, aborted) fold to the
   // nearest sensible previous screen.
+  //
+  // Re-entry guard: mobile browsers can occasionally fire popstate
+  // twice for a single tap, and the async /rewind branches leave a
+  // window where a second call would race the first. `goingBackRef`
+  // swallows any re-entry while a goBack is in flight.
+  const goingBackRef = useRef(false)
   async function goBack() {
+    if (goingBackRef.current) return
+    goingBackRef.current = true
+    try {
+      await runGoBack()
+    } finally {
+      goingBackRef.current = false
+    }
+  }
+
+  async function runGoBack() {
     // 2026-08-11 — the diagnose page lives at /advisory/[sid]/diagnose
     // so its "parent" URL is the advisory screen. Farmers reach it
     // from the Crop Dashboard, though, so back from the initial
     // screen skips advisory and lands on the dashboard itself.
     const goToDashboard = () => router.push(`/crop-detail/${subscriptionId}`)
+
+    // Reset any transient loading / answering flags so a mid-action
+    // back tap doesn't leave the target screen showing a stale spinner.
+    setAnswering(false)
+    setLoading(false)
 
     if (stage === 'select_stage') {
       goToDashboard()
@@ -220,6 +241,7 @@ export default function DiagnosisPage() {
         setSessionId(null)
         setCurrentQuestion(null)
         setQuestionHistory([])
+        setDiagnosis(null)
         setStage('select_part')
         return
       }
@@ -228,15 +250,15 @@ export default function DiagnosisPage() {
           `/diagnosis/${sessionId}/rewind`,
           { steps: questionHistory.length },
         )
-        setCurrentQuestion(data.question || null)
         setQuestionHistory([])
         setDiagnosis(null)
-        setStage(data.question ? 'questioning' : 'select_part')
+        applyStepStatus(data)
       } catch {
         // If rewind fails, fall back to a clean restart at plant-part.
         setSessionId(null)
         setCurrentQuestion(null)
         setQuestionHistory([])
+        setDiagnosis(null)
         setStage('select_part')
       }
       return
@@ -257,10 +279,9 @@ export default function DiagnosisPage() {
           `/diagnosis/${sessionId}/rewind`,
           { steps: 1 },
         )
-        setCurrentQuestion(data.question || null)
         setQuestionHistory(h => h.slice(0, -1))
         setDiagnosis(null)
-        setStage(data.question ? 'questioning' : 'select_part')
+        applyStepStatus(data)
       } catch {
         setSessionId(null)
         setCurrentQuestion(null)
@@ -295,10 +316,20 @@ export default function DiagnosisPage() {
     if (typeof window === 'undefined') return
     window.history.pushState({ diagnoseSentinel: true }, '')
     const onPop = () => {
-      // Re-push the sentinel so a rapid second-back doesn't leak out
-      // of the trap before goBack finishes deciding where to land.
-      window.history.pushState({ diagnoseSentinel: true }, '')
-      void goBackRef.current()
+      try {
+        // Re-push the sentinel so a rapid second-back doesn't leak out
+        // of the trap before goBack finishes deciding where to land.
+        window.history.pushState({ diagnoseSentinel: true }, '')
+        goBackRef.current().catch(err => {
+          // Swallow — the goBack branches already fall back to a safe
+          // screen on error, but an unhandled rejection here would
+          // otherwise reach window.onerror and manifest as a "crash"
+          // white screen on some mobile browsers.
+          console.warn('[diagnose] goBack failed:', err)
+        })
+      } catch (err) {
+        console.warn('[diagnose] popstate handler failed:', err)
+      }
     }
     window.addEventListener('popstate', onPop)
     return () => {
