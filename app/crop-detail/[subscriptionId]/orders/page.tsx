@@ -83,6 +83,11 @@ type SubOrder = {
   // as a batch the farmer can Forward or Discard. Populates the
   // Returned pill and unlocks the "Don't need these now" action.
   is_returned_to_farmer?: boolean
+  // 2026-08-11 — 30s heartbeat lease from the dealer PWA. When set
+  // and in the future, the dealer is actively viewing the order —
+  // the farmer's cancel handler short-circuits the confirm dialog
+  // and shows "The dealer has opened your order..." directly.
+  dealer_viewing_until?: string | null
   // 2026-08-11 — Outgoing-recipient context ("Cancelled by you · from
   // X") for the returned-DRAFT card. Null on every other order shape.
   released_from_recipient_name?: string | null
@@ -692,6 +697,19 @@ function ManageTab({
   const load = reload
 
   async function cancel(orderId: string, kind: 'REGULAR' | 'SEED') {
+    // 2026-08-11 — Client-side dealer-presence pre-check. If the
+    // dealer's 30s heartbeat lease is still in the future per the
+    // last list fetch, short-circuit the confirm dialog and tell the
+    // farmer directly. Server-side 409 stays as the authoritative
+    // fallback for the case where the dealer starts viewing between
+    // our list fetch and the cancel tap (surfaces via surfaceApiError
+    // in the catch below).
+    const sub = (orders || []).find(o => o.id === orderId)
+    const dealerUntil = sub?.dealer_viewing_until
+    if (dealerUntil && new Date(dealerUntil) > new Date()) {
+      alert('The dealer has opened your order for processing. Please wait.')
+      return
+    }
     // 2026-08-11 — Cancel-migrate (Model B). Release the dealer;
     // pending / postponed items come back to the farmer as a returned
     // batch on the Returned pill. From there the farmer chooses to
