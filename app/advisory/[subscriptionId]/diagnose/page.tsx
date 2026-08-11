@@ -314,16 +314,19 @@ export default function DiagnosisPage() {
   goBackRef.current = goBack
   useEffect(() => {
     if (typeof window === 'undefined') return
-    // 2026-08-11 — sentinel URLs must be DISTINCT per push, else
-    // Chrome/Android occasionally coalesces consecutive same-URL
-    // history entries and the second device-back jumps past our trap
-    // to the previous page (feels like a "crash" to the user because
-    // they're abruptly off the diagnose flow). We add a monotonic
-    // hash suffix so each sentinel is its own history record.
+    // 2026-08-11 — hash-only sentinel entries didn't survive desktop
+    // Chrome's back button (the second click jumped past all our
+    // #d1/#d2/… entries in one action and dropped the user on the
+    // Chrome new-tab page). Query-param sentinels are treated as
+    // fully distinct URLs and are not coalesced. `_diag_step` is a
+    // reserved param the diagnose page ignores — Next.js router
+    // isn't invoked by raw pushState so no routing side-effects.
     let seq = 0
     const pushSentinel = () => {
       seq += 1
-      const url = `${window.location.pathname}${window.location.search}#d${seq}`
+      const params = new URLSearchParams(window.location.search)
+      params.set('_diag_step', String(seq))
+      const url = `${window.location.pathname}?${params.toString()}`
       window.history.pushState({ diagnoseSentinel: seq }, '', url)
     }
     pushSentinel()
