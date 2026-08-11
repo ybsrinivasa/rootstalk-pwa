@@ -575,12 +575,18 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   // 2026-06-20 — EXPIRED added: an order whose window lapsed without
   // farmer-receipt is terminal too. Pre-fix it leaked into Routed and
   // its tap-target crashed (user report).
-  // 2026-08-11 — COMPLETED added: a fully-delivered order was leaking
-  // into the Routed pill (awaiting=0, returned=0, pickup=0 → all
-  // false, so the routed switch matched) and mis-implied that it was
-  // still in flight. History already treats COMPLETED as a positive
-  // terminal (see history/page.tsx:51).
-  if (['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(o.status)) {
+  if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(o.status)) {
+    return false
+  }
+  // 2026-08-11 — COMPLETED is "approval work done" — order status flips
+  // once every item is APPROVED. But the farmer may still need to pick
+  // items up. So COMPLETED belongs on the Pickup pill (until pickup is
+  // confirmed and pickup_ready_count drops to 0), NOT on Routed /
+  // Approval / Returned. Earlier fix put it in the outright-terminal
+  // list, which sent pickup-pending orders to the Received tab — wrong
+  // surface, farmer looks under Received for something they haven't
+  // received yet.
+  if (o.status === 'COMPLETED' && pill !== 'pickup') {
     return false
   }
 
