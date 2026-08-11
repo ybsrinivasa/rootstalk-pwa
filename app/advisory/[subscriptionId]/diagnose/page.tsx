@@ -314,17 +314,23 @@ export default function DiagnosisPage() {
   goBackRef.current = goBack
   useEffect(() => {
     if (typeof window === 'undefined') return
-    window.history.pushState({ diagnoseSentinel: true }, '')
+    // 2026-08-11 — sentinel URLs must be DISTINCT per push, else
+    // Chrome/Android occasionally coalesces consecutive same-URL
+    // history entries and the second device-back jumps past our trap
+    // to the previous page (feels like a "crash" to the user because
+    // they're abruptly off the diagnose flow). We add a monotonic
+    // hash suffix so each sentinel is its own history record.
+    let seq = 0
+    const pushSentinel = () => {
+      seq += 1
+      const url = `${window.location.pathname}${window.location.search}#d${seq}`
+      window.history.pushState({ diagnoseSentinel: seq }, '', url)
+    }
+    pushSentinel()
     const onPop = () => {
       try {
-        // Re-push the sentinel so a rapid second-back doesn't leak out
-        // of the trap before goBack finishes deciding where to land.
-        window.history.pushState({ diagnoseSentinel: true }, '')
+        pushSentinel()
         goBackRef.current().catch(err => {
-          // Swallow — the goBack branches already fall back to a safe
-          // screen on error, but an unhandled rejection here would
-          // otherwise reach window.onerror and manifest as a "crash"
-          // white screen on some mobile browsers.
           console.warn('[diagnose] goBack failed:', err)
         })
       } catch (err) {
