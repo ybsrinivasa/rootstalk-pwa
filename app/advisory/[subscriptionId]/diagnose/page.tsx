@@ -299,52 +299,22 @@ export default function DiagnosisPage() {
     goToDashboard()
   }
 
-  // 2026-08-11 — Device / browser back button trap.
-  // Without this, tapping the Android back button (or the browser's
-  // back arrow) leaves the page abruptly and lands on advisory/crop-
-  // dashboard, defeating the whole state-machine back design above.
-  // We push a sentinel history entry on mount so a device-back fires
-  // popstate ON our page, then run goBack() from the handler. If
-  // goBack navigates away (router.push), this component unmounts and
-  // the listener is cleaned up automatically.
+  // 2026-08-11 — Two-buttons-two-behaviours (deliberate):
+  //   Device / browser back button → leaves the flow to the previous
+  //     page (Crop Dashboard, since that's where the farmer came from
+  //     when they tapped Diagnose). Fast escape, no retracing.
+  //   PWA header back arrow → runs the state-machine goBack (Problem
+  //     → last symptom → first symptom → Plant Parts → Crop Stage →
+  //     Crop Dashboard). Careful retracing.
   //
-  // goBackRef keeps the closure fresh across renders without re-arming
-  // the popstate listener on every state change.
-  const goBackRef = useRef(goBack)
-  goBackRef.current = goBack
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    // 2026-08-11 — hash-only sentinel entries didn't survive desktop
-    // Chrome's back button (the second click jumped past all our
-    // #d1/#d2/… entries in one action and dropped the user on the
-    // Chrome new-tab page). Query-param sentinels are treated as
-    // fully distinct URLs and are not coalesced. `_diag_step` is a
-    // reserved param the diagnose page ignores — Next.js router
-    // isn't invoked by raw pushState so no routing side-effects.
-    let seq = 0
-    const pushSentinel = () => {
-      seq += 1
-      const params = new URLSearchParams(window.location.search)
-      params.set('_diag_step', String(seq))
-      const url = `${window.location.pathname}?${params.toString()}`
-      window.history.pushState({ diagnoseSentinel: seq }, '', url)
-    }
-    pushSentinel()
-    const onPop = () => {
-      try {
-        pushSentinel()
-        goBackRef.current().catch(err => {
-          console.warn('[diagnose] goBack failed:', err)
-        })
-      } catch (err) {
-        console.warn('[diagnose] popstate handler failed:', err)
-      }
-    }
-    window.addEventListener('popstate', onPop)
-    return () => {
-      window.removeEventListener('popstate', onPop)
-    }
-  }, [])
+  // Earlier we tried to hijack popstate to force retracing on device-
+  // back too, first with hash sentinels and then with query-param
+  // sentinels. Desktop Chrome kept coalescing consecutive sentinel
+  // entries and bulk-popping past the trap on the second click,
+  // dropping the user on chrome://newtab. Rather than fight the
+  // browser we now embrace the two-behaviour design — most users
+  // tap the app back when they want to navigate within the flow and
+  // reach for device back when they want to escape.
 
   async function loadCropStages(crop_cosh_id: string) {
     try {
