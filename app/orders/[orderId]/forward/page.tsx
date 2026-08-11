@@ -57,10 +57,15 @@ interface EligibleRecipientsResult {
 
 interface ForwardOrder {
   id: string
+  status: string
   subscription_id: string
   category?: string | null
   returned_items?: { id: string }[]
   postponed_items?: { id: string }[]
+  // 2026-08-11 — Cancel-migrate marker (Model B). TRUE on DRAFTs the
+  // farmer produced by cancelling an earlier dealer engagement; this
+  // page then commits via PUT /send instead of POST /reroute-returned.
+  is_returned_to_farmer?: boolean
 }
 
 export default function FarmerForwardPage() {
@@ -118,7 +123,13 @@ export default function FarmerForwardPage() {
         setOrder(orderRes.value.data)
         const returnedN = orderRes.value.data.returned_items?.length || 0
         const postponedN = orderRes.value.data.postponed_items?.length || 0
-        if (postponedN > 0 && returnedN === 0) {
+        // 2026-08-11 — Cancel-migrate DRAFTs skip the postpone nudge
+        // entirely — every item on the DRAFT is fresh PENDING, no
+        // include-postponed choice to make. Force the gate open so
+        // Send Order buttons on the recipient list are tappable.
+        if (orderRes.value.data.is_returned_to_farmer) {
+          setIncludePostponed(false)
+        } else if (postponedN > 0 && returnedN === 0) {
           // Postpone-only path: auto-include (no choice to make).
           setIncludePostponed(true)
         } else if (postponedN === 0) {
@@ -197,14 +208,20 @@ export default function FarmerForwardPage() {
     const target = pendingForward
     setPendingForward(null)
     try {
-      const { data } = await api.post<{ new_draft_order_id: string }>(
-        `/farmer/orders/${order.id}/reroute-returned`,
-        { include_postponed: includePostponed },
-      )
       const payload = target.isDealer
         ? { dealer_user_id: target.user_id }
         : { facilitator_user_id: target.user_id }
-      await api.put(`/farmer/orders/${data.new_draft_order_id}/send`, payload)
+      // 2026-08-11 — Cancel-migrate DRAFTs already ARE the fresh DRAFT
+      // that /reroute-returned would create; skip the reroute call and
+      // send the DRAFT directly. The NA-items reroute case (source
+      // still SENT/PROCESSING) still needs the two-step flow.
+      const sendTargetId = order.is_returned_to_farmer
+        ? order.id
+        : (await api.post<{ new_draft_order_id: string }>(
+            `/farmer/orders/${order.id}/reroute-returned`,
+            { include_postponed: includePostponed },
+          )).data.new_draft_order_id
+      await api.put(`/farmer/orders/${sendTargetId}/send`, payload)
       router.replace(backHref)
     } catch (err: unknown) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
@@ -344,7 +361,13 @@ export default function FarmerForwardPage() {
       </div>
     )
   }
-  if ((order.returned_items?.length || 0) + (order.postponed_items?.length || 0) === 0) {
+  if (
+    !order.is_returned_to_farmer &&
+    (order.returned_items?.length || 0) + (order.postponed_items?.length || 0) === 0
+  ) {
+    // 2026-08-11 — Cancel-migrate DRAFTs have no returned/postponed
+    // items (every item on the DRAFT is fresh PENDING) but the whole
+    // batch is still forwardable — skip the empty guard for that case.
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
         <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />

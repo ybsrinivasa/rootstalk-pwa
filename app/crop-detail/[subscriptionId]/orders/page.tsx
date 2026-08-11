@@ -78,6 +78,16 @@ type SubOrder = {
   // returned-items strip suppression on this tab — see the
   // `returnedN > 0` block below.
   facilitator_user_id?: string | null
+  // 2026-08-11 — Cancel-migrate marker (Model B). TRUE on DRAFT rows
+  // created when the farmer taps Cancel Order — the items come back
+  // as a batch the farmer can Forward or Discard. Populates the
+  // Returned pill and unlocks the "Don't need these now" action.
+  is_returned_to_farmer?: boolean
+  // 2026-08-11 — Outgoing-recipient context ("Cancelled by you · from
+  // X") for the returned-DRAFT card. Null on every other order shape.
+  released_from_recipient_name?: string | null
+  released_from_recipient_shop_name?: string | null
+  released_from_recipient_role?: 'DEALER' | 'FACILITATOR' | null
 }
 
 type DBSPreview = {
@@ -570,6 +580,13 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   }
 
   if (o.kind === 'SEED') {
+    // 2026-08-11 — A seed DRAFT with is_returned_to_farmer=true was
+    // moved back to the farmer by their own cancel; belongs on the
+    // Returned pill, NOT Routed, so the forward-or-discard prompt is
+    // visible there.
+    if (o.status === 'DRAFT' && o.is_returned_to_farmer) {
+      return pill === 'returned'
+    }
     // Seed lifecycle uses status directly (no per-item counts).
     switch (pill) {
       case 'routed':
@@ -586,6 +603,15 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
         // closes the order — whichever taps first wins.
         return o.status === 'READY_FOR_PICKUP'
     }
+  }
+
+  // 2026-08-11 — Cancel-migrate DRAFT (Model B, pesticide/fert).
+  // The DRAFT carries the items the farmer released from a cancelled
+  // dealer engagement and belongs exclusively on the Returned pill —
+  // NOT Routed — so the whole-batch forward/discard prompt is the
+  // visible action.
+  if (o.status === 'DRAFT' && o.is_returned_to_farmer) {
+    return pill === 'returned'
   }
 
   const awaiting = o.awaiting_approval_count ?? 0
@@ -666,23 +692,22 @@ function ManageTab({
   const load = reload
 
   async function cancel(orderId: string, kind: 'REGULAR' | 'SEED') {
-    // 2026-06-21 — Both regular and seed cancel use release-not-migrate.
-    // Order goes CANCELLED, no DRAFT continuation. Farmer re-orders
-    // through advisory in their preferred window.
-    if (kind === 'SEED') {
-      if (!confirm(t('confirmCancelSeed'))) return
-      setBusy(orderId)
-      try {
-        // 2026-06-21 — Release-not-migrate parity with regular cancel.
-        await api.put(`/farmer/seed-orders/${orderId}/cancel`, {})
-        await load()
-      } finally { setBusy(null) }
-      return
-    }
-    if (!confirm(t('confirmCancelRegular'))) return
+    // 2026-08-11 — Cancel-migrate (Model B). Release the dealer;
+    // pending / postponed items come back to the farmer as a returned
+    // batch on the Returned pill. From there the farmer chooses to
+    // Send to another dealer OR Set aside (discard). Inline copy
+    // pending i18n catch-up.
+    const cancelMsg =
+      "Cancel this order? Your dealer will be released. Your pending items will come back to you " +
+      "on the Returned pill — you can send them to another dealer or set them aside."
+    if (!confirm(cancelMsg)) return
     setBusy(orderId)
     try {
-      await api.put(`/farmer/orders/${orderId}/cancel`, {})
+      if (kind === 'SEED') {
+        await api.put(`/farmer/seed-orders/${orderId}/cancel`, {})
+      } else {
+        await api.put(`/farmer/orders/${orderId}/cancel`, {})
+      }
       await load()
     } finally { setBusy(null) }
   }
@@ -742,6 +767,54 @@ function ManageTab({
   // tap-target scoped to the two underlined links only.
   function rerouteReturned(orderId: string) {
     router.push(`/orders/${orderId}/forward`)
+  }
+
+  // 2026-08-11 — Cancel-migrate DRAFT (Model B) discard. "Don't need
+  // these now" — DRAFT → CANCELLED, items → REROUTED on the backend
+  // so advisory re-offers the practice with an Order CTA on the next
+  // pull. Soft confirm (destructive-ish but recoverable via advisory).
+  async function discardReturnedDraft(orderId: string, kind: 'REGULAR' | 'SEED') {
+    if (!confirm(
+      "Set these items aside? They'll show back up in your advisory so you can order them again later.",
+    )) return
+    setBusy(orderId)
+    try {
+      if (kind === 'SEED') {
+        await api.put(`/farmer/seed-orders/${orderId}/discard`, {})
+      } else {
+        await api.put(`/farmer/orders/${orderId}/discard`, {})
+      }
+      await load()
+    } finally { setBusy(null) }
+  }
+
+  // 2026-08-11 — Dealer-returned discard. Symmetry with the forward
+  // flow: if the same source order also has POSTPONED items sitting
+  // with the current dealer, we show a nudge sheet asking "discard
+  // those too, or leave them?" — parallel to the include-postponed
+  // nudge on /forward. When no postponed items exist, we fall back
+  // to a plain confirm.
+  const [discardNudge, setDiscardNudge] = useState<SubOrder | null>(null)
+  function openDiscardReturnedItems(sub: SubOrder) {
+    if ((sub.postponed_count ?? 0) > 0) {
+      setDiscardNudge(sub)
+      return
+    }
+    // No postponed items — plain confirm, then fire.
+    if (!confirm(
+      "Set these returned items aside? They'll show back up in your advisory so you can order them again later.",
+    )) return
+    void commitDiscardReturnedItems(sub, false)
+  }
+  async function commitDiscardReturnedItems(sub: SubOrder, includePostponed: boolean) {
+    setDiscardNudge(null)
+    setBusy(sub.id)
+    try {
+      await api.put(`/farmer/orders/${sub.id}/discard-returned-items`, {
+        include_postponed: includePostponed,
+      })
+      await load()
+    } finally { setBusy(null) }
   }
 
   if (orders === null) return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
@@ -869,10 +942,53 @@ function ManageTab({
           onCancel={(id, kind) => cancel(id, kind)}
           onDelete={(id, kind) => deleteOrder(id, kind)}
           onForwardReturned={rerouteReturned}
+          onDiscard={discardReturnedDraft}
+          onDiscardReturnedItems={openDiscardReturnedItems}
           onMarkReceivedSeed={markReceivedSeed}
           busy={busy}
         />
       ))}
+
+      {/* 2026-08-11 — Dealer-returned discard nudge. Parallel to the
+          include-postponed nudge on /forward — asks the farmer to
+          decide the fate of any POSTPONED items still with the same
+          dealer when they Discard the returned items. */}
+      {discardNudge && (() => {
+        const returnedN = discardNudge.returned_count
+          ?? (discardNudge.status === 'NOT_AVAILABLE' ? 1 : 0)
+        const postponedN = discardNudge.postponed_count ?? 0
+        return (
+          <div className="fixed inset-0 z-[60] bg-black/50 flex items-end">
+            <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+              style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}>
+              <p className="font-bold text-[#6B3F1F]">Set them aside?</p>
+              <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
+                The dealer still has <strong className="text-[#6B3F1F]">{postponedN} postponed item{postponedN === 1 ? '' : 's'}</strong> waiting for delivery,
+                separate from the {returnedN} returned item{returnedN === 1 ? '' : 's'} you want to set aside.
+                What should we do with the postponed one{postponedN === 1 ? '' : 's'}?
+              </p>
+              <div className="space-y-2 mt-4">
+                <button
+                  onClick={() => void commitDiscardReturnedItems(discardNudge, true)}
+                  className="w-full py-3 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
+                  Set aside all {returnedN + postponedN} items
+                </button>
+                <button
+                  onClick={() => void commitDiscardReturnedItems(discardNudge, false)}
+                  className="w-full py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
+                  Only the {returnedN} returned — leave postponed with dealer
+                </button>
+                <button
+                  onClick={() => setDiscardNudge(null)}
+                  className="w-full py-2 text-[#7A8C7E] text-sm">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -881,7 +997,8 @@ function ManageTab({
 
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onCancel, onDelete, onForwardReturned, onMarkReceivedSeed, busy,
+  onCancel, onDelete, onForwardReturned, onDiscard,
+  onDiscardReturnedItems, onMarkReceivedSeed, busy,
 }: {
   orderId: string
   subs: SubOrder[]
@@ -892,6 +1009,8 @@ function OrderIdCard({
   onCancel: (id: string, kind: 'REGULAR' | 'SEED') => void
   onDelete: (id: string, kind: 'REGULAR' | 'SEED') => void
   onForwardReturned: (id: string) => void
+  onDiscard: (id: string, kind: 'REGULAR' | 'SEED') => void
+  onDiscardReturnedItems: (sub: SubOrder) => void
   onMarkReceivedSeed: (id: string) => void
   busy: string | null
 }) {
@@ -923,8 +1042,13 @@ function OrderIdCard({
   // A DRAFT sub-order is deletable. Typically arrives via
   // dealer-decline cancel-and-migrate; farmer can discard it
   // entirely instead of picking a recipient.
+  // 2026-08-11 — Skip returned-from-cancel DRAFTs: the ReturnedChunk
+  // above already exposes "Don't need these now" (soft discard →
+  // advisory re-offers), which is the semantically correct action
+  // for that batch. Showing "Delete draft" alongside is redundant
+  // and confusing.
   const deletable = liveSubs.find(s =>
-    s.kind === 'REGULAR' && s.status === 'DRAFT',
+    s.kind === 'REGULAR' && s.status === 'DRAFT' && !s.is_returned_to_farmer,
   )
 
   return (
@@ -936,12 +1060,16 @@ function OrderIdCard({
           ? matching.map(sub => (
               <FarmerPillChunk key={sub.id} sub={sub} pill={pill}
                 onForwardReturned={onForwardReturned}
+                onDiscard={onDiscard}
+                onDiscardReturnedItems={onDiscardReturnedItems}
                 onMarkReceivedSeed={onMarkReceivedSeed}
                 busy={busy} showSubHeader />
             ))
           : matching.length === 1 && (
               <FarmerPillChunk sub={matching[0]} pill={pill}
                 onForwardReturned={onForwardReturned}
+                onDiscard={onDiscard}
+                onDiscardReturnedItems={onDiscardReturnedItems}
                 onMarkReceivedSeed={onMarkReceivedSeed}
                 busy={busy} />
             )
@@ -1061,11 +1189,14 @@ function OrderCardHeader({
 }
 
 function FarmerPillChunk({
-  sub, pill, onForwardReturned, onMarkReceivedSeed, busy, showSubHeader,
+  sub, pill, onForwardReturned, onDiscard, onDiscardReturnedItems,
+  onMarkReceivedSeed, busy, showSubHeader,
 }: {
   sub: SubOrder
   pill: Pill
   onForwardReturned: (id: string) => void
+  onDiscard: (id: string, kind: 'REGULAR' | 'SEED') => void
+  onDiscardReturnedItems: (sub: SubOrder) => void
   onMarkReceivedSeed: (id: string) => void
   busy: string | null
   showSubHeader?: boolean
@@ -1089,7 +1220,10 @@ function FarmerPillChunk({
       {pill === 'routed' && <RoutedChunk sub={sub} />}
       {pill === 'approval' && <ApprovalChunk sub={sub} />}
       {pill === 'returned' && (
-        <ReturnedChunk sub={sub} onForwardReturned={onForwardReturned} busy={busy} />
+        <ReturnedChunk sub={sub} onForwardReturned={onForwardReturned}
+          onDiscard={onDiscard}
+          onDiscardReturnedItems={onDiscardReturnedItems}
+          busy={busy} />
       )}
       {pill === 'pickup' && (
         sub.kind === 'SEED' ? (
@@ -1258,27 +1392,93 @@ function ApprovalChunk({ sub }: { sub: SubOrder }) {
 }
 
 function ReturnedChunk({
-  sub, onForwardReturned, busy,
+  sub, onForwardReturned, onDiscard, onDiscardReturnedItems, busy,
 }: {
   sub: SubOrder
   onForwardReturned: (id: string) => void
+  onDiscard: (id: string, kind: 'REGULAR' | 'SEED') => void
+  onDiscardReturnedItems: (sub: SubOrder) => void
   busy: string | null
 }) {
+  const router = useRouter()
   const t = useTranslations('orders.cropOrders.chunk')
+  // 2026-08-11 — Cancel-migrate DRAFT (Model B). The DRAFT carries
+  // items the farmer released from a cancelled dealer engagement.
+  // Whole-batch decision: forward to another dealer (existing DRAFT
+  // pick-recipient page → PUT /send) or discard ("Don't need these
+  // now" → PUT /discard, items flip to REROUTED so advisory re-offers
+  // the practice with an Order CTA).
+  if (sub.is_returned_to_farmer && sub.status === 'DRAFT') {
+    const count = sub.item_count ?? 0
+    // 2026-08-11 — Regular DRAFTs use the focused /forward page that
+    // mirrors the /order/new picker (map + Call/Send Order per row).
+    // Seed doesn't have a /forward page today — /seed-orders/[id]
+    // auto-opens its picker sheet for returned DRAFTs.
+    const forwardHref =
+      sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}/forward`
+    // 2026-08-11 — "Cancelled by you · from X" context line. Shop
+    // name wins over person name when both are available (mirrors
+    // RecipientLine's preference for shop identity on the dealer).
+    const releasedFromLabel =
+      sub.released_from_recipient_shop_name
+      || sub.released_from_recipient_name
+      || null
+    return (
+      <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-2">
+        <p className="text-[10px] text-amber-700/80 font-medium uppercase tracking-wide">
+          Cancelled by you
+          {releasedFromLabel && (
+            <> · from <span className="text-amber-800 normal-case font-semibold">{releasedFromLabel}</span></>
+          )}
+        </p>
+        <p className="text-xs text-amber-800">
+          {count === 1
+            ? '1 item returned to you. Send to another dealer or set it aside.'
+            : `${count} items returned to you. Send to another dealer or set them aside.`}
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push(forwardHref)}
+            disabled={busy === sub.id}
+            className="flex-1 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+            style={{ background: '#3A7D44' }}>
+            Send to another dealer
+          </button>
+          <button
+            onClick={() => onDiscard(sub.id, sub.kind)}
+            disabled={busy === sub.id}
+            className="flex-1 py-2 rounded-lg border border-amber-700/40 text-amber-900 text-xs font-semibold disabled:opacity-50">
+            {busy === sub.id ? '…' : "Don't need these now"}
+          </button>
+        </div>
+      </div>
+    )
+  }
   const returned = sub.returned_count ?? (sub.status === 'NOT_AVAILABLE' ? 1 : 0)
   // 2026-06-21 — Facilitator-owned orders no longer reach this chunk
   // — the Returned pill predicate filters them out. The passive
   // "your facilitator is handling" branch that used to live here has
   // been removed along with its dead code path.
+  // 2026-08-11 — Symmetry with the cancel-migrate DRAFT card: farmer
+  // gets both actions on dealer-returned items too. If the source
+  // order also has POSTPONED items still with the dealer, the discard
+  // handler opens a nudge modal (parallel to /forward's nudge).
   return (
-    <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+    <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-2">
       <p className="text-xs text-amber-800">
         {t('returnedCount', { count: returned })}
       </p>
-      <button onClick={() => onForwardReturned(sub.id)} disabled={busy === sub.id}
-        className="text-xs font-semibold text-amber-800 underline disabled:opacity-50">
-        {busy === sub.id ? '…' : t('sendToAnotherDealer')}
-      </button>
+      <div className="flex gap-2">
+        <button onClick={() => onForwardReturned(sub.id)} disabled={busy === sub.id}
+          className="flex-1 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+          style={{ background: '#3A7D44' }}>
+          {busy === sub.id ? '…' : t('sendToAnotherDealer')}
+        </button>
+        <button onClick={() => onDiscardReturnedItems(sub)} disabled={busy === sub.id}
+          className="flex-1 py-2 rounded-lg border border-amber-700/40 text-amber-900 text-xs font-semibold disabled:opacity-50">
+          {busy === sub.id ? '…' : "Don't need these now"}
+        </button>
+      </div>
     </div>
   )
 }

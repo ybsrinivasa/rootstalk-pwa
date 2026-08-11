@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser } from '@/lib/auth'
@@ -35,6 +35,9 @@ interface SeedOrder {
   scan_verified?: boolean
   qr_available?: boolean
   created_at: string
+  // 2026-08-11 — Cancel-migrate marker (Model B). TRUE on DRAFT rows
+  // where the farmer cancelled the earlier dealer engagement.
+  is_returned_to_farmer?: boolean
 }
 
 interface Recipient {
@@ -208,6 +211,21 @@ export default function FarmerSeedOrderDetailPage() {
     await fetchRecipients(null)
     setPickerLoading(false)
   }
+
+  // 2026-08-11 — Cancel-migrate seed DRAFTs (Model B) skip the
+  // "This is a draft" wrapper — auto-open the picker on mount so the
+  // farmer lands directly on the recipient list. Wrapper still renders
+  // behind as a fallback if the sheet is dismissed. Ref guard to only
+  // auto-open once per page load.
+  const autoOpenedPickerRef = useRef(false)
+  useEffect(() => {
+    if (autoOpenedPickerRef.current) return
+    if (order && order.status === 'DRAFT' && order.is_returned_to_farmer) {
+      autoOpenedPickerRef.current = true
+      openPicker()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order])
 
   async function fetchRecipients(coords: { lat: number; lng: number } | null) {
     if (!order) return

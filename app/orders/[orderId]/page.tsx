@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -47,6 +47,11 @@ interface Order {
   packing_picked_up_at?: string | null
   packing_picked_up_by_role?: 'FARMER' | 'FACILITATOR' | null
   packing_farmer_received_at?: string | null
+  // 2026-08-11 — TRUE when the DRAFT was produced by a farmer cancel
+  // (Model B cancel-migrate). Skip the "This is a draft / Pick a
+  // recipient" wrapper and open the picker sheet on mount so the
+  // farmer lands directly on the recipient list.
+  is_returned_to_farmer?: boolean
   items: OrderItem[]
 }
 interface Recipient {
@@ -190,6 +195,24 @@ export default function FarmerOrderDetailPage() {
     // a normal DRAFT recipient pick.
     setRerouteIncludePostponed(null)
   }
+
+  // 2026-08-11 — Cancel-migrate DRAFTs (Model B) skip the intermediate
+  // "Pick a recipient" wrapper — auto-open the picker on mount so the
+  // farmer lands directly on the recipient list. The wrapper still
+  // renders behind the sheet as a fallback if the farmer dismisses.
+  // Ref guard so we only auto-open once per page load — otherwise
+  // dismissing the sheet would immediately re-open it.
+  const autoOpenedPickerRef = useRef(false)
+  useEffect(() => {
+    if (autoOpenedPickerRef.current) return
+    if (order && order.status === 'DRAFT' && order.is_returned_to_farmer) {
+      autoOpenedPickerRef.current = true
+      openPicker()
+    }
+    // Intentionally not listing openPicker — it's stable within the
+    // component instance and pulls order from closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order])
 
   // 2026-06-19 — Tap on a recipient row stashes the pending send;
   // ConfirmSendOrderSheet at the bottom of the page shows the
