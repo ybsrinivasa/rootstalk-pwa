@@ -697,42 +697,36 @@ function ManageTab({
   const load = reload
 
   async function cancel(orderId: string, kind: 'REGULAR' | 'SEED') {
-    // 2026-08-11 — Client-side dealer-presence pre-check. If the
-    // dealer's 30s heartbeat lease is still in the future per the
-    // last list fetch, short-circuit the confirm dialog and tell the
-    // farmer directly. Server-side 409 stays as the authoritative
-    // fallback for the case where the dealer starts viewing between
-    // our list fetch and the cancel tap (surfaces via surfaceApiError
-    // in the catch below).
-    const sub = (orders || []).find(o => o.id === orderId)
-    const dealerUntil = sub?.dealer_viewing_until
-    if (dealerUntil && new Date(dealerUntil) > new Date()) {
-      alert('The dealer has opened your order for processing. Please wait.')
-      return
-    }
-    // 2026-08-11 — Cancel-migrate (Model B). Release the dealer;
-    // pending / postponed items come back to the farmer as a returned
-    // batch on the Returned pill. From there the farmer chooses to
-    // Send to another dealer OR Set aside (discard). Inline copy
-    // pending i18n catch-up.
-    const cancelMsg =
-      "Cancel this order? Your dealer will be released. Your pending items will come back to you " +
-      "on the Returned pill — you can send them to another dealer or set them aside."
-    if (!confirm(cancelMsg)) return
+    // 2026-08-11 — Tap-time server eligibility check. The dealer's
+    // heartbeat can be freshly stamped between our list fetch and
+    // the farmer's tap, so cached dealer_viewing_until is stale by
+    // definition. GET the authoritative state now — if not
+    // eligible, alert the specific reason and stop (no confirm
+    // dialog for a cancel the server would immediately refuse).
     setBusy(orderId)
     try {
-      if (kind === 'SEED') {
-        await api.put(`/farmer/seed-orders/${orderId}/cancel`, {})
-      } else {
-        await api.put(`/farmer/orders/${orderId}/cancel`, {})
+      const path = kind === 'SEED' ? '/farmer/seed-orders' : '/farmer/orders'
+      const { data: elig } = await api.get<{
+        can_cancel: boolean; code: string | null; message: string | null
+      }>(`${path}/${orderId}/cancel-eligibility`)
+      if (!elig.can_cancel) {
+        alert(elig.message || 'This order cannot be cancelled right now.')
+        return
       }
+      // 2026-08-11 — Cancel-migrate (Model B). Release the dealer;
+      // pending / postponed items come back to the farmer as a
+      // returned batch on the Returned pill. From there the farmer
+      // chooses to Send to another dealer OR Set aside (discard).
+      const cancelMsg =
+        "Cancel this order? Your dealer will be released. Your pending items will come back to you " +
+        "on the Returned pill — you can send them to another dealer or set them aside."
+      if (!confirm(cancelMsg)) return
+      await api.put(`${path}/${orderId}/cancel`, {})
       await load()
     } catch (err) {
-      // 2026-08-11 — Backend gates on cancel return 409 with a coded
-      // `detail.message` (dealer_currently_viewing,
-      // items_pending_your_approval). Surface that verbatim — the
-      // earlier code had no catch and the failed cancel just did
-      // nothing visible.
+      // Server-side 409 stays as the safety net for the (tiny) race
+      // window between the eligibility GET and the cancel PUT — the
+      // dealer could open the order in that gap.
       surfaceApiError(err, 'Could not cancel this order. Please try again.')
     } finally { setBusy(null) }
   }
