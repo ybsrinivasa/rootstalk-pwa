@@ -709,6 +709,13 @@ function ManageTab({
         await api.put(`/farmer/orders/${orderId}/cancel`, {})
       }
       await load()
+    } catch (err) {
+      // 2026-08-11 — Backend gates on cancel return 409 with a coded
+      // `detail.message` (dealer_currently_viewing,
+      // items_pending_your_approval). Surface that verbatim — the
+      // earlier code had no catch and the failed cancel just did
+      // nothing visible.
+      surfaceApiError(err, 'Could not cancel this order. Please try again.')
     } finally { setBusy(null) }
   }
 
@@ -769,6 +776,21 @@ function ManageTab({
     router.push(`/orders/${orderId}/forward`)
   }
 
+  // 2026-08-11 — Shared error-surfacer for cancel / discard endpoints.
+  // Backend gates return 409 with `detail.message`; we alert() that
+  // verbatim so the farmer sees the specific reason (dealer viewing,
+  // items awaiting your approval, etc.) instead of the failed action
+  // just doing nothing.
+  function surfaceApiError(err: unknown, fallback: string) {
+    const e = err as { response?: { data?: { detail?: string | { code?: string; message?: string } } } }
+    const detail = e?.response?.data?.detail
+    const msg =
+      typeof detail === 'object' && detail?.message
+        ? detail.message
+        : (typeof detail === 'string' ? detail : null)
+    alert(msg || fallback)
+  }
+
   // 2026-08-11 — Cancel-migrate DRAFT (Model B) discard. "Don't need
   // these now" — DRAFT → CANCELLED, items → REROUTED on the backend
   // so advisory re-offers the practice with an Order CTA on the next
@@ -785,6 +807,8 @@ function ManageTab({
         await api.put(`/farmer/orders/${orderId}/discard`, {})
       }
       await load()
+    } catch (err) {
+      surfaceApiError(err, 'Could not set these items aside. Please try again.')
     } finally { setBusy(null) }
   }
 
@@ -814,6 +838,8 @@ function ManageTab({
         include_postponed: includePostponed,
       })
       await load()
+    } catch (err) {
+      surfaceApiError(err, 'Could not set these items aside. Please try again.')
     } finally { setBusy(null) }
   }
 
