@@ -782,13 +782,25 @@ function ManageTab({
   // items awaiting your approval, etc.) instead of the failed action
   // just doing nothing.
   function surfaceApiError(err: unknown, fallback: string) {
-    const e = err as { response?: { data?: { detail?: string | { code?: string; message?: string } } } }
+    const e = err as {
+      response?: { status?: number; data?: { detail?: string | { code?: string; message?: string } } }
+      message?: string
+    }
+    // Temporary diagnostic: console output so we can see the actual
+    // error shape if the extracted message doesn't match expectations.
+    // Safe to leave in — noise only fires on error paths.
+    // eslint-disable-next-line no-console
+    console.warn('[surfaceApiError]', {
+      status: e?.response?.status,
+      detail: e?.response?.data?.detail,
+      message: e?.message,
+    })
     const detail = e?.response?.data?.detail
     const msg =
-      typeof detail === 'object' && detail?.message
+      typeof detail === 'object' && detail !== null && detail.message
         ? detail.message
         : (typeof detail === 'string' ? detail : null)
-    alert(msg || fallback)
+    alert(msg || `${fallback} [v2]`)
   }
 
   // 2026-08-11 — Cancel-migrate DRAFT (Model B) discard. "Don't need
