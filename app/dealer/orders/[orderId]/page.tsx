@@ -355,22 +355,36 @@ export default function DealerOrderDetailPage() {
   }, [focusItemId, order])
 
   // Orders V2 Batch 2: presence heartbeat. While the dealer is on
-  // this screen, ping the server every 20 s. The server stamps a
-  // 30-s lease on the order; the farmer's cancel endpoint refuses
-  // while the lease is in the future. Closing the tab or
-  // navigating away clears the interval and the lease expires
-  // naturally within 30 s. Network errors are swallowed — the
-  // worst case is the lease lapses and the farmer can cancel.
+  // this screen AND the tab is visible, ping the server every 20 s.
+  // The server stamps a 30-s lease on the order; the farmer's cancel
+  // endpoint refuses while the lease is in the future.
+  //
+  // 2026-08-11 — visibility-aware. Without this, the heartbeat
+  // fired for every tab-backgrounded / phone-locked minute of a
+  // mounted page and could pin the farmer's cancel indefinitely
+  // when the dealer walked away with the page open. Now: skip pings
+  // when `document.visibilityState !== 'visible'`, and fire an
+  // immediate ping when the tab returns to visible so the lease
+  // resumes without a 20 s gap.
   useEffect(() => {
     if (!orderId || !getToken()) return
     let cancelled = false
     const ping = () => {
       if (cancelled) return
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       api.put(`/dealer/orders/${orderId}/heartbeat`, {}).catch(() => {})
     }
     ping()  // first heartbeat right away so the lease lands fast
     const handle = setInterval(ping, 20_000)
-    return () => { cancelled = true; clearInterval(handle) }
+    const onVis = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') ping()
+    }
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVis)
+    return () => {
+      cancelled = true
+      clearInterval(handle)
+      if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVis)
+    }
   }, [orderId])
 
   // Batch 28 — debounced sync of in-flight per-item edits. Every
