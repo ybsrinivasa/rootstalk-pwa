@@ -690,7 +690,14 @@ export default function DealerOrderDetailPage() {
   }
 
   async function markUnavailable(itemId: string) {
-    await api.put(`/dealer/orders/${orderId}/items/${itemId}/not-available`, {})
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/not-available`, {})
+    } catch {
+      // 2026-08-12 — NA → NA (dealer taps Not Available on an item
+      // that's already NA — e.g. via the three-button Change Decision
+      // trio) rejects at bl10 as a self-transition that isn't in the
+      // table. Silent swallow: state is already what they picked.
+    }
     if (focusItemId === itemId) {
       router.replace('/dealer/postponed')
       return
@@ -1236,22 +1243,32 @@ export default function DealerOrderDetailPage() {
             )}
           </div>
         )}
-        {/* 2026-06-03 — Change decision on POSTPONED / NOT_AVAILABLE.
-            For NOT_AVAILABLE we keep the order.status === 'PROCESSING'
-            gate (a once-NA item revisited only makes sense pre-submit).
-            For POSTPONED we relax the gate — the dealer needs to
-            resolve postpones AFTER the order is submitted too, because
-            that's exactly when "I now have this" or "I cannot supply
-            this" happens. Backend's mark_item_available auto-flips
-            POSTPONED → SENT_FOR_APPROVAL when order is past PROCESSING,
-            so the farmer's review picks the item up automatically. */}
+        {/* 2026-08-12 — Change Decision on NOT_AVAILABLE now renders
+            the same three-way choice as a PENDING card (Available /
+            Later / Not Available) instead of the single "opens brand
+            form" shortcut. Prior UX permanently lost Later after any
+            NA mark; dealer couldn't record "I can get this in 2 days"
+            after realising it. Backend transitions table gained
+            NA → POSTPONED (bl10) to match. NA → NA (redundant tap on
+            the third button) is safely swallowed in markUnavailable. */}
         {!isLocked
           && order!.status === 'PROCESSING'
           && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
-          <button onClick={() => openItemForm(item)}
-            className="mt-2 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-            {t('item.changeDecision')}
-          </button>
+          <div className="flex gap-2 mt-3">
+            <button onClick={() => openItemForm(item)}
+              className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
+              {t('item.available')}
+            </button>
+            <button onClick={() => openPostponePicker(item.id)}
+              disabled={postponeBusy}
+              className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2 rounded-lg disabled:opacity-50">
+              {t('item.later')}
+            </button>
+            <button onClick={() => markUnavailable(item.id)}
+              className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
+              {t('item.na')}
+            </button>
+          </div>
         )}
         {!isLocked
           && item.status === 'POSTPONED' && editingItem !== item.id && (
@@ -2294,11 +2311,24 @@ export default function DealerOrderDetailPage() {
               </button>
             </div>
           )}
+          {/* 2026-08-12 — Same three-way choice as the relation-
+              grouped NA card above. See comment there. */}
           {order!.status === 'PROCESSING' && item.status === 'NOT_AVAILABLE' && editingItem !== item.id && (
-            <button onClick={() => openItemForm(item)}
-              className="mt-3 w-full border border-[#DDD0B8] text-[#6B3F1F] text-xs font-medium py-2 rounded-lg">
-              {t('item.changeDecision')}
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => openItemForm(item)}
+                className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
+                {t('item.available')}
+              </button>
+              <button onClick={() => openPostponePicker(item.id)}
+                disabled={postponeBusy}
+                className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2 rounded-lg disabled:opacity-50">
+                {t('item.later')}
+              </button>
+              <button onClick={() => markUnavailable(item.id)}
+                className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
+                {t('item.na')}
+              </button>
+            </div>
           )}
           {/* POSTPONED items remain actionable regardless of order
               status — see comment near the relation-grouped renderer. */}
