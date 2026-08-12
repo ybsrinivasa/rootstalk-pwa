@@ -2512,6 +2512,22 @@ export default function DealerOrderDetailPage() {
           </button>
         )}
 
+        {/* 2026-08-12 — Decline order from PROCESSING. Existing SENT
+            case has its own Accept/Decline pair above the item list;
+            this button is the finalisation path after the dealer has
+            accepted + marked items (typically all NA). Backend
+            transition PROCESSING → CANCELLED now allows DEALER role.
+            Same PUT /dealer/orders/{id}/decline endpoint under the
+            hood; items migrate through the returned-to-farmer /
+            returned-to-facilitator plumbing so the farmer or
+            facilitator sees the batch on their Returned pill. */}
+        {order.status === 'PROCESSING' && (
+          <button onClick={() => setShowDeclineConfirm(true)}
+            className="w-full py-3 rounded-2xl border-2 border-red-200 text-[#D4682E] font-semibold text-sm">
+            {t('acceptDecline.declineCta')}
+          </button>
+        )}
+
       </div>
 
       {/* Brand selection bottom sheet */}
