@@ -520,7 +520,13 @@ export default function FarmerOrderDetailPage() {
           </section>
         )}
 
-        {(order.postponed_items?.length ?? 0) > 0 && (
+        {/* 2026-08-12 — Same gate as the Returned section: hide the
+            Postponed list while there are items awaiting the farmer's
+            approval. Farmer's mental model on this screen is "decide
+            these items"; postponed + returned context clutters the
+            decision and confuses "what do I need to do right now?"
+            Both surface again once the approval batch is cleared. */}
+        {!approvalPending && (order.postponed_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
             <p className="text-sm font-semibold text-[#6B3F1F] px-1">
               {t('postponedSection.title', { count: order.postponed_items!.length })}
