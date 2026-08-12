@@ -93,6 +93,10 @@ type SubOrder = {
   released_from_recipient_name?: string | null
   released_from_recipient_shop_name?: string | null
   released_from_recipient_role?: 'DEALER' | 'FACILITATOR' | null
+  // 2026-08-12 — Chip text differentiator on the Returned pill card.
+  // Farmer_cancel → "CANCELLED BY YOU", dealer_declined → "DECLINED
+  // BY DEALER", facilitator_declined → "DECLINED BY FACILITATOR".
+  return_reason?: 'farmer_cancel' | 'dealer_declined' | 'facilitator_declined' | null
 }
 
 type DBSPreview = {
@@ -1367,13 +1371,19 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
 function RoutedChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.chunk')
+  // 2026-08-12 — Per user direction, no plain DRAFTs are produced by
+  // any current flow — every DRAFT is a returned-to-farmer DRAFT and
+  // belongs on the Returned pill. These branches are dead-code
+  // safety fallbacks; if any legacy plain DRAFT is around, route to
+  // the same /forward page so the intermediate "This is a draft"
+  // wrapper never surfaces.
   if (sub.kind === 'REGULAR' && sub.status === 'DRAFT') {
     return (
       <div className="space-y-2">
         <p className="text-xs text-amber-700">
           {t('draftPickRecipient')}
         </p>
-        <button onClick={() => router.push(`/orders/${sub.id}`)}
+        <button onClick={() => router.push(`/orders/${sub.id}/forward`)}
           className="w-full py-2 rounded-lg text-white text-xs font-semibold"
           style={{ background: '#3A7D44' }}>
           {t('pickRecipientCta')}
@@ -1387,7 +1397,7 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
         <p className="text-xs text-amber-700">
           {t('draftPickRecipient')}
         </p>
-        <button onClick={() => router.push(`/seed-orders/${sub.id}`)}
+        <button onClick={() => router.push(`/seed-orders/${sub.id}/forward`)}
           className="w-full py-2 rounded-lg text-white text-xs font-semibold"
           style={{ background: '#3A7D44' }}>
           {t('pickRecipientCta')}
@@ -1456,12 +1466,10 @@ function ReturnedChunk({
   // the practice with an Order CTA).
   if (sub.is_returned_to_farmer && sub.status === 'DRAFT') {
     const count = sub.item_count ?? 0
-    // 2026-08-11 — Regular DRAFTs use the focused /forward page that
-    // mirrors the /order/new picker (map + Call/Send Order per row).
-    // Seed doesn't have a /forward page today — /seed-orders/[id]
-    // auto-opens its picker sheet for returned DRAFTs.
+    // 2026-08-12 — Both regular + seed use their focused /forward
+    // page (single consistent picker per user direction).
     const forwardHref =
-      sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}/forward`
+      sub.kind === 'SEED' ? `/seed-orders/${sub.id}/forward` : `/orders/${sub.id}/forward`
     // 2026-08-11 — "Cancelled by you · from X" context line. Shop
     // name wins over person name when both are available (mirrors
     // RecipientLine's preference for shop identity on the dealer).
@@ -1469,10 +1477,17 @@ function ReturnedChunk({
       sub.released_from_recipient_shop_name
       || sub.released_from_recipient_name
       || null
+    // 2026-08-12 — Chip text differentiator: same "returned to farmer"
+    // state can arise from farmer cancel, dealer decline, or
+    // facilitator decline — chip name each cause.
+    const chipLabel =
+      sub.return_reason === 'dealer_declined' ? 'Declined by dealer'
+      : sub.return_reason === 'facilitator_declined' ? 'Declined by facilitator'
+      : 'Cancelled by you'
     return (
       <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-2">
         <p className="text-[10px] text-amber-700/80 font-medium uppercase tracking-wide">
-          Cancelled by you
+          {chipLabel}
           {releasedFromLabel && (
             <> · from <span className="text-amber-800 normal-case font-semibold">{releasedFromLabel}</span></>
           )}

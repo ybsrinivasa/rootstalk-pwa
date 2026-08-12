@@ -196,23 +196,22 @@ export default function FarmerOrderDetailPage() {
     setRerouteIncludePostponed(null)
   }
 
-  // 2026-08-11 — Cancel-migrate DRAFTs (Model B) skip the intermediate
-  // "Pick a recipient" wrapper — auto-open the picker on mount so the
-  // farmer lands directly on the recipient list. The wrapper still
-  // renders behind the sheet as a fallback if the farmer dismisses.
-  // Ref guard so we only auto-open once per page load — otherwise
-  // dismissing the sheet would immediately re-open it.
-  const autoOpenedPickerRef = useRef(false)
+  // 2026-08-12 — DRAFT orders never render this wrapper — redirect on
+  // mount to the focused /forward picker, which is the single
+  // consistent picker surface across all "send order" flows (initial
+  // composer, cancel-migrate, dealer decline, facilitator decline).
+  // Replaces the earlier auto-open-picker trick (which still let the
+  // "This is a draft" wrapper flash for a frame). Per user direction
+  // there are no plain DRAFTs today — every DRAFT is returned-to-
+  // farmer — so this redirect covers 100% of DRAFT arrivals here.
+  const redirectedRef = useRef(false)
   useEffect(() => {
-    if (autoOpenedPickerRef.current) return
-    if (order && order.status === 'DRAFT' && order.is_returned_to_farmer) {
-      autoOpenedPickerRef.current = true
-      openPicker()
+    if (redirectedRef.current) return
+    if (order && order.status === 'DRAFT') {
+      redirectedRef.current = true
+      router.replace(`/orders/${order.id}/forward`)
     }
-    // Intentionally not listing openPicker — it's stable within the
-    // component instance and pulls order from closure.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order])
+  }, [order, router])
 
   // 2026-06-19 — Tap on a recipient row stashes the pending send;
   // ConfirmSendOrderSheet at the bottom of the page shows the
@@ -361,11 +360,18 @@ export default function FarmerOrderDetailPage() {
   // neither cancel nor bundle-reroute — both decisions depend on
   // what they choose for the awaiting items first. Once approvals
   // are cleared (approved or deleted), the gates reopen.
+  // 2026-08-12 — Never render the wrapper for DRAFT orders — the
+  // useEffect above router.replaces to /forward. Return early with a
+  // skeleton so the "This is a draft / Pick a recipient" block doesn't
+  // flash for a frame before the redirect fires.
+  if (order.status === 'DRAFT') {
+    return <div className="m-4 h-20 bg-white/60 rounded-2xl animate-pulse" />
+  }
   const approvalPending = (order.approval_items?.length ?? 0) > 0
   const canCancel = !approvalPending &&
     !['DRAFT', 'CANCELLED', 'COMPLETED', 'EXPIRED'].includes(order.status)
   const canDeleteHusk = order.status === 'CANCELLED'
-  const isDraft = order.status === 'DRAFT'
+  const isDraft = false  // always false past the guard above; kept for downstream reads
   // Bundle re-route is offered for NOT_AVAILABLE + REJECTED +
   // POSTPONED items, BUT only after the approval task is complete.
   const reroutableItems = order.items.filter(i =>

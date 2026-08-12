@@ -213,19 +213,17 @@ export default function FarmerSeedOrderDetailPage() {
   }
 
   // 2026-08-11 — Cancel-migrate seed DRAFTs (Model B) skip the
-  // "This is a draft" wrapper — auto-open the picker on mount so the
-  // farmer lands directly on the recipient list. Wrapper still renders
-  // behind as a fallback if the sheet is dismissed. Ref guard to only
-  // auto-open once per page load.
-  const autoOpenedPickerRef = useRef(false)
+  // 2026-08-12 — DRAFT seed orders never render this wrapper —
+  // redirect on mount to the focused /forward picker (single
+  // consistent picker surface). Replaces the earlier auto-open trick.
+  const redirectedRef = useRef(false)
   useEffect(() => {
-    if (autoOpenedPickerRef.current) return
-    if (order && order.status === 'DRAFT' && order.is_returned_to_farmer) {
-      autoOpenedPickerRef.current = true
-      openPicker()
+    if (redirectedRef.current) return
+    if (order && order.status === 'DRAFT') {
+      redirectedRef.current = true
+      router.replace(`/seed-orders/${order.id}/forward`)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order])
+  }, [order, router])
 
   async function fetchRecipients(coords: { lat: number; lng: number } | null) {
     if (!order) return
@@ -305,7 +303,17 @@ export default function FarmerSeedOrderDetailPage() {
   )
   if (!order) return null
 
-  const isDraft = order.status === 'DRAFT'
+  // 2026-08-12 — DRAFT seed orders redirect to /seed-orders/[id]/forward
+  // (see useEffect above). Skeleton stops the "This is a draft"
+  // wrapper from flashing between mount and redirect.
+  if (order.status === 'DRAFT') {
+    return (
+      <div className="min-h-screen bg-[#F5F0E8] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-green-700 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+  const isDraft = false  // always false past the guard above
   const isCancelled = order.status === 'CANCELLED'
   // 2026-06-19 — READY_FOR_PICKUP joins the cancel-blocked set.
   // Once approved the commercial transaction is committed; the
