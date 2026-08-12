@@ -388,8 +388,12 @@ export default function SeedVarietiesPage() {
     const noOne = !pickerLoading && dealers.length === 0 && facilitators.length === 0
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
+        {/* 2026-08-12 — Back from recipient picker returns to the
+            varieties list (dismiss picker + selection state). Farmer
+            can then pick a different variety or leave. Consistent
+            across all seed recipient pickers: back = varieties list. */}
         <PWAHeader title={t('recipientTitle')} activeRole="FARMER"
-          back={`/crop-detail/${subscriptionId}/orders`} />
+          back={{ onClick: () => { setPickingRecipient(false); setSelected(null) } }} />
         <div className="pt-20 pb-24 px-4 max-w-lg mx-auto">
           <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 mb-4">
             <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">SEED</span>

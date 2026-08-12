@@ -107,6 +107,13 @@ export default function FarmerForwardPage() {
   const backHref = order?.subscription_id
     ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
     : '/orders'
+  // 2026-08-12 — Header back button targets Advisory (consistent
+  // across all pest/fert recipient pickers per user direction). The
+  // other CTAs (Back-to-Manage on error/empty, post-send router.replace)
+  // continue to target the Manage tab.
+  const escapeHref = order?.subscription_id
+    ? `/advisory/${order.subscription_id}`
+    : '/orders'
 
   function buildRecipientsUrl(coords?: { lat: number; lng: number } | null): string {
     const base = `/farmer/orders/${orderId}/eligible-recipients`
@@ -336,7 +343,7 @@ export default function FarmerForwardPage() {
   if (loadError) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
+        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={escapeHref} />
         <div className="pt-16 px-4 mt-4 max-w-lg mx-auto">
           <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
             <p className="text-3xl mb-2">📦</p>
@@ -370,7 +377,7 @@ export default function FarmerForwardPage() {
     // batch is still forwardable — skip the empty guard for that case.
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
+        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={escapeHref} />
         <div className="pt-16 px-4 mt-4 max-w-lg mx-auto">
           <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
             <p className="text-3xl mb-2">📦</p>
@@ -393,7 +400,7 @@ export default function FarmerForwardPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={escapeHref} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
 
         <p className="text-xs text-[#7A8C7E] mt-4 mb-3 leading-relaxed">

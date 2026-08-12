@@ -346,7 +346,10 @@ export default function OrderingScreenPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
+      {/* 2026-08-12 — Back button returns to Advisory (where the
+          farmer entered this flow from). Consistent across all
+          pest/fert recipient pickers: back = /advisory. */}
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={`/advisory/${subscriptionId}`} />
       <div className="pt-16">
         <ClientCropChip subscriptionId={subscriptionId} />
       </div>

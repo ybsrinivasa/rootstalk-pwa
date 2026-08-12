@@ -84,6 +84,12 @@ export default function FarmerForwardSeedPage() {
   const backHref = order?.subscription_id
     ? `/crop-detail/${order.subscription_id}/orders?tab=manage`
     : '/orders'
+  // 2026-08-12 — Header back button targets the seed varieties list
+  // (where the farmer entered the seed-order flow from). Consistent
+  // across all seed recipient pickers per user direction.
+  const escapeHref = order?.subscription_id
+    ? `/subscribe/seed-varieties/${order.subscription_id}`
+    : '/orders'
 
   function buildRecipientsUrl(coords?: { lat: number; lng: number } | null): string {
     const base = `/farmer/seed-orders/${orderId}/eligible-recipients`
@@ -293,7 +299,7 @@ export default function FarmerForwardSeedPage() {
   if (loadError) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
+        <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={escapeHref} />
         <div className="pt-16 px-4 mt-4 max-w-lg mx-auto">
           <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
             <p className="text-3xl mb-2">📦</p>
@@ -321,7 +327,7 @@ export default function FarmerForwardSeedPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={backHref} />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back={escapeHref} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
 
         <p className="text-xs text-[#7A8C7E] mt-4 mb-3 leading-relaxed">
