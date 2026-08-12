@@ -21,6 +21,12 @@ interface Fulfilment {
   order_status: string
   dealer_user_id: string | null
   facilitator_user_id: string | null
+  // 2026-08-12 — TRUE when the item's parent order is a returned-to-
+  // farmer DRAFT (farmer cancel, dealer decline, facilitator decline).
+  // Overrides the status-based pill derivation so the chip reads
+  // "Returned" instead of "Routed" — accurate: no dealer is actively
+  // processing this, the farmer needs to forward or discard.
+  is_returned_to_farmer?: boolean
   brand_name: string | null
   manufacturer_name: string | null
   given_volume: number | null
@@ -988,6 +994,12 @@ const MANAGE_PILL_TONE: Record<ManagePill, { bg: string; fg: string }> = {
 // terminal-received (chip drops off — nothing left for the farmer to do).
 function fulfilmentToPill(f: Fulfilment): ManagePill | null {
   if (f.farmer_received_at) return null
+  // 2026-08-12 — Returned-to-farmer DRAFTs (farmer cancel, dealer
+  // decline, facilitator decline) always chip as "Returned" regardless
+  // of item status. The item is technically PENDING on the DRAFT but
+  // no dealer is processing it — the farmer is holding it, and needs
+  // to Send to another dealer or Discard. Chip must reflect that.
+  if (f.is_returned_to_farmer) return 'returned'
   switch (f.status) {
     case 'PENDING':
     case 'AVAILABLE':
