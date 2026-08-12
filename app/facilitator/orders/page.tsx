@@ -75,6 +75,12 @@ interface Order {
   is_seed?: boolean
   crop_cosh_id?: string | null
   farm_area_acres?: number | null
+  // 2026-08-12 — Dealer-declined-back marker. TRUE when a dealer
+  // declined the facilitator's forward. Routes the card to the
+  // Returned pill (not lumped with fresh "needs accept" on Pending).
+  // Cleared when the facilitator forwards to a new dealer.
+  is_returned_to_facilitator?: boolean
+  released_dealer_user_id?: string | null
 }
 
 // 2026-06-22 — Raw payload shape from /facilitator/seed-orders.
@@ -94,6 +100,9 @@ interface SeedOrderRaw {
   dealer_user_id: string | null
   dealer_name: string | null
   created_at: string
+  // 2026-08-12 — Dealer-declined-back marker (see Order interface).
+  is_returned_to_facilitator?: boolean
+  released_dealer_user_id?: string | null
 }
 
 interface NearbyDealer {
@@ -121,6 +130,10 @@ const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned'
 // added to dealer/orders same day). Priority follows the facilitator's
 // tap-through order: pending → returned → farmer → pickup → routed.
 function effectivePillForTraining(o: Order): Pill {
+  // 2026-08-12 — Dealer-declined-back takes precedence over the
+  // status-based routing for training orders too, so training-pill
+  // action UI matches what the real Returned pill would render.
+  if (o.is_returned_to_facilitator) return 'returned'
   if (o.is_seed) {
     if (['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id) return 'pending'
     if (o.dealer_user_id) return 'routed'
@@ -159,9 +172,17 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   // Facilitator's life-cycle in seeds: SENT (accept/reject) →
   // ACCEPTED-no-dealer (forward to dealer) → routed to dealer
   // (read-only). NOT_AVAILABLE / REJECTED / PURCHASED are terminal
-  // and already filtered above. Seeds don't appear on returned /
-  // farmer / pickup — those stages happen at the dealer.
+  // and already filtered above. Seeds appear on Returned when a
+  // dealer declined the facilitator's forward (2026-08-12); otherwise
+  // seeds don't appear on farmer / pickup — those stages happen at
+  // the dealer.
   if (o.is_seed) {
+    // Dealer-declined-back → Returned pill (not Pending). Overrides
+    // status-based routing so the card is grouped with other "waiting
+    // for the facilitator to pick a different dealer" work.
+    if (o.is_returned_to_facilitator) {
+      return pill === 'returned'
+    }
     switch (pill) {
       case 'pending':
         return ['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id
@@ -173,6 +194,15 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       case 'pickup':
         return false
     }
+  }
+  // 2026-08-12 — Pest/fert dealer-declined-back marker takes precedence
+  // over the item-count-based pill match. A facilitator-forwarded order
+  // whose dealer declined lands in ACCEPTED + no-dealer + is_returned_
+  // to_facilitator=True; without this branch it fell into Pending
+  // ("needs a dealer pick") — technically true but lumped in with
+  // fresh accept-me orders. Returned pill is the more precise home.
+  if (o.is_returned_to_facilitator) {
+    return pill === 'returned'
   }
   const c = o.item_status_counts
   switch (pill) {
@@ -284,6 +314,8 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
     is_seed: true,
     crop_cosh_id: s.crop_cosh_id,
     farm_area_acres: s.farm_area_acres,
+    is_returned_to_facilitator: s.is_returned_to_facilitator,
+    released_dealer_user_id: s.released_dealer_user_id,
   }
 }
 
