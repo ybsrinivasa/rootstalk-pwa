@@ -520,64 +520,12 @@ export default function FarmerOrderDetailPage() {
           </section>
         )}
 
-        {/* 2026-08-12 — Same gate as the Returned section: hide the
-            Postponed list while there are items awaiting the farmer's
-            approval. Farmer's mental model on this screen is "decide
-            these items"; postponed + returned context clutters the
-            decision and confuses "what do I need to do right now?"
-            Both surface again once the approval batch is cleared. */}
-        {!approvalPending && (order.postponed_items?.length ?? 0) > 0 && (
-          <section className="space-y-2">
-            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              {t('postponedSection.title', { count: order.postponed_items!.length })}
-            </p>
-            {order.postponed_items!.map(row => (
-              <div key={row.id} className="bg-white rounded-2xl border border-amber-200 shadow-sm p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-[#6B3F1F] truncate">{row.brand_name || row.practice_name || t('postponedSection.itemFallback')}</p>
-                    {row.postponed_until && (
-                      <p className="text-xs text-amber-700 mt-1">
-                        {t('postponedSection.dealerRevisitBy', { date: new Date(row.postponed_until).toLocaleDateString(locale, { day: '2-digit', month: 'short' }) })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button onClick={() => setConfirmCancelPostponed(row)}
-                  className="mt-3 w-full bg-red-50 border border-red-200 text-[#D4682E] text-xs font-semibold py-2 rounded-xl">
-                  {t('postponedSection.cancelDontWait')}
-                </button>
-              </div>
-            ))}
-          </section>
-        )}
-
-        {/* 2026-06-03 — Returned section hidden while there are any
-            SENT_FOR_APPROVAL items. Per user: returned actions
-            depend on the approval decision; expose them only after
-            the approval task is complete. */}
-        {!approvalPending && (order.returned_items?.length ?? 0) > 0 && (
-          <section className="space-y-2">
-            <p className="text-sm font-semibold text-[#6B3F1F] px-1">
-              {t('returnedSection.title', { count: order.returned_items!.length })}
-            </p>
-            <p className="text-[11px] text-[#7A8C7E] px-1 -mt-1">
-              {facilitatorOwns
-                ? t('returnedSection.hintFacilitatorOwned')
-                : t('returnedSection.hintFarmerActs')}
-            </p>
-            {order.returned_items!.map(row => (
-              <div key={row.id} className="bg-white rounded-2xl border border-red-200 shadow-sm p-4">
-                <p className="font-semibold text-[#6B3F1F] truncate">
-                  {row.brand_name || row.practice_name || t('returnedSection.itemFallback')}
-                </p>
-                <p className="text-xs text-[#D4682E] mt-1">
-                  {row.status === 'REJECTED' ? t('returnedSection.deletedFromApproval') : t('returnedSection.notAvailableAtDealer')}
-                </p>
-              </div>
-            ))}
-          </section>
-        )}
+        {/* 2026-08-12 — Postponed + Returned sections removed from the
+            order-detail screen entirely. Both are handled on the
+            Manage tab's own pills (Routed's PostponedStrip for
+            postponed items, Returned pill for NA/REJECTED). Their
+            presence here duplicated the action surface and confused
+            the farmer's decision context on this screen. */}
 
         {(order.approved_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
