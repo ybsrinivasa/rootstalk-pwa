@@ -482,7 +482,13 @@ export default function SeedVarietiesPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('selectVarietyTitle')} activeRole="FARMER" back={`/crop-detail/${subscriptionId}/orders`} />
+      {/* 2026-08-12 — Back from the varieties list returns to the
+          Crop Dashboard (not Manage Orders). Farmer's mental model:
+          they entered varieties FROM the dashboard (Browse Varieties
+          button or the Order tab), and dashboard is the "home" they
+          recognise. Landing on Manage Orders after a back-tap was
+          disorienting per user report. */}
+      <PWAHeader title={t('selectVarietyTitle')} activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <p className="text-xs text-[#7A8C7E] mt-4 mb-4 leading-relaxed">
           {t('browseHelp')}
