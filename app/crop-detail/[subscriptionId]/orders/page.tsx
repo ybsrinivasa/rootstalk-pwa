@@ -586,11 +586,15 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   // once every item is APPROVED. But the farmer may still need to pick
   // items up. So COMPLETED belongs on the Pickup pill (until pickup is
   // confirmed and pickup_ready_count drops to 0), NOT on Routed /
-  // Approval / Returned. Earlier fix put it in the outright-terminal
-  // list, which sent pickup-pending orders to the Received tab — wrong
-  // surface, farmer looks under Received for something they haven't
-  // received yet.
-  if (o.status === 'COMPLETED' && pill !== 'pickup') {
+  // Approval. Earlier fix put it in the outright-terminal list, which
+  // sent pickup-pending orders to the Received tab — wrong surface,
+  // farmer looks under Received for something they haven't received yet.
+  // 2026-08-13 — Returned pill also stays open on COMPLETED: a mixed
+  // order (some approvals, some NA) flips to COMPLETED as soon as
+  // every SFA item is decided, but the NA items still need to be
+  // rerouted or discarded. Hiding from Returned created a dead-end
+  // where the farmer had no way to act on the returned items.
+  if (o.status === 'COMPLETED' && pill !== 'pickup' && pill !== 'returned') {
     return false
   }
 
