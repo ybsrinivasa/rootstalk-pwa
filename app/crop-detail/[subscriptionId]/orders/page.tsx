@@ -49,6 +49,12 @@ type SubOrder = {
   awaiting_approval_count?: number
   returned_count?: number
   postponed_count?: number
+  // 2026-08-13 — U-turn model: sum of PENDING + AVAILABLE + POSTPONED +
+  // SENT_FOR_APPROVAL items. Order is "quiescent" when this hits 0 —
+  // at that moment the wrapper releases and N/A / rejected items
+  // surface on the Returned pill. Before quiescence, N/A items are
+  // held server-side so the batch stays with one dealer.
+  active_item_count?: number
   // 2026-06-06 — Approved items awaiting farmer-confirmed pickup.
   // Drives the emerald "Pick up N items from X" banner.
   pickup_ready_count?: number
@@ -659,7 +665,14 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
       // card so the farmer can see them + gate Cancel Order on the
       // OrderIdCard footer. The rerouting action itself stays with
       // the facilitator; the card carries no Send/Discard buttons.
-      return returned > 0
+      // 2026-08-13 — U-turn: N/A + rejected items are held server-side
+      // in a "wrapper" until the whole order goes quiescent (no more
+      // PENDING / AVAILABLE / POSTPONED / SFA items). Prevents the
+      // order from getting split across dealers while any postpone
+      // is still in flight. Cancel Order stays as the farmer's
+      // explicit early-release escape hatch.
+      const active = o.active_item_count ?? 0
+      return returned > 0 && active === 0
     case 'pickup':
       return pickup > 0
   }

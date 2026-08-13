@@ -144,7 +144,16 @@ function effectivePillForTraining(o: Order): Pill {
   // 2026-08-12 — Farmer-rejected items = "same needs-rerouting state"
   // as dealer-NA (both go through /reroute-returned). Count together
   // so the Returned pill picks up either cause.
-  if (((c?.not_available ?? 0) + (c?.rejected ?? 0)) > 0) return 'returned'
+  // 2026-08-13 — U-turn: only surface as 'returned' when the order is
+  // quiescent (no active-with-dealer items). Otherwise fall through to
+  // the priority path (farmer / pickup / routed) so training-pill
+  // preview matches the real pill routing.
+  const quiescent =
+    (c?.pending ?? 0) === 0
+    && (c?.available ?? 0) === 0
+    && (c?.postponed ?? 0) === 0
+    && (c?.sent_for_approval ?? 0) === 0
+  if (((c?.not_available ?? 0) + (c?.rejected ?? 0)) > 0 && quiescent) return 'returned'
   if ((c?.sent_for_approval ?? 0) > 0) return 'farmer'
   if ((c?.approved ?? 0) > 0 && !o.packing_farmer_received_at) return 'pickup'
   return 'routed'
@@ -236,7 +245,15 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       // 2026-08-12 — Farmer-rejected items surface here too (same
       // reroute action). Backend `_reroute_returned_items` accepts
       // both NA and REJECTED item statuses.
+      // 2026-08-13 — U-turn: Returned pill only fires when the whole
+      // order is quiescent — no PENDING / AVAILABLE / POSTPONED / SFA
+      // items still open with the dealer. Prevents order-splitting
+      // while a postpone is alive. Symmetric to the farmer's gate.
       return ((c?.not_available ?? 0) + (c?.rejected ?? 0)) > 0
+        && (c?.pending ?? 0) === 0
+        && (c?.available ?? 0) === 0
+        && (c?.postponed ?? 0) === 0
+        && (c?.sent_for_approval ?? 0) === 0
     case 'farmer':
       return (c?.sent_for_approval ?? 0) > 0
     case 'pickup':

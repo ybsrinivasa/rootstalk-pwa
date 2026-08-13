@@ -1054,9 +1054,20 @@ export default function DealerOrderDetailPage() {
     </div>
   )
 
-  const activeItems = order.items.filter(i =>
-    !['NOT_NEEDED', 'SKIPPED', 'REMOVED', 'APPROVED', 'SENT_FOR_APPROVAL'].includes(i.status)
-  )
+  // 2026-08-13 — U-turn: once dealer has submitted the order at least
+  // once (order.status past PROCESSING), N/A items are tucked into a
+  // "wrapper" hidden from the dealer's view. They stay held on the
+  // server side until the whole order goes quiescent (no postpones,
+  // no farmer approvals in flight), at which point the batch releases
+  // to the farmer's Returned pill in one go. Pre-submit (PROCESSING),
+  // dealer still sees N/A so they can review their own decisions
+  // before tapping Submit.
+  const postSubmit = order.status !== 'PROCESSING' && order.status !== 'ACCEPTED'
+  const activeItems = order.items.filter(i => {
+    if (['NOT_NEEDED', 'SKIPPED', 'REMOVED', 'APPROVED', 'SENT_FOR_APPROVAL'].includes(i.status)) return false
+    if (postSubmit && i.status === 'NOT_AVAILABLE') return false
+    return true
+  })
   // 2026-06-03 — every active item must be decided (no PENDING) before
   // the dealer can submit. Submit succeeds if at least one item is
   // AVAILABLE or NOT_AVAILABLE (both give the farmer something to act on).
@@ -1100,6 +1111,11 @@ export default function DealerOrderDetailPage() {
     item: OrderItem,
     opts: {
       compactMeta?: boolean
+      // 2026-08-13 — U-turn: hide N/A items from dealer's view once the
+      // order is past PROCESSING (i.e., dealer has submitted). Applies
+      // to every call site — standalone, pure-OR, pure-AND, COMPLEX_OR.
+      // Returns null so the parent skip renders nothing (avoids the
+      // "one option-card visible, its sibling gone" visual asymmetry).
       // 2026-06-26 — When the parent renders a pure-AND or pure-OR
       // Relation Part as individual items, PENDING rows need the
       // three-button decision row inline. Mirrors the standalone-item
@@ -1122,6 +1138,9 @@ export default function DealerOrderDetailPage() {
       orGroupState?: 'locked'
     } = {},
   ) {
+    // 2026-08-13 — U-turn: post-submit N/A items are hidden from the
+    // dealer. See postSubmit definition above.
+    if (postSubmit && item.status === 'NOT_AVAILABLE') return null
     const showPriceColumn = item.status === 'AVAILABLE'
     const isLocked = opts.orGroupState === 'locked'
     return (
