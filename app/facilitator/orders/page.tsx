@@ -141,7 +141,10 @@ function effectivePillForTraining(o: Order): Pill {
   }
   if (['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id) return 'pending'
   const c = o.item_status_counts
-  if ((c?.not_available ?? 0) > 0) return 'returned'
+  // 2026-08-12 — Farmer-rejected items = "same needs-rerouting state"
+  // as dealer-NA (both go through /reroute-returned). Count together
+  // so the Returned pill picks up either cause.
+  if (((c?.not_available ?? 0) + (c?.rejected ?? 0)) > 0) return 'returned'
   if ((c?.sent_for_approval ?? 0) > 0) return 'farmer'
   if ((c?.approved ?? 0) > 0 && !o.packing_farmer_received_at) return 'pickup'
   return 'routed'
@@ -230,7 +233,10 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
         (c?.not_available ?? 0) === 0 &&
         (c?.sent_for_approval ?? 0) === 0
     case 'returned':
-      return (c?.not_available ?? 0) > 0
+      // 2026-08-12 — Farmer-rejected items surface here too (same
+      // reroute action). Backend `_reroute_returned_items` accepts
+      // both NA and REJECTED item statuses.
+      return ((c?.not_available ?? 0) + (c?.rejected ?? 0)) > 0
     case 'farmer':
       return (c?.sent_for_approval ?? 0) > 0
     case 'pickup':
@@ -1024,7 +1030,11 @@ function PillChunk({
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
           <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2 mt-2">
             <p className="text-xs text-amber-800">
-              {t('returnedItemsCount', { count: sub.item_status_counts?.not_available ?? 0 })}
+              {t('returnedItemsCount', {
+                count:
+                  (sub.item_status_counts?.not_available ?? 0)
+                  + (sub.item_status_counts?.rejected ?? 0),
+              })}
             </p>
             <button onClick={() => onForwardReturned(sub.id)}
               className="text-xs font-semibold text-amber-800 underline">

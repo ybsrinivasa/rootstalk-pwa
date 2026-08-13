@@ -650,10 +650,12 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
     case 'approval':
       return awaiting > 0
     case 'returned':
-      // Hide facilitator-routed orders — those are in the
-      // facilitator's queue. They only resurface here after
-      // facilitator's return-to-farmer creates a fresh DRAFT.
-      return returned > 0 && !facilitatorOwned
+      // 2026-08-12 — Facilitator-owned orders with returned items
+      // (NA-by-dealer + rejected-by-farmer) surface here as an info
+      // card so the farmer can see them + gate Cancel Order on the
+      // OrderIdCard footer. The rerouting action itself stays with
+      // the facilitator; the card carries no Send/Discard buttons.
+      return returned > 0
     case 'pickup':
       return pickup > 0
   }
@@ -1083,12 +1085,20 @@ function OrderIdCard({
   // sees no change and thinks Cancel failed). DRAFT now offers a
   // Delete action instead (different button below) — the review
   // page already excludes DRAFT from canCancel.
+  // 2026-08-12 — Always find a cancel candidate (ignore awaiting-
+  // approval gate here). When awaiting > 0 the button renders
+  // DISABLED with a small explanatory note asking the farmer to
+  // clear approvals first. Applies uniformly to direct-to-dealer
+  // and facilitator-forwarded orders (user direction: consistency).
   const cancellable = liveSubs.find(s => {
     if (s.kind === 'SEED') {
       return !['DRAFT', 'SENT_FOR_APPROVAL'].includes(s.status)
     }
-    return s.status !== 'DRAFT' && (s.awaiting_approval_count || 0) === 0
+    return s.status !== 'DRAFT'
   })
+  const cancellableAwaiting = cancellable
+    ? (cancellable.awaiting_approval_count || 0) : 0
+  const cancelDisabled = cancellableAwaiting > 0
   // A DRAFT sub-order is deletable. Typically arrives via
   // dealer-decline cancel-and-migrate; farmer can discard it
   // entirely instead of picking a recipient.
@@ -1131,9 +1141,16 @@ function OrderIdCard({
       {/* Cancel / cleanup row — surfaced at the Order ID level
           because cancel cascades across the lineage. */}
       {cancellable && (
-        <div className="border-t border-[#F0E5D0] px-4 py-2">
+        <div className="border-t border-[#F0E5D0] px-4 py-2 space-y-1.5">
+          {cancelDisabled && (
+            <p className="text-[10px] text-amber-700 text-center leading-snug">
+              {cancellableAwaiting === 1
+                ? 'Please decide on the 1 item awaiting your approval first.'
+                : `Please decide on the ${cancellableAwaiting} items awaiting your approval first.`}
+            </p>
+          )}
           <button onClick={() => onCancel(cancellable.id, cancellable.kind)}
-            disabled={busy === cancellable.id}
+            disabled={busy === cancellable.id || cancelDisabled}
             className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
             {busy === cancellable.id ? '…' : t('cancelOrderBtn')}
           </button>
@@ -1516,10 +1533,24 @@ function ReturnedChunk({
     )
   }
   const returned = sub.returned_count ?? (sub.status === 'NOT_AVAILABLE' ? 1 : 0)
-  // 2026-06-21 — Facilitator-owned orders no longer reach this chunk
-  // — the Returned pill predicate filters them out. The passive
-  // "your facilitator is handling" branch that used to live here has
-  // been removed along with its dead code path.
+  // 2026-08-12 — Facilitator-owned variant: informational card only.
+  // Farmer sees "Handled by [Facilitator]" + count; no Send/Discard
+  // buttons (facilitator's action). Cancel Order lives at the
+  // OrderIdCard footer with its own await-gate + explanatory note.
+  if (sub.facilitator_user_id) {
+    const facilitatorName =
+      sub.recipient_shop_name || sub.recipient_name || 'the facilitator'
+    return (
+      <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-1">
+        <p className="text-[10px] text-amber-700/80 font-medium uppercase tracking-wide">
+          Handled by <span className="text-amber-800 normal-case font-semibold">{facilitatorName}</span>
+        </p>
+        <p className="text-xs text-amber-800">
+          {returned === 1 ? '1 item returned' : `${returned} items returned`}
+        </p>
+      </div>
+    )
+  }
   // 2026-08-11 — Symmetry with the cancel-migrate DRAFT card: farmer
   // gets both actions on dealer-returned items too. If the source
   // order also has POSTPONED items still with the dealer, the discard
