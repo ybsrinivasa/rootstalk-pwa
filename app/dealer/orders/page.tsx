@@ -22,6 +22,10 @@ interface PackingItem {
   given_volume: number | null
   volume_unit: string | null
   price: number | null
+  // 2026-08-14 (Phase 2 rework): per-item Final Confirmation timestamp.
+  // Null → dealer hasn't Final Confirmed → per-row Confirm / Cancel
+  // buttons render. Non-null → committed.
+  final_confirmed_at?: string | null
 }
 
 interface ItemStatusCounts {
@@ -550,6 +554,36 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
+  // 2026-08-14 (Phase 2 rework): per-item Final Confirmation and
+  // Cancel from the Packing list card. Batch button covers the common
+  // case; these two enable partial fulfilment (e.g. farmer paid for
+  // one item in cash, credit still pending on the other).
+  async function finalConfirmItemFromList(orderId: string, itemId: string) {
+    setBusy(orderId)
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm. Please try again.')
+    } finally { setBusy(null) }
+  }
+
+  async function cancelFinalConfirmItemFromList(orderId: string, itemId: string) {
+    if (!confirm(
+      "Cancel this approved item? It will return to the farmer as Not Available " +
+      "once the whole order settles.",
+    )) return
+    setBusy(orderId)
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/cancel-final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not cancel this item. Please try again.')
+    } finally { setBusy(null) }
+  }
+
   async function cancelFinalConfirmSeed(o: Order) {
     if (!confirm(
       "Cancel this approved seed order? It will return to the farmer as " +
@@ -738,6 +772,8 @@ function DealerOrdersInner() {
                 onFinalConfirmSeed={finalConfirmSeed}
                 onCancelFinalConfirmSeed={cancelFinalConfirmSeed}
                 onFinalConfirmAll={finalConfirmAllOrder}
+                onFinalConfirmItem={finalConfirmItemFromList}
+                onCancelFinalConfirmItem={cancelFinalConfirmItemFromList}
                 onAcceptSeed={acceptSeed}
                 onConfirmDeclineSeed={(id) => setConfirmDeclineSeedId(id)}
                 onSubmitSeed={submitSeed}
@@ -926,6 +962,7 @@ function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
+  onFinalConfirmItem, onCancelFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy,
@@ -943,6 +980,8 @@ function DealerOrderIdCard({
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
   onFinalConfirmAll: (o: Order) => void
+  onFinalConfirmItem: (orderId: string, itemId: string) => void
+  onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -972,6 +1011,8 @@ function DealerOrderIdCard({
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
                 onFinalConfirmAll={onFinalConfirmAll}
+                onFinalConfirmItem={onFinalConfirmItem}
+                onCancelFinalConfirmItem={onCancelFinalConfirmItem}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -986,6 +1027,8 @@ function DealerOrderIdCard({
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
                 onFinalConfirmAll={onFinalConfirmAll}
+                onFinalConfirmItem={onFinalConfirmItem}
+                onCancelFinalConfirmItem={onCancelFinalConfirmItem}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -1169,6 +1212,7 @@ function DealerOrderCardHeader({
 function DealerPillChunk({
   sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
+  onFinalConfirmItem, onCancelFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy, showSubHeader,
@@ -1182,6 +1226,8 @@ function DealerPillChunk({
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
   onFinalConfirmAll: (o: Order) => void
+  onFinalConfirmItem: (orderId: string, itemId: string) => void
+  onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -1307,6 +1353,8 @@ function DealerPillChunk({
             onShare={() => onShare(sub)}
             onRemove={() => onRemove(sub)}
             onFinalConfirmAll={() => onFinalConfirmAll(sub)}
+            onFinalConfirmItem={onFinalConfirmItem}
+            onCancelFinalConfirmItem={onCancelFinalConfirmItem}
             busy={busy === sub.id} />
         )
       )}
@@ -1425,12 +1473,15 @@ function SeedPendingChunk({
 // now in DealerOrderCardHeader; the chunk starts at the Packing
 // ID strip.
 function PackingChunk({
-  order, onShare, onRemove, onFinalConfirmAll, busy,
+  order, onShare, onRemove, onFinalConfirmAll,
+  onFinalConfirmItem, onCancelFinalConfirmItem, busy,
 }: {
   order: Order
   onShare: () => void
   onRemove: () => void
   onFinalConfirmAll: () => void
+  onFinalConfirmItem: (orderId: string, itemId: string) => void
+  onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
   busy: boolean
 }) {
   const t = useTranslations('dealer.orders.packing')
@@ -1482,18 +1533,39 @@ function PackingChunk({
       </div>
       <div className="divide-y divide-purple-100">
         {order.packing_items.map(it => (
-          <div key={it.id} className="p-3 flex items-baseline justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#6B3F1F] truncate">{it.brand_name || t('itemFallback')}</p>
-              {it.manufacturer_name && (
-                <p className="text-[11px] text-[#7A8C7E] truncate">{t('byManufacturer', { manufacturer: it.manufacturer_name })}</p>
-              )}
-              {it.given_volume != null && (
-                <p className="text-[11px] text-[#7A8C7E] mt-0.5">{it.given_volume} {it.volume_unit || ''}</p>
+          <div key={it.id} className="p-3 space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-[#6B3F1F] truncate">{it.brand_name || t('itemFallback')}</p>
+                {it.manufacturer_name && (
+                  <p className="text-[11px] text-[#7A8C7E] truncate">{t('byManufacturer', { manufacturer: it.manufacturer_name })}</p>
+                )}
+                {it.given_volume != null && (
+                  <p className="text-[11px] text-[#7A8C7E] mt-0.5">{it.given_volume} {it.volume_unit || ''}</p>
+                )}
+              </div>
+              {it.price != null && (
+                <p className="text-sm font-bold text-[#7D4196] shrink-0">₹{it.price.toLocaleString(locale)}</p>
               )}
             </div>
-            {it.price != null && (
-              <p className="text-sm font-bold text-[#7D4196] shrink-0">₹{it.price.toLocaleString(locale)}</p>
+            {/* 2026-08-14 (Phase 2 rework): per-item Final Confirmation
+                controls. Dealer can commit individual items or drop
+                them (payment fell through on a specific item) without
+                affecting the rest of the batch. */}
+            {!it.final_confirmed_at && (
+              <div className="flex gap-2">
+                <button onClick={() => onFinalConfirmItem(order.id, it.id)} disabled={busy}
+                  className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-[11px] font-semibold py-1.5 rounded-lg">
+                  Final Confirm
+                </button>
+                <button onClick={() => onCancelFinalConfirmItem(order.id, it.id)} disabled={busy}
+                  className="flex-1 border border-red-200 text-[#D4682E] text-[11px] font-semibold py-1.5 rounded-lg">
+                  Cancel
+                </button>
+              </div>
+            )}
+            {it.final_confirmed_at && (
+              <p className="text-[10px] text-purple-600 font-medium">✓ Final Confirmed</p>
             )}
           </div>
         ))}
