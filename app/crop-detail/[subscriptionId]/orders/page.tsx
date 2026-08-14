@@ -972,7 +972,11 @@ type RoutedFooterMode =
 
 function computeRoutedFooterMode(sub: SubOrder | undefined): RoutedFooterMode {
   if (!sub) return 'none'
-  if (['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(sub.status)) {
+  // 2026-08-14 (Phase 2 rework): COMPLETED intentionally NOT here —
+  // that status only means "all farmer-approval work is done," not
+  // that the order is finished. Dealer's Final Confirmation, active
+  // postpones, or pending pickups can all coexist with COMPLETED.
+  if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(sub.status)) {
     return 'none'
   }
   if (sub.kind === 'REGULAR' && sub.status === 'DRAFT' && !sub.is_returned_to_farmer) {
@@ -1012,8 +1016,16 @@ function OrderIdCard({
   const head = subs[0]
   const renderRows = matching.length > 1
 
+  // 2026-08-14 (Phase 2 rework): COMPLETED dropped from the terminal
+  // filter. An order flips to COMPLETED the moment all farmer-approval
+  // work is done, but the dealer's Final Confirmation might still be
+  // pending, a postpone might still be alive, or approved items might
+  // be awaiting pickup. Only truly terminal statuses (CANCELLED,
+  // EXPIRED, PURCHASED, REJECTED, REROUTED) exclude a sub from the
+  // liveSubs pool — the footer needs to render Cancel etc. for
+  // COMPLETED orders with in-flight items.
   const liveSubs = subs.filter(s =>
-    !['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(s.status),
+    !['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(s.status),
   )
   // Pick a single sub as the "footer subject" for the whole Order ID
   // card. Cascade-cancel on the backend walks the lineage, so any live
