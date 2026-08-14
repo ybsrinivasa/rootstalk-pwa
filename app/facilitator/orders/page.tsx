@@ -23,6 +23,12 @@ interface ItemStatusCounts {
   sent_for_approval: number
   approved: number
   rejected: number
+  // 2026-08-14 (Phase 2): APPROVED items split by dealer's Final
+  // Confirmation status. `awaiting_final_confirmation` = dealer has
+  // yet to commit; `final_confirmed` = ready for physical hand-off
+  // (Pickup pill gates on this).
+  awaiting_final_confirmation?: number
+  final_confirmed?: number
 }
 
 interface Order {
@@ -114,12 +120,15 @@ interface NearbyDealer {
 // Real pills exclude training-client orders; training pill collects
 // every training order regardless of status. See dealer/orders for
 // the same pattern.
-type Pill = 'pending' | 'routed' | 'returned' | 'farmer' | 'pickup' | 'training'
+// 2026-08-14 (Phase 2 rework): 'returned' pill dropped. Returned-to-
+// facilitator + dealer-declined states now surface on the Routed pill's
+// master card with contextual action UI. Mirrors the farmer's 3-pill
+// (routed / approval / pickup) treatment.
+type Pill = 'pending' | 'routed' | 'farmer' | 'pickup' | 'training'
 
-const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned' | 'pillFarmer' | 'pillPickup' | 'pillTraining'> = {
+const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillFarmer' | 'pillPickup' | 'pillTraining'> = {
   pending: 'pillPending',
   routed: 'pillRouted',
-  returned: 'pillReturned',
   farmer: 'pillFarmer',
   pickup: 'pillPickup',
   training: 'pillTraining',
@@ -130,32 +139,20 @@ const PILL_LABEL_KEY: Record<Pill, 'pillPending' | 'pillRouted' | 'pillReturned'
 // added to dealer/orders same day). Priority follows the facilitator's
 // tap-through order: pending → returned → farmer → pickup → routed.
 function effectivePillForTraining(o: Order): Pill {
-  // 2026-08-12 — Dealer-declined-back takes precedence over the
-  // status-based routing for training orders too, so training-pill
-  // action UI matches what the real Returned pill would render.
-  if (o.is_returned_to_facilitator) return 'returned'
+  // 2026-08-14 (Phase 2): 'returned' pill gone — all returned-to-
+  // facilitator + dealer-decline states surface on 'routed' (master
+  // card). Only pending / farmer / pickup route away from routed.
+  if (o.is_returned_to_facilitator) return 'routed'
   if (o.is_seed) {
     if (['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id) return 'pending'
-    if (o.dealer_user_id) return 'routed'
-    return 'pending'
+    return 'routed'
   }
   if (['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id) return 'pending'
   const c = o.item_status_counts
-  // 2026-08-12 — Farmer-rejected items = "same needs-rerouting state"
-  // as dealer-NA (both go through /reroute-returned). Count together
-  // so the Returned pill picks up either cause.
-  // 2026-08-13 — U-turn: only surface as 'returned' when the order is
-  // quiescent (no active-with-dealer items). Otherwise fall through to
-  // the priority path (farmer / pickup / routed) so training-pill
-  // preview matches the real pill routing.
-  const quiescent =
-    (c?.pending ?? 0) === 0
-    && (c?.available ?? 0) === 0
-    && (c?.postponed ?? 0) === 0
-    && (c?.sent_for_approval ?? 0) === 0
-  if (((c?.not_available ?? 0) + (c?.rejected ?? 0)) > 0 && quiescent) return 'returned'
   if ((c?.sent_for_approval ?? 0) > 0) return 'farmer'
-  if ((c?.approved ?? 0) > 0 && !o.packing_farmer_received_at) return 'pickup'
+  // 2026-08-14 (Phase 2): Pickup gates on Final Confirmation. Approved
+  // items awaiting the dealer's Final Confirmation stay on Routed.
+  if ((c?.final_confirmed ?? 0) > 0 && !o.packing_farmer_received_at) return 'pickup'
   return 'routed'
 }
 
@@ -188,12 +185,12 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   // dealer declined the facilitator's forward (2026-08-12); otherwise
   // seeds don't appear on farmer / pickup — those stages happen at
   // the dealer.
+  // 2026-08-14 (Phase 2): Routed pill is the master card. Returned-to-
+  // facilitator orders (dealer declined) show on Routed with a state
+  // chip + "Forward to another dealer" action. No separate Returned pill.
   if (o.is_seed) {
-    // Dealer-declined-back → Returned pill (not Pending). Overrides
-    // status-based routing so the card is grouped with other "waiting
-    // for the facilitator to pick a different dealer" work.
     if (o.is_returned_to_facilitator) {
-      return pill === 'returned'
+      return pill === 'routed'
     }
     switch (pill) {
       case 'pending':
@@ -201,20 +198,13 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       case 'routed':
         return !!o.dealer_user_id
           && !['NOT_AVAILABLE', 'REJECTED', 'PURCHASED', 'CANCELLED', 'REROUTED'].includes(o.status)
-      case 'returned':
       case 'farmer':
       case 'pickup':
         return false
     }
   }
-  // 2026-08-12 — Pest/fert dealer-declined-back marker takes precedence
-  // over the item-count-based pill match. A facilitator-forwarded order
-  // whose dealer declined lands in ACCEPTED + no-dealer + is_returned_
-  // to_facilitator=True; without this branch it fell into Pending
-  // ("needs a dealer pick") — technically true but lumped in with
-  // fresh accept-me orders. Returned pill is the more precise home.
   if (o.is_returned_to_facilitator) {
-    return pill === 'returned'
+    return pill === 'routed'
   }
   const c = o.item_status_counts
   switch (pill) {
@@ -230,48 +220,20 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       //       ACCEPTED, facilitator preserved, dealer cleared).
       return ['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id
     case 'routed':
-      // 2026-06-08 — Routed = dealer is processing.
-      // Includes orders with POSTPONED items even if some items are
-      // already APPROVED (those live in /facilitator/pickup; their
-      // presence shouldn't hide the order from active). Excludes
-      // orders where NA / SFA dominate — those have their own pill.
-      // The approved-count check was dropped (was incorrectly making
-      // any order with picked-up items disappear from the queue).
-      return !!o.dealer_user_id &&
-        (c?.pending ?? 0) + (c?.available ?? 0) + (c?.postponed ?? 0) > 0 &&
-        (c?.not_available ?? 0) === 0 &&
-        (c?.sent_for_approval ?? 0) === 0
-    case 'returned':
-      // 2026-08-12 — Farmer-rejected items surface here too (same
-      // reroute action). Backend `_reroute_returned_items` accepts
-      // both NA and REJECTED item statuses.
-      // 2026-08-13 — U-turn: Returned pill only fires when the whole
-      // order is quiescent — no PENDING / AVAILABLE / POSTPONED / SFA
-      // items still open with the dealer. Prevents order-splitting
-      // while a postpone is alive. Symmetric to the farmer's gate.
-      return ((c?.not_available ?? 0) + (c?.rejected ?? 0)) > 0
-        && (c?.pending ?? 0) === 0
-        && (c?.available ?? 0) === 0
-        && (c?.postponed ?? 0) === 0
-        && (c?.sent_for_approval ?? 0) === 0
+      // 2026-08-14 (Phase 2): Routed is the master card. Every
+      // dealer-forwarded order that isn't otherwise on a distinct
+      // action pill (farmer / pickup / pending) surfaces here — same
+      // spirit as the farmer's rework. The card's contextual UI
+      // handles the different sub-states (dealer processing / awaiting
+      // Final Confirmation / returned-to-facilitator / etc).
+      return !!o.dealer_user_id
     case 'farmer':
       return (c?.sent_for_approval ?? 0) > 0
     case 'pickup':
-      // 2026-06-22 — Drop the packing_list_shared_at gate. Match the
-      // farmer's Pickup pill behaviour (fires on approved_count alone).
-      // Reason: the dealer's "Share Packing List" is a soft formality
-      // — once items are APPROVED the dealer can already hand them
-      // over physically, and the backend lazy-creates the packing row
-      // + code on mark-picked-up. User report 2026-06-22: facilitator
-      // saw 0 on Pickup with 3 approved items because the dealer
-      // hadn't shared yet, even though physically the items were ready.
-      // Two sub-states inside this pill (unchanged):
-      //   (a) packing_picked_up_at is null → "Pick up from dealer"
-      //       (mark-picked-up CTA)
-      //   (b) packing_picked_up_at set, no farmer_received_at → "With
-      //       you — deliver to farmer" (info only; farmer's tap is
-      //       what closes the order)
-      return (c?.approved ?? 0) > 0
+      // 2026-08-14 (Phase 2): Pickup gates on Final Confirmation.
+      // Approved-but-not-yet-Final-Confirmed items stay on Routed as
+      // "Awaiting dealer's Final Confirmation".
+      return (c?.final_confirmed ?? 0) > 0
         && !o.packing_farmer_received_at
   }
 }
@@ -509,7 +471,7 @@ export default function FacilitatorOrdersPage() {
   // matching the pill (not raw sub-orders) so the count matches
   // what the user sees rendered.
   const counts: Record<Pill, number> = useMemo(() => {
-    const c: Record<Pill, number> = { pending: 0, routed: 0, returned: 0, farmer: 0, pickup: 0, training: 0 }
+    const c: Record<Pill, number> = { pending: 0, routed: 0, farmer: 0, pickup: 0, training: 0 }
     for (const list of groups.values()) {
       for (const p of Object.keys(c) as Pill[]) {
         if (list.some(o => subBelongsTo(o, p))) c[p] += 1
@@ -1038,27 +1000,39 @@ function PillChunk({
       {!sub.is_seed && renderPill === 'routed' && (
         <>
           <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
+          {/* 2026-08-14 (Phase 2): returned-items strip lives on the
+              master Routed card. Fires when the order is quiescent
+              (no PENDING/AVAILABLE/POSTPONED/SFA + no APPROVED-
+              awaiting-Final-Confirm) AND there are unsold items to
+              forward. Below the strip, the standard postponed +
+              approved-hint strips still render. */}
+          {(() => {
+            const c = sub.item_status_counts
+            const returnedNAndRejected =
+              (c?.not_available ?? 0) + (c?.rejected ?? 0)
+            const quiescent =
+              (c?.pending ?? 0) === 0
+              && (c?.available ?? 0) === 0
+              && (c?.postponed ?? 0) === 0
+              && (c?.sent_for_approval ?? 0) === 0
+              && (c?.awaiting_final_confirmation ?? 0) === 0
+            if (returnedNAndRejected > 0 && quiescent) {
+              return (
+                <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2 mt-2">
+                  <p className="text-xs text-amber-800">
+                    {t('returnedItemsCount', { count: returnedNAndRejected })}
+                  </p>
+                  <button onClick={() => onForwardReturned(sub.id)}
+                    className="text-xs font-semibold text-amber-800 underline">
+                    {t('forwardReturnedLink')}
+                  </button>
+                </div>
+              )
+            }
+            return null
+          })()}
           <PostponedStrip sub={sub} />
           <ApprovedHintStrip sub={sub} />
-        </>
-      )}
-      {!sub.is_seed && renderPill === 'returned' && (
-        <>
-          <RoutedBody sub={sub} onOpenDetail={onOpenDetail} />
-          <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2 mt-2">
-            <p className="text-xs text-amber-800">
-              {t('returnedItemsCount', {
-                count:
-                  (sub.item_status_counts?.not_available ?? 0)
-                  + (sub.item_status_counts?.rejected ?? 0),
-              })}
-            </p>
-            <button onClick={() => onForwardReturned(sub.id)}
-              className="text-xs font-semibold text-amber-800 underline">
-              {t('forwardReturnedLink')}
-            </button>
-          </div>
-          <PostponedStrip sub={sub} />
         </>
       )}
       {!sub.is_seed && renderPill === 'farmer' && (
