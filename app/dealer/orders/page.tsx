@@ -32,6 +32,12 @@ interface ItemStatusCounts {
   sent_for_approval: number
   approved: number
   rejected: number
+  // 2026-08-14 (Phase 2 rework): APPROVED items split by dealer's
+  // Final Confirmation. awaiting_final_confirmation > 0 blocks the
+  // Packing card's Share/Remove actions and surfaces a batch Final
+  // Confirmation button instead.
+  awaiting_final_confirmation?: number
+  final_confirmed?: number
 }
 
 interface Order {
@@ -525,6 +531,25 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
+  // 2026-08-14 (Phase 2 rework): batch Final Confirmation for all
+  // APPROVED-not-yet-Final-Confirmed items on a pest/fert order,
+  // fired from the Packing pill card on the dealer's list. Mirror of
+  // the same button on the per-order detail page.
+  async function finalConfirmAllOrder(o: Order) {
+    if (!confirm(
+      "This is the final commitment. The packing list is populated after this. " +
+      "Confirm all approved items only after payment or credit terms with the farmer are settled.",
+    )) return
+    setBusy(o.id)
+    try {
+      await api.put(`/dealer/orders/${o.id}/final-confirm-all`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm the batch. Please try again.')
+    } finally { setBusy(null) }
+  }
+
   async function cancelFinalConfirmSeed(o: Order) {
     if (!confirm(
       "Cancel this approved seed order? It will return to the farmer as " +
@@ -712,6 +737,7 @@ function DealerOrdersInner() {
                 onHandoverSeed={handoverSeed}
                 onFinalConfirmSeed={finalConfirmSeed}
                 onCancelFinalConfirmSeed={cancelFinalConfirmSeed}
+                onFinalConfirmAll={finalConfirmAllOrder}
                 onAcceptSeed={acceptSeed}
                 onConfirmDeclineSeed={(id) => setConfirmDeclineSeedId(id)}
                 onSubmitSeed={submitSeed}
@@ -899,7 +925,7 @@ function PickupStatus({ order }: { order: Order }) {
 function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onShare, onRemove, onOpenDetail, onHandoverSeed,
-  onFinalConfirmSeed, onCancelFinalConfirmSeed,
+  onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy,
@@ -916,6 +942,7 @@ function DealerOrderIdCard({
   onHandoverSeed: (o: Order) => void
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
+  onFinalConfirmAll: (o: Order) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -944,6 +971,7 @@ function DealerOrderIdCard({
                 onHandoverSeed={onHandoverSeed}
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
+                onFinalConfirmAll={onFinalConfirmAll}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -957,6 +985,7 @@ function DealerOrderIdCard({
                 onHandoverSeed={onHandoverSeed}
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
+                onFinalConfirmAll={onFinalConfirmAll}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -1139,7 +1168,7 @@ function DealerOrderCardHeader({
 
 function DealerPillChunk({
   sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
-  onFinalConfirmSeed, onCancelFinalConfirmSeed,
+  onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy, showSubHeader,
@@ -1152,6 +1181,7 @@ function DealerPillChunk({
   onHandoverSeed: (o: Order) => void
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
+  onFinalConfirmAll: (o: Order) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -1276,6 +1306,7 @@ function DealerPillChunk({
           <PackingChunk order={sub}
             onShare={() => onShare(sub)}
             onRemove={() => onRemove(sub)}
+            onFinalConfirmAll={() => onFinalConfirmAll(sub)}
             busy={busy === sub.id} />
         )
       )}
@@ -1394,11 +1425,12 @@ function SeedPendingChunk({
 // now in DealerOrderCardHeader; the chunk starts at the Packing
 // ID strip.
 function PackingChunk({
-  order, onShare, onRemove, busy,
+  order, onShare, onRemove, onFinalConfirmAll, busy,
 }: {
   order: Order
   onShare: () => void
   onRemove: () => void
+  onFinalConfirmAll: () => void
   busy: boolean
 }) {
   const t = useTranslations('dealer.orders.packing')
@@ -1470,16 +1502,35 @@ function PackingChunk({
         <p className="text-[11px] text-[#7A8C7E]">{t('totalLabel')}</p>
         <p className="text-sm font-bold text-[#7D4196]">₹{total.toLocaleString(locale)}</p>
       </div>
-      <div className="p-3 flex gap-2">
-        <button onClick={onShare} disabled={busy}
-          className="flex-1 bg-[#7D4196] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-60">
-          {busy ? '…' : (shared ? t('shareAgainCta') : t('shareCta'))}
-        </button>
-        <button onClick={onRemove} disabled={busy}
-          className="flex-1 border border-red-200 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
-          {t('removeCta')}
-        </button>
-      </div>
+      {/* 2026-08-14 (Phase 2 rework): Final Confirmation gate. Items
+          farmer approved but dealer hasn't Final Confirmed yet block
+          the Share / Remove path. Dealer must commit (payment / credit
+          settled) before the packing-list actions unlock. */}
+      {(order.item_status_counts.awaiting_final_confirmation ?? 0) > 0 ? (
+        <div className="p-3 space-y-2">
+          <p className="text-[11px] text-purple-800 leading-snug">
+            <strong>Final Confirmation:</strong> the packing list is populated
+            after this. Confirm only when payment or credit terms with the
+            farmer are settled.
+          </p>
+          <button onClick={onFinalConfirmAll} disabled={busy}
+            className="w-full py-2.5 rounded-xl text-white font-semibold text-xs disabled:opacity-60"
+            style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
+            {busy ? '…' : `Final Confirm all ${order.item_status_counts.awaiting_final_confirmation} approved item${order.item_status_counts.awaiting_final_confirmation === 1 ? '' : 's'}`}
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 flex gap-2">
+          <button onClick={onShare} disabled={busy}
+            className="flex-1 bg-[#7D4196] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-60">
+            {busy ? '…' : (shared ? t('shareAgainCta') : t('shareCta'))}
+          </button>
+          <button onClick={onRemove} disabled={busy}
+            className="flex-1 border border-red-200 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
+            {t('removeCta')}
+          </button>
+        </div>
+      )}
     </div>
   )
 }
