@@ -1259,8 +1259,15 @@ function SeedPickupChunk({
 //   order; postponed items belong to the facilitator's queue.
 // - Passive "dealer is following up" — fallback (Approval pill,
 //   seeds, etc.) where the farmer shouldn't act yet.
-function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
-  const router = useRouter()
+// 2026-08-14 (Phase 2 rework): PostponedStrip is now PURELY passive.
+// The old "Send to another dealer" inline link on the Routed variant
+// let the farmer split the order by rerouting postpone items while
+// the rest of the order was still with the dealer — the U-turn model
+// explicitly forbids that split. Farmer must Cancel the whole order
+// first (from the master Routed card's footer) to release everything
+// as one batch, then choose Send / Discard on the same card. This
+// strip is now info-only across every variant.
+function PostponedStrip({ sub, pill: _pill }: { sub: SubOrder; pill: Pill }) {
   const t = useTranslations('orders.cropOrders.chunk')
   const n = sub.postponed_count ?? 0
   if (n === 0) return null
@@ -1271,22 +1278,6 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
         <p className="text-xs text-amber-800">
           {t('postponedFacilitatorHandling', { count: n })}
         </p>
-      </div>
-    )
-  }
-
-  // Active variant: Routed pill on a regular (non-seed) order.
-  // Seeds don't go through /forward; passive fallback for them.
-  if (pill === 'routed' && sub.kind === 'REGULAR') {
-    return (
-      <div className="bg-amber-50/60 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-        <p className="text-xs text-amber-800">
-          {t('postponedCount', { count: n })}
-        </p>
-        <button onClick={() => router.push(`/orders/${sub.id}/forward`)}
-          className="text-xs font-semibold text-amber-800 underline">
-          {t('sendToAnotherDealer')}
-        </button>
       </div>
     )
   }
