@@ -97,6 +97,11 @@ interface OrderItem {
   // PWA renders a "Please check with the farmer" hint and the
   // dealer enters volume manually.
   affected_plants_count?: number | null
+  // 2026-08-14 (Phase 2 rework): Final Confirmation timestamp. Null
+  // when APPROVED and dealer hasn't committed to hand-off yet — the
+  // "Final Confirmation" button shows on those items. Non-null when
+  // dealer has committed → item goes to farmer's Pickup pill.
+  final_confirmed_at?: string | null
 }
 interface RelationOption {
   option_index: number
@@ -705,6 +710,48 @@ export default function DealerOrderDetailPage() {
     load()
   }
 
+  // 2026-08-14 (Phase 2 rework): Final Confirmation is the dealer's
+  // explicit commitment step between the farmer's APPROVED decision
+  // and the physical hand-off. Fire the per-item endpoint and reload
+  // so the button disappears + the item flows to the packing side.
+  async function finalConfirmItem(itemId: string) {
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm. Please try again.')
+    }
+  }
+
+  async function finalConfirmAll() {
+    if (!confirm(
+      "This is the final commitment. The packing list is populated after this. " +
+      "Confirm all approved items only after payment or credit terms with the farmer are settled.",
+    )) return
+    try {
+      await api.put(`/dealer/orders/${orderId}/final-confirm-all`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm the batch. Please try again.')
+    }
+  }
+
+  async function cancelFinalConfirm(itemId: string) {
+    if (!confirm(
+      "Cancel this approved item? It will return to the farmer as Not Available " +
+      "(with the other unsold items) once the whole order is settled.",
+    )) return
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/cancel-final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not cancel this item. Please try again.')
+    }
+  }
+
   // ── Relation actions ────────────────────────────────────────────────────────
 
   async function tryPickOption(relationId: string, partIndex: number, optionIndex: number) {
@@ -1064,10 +1111,20 @@ export default function DealerOrderDetailPage() {
   // before tapping Submit.
   const postSubmit = order.status !== 'PROCESSING' && order.status !== 'ACCEPTED'
   const activeItems = order.items.filter(i => {
-    if (['NOT_NEEDED', 'SKIPPED', 'REMOVED', 'APPROVED', 'SENT_FOR_APPROVAL'].includes(i.status)) return false
+    if (['NOT_NEEDED', 'SKIPPED', 'REMOVED', 'SENT_FOR_APPROVAL'].includes(i.status)) return false
+    // 2026-08-14 (Phase 2 rework): APPROVED items awaiting the dealer's
+    // Final Confirmation ARE active (they need the Final Confirmation
+    // tap). Once Final Confirmed, they're the packing-list's problem —
+    // hide from the active list.
+    if (i.status === 'APPROVED' && i.final_confirmed_at) return false
     if (postSubmit && i.status === 'NOT_AVAILABLE') return false
     return true
   })
+  // 2026-08-14 (Phase 2): APPROVED items awaiting Final Confirmation
+  // — the actionable subset that needs the dealer's commitment tap.
+  const awaitingFinalConfirmItems = order.items.filter(
+    i => i.status === 'APPROVED' && !i.final_confirmed_at,
+  )
   // 2026-06-03 — every active item must be decided (no PENDING) before
   // the dealer can submit. Submit succeeds if at least one item is
   // AVAILABLE or NOT_AVAILABLE (both give the farmer something to act on).
@@ -1299,6 +1356,25 @@ export default function DealerOrderDetailPage() {
             <button onClick={() => markUnavailable(item.id)}
               className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
               {t('item.notAvailable')}
+            </button>
+          </div>
+        )}
+
+        {/* 2026-08-14 (Phase 2 rework): Final Confirmation per-item
+            buttons. Shown only when the item is APPROVED and dealer
+            hasn't committed yet. "Final Confirmation" stamps the
+            timestamp → item flows to farmer's Pickup pill. "Cancel"
+            releases the item to NOT_AVAILABLE (farmer sees it back on
+            their unsold-items batch when the order goes quiescent). */}
+        {item.status === 'APPROVED' && !item.final_confirmed_at && editingItem !== item.id && (
+          <div className="mt-2 flex gap-2">
+            <button onClick={() => finalConfirmItem(item.id)}
+              className="flex-1 bg-purple-600 text-white text-xs font-semibold py-2 rounded-lg">
+              Final Confirmation
+            </button>
+            <button onClick={() => cancelFinalConfirm(item.id)}
+              className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
+              Cancel
             </button>
           </div>
         )}
@@ -2546,6 +2622,25 @@ export default function DealerOrderDetailPage() {
         {order.status === 'SENT_FOR_APPROVAL' && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
             <p className="text-amber-700 font-semibold text-sm">{t('footer.awaitingApproval')}</p>
+          </div>
+        )}
+
+        {/* 2026-08-14 (Phase 2 rework): batch "Confirm all" for every
+            APPROVED item still awaiting Final Confirmation. The per-
+            item button lives on each item card; this footer button is
+            the one-tap shortcut with the mandatory caution copy. */}
+        {awaitingFinalConfirmItems.length > 0 && (
+          <div className="bg-purple-50 border border-purple-200 rounded-2xl p-3 space-y-2">
+            <p className="text-[11px] text-purple-800 leading-snug">
+              <strong>Final Confirmation:</strong> the packing list is populated
+              after this. Confirm only when payment or credit terms with the
+              farmer are settled.
+            </p>
+            <button onClick={finalConfirmAll}
+              className="w-full py-2.5 rounded-xl text-white font-semibold text-xs"
+              style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
+              Final Confirm all {awaitingFinalConfirmItems.length} approved item{awaitingFinalConfirmItems.length === 1 ? '' : 's'}
+            </button>
           </div>
         )}
 
