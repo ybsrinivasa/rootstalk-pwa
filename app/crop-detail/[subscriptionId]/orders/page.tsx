@@ -49,12 +49,18 @@ type SubOrder = {
   awaiting_approval_count?: number
   returned_count?: number
   postponed_count?: number
-  // 2026-08-13 — U-turn model: sum of PENDING + AVAILABLE + POSTPONED +
-  // SENT_FOR_APPROVAL items. Order is "quiescent" when this hits 0 —
-  // at that moment the wrapper releases and N/A / rejected items
-  // surface on the Returned pill. Before quiescence, N/A items are
-  // held server-side so the batch stays with one dealer.
+  // 2026-08-13 — U-turn model: sum of in-flight items with the dealer.
+  // 2026-08-14 (Phase 2): now also includes APPROVED-awaiting-Final-
+  // Confirm items. Order is "quiescent" when this hits 0.
   active_item_count?: number
+  // 2026-08-14 (Phase 2): APPROVED items where the dealer has not yet
+  // tapped Final Confirmation. Routed card renders "Awaiting dealer's
+  // Final Confirmation" chip when > 0.
+  awaiting_final_confirmation_count?: number
+  // 2026-08-14 (Phase 2): seed-order Final Confirmation timestamp.
+  // Seeds are single-item, so we expose the timestamp directly on the
+  // sub payload (not a count). Pickup pill gates on this being set.
+  final_confirmed_at?: string | null
   // 2026-06-06 — Approved items awaiting farmer-confirmed pickup.
   // Drives the emerald "Pick up N items from X" banner.
   pickup_ready_count?: number
@@ -215,7 +221,7 @@ export default function CropOrdersPage() {
   const { pillCounts, manageBadgeCount } = useMemo(() => {
     if (!manageOrders) {
       return {
-        pillCounts: { routed: 0, approval: 0, returned: 0, pickup: 0 } as Record<Pill, number>,
+        pillCounts: { routed: 0, approval: 0, pickup: 0 } as Record<Pill, number>,
         manageBadgeCount: 0,
       }
     }
@@ -226,7 +232,7 @@ export default function CropOrdersPage() {
       if (list) list.push(o)
       else groupMap.set(key, [o])
     }
-    const counts: Record<Pill, number> = { routed: 0, approval: 0, returned: 0, pickup: 0 }
+    const counts: Record<Pill, number> = { routed: 0, approval: 0, pickup: 0 }
     for (const list of groupMap.values()) {
       for (const p of PILLS) {
         if (list.some(o => subBelongsToPill(o, p))) counts[p] += 1
@@ -575,107 +581,68 @@ function PreSowingSubMode({ subscriptionId, category }: { subscriptionId: string
 // Approval" here — the farmer is the one approving. An Order ID
 // card appears in multiple pills if its sub-orders span multiple
 // statuses (same rule as Facilitator).
-type Pill = 'routed' | 'approval' | 'returned' | 'pickup'
+// 2026-08-14 (Phase 2 rework): three pills. Routed is the master
+// tracker — every live order shows here. Approval + Pickup are action
+// surfaces for SFA items and Final-Confirmed pickups. The "Returned"
+// pill from Phase 1 is gone — Send/Discard buttons now live on the
+// Routed card contextually.
+type Pill = 'routed' | 'approval' | 'pickup'
 
-const PILLS: readonly Pill[] = ['routed', 'approval', 'returned', 'pickup'] as const
+const PILLS: readonly Pill[] = ['routed', 'approval', 'pickup'] as const
 
 function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
-  // Terminal sub-orders never show in active pills — they belong
-  // to History (separate surface, Batch 3).
-  // 2026-06-20 — EXPIRED added: an order whose window lapsed without
-  // farmer-receipt is terminal too. Pre-fix it leaked into Routed and
-  // its tap-target crashed (user report).
+  // Fully-terminal orders never appear on any live pill. History has
+  // its own surface. REROUTED is a per-item status but appears here
+  // for defensive parity (an order-level REROUTED is legacy husk).
   if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(o.status)) {
     return false
   }
-  // 2026-08-11 — COMPLETED is "approval work done" — order status flips
-  // once every item is APPROVED. But the farmer may still need to pick
-  // items up. So COMPLETED belongs on the Pickup pill (until pickup is
-  // confirmed and pickup_ready_count drops to 0), NOT on Routed /
-  // Approval. Earlier fix put it in the outright-terminal list, which
-  // sent pickup-pending orders to the Received tab — wrong surface,
-  // farmer looks under Received for something they haven't received yet.
-  // 2026-08-13 — Returned pill also stays open on COMPLETED: a mixed
-  // order (some approvals, some NA) flips to COMPLETED as soon as
-  // every SFA item is decided, but the NA items still need to be
-  // rerouted or discarded. Hiding from Returned created a dead-end
-  // where the farmer had no way to act on the returned items.
-  if (o.status === 'COMPLETED' && pill !== 'pickup' && pill !== 'returned') {
-    return false
-  }
+
+  // 2026-08-14 (Phase 2 rework): Routed pill is the persistent master
+  // card. Every live order shows here from creation until it's
+  // discarded, completed, or expired. Approval + Pickup pills show
+  // action slices; the Routed card carries the state-driven Cancel /
+  // Send / Discard buttons.
+  const facilitatorOwned = !!o.facilitator_user_id
 
   if (o.kind === 'SEED') {
-    // 2026-08-11 — A seed DRAFT with is_returned_to_farmer=true was
-    // moved back to the farmer by their own cancel; belongs on the
-    // Returned pill, NOT Routed, so the forward-or-discard prompt is
-    // visible there.
-    if (o.status === 'DRAFT' && o.is_returned_to_farmer) {
-      return pill === 'returned'
-    }
-    // Seed lifecycle uses status directly (no per-item counts).
     switch (pill) {
       case 'routed':
-        return ['DRAFT', 'SENT', 'ACCEPTED', 'AVAILABLE', 'POSTPONED'].includes(o.status)
+        // Every non-terminal seed order lives on Routed. NOT_AVAILABLE
+        // with is_returned_to_farmer=true is the "back with farmer for
+        // fate decision" state — Routed card renders Send/Discard.
+        // Facilitator-owned seed orders (is_returned_to_facilitator)
+        // are the facilitator's problem, not the farmer's — hide.
+        if (o.status === 'NOT_AVAILABLE' && !o.is_returned_to_farmer) return false
+        return true
       case 'approval':
         return o.status === 'SENT_FOR_APPROVAL'
-      case 'returned':
-        return o.status === 'NOT_AVAILABLE'
       case 'pickup':
-        // 2026-06-19 — Seeds now have a physical-pickup step.
-        // Farmer-approve lands the order at READY_FOR_PICKUP; the
-        // Pickup pill surfaces it with an inline "I've picked up
-        // the seed" button. Either farmer or dealer (via /handover)
-        // closes the order — whichever taps first wins.
-        return o.status === 'READY_FOR_PICKUP'
+        // 2026-08-14 (Phase 2): pickup gates on dealer's Final
+        // Confirmation. Approved-but-not-Final-Confirmed seed orders
+        // stay on the Routed card as "Awaiting dealer's Final
+        // Confirmation"; only Final-Confirmed shows on Pickup.
+        return o.status === 'READY_FOR_PICKUP' && !!o.final_confirmed_at
     }
-  }
-
-  // 2026-08-11 — Cancel-migrate DRAFT (Model B, pesticide/fert).
-  // The DRAFT carries the items the farmer released from a cancelled
-  // dealer engagement and belongs exclusively on the Returned pill —
-  // NOT Routed — so the whole-batch forward/discard prompt is the
-  // visible action.
-  if (o.status === 'DRAFT' && o.is_returned_to_farmer) {
-    return pill === 'returned'
   }
 
   const awaiting = o.awaiting_approval_count ?? 0
-  const returned = o.returned_count ?? 0
   const pickup = o.pickup_ready_count ?? 0
-  // 2026-06-21 — For facilitator-routed orders, returned items live
-  // in the facilitator's queue (their /facilitator/orders Returned
-  // pill carries the reroute action). The farmer only ever sees the
-  // order back on their Returned pill AFTER the facilitator hits
-  // return-to-farmer (which creates a fresh DRAFT with
-  // facilitator_user_id=NULL). For Approval + Pickup always go to
-  // the farmer regardless of routing.
-  const facilitatorOwned = !!o.facilitator_user_id
   switch (pill) {
     case 'routed':
-      // Direct: dealer is processing or order is DRAFT awaiting send.
-      // Facilitator-routed: ignore returned (facilitator handles).
-      // Approval + pickup pull the order out either way.
-      if (facilitatorOwned) return awaiting === 0 && pickup === 0
-      return awaiting === 0 && returned === 0 && pickup === 0
+      // Facilitator-owned orders show here too when the farmer needs
+      // to see the master card. Facilitator's own queue is separate
+      // (their PWA). Only exception: a facilitator-owned order where
+      // the whole batch has been handled and there's nothing for the
+      // farmer to track — that's rare in practice; the Routed card
+      // is safe as a "you can see this is with your facilitator" note.
+      return true
     case 'approval':
       return awaiting > 0
-    case 'returned':
-      // 2026-08-12 — Facilitator-owned orders with returned items
-      // (NA-by-dealer + rejected-by-farmer) surface here as an info
-      // card so the farmer can see them + gate Cancel Order on the
-      // OrderIdCard footer. The rerouting action itself stays with
-      // the facilitator; the card carries no Send/Discard buttons.
-      // 2026-08-13 — U-turn: N/A + rejected items are held server-side
-      // in a "wrapper" until the whole order goes quiescent (no more
-      // PENDING / AVAILABLE / POSTPONED / SFA items). Prevents the
-      // order from getting split across dealers while any postpone
-      // is still in flight. Cancel Order stays as the farmer's
-      // explicit early-release escape hatch.
-      const active = o.active_item_count ?? 0
-      return returned > 0 && active === 0
     case 'pickup':
       return pickup > 0
   }
+  return false
 }
 
 function ManageTab({
@@ -710,7 +677,7 @@ function ManageTab({
   useEffect(() => {
     if (pillUserPicked) return
     if (orders === null) return
-    const priority: Pill[] = ['approval', 'returned', 'pickup', 'routed']
+    const priority: Pill[] = ['approval', 'pickup', 'routed']
     for (const p of priority) {
       if (pillCounts[p] > 0) { setPillRaw(p); return }
     }
@@ -809,14 +776,6 @@ function ManageTab({
     } finally { setBusy(null) }
   }
 
-  // 2026-06-06 — Inline reroute action routes directly to the focused
-  // forward page (which handles the postponed nudge + picker without
-  // a review-page detour). User direction: keep the Manage card
-  // tap-target scoped to the two underlined links only.
-  function rerouteReturned(orderId: string) {
-    router.push(`/orders/${orderId}/forward`)
-  }
-
   // 2026-08-11 — Shared error-surfacer for cancel / discard endpoints.
   // Backend gates return 409 with `detail.message`; we alert() that
   // verbatim so the farmer sees the specific reason (dealer viewing,
@@ -834,13 +793,16 @@ function ManageTab({
     alert(msg || fallback)
   }
 
-  // 2026-08-11 — Cancel-migrate DRAFT (Model B) discard. "Don't need
-  // these now" — DRAFT → CANCELLED, items → REROUTED on the backend
-  // so advisory re-offers the practice with an Order CTA on the next
-  // pull. Soft confirm (destructive-ish but recoverable via advisory).
-  async function discardReturnedDraft(orderId: string, kind: 'REGULAR' | 'SEED') {
+  // 2026-08-14 (Phase 2 rework): Send + Discard replace the old
+  // rerouteReturned / discardReturnedDraft / discardReturnedItems
+  // handlers. Both operate on the same source order (the master
+  // Routed card) — no more DRAFT-intermediary dance.
+  function sendToAnotherDealer(orderId: string, kind: 'REGULAR' | 'SEED') {
+    router.push(kind === 'SEED' ? `/seed-orders/${orderId}/forward` : `/orders/${orderId}/forward`)
+  }
+  async function discardOrder(orderId: string, kind: 'REGULAR' | 'SEED') {
     if (!confirm(
-      "Set these items aside? They'll show back up in your advisory so you can order them again later.",
+      "Discard this order? Items you've committed to picking up (dealer already Final Confirmed) will still be delivered.",
     )) return
     setBusy(orderId)
     try {
@@ -851,38 +813,7 @@ function ManageTab({
       }
       await load()
     } catch (err) {
-      surfaceApiError(err, 'Could not set these items aside. Please try again.')
-    } finally { setBusy(null) }
-  }
-
-  // 2026-08-11 — Dealer-returned discard. Symmetry with the forward
-  // flow: if the same source order also has POSTPONED items sitting
-  // with the current dealer, we show a nudge sheet asking "discard
-  // those too, or leave them?" — parallel to the include-postponed
-  // nudge on /forward. When no postponed items exist, we fall back
-  // to a plain confirm.
-  const [discardNudge, setDiscardNudge] = useState<SubOrder | null>(null)
-  function openDiscardReturnedItems(sub: SubOrder) {
-    if ((sub.postponed_count ?? 0) > 0) {
-      setDiscardNudge(sub)
-      return
-    }
-    // No postponed items — plain confirm, then fire.
-    if (!confirm(
-      "Set these returned items aside? They'll show back up in your advisory so you can order them again later.",
-    )) return
-    void commitDiscardReturnedItems(sub, false)
-  }
-  async function commitDiscardReturnedItems(sub: SubOrder, includePostponed: boolean) {
-    setDiscardNudge(null)
-    setBusy(sub.id)
-    try {
-      await api.put(`/farmer/orders/${sub.id}/discard-returned-items`, {
-        include_postponed: includePostponed,
-      })
-      await load()
-    } catch (err) {
-      surfaceApiError(err, 'Could not set these items aside. Please try again.')
+      surfaceApiError(err, 'Could not discard the order. Please try again.')
     } finally { setBusy(null) }
   }
 
@@ -1010,64 +941,59 @@ function ManageTab({
           onToggleExpand={() => setExpandedGroup(expandedGroup === key ? null : key)}
           onCancel={(id, kind) => cancel(id, kind)}
           onDelete={(id, kind) => deleteOrder(id, kind)}
-          onForwardReturned={rerouteReturned}
-          onDiscard={discardReturnedDraft}
-          onDiscardReturnedItems={openDiscardReturnedItems}
+          onSend={sendToAnotherDealer}
+          onDiscard={discardOrder}
           onMarkReceivedSeed={markReceivedSeed}
           busy={busy}
         />
       ))}
 
-      {/* 2026-08-11 — Dealer-returned discard nudge. Parallel to the
-          include-postponed nudge on /forward — asks the farmer to
-          decide the fate of any POSTPONED items still with the same
-          dealer when they Discard the returned items. */}
-      {discardNudge && (() => {
-        const returnedN = discardNudge.returned_count
-          ?? (discardNudge.status === 'NOT_AVAILABLE' ? 1 : 0)
-        const postponedN = discardNudge.postponed_count ?? 0
-        return (
-          <div className="fixed inset-0 z-[60] bg-black/50 flex items-end">
-            <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
-              style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}>
-              <p className="font-bold text-[#6B3F1F]">Set them aside?</p>
-              <p className="text-xs text-[#7A8C7E] mt-2 leading-relaxed">
-                The dealer still has <strong className="text-[#6B3F1F]">{postponedN} postponed item{postponedN === 1 ? '' : 's'}</strong> waiting for delivery,
-                separate from the {returnedN} returned item{returnedN === 1 ? '' : 's'} you want to set aside.
-                What should we do with the postponed one{postponedN === 1 ? '' : 's'}?
-              </p>
-              <div className="space-y-2 mt-4">
-                <button
-                  onClick={() => void commitDiscardReturnedItems(discardNudge, true)}
-                  className="w-full py-3 rounded-xl text-white text-sm font-semibold"
-                  style={{ background: 'linear-gradient(135deg, #b45309, #92400e)' }}>
-                  Set aside all {returnedN + postponedN} items
-                </button>
-                <button
-                  onClick={() => void commitDiscardReturnedItems(discardNudge, false)}
-                  className="w-full py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
-                  Only the {returnedN} returned — leave postponed with dealer
-                </button>
-                <button
-                  onClick={() => setDiscardNudge(null)}
-                  className="w-full py-2 text-[#7A8C7E] text-sm">
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-      })()}
+      {/* 2026-08-14 (Phase 2 rework): the include-postponed nudge for
+          Discard is obsolete under the U-turn model — Cancel already
+          released all postpones to NOT_AVAILABLE before Discard is
+          reachable. The Discard confirmation is now a plain confirm(). */}
     </div>
   )
 }
 
 // ── Per-pill chunk renderers + Order-ID card (Batch 1, 2026-06-09) ─────────
 
+// 2026-08-14 (Phase 2 rework): state-driven button set on the Routed-
+// pill master card. Cancel is a RELEASE step, Send/Discard are FATE
+// decisions. Cancel disappears when nothing in-flight; Send/Discard
+// appear directly. All three respect the persistent-Routed model —
+// see project_rootstalk_order_lifecycle_rework_2026_08_13.md.
+type RoutedFooterMode =
+  | 'none'                    // nothing actionable / Pickup only
+  | 'cancel-disabled'         // approvals pending; farmer must act
+  | 'cancel'                  // in-flight work with dealer, farmer can pull back
+  | 'send-discard'            // unsold items pooled, farmer picks a fate
+  | 'delete-draft'            // legacy plain DRAFT (rare)
+
+function computeRoutedFooterMode(sub: SubOrder | undefined): RoutedFooterMode {
+  if (!sub) return 'none'
+  if (['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(sub.status)) {
+    return 'none'
+  }
+  if (sub.kind === 'REGULAR' && sub.status === 'DRAFT' && !sub.is_returned_to_farmer) {
+    return 'delete-draft'
+  }
+  const awaiting = sub.awaiting_approval_count ?? 0
+  if (awaiting > 0) return 'cancel-disabled'
+  if (sub.is_returned_to_farmer) return 'send-discard'
+  // Seed order in returned-to-farmer state (kept for symmetry —
+  // covered by is_returned_to_farmer above).
+  const active = sub.active_item_count ?? 0
+  const returned = sub.returned_count ?? 0
+  if (active === 0 && returned > 0) return 'send-discard'
+  if (active === 0 && returned === 0) return 'none'  // Delivering / all done
+  return 'cancel'
+}
+
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onCancel, onDelete, onForwardReturned, onDiscard,
-  onDiscardReturnedItems, onMarkReceivedSeed, busy,
+  onCancel, onDelete, onSend, onDiscard,
+  onMarkReceivedSeed, busy,
 }: {
   orderId: string
   subs: SubOrder[]
@@ -1077,56 +1003,25 @@ function OrderIdCard({
   onToggleExpand: () => void
   onCancel: (id: string, kind: 'REGULAR' | 'SEED') => void
   onDelete: (id: string, kind: 'REGULAR' | 'SEED') => void
-  onForwardReturned: (id: string) => void
+  onSend: (id: string, kind: 'REGULAR' | 'SEED') => void
   onDiscard: (id: string, kind: 'REGULAR' | 'SEED') => void
-  onDiscardReturnedItems: (sub: SubOrder) => void
   onMarkReceivedSeed: (id: string) => void
   busy: string | null
 }) {
   const t = useTranslations('orders.cropOrders.manage')
   const head = subs[0]
-  // Single-chunk inline; multi-chunk (e.g. lineage has two sibling
-  // sub-orders both with returned items) renders as rows with
-  // "Sub-order · date" micro-header.
   const renderRows = matching.length > 1
 
-  // Cancel allowed when source has live work + farmer hasn't
-  // already cancelled it. Cancel walks the lineage server-side
-  // (per Batch 6: cascade across siblings, all migrate to one
-  // new DRAFT). So we offer Cancel at the Order-ID level.
   const liveSubs = subs.filter(s =>
     !['CANCELLED', 'PURCHASED', 'COMPLETED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(s.status),
   )
-  // 2026-06-09 — Cancel-on-DRAFT was visually a no-op (cancel-and-
-  // migrate creates another DRAFT with the same items, so the user
-  // sees no change and thinks Cancel failed). DRAFT now offers a
-  // Delete action instead (different button below) — the review
-  // page already excludes DRAFT from canCancel.
-  // 2026-08-12 — Always find a cancel candidate (ignore awaiting-
-  // approval gate here). When awaiting > 0 the button renders
-  // DISABLED with a small explanatory note asking the farmer to
-  // clear approvals first. Applies uniformly to direct-to-dealer
-  // and facilitator-forwarded orders (user direction: consistency).
-  const cancellable = liveSubs.find(s => {
-    if (s.kind === 'SEED') {
-      return !['DRAFT', 'SENT_FOR_APPROVAL'].includes(s.status)
-    }
-    return s.status !== 'DRAFT'
-  })
-  const cancellableAwaiting = cancellable
-    ? (cancellable.awaiting_approval_count || 0) : 0
-  const cancelDisabled = cancellableAwaiting > 0
-  // A DRAFT sub-order is deletable. Typically arrives via
-  // dealer-decline cancel-and-migrate; farmer can discard it
-  // entirely instead of picking a recipient.
-  // 2026-08-11 — Skip returned-from-cancel DRAFTs: the ReturnedChunk
-  // above already exposes "Don't need these now" (soft discard →
-  // advisory re-offers), which is the semantically correct action
-  // for that batch. Showing "Delete draft" alongside is redundant
-  // and confusing.
-  const deletable = liveSubs.find(s =>
-    s.kind === 'REGULAR' && s.status === 'DRAFT' && !s.is_returned_to_farmer,
-  )
+  // Pick a single sub as the "footer subject" for the whole Order ID
+  // card. Cascade-cancel on the backend walks the lineage, so any live
+  // sub works as the anchor; prefer the one showing on the current
+  // pill for visual coherence.
+  const footerSub = liveSubs[0]
+  const mode = computeRoutedFooterMode(footerSub)
+  const awaitingCount = footerSub?.awaiting_approval_count ?? 0
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
@@ -1136,17 +1031,11 @@ function OrderIdCard({
         {renderRows
           ? matching.map(sub => (
               <FarmerPillChunk key={sub.id} sub={sub} pill={pill}
-                onForwardReturned={onForwardReturned}
-                onDiscard={onDiscard}
-                onDiscardReturnedItems={onDiscardReturnedItems}
                 onMarkReceivedSeed={onMarkReceivedSeed}
                 busy={busy} showSubHeader />
             ))
           : matching.length === 1 && (
               <FarmerPillChunk sub={matching[0]} pill={pill}
-                onForwardReturned={onForwardReturned}
-                onDiscard={onDiscard}
-                onDiscardReturnedItems={onDiscardReturnedItems}
                 onMarkReceivedSeed={onMarkReceivedSeed}
                 busy={busy} />
             )
@@ -1155,33 +1044,52 @@ function OrderIdCard({
       {expanded && (
         <ExpandedSubOrderList subs={subs} />
       )}
-      {/* Cancel / cleanup row — surfaced at the Order ID level
-          because cancel cascades across the lineage. */}
-      {cancellable && (
+      {/* Footer — only rendered on the Routed pill (the master card
+          surface). Approval / Pickup pills show their own chunks
+          without a footer since those are action slices. */}
+      {pill === 'routed' && footerSub && mode === 'cancel-disabled' && (
         <div className="border-t border-[#F0E5D0] px-4 py-2 space-y-1.5">
-          {cancelDisabled && (
-            <p className="text-[10px] text-amber-700 text-center leading-snug">
-              {cancellableAwaiting === 1
-                ? 'Please decide on the 1 item awaiting your approval first.'
-                : `Please decide on the ${cancellableAwaiting} items awaiting your approval first.`}
-            </p>
-          )}
-          <button onClick={() => onCancel(cancellable.id, cancellable.kind)}
-            disabled={busy === cancellable.id || cancelDisabled}
-            className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-            {busy === cancellable.id ? '…' : t('cancelOrderBtn')}
+          <p className="text-[10px] text-amber-700 text-center leading-snug">
+            {awaitingCount === 1
+              ? 'Please decide on the 1 item awaiting your approval first.'
+              : `Please decide on the ${awaitingCount} items awaiting your approval first.`}
+          </p>
+          <button disabled
+            className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium opacity-50">
+            {t('cancelOrderBtn')}
           </button>
         </div>
       )}
-      {/* 2026-06-09 — Delete DRAFT. Per user direction: cancel-and-
-          migrate on a DRAFT is a no-op visually (it creates an
-          identical DRAFT), so DRAFT gets a real Delete instead. */}
-      {!cancellable && deletable && (
+      {pill === 'routed' && footerSub && mode === 'cancel' && (
         <div className="border-t border-[#F0E5D0] px-4 py-2">
-          <button onClick={() => onDelete(deletable.id, deletable.kind)}
-            disabled={busy === deletable.id}
+          <button onClick={() => onCancel(footerSub.id, footerSub.kind)}
+            disabled={busy === footerSub.id}
             className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
-            {busy === deletable.id ? '…' : t('deleteDraftBtn')}
+            {busy === footerSub.id ? '…' : t('cancelOrderBtn')}
+          </button>
+        </div>
+      )}
+      {pill === 'routed' && footerSub && mode === 'send-discard' && (
+        <div className="border-t border-[#F0E5D0] px-4 py-2 flex gap-2">
+          <button onClick={() => onSend(footerSub.id, footerSub.kind)}
+            disabled={busy === footerSub.id}
+            className="flex-1 py-1.5 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+            style={{ background: '#3A7D44' }}>
+            {busy === footerSub.id ? '…' : 'Send to another dealer'}
+          </button>
+          <button onClick={() => onDiscard(footerSub.id, footerSub.kind)}
+            disabled={busy === footerSub.id}
+            className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+            {busy === footerSub.id ? '…' : 'Discard order'}
+          </button>
+        </div>
+      )}
+      {pill === 'routed' && footerSub && mode === 'delete-draft' && (
+        <div className="border-t border-[#F0E5D0] px-4 py-2">
+          <button onClick={() => onDelete(footerSub.id, footerSub.kind)}
+            disabled={busy === footerSub.id}
+            className="w-full py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+            {busy === footerSub.id ? '…' : t('deleteDraftBtn')}
           </button>
         </div>
       )}
@@ -1273,14 +1181,10 @@ function OrderCardHeader({
 }
 
 function FarmerPillChunk({
-  sub, pill, onForwardReturned, onDiscard, onDiscardReturnedItems,
-  onMarkReceivedSeed, busy, showSubHeader,
+  sub, pill, onMarkReceivedSeed, busy, showSubHeader,
 }: {
   sub: SubOrder
   pill: Pill
-  onForwardReturned: (id: string) => void
-  onDiscard: (id: string, kind: 'REGULAR' | 'SEED') => void
-  onDiscardReturnedItems: (sub: SubOrder) => void
   onMarkReceivedSeed: (id: string) => void
   busy: string | null
   showSubHeader?: boolean
@@ -1303,12 +1207,6 @@ function FarmerPillChunk({
       />
       {pill === 'routed' && <RoutedChunk sub={sub} />}
       {pill === 'approval' && <ApprovalChunk sub={sub} />}
-      {pill === 'returned' && (
-        <ReturnedChunk sub={sub} onForwardReturned={onForwardReturned}
-          onDiscard={onDiscard}
-          onDiscardReturnedItems={onDiscardReturnedItems}
-          busy={busy} />
-      )}
       {pill === 'pickup' && (
         sub.kind === 'SEED' ? (
           <SeedPickupChunk sub={sub} onMarkReceived={onMarkReceivedSeed} busy={busy} />
@@ -1402,21 +1300,17 @@ function PostponedStrip({ sub, pill }: { sub: SubOrder; pill: Pill }) {
   )
 }
 
+// 2026-08-14 (Phase 2 rework): state-driven summary line on the master
+// Routed card. Combines with the OrderIdCard's contextual footer to
+// paint the full lifecycle picture for the farmer without leaving the
+// Routed pill.
 function RoutedChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.chunk')
-  // 2026-08-12 — Per user direction, no plain DRAFTs are produced by
-  // any current flow — every DRAFT is a returned-to-farmer DRAFT and
-  // belongs on the Returned pill. These branches are dead-code
-  // safety fallbacks; if any legacy plain DRAFT is around, route to
-  // the same /forward page so the intermediate "This is a draft"
-  // wrapper never surfaces.
-  if (sub.kind === 'REGULAR' && sub.status === 'DRAFT') {
+  if (sub.kind === 'REGULAR' && sub.status === 'DRAFT' && !sub.is_returned_to_farmer) {
     return (
       <div className="space-y-2">
-        <p className="text-xs text-amber-700">
-          {t('draftPickRecipient')}
-        </p>
+        <p className="text-xs text-amber-700">{t('draftPickRecipient')}</p>
         <button onClick={() => router.push(`/orders/${sub.id}/forward`)}
           className="w-full py-2 rounded-lg text-white text-xs font-semibold"
           style={{ background: '#3A7D44' }}>
@@ -1425,12 +1319,10 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
       </div>
     )
   }
-  if (sub.kind === 'SEED' && sub.status === 'DRAFT') {
+  if (sub.kind === 'SEED' && sub.status === 'DRAFT' && !sub.is_returned_to_farmer) {
     return (
       <div className="space-y-2">
-        <p className="text-xs text-amber-700">
-          {t('draftPickRecipient')}
-        </p>
+        <p className="text-xs text-amber-700">{t('draftPickRecipient')}</p>
         <button onClick={() => router.push(`/seed-orders/${sub.id}/forward`)}
           className="w-full py-2 rounded-lg text-white text-xs font-semibold"
           style={{ background: '#3A7D44' }}>
@@ -1439,16 +1331,53 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
       </div>
     )
   }
-  // 2026-06-22 — For facilitator-routed orders that have no dealer-
-  // actionable items left (just NA items the facilitator is rerouting
-  // + already-received APPROVED items), the "N items · Dealer is
-  // processing" line is misleading. The dealer is done; the
-  // facilitator is the one with work to do. Show the truth.
+  // Returned-to-farmer state — Cancel already happened OR dealer/
+  // facilitator declined OR order naturally quiesced with unsold items.
+  // Show the "why" chip; the Send/Discard buttons live in the footer.
+  if (sub.is_returned_to_farmer) {
+    const returned = sub.returned_count ?? 0
+    const chipLabel =
+      sub.return_reason === 'dealer_declined' ? 'Declined by dealer'
+      : sub.return_reason === 'facilitator_declined' ? 'Declined by facilitator'
+      : 'Cancelled by you'
+    const releasedFromLabel =
+      sub.released_from_recipient_shop_name
+      || sub.released_from_recipient_name
+      || null
+    return (
+      <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-1">
+        <p className="text-[10px] text-amber-700/80 font-medium uppercase tracking-wide">
+          {chipLabel}
+          {releasedFromLabel && (
+            <> · from <span className="text-amber-800 normal-case font-semibold">{releasedFromLabel}</span></>
+          )}
+        </p>
+        {returned > 0 && (
+          <p className="text-xs text-amber-800">
+            {returned === 1 ? '1 item returned to you' : `${returned} items returned to you`}
+          </p>
+        )}
+      </div>
+    )
+  }
+  // Facilitator-owned, with unsold items — facilitator is the one
+  // acting; farmer is just watching.
   const returned = sub.returned_count ?? 0
   if (sub.facilitator_user_id && returned > 0) {
     return (
       <p className="text-xs text-amber-800">
         {t('returnedFacilitatorHandling', { count: returned })}
+      </p>
+    )
+  }
+  // Awaiting dealer's Final Confirmation on approved items.
+  const awaitingFinalConfirm = sub.awaiting_final_confirmation_count ?? 0
+  if (awaitingFinalConfirm > 0) {
+    return (
+      <p className="text-xs text-amber-800">
+        {awaitingFinalConfirm === 1
+          ? '1 item awaiting the dealer’s Final Confirmation for pickup.'
+          : `${awaitingFinalConfirm} items awaiting the dealer’s Final Confirmation for pickup.`}
       </p>
     )
   }
@@ -1481,116 +1410,9 @@ function ApprovalChunk({ sub }: { sub: SubOrder }) {
   )
 }
 
-function ReturnedChunk({
-  sub, onForwardReturned, onDiscard, onDiscardReturnedItems, busy,
-}: {
-  sub: SubOrder
-  onForwardReturned: (id: string) => void
-  onDiscard: (id: string, kind: 'REGULAR' | 'SEED') => void
-  onDiscardReturnedItems: (sub: SubOrder) => void
-  busy: string | null
-}) {
-  const router = useRouter()
-  const t = useTranslations('orders.cropOrders.chunk')
-  // 2026-08-11 — Cancel-migrate DRAFT (Model B). The DRAFT carries
-  // items the farmer released from a cancelled dealer engagement.
-  // Whole-batch decision: forward to another dealer (existing DRAFT
-  // pick-recipient page → PUT /send) or discard ("Don't need these
-  // now" → PUT /discard, items flip to REROUTED so advisory re-offers
-  // the practice with an Order CTA).
-  if (sub.is_returned_to_farmer && sub.status === 'DRAFT') {
-    const count = sub.item_count ?? 0
-    // 2026-08-12 — Both regular + seed use their focused /forward
-    // page (single consistent picker per user direction).
-    const forwardHref =
-      sub.kind === 'SEED' ? `/seed-orders/${sub.id}/forward` : `/orders/${sub.id}/forward`
-    // 2026-08-11 — "Cancelled by you · from X" context line. Shop
-    // name wins over person name when both are available (mirrors
-    // RecipientLine's preference for shop identity on the dealer).
-    const releasedFromLabel =
-      sub.released_from_recipient_shop_name
-      || sub.released_from_recipient_name
-      || null
-    // 2026-08-12 — Chip text differentiator: same "returned to farmer"
-    // state can arise from farmer cancel, dealer decline, or
-    // facilitator decline — chip name each cause.
-    const chipLabel =
-      sub.return_reason === 'dealer_declined' ? 'Declined by dealer'
-      : sub.return_reason === 'facilitator_declined' ? 'Declined by facilitator'
-      : 'Cancelled by you'
-    return (
-      <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-2">
-        <p className="text-[10px] text-amber-700/80 font-medium uppercase tracking-wide">
-          {chipLabel}
-          {releasedFromLabel && (
-            <> · from <span className="text-amber-800 normal-case font-semibold">{releasedFromLabel}</span></>
-          )}
-        </p>
-        <p className="text-xs text-amber-800">
-          {count === 1
-            ? '1 item returned to you. Send to another dealer or set it aside.'
-            : `${count} items returned to you. Send to another dealer or set them aside.`}
-        </p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => router.push(forwardHref)}
-            disabled={busy === sub.id}
-            className="flex-1 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
-            style={{ background: '#3A7D44' }}>
-            Send to another dealer
-          </button>
-          <button
-            onClick={() => onDiscard(sub.id, sub.kind)}
-            disabled={busy === sub.id}
-            className="flex-1 py-2 rounded-lg border border-amber-700/40 text-amber-900 text-xs font-semibold disabled:opacity-50">
-            {busy === sub.id ? '…' : "Don't need these now"}
-          </button>
-        </div>
-      </div>
-    )
-  }
-  const returned = sub.returned_count ?? (sub.status === 'NOT_AVAILABLE' ? 1 : 0)
-  // 2026-08-12 — Facilitator-owned variant: informational card only.
-  // Farmer sees "Handled by [Facilitator]" + count; no Send/Discard
-  // buttons (facilitator's action). Cancel Order lives at the
-  // OrderIdCard footer with its own await-gate + explanatory note.
-  if (sub.facilitator_user_id) {
-    const facilitatorName =
-      sub.recipient_shop_name || sub.recipient_name || 'the facilitator'
-    return (
-      <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-1">
-        <p className="text-[10px] text-amber-700/80 font-medium uppercase tracking-wide">
-          Handled by <span className="text-amber-800 normal-case font-semibold">{facilitatorName}</span>
-        </p>
-        <p className="text-xs text-amber-800">
-          {returned === 1 ? '1 item returned' : `${returned} items returned`}
-        </p>
-      </div>
-    )
-  }
-  // 2026-08-11 — Symmetry with the cancel-migrate DRAFT card: farmer
-  // gets both actions on dealer-returned items too. If the source
-  // order also has POSTPONED items still with the dealer, the discard
-  // handler opens a nudge modal (parallel to /forward's nudge).
-  return (
-    <div className="bg-amber-50/60 rounded-lg px-3 py-2 space-y-2">
-      <p className="text-xs text-amber-800">
-        {t('returnedCount', { count: returned })}
-      </p>
-      <div className="flex gap-2">
-        <button onClick={() => onForwardReturned(sub.id)} disabled={busy === sub.id}
-          className="flex-1 py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
-          style={{ background: '#3A7D44' }}>
-          {busy === sub.id ? '…' : t('sendToAnotherDealer')}
-        </button>
-        <button onClick={() => onDiscardReturnedItems(sub)} disabled={busy === sub.id}
-          className="flex-1 py-2 rounded-lg border border-amber-700/40 text-amber-900 text-xs font-semibold disabled:opacity-50">
-          {busy === sub.id ? '…' : "Don't need these now"}
-        </button>
-      </div>
-    </div>
-  )
-}
+// 2026-08-14 (Phase 2 rework): ReturnedChunk removed. Send/Discard
+// live on the Routed pill's master card footer (see OrderIdCard's
+// state-driven footer). The Returned pill is gone.
 
 // 2026-06-09 — Pickup chunk parity with the Facilitator pickup
 // card composition. Packing ID is the lead identifier (mono
