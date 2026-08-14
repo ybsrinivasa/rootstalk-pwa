@@ -85,6 +85,11 @@ interface Order {
   farm_area_acres?: number | null
   number_of_plants?: number | null
   computed_crop_age?: { value: number; unit: string; source: string; is_minimum?: boolean } | null
+  // 2026-08-14 (Phase 2 rework): Final Confirmation timestamp on
+  // seed orders. Farmer's approval → READY_FOR_PICKUP + null; dealer
+  // stamps this via /dealer/seed-orders/{id}/final-confirm → now the
+  // farmer's Pickup pill fires + dealer can Handover.
+  final_confirmed_at?: string | null
 }
 
 // 2026-06-06 — Raw shape from /dealer/seed-orders before adapter.
@@ -111,6 +116,8 @@ interface SeedOrderRaw {
   quantity: number | null
   total_price: number | null
   created_at: string
+  // 2026-08-14 (Phase 2 rework): Final Confirmation timestamp on seed.
+  final_confirmed_at: string | null
 }
 
 // 2026-06-09 — Completed dropped from active pills (Batch 2 of
@@ -277,6 +284,7 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
     farm_area_acres: s.farm_area_acres,
     number_of_plants: s.number_of_plants,
     computed_crop_age: s.computed_crop_age,
+    final_confirmed_at: s.final_confirmed_at,
   }
 }
 
@@ -498,6 +506,40 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
+  // 2026-08-14 (Phase 2 rework): Final Confirmation for seed orders.
+  // Farmer's approval takes the seed order to READY_FOR_PICKUP + null
+  // final_confirmed_at; dealer stamps final_confirmed_at once payment
+  // / credit is settled, then Handover.
+  async function finalConfirmSeed(o: Order) {
+    if (!confirm(
+      "This is the final commitment for this seed order. Confirm only when " +
+      "payment or credit terms with the farmer are settled.",
+    )) return
+    setBusy(o.id)
+    try {
+      await api.put(`/dealer/seed-orders/${o.id}/final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm. Please try again.')
+    } finally { setBusy(null) }
+  }
+
+  async function cancelFinalConfirmSeed(o: Order) {
+    if (!confirm(
+      "Cancel this approved seed order? It will return to the farmer as " +
+      "Not Available once the order settles.",
+    )) return
+    setBusy(o.id)
+    try {
+      await api.put(`/dealer/seed-orders/${o.id}/cancel-final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not cancel. Please try again.')
+    } finally { setBusy(null) }
+  }
+
   // 2026-06-19 — Seed accept (SENT → ACCEPTED), inlined from the
   // retired /dealer/seed-orders page. After accept the card stays in
   // the Pending pill and re-renders with the qty/price form.
@@ -668,6 +710,8 @@ function DealerOrdersInner() {
                   router.push(`/dealer/orders/${o.id}`)
                 }}
                 onHandoverSeed={handoverSeed}
+                onFinalConfirmSeed={finalConfirmSeed}
+                onCancelFinalConfirmSeed={cancelFinalConfirmSeed}
                 onAcceptSeed={acceptSeed}
                 onConfirmDeclineSeed={(id) => setConfirmDeclineSeedId(id)}
                 onSubmitSeed={submitSeed}
@@ -855,6 +899,7 @@ function PickupStatus({ order }: { order: Order }) {
 function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onShare, onRemove, onOpenDetail, onHandoverSeed,
+  onFinalConfirmSeed, onCancelFinalConfirmSeed,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy,
@@ -869,6 +914,8 @@ function DealerOrderIdCard({
   onRemove: (o: Order) => void
   onOpenDetail: (o: Order) => void
   onHandoverSeed: (o: Order) => void
+  onFinalConfirmSeed: (o: Order) => void
+  onCancelFinalConfirmSeed: (o: Order) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -895,6 +942,8 @@ function DealerOrderIdCard({
               <DealerPillChunk key={sub.id} sub={sub} pill={pill}
                 onShare={onShare} onRemove={onRemove} onOpenDetail={onOpenDetail}
                 onHandoverSeed={onHandoverSeed}
+                onFinalConfirmSeed={onFinalConfirmSeed}
+                onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -906,6 +955,8 @@ function DealerOrderIdCard({
               <DealerPillChunk sub={matching[0]} pill={pill}
                 onShare={onShare} onRemove={onRemove} onOpenDetail={onOpenDetail}
                 onHandoverSeed={onHandoverSeed}
+                onFinalConfirmSeed={onFinalConfirmSeed}
+                onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -1088,6 +1139,7 @@ function DealerOrderCardHeader({
 
 function DealerPillChunk({
   sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
+  onFinalConfirmSeed, onCancelFinalConfirmSeed,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy, showSubHeader,
@@ -1098,6 +1150,8 @@ function DealerPillChunk({
   onRemove: (o: Order) => void
   onOpenDetail: (o: Order) => void
   onHandoverSeed: (o: Order) => void
+  onFinalConfirmSeed: (o: Order) => void
+  onCancelFinalConfirmSeed: (o: Order) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -1180,20 +1234,43 @@ function DealerPillChunk({
       )}
       {renderPill === 'packing' && (
         sub.is_seed ? (
-          // 2026-06-19 — Inline seed handover. Pre-fix this tile linked
-          // to /dealer/seed-orders which dumped the dealer onto the
-          // unfiltered Active tab (mix of accept-needed + handover-
-          // needed). Acting in-place keeps the focused Packing pill
-          // intact.
+          // 2026-06-19 — Inline seed handover.
+          // 2026-08-14 (Phase 2 rework): Final Confirmation gate. If
+          // the dealer hasn't tapped Final Confirmation on this seed
+          // order yet, show that button + a Cancel option first.
+          // Handover only unlocks after Final Confirmation.
           <div className="px-4 py-3 space-y-2">
-            <p className="text-[11px] text-purple-800 font-medium text-center">
-              {t('packingSeedBanner')}
-            </p>
-            <button onClick={() => onHandoverSeed(sub)}
-              disabled={busy === sub.id}
-              className="w-full bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold py-2.5 rounded-xl">
-              {busy === sub.id ? t('packingSeedBusy') : t('packingSeedHandoverCta')}
-            </button>
+            {sub.final_confirmed_at ? (
+              <>
+                <p className="text-[11px] text-purple-800 font-medium text-center">
+                  {t('packingSeedBanner')}
+                </p>
+                <button onClick={() => onHandoverSeed(sub)}
+                  disabled={busy === sub.id}
+                  className="w-full bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold py-2.5 rounded-xl">
+                  {busy === sub.id ? t('packingSeedBusy') : t('packingSeedHandoverCta')}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-[11px] text-purple-800 leading-snug">
+                  <strong>Final Confirmation:</strong> the packing list is populated after this.
+                  Confirm only when payment or credit terms with the farmer are settled.
+                </p>
+                <div className="flex gap-2">
+                  <button onClick={() => onFinalConfirmSeed(sub)}
+                    disabled={busy === sub.id}
+                    className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold py-2.5 rounded-xl">
+                    Final Confirmation
+                  </button>
+                  <button onClick={() => onCancelFinalConfirmSeed(sub)}
+                    disabled={busy === sub.id}
+                    className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <PackingChunk order={sub}
