@@ -38,6 +38,11 @@ interface Fulfilment {
   // pickup" hint on APPROVED-but-not-yet-received advisory rows.
   packing_code?: string | null
   farmer_received_at?: string | null
+  // 2026-08-14 (Phase 2 rework): dealer's Final Confirmation timestamp.
+  // APPROVED items with a null timestamp are still with the dealer
+  // (waiting for their commitment tap); Fulfilment chip stays "Routed"
+  // until this is set.
+  final_confirmed_at?: string | null
   // 2026-07-13 — NPK auto-AND siblings (spec §3.2). Present when the
   // primary OrderItem is part of an NPK Mixed+Straight combo — the
   // dealer picked one Mixed + zero-to-three Straights on `npk_select`
@@ -1011,7 +1016,11 @@ function fulfilmentToPill(f: Fulfilment): ManagePill | null {
     case 'REJECTED':
       return 'returned'
     case 'APPROVED':
-      return 'pickup'
+      // 2026-08-14 (Phase 2 rework): APPROVED items with no Final
+      // Confirmation stamp are still with the dealer — chip as
+      // "Routed" not "Pickup". Only Final-Confirmed items are
+      // actually ready for physical hand-off.
+      return f.final_confirmed_at ? 'pickup' : 'routed'
     case 'NOT_NEEDED':
       // 2026-06-29 — OR alternative the dealer didn't pick. Not a
       // farmer-actionable state; no pill. The chosen leg's chip
