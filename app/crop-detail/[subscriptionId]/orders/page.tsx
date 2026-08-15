@@ -1392,6 +1392,22 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
       </p>
     )
   }
+  // 2026-08-15 — Quiescent-with-unsold. Farmer approved + picked up
+  // some items, others came back as N/A; dealer is done. Show the
+  // returned count (not item_count — which includes the picked-up
+  // items and misleadingly reads "N items · Dealer is processing"
+  // when the dealer isn't processing anything). Footer's send-discard
+  // buttons are what the farmer acts on.
+  const active = sub.active_item_count ?? 0
+  if (active === 0 && returned > 0) {
+    return (
+      <p className="text-xs text-amber-800">
+        {returned === 1
+          ? '1 item returned to you'
+          : `${returned} items returned to you`}
+      </p>
+    )
+  }
   return (
     <p className="text-xs text-[#7A8C7E]">
       {sub.item_count !== undefined && sub.item_count > 0

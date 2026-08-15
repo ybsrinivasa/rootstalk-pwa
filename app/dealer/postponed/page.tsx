@@ -75,6 +75,11 @@ export default function DealerPostponedPage() {
   // Items the dealer has "skipped for now" — frontend-only. Resets
   // when the page is reloaded. No backend writes.
   const [skipped, setSkipped] = useState<Set<string>>(new Set())
+  // 2026-08-15 — Order-grouped cards collapsed by default. Dealer taps
+  // a card header to expand and act on the postponed items one at a
+  // time. Prevents the "everything's open at once, can't tell where
+  // one order ends" confusion.
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
 
   async function load() {
     const { data } = await api.get<PostponedItem[]>('/dealer/postponed-items')
@@ -160,12 +165,23 @@ export default function DealerPostponedPage() {
 
         {visibleGroups.map(g => {
           const remainingItems = g.items.filter(i => !skipped.has(i.item_id))
+          const isExpanded = expandedOrderId === g.order_id
+          const soonestDaysRemaining = remainingItems.reduce<number | null>((min, it) => {
+            if (it.days_remaining === null) return min
+            if (min === null) return it.days_remaining
+            return Math.min(min, it.days_remaining)
+          }, null)
           return (
             <div key={g.order_id}
               className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
 
-              {/* Order header — farmer + company + dates */}
-              <div className="p-4 bg-amber-50/50 border-b border-amber-200">
+              {/* Order header — tap to expand/collapse. Farmer + company
+                  + dates + a summary chip showing how many postponed
+                  items + the soonest deadline. */}
+              <button
+                type="button"
+                onClick={() => setExpandedOrderId(isExpanded ? null : g.order_id)}
+                className="w-full text-left p-4 bg-amber-50/50 border-b border-amber-200 active:bg-amber-100/50">
                 <div className="flex items-start gap-3">
                   {g.farmer_photo_url ? (
                     <img src={g.farmer_photo_url} alt={g.farmer_name}
@@ -196,17 +212,39 @@ export default function DealerPostponedPage() {
                         {t('orderRange', { from: shortDate(g.date_from, locale), to: shortDate(g.date_to, locale) })}
                       </p>
                     )}
+                    {/* Collapsed-summary chip: item count + soonest deadline */}
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
+                      <span className="text-[11px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                        {remainingItems.length === 1
+                          ? '1 postponed item'
+                          : `${remainingItems.length} postponed items`}
+                      </span>
+                      {soonestDaysRemaining !== null && (
+                        <span className={`text-[10px] font-medium ${
+                          soonestDaysRemaining <= 1 ? 'text-red-600' : 'text-amber-700'
+                        }`}>
+                          {soonestDaysRemaining === 0
+                            ? t('dueToday')
+                            : t('daysLeft', { count: soonestDaysRemaining })}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-[#7A8C7E] ml-auto shrink-0">
+                        {isExpanded ? '▾' : '▸'}
+                      </span>
+                    </div>
                   </div>
                   {g.farmer_phone && (
                     <a href={`tel:${g.farmer_phone}`}
+                      onClick={e => e.stopPropagation()}
                       className="text-[11px] bg-white text-[#7D4196] border border-amber-300 px-2.5 py-1 rounded-lg shrink-0 font-semibold">
                       {t('callBtn')}
                     </a>
                   )}
                 </div>
-              </div>
+              </button>
 
-              {/* Postponed items */}
+              {/* Postponed items — hidden until the card is tapped */}
+              {isExpanded && (
               <div className="divide-y divide-amber-100">
                 {remainingItems.map(it => {
                   const dr = it.days_remaining
@@ -246,6 +284,7 @@ export default function DealerPostponedPage() {
                   )
                 })}
               </div>
+              )}
             </div>
           )
         })}
