@@ -985,6 +985,14 @@ function computeRoutedFooterMode(sub: SubOrder | undefined): RoutedFooterMode {
   const awaiting = sub.awaiting_approval_count ?? 0
   if (awaiting > 0) return 'cancel-disabled'
   if (sub.is_returned_to_farmer) return 'send-discard'
+  // 2026-08-15 (Phase 2 facilitator-flow fix F5): if the facilitator
+  // is holding the order (with or without a dealer), farmer's fate
+  // decisions (Send / Discard) don't apply — the facilitator owns the
+  // reroute/return decision. Farmer's only escape is Cancel to reclaim
+  // the order → is_returned_to_farmer flips true → send-discard on the
+  // next render. Same logic if a dealer is still processing (with no
+  // facilitator in the chain): Cancel is the reclaim path.
+  if (sub.facilitator_user_id) return 'cancel'
   // Seed order in returned-to-farmer state (kept for symmetry —
   // covered by is_returned_to_farmer above).
   const active = sub.active_item_count ?? 0

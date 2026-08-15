@@ -86,6 +86,10 @@ interface Order {
   // Returned pill (not lumped with fresh "needs accept" on Pending).
   // Cleared when the facilitator forwards to a new dealer.
   is_returned_to_facilitator?: boolean
+  // 2026-08-15 (Phase 2 facilitator-flow F7): TRUE once the order is
+  // back with the farmer (farmer Cancel or facilitator's own Return-
+  // to-farmer). Facilitator's subBelongsTo drops these from every pill.
+  is_returned_to_farmer?: boolean
   released_dealer_user_id?: string | null
 }
 
@@ -108,6 +112,7 @@ interface SeedOrderRaw {
   created_at: string
   // 2026-08-12 — Dealer-declined-back marker (see Order interface).
   is_returned_to_facilitator?: boolean
+  is_returned_to_farmer?: boolean
   released_dealer_user_id?: string | null
 }
 
@@ -166,6 +171,12 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   // is the correct surface for that — pill predicate gates further
   // down. Same fix shipped to dealer + farmer earlier today.
   if (['CANCELLED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
+    return false
+  }
+  // 2026-08-15 (Phase 2 facilitator-flow F7): once the order is back
+  // with the farmer (via farmer Cancel or facilitator's own Return-to-
+  // farmer), the facilitator has handed off. Drop from every pill.
+  if (o.is_returned_to_farmer) {
     return false
   }
   // 2026-07-24 — Training-client orders live exclusively on the
@@ -300,6 +311,7 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
     crop_cosh_id: s.crop_cosh_id,
     farm_area_acres: s.farm_area_acres,
     is_returned_to_facilitator: s.is_returned_to_facilitator,
+    is_returned_to_farmer: s.is_returned_to_farmer,
     released_dealer_user_id: s.released_dealer_user_id,
   }
 }
@@ -447,6 +459,29 @@ export default function FacilitatorOrdersPage() {
     } finally { setRerouting(false) }
   }
 
+  // 2026-08-15 (Phase 2 facilitator-flow fix F6): return-to-farmer
+  // hand-off. Backend gate refuses when the order has active work
+  // (postpones, farmer approvals pending, awaiting Final Confirmation);
+  // we surface the specific message inline. Farmer's Routed card takes
+  // over on success (is_returned_to_farmer=true → Send/Discard buttons).
+  async function returnOrderToFarmer(orderId: string) {
+    if (!confirm(
+      "Hand this order back to the farmer? The farmer will choose whether to " +
+      "send the returned items to another dealer or discard them.",
+    )) return
+    try {
+      await api.put(`/facilitator/orders/${orderId}/return-to-farmer`, {})
+      load()
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: { message?: string } | string } } }
+      const detail = e?.response?.data?.detail
+      const msg = typeof detail === 'string'
+        ? detail
+        : (detail as { message?: string } | undefined)?.message
+      alert(msg || 'Could not return the order. Please try again.')
+    }
+  }
+
   // 2026-06-07 — Group orders by reference_number (Order ID). Pre-
   // batch-1 rows may have null reference_number; fall back to the
   // row id so the group is still rendered (transient until backfill
@@ -578,6 +613,7 @@ export default function FacilitatorOrdersPage() {
                 onAccept={accept}
                 onReject={(id) => setConfirmReject(id)}
                 onForwardReturned={(id) => openRerouteSheet(id)}
+                onReturnToFarmer={returnOrderToFarmer}
                 onMarkPickedUp={markPickedUp}
                 onOpenDetail={(id) => router.push(`/facilitator/orders/${id}`)}
                 onAcceptSeed={acceptSeed}
@@ -725,9 +761,35 @@ export default function FacilitatorOrdersPage() {
 
 // ── Order-ID grouped card ────────────────────────────────────────────────────
 
+// 2026-08-15 (Phase 2 facilitator-flow F8): footer mode for the
+// facilitator's master Routed card. Send-return offers Send +
+// Return-to-farmer buttons ONLY when the order is quiescent from the
+// dealer's side (no postpones, no farmer-approvals in flight, no
+// items awaiting the dealer's Final Confirmation) AND unsold items
+// exist. Otherwise the card stays passive.
+type FacilitatorFooterMode = 'none' | 'send-return'
+
+function computeFacilitatorFooterMode(sub: Order | undefined): FacilitatorFooterMode {
+  if (!sub) return 'none'
+  if (['CANCELLED', 'PURCHASED', 'REJECTED', 'REROUTED', 'EXPIRED'].includes(sub.status)) {
+    return 'none'
+  }
+  if (sub.is_seed) return 'none'  // seeds handled via their own flow
+  const c = sub.item_status_counts
+  if (!c) return 'none'
+  const returnedCount = (c.not_available ?? 0) + (c.rejected ?? 0)
+  if (returnedCount === 0) return 'none'
+  const activeWithDealer =
+    (c.pending ?? 0) + (c.available ?? 0) + (c.postponed ?? 0)
+    + (c.sent_for_approval ?? 0) + (c.awaiting_final_confirmation ?? 0)
+  if (activeWithDealer > 0) return 'none'
+  return 'send-return'
+}
+
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
-  onAccept, onReject, onForwardReturned, onMarkPickedUp, onOpenDetail,
+  onAccept, onReject, onForwardReturned, onReturnToFarmer,
+  onMarkPickedUp, onOpenDetail,
   onAcceptSeed, onConfirmRejectSeed, onForwardSeed, acting,
 }: {
   orderId: string
@@ -739,6 +801,7 @@ function OrderIdCard({
   onAccept: (id: string) => void
   onReject: (id: string) => void
   onForwardReturned: (id: string) => void
+  onReturnToFarmer: (id: string) => void
   onMarkPickedUp: (id: string) => void
   onOpenDetail: (id: string) => void
   onAcceptSeed: (id: string) => void
@@ -753,6 +816,8 @@ function OrderIdCard({
   // matches the pill, render its chunk inline. If 2+, render each
   // as a separate row inside the card.
   const renderRows = matching.length > 1
+  const footerSub = matching[0]
+  const footerMode = computeFacilitatorFooterMode(footerSub)
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
@@ -787,6 +852,24 @@ function OrderIdCard({
       </div>
       {expanded && (
         <ExpandedSubOrderList subs={subs} onOpenDetail={onOpenDetail} />
+      )}
+      {/* 2026-08-15 (Phase 2 facilitator-flow F6): master-card footer
+          for Send / Return-to-farmer. Only appears when the order is
+          quiescent from the dealer's side + has unsold items. */}
+      {pill === 'routed' && footerSub && footerMode === 'send-return' && (
+        <div className="border-t border-[#F0E5D0] px-4 py-2 flex gap-2">
+          <button onClick={() => onForwardReturned(footerSub.id)}
+            disabled={acting === footerSub.id}
+            className="flex-1 py-1.5 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+            style={{ background: COLOUR }}>
+            {acting === footerSub.id ? '…' : 'Send to another dealer'}
+          </button>
+          <button onClick={() => onReturnToFarmer(footerSub.id)}
+            disabled={acting === footerSub.id}
+            className="flex-1 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium disabled:opacity-50">
+            {acting === footerSub.id ? '…' : 'Return to farmer'}
+          </button>
+        </div>
       )}
     </div>
   )
