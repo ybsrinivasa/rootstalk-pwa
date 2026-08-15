@@ -566,7 +566,9 @@ export default function AdvisoryPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title="Advisory" activeRole="FARMER" back={`/crop-detail/${subscriptionId}`} />
-      <div className="pt-16 pb-24">
+      {/* 2026-08-15 — pb-32 (was pb-24) leaves clearance for both the
+          disclaimer strip AND the BottomNav below it. */}
+      <div className="pt-16 pb-32">
         <ClientCropChip subscriptionId={subscriptionId} />
 
         {/* Phase 3 of the Orders restructure (2026-06-02) — Orders
@@ -810,6 +812,18 @@ export default function AdvisoryPage() {
                 noise that competed with the actual advisory content. */}
           </div>
         )}
+      </div>
+      {/* 2026-08-15 — Fixed disclaimer strip above BottomNav. Small,
+          low-emphasis copy per user direction: not to be highlighted,
+          just always visible. Legal/political safety for client orgs
+          that publish advisories but can't vouch for outcomes. TODO
+          localise via a translation key when translations are next
+          refreshed. */}
+      <div
+        className="fixed left-0 right-0 z-40 bg-[#F5F0E8]/95 backdrop-blur-sm border-t border-[#DDD0B8] px-4 py-1.5 text-[10px] text-[#7A8C7E] text-center leading-tight"
+        style={{ bottom: 'calc(56px + env(safe-area-inset-bottom))' }}
+      >
+        Advisories are suggestions only. Local factors influence crop growth and yield too.
       </div>
       <BottomNav color="#3A7D44" />
 
