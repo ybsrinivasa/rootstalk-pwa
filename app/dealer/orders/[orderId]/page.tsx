@@ -320,37 +320,32 @@ export default function DealerOrderDetailPage() {
   const [drafts, setDrafts] = useState<Record<string, DraftEntry>>({})
   const draftSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastSyncedItem = useRef<string | null>(null)
-  // 2026-08-16 — scope=postponed snapshot. On first successful load
-  // in postponed scope, capture the set of relation_ids that had at
-  // least one POSTPONED member + the set of standalone item_ids that
-  // were POSTPONED. Filter then persists those in the visible list
-  // regardless of any subsequent status transitions (OR-cascade to
-  // NOT_NEEDED, resolve to AVAILABLE). Prevents the "vanish on
-  // resolve" bug without dragging in fully-resolved unrelated
-  // relations (which was the bug in the greedy NOT_NEEDED filter).
-  const postponedScopeSnapshot = useRef<{
-    relationIds: Set<string>
-    standaloneItemIds: Set<string>
-  } | null>(null)
+  // 2026-08-16 — scope=postponed snapshot. On first successful load,
+  // capture the set of item_ids that were POSTPONED. Filter then
+  // renders exactly those items (via their relation Part if nested,
+  // or as standalone) regardless of any subsequent status transitions
+  // (OR-cascade to NOT_NEEDED, resolve to AVAILABLE). Item-level
+  // snapshot (not relation-level) so unrelated Parts inside the same
+  // Relation don't get dragged in — a Relation can have multiple
+  // AND-Parts, only the postponed Part should render.
+  const postponedScopeSnapshot = useRef<{ itemIds: Set<string> } | null>(null)
 
   const load = async () => {
     try {
       const { data } = await api.get<Order>(`/dealer/orders/${orderId}`)
       setOrder(data)
       // 2026-08-16 — Snapshot postponed-scope membership on first load.
-      // Anything currently POSTPONED (either standalone or inside a
-      // relation) is the "postpone-touched" set — that set persists
-      // for the page's lifetime so OR-cascade resolutions don't drop
-      // items and fully-resolved unrelated relations don't sneak in.
+      // Item-level (not relation-level): a Relation can have multiple
+      // AND-Parts; only Parts containing a snapshotted item should
+      // render. Relation-level snapshot mistakenly rendered
+      // fully-resolved siblings' Parts too (RT-26-000429 had 4 items
+      // in 1 relation: 2 Parts, only Part 2 postponed).
       if (scope === 'postponed' && postponedScopeSnapshot.current === null) {
-        const relationIds = new Set<string>()
-        const standaloneItemIds = new Set<string>()
+        const itemIds = new Set<string>()
         for (const it of data.items ?? []) {
-          if (it.status !== 'POSTPONED') continue
-          if (it.relation_id) relationIds.add(it.relation_id)
-          else standaloneItemIds.add(it.id)
+          if (it.status === 'POSTPONED') itemIds.add(it.id)
         }
-        postponedScopeSnapshot.current = { relationIds, standaloneItemIds }
+        postponedScopeSnapshot.current = { itemIds }
       }
       // Batch 28 — server payload + IDB hydration. IDB entries win
       // over server entries for the same item id: if both exist, the
@@ -2565,21 +2560,33 @@ export default function DealerOrderDetailPage() {
             {relations.map(renderRelation)}
           </div>
         )}
-        {/* 2026-08-16 — scope=postponed: render relations that were
-            snapshotted at page-load as having a POSTPONED member. Uses
-            renderRelation (same as Pending pill) so the dealer gets
-            consistent UI + "Change selection" affordance for OR groups.
-            Snapshot-based filter prevents (a) the "vanish on resolve"
-            bug where OR-cascade to NOT_NEEDED dropped items and (b)
-            unrelated fully-resolved relations showing up (the earlier
-            NOT_NEEDED-inclusive filter grabbed those). */}
-        {scope === 'postponed' && order.status !== 'SENT' && relations.length > 0 && postponedScopeSnapshot.current && (
-          <div className="space-y-3">
-            {relations
-              .filter(rel => postponedScopeSnapshot.current!.relationIds.has(rel.relation_id))
-              .map(renderRelation)}
-          </div>
-        )}
+        {/* 2026-08-16 — scope=postponed: render Parts of Relations
+            that contain a snapshotted (postpone-touched) item. A
+            Relation can have multiple AND-Parts; only the postpone-
+            touched Part(s) render, not the fully-resolved siblings.
+            Uses renderRelation (same as Pending pill) with a
+            filtered-parts clone so the dealer gets consistent UI +
+            "Change selection" affordance without dragging in
+            unrelated Parts from the same Relation. */}
+        {scope === 'postponed' && order.status !== 'SENT' && relations.length > 0 && postponedScopeSnapshot.current && (() => {
+          const snap = postponedScopeSnapshot.current!
+          const scopedRelations = relations
+            .map(rel => ({
+              ...rel,
+              parts: rel.parts.filter(part =>
+                part.options.some(opt =>
+                  opt.items.some(it => snap.itemIds.has(it.id))
+                )
+              ),
+            }))
+            .filter(rel => rel.parts.length > 0)
+          if (scopedRelations.length === 0) return null
+          return (
+            <div className="space-y-3">
+              {scopedRelations.map(renderRelation)}
+            </div>
+          )
+        })()}
 
         {/* Standalone items — hidden when order.status === 'SENT'
             (pre-accept) so the dealer makes their accept/decline call
@@ -2602,15 +2609,14 @@ export default function DealerOrderDetailPage() {
             const focused = order.items?.find(i => i.id === focusItemId)
             visible = focused ? [focused] : []
           } else if (scope === 'postponed') {
-            // 2026-08-16 — scope=postponed for standalone items: use
-            // the page-load snapshot to persist items that WERE
-            // postponed (survives resolve to AVAILABLE / NA / whatever
-            // transition happens on this page). Not-snapshotted items
-            // never showed up here, so they don't sneak in via later
-            // status transitions.
+            // 2026-08-16 — Standalone items in scope=postponed: only
+            // items that were POSTPONED at page load (snapshotted).
+            // Relation-nested items go through the renderRelation path
+            // below (which now Part-filters using the same snapshot).
             const snap = postponedScopeSnapshot.current
+            const standaloneIds = new Set(standaloneItems.map(i => i.id))
             visible = snap
-              ? (order.items || []).filter(i => snap.standaloneItemIds.has(i.id))
+              ? (order.items || []).filter(i => snap.itemIds.has(i.id) && standaloneIds.has(i.id))
               : []
           } else {
             visible = standaloneItems
