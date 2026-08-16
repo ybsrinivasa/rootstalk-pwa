@@ -2538,6 +2538,24 @@ export default function DealerOrderDetailPage() {
             {relations.map(renderRelation)}
           </div>
         )}
+        {/* 2026-08-16 — scope=postponed: render relations that contain
+            at least one POSTPONED member (or a NOT_NEEDED item that got
+            there via OR-collapse cascading off a postpone-picked
+            sibling). Uses the SAME renderRelation as the Pending pill
+            so the dealer gets consistent UI + the "Change selection"
+            affordance for OR groups — earlier flat-filter approach lost
+            the relation structure and vanished siblings on OR-collapse. */}
+        {scope === 'postponed' && order.status !== 'SENT' && relations.length > 0 && (
+          <div className="space-y-3">
+            {relations
+              .filter(rel => rel.parts.some(part =>
+                part.options.some(opt =>
+                  opt.items.some(it => it.status === 'POSTPONED' || it.status === 'NOT_NEEDED')
+                )
+              ))
+              .map(renderRelation)}
+          </div>
+        )}
 
         {/* Standalone items — hidden when order.status === 'SENT'
             (pre-accept) so the dealer makes their accept/decline call
@@ -2560,9 +2578,19 @@ export default function DealerOrderDetailPage() {
             const focused = order.items?.find(i => i.id === focusItemId)
             visible = focused ? [focused] : []
           } else if (scope === 'postponed') {
-            // scope=postponed: show only POSTPONED items across the
-            // whole order (standalone + relation-nested).
-            visible = (order.items || []).filter(i => i.status === 'POSTPONED')
+            // 2026-08-16 — scope=postponed for standalone items: show
+            // items that ARE currently POSTPONED plus items that
+            // TRANSITIONED OUT of postponed on this page (AVAILABLE
+            // or NOT_AVAILABLE). If we filtered to POSTPONED only,
+            // the dealer's just-decided item would vanish immediately
+            // — no confirmation, no Change-selection path. Relation-
+            // nested items go through the renderRelation path below
+            // (this branch only picks up standalones).
+            const standaloneIds = new Set(standaloneItems.map(i => i.id))
+            visible = (order.items || []).filter(i =>
+              standaloneIds.has(i.id)
+              && (i.status === 'POSTPONED' || i.status === 'AVAILABLE' || i.status === 'NOT_AVAILABLE')
+            )
           } else {
             visible = standaloneItems
           }
