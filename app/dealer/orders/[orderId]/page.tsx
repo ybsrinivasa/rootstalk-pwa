@@ -1124,6 +1124,29 @@ export default function DealerOrderDetailPage() {
 
   const relations = order?.relations || []
 
+  // 2026-08-16 — Only one postpone per relation-Part. If dealer has
+  // POSTPONED any item in a Part, the Later button on sibling items
+  // in the same Part hides — otherwise the whole Part gets stuck
+  // waiting on two alternatives (which defeats the point of an OR).
+  // User rule: 'he can postpone an item once only'.
+  const suppressLaterItemIds = useMemo(() => {
+    const suppressed = new Set<string>()
+    for (const rel of relations) {
+      for (const part of rel.parts) {
+        const hasPostponed = part.options.some(o =>
+          o.items.some(it => it.status === 'POSTPONED'),
+        )
+        if (!hasPostponed) continue
+        for (const opt of part.options) {
+          for (const it of opt.items) {
+            if (it.status !== 'POSTPONED') suppressed.add(it.id)
+          }
+        }
+      }
+    }
+    return suppressed
+  }, [relations])
+
   if (loading || !order) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-2 border-[#7D4196] border-t-transparent rounded-full animate-spin" />
@@ -1300,11 +1323,13 @@ export default function DealerOrderDetailPage() {
               className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
               {t('item.available')}
             </button>
+            {!suppressLaterItemIds.has(item.id) && (
             <button onClick={() => openPostponePicker(item.id)}
               disabled={postponeBusy}
               className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2 rounded-lg disabled:opacity-50">
               {t('item.later')}
             </button>
+            )}
             <button onClick={() => markUnavailable(item.id)}
               className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
               {t('item.na')}
@@ -1364,11 +1389,13 @@ export default function DealerOrderDetailPage() {
               className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
               {t('item.available')}
             </button>
+            {!suppressLaterItemIds.has(item.id) && (
             <button onClick={() => openPostponePicker(item.id)}
               disabled={postponeBusy}
               className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2 rounded-lg disabled:opacity-50">
               {t('item.later')}
             </button>
+            )}
             <button onClick={() => markUnavailable(item.id)}
               className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
               {t('item.na')}
@@ -2403,11 +2430,13 @@ export default function DealerOrderDetailPage() {
                 className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl">
                 {t('item.available')}
               </button>
+              {!suppressLaterItemIds.has(item.id) && (
               <button onClick={() => openPostponePicker(item.id)}
                 disabled={postponeBusy}
                 className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
                 {t('item.later')}
               </button>
+              )}
               <button onClick={() => markUnavailable(item.id)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
                 {t('item.na')}
@@ -2443,11 +2472,13 @@ export default function DealerOrderDetailPage() {
                 className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg">
                 {t('item.available')}
               </button>
+              {!suppressLaterItemIds.has(item.id) && (
               <button onClick={() => openPostponePicker(item.id)}
                 disabled={postponeBusy}
                 className="flex-1 bg-amber-100 text-amber-700 text-xs font-semibold py-2 rounded-lg disabled:opacity-50">
                 {t('item.later')}
               </button>
+              )}
               <button onClick={() => markUnavailable(item.id)}
                 className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
                 {t('item.na')}
