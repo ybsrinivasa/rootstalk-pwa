@@ -236,8 +236,15 @@ export default function DealerOrderDetailPage() {
   // the brand form on that one item. Used by /dealer/postponed to
   // route the dealer straight into resolving one postponed item
   // without the noise of the full order.
+  // 2026-08-16 — scope=postponed shows only POSTPONED items on the
+  // order (standalone + relation-nested), each with the standard per-
+  // item action UI. Card tap on /dealer/postponed routes here. Dealer
+  // can act on one postpone at a time and Submit sends only that batch
+  // (POSTPONED items count as decided so the submit gate accepts
+  // partial fulfilment).
   const searchParams = useSearchParams()
   const focusItemId = searchParams.get('focus_item')
+  const scope = searchParams.get('scope')  // 'postponed' | null
   const router = useRouter()
   const [order, setOrder] = useState<Order | null>(null)
   const [packingList, setPackingList] = useState<PackingList | null>(null)
@@ -2448,8 +2455,8 @@ export default function DealerOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={focusItemId ? t('focusHeader') : t('headerTitle')} activeRole="DEALER"
-        back={focusItemId ? '/dealer/postponed' : '/dealer/orders'} />
+      <PWAHeader title={(focusItemId || scope === 'postponed') ? t('focusHeader') : t('headerTitle')} activeRole="DEALER"
+        back={(focusItemId || scope === 'postponed') ? '/dealer/postponed' : '/dealer/orders'} />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         {/* Batch 24 — farmer context. Skipped in focus mode (the dealer
@@ -2477,8 +2484,9 @@ export default function DealerOrderDetailPage() {
         )}
 
         {/* Header card — skipped in focus mode so the screen stays
-            clean on a single postponed-item resolve. */}
-        {!focusItemId && (
+            clean on a single postponed-item resolve. Also skipped in
+            scope=postponed mode. */}
+        {!focusItemId && scope !== 'postponed' && (
           <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
             <div className="flex items-center justify-between">
               <div>
@@ -2525,7 +2533,7 @@ export default function DealerOrderDetailPage() {
             entirely; if the focus item is standalone it still shows
             under "Standalone items"; if it's part of a relation we
             render only its relation. */}
-        {!focusItemId && order.status !== 'SENT' && relations.length > 0 && (
+        {!focusItemId && scope !== 'postponed' && order.status !== 'SENT' && relations.length > 0 && (
           <div className="space-y-3">
             {relations.map(renderRelation)}
           </div>
@@ -2542,14 +2550,26 @@ export default function DealerOrderDetailPage() {
             "Resolve this postponed item" label because the framing
             is genuinely contextual there. */}
         {(() => {
-          if (order.status === 'SENT' && !focusItemId) return null
-          const visible = focusItemId
-            ? standaloneItems.filter(i => i.id === focusItemId)
-            : standaloneItems
+          if (order.status === 'SENT' && !focusItemId && scope !== 'postponed') return null
+          // 2026-08-16 — focus_item may point at a relation-nested
+          // item; look it up on the raw items list, not standaloneItems
+          // (which excludes relation items). renderStandaloneItem is
+          // status-agnostic and renders any single item cleanly.
+          let visible: OrderItem[]
+          if (focusItemId) {
+            const focused = order.items?.find(i => i.id === focusItemId)
+            visible = focused ? [focused] : []
+          } else if (scope === 'postponed') {
+            // scope=postponed: show only POSTPONED items across the
+            // whole order (standalone + relation-nested).
+            visible = (order.items || []).filter(i => i.status === 'POSTPONED')
+          } else {
+            visible = standaloneItems
+          }
           if (visible.length === 0) return null
           return (
             <div className="space-y-3">
-              {focusItemId && (
+              {(focusItemId || scope === 'postponed') && (
                 <p className="text-sm font-semibold text-[#6B3F1F] px-1">
                   {t('sections.resolvePostponed')}
                 </p>
@@ -2606,7 +2626,7 @@ export default function DealerOrderDetailPage() {
             {t('footer.pendingHint', { count: pendingCount })}
           </div>
         )}
-        {order.status === 'PROCESSING' && pendingCount === 0 && availableCount === 0 && notAvailableCount === 0 && (
+        {scope !== 'postponed' && order.status === 'PROCESSING' && pendingCount === 0 && availableCount === 0 && notAvailableCount === 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-800">
             {t('footer.allPostponed')}
           </div>

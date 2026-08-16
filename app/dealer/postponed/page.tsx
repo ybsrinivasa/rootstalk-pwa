@@ -67,19 +67,15 @@ function shortDate(iso: string | null, locale: string): string {
 export default function DealerPostponedPage() {
   const router = useRouter()
   const t = useTranslations('dealer.postponed')
-  const tCommon = useTranslations('common')
   const locale = useLocale()
   const [items, setItems] = useState<PostponedItem[] | null>(null)
-  const [confirmNA, setConfirmNA] = useState<PostponedItem | null>(null)
-  const [busy, setBusy] = useState<string | null>(null)
   // Items the dealer has "skipped for now" — frontend-only. Resets
   // when the page is reloaded. No backend writes.
-  const [skipped, setSkipped] = useState<Set<string>>(new Set())
-  // 2026-08-15 — Order-grouped cards collapsed by default. Dealer taps
-  // a card header to expand and act on the postponed items one at a
-  // time. Prevents the "everything's open at once, can't tell where
-  // one order ends" confusion.
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null)
+  const [skipped] = useState<Set<string>>(new Set())
+  // 2026-08-16 — Card tap navigates to /dealer/orders/{oid}?scope=postponed
+  // (order detail page with postponed-only filter). Inline expand removed
+  // per user direction: dealer wants a dedicated action screen, not an
+  // accordion where a 2-postponed-item card force-opens buttons inline.
 
   async function load() {
     const { data } = await api.get<PostponedItem[]>('/dealer/postponed-items')
@@ -90,27 +86,6 @@ export default function DealerPostponedPage() {
     if (!getToken()) { router.replace('/register'); return }
     load()
   }, [])
-
-  function nowAvailable(it: PostponedItem) {
-    router.push(`/dealer/orders/${it.order_id}?focus_item=${it.item_id}`)
-  }
-
-  async function notAvailable(it: PostponedItem) {
-    setBusy(it.item_id)
-    try {
-      await api.put(`/dealer/orders/${it.order_id}/items/${it.item_id}/not-available`, {})
-      setConfirmNA(null)
-      load()
-    } finally { setBusy(null) }
-  }
-
-  function laterSkip(it: PostponedItem) {
-    setSkipped(prev => {
-      const next = new Set(prev)
-      next.add(it.item_id)
-      return next
-    })
-  }
 
   // Group items by order_id, preserving the backend's chronological
   // order (earliest-received order first).
@@ -165,7 +140,6 @@ export default function DealerPostponedPage() {
 
         {visibleGroups.map(g => {
           const remainingItems = g.items.filter(i => !skipped.has(i.item_id))
-          const isExpanded = expandedOrderId === g.order_id
           const soonestDaysRemaining = remainingItems.reduce<number | null>((min, it) => {
             if (it.days_remaining === null) return min
             if (min === null) return it.days_remaining
@@ -175,13 +149,18 @@ export default function DealerPostponedPage() {
             <div key={g.order_id}
               className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden">
 
-              {/* Order header — tap to expand/collapse. Farmer + company
-                  + dates + a summary chip showing how many postponed
-                  items + the soonest deadline. */}
+              {/* 2026-08-16 — Card tap navigates to the dealer detail
+                  page scoped to this order's postponed items. The
+                  detail page's ?scope=postponed mode filters standalone
+                  + relation items to only POSTPONED, and the dealer
+                  works through them per-item — Now Available → brand
+                  form → Submit for Approval (POSTPONED counts as
+                  decided, so the submit-for-approval gate accepts a
+                  batch where the OTHER postpones stay untouched). */}
               <button
                 type="button"
-                onClick={() => setExpandedOrderId(isExpanded ? null : g.order_id)}
-                className="w-full text-left p-4 bg-amber-50/50 border-b border-amber-200 active:bg-amber-100/50">
+                onClick={() => router.push(`/dealer/orders/${g.order_id}?scope=postponed`)}
+                className="w-full text-left p-4 bg-amber-50/50 active:bg-amber-100/50">
                 <div className="flex items-start gap-3">
                   {g.farmer_photo_url ? (
                     <img src={g.farmer_photo_url} alt={g.farmer_name}
@@ -212,7 +191,6 @@ export default function DealerPostponedPage() {
                         {t('orderRange', { from: shortDate(g.date_from, locale), to: shortDate(g.date_to, locale) })}
                       </p>
                     )}
-                    {/* Collapsed-summary chip: item count + soonest deadline */}
                     <div className="mt-2 flex items-center gap-2 flex-wrap">
                       <span className="text-[11px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
                         {remainingItems.length === 1
@@ -228,9 +206,7 @@ export default function DealerPostponedPage() {
                             : t('daysLeft', { count: soonestDaysRemaining })}
                         </span>
                       )}
-                      <span className="text-[10px] text-[#7A8C7E] ml-auto shrink-0">
-                        {isExpanded ? '▾' : '▸'}
-                      </span>
+                      <span className="text-[10px] text-[#7A8C7E] ml-auto shrink-0">›</span>
                     </div>
                   </div>
                   {g.farmer_phone && (
@@ -242,75 +218,10 @@ export default function DealerPostponedPage() {
                   )}
                 </div>
               </button>
-
-              {/* Postponed items — hidden until the card is tapped */}
-              {isExpanded && (
-              <div className="divide-y divide-amber-100">
-                {remainingItems.map(it => {
-                  const dr = it.days_remaining
-                  // Hide Later when on the last day (must decide).
-                  const allowLater = dr !== null && dr > 1
-                  return (
-                    <div key={it.item_id} className="p-3">
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="text-sm font-semibold text-[#6B3F1F] truncate">
-                          {it.display_name}
-                        </p>
-                        {dr !== null && (
-                          <p className={`text-[11px] font-medium shrink-0 ${
-                            dr <= 1 ? 'text-red-600' : 'text-amber-700'
-                          }`}>
-                            {dr === 0 ? t('dueToday') : t('daysLeft', { count: dr })}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        <button onClick={() => nowAvailable(it)}
-                          className="flex-1 bg-green-600 text-white text-[11px] font-semibold py-2 rounded-lg">
-                          {t('ctaAvailable')}
-                        </button>
-                        <button onClick={() => setConfirmNA(it)}
-                          className="flex-1 bg-red-100 text-[#D4682E] text-[11px] font-semibold py-2 rounded-lg">
-                          {t('ctaNa')}
-                        </button>
-                        {allowLater && (
-                          <button onClick={() => laterSkip(it)}
-                            className="flex-1 bg-amber-100 text-amber-800 text-[11px] font-semibold py-2 rounded-lg">
-                            {t('ctaLater')}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-              )}
             </div>
           )
         })}
       </div>
-
-      {confirmNA && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirmNA(null)}>
-          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5 pb-10" onClick={e => e.stopPropagation()}>
-            <p className="font-bold text-[#6B3F1F]">{t('confirmNa.title')}</p>
-            <p className="text-xs text-[#7A8C7E] mt-2">
-              <strong className="text-[#6B3F1F]">{confirmNA.display_name}</strong> {t('confirmNa.bodyMiddle')}{' '}
-              {t('confirmNa.farmerParen', { name: confirmNA.farmer_name })}{t('confirmNa.bodySuffix')}
-            </p>
-            <div className="flex gap-2 mt-4">
-              <button onClick={() => setConfirmNA(null)}
-                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
-                {tCommon('cancel')}
-              </button>
-              <button onClick={() => notAvailable(confirmNA)} disabled={busy === confirmNA.item_id}
-                className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy === confirmNA.item_id ? '…' : t('confirmNa.yesReturn')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
