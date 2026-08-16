@@ -170,6 +170,10 @@ function effectivePillForTraining(o: Order): Pill {
   }
   if (['SENT', 'ACCEPTED', 'PROCESSING'].includes(o.status)) return 'pending'
   const c = o.item_status_counts
+  // 2026-08-16 — AVAILABLE items awaiting Submit take priority over
+  // downstream states so the dealer's Submit-for-approval CTA is
+  // the visible action (mirrors the pending-pill fix in subBelongsTo).
+  if ((c.available ?? 0) > 0) return 'pending'
   if (c.approved > 0 && !o.packing_list_removed_at && !o.packing_farmer_received_at) return 'packing'
   if (c.postponed > 0) return 'postponed'
   if (c.sent_for_approval > 0) return 'farmer'
@@ -231,7 +235,17 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   switch (pill) {
     case 'pending':
       // Hasn't been submitted: still in SENT / ACCEPTED / PROCESSING.
+      // 2026-08-16 — Also fires when the order has AVAILABLE items
+      // waiting for the dealer's Submit-for-approval tap, regardless
+      // of order-level status. Catches the postpone-resolve exit path:
+      // dealer resolves a postpone from /dealer/postponed → item is
+      // AVAILABLE → order.status stays past-PROCESSING (COMPLETED /
+      // PARTIALLY_APPROVED / SFA from an earlier round) → without this
+      // clause the order fell into a pill-gap (invisible until Submit
+      // ran). Now the Pending pill picks it up so the dealer sees the
+      // Submit CTA even if they walked away without tapping Submit.
       return ['SENT', 'ACCEPTED', 'PROCESSING'].includes(o.status)
+        || (c.available ?? 0) > 0
     case 'postponed':
       return c.postponed > 0
     case 'farmer':
