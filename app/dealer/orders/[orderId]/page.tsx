@@ -21,6 +21,12 @@ interface ElementBlock {
   vol_per_plant_value: number | null
   vol_per_plant_unit_cosh_id: string | null
   vol_per_plant_unit_name: string | null
+  // 2026-08-17 — Frequency-based practice metadata. When frequency_days
+  // is set (Fertigation NPK Dosages, Fertigation Products), the dosage
+  // is per-application and applications_count multiplies it over the
+  // full timeline.
+  frequency_days?: number | null
+  applications_count?: number | null
 }
 // Batch 30B — NPK ranking shape (subset of /npk-options response).
 interface NPKMixed {
@@ -3200,16 +3206,36 @@ function ElementGuidance({
 }) {
   const t = useTranslations('dealer.orderDetail.elementGuidance')
   const rows: { label: string; value: string; emphasis?: boolean; italic?: boolean }[] = []
+  // 2026-08-17 — Frequency-based practices (Fertigation NPK Dosages,
+  // Fertigation Products): dosage label suffixed with "per application"
+  // + a separate "Applications" row so the dealer understands the total
+  // volume (per-app dose × applications × area). Non-frequency practices
+  // stay unchanged.
+  const isFrequencyBased = !!block.frequency_days
   if (block.dosage_value != null) {
     const unit = block.dosage_unit_name || block.dosage_unit_cosh_id || ''
-    rows.push({ label: t('recommendedDosage'), value: `${block.dosage_value} ${unit}`.trim() })
+    const value = `${block.dosage_value} ${unit}`.trim()
+    rows.push({
+      label: t('recommendedDosage'),
+      value: isFrequencyBased ? `${value} per application` : value,
+    })
   }
   if (block.application_method_name) {
     rows.push({ label: t('applicationMethod'), value: block.application_method_name })
   }
   if (block.vol_per_plant_value != null) {
     const unit = block.vol_per_plant_unit_name || block.vol_per_plant_unit_cosh_id || ''
-    rows.push({ label: t('volumePerPlant'), value: `${block.vol_per_plant_value} ${unit}`.trim() })
+    const value = `${block.vol_per_plant_value} ${unit}`.trim()
+    rows.push({
+      label: t('volumePerPlant'),
+      value: isFrequencyBased ? `${value} per application` : value,
+    })
+  }
+  if (isFrequencyBased && block.applications_count != null) {
+    rows.push({
+      label: 'Applications',
+      value: `${block.applications_count}`,
+    })
   }
   // Batch 27 — BL-06 estimated volume in the same warm-tan card so
   // the dealer reads SE guidance + computed estimate together, right
