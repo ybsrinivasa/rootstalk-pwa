@@ -1523,6 +1523,7 @@
         "pending": "Pending",
         "postponed": "Postponed",
         "farmer": "With Farmer",
+        "confirm": "Final Confirmation",
         "packing": "Packing",
         "training": "Training"
       },

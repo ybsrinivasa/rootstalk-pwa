@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -41,6 +41,11 @@ interface OrderForPickup {
 export default function FarmerPickupPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // 2026-08-17 — Optional approval_round query param scopes the pickup
+  // action to a specific batch. If absent, backend picks the earliest
+  // unresolved batch (legacy behaviour).
+  const approvalRound = searchParams.get('approval_round')
   const t = useTranslations('orders.pickup')
   const tCommon = useTranslations('common')
   const tOrdersCommon = useTranslations('orders.common')
@@ -61,7 +66,8 @@ export default function FarmerPickupPage() {
     if (!order) return
     setBusy(true)
     try {
-      await api.put(`/farmer/orders/${order.id}/packing-list/mark-received`, {})
+      const qs = approvalRound ? `?approval_round=${approvalRound}` : ''
+      await api.put(`/farmer/orders/${order.id}/packing-list/mark-received${qs}`, {})
       router.replace(`/crop-detail/${order.subscription_id}/orders?tab=manage`)
     } catch { alert(tOrdersCommon('errors.receiptFailed')) }
     finally { setBusy(false); setConfirm(false) }

@@ -28,6 +28,25 @@ interface PackingItem {
   final_confirmed_at?: string | null
 }
 
+// 2026-08-17 — Per-batch (per-approval_round) Pickup lifecycle. Each
+// batch has its own PackingList row: Final Confirmation → Packing →
+// Pickup runs independently for each round the dealer opens.
+interface PackingBatch {
+  approval_round: number
+  packing_list_id: string | null
+  packing_code: string | null
+  shared_at: string | null
+  picked_up_at: string | null
+  picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
+  picked_up_by_name: string | null
+  farmer_received_at: string | null
+  dealer_removed_at: string | null
+  awaiting_final_confirmation: number
+  final_confirmed: number
+  all_final_confirmed: boolean
+  items: PackingItem[]
+}
+
 interface ItemStatusCounts {
   pending: number
   available: number
@@ -71,12 +90,16 @@ interface Order {
   date_to: string
   created_at: string
   item_status_counts: ItemStatusCounts
+  // 2026-08-17 — Per-batch pickup lifecycle. Primary source for the
+  // Final Confirmation + Packing pills.
+  packing_batches: PackingBatch[]
+  // Legacy top-level packing fields — populated from the earliest
+  // unresolved batch on the backend. Read by pages that haven't yet
+  // migrated to packing_batches; scheduled for removal.
   packing_items: PackingItem[]
   packing_code: string | null
   packing_list_shared_at: string | null
   packing_list_removed_at: string | null
-  // 2026-06-06 — Pickup + farmer-received tracking. Renders the
-  // status line under the contact chips on the Packing card.
   packing_picked_up_at: string | null
   packing_picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
   packing_picked_up_by_name: string | null
@@ -138,9 +161,13 @@ interface SeedOrderRaw {
 // work. The Training pill collects every training-client order the
 // dealer holds regardless of item status — that's the whole point
 // of separating it.
-type Pill = 'pending' | 'postponed' | 'farmer' | 'packing' | 'training'
+// 2026-08-17 — 'confirm' pill added. Sits between 'farmer' (awaiting
+// farmer approval) and 'packing' (all Final Confirmed, ready to pack).
+// It surfaces per-batch groups where the dealer still owes Final
+// Confirmation. Post-confirm, that batch moves to the Packing pill.
+type Pill = 'pending' | 'postponed' | 'farmer' | 'confirm' | 'packing' | 'training'
 
-const PILLS: readonly Pill[] = ['pending', 'postponed', 'farmer', 'packing', 'training'] as const
+const PILLS: readonly Pill[] = ['pending', 'postponed', 'farmer', 'confirm', 'packing', 'training'] as const
 
 function initials(name: string | null): string {
   if (!name) return '?'
@@ -232,6 +259,7 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
     }
   }
   const c = o.item_status_counts
+  const batches = o.packing_batches ?? []
   switch (pill) {
     case 'pending':
       // Hasn't been submitted: still in SENT / ACCEPTED / PROCESSING.
@@ -250,11 +278,19 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
       return c.postponed > 0
     case 'farmer':
       return c.sent_for_approval > 0
+    case 'confirm':
+      // 2026-08-17 — Any batch with items still awaiting Final
+      // Confirmation from the dealer. Post-confirm, the batch moves
+      // to the Packing pill; independent per-round lifecycles.
+      return batches.some(b => b.awaiting_final_confirmation > 0)
     case 'packing':
-      // 2026-06-06 — Order leaves Packing when EITHER the dealer
-      // removed it manually OR the farmer confirmed receipt. Either
-      // signals "done from the dealer's standpoint".
-      return c.approved > 0 && !o.packing_list_removed_at && !o.packing_farmer_received_at
+      // 2026-08-17 (per-batch rework) — surface the order whenever ANY
+      // batch is fully Final-Confirmed AND still awaiting share/receive.
+      return batches.some(b =>
+        b.all_final_confirmed
+        && !b.farmer_received_at
+        && !b.dealer_removed_at,
+      )
   }
 }
 
@@ -293,6 +329,7 @@ function adaptSeedOrder(s: SeedOrderRaw): Order {
       sent_for_approval: 0, approved: 0, rejected: 0,
     },
     packing_items: [],
+    packing_batches: [],
     packing_code: null,
     packing_list_shared_at: null,
     packing_list_removed_at: null,
@@ -332,10 +369,11 @@ function DealerOrdersInner() {
   const [pill, setPill] = useState<Pill>(initialPill)
   // Local state for share/remove busy spinners + the confirm-remove
   // sheet payload.
-  const [confirmRemove, setConfirmRemove] = useState<Order | null>(null)
-  // 2026-06-06 — Re-share confirmation. First share is friction-free;
-  // subsequent shares show a warning about duplicate-delivery risk.
-  const [confirmReshare, setConfirmReshare] = useState<Order | null>(null)
+  // 2026-08-17 — Per-batch: confirmRemove + confirmReshare carry the
+  // specific batch alongside the order so the eventual PUT scopes to
+  // that batch's approval_round.
+  const [confirmRemove, setConfirmRemove] = useState<{ order: Order; batch: PackingBatch } | null>(null)
+  const [confirmReshare, setConfirmReshare] = useState<{ order: Order; batch: PackingBatch } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
   // 2026-06-19 — Seed inline-action state (migrated from
@@ -394,7 +432,7 @@ function DealerOrdersInner() {
   // sub-order (matches what the user sees rendered).
   const counts: Record<Pill, number> = useMemo(() => {
     const c: Record<Pill, number> = {
-      pending: 0, postponed: 0, farmer: 0, packing: 0, training: 0,
+      pending: 0, postponed: 0, farmer: 0, confirm: 0, packing: 0, training: 0,
     }
     for (const list of groups.values()) {
       for (const p of PILLS) {
@@ -467,21 +505,28 @@ function DealerOrdersInner() {
     return lines.join('\n')
   }
 
-  async function shareOrder(o: Order) {
+  // 2026-08-17 — Share/Remove/FinalConfirmAll all take a specific batch
+  // now (per-round Pickup rework). Backend endpoints accept an optional
+  // approval_round query param; the batch's own round scopes the action.
+  async function shareOrder(o: Order, batch: PackingBatch) {
     setBusy(o.id)
     setConfirmReshare(null)
     try {
-      // 2026-06-06 — Call mark-shared FIRST so the backend lazy-creates
-      // the PackingList row and stamps a packing_code. We use the
-      // returned code to compose the share text — earlier flow had the
-      // code only after the share was done, so the first share went
-      // out without the ID.
       const { data } = await api.put<{
         packing_code: string | null
         first_shared_at: string | null
-      }>(`/dealer/orders/${o.id}/packing-list/mark-shared`, {})
-      const code = data.packing_code || o.packing_code || null
-      const text = buildShareText({ ...o, packing_code: code })
+        approval_round: number | null
+      }>(
+        `/dealer/orders/${o.id}/packing-list/mark-shared?approval_round=${batch.approval_round}`,
+        {},
+      )
+      const code = data.packing_code || batch.packing_code || null
+      // Build share text from the batch's items only.
+      const text = buildShareText({
+        ...o,
+        packing_code: code,
+        packing_items: batch.items,
+      })
 
       const navigatorAny = navigator as Navigator & { share?: (data: ShareData) => Promise<void> }
       if (navigatorAny.share) {
@@ -496,20 +541,23 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
-  function onSharePressed(o: Order) {
-    // First share is friction-free; subsequent shares warn about
-    // duplicate-delivery risk per user direction 2026-06-06.
-    if (o.packing_list_shared_at) {
-      setConfirmReshare(o)
+  function onSharePressed(o: Order, batch: PackingBatch) {
+    // First share of THIS batch is friction-free; subsequent shares of
+    // the same batch warn about duplicate-delivery risk.
+    if (batch.shared_at) {
+      setConfirmReshare({ order: o, batch })
       return
     }
-    void shareOrder(o)
+    void shareOrder(o, batch)
   }
 
-  async function removeOrder(o: Order) {
+  async function removeOrder(o: Order, batch: PackingBatch) {
     setBusy(o.id)
     try {
-      await api.put(`/dealer/orders/${o.id}/packing-list/remove`, {})
+      await api.put(
+        `/dealer/orders/${o.id}/packing-list/remove?approval_round=${batch.approval_round}`,
+        {},
+      )
       setConfirmRemove(null)
       await load()
     } finally { setBusy(null) }
@@ -553,14 +601,17 @@ function DealerOrdersInner() {
   // APPROVED-not-yet-Final-Confirmed items on a pest/fert order,
   // fired from the Packing pill card on the dealer's list. Mirror of
   // the same button on the per-order detail page.
-  async function finalConfirmAllOrder(o: Order) {
+  async function finalConfirmAllOrder(o: Order, batch: PackingBatch) {
     if (!confirm(
       "This is the final commitment. The packing list is populated after this. " +
       "Confirm all approved items only after payment or credit terms with the farmer are settled.",
     )) return
     setBusy(o.id)
     try {
-      await api.put(`/dealer/orders/${o.id}/final-confirm-all`, {})
+      await api.put(
+        `/dealer/orders/${o.id}/final-confirm-all?approval_round=${batch.approval_round}`,
+        {},
+      )
       await load()
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
@@ -773,7 +824,7 @@ function DealerOrdersInner() {
                 expanded={expandedGroup === key}
                 onToggleExpand={() => setExpandedGroup(expandedGroup === key ? null : key)}
                 onShare={onSharePressed}
-                onRemove={(o) => setConfirmRemove(o)}
+                onRemove={(o, b) => setConfirmRemove({ order: o, batch: b })}
                 // 2026-06-19 — Seed open-detail is a no-op now that all
                 // seed actions live inline on the unified feed. Regular
                 // orders still route to their detail page for the rich
@@ -800,7 +851,7 @@ function DealerOrdersInner() {
         </div>
       </div>
 
-      {/* Re-share warning sheet */}
+      {/* Re-share warning sheet — batch-scoped */}
       {confirmReshare && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => setConfirmReshare(null)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
@@ -809,13 +860,13 @@ function DealerOrdersInner() {
             <p className="font-bold text-[#6B3F1F]">{t('reshare.title')}</p>
             <p className="text-xs text-amber-700 mt-2">
               {t('reshare.bodyPrefix')}
-              {confirmReshare.packing_list_shared_at && (
+              {confirmReshare.batch.shared_at && (
                 <span>
                   {' '}{t('reshare.bodyAt')}{' '}
                   <strong>
-                    {new Date(confirmReshare.packing_list_shared_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(confirmReshare.batch.shared_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}
                     {' '}{t('reshare.bodyOn')}{' '}
-                    {new Date(confirmReshare.packing_list_shared_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
+                    {new Date(confirmReshare.batch.shared_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
                   </strong>
                 </span>
               )}{t('reshare.bodySuffix')}
@@ -825,16 +876,17 @@ function DealerOrdersInner() {
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
                 {tCommon('cancel')}
               </button>
-              <button onClick={() => shareOrder(confirmReshare)} disabled={busy === confirmReshare.id}
+              <button onClick={() => shareOrder(confirmReshare.order, confirmReshare.batch)}
+                disabled={busy === confirmReshare.order.id}
                 className="flex-1 bg-amber-600 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy === confirmReshare.id ? '…' : t('reshare.yesShareAgain')}
+                {busy === confirmReshare.order.id ? '…' : t('reshare.yesShareAgain')}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Remove-confirm sheet */}
+      {/* Remove-confirm sheet — batch-scoped */}
       {confirmRemove && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-end" onClick={() => setConfirmRemove(null)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
@@ -849,9 +901,10 @@ function DealerOrdersInner() {
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">
                 {tCommon('cancel')}
               </button>
-              <button onClick={() => removeOrder(confirmRemove)} disabled={busy === confirmRemove.id}
+              <button onClick={() => removeOrder(confirmRemove.order, confirmRemove.batch)}
+                disabled={busy === confirmRemove.order.id}
                 className="flex-1 bg-red-100 text-[#D4682E] text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                {busy === confirmRemove.id ? '…' : t('removeConfirm.yesRemove')}
+                {busy === confirmRemove.order.id ? '…' : t('removeConfirm.yesRemove')}
               </button>
             </div>
           </div>
@@ -926,6 +979,44 @@ function DealerOrdersInner() {
   )
 }
 
+// 2026-08-17 — Per-batch variant of PickupStatus. Reads pickup/receipt
+// state from a specific PackingBatch instead of the order-level legacy
+// fields. Used by the per-batch PackingChunk on the Packing pill.
+function BatchPickupStatus({ batch, order }: { batch: PackingBatch; order: Order }) {
+  const t = useTranslations('dealer.orders.pickup')
+  const locale = useLocale()
+  if (batch.farmer_received_at) {
+    const stamp = new Date(batch.farmer_received_at)
+    return (
+      <p className="text-[11px] text-purple-700 mt-1 font-semibold">
+        {t('receivedByFarmer', {
+          date: stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' }),
+          time: stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+        })}
+      </p>
+    )
+  }
+  if (batch.picked_up_at) {
+    const stamp = new Date(batch.picked_up_at)
+    const date = stamp.toLocaleDateString(locale, { day: '2-digit', month: 'short' })
+    const time = stamp.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+    let line: string
+    if (batch.picked_up_by_role === 'FACILITATOR') {
+      line = batch.picked_up_by_name
+        ? t('pickedUpByFacilitatorNamed', { name: batch.picked_up_by_name, date, time })
+        : t('pickedUpByFacilitator', { date, time })
+    } else {
+      line = t('pickedUpByFarmer', { date, time })
+    }
+    return <p className="text-[11px] text-amber-700 mt-1 font-medium">{line}</p>
+  }
+  return (
+    <p className="text-[11px] text-[#7A8C7E] mt-1">
+      {t('awaitingPickup')}
+    </p>
+  )
+}
+
 function PickupStatus({ order }: { order: Order }) {
   const t = useTranslations('dealer.orders.pickup')
   const locale = useLocale()
@@ -987,13 +1078,13 @@ function DealerOrderIdCard({
   pill: Pill
   expanded: boolean
   onToggleExpand: () => void
-  onShare: (o: Order) => void
-  onRemove: (o: Order) => void
+  onShare: (o: Order, batch: PackingBatch) => void
+  onRemove: (o: Order, batch: PackingBatch) => void
   onOpenDetail: (o: Order) => void
   onHandoverSeed: (o: Order) => void
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
-  onFinalConfirmAll: (o: Order) => void
+  onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onFinalConfirmItem: (orderId: string, itemId: string) => void
   onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
@@ -1233,13 +1324,13 @@ function DealerPillChunk({
 }: {
   sub: Order
   pill: Pill
-  onShare: (o: Order) => void
-  onRemove: (o: Order) => void
+  onShare: (o: Order, batch: PackingBatch) => void
+  onRemove: (o: Order, batch: PackingBatch) => void
   onOpenDetail: (o: Order) => void
   onHandoverSeed: (o: Order) => void
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
-  onFinalConfirmAll: (o: Order) => void
+  onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onFinalConfirmItem: (orderId: string, itemId: string) => void
   onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
@@ -1322,6 +1413,48 @@ function DealerPillChunk({
           </p>
         </div>
       )}
+      {renderPill === 'confirm' && !sub.is_seed && (
+        // 2026-08-17 — Final Confirmation pill: render one card per
+        // batch (approval_round) that still has items awaiting Final
+        // Confirmation. Iterating packing_batches keeps each round's
+        // lifecycle independent from the others.
+        <div className="divide-y divide-purple-100">
+          {(sub.packing_batches ?? [])
+            .filter(b => b.awaiting_final_confirmation > 0)
+            .map(b => (
+              <PackingChunk key={b.approval_round} order={sub} batch={b}
+                onShare={onShare}
+                onRemove={onRemove}
+                onFinalConfirmAll={onFinalConfirmAll}
+                onFinalConfirmItem={onFinalConfirmItem}
+                onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                busy={busy === sub.id} />
+            ))}
+        </div>
+      )}
+      {renderPill === 'confirm' && sub.is_seed && (
+        // Seed orders share the Final Confirmation semantics; render
+        // the same block as the legacy Packing seed flow so the dealer
+        // sees the Final Confirm / Cancel affordances on this pill.
+        <div className="px-4 py-3 space-y-2">
+          <p className="text-[11px] text-purple-800 leading-snug">
+            <strong>Final Confirmation:</strong> the packing list is populated after this.
+            Confirm only when payment or credit terms with the farmer are settled.
+          </p>
+          <div className="flex gap-2">
+            <button onClick={() => onFinalConfirmSeed(sub)}
+              disabled={busy === sub.id}
+              className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold py-2.5 rounded-xl">
+              Final Confirmation
+            </button>
+            <button onClick={() => onCancelFinalConfirmSeed(sub)}
+              disabled={busy === sub.id}
+              className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       {renderPill === 'packing' && (
         sub.is_seed ? (
           // 2026-06-19 — Inline seed handover.
@@ -1363,13 +1496,25 @@ function DealerPillChunk({
             )}
           </div>
         ) : (
-          <PackingChunk order={sub}
-            onShare={() => onShare(sub)}
-            onRemove={() => onRemove(sub)}
-            onFinalConfirmAll={() => onFinalConfirmAll(sub)}
-            onFinalConfirmItem={onFinalConfirmItem}
-            onCancelFinalConfirmItem={onCancelFinalConfirmItem}
-            busy={busy === sub.id} />
+          // 2026-08-17 — Per-batch Packing pill: one PackingChunk per
+          // batch that's all Final-Confirmed AND not yet received/removed.
+          <div className="divide-y divide-purple-100">
+            {(sub.packing_batches ?? [])
+              .filter(b =>
+                b.all_final_confirmed
+                && !b.farmer_received_at
+                && !b.dealer_removed_at,
+              )
+              .map(b => (
+                <PackingChunk key={b.approval_round} order={sub} batch={b}
+                  onShare={onShare}
+                  onRemove={onRemove}
+                  onFinalConfirmAll={onFinalConfirmAll}
+                  onFinalConfirmItem={onFinalConfirmItem}
+                  onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                  busy={busy === sub.id} />
+              ))}
+          </div>
         )
       )}
     </div>
@@ -1486,35 +1631,45 @@ function SeedPendingChunk({
 // total, Share / Remove. Order-level header (farmer + Order ID) is
 // now in DealerOrderCardHeader; the chunk starts at the Packing
 // ID strip.
+// 2026-08-17 — Per-batch Packing card. Renders a single batch
+// (approval_round). Mode is inferred from the batch state:
+// awaiting_final_confirmation > 0 → Final Confirmation controls;
+// all_final_confirmed → Share/Remove controls. This lets the same
+// component drive both the 'confirm' pill (batches needing Final
+// Confirmation) and the 'packing' pill (batches ready to hand over).
 function PackingChunk({
-  order, onShare, onRemove, onFinalConfirmAll,
+  order, batch, onShare, onRemove, onFinalConfirmAll,
   onFinalConfirmItem, onCancelFinalConfirmItem, busy,
 }: {
   order: Order
-  onShare: () => void
-  onRemove: () => void
-  onFinalConfirmAll: () => void
+  batch: PackingBatch
+  onShare: (o: Order, batch: PackingBatch) => void
+  onRemove: (o: Order, batch: PackingBatch) => void
+  onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onFinalConfirmItem: (orderId: string, itemId: string) => void
   onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
   busy: boolean
 }) {
   const t = useTranslations('dealer.orders.packing')
   const locale = useLocale()
-  const shared = !!order.packing_list_shared_at
-  const total = order.packing_items.reduce((s, i) => s + (i.price || 0), 0)
-  const sharedAt = order.packing_list_shared_at
-    ? new Date(order.packing_list_shared_at)
-    : null
+  const shared = !!batch.shared_at
+  const total = batch.items.reduce((s, i) => s + (i.price || 0), 0)
+  const sharedAt = batch.shared_at ? new Date(batch.shared_at) : null
   return (
     <div>
-      {order.packing_code && (
+      {batch.packing_code && (
         <div className="px-4 py-2 bg-purple-600 text-white flex items-baseline justify-between">
           <p className="text-[10px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
-          <p className="text-base font-bold font-mono tracking-widest">{order.packing_code}</p>
+          <p className="text-base font-bold font-mono tracking-widest">{batch.packing_code}</p>
         </div>
       )}
       <div className="px-4 py-3 bg-purple-50/40">
         <div className="flex items-center gap-2 flex-wrap">
+          {batch.approval_round > 1 && (
+            <span className="text-[10px] font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+              Batch {batch.approval_round}
+            </span>
+          )}
           {order.farmer_phone && (
             <a href={`tel:${order.farmer_phone}`}
               onClick={e => e.stopPropagation()}
@@ -1543,10 +1698,10 @@ function PackingChunk({
             })}
           </p>
         )}
-        <PickupStatus order={order} />
+        <BatchPickupStatus batch={batch} order={order} />
       </div>
       <div className="divide-y divide-purple-100">
-        {order.packing_items.map(it => (
+        {batch.items.map(it => (
           <div key={it.id} className="p-3 space-y-2">
             <div className="flex items-baseline justify-between gap-3">
               <div className="flex-1 min-w-0">
@@ -1562,10 +1717,6 @@ function PackingChunk({
                 <p className="text-sm font-bold text-[#7D4196] shrink-0">₹{it.price.toLocaleString(locale)}</p>
               )}
             </div>
-            {/* 2026-08-14 (Phase 2 rework): per-item Final Confirmation
-                controls. Dealer can commit individual items or drop
-                them (payment fell through on a specific item) without
-                affecting the rest of the batch. */}
             {!it.final_confirmed_at && (
               <div className="flex gap-2">
                 <button onClick={() => onFinalConfirmItem(order.id, it.id)} disabled={busy}
@@ -1588,30 +1739,26 @@ function PackingChunk({
         <p className="text-[11px] text-[#7A8C7E]">{t('totalLabel')}</p>
         <p className="text-sm font-bold text-[#7D4196]">₹{total.toLocaleString(locale)}</p>
       </div>
-      {/* 2026-08-14 (Phase 2 rework): Final Confirmation gate. Items
-          farmer approved but dealer hasn't Final Confirmed yet block
-          the Share / Remove path. Dealer must commit (payment / credit
-          settled) before the packing-list actions unlock. */}
-      {(order.item_status_counts.awaiting_final_confirmation ?? 0) > 0 ? (
+      {batch.awaiting_final_confirmation > 0 ? (
         <div className="p-3 space-y-2">
           <p className="text-[11px] text-purple-800 leading-snug">
             <strong>Final Confirmation:</strong> the packing list is populated
             after this. Confirm only when payment or credit terms with the
             farmer are settled.
           </p>
-          <button onClick={onFinalConfirmAll} disabled={busy}
+          <button onClick={() => onFinalConfirmAll(order, batch)} disabled={busy}
             className="w-full py-2.5 rounded-xl text-white font-semibold text-xs disabled:opacity-60"
             style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
-            {busy ? '…' : `Final Confirm all ${order.item_status_counts.awaiting_final_confirmation} approved item${order.item_status_counts.awaiting_final_confirmation === 1 ? '' : 's'}`}
+            {busy ? '…' : `Final Confirm all ${batch.awaiting_final_confirmation} approved item${batch.awaiting_final_confirmation === 1 ? '' : 's'}`}
           </button>
         </div>
       ) : (
         <div className="p-3 flex gap-2">
-          <button onClick={onShare} disabled={busy}
+          <button onClick={() => onShare(order, batch)} disabled={busy}
             className="flex-1 bg-[#7D4196] text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-60">
             {busy ? '…' : (shared ? t('shareAgainCta') : t('shareCta'))}
           </button>
-          <button onClick={onRemove} disabled={busy}
+          <button onClick={() => onRemove(order, batch)} disabled={busy}
             className="flex-1 border border-red-200 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl disabled:opacity-50">
             {t('removeCta')}
           </button>

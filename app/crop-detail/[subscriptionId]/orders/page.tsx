@@ -72,6 +72,22 @@ type SubOrder = {
   // 2026-06-09 — Packing ID for the Pickup chunk lead (mirrors the
   // Facilitator pickup card composition).
   packing_code?: string | null
+  // 2026-08-17 — Per-batch pickup. One entry per approval_round with
+  // APPROVED items. Pickup pill iterates unreceived Final-Confirmed
+  // batches; old received batches drop off without hiding new ones.
+  packing_batches?: {
+    approval_round: number
+    packing_list_id: string | null
+    packing_code: string | null
+    shared_at: string | null
+    picked_up_at: string | null
+    picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
+    farmer_received_at: string | null
+    awaiting_final_confirmation: number
+    final_confirmed: number
+    all_final_confirmed: boolean
+    item_count: number
+  }[]
   // 2026-06-03 — Lineage so the Manage tab can group reroute-child
   // orders under one card. Root of the chain has lineage_root_id ===
   // its own id (backend backfills this on first reroute).
@@ -1441,40 +1457,56 @@ function ApprovalChunk({ sub }: { sub: SubOrder }) {
 // live on the Routed pill's master card footer (see OrderIdCard's
 // state-driven footer). The Returned pill is gone.
 
-// 2026-06-09 — Pickup chunk parity with the Facilitator pickup
-// card composition. Packing ID is the lead identifier (mono
-// banner); the count + recipient line sits beneath; the Confirm
-// CTA routes to the full /orders/[id]/pickup surface where the
-// item list + total + I-have-received button live.
+// 2026-08-17 (per-batch rework) — Pickup chunk iterates packing_batches.
+// One card per not-yet-received batch that's fully Final-Confirmed.
+// Old batches (received) simply don't appear; new batches don't leak
+// their pickup-ready state onto old batches' cards.
 function PickupChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.chunk')
-  const count = sub.pickup_ready_count ?? 0
-  const receiveMode = sub.packing_picked_up_by_role === 'FACILITATOR'
+  const batches = (sub.packing_batches ?? []).filter(
+    b => b.all_final_confirmed && !b.farmer_received_at,
+  )
   const fromName = sub.recipient_shop_name || sub.recipient_name
+  if (batches.length === 0) return null
   return (
-    <button
-      onClick={() => router.push(`/orders/${sub.id}/pickup`)}
-      className="w-full bg-white rounded-lg border border-emerald-300 overflow-hidden text-left active:bg-emerald-50/50">
-      {sub.packing_code && (
-        <div className="px-3 py-1.5 bg-emerald-600 text-white flex items-baseline justify-between">
-          <p className="text-[9px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
-          <p className="text-xs font-bold font-mono tracking-widest">{sub.packing_code}</p>
-        </div>
-      )}
-      <div className="px-3 py-2 flex items-center justify-between gap-3 bg-emerald-50">
-        <p className="text-xs text-emerald-800">
-          {receiveMode ? t('receivePrefix') : t('pickupPrefix')}{' '}
-          <strong>{t('pickupItemCount', { count })}</strong>
-          {fromName && (
-            <> {t('fromConnector')} <strong>{fromName}</strong></>
-          )}
-        </p>
-        <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
-          {t('confirmCta')}
-        </span>
-      </div>
-    </button>
+    <div className="space-y-2">
+      {batches.map(b => {
+        const receiveMode = b.picked_up_by_role === 'FACILITATOR'
+        return (
+          <button
+            key={b.approval_round}
+            onClick={() => router.push(`/orders/${sub.id}/pickup?approval_round=${b.approval_round}`)}
+            className="w-full bg-white rounded-lg border border-emerald-300 overflow-hidden text-left active:bg-emerald-50/50">
+            {b.packing_code && (
+              <div className="px-3 py-1.5 bg-emerald-600 text-white flex items-baseline justify-between">
+                <p className="text-[9px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
+                <p className="text-xs font-bold font-mono tracking-widest">
+                  {b.packing_code}
+                  {b.approval_round > 1 && (
+                    <span className="opacity-75 ml-2 text-[9px] font-normal">
+                      · Batch {b.approval_round}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+            <div className="px-3 py-2 flex items-center justify-between gap-3 bg-emerald-50">
+              <p className="text-xs text-emerald-800">
+                {receiveMode ? t('receivePrefix') : t('pickupPrefix')}{' '}
+                <strong>{t('pickupItemCount', { count: b.item_count })}</strong>
+                {fromName && (
+                  <> {t('fromConnector')} <strong>{fromName}</strong></>
+                )}
+              </p>
+              <span className="text-xs font-semibold text-emerald-700 underline shrink-0">
+                {t('confirmCta')}
+              </span>
+            </div>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 
