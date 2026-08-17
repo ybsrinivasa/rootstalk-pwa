@@ -28,6 +28,27 @@ interface OrderDetail {
   packing_picked_up_at?: string | null
   packing_picked_up_by_role?: 'FARMER' | 'FACILITATOR' | null
   packing_farmer_received_at?: string | null
+  // 2026-08-17 — Per-batch pickup lifecycle. Facilitator's order-detail
+  // page iterates this to render one pickup banner per batch.
+  packing_batches?: {
+    approval_round: number
+    packing_list_id: string | null
+    packing_code: string | null
+    shared_at: string | null
+    picked_up_at: string | null
+    picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
+    farmer_received_at: string | null
+    awaiting_final_confirmation: number
+    final_confirmed: number
+    all_final_confirmed: boolean
+    items: {
+      id: string
+      brand_name: string | null
+      given_volume: number | null
+      volume_unit: string | null
+      price: number | null
+    }[]
+  }[]
 }
 interface NearbyDealer {
   user_id: string; name: string | null; phone: string | null; shop_name: string | null
@@ -250,11 +271,19 @@ export default function FacilitatorOrderDetailPage() {
       <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/orders" />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
-        {/* 2026-06-06 — Packing pickup CTA. Shows when items are
-            approved + the facilitator hasn't already marked pickup. */}
-        {order.packing_code && approvedItems.length > 0 && (
-          <FacilitatorPickupBanner order={order} onPickedUp={load} />
-        )}
+        {/* 2026-08-17 — Per-batch: one pickup banner per batch that has
+            a packing code (i.e. has APPROVED items and a PL row).
+            Legacy single-banner path preserved for orders whose backend
+            hasn't yet populated packing_batches. */}
+        {(order.packing_batches ?? []).length > 0
+          ? (order.packing_batches ?? []).map(b => (
+              <FacilitatorPickupBanner key={b.approval_round}
+                order={order} batch={b} onPickedUp={load} />
+            ))
+          : order.packing_code && approvedItems.length > 0 && (
+            <FacilitatorPickupBanner order={order} onPickedUp={load} />
+          )
+        }
 
         {/* Status card */}
         <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] mt-4">
@@ -564,9 +593,20 @@ export default function FacilitatorOrderDetailPage() {
 //   2. Picked up by this facilitator → status + waiting for farmer.
 //   3. Farmer received → green confirmation strip.
 function FacilitatorPickupBanner({
-  order, onPickedUp,
+  order, batch, onPickedUp,
 }: {
   order: OrderDetail
+  // 2026-08-17 — Optional batch. When present the banner scopes to
+  // that specific approval_round's PL row (packing code + pickup +
+  // receipt state + mark-picked-up PUT). Absent = legacy single-slot
+  // fallback for backends that haven't populated packing_batches yet.
+  batch?: {
+    approval_round: number
+    packing_code: string | null
+    picked_up_at: string | null
+    farmer_received_at: string | null
+    all_final_confirmed: boolean
+  }
   onPickedUp: () => void
 }) {
   const t = useTranslations('facilitator.orderDetail.pickupBanner')
@@ -574,44 +614,67 @@ function FacilitatorPickupBanner({
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
 
+  const packingCode = batch?.packing_code ?? order.packing_code
+  const pickedUpAt = batch?.picked_up_at ?? order.packing_picked_up_at
+  const farmerReceivedAt = batch?.farmer_received_at ?? order.packing_farmer_received_at
+  const canPickUp = batch ? batch.all_final_confirmed : true
+
   async function markPickedUp() {
     setBusy(true)
     try {
-      await api.put(`/facilitator/orders/${order.id}/packing-list/mark-picked-up`, {})
+      const qs = batch ? `?approval_round=${batch.approval_round}` : ''
+      await api.put(`/facilitator/orders/${order.id}/packing-list/mark-picked-up${qs}`, {})
       setConfirm(false)
       onPickedUp()
     } catch { alert(t('errorPickup')) }
     finally { setBusy(false) }
   }
 
-  if (order.packing_farmer_received_at) {
+  if (farmerReceivedAt) {
     return (
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-800">
         {t('farmerConfirmed')}
+        {batch && (
+          <span className="ml-2 opacity-75">· Batch {batch.approval_round}</span>
+        )}
       </div>
     )
   }
 
-  if (order.packing_picked_up_at) {
-    const ts = new Date(order.packing_picked_up_at)
+  if (pickedUpAt) {
+    const ts = new Date(pickedUpAt)
     return (
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
         {t('youPickedUp', {
           date: ts.toLocaleDateString(locale, { day: "2-digit", month: "short" }),
           time: ts.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
         })}
+        {batch && (
+          <span className="ml-2 opacity-75">· Batch {batch.approval_round}</span>
+        )}
       </div>
     )
   }
+
+  if (!canPickUp) return null
 
   return (
     <>
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-3">
         <div className="flex items-baseline justify-between mb-2">
-          <p className="text-xs text-amber-800 font-medium">{t('pickupTitle')}</p>
-          <span className="text-[10px] font-mono tracking-widest bg-amber-600 text-white px-2 py-0.5 rounded-full">
-            {order.packing_code}
-          </span>
+          <p className="text-xs text-amber-800 font-medium">
+            {t('pickupTitle')}
+            {batch && (
+              <span className="ml-2 text-[10px] font-normal opacity-75">
+                · Batch {batch.approval_round}
+              </span>
+            )}
+          </p>
+          {packingCode && (
+            <span className="text-[10px] font-mono tracking-widest bg-amber-600 text-white px-2 py-0.5 rounded-full">
+              {packingCode}
+            </span>
+          )}
         </div>
         <button onClick={() => setConfirm(true)}
           className="w-full bg-[#7D4E00] text-white text-sm font-semibold py-2.5 rounded-xl">
@@ -627,9 +690,11 @@ function FacilitatorPickupBanner({
             <p className="text-xs text-[#7A8C7E] mt-2">
               {t('confirmBody')}
             </p>
-            <p className="text-xs text-[#6B3F1F] mt-2">
-              {t('confirmIdLine')} <strong className="font-mono tracking-widest">{order.packing_code}</strong>
-            </p>
+            {packingCode && (
+              <p className="text-xs text-[#6B3F1F] mt-2">
+                {t('confirmIdLine')} <strong className="font-mono tracking-widest">{packingCode}</strong>
+              </p>
+            )}
             <div className="flex gap-2 mt-4">
               <button onClick={() => setConfirm(false)}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl">

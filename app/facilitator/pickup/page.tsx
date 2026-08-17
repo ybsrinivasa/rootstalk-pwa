@@ -25,6 +25,11 @@ interface PickupItem {
 interface PickupOrder {
   order_id: string
   reference_number: string | null
+  // 2026-08-17 — Per-batch pickup: one row per (order, approval_round).
+  // Same order with two batches → two rows here; each carries its own
+  // packing_code + picked_up_at + items list. mark-picked-up PUT scopes
+  // to this round.
+  approval_round: number
   packing_code: string | null
   packing_shared_at: string | null
   picked_up_at: string | null
@@ -57,7 +62,12 @@ export default function FacilitatorPickupPage() {
   const t = useTranslations('facilitator.pickup')
   const [pickups, setPickups] = useState<PickupOrder[]>([])
   const [loading, setLoading] = useState(true)
-  const [confirmPickup, setConfirmPickup] = useState<string | null>(null)
+  // 2026-08-17 — Per-batch pickup: confirmation state carries both
+  // orderId and approvalRound so mark-picked-up scopes to the right
+  // batch's PL row.
+  const [confirmPickup, setConfirmPickup] = useState<{
+    orderId: string; approvalRound: number
+  } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
 
   const load = () =>
@@ -70,10 +80,14 @@ export default function FacilitatorPickupPage() {
     load()
   }, [])
 
-  async function markPickedUp(orderId: string) {
-    setBusy(orderId)
+  async function markPickedUp(orderId: string, approvalRound: number) {
+    const busyKey = `${orderId}:${approvalRound}`
+    setBusy(busyKey)
     try {
-      await api.put(`/facilitator/orders/${orderId}/packing-list/mark-picked-up`, {})
+      await api.put(
+        `/facilitator/orders/${orderId}/packing-list/mark-picked-up?approval_round=${approvalRound}`,
+        {},
+      )
       setConfirmPickup(null)
       load()
     } catch {
@@ -148,11 +162,17 @@ export default function FacilitatorPickupPage() {
                     </div>
                   </div>
 
-                  {subs.map(sub => (
-                    <PickupCard key={sub.order_id} pickup={sub}
-                      onPickupClick={() => setConfirmPickup(sub.order_id)}
-                      busy={busy === sub.order_id} />
-                  ))}
+                  {subs.map(sub => {
+                    const busyKey = `${sub.order_id}:${sub.approval_round}`
+                    return (
+                      <PickupCard key={busyKey} pickup={sub}
+                        showBatchTag={subs.length > 1}
+                        onPickupClick={() => setConfirmPickup({
+                          orderId: sub.order_id, approvalRound: sub.approval_round,
+                        })}
+                        busy={busy === busyKey} />
+                    )
+                  })}
                 </div>
               )
             })
@@ -160,10 +180,12 @@ export default function FacilitatorPickupPage() {
         </div>
       </div>
 
-      {/* Confirm pickup sheet */}
-      {confirmPickup && (
+      {/* Confirm pickup sheet — scoped to a specific batch */}
+      {confirmPickup && (() => {
+        const busyKey = `${confirmPickup.orderId}:${confirmPickup.approvalRound}`
+        return (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
-          onClick={() => busy !== confirmPickup && setConfirmPickup(null)}>
+          onClick={() => busy !== busyKey && setConfirmPickup(null)}>
           <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
             style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
             onClick={e => e.stopPropagation()}>
@@ -172,19 +194,20 @@ export default function FacilitatorPickupPage() {
               {t('confirmBody')}
             </p>
             <div className="flex gap-2 mt-4">
-              <button onClick={() => setConfirmPickup(null)} disabled={busy === confirmPickup}
+              <button onClick={() => setConfirmPickup(null)} disabled={busy === busyKey}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
                 {t('cancel')}
               </button>
-              <button onClick={() => markPickedUp(confirmPickup)} disabled={busy === confirmPickup}
+              <button onClick={() => markPickedUp(confirmPickup.orderId, confirmPickup.approvalRound)} disabled={busy === busyKey}
                 className="flex-1 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50"
                 style={{ background: COLOUR }}>
-                {busy === confirmPickup ? '…' : t('confirmCta')}
+                {busy === busyKey ? '…' : t('confirmCta')}
               </button>
             </div>
           </div>
         </div>
-      )}
+        )
+      })()}
 
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
     </div>
@@ -193,9 +216,10 @@ export default function FacilitatorPickupPage() {
 
 
 function PickupCard({
-  pickup, onPickupClick, busy,
+  pickup, showBatchTag, onPickupClick, busy,
 }: {
   pickup: PickupOrder
+  showBatchTag: boolean
   onPickupClick: () => void
   busy: boolean
 }) {
@@ -211,7 +235,14 @@ function PickupCard({
           all reference the same batch. */}
       {pickup.packing_code && (
         <div className="px-4 py-2 bg-emerald-600 text-white flex items-baseline justify-between">
-          <p className="text-[10px] uppercase tracking-wider opacity-75">{t('packingIdLabel')}</p>
+          <p className="text-[10px] uppercase tracking-wider opacity-75">
+            {t('packingIdLabel')}
+            {showBatchTag && (
+              <span className="ml-2 text-[9px] font-normal opacity-90">
+                · Batch {pickup.approval_round}
+              </span>
+            )}
+          </p>
           <p className="text-base font-bold font-mono tracking-widest">{pickup.packing_code}</p>
         </div>
       )}

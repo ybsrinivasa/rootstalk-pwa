@@ -73,6 +73,30 @@ interface Order {
     volume_unit: string | null
     price: number | null
   }[]
+  // 2026-08-17 — Per-batch pickup lifecycle. Facilitator's Pickup
+  // pill iterates this to render one card per batch (each with its
+  // own code + pick-up state + hand-off progress). Legacy packing_*
+  // fields above stay populated from the earliest unresolved batch
+  // for pages that haven't yet migrated.
+  packing_batches?: {
+    approval_round: number
+    packing_list_id: string | null
+    packing_code: string | null
+    shared_at: string | null
+    picked_up_at: string | null
+    picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
+    farmer_received_at: string | null
+    awaiting_final_confirmation: number
+    final_confirmed: number
+    all_final_confirmed: boolean
+    items: {
+      id: string
+      brand_name: string | null
+      given_volume: number | null
+      volume_unit: string | null
+      price: number | null
+    }[]
+  }[]
   // 2026-06-22 — Seed-order folding into the unified feed (dealer
   // parity). Seed cards branch downstream for label, pill predicate,
   // and CTA. `crop_cosh_id` + `farm_area_acres` are seed-card body
@@ -155,9 +179,13 @@ function effectivePillForTraining(o: Order): Pill {
   if (['SENT', 'ACCEPTED'].includes(o.status) && !o.dealer_user_id) return 'pending'
   const c = o.item_status_counts
   if ((c?.sent_for_approval ?? 0) > 0) return 'farmer'
-  // 2026-08-14 (Phase 2): Pickup gates on Final Confirmation. Approved
-  // items awaiting the dealer's Final Confirmation stay on Routed.
-  if ((c?.final_confirmed ?? 0) > 0 && !o.packing_farmer_received_at) return 'pickup'
+  // 2026-08-17 — Per-batch: pickup pill fires when ANY Final-Confirmed
+  // batch hasn't been received yet. Falls back to legacy check when
+  // packing_batches isn't populated (defensive).
+  const hasUnreceivedFinal = (o.packing_batches ?? []).some(
+    b => b.all_final_confirmed && !b.farmer_received_at,
+  )
+  if (hasUnreceivedFinal) return 'pickup'
   return 'routed'
 }
 
@@ -241,11 +269,13 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
     case 'farmer':
       return (c?.sent_for_approval ?? 0) > 0
     case 'pickup':
-      // 2026-08-14 (Phase 2): Pickup gates on Final Confirmation.
-      // Approved-but-not-yet-Final-Confirmed items stay on Routed as
-      // "Awaiting dealer's Final Confirmation".
-      return (c?.final_confirmed ?? 0) > 0
-        && !o.packing_farmer_received_at
+      // 2026-08-17 — Per-batch: any Final-Confirmed batch that isn't
+      // received yet keeps the order on Pickup. Old design used the
+      // canonical `packing_farmer_received_at` which flipped once batch 1
+      // was received, dropping batch 2 from the pill entirely.
+      return (o.packing_batches ?? []).some(
+        b => b.all_final_confirmed && !b.farmer_received_at,
+      )
   }
 }
 
@@ -407,10 +437,17 @@ export default function FacilitatorOrdersPage() {
   // items from the dealer." Uses the same endpoint /facilitator/pickup
   // calls; the order stays on the Pickup pill afterwards (with a
   // "deliver to farmer" message) until the farmer marks received.
-  async function markPickedUp(id: string) {
-    setActing(id)
+  // 2026-08-17 — Per-batch pickup: caller passes approval_round so the
+  // PUT scopes to the specific batch's PL row. `acting` key uses the
+  // composite id:round to distinguish batches on the same order.
+  async function markPickedUp(id: string, approvalRound: number) {
+    const busyKey = `${id}:${approvalRound}`
+    setActing(busyKey)
     try {
-      await api.put(`/facilitator/orders/${id}/packing-list/mark-picked-up`, {})
+      await api.put(
+        `/facilitator/orders/${id}/packing-list/mark-picked-up?approval_round=${approvalRound}`,
+        {},
+      )
       load()
     } catch {
       alert(t('pickupErrorMark'))
@@ -802,7 +839,7 @@ function OrderIdCard({
   onReject: (id: string) => void
   onForwardReturned: (id: string) => void
   onReturnToFarmer: (id: string) => void
-  onMarkPickedUp: (id: string) => void
+  onMarkPickedUp: (id: string, approvalRound: number) => void
   onOpenDetail: (id: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmRejectSeed: (id: string) => void
@@ -952,7 +989,7 @@ function PillChunk({
   onAccept: (id: string) => void
   onReject: (id: string) => void
   onForwardReturned: (id: string) => void
-  onMarkPickedUp: (id: string) => void
+  onMarkPickedUp: (id: string, approvalRound: number) => void
   onOpenDetail: (id: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmRejectSeed: (id: string) => void
@@ -1127,41 +1164,64 @@ function PillChunk({
           <PostponedStrip sub={sub} />
         </>
       )}
-      {!sub.is_seed && renderPill === 'pickup' && (
-        <>
-          <RoutedBody sub={sub} onOpenDetail={onOpenDetail}
-            itemCountOverride={sub.packing_items?.length ?? sub.item_status_counts?.approved ?? 0} />
-          <PickupItemsList items={sub.packing_items ?? []} />
-          {!sub.packing_picked_up_at ? (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mt-2">
-              <p className="text-xs text-emerald-900 mb-2">
-                {t('pickupBodyFromDealer', {
-                  dealer: sub.dealer_shop_name || sub.dealer_name || '—',
-                  farmer: sub.farmer_name || '—',
-                })}
-                {sub.packing_code && (
-                  <span className="ml-1 font-mono tracking-widest text-[10px] opacity-80">#{sub.packing_code}</span>
-                )}
-              </p>
-              <button onClick={() => onMarkPickedUp(sub.id)}
-                disabled={acting === sub.id}
-                className="w-full py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
-                style={{ background: COLOUR }}>
-                {acting === sub.id ? '…' : t('pickupCta')}
-              </button>
-            </div>
-          ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mt-2">
-              <p className="text-xs text-amber-900">
-                {t('pickupBodyWithYou', { farmer: sub.farmer_name || '—' })}
-                {sub.packing_code && (
-                  <span className="ml-1 font-mono tracking-widest text-[10px] opacity-80">#{sub.packing_code}</span>
-                )}
-              </p>
-            </div>
-          )}
-        </>
-      )}
+      {!sub.is_seed && renderPill === 'pickup' && (() => {
+        // 2026-08-17 — Per-batch: iterate unreceived-Final-Confirmed
+        // batches and render one pickup block per batch. Each block
+        // scopes its mark-picked-up to that batch's approval_round so
+        // batches are picked up + delivered independently.
+        const pickupBatches = (sub.packing_batches ?? []).filter(
+          b => b.all_final_confirmed && !b.farmer_received_at,
+        )
+        if (pickupBatches.length === 0) return null
+        const showBatchTag = pickupBatches.length > 1
+        return (
+          <>
+            <RoutedBody sub={sub} onOpenDetail={onOpenDetail}
+              itemCountOverride={pickupBatches.reduce((s, b) => s + b.items.length, 0)} />
+            {pickupBatches.map(b => {
+              const busyKey = `${sub.id}:${b.approval_round}`
+              return (
+                <div key={b.approval_round} className="mt-3 border-t border-emerald-100 pt-2 first:border-t-0 first:pt-0">
+                  {showBatchTag && (
+                    <p className="text-[10px] font-semibold text-purple-700 mb-1">
+                      Batch {b.approval_round}
+                    </p>
+                  )}
+                  <PickupItemsList items={b.items} />
+                  {!b.picked_up_at ? (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mt-2">
+                      <p className="text-xs text-emerald-900 mb-2">
+                        {t('pickupBodyFromDealer', {
+                          dealer: sub.dealer_shop_name || sub.dealer_name || '—',
+                          farmer: sub.farmer_name || '—',
+                        })}
+                        {b.packing_code && (
+                          <span className="ml-1 font-mono tracking-widest text-[10px] opacity-80">#{b.packing_code}</span>
+                        )}
+                      </p>
+                      <button onClick={() => onMarkPickedUp(sub.id, b.approval_round)}
+                        disabled={acting === busyKey}
+                        className="w-full py-2 rounded-lg text-white text-xs font-semibold disabled:opacity-50"
+                        style={{ background: COLOUR }}>
+                        {acting === busyKey ? '…' : t('pickupCta')}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mt-2">
+                      <p className="text-xs text-amber-900">
+                        {t('pickupBodyWithYou', { farmer: sub.farmer_name || '—' })}
+                        {b.packing_code && (
+                          <span className="ml-1 font-mono tracking-widest text-[10px] opacity-80">#{b.packing_code}</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </>
+        )
+      })()}
     </div>
   )
 }
