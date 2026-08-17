@@ -57,10 +57,17 @@ export default function FarmerPickupPage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<OrderForPickup>(`/farmer/orders/${orderId}`)
+    // 2026-08-17 — Pass approval_round on the fetch so the backend
+    // scopes approved_items + packing_* fields to this specific batch.
+    // Without the param, items from earlier already-received batches
+    // were bleeding into the item list (and getting merged with the
+    // current batch's items via consolidate_purchased_items on same
+    // brand + unit).
+    const qs = approvalRound ? `?approval_round=${approvalRound}` : ''
+    api.get<OrderForPickup>(`/farmer/orders/${orderId}${qs}`)
       .then(r => setOrder(r.data))
       .finally(() => setLoading(false))
-  }, [orderId, router])
+  }, [orderId, router, approvalRound])
 
   async function markReceived() {
     if (!order) return
