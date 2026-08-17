@@ -527,7 +527,13 @@ export default function FarmerOrderDetailPage() {
             presence here duplicated the action surface and confused
             the farmer's decision context on this screen. */}
 
-        {(order.approved_items?.length ?? 0) > 0 && (
+        {/* 2026-08-17 — Hide the Approved section while there's an
+            active approval pending. Prior batch's approved items reading
+            "already approved" alongside the fresh Approval section led
+            the farmer to think the same items were being asked again.
+            Family: feedback_decision_ui_hides_adjacent_context.md —
+            narrow the screen to the decision at hand. */}
+        {!approvalPending && (order.approved_items?.length ?? 0) > 0 && (
           <section className="space-y-2">
             <div className="flex items-baseline justify-between px-1">
               <p className="text-sm font-semibold text-[#6B3F1F]">

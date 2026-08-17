@@ -1187,11 +1187,22 @@ export default function DealerOrderDetailPage() {
   const everyAvailableHasVolume = activeItems
     .filter(i => i.status === 'AVAILABLE')
     .every(i => i.given_volume)
+  // 2026-08-17 — Submit is legal in every "still-in-flight" order state,
+  // not just PROCESSING. Postpone-resolve after a first round completes
+  // lands the order in COMPLETED / PARTIALLY_APPROVED / SFA; the dealer
+  // marks the resolved item AVAILABLE and needs the Submit button on
+  // those statuses too. Backend BL-10 table permits COMPLETED/PART-APP/
+  // SFA → SFA for the dealer. For non-PROCESSING statuses, require at
+  // least one AVAILABLE item (no NA-only re-submit — the NA-notify
+  // affordance is a first-round-only thing).
   const canSubmit =
-    order.status === 'PROCESSING' &&
-    pendingCount === 0 &&
-    (availableCount > 0 || notAvailableCount > 0) &&
-    everyAvailableHasVolume
+    order.status === 'PROCESSING'
+      ? (pendingCount === 0
+          && (availableCount > 0 || notAvailableCount > 0)
+          && everyAvailableHasVolume)
+      : (['COMPLETED', 'PARTIALLY_APPROVED', 'SENT_FOR_APPROVAL'].includes(order.status)
+          && availableCount > 0
+          && everyAvailableHasVolume)
   const submitButtonLabel =
     availableCount === 0 && notAvailableCount > 0
       ? t('footer.submitLabelNotify', { count: notAvailableCount })

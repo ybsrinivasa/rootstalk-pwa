@@ -854,11 +854,8 @@ function ManageTab({
   // arrival order with a "1 of N" peek so the farmer knows others
   // are queued. Independent decisions (Returned / Pickup / Routed)
   // are shown all-at-once on their respective pills.
-  const allAwaiting = (orders || [])
-    .filter(o => (o.awaiting_approval_count || 0) > 0)
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-  const currentAwaiting = allAwaiting[0]
-  const otherAwaiting = allAwaiting.slice(1)
+  // 2026-08-17 — All queueing removed; the For Approval pill lists
+  // every awaiting-approval order directly.
 
   // 2026-06-23 — Pill counts are now computed at the parent (so
   // the tab strip can render a Manage badge and the dynamic-default-
@@ -867,14 +864,13 @@ function ManageTab({
   const counts = pillCounts
 
   // Visible groups for the selected pill.
+  // 2026-08-17 — For Approval pill now lists EVERY awaiting order as a
+  // separate card (previously showed just the earliest with a "1 of N"
+  // peek). Each card taps into its own order-detail approval screen —
+  // farmer can open them one by one without losing the queue view.
   const visibleGroups: { key: string; subs: SubOrder[]; matching: SubOrder[] }[] = []
   for (const [key, list] of groups.entries()) {
-    let matching = list.filter(o => subBelongsToPill(o, pill))
-    // Approval-queue: only the earliest approval sub-order shows
-    // when on the For Approval pill — others wait behind.
-    if (pill === 'approval' && matching.length > 0 && currentAwaiting) {
-      matching = matching.filter(o => o.id === currentAwaiting.id)
-    }
+    const matching = list.filter(o => subBelongsToPill(o, pill))
     if (matching.length > 0) {
       visibleGroups.push({ key, subs: list, matching })
     }
@@ -930,15 +926,8 @@ function ManageTab({
         </button>
       </div>
 
-      {/* Approval 1-of-N peek banner — only shown on the For
-          Approval pill when more approvals are queued behind the
-          current one. Per user direction 2026-06-09. */}
-      {pill === 'approval' && currentAwaiting && otherAwaiting.length > 0 && (
-        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-2 text-xs text-indigo-800">
-          {t('approvalPeek')} <strong>{t('approvalPeekProgress', { total: allAwaiting.length })}</strong> ·{' '}
-          <span className="text-indigo-600">{t('approvalPeekHint')}</span>
-        </div>
-      )}
+      {/* 2026-08-17 — Peek banner removed: the pill now lists every
+          awaiting-approval order directly, one card each. */}
 
       {visibleGroups.length === 0 && (
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
