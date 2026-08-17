@@ -652,13 +652,32 @@ function subBelongsToPill(o: SubOrder, pill: Pill): boolean {
   const pickup = o.pickup_ready_count ?? 0
   switch (pill) {
     case 'routed':
-      // Facilitator-owned orders show here too when the farmer needs
-      // to see the master card. Facilitator's own queue is separate
-      // (their PWA). Only exception: a facilitator-owned order where
-      // the whole batch has been handled and there's nothing for the
-      // farmer to track — that's rare in practice; the Routed card
-      // is safe as a "you can see this is with your facilitator" note.
-      return true
+      // 2026-08-17 — Drop from Routed once the order is fully finished
+      // end-to-end: no active work with the dealer, no returned or
+      // postponed items, no awaiting approvals, and every packing
+      // batch has been farmer-received. Order.status stays as
+      // COMPLETED in this state (COMPLETED alone doesn't mean "done"
+      // under Phase 2 — pickups can still be pending), so we compose
+      // the "truly done" predicate from the item counts + batches.
+      // Facilitator-owned orders still show here even when done so
+      // the farmer can see the trail — that's a rare edge case; the
+      // "with facilitator" note stays as a visible history anchor.
+      if (o.facilitator_user_id) return true
+      if (o.is_returned_to_farmer) return true
+      const active = o.active_item_count ?? 0
+      const returned = o.returned_count ?? 0
+      const postponed = o.postponed_count ?? 0
+      const awaitingFC = o.awaiting_final_confirmation_count ?? 0
+      const batches = o.packing_batches ?? []
+      const anyUnreceivedBatch = batches.some(b => !b.farmer_received_at)
+      const fullyDone =
+        awaiting === 0
+        && returned === 0
+        && postponed === 0
+        && awaitingFC === 0
+        && active === 0
+        && !anyUnreceivedBatch
+      return !fullyDone
     case 'approval':
       return awaiting > 0
     case 'pickup':
