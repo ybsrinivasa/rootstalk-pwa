@@ -88,6 +88,12 @@ type SubOrder = {
     all_final_confirmed: boolean
     item_count: number
   }[]
+  // 2026-08-17 — Per-batch approvals. One entry per SFA round on this
+  // order. Farmer's For Approval pill lists one card per (order,batch).
+  approval_batches?: {
+    approval_round: number
+    item_count: number
+  }[]
   // 2026-06-03 — Lineage so the Manage tab can group reroute-child
   // orders under one card. Root of the chain has lineage_root_id ===
   // its own id (backend backfills this on first reroute).
@@ -1426,18 +1432,44 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
 function ApprovalChunk({ sub }: { sub: SubOrder }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.chunk')
-  const awaiting = sub.awaiting_approval_count ?? 0
+  // 2026-08-17 — Per-batch approvals: one row per SFA round. Regular
+  // orders expose approval_batches; seed orders have no rounds (one
+  // seed = one item) so we render a single row from the top-level
+  // awaiting_approval_count. Each row taps into the order-detail with
+  // the specific approval_round so the review page shows ONLY that
+  // batch's items.
+  const batches = sub.kind === 'SEED'
+    ? [{ approval_round: 1, item_count: sub.awaiting_approval_count ?? 1 }]
+    : (sub.approval_batches ?? [])
+  if (batches.length === 0) return null
+  const showBatchTag = batches.length > 1
   return (
-    <div className="bg-emerald-50/40 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
-      <p className="text-xs text-[#3A7D44]">
-        {t('awaitingApproval', { count: awaiting })}
-      </p>
-      <button
-        onClick={() => router.push(sub.kind === 'SEED' ? `/seed-orders/${sub.id}` : `/orders/${sub.id}`)}
-        className="text-xs font-semibold text-white px-3 py-1 rounded-lg"
-        style={{ background: '#3A7D44' }}>
-        {t('approveCta')}
-      </button>
+    <div className="space-y-2">
+      {batches.map(b => (
+        <div key={b.approval_round}
+          className="bg-emerald-50/40 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+          <p className="text-xs text-[#3A7D44]">
+            {t('awaitingApproval', { count: b.item_count })}
+            {showBatchTag && (
+              <span className="ml-2 text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.5 rounded-full align-middle">
+                Batch {b.approval_round}
+              </span>
+            )}
+          </p>
+          <button
+            onClick={() => {
+              if (sub.kind === 'SEED') {
+                router.push(`/seed-orders/${sub.id}`)
+              } else {
+                router.push(`/orders/${sub.id}?approval_round=${b.approval_round}`)
+              }
+            }}
+            className="text-xs font-semibold text-white px-3 py-1 rounded-lg"
+            style={{ background: '#3A7D44' }}>
+            {t('approveCta')}
+          </button>
+        </div>
+      ))}
     </div>
   )
 }

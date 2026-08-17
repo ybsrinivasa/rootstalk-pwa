@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -90,6 +90,12 @@ const STATUS_FARMER: Record<string, string> = {
 export default function FarmerOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // 2026-08-17 — Per-batch approvals. When the pill card carries
+  // ?approval_round=N, the review page scopes its Approval section to
+  // that specific batch (backend does the filter). Absent = legacy
+  // earliest-pending-round fallback.
+  const approvalRoundParam = searchParams.get('approval_round')
   const t = useTranslations('orders.review')
   const tCommon = useTranslations('common')
   const tOrdersCommon = useTranslations('orders.common')
@@ -117,7 +123,8 @@ export default function FarmerOrderDetailPage() {
 
   const load = async () => {
     try {
-      const { data } = await api.get<Order>(`/farmer/orders/${orderId}`)
+      const qs = approvalRoundParam ? `?approval_round=${approvalRoundParam}` : ''
+      const { data } = await api.get<Order>(`/farmer/orders/${orderId}${qs}`)
       setOrder(data)
     } catch { router.replace('/orders') } finally { setLoading(false) }
   }
