@@ -37,6 +37,11 @@ interface PostponedItem {
   postponed_until: string | null
   days_remaining: number | null
   order_status: string
+  // 2026-08-17 — Item's own status. Postponed page now surfaces
+  // AVAILABLE items too (post-resolve, awaiting Submit) so the dealer
+  // can complete the flow from here. Chip distinguishes the two on
+  // the card.
+  item_status?: string
 }
 
 interface OrderGroup {
@@ -192,11 +197,31 @@ export default function DealerPostponedPage() {
                       </p>
                     )}
                     <div className="mt-2 flex items-center gap-2 flex-wrap">
-                      <span className="text-[11px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
-                        {remainingItems.length === 1
-                          ? '1 postponed item'
-                          : `${remainingItems.length} postponed items`}
-                      </span>
+                      {(() => {
+                        // 2026-08-17 — Split by item_status so resolved
+                        // (AVAILABLE) items get their own "ready to
+                        // submit" chip alongside the still-postponed ones.
+                        const postponedN = remainingItems.filter(
+                          i => (i.item_status ?? 'POSTPONED') === 'POSTPONED',
+                        ).length
+                        const readyN = remainingItems.filter(
+                          i => i.item_status === 'AVAILABLE',
+                        ).length
+                        return (
+                          <>
+                            {postponedN > 0 && (
+                              <span className="text-[11px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                                {postponedN === 1 ? '1 postponed' : `${postponedN} postponed`}
+                              </span>
+                            )}
+                            {readyN > 0 && (
+                              <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                {readyN === 1 ? '1 ready to submit' : `${readyN} ready to submit`}
+                              </span>
+                            )}
+                          </>
+                        )
+                      })()}
                       {soonestDaysRemaining !== null && (
                         <span className={`text-[10px] font-medium ${
                           soonestDaysRemaining <= 1 ? 'text-red-600' : 'text-amber-700'

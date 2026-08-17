@@ -347,9 +347,18 @@ export default function DealerOrderDetailPage() {
       // fully-resolved siblings' Parts too (RT-26-000429 had 4 items
       // in 1 relation: 2 Parts, only Part 2 postponed).
       if (scope === 'postponed' && postponedScopeSnapshot.current === null) {
+        // 2026-08-17 — Snapshot both POSTPONED and AVAILABLE items so
+        // a re-visit to the same order's Postponed scope preserves the
+        // resolved (AVAILABLE) items too. Previously the snapshot only
+        // captured POSTPONED, so if the dealer resolved one item and
+        // came back later via the Postponed page, the resolved item
+        // silently vanished from the scope view — dealer lost the
+        // "Submit for approval" affordance on it (RT-26-000467 anchor).
         const itemIds = new Set<string>()
         for (const it of data.items ?? []) {
-          if (it.status === 'POSTPONED') itemIds.add(it.id)
+          if (it.status === 'POSTPONED' || it.status === 'AVAILABLE') {
+            itemIds.add(it.id)
+          }
         }
         postponedScopeSnapshot.current = { itemIds }
       }
