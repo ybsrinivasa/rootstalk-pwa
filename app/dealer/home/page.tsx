@@ -220,7 +220,12 @@ export default function DealerHomePage() {
             second-most-frequent action lives at thumb-distance from
             the first. */}
         {postponedCount > 0 && (
-          <button onClick={() => router.push('/dealer/postponed')}
+          // 2026-08-18 — Tile lands on /dealer/orders?pill=postponed
+          // (order-grouped, with reference numbers, newest first) to
+          // match the Postponed pill's own view. Previously landed on
+          // the standalone /dealer/postponed page which had a different
+          // sort order + no reference numbers per user 2026-08-18.
+          <button onClick={() => router.push('/dealer/orders?pill=postponed')}
             className="w-full rounded-2xl p-5 text-white text-left shadow-lg active:scale-98 transition-transform"
             style={{ background: 'linear-gradient(135deg, #b45309, #d97706)' }}>
             <div className="flex items-center justify-between">

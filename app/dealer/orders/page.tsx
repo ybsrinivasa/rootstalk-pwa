@@ -1396,7 +1396,12 @@ function DealerPillChunk({
             </button>
           </div>
         ) : (
-          <button onClick={() => router.push('/dealer/postponed')}
+          // 2026-08-18 — Card-body tap navigates to THIS order's
+          // scope=postponed detail view instead of the standalone
+          // /dealer/postponed cross-order list. Keeps the dealer in
+          // the same order context (matches the "first list" the user
+          // prefers — order-grouped, reference-numbered).
+          <button onClick={() => router.push(`/dealer/orders/${sub.id}?scope=postponed`)}
             className="w-full px-4 py-3 text-left active:bg-amber-50/60">
             <p className="text-[11px] text-amber-700 font-medium">
               {t('postponedTap', { count: sub.item_status_counts.postponed })}
