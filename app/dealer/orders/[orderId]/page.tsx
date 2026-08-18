@@ -2535,7 +2535,13 @@ export default function DealerOrderDetailPage() {
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={(focusItemId || scope === 'postponed') ? t('focusHeader') : t('headerTitle')} activeRole="DEALER"
-        back={(focusItemId || scope === 'postponed') ? '/dealer/postponed' : '/dealer/orders'} />
+        back={
+          scope === 'postponed'
+            ? '/dealer/orders?pill=postponed'
+            : focusItemId
+              ? '/dealer/postponed'
+              : '/dealer/orders'
+        } />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
 
         {/* Batch 24 — farmer context. Skipped in focus mode (the dealer
