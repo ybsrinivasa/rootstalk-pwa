@@ -1020,17 +1020,20 @@ const MANAGE_PILL_TONE: Record<ManagePill, { bg: string; fg: string }> = {
 // terminal-received (chip drops off — nothing left for the farmer to do).
 function fulfilmentToPill(f: Fulfilment): ManagePill | null {
   if (f.farmer_received_at) return null
-  // 2026-08-12 — Returned-to-farmer DRAFTs (farmer cancel, dealer
-  // decline, facilitator decline) always chip as "Returned" regardless
-  // of item status. The item is technically PENDING on the DRAFT but
-  // no dealer is processing it — the farmer is holding it, and needs
-  // to Send to another dealer or Discard. Chip must reflect that.
-  if (f.is_returned_to_farmer) return 'returned'
   switch (f.status) {
     case 'PENDING':
     case 'AVAILABLE':
     case 'POSTPONED':
-      return 'routed'
+      // 2026-08-12 — is_returned_to_farmer override only applies to
+      // items still in the dealer's pre-approval phase. When the order
+      // came back to the farmer (farmer cancel / dealer decline /
+      // facilitator decline), those items are technically PENDING on
+      // the source order but no dealer is processing them — farmer
+      // holds them and needs to Send-to-another-dealer or Discard.
+      // 2026-08-18 scope fix: for APPROVED items (in pickup lifecycle)
+      // the order-level flag doesn't apply — those items live on their
+      // own status regardless of what returned siblings triggered.
+      return f.is_returned_to_farmer ? 'returned' : 'routed'
     case 'SENT_FOR_APPROVAL':
       return 'approval'
     case 'NOT_AVAILABLE':

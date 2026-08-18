@@ -653,6 +653,20 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
+  async function undoFinalConfirmItemFromList(orderId: string, itemId: string) {
+    // 2026-08-18 — Reversible until pickup. No confirm modal — mirrors
+    // Change Selection's low-friction feel; dealer can freely revise
+    // FC decisions while the batch is being assembled.
+    setBusy(orderId)
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/undo-final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not undo Final Confirmation. Please try again.')
+    } finally { setBusy(null) }
+  }
+
   async function cancelFinalConfirmSeed(o: Order) {
     if (!confirm(
       "Cancel this approved seed order? It will return to the farmer as " +
@@ -843,6 +857,7 @@ function DealerOrdersInner() {
                 onFinalConfirmAll={finalConfirmAllOrder}
                 onFinalConfirmItem={finalConfirmItemFromList}
                 onCancelFinalConfirmItem={cancelFinalConfirmItemFromList}
+                onUndoFinalConfirmItem={undoFinalConfirmItemFromList}
                 onAcceptSeed={acceptSeed}
                 onConfirmDeclineSeed={(id) => setConfirmDeclineSeedId(id)}
                 onSubmitSeed={submitSeed}
@@ -1071,7 +1086,7 @@ function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
-  onFinalConfirmItem, onCancelFinalConfirmItem,
+  onFinalConfirmItem, onCancelFinalConfirmItem, onUndoFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy,
@@ -1091,6 +1106,7 @@ function DealerOrderIdCard({
   onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onFinalConfirmItem: (orderId: string, itemId: string) => void
   onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
+  onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -1122,6 +1138,7 @@ function DealerOrderIdCard({
                 onFinalConfirmAll={onFinalConfirmAll}
                 onFinalConfirmItem={onFinalConfirmItem}
                 onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -1138,6 +1155,7 @@ function DealerOrderIdCard({
                 onFinalConfirmAll={onFinalConfirmAll}
                 onFinalConfirmItem={onFinalConfirmItem}
                 onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -1321,7 +1339,7 @@ function DealerOrderCardHeader({
 function DealerPillChunk({
   sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
-  onFinalConfirmItem, onCancelFinalConfirmItem,
+  onFinalConfirmItem, onCancelFinalConfirmItem, onUndoFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy, showSubHeader,
@@ -1337,6 +1355,7 @@ function DealerPillChunk({
   onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onFinalConfirmItem: (orderId: string, itemId: string) => void
   onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
+  onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -1446,6 +1465,7 @@ function DealerPillChunk({
                 onFinalConfirmAll={onFinalConfirmAll}
                 onFinalConfirmItem={onFinalConfirmItem}
                 onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                 busy={busy === sub.id} />
             ))}
         </div>
@@ -1530,6 +1550,7 @@ function DealerPillChunk({
                   onFinalConfirmAll={onFinalConfirmAll}
                   onFinalConfirmItem={onFinalConfirmItem}
                   onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                  onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                   busy={busy === sub.id} />
               ))}
           </div>
@@ -1657,7 +1678,7 @@ function SeedPendingChunk({
 // Confirmation) and the 'packing' pill (batches ready to hand over).
 function PackingChunk({
   order, batch, onShare, onRemove, onFinalConfirmAll,
-  onFinalConfirmItem, onCancelFinalConfirmItem, busy,
+  onFinalConfirmItem, onCancelFinalConfirmItem, onUndoFinalConfirmItem, busy,
 }: {
   order: Order
   batch: PackingBatch
@@ -1666,8 +1687,10 @@ function PackingChunk({
   onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onFinalConfirmItem: (orderId: string, itemId: string) => void
   onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
+  onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
   busy: boolean
 }) {
+  const pickedUp = !!batch.picked_up_at
   const t = useTranslations('dealer.orders.packing')
   const locale = useLocale()
   const shared = !!batch.shared_at
@@ -1748,7 +1771,16 @@ function PackingChunk({
               </div>
             )}
             {it.final_confirmed_at && (
-              <p className="text-[10px] text-purple-600 font-medium">✓ Final Confirmed</p>
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] text-purple-600 font-medium">✓ Final Confirmed</p>
+                {!pickedUp && (
+                  <button onClick={() => onUndoFinalConfirmItem(order.id, it.id)}
+                    disabled={busy}
+                    className="text-[10px] text-[#7A8C7E] underline disabled:opacity-40">
+                    Undo
+                  </button>
+                )}
+              </div>
             )}
           </div>
         ))}

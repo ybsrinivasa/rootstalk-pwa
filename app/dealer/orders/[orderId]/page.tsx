@@ -806,6 +806,20 @@ export default function DealerOrderDetailPage() {
     }
   }
 
+  async function undoFinalConfirm(itemId: string) {
+    // 2026-08-18 — Same tentative-until-committed principle as the
+    // dealer's earlier taps: a Final Confirmation is reversible until
+    // the batch's packing list is picked up. No confirm modal — quick
+    // one-tap undo mirrors the low-friction feel of Change Selection.
+    try {
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/undo-final-confirm`, {})
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not undo Final Confirmation. Please try again.')
+    }
+  }
+
   // ── Relation actions ────────────────────────────────────────────────────────
 
   async function tryPickOption(relationId: string, partIndex: number, optionIndex: number) {
