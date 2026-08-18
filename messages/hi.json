@@ -1828,6 +1828,7 @@
         "sending": "भेजा जा रहा है…",
         "submitLabelNotify": "{count, plural, one {किसान को सूचित करें (1 लौटाया गया)} other {किसान को सूचित करें (वापस की गई # )}}",
         "submitLabelSend": "अनुमोदन के लिए किसान को भेजें",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "किसान की मंजूरी का इंतजार है",
         "orderComplete": "आर्डर पूरा",
         "resetItems": "आइटम रीसेट करें",

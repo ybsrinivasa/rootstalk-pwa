@@ -1828,6 +1828,7 @@
         "sending": "بھیج رہا ہے…",
         "submitLabelNotify": "{count, plural, one {کسان کو مطلع کریں (1 واپس کیا گیا)} other {کسان کو مطلع کریں ( # واپس آئے)}}",
         "submitLabelSend": "منظوری کے لیے کسان کو بھیجیں۔",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "کسانوں کی منظوری کا انتظار ہے۔",
         "orderComplete": "آرڈر مکمل",
         "resetItems": "آئٹمز کو دوبارہ ترتیب دیں۔",

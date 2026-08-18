@@ -1828,6 +1828,7 @@
         "sending": "அனுப்புகிறது…",
         "submitLabelNotify": "{count, plural, one {விவசாயிக்குத் தெரிவிக்கவும் (1 திரும்பியது)} other {விவசாயிக்குத் தெரிவிக்கவும் ( # திரும்பியது)}}",
         "submitLabelSend": "விவசாயியின் ஒப்புதலுக்கு அனுப்பவும்",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "விவசாயியின் ஒப்புதலுக்காக காத்திருக்கிறது",
         "orderComplete": "ஆர்டர் நிறைவுற்றது",
         "resetItems": "உருப்படிகளை மீட்டமைக்கவும்",

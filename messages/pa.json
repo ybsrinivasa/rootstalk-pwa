@@ -1828,6 +1828,7 @@
         "sending": "ਭੇਜਿਆ ਜਾ ਰਿਹਾ ਹੈ...",
         "submitLabelNotify": "{count, plural, one {ਕਿਸਾਨ ਨੂੰ ਸੂਚਿਤ ਕਰੋ (1 ਵਾਪਸ ਆਇਆ)} other {ਕਿਸਾਨ ਨੂੰ ਸੂਚਿਤ ਕਰੋ ( # ਵਾਪਸ ਕੀਤਾ ਗਿਆ)}}",
         "submitLabelSend": "ਕਿਸਾਨ ਨੂੰ ਪ੍ਰਵਾਨਗੀ ਲਈ ਭੇਜੋ",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "ਕਿਸਾਨ ਦੀ ਪ੍ਰਵਾਨਗੀ ਦੀ ਉਡੀਕ ਹੈ",
         "orderComplete": "ਆਰਡਰ ਪੂਰਾ ਹੋਇਆ",
         "resetItems": "ਆਈਟਮਾਂ ਰੀਸੈਟ ਕਰੋ",

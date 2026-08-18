@@ -1828,6 +1828,7 @@
         "sending": "Sending...",
         "submitLabelNotify": "{count, plural, one {কৃষকক অৱগত কৰক (১ ঘূৰাই দিয়া হৈছে)} other {কৃষকক অৱগত কৰক ( # returned)}}",
         "submitLabelSend": "অনুমোদনৰ বাবে কৃষকৰ ওচৰলৈ প্ৰেৰণ কৰক",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "কৃষকৰ অনুমোদনৰ বাবে অপেক্ষা",
         "orderComplete": "অৰ্ডাৰ সম্পূৰ্ণ",
         "resetItems": "বস্তুসমূহ পুনৰায় সেট কৰক",

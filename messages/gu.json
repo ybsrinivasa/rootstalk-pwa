@@ -1828,6 +1828,7 @@
         "sending": "મોકલી રહ્યું છે...",
         "submitLabelNotify": "{count, plural, one {ખેડૂતને સૂચિત કરો (1 પરત કરેલ)} other {ખેડૂતને સૂચિત કરો ( # પરત કરેલ)}}",
         "submitLabelSend": "ખેડૂતને મંજૂરી માટે મોકલો",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "ખેડૂત મંજૂરીની રાહ જોઈ રહ્યા છીએ",
         "orderComplete": "ઓર્ડર પૂર્ણ",
         "resetItems": "આઇટમ્સ રીસેટ કરો",

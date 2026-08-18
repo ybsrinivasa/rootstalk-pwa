@@ -1828,6 +1828,7 @@
         "sending": "పంపుతున్నాను…",
         "submitLabelNotify": "{count, plural, one {రైతుకు తెలియజేయండి (1 తిరిగి వచ్చింది)} other {రైతుకు తెలియజేయండి ( # తిరిగి వచ్చింది}}",
         "submitLabelSend": "ఆమోదం కోసం రైతుకు పంపండి",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "రైతు ఆమోదం కోసం వేచి ఉంది",
         "orderComplete": "ఆర్డర్ పూర్తయింది",
         "resetItems": "అంశాలను రీసెట్ చేయండి",

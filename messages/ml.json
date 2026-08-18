@@ -1828,6 +1828,7 @@
         "sending": "അയയ്ക്കുന്നു...",
         "submitLabelNotify": "{count, plural, one {കർഷകനെ അറിയിക്കുക (1 പേരെ തിരികെ അയച്ചു)} other {കർഷകനെ അറിയിക്കുക ( # പേർ തിരികെ നൽകി)}}",
         "submitLabelSend": "അംഗീകാരത്തിനായി കർഷകന് അയയ്ക്കുക.",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "കർഷകരുടെ അനുമതിക്കായി കാത്തിരിക്കുന്നു",
         "orderComplete": "ഓർഡർ പൂർത്തിയായി",
         "resetItems": "ഇനങ്ങൾ പുനഃസജ്ജമാക്കുക",

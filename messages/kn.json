@@ -1828,6 +1828,7 @@
         "sending": "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...",
         "submitLabelNotify": "{count, plural, one {ರೈತರಿಗೆ ಸೂಚಿಸಿ (1 ಹಿಂತಿರುಗಿಸಲಾಗಿದೆ)} other {ರೈತರಿಗೆ ಸೂಚಿಸಿ ( # ಹಿಂತಿರುಗಿಸಲಾಗಿದೆ)}}",
         "submitLabelSend": "ಅನುಮೋದನೆಗಾಗಿ ರೈತರಿಗೆ ಕಳುಹಿಸಿ.",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "ರೈತರ ಅನುಮೋದನೆಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ",
         "orderComplete": "ಆರ್ಡರ್ ಪೂರ್ಣಗೊಂಡಿದೆ",
         "resetItems": "ಐಟಂಗಳನ್ನು ಮರುಹೊಂದಿಸಿ",

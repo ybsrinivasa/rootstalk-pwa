@@ -1828,6 +1828,7 @@
         "sending": "ପଠାଯାଉଛି…",
         "submitLabelNotify": "{count, plural, one {ଚାଷୀଙ୍କୁ ସୂଚିତ କରନ୍ତୁ (୧ ଜଣ ଫେରିଛନ୍ତି)} other {ଚାଷୀଙ୍କୁ ସୂଚିତ କରନ୍ତୁ ( # ଜଣ ଫେରିଛନ୍ତି)}}",
         "submitLabelSend": "ଅନୁମୋଦନ ପାଇଁ ଚାଷୀଙ୍କ ପାଖକୁ ପଠାନ୍ତୁ",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "ଚାଷୀଙ୍କ ଅନୁମୋଦନ ପାଇଁ ଅପେକ୍ଷା",
         "orderComplete": "ଅର୍ଡର ସମ୍ପୂର୍ଣ୍ଣ ହୋଇଛି",
         "resetItems": "ଆଇଟମ୍‌ଗୁଡ଼ିକୁ ରିସେଟ୍ କରନ୍ତୁ",

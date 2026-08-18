@@ -1828,6 +1828,7 @@
         "sending": "প্রেরণ করা হচ্ছে…",
         "submitLabelNotify": "{count, plural, one {কৃষককে অবহিত করুন (১টি ফেরত এসেছে)} other {কৃষককে অবহিত করুন ( # ফেরত এসেছে)}}",
         "submitLabelSend": "অনুমোদনের জন্য কৃষকের কাছে পাঠান",
+        "submitLabelResponse": "Submit Response",
         "awaitingApproval": "কৃষকের অনুমোদনের জন্য অপেক্ষা করা হচ্ছে",
         "orderComplete": "অর্ডার সম্পূর্ণ",
         "resetItems": "আইটেমগুলি রিসেট করুন",

@@ -155,6 +155,12 @@ interface Order {
   id: string; status: string; farmer_user_id: string; client_id: string
   // 2026-06-19 — Human-readable Order ID surfaced on the detail header.
   reference_number?: string | null
+  // 2026-08-18 — Tentative-until-submit: backend derives the correct
+  // submit-button state from effective (dealer_pending || live) item
+  // status. 'SEND_TO_FARMER' when ≥1 pending-AVAILABLE, 'SUBMIT_RESPONSE'
+  // when only POSTPONED/NA pending, null when nothing to submit or any
+  // item is still undecided.
+  submit_action_type?: 'SEND_TO_FARMER' | 'SUBMIT_RESPONSE' | null
   date_from: string; date_to: string; created_at: string
   farmer_context?: FarmerContext
   facilitator_context?: FacilitatorContext | null
@@ -347,21 +353,19 @@ export default function DealerOrderDetailPage() {
       // fully-resolved siblings' Parts too (RT-26-000429 had 4 items
       // in 1 relation: 2 Parts, only Part 2 postponed).
       if (scope === 'postponed' && postponedScopeSnapshot.current === null) {
-        // 2026-08-17 — Snapshot POSTPONED / AVAILABLE / PENDING so a
-        // re-visit to the same order's Postponed scope preserves the
-        // full postpone-resolve journey. If dealer resolved one item
-        // (POSTPONED → AVAILABLE) then Change-Selection reset it back
-        // (AVAILABLE → PENDING), the item is now PENDING but still
-        // dealer's turn to decide — snapshot must include it or a
-        // page refresh drops it from the view.
-        // Anchors: RT-26-000467 (missing AVAILABLE), RT-26-000446
-        // (missing PENDING after Change Selection).
+        // 2026-08-18 — Under the tentative-until-submit model, an item's
+        // effective status (returned as `status`) covers all the states
+        // that should stay in the postponed-scope view: POSTPONED,
+        // AVAILABLE (tentative resolve), NOT_AVAILABLE (tentative NA
+        // resolve). Snapshot on first mount so subsequent refreshes
+        // preserve the same working set even if the effective status
+        // has flipped in the meantime.
         const itemIds = new Set<string>()
         for (const it of data.items ?? []) {
           if (
             it.status === 'POSTPONED'
             || it.status === 'AVAILABLE'
-            || it.status === 'PENDING'
+            || it.status === 'NOT_AVAILABLE'
           ) {
             itemIds.add(it.id)
           }
@@ -1198,35 +1202,25 @@ export default function DealerOrderDetailPage() {
   const awaitingFinalConfirmItems = order.items.filter(
     i => i.status === 'APPROVED' && !i.final_confirmed_at,
   )
-  // 2026-06-03 — every active item must be decided (no PENDING) before
-  // the dealer can submit. Submit succeeds if at least one item is
-  // AVAILABLE or NOT_AVAILABLE (both give the farmer something to act on).
-  // All-POSTPONED blocks submit — dealer waits, nothing for farmer.
+  // 2026-08-18 — Tentative-until-submit. Every dealer tap writes to
+  // dealer_pending_* on the backend; effective status (= pending ||
+  // live) lands on OrderItem.status via item_brief serialization. The
+  // backend also emits order.submit_action_type derived from the same
+  // effective state — the canonical source for which of the two Submit
+  // buttons is enabled and what label it carries.
   const pendingCount = activeItems.filter(i => i.status === 'PENDING').length
   const availableCount = activeItems.filter(i => i.status === 'AVAILABLE').length
   const notAvailableCount = activeItems.filter(i => i.status === 'NOT_AVAILABLE').length
   const everyAvailableHasVolume = activeItems
     .filter(i => i.status === 'AVAILABLE')
     .every(i => i.given_volume)
-  // 2026-08-17 — Submit is legal in every "still-in-flight" order state,
-  // not just PROCESSING. Postpone-resolve after a first round completes
-  // lands the order in COMPLETED / PARTIALLY_APPROVED / SFA; the dealer
-  // marks the resolved item AVAILABLE and needs the Submit button on
-  // those statuses too. Backend BL-10 table permits COMPLETED/PART-APP/
-  // SFA → SFA for the dealer. For non-PROCESSING statuses, require at
-  // least one AVAILABLE item (no NA-only re-submit — the NA-notify
-  // affordance is a first-round-only thing).
+  const submitAction = order.submit_action_type ?? null
   const canSubmit =
-    order.status === 'PROCESSING'
-      ? (pendingCount === 0
-          && (availableCount > 0 || notAvailableCount > 0)
-          && everyAvailableHasVolume)
-      : (['COMPLETED', 'PARTIALLY_APPROVED', 'SENT_FOR_APPROVAL'].includes(order.status)
-          && availableCount > 0
-          && everyAvailableHasVolume)
+    submitAction !== null
+    && (submitAction !== 'SEND_TO_FARMER' || everyAvailableHasVolume)
   const submitButtonLabel =
-    availableCount === 0 && notAvailableCount > 0
-      ? t('footer.submitLabelNotify', { count: notAvailableCount })
+    submitAction === 'SUBMIT_RESPONSE'
+      ? t('footer.submitLabelResponse')
       : t('footer.submitLabelSend')
 
   // Batch 27 — Total amount footer. `price` is the line-item total
@@ -2750,7 +2744,7 @@ export default function DealerOrderDetailPage() {
             {t('footer.pendingHint', { count: pendingCount })}
           </div>
         )}
-        {scope !== 'postponed' && order.status === 'PROCESSING' && pendingCount === 0 && availableCount === 0 && notAvailableCount === 0 && (
+        {scope !== 'postponed' && order.status === 'PROCESSING' && submitAction === null && pendingCount === 0 && availableCount === 0 && notAvailableCount === 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-xs text-amber-800">
             {t('footer.allPostponed')}
           </div>
