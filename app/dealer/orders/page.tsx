@@ -267,17 +267,16 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   const batches = o.packing_batches ?? []
   switch (pill) {
     case 'pending':
-      // Hasn't been submitted: still in SENT / ACCEPTED / PROCESSING.
-      // 2026-08-16 — Also fires when the order has AVAILABLE items
-      // waiting for the dealer's Submit-for-approval tap, regardless
-      // of order-level status. Catches the postpone-resolve exit path:
-      // dealer resolves a postpone from /dealer/postponed → item is
-      // AVAILABLE → order.status stays past-PROCESSING (COMPLETED /
-      // PARTIALLY_APPROVED / SFA from an earlier round) → without this
-      // clause the order fell into a pill-gap (invisible until Submit
-      // ran). Now the Pending pill picks it up so the dealer sees the
-      // Submit CTA even if they walked away without tapping Submit.
-      return ['SENT', 'ACCEPTED', 'PROCESSING'].includes(o.status)
+      // Pre-decision phase: SENT / ACCEPTED means the dealer hasn't
+      // even opened the order yet — always show here regardless of
+      // item counts. Once the dealer starts working (PROCESSING),
+      // gate on actual undecided or ready-to-submit items, so an
+      // all-postponed order doesn't double up on Pending + Postponed.
+      // The postpone-resolve exit path still surfaces via the
+      // c.available > 0 branch. 2026-08-18 tentative-until-submit
+      // exposes c.pending on effective status.
+      return ['SENT', 'ACCEPTED'].includes(o.status)
+        || (c.pending ?? 0) > 0
         || (c.available ?? 0) > 0
     case 'postponed':
       return c.postponed > 0
