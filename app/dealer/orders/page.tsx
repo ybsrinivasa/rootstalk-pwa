@@ -104,6 +104,11 @@ interface Order {
   packing_picked_up_by_role: 'FARMER' | 'FACILITATOR' | null
   packing_picked_up_by_name: string | null
   packing_farmer_received_at: string | null
+  // 2026-08-18 — Common-input names of POSTPONED items on this order,
+  // ordered by item creation. Rendered on the Postponed pill card so
+  // the dealer can scan across cards to spot supply matches without
+  // opening each order.
+  postponed_item_names?: string[]
   // 2026-06-06 — Discriminator for seed orders folded into the
   // unified feed. Seed cards carry the variety + crop_cosh_id used
   // for the seed-specific label and route to /dealer/seed-orders
@@ -1406,6 +1411,15 @@ function DealerPillChunk({
             <p className="text-[11px] text-amber-700 font-medium">
               {t('postponedTap', { count: sub.item_status_counts.postponed })}
             </p>
+            {(sub.postponed_item_names ?? []).length > 0 && (
+              // 2026-08-18 — Purely informational chip row. Lets the
+              // dealer scan for "supply just came in for X" across
+              // many postponed orders without opening each. No tap
+              // behaviour on individual chips.
+              <p className="text-[11px] text-[#6B3F1F] mt-1.5">
+                {(sub.postponed_item_names ?? []).join(' · ')}
+              </p>
+            )}
           </button>
         )
       )}
