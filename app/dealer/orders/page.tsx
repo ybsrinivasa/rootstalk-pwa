@@ -613,28 +613,6 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
-  // 2026-08-14 (Phase 2 rework): batch Final Confirmation for all
-  // APPROVED-not-yet-Final-Confirmed items on a pest/fert order,
-  // fired from the Packing pill card on the dealer's list. Mirror of
-  // the same button on the per-order detail page.
-  async function finalConfirmAllOrder(o: Order, batch: PackingBatch) {
-    if (!confirm(
-      "This is the final commitment. The packing list is populated after this. " +
-      "Confirm all approved items only after payment or credit terms with the farmer are settled.",
-    )) return
-    setBusy(o.id)
-    try {
-      await api.put(
-        `/dealer/orders/${o.id}/final-confirm-all?approval_round=${batch.approval_round}`,
-        {},
-      )
-      await load()
-    } catch (err) {
-      const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm the batch. Please try again.')
-    } finally { setBusy(null) }
-  }
-
   // 2026-08-14 (Phase 2 rework): per-item Final Confirmation and
   // Cancel from the Packing list card. Batch button covers the common
   // case; these two enable partial fulfilment (e.g. farmer paid for
@@ -873,7 +851,6 @@ function DealerOrdersInner() {
                 onHandoverSeed={handoverSeed}
                 onFinalConfirmSeed={finalConfirmSeed}
                 onCancelFinalConfirmSeed={cancelFinalConfirmSeed}
-                onFinalConfirmAll={finalConfirmAllOrder}
                 onSetFcPending={setFcPending}
                 onSubmitFcBatch={submitFcBatch}
                 onUndoFinalConfirmItem={undoFinalConfirmItemFromList}
@@ -1104,7 +1081,7 @@ function PickupStatus({ order }: { order: Order }) {
 function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onShare, onRemove, onOpenDetail, onHandoverSeed,
-  onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
+  onFinalConfirmSeed, onCancelFinalConfirmSeed,
   onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
@@ -1122,7 +1099,6 @@ function DealerOrderIdCard({
   onHandoverSeed: (o: Order) => void
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
-  onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
   onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
@@ -1154,7 +1130,6 @@ function DealerOrderIdCard({
                 onHandoverSeed={onHandoverSeed}
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
-                onFinalConfirmAll={onFinalConfirmAll}
                 onSetFcPending={onSetFcPending}
                 onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
@@ -1171,7 +1146,6 @@ function DealerOrderIdCard({
                 onHandoverSeed={onHandoverSeed}
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
-                onFinalConfirmAll={onFinalConfirmAll}
                 onSetFcPending={onSetFcPending}
                 onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
@@ -1357,7 +1331,7 @@ function DealerOrderCardHeader({
 
 function DealerPillChunk({
   sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
-  onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
+  onFinalConfirmSeed, onCancelFinalConfirmSeed,
   onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
@@ -1371,7 +1345,6 @@ function DealerPillChunk({
   onHandoverSeed: (o: Order) => void
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
-  onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
   onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
   onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
@@ -1481,7 +1454,6 @@ function DealerPillChunk({
               <PackingChunk key={b.approval_round} order={sub} batch={b}
                 onShare={onShare}
                 onRemove={onRemove}
-                onFinalConfirmAll={onFinalConfirmAll}
                 onSetFcPending={onSetFcPending}
                 onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
@@ -1566,9 +1538,8 @@ function DealerPillChunk({
                 <PackingChunk key={b.approval_round} order={sub} batch={b}
                   onShare={onShare}
                   onRemove={onRemove}
-                  onFinalConfirmAll={onFinalConfirmAll}
-                  onFinalConfirmItem={onFinalConfirmItem}
-                  onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                  onSetFcPending={onSetFcPending}
+                  onSubmitFcBatch={onSubmitFcBatch}
                   onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                   busy={busy === sub.id} />
               ))}
