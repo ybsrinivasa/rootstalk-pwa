@@ -26,6 +26,10 @@ interface PackingItem {
   // Null → dealer hasn't Final Confirmed → per-row Confirm / Cancel
   // buttons render. Non-null → committed.
   final_confirmed_at?: string | null
+  // 2026-08-19 — Tentative FC decision. Set by /set-fc-pending; cleared
+  // when the dealer taps batch Submit. Same rhythm as the order-level
+  // tentative-until-submit rework.
+  dealer_pending_final_confirmation?: 'CONFIRM' | 'CANCEL' | null
 }
 
 // 2026-08-17 — Per-batch (per-approval_round) Pickup lifecycle. Each
@@ -44,6 +48,14 @@ interface PackingBatch {
   awaiting_final_confirmation: number
   final_confirmed: number
   all_final_confirmed: boolean
+  // 2026-08-19 — Tentative-FC batch rollup: fc_submit_ready is true
+  // iff every awaiting-FC item in the batch has a tentative decision
+  // set (CONFIRM or CANCEL) and at least one exists — dealer can
+  // Submit. Same gate as the order-level Submit for Approval.
+  fc_tentative_confirm?: number
+  fc_tentative_cancel?: number
+  fc_undecided?: number
+  fc_submit_ready?: boolean
   items: PackingItem[]
 }
 
@@ -627,36 +639,43 @@ function DealerOrdersInner() {
   // Cancel from the Packing list card. Batch button covers the common
   // case; these two enable partial fulfilment (e.g. farmer paid for
   // one item in cash, credit still pending on the other).
-  async function finalConfirmItemFromList(orderId: string, itemId: string) {
+  // 2026-08-19 — Tentative-until-submit for Final Confirmation. Per-
+  // item FC / Cancel taps now set dealer_pending_final_confirmation
+  // via /set-fc-pending — no commit yet. The batch-level Submit
+  // (submitFcBatch below) promotes every tentative decision at once.
+  // Same rhythm as the order-level Submit-for-Approval flow so the
+  // dealer works with one mental model across the order.
+  async function setFcPending(
+    orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null,
+  ) {
     setBusy(orderId)
     try {
-      await api.put(`/dealer/orders/${orderId}/items/${itemId}/final-confirm`, {})
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/set-fc-pending`, { decision })
       await load()
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm. Please try again.')
+      alert(e?.response?.data?.detail?.message ?? 'Could not mark this item. Please try again.')
     } finally { setBusy(null) }
   }
 
-  async function cancelFinalConfirmItemFromList(orderId: string, itemId: string) {
-    if (!confirm(
-      "Cancel this approved item? It will return to the farmer as Not Available " +
-      "once the whole order settles.",
-    )) return
+  async function submitFcBatch(orderId: string, approvalRound: number) {
     setBusy(orderId)
     try {
-      await api.put(`/dealer/orders/${orderId}/items/${itemId}/cancel-final-confirm`, {})
+      await api.put(
+        `/dealer/orders/${orderId}/final-confirm-submit?approval_round=${approvalRound}`,
+        {},
+      )
       await load()
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not cancel this item. Please try again.')
+      alert(e?.response?.data?.detail?.message ?? 'Could not submit the batch. Please try again.')
     } finally { setBusy(null) }
   }
 
   async function undoFinalConfirmItemFromList(orderId: string, itemId: string) {
-    // 2026-08-18 — Reversible until pickup. No confirm modal — mirrors
-    // Change Selection's low-friction feel; dealer can freely revise
-    // FC decisions while the batch is being assembled.
+    // Safety-net undo AFTER Submit (until packing list is picked up).
+    // Different from setFcPending(null) which just clears the pre-Submit
+    // tentative state.
     setBusy(orderId)
     try {
       await api.put(`/dealer/orders/${orderId}/items/${itemId}/undo-final-confirm`, {})
@@ -855,8 +874,8 @@ function DealerOrdersInner() {
                 onFinalConfirmSeed={finalConfirmSeed}
                 onCancelFinalConfirmSeed={cancelFinalConfirmSeed}
                 onFinalConfirmAll={finalConfirmAllOrder}
-                onFinalConfirmItem={finalConfirmItemFromList}
-                onCancelFinalConfirmItem={cancelFinalConfirmItemFromList}
+                onSetFcPending={setFcPending}
+                onSubmitFcBatch={submitFcBatch}
                 onUndoFinalConfirmItem={undoFinalConfirmItemFromList}
                 onAcceptSeed={acceptSeed}
                 onConfirmDeclineSeed={(id) => setConfirmDeclineSeedId(id)}
@@ -1086,7 +1105,7 @@ function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
-  onFinalConfirmItem, onCancelFinalConfirmItem, onUndoFinalConfirmItem,
+  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy,
@@ -1104,8 +1123,8 @@ function DealerOrderIdCard({
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
   onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
-  onFinalConfirmItem: (orderId: string, itemId: string) => void
-  onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
+  onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
+  onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
@@ -1136,8 +1155,8 @@ function DealerOrderIdCard({
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
                 onFinalConfirmAll={onFinalConfirmAll}
-                onFinalConfirmItem={onFinalConfirmItem}
-                onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                onSetFcPending={onSetFcPending}
+                onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
@@ -1153,8 +1172,8 @@ function DealerOrderIdCard({
                 onFinalConfirmSeed={onFinalConfirmSeed}
                 onCancelFinalConfirmSeed={onCancelFinalConfirmSeed}
                 onFinalConfirmAll={onFinalConfirmAll}
-                onFinalConfirmItem={onFinalConfirmItem}
-                onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                onSetFcPending={onSetFcPending}
+                onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
@@ -1339,7 +1358,7 @@ function DealerOrderCardHeader({
 function DealerPillChunk({
   sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed, onFinalConfirmAll,
-  onFinalConfirmItem, onCancelFinalConfirmItem, onUndoFinalConfirmItem,
+  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy, showSubHeader,
@@ -1353,8 +1372,8 @@ function DealerPillChunk({
   onFinalConfirmSeed: (o: Order) => void
   onCancelFinalConfirmSeed: (o: Order) => void
   onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
-  onFinalConfirmItem: (orderId: string, itemId: string) => void
-  onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
+  onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
+  onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
@@ -1463,8 +1482,8 @@ function DealerPillChunk({
                 onShare={onShare}
                 onRemove={onRemove}
                 onFinalConfirmAll={onFinalConfirmAll}
-                onFinalConfirmItem={onFinalConfirmItem}
-                onCancelFinalConfirmItem={onCancelFinalConfirmItem}
+                onSetFcPending={onSetFcPending}
+                onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
                 busy={busy === sub.id} />
             ))}
@@ -1677,16 +1696,15 @@ function SeedPendingChunk({
 // component drive both the 'confirm' pill (batches needing Final
 // Confirmation) and the 'packing' pill (batches ready to hand over).
 function PackingChunk({
-  order, batch, onShare, onRemove, onFinalConfirmAll,
-  onFinalConfirmItem, onCancelFinalConfirmItem, onUndoFinalConfirmItem, busy,
+  order, batch, onShare, onRemove,
+  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem, busy,
 }: {
   order: Order
   batch: PackingBatch
   onShare: (o: Order, batch: PackingBatch) => void
   onRemove: (o: Order, batch: PackingBatch) => void
-  onFinalConfirmAll: (o: Order, batch: PackingBatch) => void
-  onFinalConfirmItem: (orderId: string, itemId: string) => void
-  onCancelFinalConfirmItem: (orderId: string, itemId: string) => void
+  onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
+  onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
   busy: boolean
 }) {
@@ -1758,15 +1776,42 @@ function PackingChunk({
                 <p className="text-sm font-bold text-[#7D4196] shrink-0">₹{it.price.toLocaleString(locale)}</p>
               )}
             </div>
-            {!it.final_confirmed_at && (
+            {/* 2026-08-19 — Tentative-until-submit UX. Per-item taps set
+                dealer_pending_final_confirmation via /set-fc-pending;
+                nothing commits until the batch Submit at the bottom
+                fires. Three visual states per row:
+                  1. Un-decided: purple FC + red Cancel buttons
+                  2. Marked-CONFIRM: purple pill + Undo
+                  3. Marked-CANCEL:  red pill + Undo
+                  4. Already-committed (final_confirmed_at): ✓ label +
+                     safety-net Undo (until pickup) */}
+            {!it.final_confirmed_at && !it.dealer_pending_final_confirmation && (
               <div className="flex gap-2">
-                <button onClick={() => onFinalConfirmItem(order.id, it.id)} disabled={busy}
+                <button onClick={() => onSetFcPending(order.id, it.id, 'CONFIRM')} disabled={busy}
                   className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-[11px] font-semibold py-1.5 rounded-lg">
                   Final Confirm
                 </button>
-                <button onClick={() => onCancelFinalConfirmItem(order.id, it.id)} disabled={busy}
+                <button onClick={() => onSetFcPending(order.id, it.id, 'CANCEL')} disabled={busy}
                   className="flex-1 border border-red-200 text-[#D4682E] text-[11px] font-semibold py-1.5 rounded-lg">
                   Cancel
+                </button>
+              </div>
+            )}
+            {!it.final_confirmed_at && it.dealer_pending_final_confirmation === 'CONFIRM' && (
+              <div className="flex items-center justify-between bg-purple-100 rounded-lg px-3 py-1.5">
+                <p className="text-[11px] text-purple-800 font-semibold">✓ Marked for Final Confirm</p>
+                <button onClick={() => onSetFcPending(order.id, it.id, null)} disabled={busy}
+                  className="text-[10px] text-purple-700 underline disabled:opacity-40">
+                  Undo
+                </button>
+              </div>
+            )}
+            {!it.final_confirmed_at && it.dealer_pending_final_confirmation === 'CANCEL' && (
+              <div className="flex items-center justify-between bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
+                <p className="text-[11px] text-[#D4682E] font-semibold">✗ Marked to Cancel</p>
+                <button onClick={() => onSetFcPending(order.id, it.id, null)} disabled={busy}
+                  className="text-[10px] text-[#D4682E] underline disabled:opacity-40">
+                  Undo
                 </button>
               </div>
             )}
@@ -1796,11 +1841,28 @@ function PackingChunk({
             after this. Confirm only when payment or credit terms with the
             farmer are settled.
           </p>
-          <button onClick={() => onFinalConfirmAll(order, batch)} disabled={busy}
-            className="w-full py-2.5 rounded-xl text-white font-semibold text-xs disabled:opacity-60"
-            style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
-            {busy ? '…' : `Final Confirm all ${batch.awaiting_final_confirmation} approved item${batch.awaiting_final_confirmation === 1 ? '' : 's'}`}
-          </button>
+          {/* 2026-08-19 — Submit only enables when every awaiting item
+              has a tentative decision. Same all-decisions-first gate as
+              the order-level Submit for Approval. Label shows total
+              tentative count so the dealer knows how many decisions
+              are about to commit at once. */}
+          {(() => {
+            const tentativeTotal = (batch.fc_tentative_confirm ?? 0) + (batch.fc_tentative_cancel ?? 0)
+            const ready = !!batch.fc_submit_ready
+            const undecidedN = batch.fc_undecided ?? batch.awaiting_final_confirmation
+            return (
+              <button onClick={() => onSubmitFcBatch(order.id, batch.approval_round)}
+                disabled={busy || !ready}
+                className="w-full py-2.5 rounded-xl text-white font-semibold text-xs disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
+                {busy
+                  ? '…'
+                  : ready
+                    ? `Submit ${tentativeTotal} decision${tentativeTotal === 1 ? '' : 's'}`
+                    : `${undecidedN} item${undecidedN === 1 ? '' : 's'} still need${undecidedN === 1 ? 's' : ''} a decision`}
+              </button>
+            )
+          })()}
         </div>
       ) : (
         <div className="p-3 flex gap-2">

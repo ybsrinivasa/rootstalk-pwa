@@ -108,6 +108,11 @@ interface OrderItem {
   // "Final Confirmation" button shows on those items. Non-null when
   // dealer has committed → item goes to farmer's Pickup pill.
   final_confirmed_at?: string | null
+  // 2026-08-19 — Tentative FC decision. Set via /set-fc-pending;
+  // cleared when the batch Submit fires. Same rhythm as the order-
+  // level tentative-until-submit rework.
+  dealer_pending_final_confirmation?: 'CONFIRM' | 'CANCEL' | null
+  approval_round?: number | null
 }
 interface RelationOption {
   option_index: number
@@ -768,55 +773,30 @@ export default function DealerOrderDetailPage() {
   // explicit commitment step between the farmer's APPROVED decision
   // and the physical hand-off. Fire the per-item endpoint and reload
   // so the button disappears + the item flows to the packing side.
-  async function finalConfirmItem(itemId: string) {
+  // 2026-08-19 — Tentative-until-submit for Final Confirmation. Per-
+  // item taps now set dealer_pending_final_confirmation via
+  // /set-fc-pending. Nothing commits until submitFcBatch fires — same
+  // rhythm as Submit-for-Approval on the earlier order-decision layer.
+  async function setFcPendingDecision(itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) {
     try {
-      await api.put(`/dealer/orders/${orderId}/items/${itemId}/final-confirm`, {})
+      await api.put(`/dealer/orders/${orderId}/items/${itemId}/set-fc-pending`, { decision })
       await load()
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm. Please try again.')
+      alert(e?.response?.data?.detail?.message ?? 'Could not mark this item. Please try again.')
     }
   }
 
-  async function finalConfirmAll() {
-    if (!confirm(
-      "This is the final commitment. The packing list is populated after this. " +
-      "Confirm all approved items only after payment or credit terms with the farmer are settled.",
-    )) return
+  async function submitFcBatchDetail(approvalRound: number) {
     try {
-      await api.put(`/dealer/orders/${orderId}/final-confirm-all`, {})
+      await api.put(
+        `/dealer/orders/${orderId}/final-confirm-submit?approval_round=${approvalRound}`,
+        {},
+      )
       await load()
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not Final Confirm the batch. Please try again.')
-    }
-  }
-
-  async function cancelFinalConfirm(itemId: string) {
-    if (!confirm(
-      "Cancel this approved item? It will return to the farmer as Not Available " +
-      "(with the other unsold items) once the whole order is settled.",
-    )) return
-    try {
-      await api.put(`/dealer/orders/${orderId}/items/${itemId}/cancel-final-confirm`, {})
-      await load()
-    } catch (err) {
-      const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not cancel this item. Please try again.')
-    }
-  }
-
-  async function undoFinalConfirm(itemId: string) {
-    // 2026-08-18 — Same tentative-until-committed principle as the
-    // dealer's earlier taps: a Final Confirmation is reversible until
-    // the batch's packing list is picked up. No confirm modal — quick
-    // one-tap undo mirrors the low-friction feel of Change Selection.
-    try {
-      await api.put(`/dealer/orders/${orderId}/items/${itemId}/undo-final-confirm`, {})
-      await load()
-    } catch (err) {
-      const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not undo Final Confirmation. Please try again.')
+      alert(e?.response?.data?.detail?.message ?? 'Could not submit the batch. Please try again.')
     }
   }
 
@@ -1216,6 +1196,16 @@ export default function DealerOrderDetailPage() {
   const awaitingFinalConfirmItems = order.items.filter(
     i => i.status === 'APPROVED' && !i.final_confirmed_at,
   )
+  // 2026-08-19 — Tentative-until-submit for FC. Group awaiting items
+  // by approval_round so each batch gets its own Submit gate — same
+  // per-batch model the packing/list page uses.
+  const awaitingFcByRound = new Map<number, OrderItem[]>()
+  for (const it of awaitingFinalConfirmItems) {
+    const r = it.approval_round ?? 1
+    const bucket = awaitingFcByRound.get(r) ?? []
+    bucket.push(it)
+    awaitingFcByRound.set(r, bucket)
+  }
   // 2026-08-18 — Tentative-until-submit. Every dealer tap writes to
   // dealer_pending_* on the backend; effective status (= pending ||
   // live) lands on OrderItem.status via item_brief serialization. The
@@ -1462,15 +1452,42 @@ export default function DealerOrderDetailPage() {
             timestamp → item flows to farmer's Pickup pill. "Cancel"
             releases the item to NOT_AVAILABLE (farmer sees it back on
             their unsold-items batch when the order goes quiescent). */}
-        {item.status === 'APPROVED' && !item.final_confirmed_at && editingItem !== item.id && (
+        {/* 2026-08-19 — Tentative-until-submit UX. Per-item taps set
+            the pending decision; the batch Submit (bottom of page)
+            commits every pending in one go. Three states:
+              1. Un-decided → purple Final Confirm + red Cancel buttons
+              2. Marked CONFIRM → purple pill + Undo
+              3. Marked CANCEL  → red pill + Undo */}
+        {item.status === 'APPROVED' && !item.final_confirmed_at && editingItem !== item.id
+          && !item.dealer_pending_final_confirmation && (
           <div className="mt-2 flex gap-2">
-            <button onClick={() => finalConfirmItem(item.id)}
+            <button onClick={() => setFcPendingDecision(item.id, 'CONFIRM')}
               className="flex-1 bg-purple-600 text-white text-xs font-semibold py-2 rounded-lg">
               Final Confirmation
             </button>
-            <button onClick={() => cancelFinalConfirm(item.id)}
+            <button onClick={() => setFcPendingDecision(item.id, 'CANCEL')}
               className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
               Cancel
+            </button>
+          </div>
+        )}
+        {item.status === 'APPROVED' && !item.final_confirmed_at
+          && item.dealer_pending_final_confirmation === 'CONFIRM' && (
+          <div className="mt-2 flex items-center justify-between bg-purple-100 rounded-lg px-3 py-2">
+            <p className="text-xs text-purple-800 font-semibold">✓ Marked for Final Confirm</p>
+            <button onClick={() => setFcPendingDecision(item.id, null)}
+              className="text-[11px] text-purple-700 underline">
+              Undo
+            </button>
+          </div>
+        )}
+        {item.status === 'APPROVED' && !item.final_confirmed_at
+          && item.dealer_pending_final_confirmation === 'CANCEL' && (
+          <div className="mt-2 flex items-center justify-between bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+            <p className="text-xs text-[#D4682E] font-semibold">✗ Marked to Cancel</p>
+            <button onClick={() => setFcPendingDecision(item.id, null)}
+              className="text-[11px] text-[#D4682E] underline">
+              Undo
             </button>
           </div>
         )}
@@ -2777,24 +2794,35 @@ export default function DealerOrderDetailPage() {
           </div>
         )}
 
-        {/* 2026-08-14 (Phase 2 rework): batch "Confirm all" for every
-            APPROVED item still awaiting Final Confirmation. The per-
-            item button lives on each item card; this footer button is
-            the one-tap shortcut with the mandatory caution copy. */}
-        {awaitingFinalConfirmItems.length > 0 && (
-          <div className="bg-purple-50 border border-purple-200 rounded-2xl p-3 space-y-2">
-            <p className="text-[11px] text-purple-800 leading-snug">
-              <strong>Final Confirmation:</strong> the packing list is populated
-              after this. Confirm only when payment or credit terms with the
-              farmer are settled.
-            </p>
-            <button onClick={finalConfirmAll}
-              className="w-full py-2.5 rounded-xl text-white font-semibold text-xs"
-              style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
-              Final Confirm all {awaitingFinalConfirmItems.length} approved item{awaitingFinalConfirmItems.length === 1 ? '' : 's'}
-            </button>
-          </div>
-        )}
+        {/* 2026-08-19 — Tentative-until-submit for FC. One Submit
+            button per approval_round (batch). Enabled only when every
+            awaiting item in that batch has a tentative CONFIRM or
+            CANCEL decision — same all-decisions-first gate as
+            Submit-for-Approval on the order-decision layer. */}
+        {Array.from(awaitingFcByRound.entries()).map(([round, batchItems]) => {
+          const tentativeC = batchItems.filter(i => i.dealer_pending_final_confirmation === 'CONFIRM').length
+          const tentativeX = batchItems.filter(i => i.dealer_pending_final_confirmation === 'CANCEL').length
+          const undecidedN = batchItems.length - tentativeC - tentativeX
+          const tentativeTotal = tentativeC + tentativeX
+          const ready = undecidedN === 0 && tentativeTotal > 0
+          const batchLabel = awaitingFcByRound.size > 1 ? `Batch ${round} · ` : ''
+          return (
+            <div key={round} className="bg-purple-50 border border-purple-200 rounded-2xl p-3 space-y-2">
+              <p className="text-[11px] text-purple-800 leading-snug">
+                <strong>{batchLabel}Final Confirmation:</strong> the packing list is populated
+                after this. Confirm only when payment or credit terms with the
+                farmer are settled.
+              </p>
+              <button onClick={() => submitFcBatchDetail(round)} disabled={!ready}
+                className="w-full py-2.5 rounded-xl text-white font-semibold text-xs disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
+                {ready
+                  ? `Submit ${tentativeTotal} decision${tentativeTotal === 1 ? '' : 's'}`
+                  : `${undecidedN} item${undecidedN === 1 ? '' : 's'} still need${undecidedN === 1 ? 's' : ''} a decision`}
+              </button>
+            </div>
+          )
+        })}
 
         {/* Batch 29 — Abort. Returns the order to SENT so a different
             order back to the pool. Spec correction 2026-06-01: now a
