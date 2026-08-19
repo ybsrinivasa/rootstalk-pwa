@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} ಗೆ ಫಾರ್ವರ್ಡ್ ಮಾಡಲಾಗಿದೆ",
       "filterChip": "{company} ಗಾಗಿ ಪ್ರಶ್ನೆಗಳನ್ನು ತೋರಿಸಲಾಗುತ್ತಿದೆ",
       "filterChipFallback": "ಒಂದು ಕಂಪನಿಗೆ ಫಿಲ್ಟರ್ ಮಾಡಲಾಗಿದೆ",
-      "clearFilter": "ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ"
+      "clearFilter": "ಫಿಲ್ಟರ್ ತೆರವುಗೊಳಿಸಿ",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "ಕಂಪನಿ ಆಹ್ವಾನಗಳು",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "ಇಂಗ್ಲಿಷ್‌ನಲ್ಲಿ ವೀಕ್ಷಿಸಿ",
         "viewOriginal": "ಮೂಲವನ್ನು ವೀಕ್ಷಿಸಿ",
         "loading": "ಅನುವಾದಿಸಲಾಗುತ್ತಿದೆ..."
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

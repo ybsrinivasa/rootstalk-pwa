@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} کو آگے بھیج دیا گیا",
       "filterChip": "{company} کے لیے سوالات دکھا رہا ہے",
       "filterChipFallback": "ایک کمپنی کو فلٹر کیا گیا۔",
-      "clearFilter": "فلٹر صاف کریں۔"
+      "clearFilter": "فلٹر صاف کریں۔",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "کمپنی کے دعوت نامے",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "انگریزی میں دیکھیں",
         "viewOriginal": "اصل دیکھیں",
         "loading": "ترجمہ ہو رہا ہے…"
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

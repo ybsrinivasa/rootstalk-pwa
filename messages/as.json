@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} লৈ প্ৰেৰণ কৰা হৈছে",
       "filterChip": "{company} ৰ বাবে প্ৰশ্ন দেখুৱা হৈছে",
       "filterChipFallback": "এটা কোম্পানীলৈ ফিল্টাৰ কৰা হৈছে",
-      "clearFilter": "ফিল্টাৰ পৰিষ্কাৰ কৰক"
+      "clearFilter": "ফিল্টাৰ পৰিষ্কাৰ কৰক",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "কোম্পানী নিমন্ত্ৰণী পত্ৰ",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "ইংৰাজীত চাওক",
         "viewOriginal": "মূল চাওক",
         "loading": "অনুবাদ..."
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

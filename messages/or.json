@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} କୁ ଫରୱାର୍ଡ କରାଯାଇଛି",
       "filterChip": "{company} ପାଇଁ କ୍ୱେରୀଗୁଡ଼ିକ ଦେଖାଉଛି",
       "filterChipFallback": "ଗୋଟିଏ କମ୍ପାନୀକୁ ଫିଲ୍ଟର କରାଯାଇଛି",
-      "clearFilter": "ଫିଲ୍ଟର୍ ସଫା କରନ୍ତୁ"
+      "clearFilter": "ଫିଲ୍ଟର୍ ସଫା କରନ୍ତୁ",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "କମ୍ପାନୀ ନିମନ୍ତ୍ରଣଗୁଡ଼ିକ",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "ଇଂରାଜୀରେ ଦେଖନ୍ତୁ",
         "viewOriginal": "ମୂଳ ଦେଖନ୍ତୁ",
         "loading": "ଅନୁବାଦ କରାଯାଉଛି…"
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

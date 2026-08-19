@@ -2836,7 +2836,8 @@
       "forwardedTo": "Forwarded to {name}",
       "filterChip": "Showing queries for {company}",
       "filterChipFallback": "Filtered to one company",
-      "clearFilter": "Clear filter"
+      "clearFilter": "Clear filter",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "Company Invitations",
@@ -3062,7 +3063,8 @@
         "viewInEnglish": "View in English",
         "viewOriginal": "View original",
         "loading": "Translating…"
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

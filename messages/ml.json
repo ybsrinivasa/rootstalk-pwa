@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} എന്നയാൾക്ക് കൈമാറി",
       "filterChip": "{company} എന്നതിനായുള്ള ചോദ്യങ്ങൾ കാണിക്കുന്നു",
       "filterChipFallback": "ഒരു കമ്പനിയിലേക്ക് ഫിൽട്ടർ ചെയ്‌തു",
-      "clearFilter": "ഫിൽട്ടർ മായ്‌ക്കുക"
+      "clearFilter": "ഫിൽട്ടർ മായ്‌ക്കുക",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "കമ്പനി ക്ഷണങ്ങൾ",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "ഇംഗ്ലീഷിൽ കാണുക",
         "viewOriginal": "ഒറിജിനൽ കാണുക",
         "loading": "വിവർത്തനം ചെയ്യുന്നു..."
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

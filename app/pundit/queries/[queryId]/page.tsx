@@ -432,19 +432,13 @@ export default function PunditQueryDetailPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={t('headerTitle')} activeRole="FARM_PUNDIT" back="/pundit/queries" />
       <div className="pt-16 pb-28 px-4 space-y-4">
-        {/* 2026-07-25 — Training banner. Sits at the top of the
-            detail + composer view so the pundit reads it before
-            farmer card, description, response draft, or forward
-            sheet. Prevents mid-flow confusion (team feedback). */}
+        {/* 2026-08-19 — Training banner. Aligned with the dealer
+            Training-order banner style: single-line amber-400 bar
+            "THIS IS A TRAINING QUERY". List card + detail page carry
+            the same visual to reinforce the mode. */}
         {query.client_is_training && (
-          <div className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 mt-4">
-            <p className="text-amber-900 font-semibold text-sm">
-              Training session
-            </p>
-            <p className="text-amber-800 text-xs mt-0.5 leading-relaxed">
-              This query and your response are part of a practice
-              session. Nothing here reaches a real farmer subscription.
-            </p>
+          <div className="bg-amber-400 text-[#6B3F1F] text-xs font-bold tracking-wider text-center py-2 rounded-2xl uppercase mt-4">
+            {t('trainingDetailBanner')}
           </div>
         )}
         {/* Farmer card — name + tap-to-call phone + address.

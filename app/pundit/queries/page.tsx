@@ -51,14 +51,14 @@ const SEVERITY_TEXT: Record<string, string> = {
   LOW: 'text-[#7A8C7E]',
 }
 
-// 2026-07-25 — Training tab removed. Rationale: training queries
-// now surface via a dedicated Training organisation card on the
-// pundit dashboard (backend `/pundit/profile`). Tapping any of that
-// card's count pills lands here with `?client=<training_child_id>`,
-// filtering the list to just that session's queries — and a
-// persistent banner at the top of this page tells the pundit the
-// current context is training. Real (cross-org) tabs continue to
-// exclude training so a busy pundit's day isn't polluted.
+// 2026-08-19 — Training queries flow through the cross-org view
+// alongside real queries. Per-card banner + amber border marks each
+// training card. Same principle as the dealer PWA's Training-pill
+// removal: one working queue, one mental model, "same action, same
+// place." Pundit home still shows a per-client card for the training
+// child (with a Training badge), and tapping its count pill still
+// filters this view to just those queries — that entry point stays
+// useful when the pundit specifically wants a focused training view.
 type Tab = 'new' | 'pending' | 'returned' | 'history'
 
 // Map the `?status=` query param values (NEW / FORWARDED / RETURNED)
@@ -147,15 +147,14 @@ function PunditQueriesInner() {
     [history, clientFilter],
   )
 
-  // 2026-07-25 — Cross-org view (no client filter) continues to
-  // hide training queries from the real tabs. Client-filtered view
-  // (arrived via a dashboard count pill — real OR training) shows
-  // exactly what the filter says, and the top-of-page banner tells
-  // the pundit whether they're in a training context.
-  const tabFiltered = useMemo(
-    () => clientFilter ? filtered : filtered.filter(q => !q.client_is_training),
-    [filtered, clientFilter],
-  )
+  // 2026-08-19 — Training queries now flow through the cross-org
+  // view alongside real queries. Same principle as the dealer PWA's
+  // Training-pill removal: same action, same place, per-card banner
+  // marks training so the pundit never confuses it with real work.
+  // Client-filtered view continues to show exactly what the filter
+  // says; the top-of-page banner covers the "everything here is
+  // training" context when the filter IS a training child.
+  const tabFiltered = filtered
 
   const newQueries = tabFiltered
     .filter(q => q.status === 'NEW')
@@ -305,11 +304,25 @@ function PunditQueriesInner() {
                     : q.severity
                 : ''
               const sevClass = SEVERITY_TEXT[q.severity] || 'text-[#7A8C7E]'
+              // 2026-08-19 — Training-query visual treatment matches
+              // the dealer Training-order pattern: amber-400 double
+              // border + persistent "THIS IS A TRAINING QUERY" banner
+              // across the card top. Rendered in cross-org and
+              // client-filtered views alike (top-of-page banner still
+              // fires when the filter IS a training child).
+              const isTrainingCard = !!q.client_is_training
               return (
                 <button key={q.id}
                   onClick={() => tab !== 'history' ? router.push(`/pundit/queries/${q.id}`) : undefined}
-                  className={`w-full bg-white rounded-2xl p-4 border shadow-sm text-left active:scale-98 transition-transform ${cardBorderClass(q)}`}>
-                  <div className="flex items-start gap-3">
+                  className={`w-full bg-white rounded-2xl border shadow-sm text-left active:scale-98 transition-transform overflow-hidden ${
+                    isTrainingCard ? 'border-amber-400 border-2' : cardBorderClass(q)
+                  }`}>
+                  {isTrainingCard && (
+                    <div className="bg-amber-400 text-[#6B3F1F] text-[11px] font-bold tracking-wider text-center py-1.5 uppercase">
+                      {t('trainingCardBanner')}
+                    </div>
+                  )}
+                  <div className="flex items-start gap-3 p-4">
                     <div onClick={e => e.stopPropagation()} className="shrink-0">
                       <AvatarLightbox
                         photoUrl={q.farmer_photo_url || null}
@@ -326,19 +339,6 @@ function PunditQueriesInner() {
                           <>
                             <span className="text-[#7A8C7E]"> · </span>
                             <span className={`font-medium ${sevClass}`}>{severityText}</span>
-                          </>
-                        )}
-                        {/* 2026-07-25 — Per-card training chip is
-                            only useful in the cross-org view, where
-                            training queries could mix with real. In
-                            a client-filtered training context the
-                            top-of-page banner already signals it. */}
-                        {q.client_is_training && !trainingContext && (
-                          <>
-                            <span className="text-[#7A8C7E]"> · </span>
-                            <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 px-1.5 py-0.5 rounded align-middle">
-                              Training
-                            </span>
                           </>
                         )}
                       </p>

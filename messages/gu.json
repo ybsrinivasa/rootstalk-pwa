@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} ને ફોરવર્ડ કર્યું",
       "filterChip": "{company} માટે ક્વેરી બતાવી રહ્યું છે",
       "filterChipFallback": "એક કંપનીમાં ફિલ્ટર કરેલ",
-      "clearFilter": "ફિલ્ટર સાફ કરો"
+      "clearFilter": "ફિલ્ટર સાફ કરો",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "કંપનીના આમંત્રણો",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "અંગ્રેજીમાં જુઓ",
         "viewOriginal": "મૂળ જુઓ",
         "loading": "અનુવાદ કરી રહ્યું છે..."
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

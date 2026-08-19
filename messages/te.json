@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} కు ఫార్వార్డ్ చేయబడింది",
       "filterChip": "{company} కోసం క్వెరీలను చూపుతోంది",
       "filterChipFallback": "ఒక కంపెనీకి ఫిల్టర్ చేయబడింది",
-      "clearFilter": "క్లియర్ ఫిల్టర్"
+      "clearFilter": "క్లియర్ ఫిల్టర్",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "కంపెనీ ఆహ్వానాలు",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "ఆంగ్లంలో వీక్షించండి",
         "viewOriginal": "అసలు చిత్రాన్ని వీక్షించండి",
         "loading": "అనువదిస్తోంది…"
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

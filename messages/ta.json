@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} க்கு அனுப்பப்பட்டது",
       "filterChip": "{company} க்கான வினவல்களைக் காட்டுகிறது",
       "filterChipFallback": "ஒரு நிறுவனத்திற்கு வடிகட்டப்பட்டது",
-      "clearFilter": "வடிகட்டியைத் தெளிவுபடுத்துங்கள்"
+      "clearFilter": "வடிகட்டியைத் தெளிவுபடுத்துங்கள்",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "நிறுவன அழைப்பிதழ்கள்",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "ஆங்கிலத்தில் காண்க",
         "viewOriginal": "அசல் பதிப்பைக் காண்க",
         "loading": "மொழிபெயர்க்கப்படுகிறது…"
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {

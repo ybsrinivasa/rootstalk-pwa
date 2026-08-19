@@ -2804,7 +2804,8 @@
       "forwardedTo": "{name} এর কাছে ফরোয়ার্ড করা হয়েছে",
       "filterChip": "{company} এর জন্য অনুসন্ধানগুলি দেখানো হচ্ছে",
       "filterChipFallback": "একটি কোম্পানিতে ফিল্টার করা হয়েছে",
-      "clearFilter": "ফিল্টার পরিষ্কার করুন"
+      "clearFilter": "ফিল্টার পরিষ্কার করুন",
+      "trainingCardBanner": "This is a Training Query"
     },
     "invitations": {
       "headerTitle": "কোম্পানির আমন্ত্রণ",
@@ -3030,7 +3031,8 @@
         "viewInEnglish": "ইংরেজিতে দেখুন",
         "viewOriginal": "মূল দেখুন",
         "loading": "অনুবাদ করা…"
-      }
+      },
+      "trainingDetailBanner": "This is a Training Query"
     }
   },
   "mySubscriptions": {
