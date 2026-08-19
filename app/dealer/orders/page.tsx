@@ -172,19 +172,21 @@ interface SeedOrderRaw {
 
 // 2026-06-09 — Completed dropped from active pills (Batch 2 of
 // Dealer mirroring). Terminal sub-orders live in /dealer/history.
-// 2026-07-24 — 'training' pill added. Real pills (pending / postponed
-// / farmer / packing) now exclude orders whose client is a training
-// child, so a dealer's actual work doesn't get mixed with practice
-// work. The Training pill collects every training-client order the
-// dealer holds regardless of item status — that's the whole point
-// of separating it.
+// 2026-08-19 — Training pill removed. Training-client orders now flow
+// through the same real pills (pending / postponed / farmer / confirm
+// / packing) as production orders. They're visually distinguished by
+// an amber "THIS IS A TRAINING ORDER" banner + tinted card border, so
+// the dealer works with one mental model: "same action, same place."
+// Rationale: forcing every training order into ONE pill regardless of
+// its lifecycle stage made it hard for the dealer to know what to do
+// with each — Approval? Final Confirm? Packing? All mixed in one bag.
 // 2026-08-17 — 'confirm' pill added. Sits between 'farmer' (awaiting
 // farmer approval) and 'packing' (all Final Confirmed, ready to pack).
 // It surfaces per-batch groups where the dealer still owes Final
 // Confirmation. Post-confirm, that batch moves to the Packing pill.
-type Pill = 'pending' | 'postponed' | 'farmer' | 'confirm' | 'packing' | 'training'
+type Pill = 'pending' | 'postponed' | 'farmer' | 'confirm' | 'packing'
 
-const PILLS: readonly Pill[] = ['pending', 'postponed', 'farmer', 'confirm', 'packing', 'training'] as const
+const PILLS: readonly Pill[] = ['pending', 'postponed', 'farmer', 'confirm', 'packing'] as const
 
 function initials(name: string | null): string {
   if (!name) return '?'
@@ -195,33 +197,6 @@ function initials(name: string | null): string {
 function shortDate(iso: string | null, locale: string): string {
   if (!iso) return ''
   return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: 'short' })
-}
-
-// 2026-07-25 — Training-order render routing. Training-pill orders
-// need the SAME action UI (Accept / Packing / Handover / etc.) that
-// a real order of the equivalent status gets, or the dealer sees the
-// card and can't proceed (screenshot from user 2026-07-25). Pick the
-// "most action-needed" real pill for the given item state — same
-// order the dealer would tap through in the real flow: pending →
-// packing → postponed → farmer.
-function effectivePillForTraining(o: Order): Pill {
-  if (o.is_seed) {
-    if (['SENT', 'ACCEPTED'].includes(o.status)) return 'pending'
-    if (o.status === 'READY_FOR_PICKUP') return 'packing'
-    if (o.status === 'POSTPONED') return 'postponed'
-    if (o.status === 'SENT_FOR_APPROVAL') return 'farmer'
-    return 'pending'
-  }
-  if (['SENT', 'ACCEPTED', 'PROCESSING'].includes(o.status)) return 'pending'
-  const c = o.item_status_counts
-  // 2026-08-16 — AVAILABLE items awaiting Submit take priority over
-  // downstream states so the dealer's Submit-for-approval CTA is
-  // the visible action (mirrors the pending-pill fix in subBelongsTo).
-  if ((c.available ?? 0) > 0) return 'pending'
-  if (c.approved > 0 && !o.packing_list_removed_at && !o.packing_farmer_received_at) return 'packing'
-  if (c.postponed > 0) return 'postponed'
-  if (c.sent_for_approval > 0) return 'farmer'
-  return 'pending'
 }
 
 // Per-pill membership rules. An order can appear in multiple pills
@@ -246,17 +221,9 @@ function subBelongsTo(o: Order, pill: Pill): boolean {
   if (['CANCELLED', 'REJECTED', 'REROUTED', 'EXPIRED', 'PURCHASED'].includes(o.status)) {
     return false
   }
-  // 2026-07-24 — Training-client orders live exclusively on the
-  // Training pill. Real pills (pending / postponed / farmer /
-  // packing) exclude them so the dealer's actual work doesn't get
-  // mixed with practice work. The Training pill collects every
-  // active training order regardless of item status.
-  if (pill === 'training') {
-    return !!o.client_is_training
-  }
-  if (o.client_is_training) {
-    return false
-  }
+  // 2026-08-19 — Training orders flow through the same real pills as
+  // production orders. Visual distinction (banner + amber border) is
+  // in the card render, not the pill filter. One mental model.
   // 2026-06-06 — Seed orders use the SeedOrderStatus enum directly
   // (no per-item counts) since each seed order has one item by
   // definition. Membership is keyed off o.status alone.
@@ -445,10 +412,12 @@ function DealerOrdersInner() {
   }, [orders])
 
   // Pill counts: count GROUPS that have at least one matching
-  // sub-order (matches what the user sees rendered).
+  // sub-order (matches what the user sees rendered). Training
+  // orders roll into the same counts (user 2026-08-19:
+  // "Include in the count. Let there be just one count").
   const counts: Record<Pill, number> = useMemo(() => {
     const c: Record<Pill, number> = {
-      pending: 0, postponed: 0, farmer: 0, confirm: 0, packing: 0, training: 0,
+      pending: 0, postponed: 0, farmer: 0, confirm: 0, packing: 0,
     }
     for (const list of groups.values()) {
       for (const p of PILLS) {
@@ -457,16 +426,6 @@ function DealerOrdersInner() {
     }
     return c
   }, [groups])
-
-  // 2026-07-25 — If the pill is 'training' but no training orders
-  // exist, fall back to 'pending' so the dealer isn't stuck on an
-  // empty view when a session ends mid-page. Runs once per counts
-  // change; harmless when counts.training > 0.
-  useEffect(() => {
-    if (pill === 'training' && counts.training === 0) {
-      setPill('pending')
-    }
-  }, [pill, counts.training])
 
   const visibleGroups = useMemo(() => {
     const out: { key: string; subs: Order[]; matching: Order[] }[] = []
@@ -782,12 +741,7 @@ function DealerOrdersInner() {
               on row 2's right via absolute position — safe because
               Packing leaves plenty of empty space on that row. */}
           <div className="flex flex-wrap gap-2">
-            {PILLS.filter(p => p !== 'training' || counts.training > 0).map(p => {
-              // 2026-07-25 — Hide the Training pill entirely when no
-              // training orders exist. Real pills always render (a
-              // count of 0 there is meaningful — "you have nothing
-              // pending" is worth surfacing); Training is opt-in and
-              // only appears when a session is actually going.
+            {PILLS.map(p => {
               const active = pill === p
               const n = counts[p]
               return (
@@ -1109,10 +1063,16 @@ function DealerOrderIdCard({
   onMarkNotAvailableSeed: (id: string) => void
   busy: string | null
 }) {
+  const tTrain = useTranslations('training')
   const head = subs[0]
   const renderRows = matching.length > 1
-  const borderClass = pill === 'training'
-    ? 'border-amber-300'
+  // 2026-08-19 — Training orders get the amber-400 double border (was
+  // the Training pill's distinguishing colour) regardless of which
+  // real pill they show up in. Combined with the banner below, dealer
+  // never confuses a training card with real work.
+  const isTraining = !!head?.client_is_training
+  const borderClass = isTraining
+    ? 'border-amber-400 border-2'
     : pill === 'packing'
       ? 'border-purple-200'
       : pill === 'farmer' || pill === 'postponed'
@@ -1120,6 +1080,11 @@ function DealerOrderIdCard({
         : 'border-[#DDD0B8]'
   return (
     <div className={`bg-white rounded-2xl border ${borderClass} shadow-sm overflow-hidden`}>
+      {isTraining && (
+        <div className="bg-amber-400 text-[#6B3F1F] text-[11px] font-bold tracking-wider text-center py-1.5 uppercase">
+          {tTrain('cardBanner')}
+        </div>
+      )}
       <DealerOrderCardHeader head={head} subCount={subs.length} expanded={expanded}
         onToggleExpand={onToggleExpand} orderId={orderId} />
       <div className="divide-y divide-[#F0E5D0]">
@@ -1359,11 +1324,8 @@ function DealerPillChunk({
   const router = useRouter()
   const t = useTranslations('dealer.orders.chunk')
   const locale = useLocale()
-  // 2026-07-25 — Under the Training pill, delegate to whichever real
-  // pill would render this order's current action state. Training is
-  // a status-agnostic bucket; without this, SENT orders (etc.) would
-  // show only the card header with no Accept/Decline surface.
-  const renderPill: Pill = pill === 'training' ? effectivePillForTraining(sub) : pill
+  // 2026-08-19 — Training pill removed; pill is always a real pill.
+  const renderPill: Pill = pill
   return (
     <div>
       {showSubHeader && (

@@ -1,6 +1,7 @@
 {
   "training": {
     "chip": "প্ৰশিক্ষণ",
+    "cardBanner": "This is a Training Order",
     "farmerHome": {
       "subtitle": "অনুশীলন অধিবেশন — গ্ৰহণ কৰিলে আপোনাৰ প্ৰকৃত স্বাক্ষৰণসমূহত কোনো প্ৰভাৱ নপৰে।"
     },

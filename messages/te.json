@@ -1,6 +1,7 @@
 {
   "training": {
     "chip": "శిక్షణ",
+    "cardBanner": "This is a Training Order",
     "farmerHome": {
       "subtitle": "అభ్యాస సెషన్ — అంగీకరించడం మీ నిజమైన చందాలను ప్రభావితం చేయదు."
     },

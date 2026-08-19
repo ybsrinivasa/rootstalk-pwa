@@ -1,6 +1,7 @@
 {
   "training": {
     "chip": "ତାଲିମ",
+    "cardBanner": "This is a Training Order",
     "farmerHome": {
       "subtitle": "ଅଭ୍ୟାସ ଅଧିବେଶନ - ଗ୍ରହଣ କରିବା ଦ୍ୱାରା ଆପଣଙ୍କର ପ୍ରକୃତ ସଦସ୍ୟତା ପ୍ରଭାବିତ ହେବ ନାହିଁ।"
     },

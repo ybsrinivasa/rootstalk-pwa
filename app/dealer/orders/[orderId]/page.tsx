@@ -166,6 +166,9 @@ interface Order {
   // when only POSTPONED/NA pending, null when nothing to submit or any
   // item is still undecided.
   submit_action_type?: 'SEND_TO_FARMER' | 'SUBMIT_RESPONSE' | null
+  // 2026-08-19 — Training marker so the detail page renders the same
+  // "This is a Training Order" banner the list page uses.
+  client_is_training?: boolean
   date_from: string; date_to: string; created_at: string
   farmer_context?: FarmerContext
   facilitator_context?: FacilitatorContext | null
@@ -248,6 +251,7 @@ export default function DealerOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
   const t = useTranslations('dealer.orderDetail')
   const tCommon = useTranslations('common')
+  const tTrain = useTranslations('training')
   const locale = useLocale()
   // 2026-06-03 — focus_item=<id> hides everything else and pre-opens
   // the brand form on that one item. Used by /dealer/postponed to
@@ -2574,6 +2578,16 @@ export default function DealerOrderDetailPage() {
               : '/dealer/orders'
         } />
       <div className="pt-16 pb-24 px-4 space-y-4 max-w-lg mx-auto">
+
+        {/* 2026-08-19 — Training banner. Persistent at the top of the
+            detail page so the dealer knows this order is training
+            regardless of which pill they came from. Mirrors the same
+            banner the list page shows on the card header. */}
+        {order?.client_is_training && (
+          <div className="bg-amber-400 text-[#6B3F1F] text-xs font-bold tracking-wider text-center py-2 rounded-2xl uppercase">
+            {tTrain('cardBanner')}
+          </div>
+        )}
 
         {/* Batch 24 — farmer context. Skipped in focus mode (the dealer
             knows who the farmer is from the Postponed list they came

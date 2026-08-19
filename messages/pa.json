@@ -1,6 +1,7 @@
 {
   "training": {
     "chip": "ਸਿਖਲਾਈ",
+    "cardBanner": "This is a Training Order",
     "farmerHome": {
       "subtitle": "ਅਭਿਆਸ ਸੈਸ਼ਨ — ਸਵੀਕਾਰ ਕਰਨ ਨਾਲ ਤੁਹਾਡੀਆਂ ਅਸਲ ਗਾਹਕੀਆਂ ਪ੍ਰਭਾਵਿਤ ਨਹੀਂ ਹੋਣਗੀਆਂ।"
     },

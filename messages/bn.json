@@ -1,6 +1,7 @@
 {
   "training": {
     "chip": "প্রশিক্ষণ",
+    "cardBanner": "This is a Training Order",
     "farmerHome": {
       "subtitle": "অনুশীলন পর্ব — এটি গ্রহণ করলে আপনার আসল সাবস্ক্রিপশনগুলোর ওপর কোনো প্রভাব পড়বে না।"
     },

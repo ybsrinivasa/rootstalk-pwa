@@ -1,6 +1,7 @@
 {
   "training": {
     "chip": "प्रशिक्षण",
+    "cardBanner": "This is a Training Order",
     "farmerHome": {
       "subtitle": "सराव सत्र — स्वीकारल्याने तुमच्या मूळ सदस्यत्वांवर परिणाम होणार नाही."
     },

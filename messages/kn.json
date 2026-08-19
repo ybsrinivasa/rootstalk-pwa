@@ -1,6 +1,7 @@
 {
   "training": {
     "chip": "ತರಬೇತಿ",
+    "cardBanner": "This is a Training Order",
     "farmerHome": {
       "subtitle": "ಅಭ್ಯಾಸ ಅವಧಿ — ಸ್ವೀಕರಿಸುವುದರಿಂದ ನಿಮ್ಮ ನಿಜವಾದ ಚಂದಾದಾರಿಕೆಗಳ ಮೇಲೆ ಯಾವುದೇ ಪರಿಣಾಮ ಬೀರುವುದಿಲ್ಲ."
     },
