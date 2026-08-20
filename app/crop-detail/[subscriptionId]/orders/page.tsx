@@ -1438,10 +1438,17 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
       </p>
     )
   }
+  // 2026-08-20 — Use active_item_count (dealer's actual in-flight
+  // work: PENDING/AVAILABLE/POSTPONED/SFA + APPROVED-awaiting-FC)
+  // instead of total item_count. Prior render read "4 items · Dealer
+  // is processing" on an order where 2 items were already picked up
+  // by farmer, 1 was NA, and only 1 was postponed — misleading. Fall
+  // back to item_count when active_item_count is missing.
+  const dealerActiveCount = sub.active_item_count ?? sub.item_count ?? 0
   return (
     <p className="text-xs text-[#7A8C7E]">
-      {sub.item_count !== undefined && sub.item_count > 0
-        ? t('itemsCountPrefix', { count: sub.item_count })
+      {dealerActiveCount > 0
+        ? t('itemsCountPrefix', { count: dealerActiveCount })
         : ''}
       {t('dealerProcessing')}
     </p>
