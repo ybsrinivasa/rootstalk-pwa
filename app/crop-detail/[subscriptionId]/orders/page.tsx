@@ -1442,16 +1442,28 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
   // work: PENDING/AVAILABLE/POSTPONED/SFA + APPROVED-awaiting-FC)
   // instead of total item_count. Prior render read "4 items · Dealer
   // is processing" on an order where 2 items were already picked up
-  // by farmer, 1 was NA, and only 1 was postponed — misleading. Fall
-  // back to item_count when active_item_count is missing.
+  // by farmer, 1 was NA, and only 1 was postponed — misleading.
+  // Also surface any N/A items the dealer has submitted so the
+  // farmer knows some items came back — even before the whole order
+  // goes quiescent (once quiescent, the earlier "N items returned to
+  // you" branch above kicks in with the Send/Discard footer).
   const dealerActiveCount = sub.active_item_count ?? sub.item_count ?? 0
   return (
-    <p className="text-xs text-[#7A8C7E]">
-      {dealerActiveCount > 0
-        ? t('itemsCountPrefix', { count: dealerActiveCount })
-        : ''}
-      {t('dealerProcessing')}
-    </p>
+    <div className="space-y-1">
+      {returned > 0 && (
+        <p className="text-xs text-[#D4682E] font-medium">
+          {returned === 1
+            ? '1 item not available with this dealer'
+            : `${returned} items not available with this dealer`}
+        </p>
+      )}
+      {dealerActiveCount > 0 && (
+        <p className="text-xs text-[#7A8C7E]">
+          {t('itemsCountPrefix', { count: dealerActiveCount })}
+          {t('dealerProcessing')}
+        </p>
+      )}
+    </div>
   )
 }
 
