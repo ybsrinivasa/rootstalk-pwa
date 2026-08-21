@@ -1793,32 +1793,30 @@ function PaymentChunk({
                     )}
                   </div>
                 </div>
-                {/* 2026-08-21 — Open-UPI-app buttons. Uses Android
-                    intent URLs (via package name) rather than each
-                    app's custom scheme — PhonePe and GPay's bare
-                    schemes (phonepe://, tez://) don't reliably
-                    trigger the app open anymore. Intent URLs with
-                    the LAUNCHER action are the documented Android
-                    path for "just open this app." Nothing to block
-                    since no payment context. */}
+                {/* 2026-08-21 — Open-UPI-app buttons. LAUNCHER
+                    category caused Chrome to redirect to Play Store
+                    when the app hadn't registered a LAUNCHER handler.
+                    Simpler intent with MAIN action + package + a
+                    harmless fallback URL (about:blank) so Chrome
+                    doesn't fall back to Play Store on any miss. */}
                 <div>
                   <p className="text-[11px] text-[#7A8C7E] mb-2">
                     Open your UPI app:
                   </p>
                   <div className="grid grid-cols-4 gap-2">
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.phonepe.app;end"
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=com.phonepe.app;S.browser_fallback_url=about%3Ablank;end"
                       className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       PhonePe
                     </a>
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.nbu.paisa.user;end"
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=com.google.android.apps.nbu.paisa.user;S.browser_fallback_url=about%3Ablank;end"
                       className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       GPay
                     </a>
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=net.one97.paytm;end"
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=net.one97.paytm;S.browser_fallback_url=about%3Ablank;end"
                       className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       Paytm
                     </a>
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=in.org.npci.upiapp;end"
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=in.org.npci.upiapp;S.browser_fallback_url=about%3Ablank;end"
                       className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       BHIM
                     </a>
