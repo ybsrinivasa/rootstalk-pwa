@@ -1793,29 +1793,33 @@ function PaymentChunk({
                     )}
                   </div>
                 </div>
-                {/* 2026-08-21 — Open-UPI-app buttons. Each fires the
-                    app's own custom URI scheme which just opens the
-                    app (no payment context = no NPCI block). Farmer
-                    lands on the app's home / lock screen, unlocks,
-                    taps Send Money, pastes the copied VPA. Only
-                    apps we ship are the four with meaningful market
-                    share; any UPI app the farmer prefers can still
-                    be opened from the phone's home screen. */}
+                {/* 2026-08-21 — Open-UPI-app buttons. Uses Android
+                    intent URLs (via package name) rather than each
+                    app's custom scheme — PhonePe and GPay's bare
+                    schemes (phonepe://, tez://) don't reliably
+                    trigger the app open anymore. Intent URLs with
+                    the LAUNCHER action are the documented Android
+                    path for "just open this app." Nothing to block
+                    since no payment context. */}
                 <div>
                   <p className="text-[11px] text-[#7A8C7E] mb-2">
                     Open your UPI app:
                   </p>
                   <div className="grid grid-cols-4 gap-2">
-                    <a href="phonepe://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.phonepe.app;end"
+                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       PhonePe
                     </a>
-                    <a href="tez://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=com.google.android.apps.nbu.paisa.user;end"
+                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       GPay
                     </a>
-                    <a href="paytmmp://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=net.one97.paytm;end"
+                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       Paytm
                     </a>
-                    <a href="bhim://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                    <a href="intent://#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=in.org.npci.upiapp;end"
+                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
                       BHIM
                     </a>
                   </div>
