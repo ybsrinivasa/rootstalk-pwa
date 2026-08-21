@@ -1638,24 +1638,25 @@ function PaymentChunk({
     } finally { setLoading(false) }
   }
 
-  async function copyVpaAndOpenUpi(vpa: string) {
-    // 2026-08-21 — Copy VPA + lead-to-UPI-app. Intent URL includes
-    // only the VPA (no amount, no note) so the picked UPI app opens
-    // its "send money to VPA" screen with recipient pre-filled but
-    // without the pre-filled `am=` that NPCI's rules flag as a
-    // merchant-payment intent (and block for personal VPAs).
-    // Bare `upi://pay` failed — the picked app tried to parse it
-    // as a payment intent and errored with "Something went wrong."
+  async function copyVpa(vpa: string) {
+    // 2026-08-21 — Copy-only. Auto-opening the UPI app via any deep
+    // link variant (`upi://pay`, `upi://pay?pa=<vpa>`) fails in the
+    // field — even when the app opens successfully, the actual
+    // payment gets blocked because ANY deep-link-initiated payment
+    // to a personal VPA is flagged as a merchant transaction under
+    // NPCI's tightened rules. Field testing 2026-08-21 confirmed
+    // this on PhonePe with `upi://pay?pa=9901399939@ybl` — chooser
+    // opened, PhonePe opened with recipient pre-filled + amount
+    // field empty, user entered ₹4, tapped Pay → app declined.
+    // Farmer opens their UPI app themselves from the phone home
+    // screen — the copied VPA is waiting in the clipboard.
     try {
       await navigator.clipboard.writeText(vpa)
       setCopied(true)
+      setTimeout(() => setCopied(false), 3000)
     } catch {
       window.prompt('Copy this UPI ID:', vpa)
-      setCopied(true)
     }
-    setTimeout(() => {
-      window.location.href = `upi://pay?pa=${encodeURIComponent(vpa)}`
-    }, 500)
   }
 
   async function shareVpa() {
@@ -1779,10 +1780,10 @@ function PaymentChunk({
                     {intentData.dealer_vpa}
                   </p>
                   <div className="flex gap-2 mt-3">
-                    <button onClick={() => copyVpaAndOpenUpi(intentData.dealer_vpa)}
+                    <button onClick={() => copyVpa(intentData.dealer_vpa)}
                       className="flex-1 py-2 rounded-lg text-white text-xs font-semibold"
                       style={{ background: '#3A7D44' }}>
-                      {copied ? '✓ Copied · opening UPI app…' : 'Copy & Open UPI app'}
+                      {copied ? '✓ Copied' : 'Copy UPI ID'}
                     </button>
                     {shareSupported && (
                       <button onClick={shareVpa}
@@ -1793,9 +1794,10 @@ function PaymentChunk({
                   </div>
                 </div>
                 <div className="text-[11px] text-[#7A8C7E] leading-relaxed space-y-1">
-                  <p>1. Tap <strong>Copy &amp; Open UPI app</strong> — your UPI apps will open with the UPI ID already copied. (Or Share the UPI ID if someone else is paying for you.)</p>
-                  <p>2. Pick your UPI app, paste the UPI ID, enter ₹{intentData.amount.toLocaleString(locale)}, and pay.</p>
-                  <p>3. Come back here and tap <strong>I&apos;ve paid</strong>.</p>
+                  <p>1. Tap <strong>Copy UPI ID</strong>. (Or Share the UPI ID if someone else is paying for you.)</p>
+                  <p>2. Open your UPI app yourself (PhonePe, GPay, Paytm, BHIM…) from your phone&apos;s home screen. Tap the &quot;Send money&quot; or &quot;Pay&quot; option and paste the UPI ID as the recipient.</p>
+                  <p>3. Enter ₹{intentData.amount.toLocaleString(locale)} as the amount and pay.</p>
+                  <p>4. Come back here and tap <strong>I&apos;ve paid</strong>.</p>
                 </div>
                 <div className="pt-2 border-t border-[#F0E5D0] space-y-2">
                   <input value={txnRef}
