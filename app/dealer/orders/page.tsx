@@ -56,6 +56,20 @@ interface PackingBatch {
   fc_tentative_cancel?: number
   fc_undecided?: number
   fc_submit_ready?: boolean
+  // 2026-08-21 — Payment UPI v1. Per-batch payment lifecycle running
+  // in parallel to the pickup lifecycle. status = PENDING → FARMER_
+  // MARKED_PAID → DEALER_CONFIRMED. dealer_upi_available drives the
+  // farmer's Pay button; on the dealer side this tells us whether
+  // the flow is even applicable.
+  batch_payment?: {
+    mode: 'UPI' | 'CASH' | 'CREDIT' | null
+    amount: number
+    status: 'PENDING' | 'FARMER_MARKED_PAID' | 'DEALER_CONFIRMED'
+    txn_ref: string | null
+    farmer_marked_at: string | null
+    dealer_confirmed_at: string | null
+    dealer_upi_available: boolean
+  }
   items: PackingItem[]
 }
 
@@ -609,6 +623,23 @@ function DealerOrdersInner() {
     } finally { setBusy(null) }
   }
 
+  async function confirmBatchPayment(orderId: string, approvalRound: number) {
+    // 2026-08-21 — UPI v1 dealer-confirm. Farmer must have marked-paid
+    // first (backend enforces). Confirmation is dealer's independent
+    // verification in their own UPI app.
+    setBusy(orderId)
+    try {
+      await api.put(
+        `/dealer/orders/${orderId}/batches/${approvalRound}/confirm-payment`,
+        {},
+      )
+      await load()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not confirm payment. Please try again.')
+    } finally { setBusy(null) }
+  }
+
   async function undoFinalConfirmItemFromList(orderId: string, itemId: string) {
     // Safety-net undo AFTER Submit (until packing list is picked up).
     // Different from setFcPending(null) which just clears the pre-Submit
@@ -808,6 +839,7 @@ function DealerOrdersInner() {
                 onSetFcPending={setFcPending}
                 onSubmitFcBatch={submitFcBatch}
                 onUndoFinalConfirmItem={undoFinalConfirmItemFromList}
+                onConfirmPayment={confirmBatchPayment}
                 onAcceptSeed={acceptSeed}
                 onConfirmDeclineSeed={(id) => setConfirmDeclineSeedId(id)}
                 onSubmitSeed={submitSeed}
@@ -1036,7 +1068,7 @@ function DealerOrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed,
-  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem,
+  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem, onConfirmPayment,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy,
@@ -1056,6 +1088,7 @@ function DealerOrderIdCard({
   onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
   onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
+  onConfirmPayment: (orderId: string, approvalRound: number) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -1098,6 +1131,7 @@ function DealerOrderIdCard({
                 onSetFcPending={onSetFcPending}
                 onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
+                onConfirmPayment={onConfirmPayment}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -1114,6 +1148,7 @@ function DealerOrderIdCard({
                 onSetFcPending={onSetFcPending}
                 onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
+                onConfirmPayment={onConfirmPayment}
                 onAcceptSeed={onAcceptSeed}
                 onConfirmDeclineSeed={onConfirmDeclineSeed}
                 onSubmitSeed={onSubmitSeed}
@@ -1297,7 +1332,7 @@ function DealerOrderCardHeader({
 function DealerPillChunk({
   sub, pill, onShare, onRemove, onOpenDetail, onHandoverSeed,
   onFinalConfirmSeed, onCancelFinalConfirmSeed,
-  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem,
+  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem, onConfirmPayment,
   onAcceptSeed, onConfirmDeclineSeed, onSubmitSeed,
   onOpenPostponeSeed, onMarkNotAvailableSeed,
   busy, showSubHeader,
@@ -1313,6 +1348,7 @@ function DealerPillChunk({
   onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
   onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
+  onConfirmPayment: (orderId: string, approvalRound: number) => void
   onAcceptSeed: (id: string) => void
   onConfirmDeclineSeed: (id: string) => void
   onSubmitSeed: (id: string, form: { unit: string; quantity: string; total_price: string }) => void
@@ -1419,6 +1455,7 @@ function DealerPillChunk({
                 onSetFcPending={onSetFcPending}
                 onSubmitFcBatch={onSubmitFcBatch}
                 onUndoFinalConfirmItem={onUndoFinalConfirmItem}
+                onConfirmPayment={onConfirmPayment}
                 busy={busy === sub.id} />
             ))}
         </div>
@@ -1503,6 +1540,7 @@ function DealerPillChunk({
                   onSetFcPending={onSetFcPending}
                   onSubmitFcBatch={onSubmitFcBatch}
                   onUndoFinalConfirmItem={onUndoFinalConfirmItem}
+                onConfirmPayment={onConfirmPayment}
                   busy={busy === sub.id} />
               ))}
           </div>
@@ -1630,7 +1668,7 @@ function SeedPendingChunk({
 // Confirmation) and the 'packing' pill (batches ready to hand over).
 function PackingChunk({
   order, batch, onShare, onRemove,
-  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem, busy,
+  onSetFcPending, onSubmitFcBatch, onUndoFinalConfirmItem, onConfirmPayment, busy,
 }: {
   order: Order
   batch: PackingBatch
@@ -1639,6 +1677,7 @@ function PackingChunk({
   onSetFcPending: (orderId: string, itemId: string, decision: 'CONFIRM' | 'CANCEL' | null) => void
   onSubmitFcBatch: (orderId: string, approvalRound: number) => void
   onUndoFinalConfirmItem: (orderId: string, itemId: string) => void
+  onConfirmPayment: (orderId: string, approvalRound: number) => void
   busy: boolean
 }) {
   const pickedUp = !!batch.picked_up_at
@@ -1691,6 +1730,36 @@ function PackingChunk({
           </p>
         )}
         <BatchPickupStatus batch={batch} order={order} />
+        {/* 2026-08-21 — Payment UPI v1 chip. Runs in parallel to the
+            pickup lifecycle. FARMER_MARKED_PAID → dealer taps
+            "Confirm payment" after verifying in their UPI app.
+            DEALER_CONFIRMED is terminal for v1. */}
+        {batch.batch_payment?.status === 'FARMER_MARKED_PAID' && (
+          <div className="mt-2 flex items-center justify-between gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+            <div className="min-w-0">
+              <p className="text-xs text-blue-900 font-semibold">
+                Farmer marked ₹{batch.batch_payment.amount.toLocaleString(locale)} paid via UPI
+              </p>
+              {batch.batch_payment.txn_ref && (
+                <p className="text-[10px] text-blue-700 mt-0.5 truncate">
+                  Ref: {batch.batch_payment.txn_ref}
+                </p>
+              )}
+            </div>
+            <button onClick={() => onConfirmPayment(order.id, batch.approval_round)}
+              disabled={busy}
+              className="shrink-0 bg-blue-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg disabled:opacity-50">
+              {busy ? '…' : 'Confirm receipt'}
+            </button>
+          </div>
+        )}
+        {batch.batch_payment?.status === 'DEALER_CONFIRMED' && (
+          <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+            <p className="text-xs text-emerald-800 font-semibold">
+              ✓ Payment received · ₹{batch.batch_payment.amount.toLocaleString(locale)} via UPI
+            </p>
+          </div>
+        )}
       </div>
       <div className="divide-y divide-purple-100">
         {batch.items.map(it => (

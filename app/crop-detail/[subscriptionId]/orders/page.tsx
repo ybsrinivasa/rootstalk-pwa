@@ -87,6 +87,16 @@ type SubOrder = {
     final_confirmed: number
     all_final_confirmed: boolean
     item_count: number
+    // 2026-08-21 — Payment UPI v1.
+    batch_payment?: {
+      mode: 'UPI' | 'CASH' | 'CREDIT' | null
+      amount: number
+      status: 'PENDING' | 'FARMER_MARKED_PAID' | 'DEALER_CONFIRMED'
+      txn_ref: string | null
+      farmer_marked_at: string | null
+      dealer_confirmed_at: string | null
+      dealer_upi_available: boolean
+    }
   }[]
   // 2026-08-17 — Per-batch approvals. One entry per SFA round on this
   // order. Farmer's For Approval pill lists one card per (order,batch).
@@ -975,6 +985,7 @@ function ManageTab({
           onDiscard={discardOrder}
           onMarkReceivedSeed={markReceivedSeed}
           busy={busy}
+          reload={reload}
         />
       ))}
 
@@ -1035,7 +1046,7 @@ function computeRoutedFooterMode(sub: SubOrder | undefined): RoutedFooterMode {
 function OrderIdCard({
   orderId, subs, matching, pill, expanded, onToggleExpand,
   onCancel, onDelete, onSend, onDiscard,
-  onMarkReceivedSeed, busy,
+  onMarkReceivedSeed, busy, reload,
 }: {
   orderId: string
   subs: SubOrder[]
@@ -1049,6 +1060,7 @@ function OrderIdCard({
   onDiscard: (id: string, kind: 'REGULAR' | 'SEED') => void
   onMarkReceivedSeed: (id: string) => void
   busy: string | null
+  reload: () => Promise<void>
 }) {
   const t = useTranslations('orders.cropOrders.manage')
   const head = subs[0]
@@ -1082,12 +1094,12 @@ function OrderIdCard({
           ? matching.map(sub => (
               <FarmerPillChunk key={sub.id} sub={sub} pill={pill}
                 onMarkReceivedSeed={onMarkReceivedSeed}
-                busy={busy} showSubHeader />
+                busy={busy} showSubHeader reload={reload} />
             ))
           : matching.length === 1 && (
               <FarmerPillChunk sub={matching[0]} pill={pill}
                 onMarkReceivedSeed={onMarkReceivedSeed}
-                busy={busy} />
+                busy={busy} reload={reload} />
             )
         }
       </div>
@@ -1231,13 +1243,14 @@ function OrderCardHeader({
 }
 
 function FarmerPillChunk({
-  sub, pill, onMarkReceivedSeed, busy, showSubHeader,
+  sub, pill, onMarkReceivedSeed, busy, showSubHeader, reload,
 }: {
   sub: SubOrder
   pill: Pill
   onMarkReceivedSeed: (id: string) => void
   busy: string | null
   showSubHeader?: boolean
+  reload: () => Promise<void>
 }) {
   const router = useRouter()
   const t = useTranslations('orders.cropOrders.chunk')
@@ -1263,6 +1276,9 @@ function FarmerPillChunk({
         ) : (
           <PickupChunk sub={sub} />
         )
+      )}
+      {(pill === 'routed' || pill === 'approval' || pill === 'pickup') && (
+        <PaymentChunk sub={sub} reload={reload} />
       )}
       {(pill === 'routed' || pill === 'approval') && (
         <PostponedStrip sub={sub} pill={pill} />
@@ -1563,6 +1579,144 @@ function PickupChunk({ sub }: { sub: SubOrder }) {
               </span>
             </div>
           </button>
+        )
+      })}
+    </div>
+  )
+}
+
+// 2026-08-21 — Payment UPI v1. Per-batch pay button + chip. Renders
+// alongside RoutedChunk / ApprovalChunk / PickupChunk so the farmer
+// can pay any time post-approval (advance) or at pickup.
+function PaymentChunk({
+  sub, reload,
+}: {
+  sub: SubOrder
+  reload: () => Promise<void>
+}) {
+  const locale = useLocale()
+  const [paying, setPaying] = useState<number | null>(null)
+  const [markingRound, setMarkingRound] = useState<number | null>(null)
+  const [askTxnRound, setAskTxnRound] = useState<number | null>(null)
+  const [txnRef, setTxnRef] = useState('')
+
+  // Only regular (non-seed) orders wired for UPI in v1.
+  if (sub.kind === 'SEED') return null
+  const eligible = (sub.packing_batches ?? []).filter(b => {
+    const p = b.batch_payment
+    if (!p) return false
+    // Nothing to show unless the batch has a chargeable amount.
+    if (!p.amount || p.amount <= 0) return false
+    // Terminal on the farmer's side — dealer already confirmed. Chip
+    // stays visible so the farmer sees "Paid ✓" through pickup and
+    // beyond, unless the packing batch is fully received (then the
+    // whole payment story is done + we could drop it — but keeping
+    // it visible reassures over reruns).
+    return true
+  })
+  if (eligible.length === 0) return null
+
+  async function payViaUpi(round: number) {
+    setPaying(round)
+    try {
+      const { data } = await api.get<{ upi_url: string }>(
+        `/farmer/orders/${sub.id}/batches/${round}/payment-intent`,
+      )
+      window.location.href = data.upi_url
+      // After the deep-link kick-off, prompt the farmer to confirm.
+      setTimeout(() => setAskTxnRound(round), 800)
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not open UPI. Please try again.')
+    } finally { setPaying(null) }
+  }
+
+  async function submitMarkPaid(round: number, ref: string | null) {
+    setMarkingRound(round)
+    try {
+      await api.post(
+        `/farmer/orders/${sub.id}/batches/${round}/mark-paid`,
+        { txn_ref: ref },
+      )
+      setAskTxnRound(null)
+      setTxnRef('')
+      await reload()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } } } }
+      alert(e?.response?.data?.detail?.message ?? 'Could not mark paid. Please try again.')
+    } finally { setMarkingRound(null) }
+  }
+
+  return (
+    <div className="space-y-1.5 pt-1">
+      {eligible.map(b => {
+        const p = b.batch_payment!
+        const isMulti = (sub.packing_batches ?? []).length > 1
+        const batchLabel = isMulti ? `Batch ${b.approval_round} · ` : ''
+        if (p.status === 'DEALER_CONFIRMED') {
+          return (
+            <div key={b.approval_round} className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+              <p className="text-xs text-emerald-800 font-semibold">
+                ✓ {batchLabel}Payment received · ₹{p.amount.toLocaleString(locale)}
+              </p>
+            </div>
+          )
+        }
+        if (p.status === 'FARMER_MARKED_PAID') {
+          return (
+            <div key={b.approval_round} className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+              <p className="text-xs text-blue-800 font-semibold">
+                {batchLabel}Marked paid ₹{p.amount.toLocaleString(locale)} · awaiting dealer confirmation
+              </p>
+            </div>
+          )
+        }
+        // status === 'PENDING' — offer the Pay button IF dealer has UPI set up.
+        if (!p.dealer_upi_available) {
+          return (
+            <div key={b.approval_round} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-1.5">
+              <p className="text-[11px] text-[#7A8C7E]">
+                {batchLabel}₹{p.amount.toLocaleString(locale)} due · dealer hasn&apos;t set up UPI
+              </p>
+            </div>
+          )
+        }
+        return (
+          <div key={b.approval_round} className="bg-white border border-[#DDD0B8] rounded-lg px-3 py-2 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-[#6B3F1F] font-medium">
+                {batchLabel}₹{p.amount.toLocaleString(locale)} due
+              </p>
+              <button onClick={() => payViaUpi(b.approval_round)}
+                disabled={paying === b.approval_round}
+                className="text-[11px] font-semibold text-white bg-[#3A7D44] px-3 py-1.5 rounded-lg disabled:opacity-50">
+                {paying === b.approval_round ? '…' : 'Pay via UPI'}
+              </button>
+            </div>
+            {askTxnRound === b.approval_round && (
+              <div className="pt-1.5 border-t border-[#F0E5D0] space-y-1.5">
+                <p className="text-[11px] text-[#7A8C7E]">
+                  After paying, tap below to confirm. Transaction ID is optional.
+                </p>
+                <input value={txnRef}
+                  onChange={e => setTxnRef(e.target.value)}
+                  placeholder="Transaction ID (optional)"
+                  className="w-full text-xs border border-[#DDD0B8] rounded-lg px-2.5 py-1.5" />
+                <div className="flex gap-1.5">
+                  <button onClick={() => { setAskTxnRound(null); setTxnRef('') }}
+                    disabled={markingRound === b.approval_round}
+                    className="flex-1 text-[11px] border border-[#DDD0B8] text-[#6B3F1F] py-1.5 rounded-lg">
+                    Not yet
+                  </button>
+                  <button onClick={() => submitMarkPaid(b.approval_round, txnRef.trim() || null)}
+                    disabled={markingRound === b.approval_round}
+                    className="flex-1 text-[11px] bg-[#3A7D44] text-white font-semibold py-1.5 rounded-lg disabled:opacity-50">
+                    {markingRound === b.approval_round ? '…' : "I've paid"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         )
       })}
     </div>

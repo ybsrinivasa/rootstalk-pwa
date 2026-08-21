@@ -32,6 +32,15 @@ type FormState = {
   shop_gps_lng: number | null
   shop_registration_url: string
   shop_photo_url: string
+  // 2026-08-21 — Payment UPI v1. When upi_vpa is set, the farmer's
+  // approval / pickup / packing surfaces render a "Pay via UPI"
+  // button that opens a `upi://pay?pa=<upi_vpa>&...` intent link.
+  // upi_phone is optional (UPI-linked phone if different from login).
+  // payment_display_name is what the farmer sees in their UPI app;
+  // defaults to shop_name when blank.
+  upi_vpa: string
+  upi_phone: string
+  payment_display_name: string
 }
 
 // Local-only — not persisted. Captured once per geolocation call
@@ -57,6 +66,9 @@ export default function DealerProfilePage() {
     shop_gps_lng: null,
     shop_registration_url: '',
     shop_photo_url: '',
+    upi_vpa: '',
+    upi_phone: '',
+    payment_display_name: '',
   })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -84,6 +96,9 @@ export default function DealerProfilePage() {
         shop_gps_lng: r.data.shop_gps_lng ?? null,
         shop_registration_url: r.data.shop_registration_url || '',
         shop_photo_url: r.data.shop_photo_url || '',
+        upi_vpa: r.data.upi_vpa || '',
+        upi_phone: r.data.upi_phone || '',
+        payment_display_name: r.data.payment_display_name || '',
       })
     }).catch(() => {})
   }, [router])
@@ -476,6 +491,54 @@ export default function DealerProfilePage() {
             <p className="text-xs mt-1">{uploadError}</p>
           </div>
         )}
+
+        {/* 2026-08-21 — Payment UPI v1 setup. Optional at profile
+            completeness (dealer can skip if not offering UPI yet).
+            When upi_vpa is set, farmers see "Pay via UPI" on their
+            approval / pickup cards for this dealer's orders. */}
+        <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4 space-y-3">
+          <div>
+            <h2 className="font-semibold text-[#6B3F1F]">Payment (UPI)</h2>
+            <p className="text-xs text-[#7A8C7E] mt-0.5">
+              Enter your UPI address so farmers can pay you through their
+              UPI app. Optional — leave blank if you don&apos;t use UPI yet.
+            </p>
+          </div>
+          <div>
+            <label className="block text-xs text-[#7A8C7E] mb-1 font-medium">
+              UPI ID / VPA (e.g. name@bank)
+            </label>
+            <input value={form.upi_vpa}
+              onChange={e => setForm(f => ({ ...f, upi_vpa: e.target.value }))}
+              placeholder="yourname@upi"
+              className="w-full text-sm border border-[#DDD0B8] rounded-xl px-3 py-2.5"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false} />
+          </div>
+          <div>
+            <label className="block text-xs text-[#7A8C7E] mb-1 font-medium">
+              UPI-linked phone (optional)
+            </label>
+            <input value={form.upi_phone}
+              onChange={e => setForm(f => ({ ...f, upi_phone: e.target.value }))}
+              placeholder="Only if different from your login phone"
+              inputMode="tel"
+              className="w-full text-sm border border-[#DDD0B8] rounded-xl px-3 py-2.5" />
+          </div>
+          <div>
+            <label className="block text-xs text-[#7A8C7E] mb-1 font-medium">
+              Display name (optional)
+            </label>
+            <input value={form.payment_display_name}
+              onChange={e => setForm(f => ({ ...f, payment_display_name: e.target.value }))}
+              placeholder={form.shop_name || 'What the farmer sees in their UPI app'}
+              className="w-full text-sm border border-[#DDD0B8] rounded-xl px-3 py-2.5" />
+            <p className="text-[10px] text-[#7A8C7E] mt-1">
+              Leave blank to use your shop name.
+            </p>
+          </div>
+        </div>
 
         <button onClick={save} disabled={saving || profileIncomplete}
           className="w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-40 transition-opacity"

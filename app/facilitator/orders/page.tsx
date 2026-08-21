@@ -89,6 +89,18 @@ interface Order {
     awaiting_final_confirmation: number
     final_confirmed: number
     all_final_confirmed: boolean
+    // 2026-08-21 — Payment UPI v1. Facilitator sees the chip so they
+    // know whether the farmer already paid (advance UPI) or still
+    // owes at pickup — prevents double-collection.
+    batch_payment?: {
+      mode: 'UPI' | 'CASH' | 'CREDIT' | null
+      amount: number
+      status: 'PENDING' | 'FARMER_MARKED_PAID' | 'DEALER_CONFIRMED'
+      txn_ref: string | null
+      farmer_marked_at: string | null
+      dealer_confirmed_at: string | null
+      dealer_upi_available: boolean
+    }
     items: {
       id: string
       brand_name: string | null
@@ -1188,6 +1200,26 @@ function PillChunk({
                     </p>
                   )}
                   <PickupItemsList items={b.items} />
+                  {/* 2026-08-21 — Payment UPI v1 chip. Prevents the
+                      facilitator from collecting cash on a batch the
+                      farmer has already paid (or is about to pay) via
+                      UPI. Chip visible for FARMER_MARKED_PAID and
+                      DEALER_CONFIRMED states; PENDING/no-row states
+                      hidden (nothing informative yet). */}
+                  {b.batch_payment?.status === 'DEALER_CONFIRMED' && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 mt-2">
+                      <p className="text-[11px] text-emerald-900 font-semibold">
+                        ✓ Farmer paid ₹{b.batch_payment.amount.toLocaleString()} via UPI — do not collect
+                      </p>
+                    </div>
+                  )}
+                  {b.batch_payment?.status === 'FARMER_MARKED_PAID' && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 mt-2">
+                      <p className="text-[11px] text-blue-900 font-semibold">
+                        Farmer marked ₹{b.batch_payment.amount.toLocaleString()} paid via UPI — check with dealer before collecting
+                      </p>
+                    </div>
+                  )}
                   {!b.picked_up_at ? (
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mt-2">
                       <p className="text-xs text-emerald-900 mb-2">
