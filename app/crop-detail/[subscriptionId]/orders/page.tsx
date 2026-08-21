@@ -1793,10 +1793,37 @@ function PaymentChunk({
                     )}
                   </div>
                 </div>
+                {/* 2026-08-21 — Open-UPI-app buttons. Each fires the
+                    app's own custom URI scheme which just opens the
+                    app (no payment context = no NPCI block). Farmer
+                    lands on the app's home / lock screen, unlocks,
+                    taps Send Money, pastes the copied VPA. Only
+                    apps we ship are the four with meaningful market
+                    share; any UPI app the farmer prefers can still
+                    be opened from the phone's home screen. */}
+                <div>
+                  <p className="text-[11px] text-[#7A8C7E] mb-2">
+                    Open your UPI app:
+                  </p>
+                  <div className="grid grid-cols-4 gap-2">
+                    <a href="phonepe://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                      PhonePe
+                    </a>
+                    <a href="tez://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                      GPay
+                    </a>
+                    <a href="paytmmp://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                      Paytm
+                    </a>
+                    <a href="bhim://" className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
+                      BHIM
+                    </a>
+                  </div>
+                </div>
                 <div className="text-[11px] text-[#7A8C7E] leading-relaxed space-y-1">
-                  <p>1. Tap <strong>Copy UPI ID</strong>. (Or Share the UPI ID if someone else is paying for you.)</p>
-                  <p>2. Open your UPI app yourself (PhonePe, GPay, Paytm, BHIM…) from your phone&apos;s home screen. Tap the &quot;Send money&quot; or &quot;Pay&quot; option and paste the UPI ID as the recipient.</p>
-                  <p>3. Enter ₹{intentData.amount.toLocaleString(locale)} as the amount and pay.</p>
+                  <p>1. Tap <strong>Copy UPI ID</strong>.</p>
+                  <p>2. Tap your UPI app above to open it (or open it yourself if you use a different one).</p>
+                  <p>3. In your UPI app, tap &quot;Send money&quot; or &quot;Pay&quot;, paste the UPI ID as recipient, enter ₹{intentData.amount.toLocaleString(locale)}, and pay.</p>
                   <p>4. Come back here and tap <strong>I&apos;ve paid</strong>.</p>
                 </div>
                 <div className="pt-2 border-t border-[#F0E5D0] space-y-2">
