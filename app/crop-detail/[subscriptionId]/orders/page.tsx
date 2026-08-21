@@ -1595,131 +1595,223 @@ function PaymentChunk({
   reload: () => Promise<void>
 }) {
   const locale = useLocale()
-  const [paying, setPaying] = useState<number | null>(null)
-  const [markingRound, setMarkingRound] = useState<number | null>(null)
-  const [askTxnRound, setAskTxnRound] = useState<number | null>(null)
+  const [openRound, setOpenRound] = useState<number | null>(null)
+  const [intentData, setIntentData] = useState<{
+    dealer_vpa: string
+    dealer_display_name: string
+    amount: number
+    reference: string
+  } | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
   const [txnRef, setTxnRef] = useState('')
+  const [marking, setMarking] = useState(false)
 
   // Only regular (non-seed) orders wired for UPI in v1.
   if (sub.kind === 'SEED') return null
   const eligible = (sub.packing_batches ?? []).filter(b => {
     const p = b.batch_payment
     if (!p) return false
-    // Nothing to show unless the batch has a chargeable amount.
     if (!p.amount || p.amount <= 0) return false
-    // Terminal on the farmer's side — dealer already confirmed. Chip
-    // stays visible so the farmer sees "Paid ✓" through pickup and
-    // beyond, unless the packing batch is fully received (then the
-    // whole payment story is done + we could drop it — but keeping
-    // it visible reassures over reruns).
     return true
   })
   if (eligible.length === 0) return null
 
-  async function payViaUpi(round: number) {
-    setPaying(round)
+  async function openPaySheet(round: number) {
+    setOpenRound(round)
+    setCopied(false)
+    setTxnRef('')
+    setIntentData(null)
+    setLoading(true)
     try {
-      const { data } = await api.get<{ upi_url: string }>(
-        `/farmer/orders/${sub.id}/batches/${round}/payment-intent`,
-      )
-      window.location.href = data.upi_url
-      // After the deep-link kick-off, prompt the farmer to confirm.
-      setTimeout(() => setAskTxnRound(round), 800)
+      const { data } = await api.get<{
+        dealer_vpa: string
+        dealer_display_name: string
+        amount: number
+        reference: string
+      }>(`/farmer/orders/${sub.id}/batches/${round}/payment-intent`)
+      setIntentData(data)
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
-      alert(e?.response?.data?.detail?.message ?? 'Could not open UPI. Please try again.')
-    } finally { setPaying(null) }
+      alert(e?.response?.data?.detail?.message ?? 'Could not load payment details.')
+      setOpenRound(null)
+    } finally { setLoading(false) }
   }
 
-  async function submitMarkPaid(round: number, ref: string | null) {
-    setMarkingRound(round)
+  async function copyVpa(vpa: string) {
+    try {
+      await navigator.clipboard.writeText(vpa)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      // Rare — no clipboard permission. Fall back to a browser prompt.
+      window.prompt('Copy this UPI ID:', vpa)
+    }
+  }
+
+  async function shareVpa() {
+    if (!intentData) return
+    const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> }
+    if (!nav.share) return
+    try {
+      await nav.share({
+        title: 'UPI ID for RootsTalk order',
+        text: `Please pay ₹${intentData.amount.toLocaleString(locale)} to ${intentData.dealer_display_name}\nUPI ID: ${intentData.dealer_vpa}\nNote: ${intentData.reference}`,
+      })
+    } catch {
+      // User cancelled the share sheet — no-op
+    }
+  }
+
+  async function submitMarkPaid() {
+    if (openRound === null) return
+    setMarking(true)
     try {
       await api.post(
-        `/farmer/orders/${sub.id}/batches/${round}/mark-paid`,
-        { txn_ref: ref },
+        `/farmer/orders/${sub.id}/batches/${openRound}/mark-paid`,
+        { txn_ref: txnRef.trim() || null },
       )
-      setAskTxnRound(null)
+      setOpenRound(null)
       setTxnRef('')
+      setIntentData(null)
       await reload()
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
       alert(e?.response?.data?.detail?.message ?? 'Could not mark paid. Please try again.')
-    } finally { setMarkingRound(null) }
+    } finally { setMarking(false) }
   }
 
+  const shareSupported = typeof navigator !== 'undefined' && !!(navigator as Navigator & { share?: unknown }).share
+
   return (
-    <div className="space-y-1.5 pt-1">
-      {eligible.map(b => {
-        const p = b.batch_payment!
-        const isMulti = (sub.packing_batches ?? []).length > 1
-        const batchLabel = isMulti ? `Batch ${b.approval_round} · ` : ''
-        if (p.status === 'DEALER_CONFIRMED') {
-          return (
-            <div key={b.approval_round} className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
-              <p className="text-xs text-emerald-800 font-semibold">
-                ✓ {batchLabel}Payment received · ₹{p.amount.toLocaleString(locale)}
-              </p>
-            </div>
-          )
-        }
-        if (p.status === 'FARMER_MARKED_PAID') {
-          return (
-            <div key={b.approval_round} className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
-              <p className="text-xs text-blue-800 font-semibold">
-                {batchLabel}Marked paid ₹{p.amount.toLocaleString(locale)} · awaiting dealer confirmation
-              </p>
-            </div>
-          )
-        }
-        // status === 'PENDING' — offer the Pay button IF dealer has UPI set up.
-        if (!p.dealer_upi_available) {
-          return (
-            <div key={b.approval_round} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-1.5">
-              <p className="text-[11px] text-[#7A8C7E]">
-                {batchLabel}₹{p.amount.toLocaleString(locale)} due · dealer hasn&apos;t set up UPI
-              </p>
-            </div>
-          )
-        }
-        return (
-          <div key={b.approval_round} className="bg-white border border-[#DDD0B8] rounded-lg px-3 py-2 space-y-1.5">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs text-[#6B3F1F] font-medium">
-                {batchLabel}₹{p.amount.toLocaleString(locale)} due
-              </p>
-              <button onClick={() => payViaUpi(b.approval_round)}
-                disabled={paying === b.approval_round}
-                className="text-[11px] font-semibold text-white bg-[#3A7D44] px-3 py-1.5 rounded-lg disabled:opacity-50">
-                {paying === b.approval_round ? '…' : 'Pay via UPI'}
-              </button>
-            </div>
-            {askTxnRound === b.approval_round && (
-              <div className="pt-1.5 border-t border-[#F0E5D0] space-y-1.5">
-                <p className="text-[11px] text-[#7A8C7E]">
-                  After paying, tap below to confirm. Transaction ID is optional.
+    <>
+      <div className="space-y-1.5 pt-1">
+        {eligible.map(b => {
+          const p = b.batch_payment!
+          const isMulti = (sub.packing_batches ?? []).length > 1
+          const batchLabel = isMulti ? `Batch ${b.approval_round} · ` : ''
+          if (p.status === 'DEALER_CONFIRMED') {
+            return (
+              <div key={b.approval_round} className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+                <p className="text-xs text-emerald-800 font-semibold">
+                  ✓ {batchLabel}Payment received · ₹{p.amount.toLocaleString(locale)}
                 </p>
-                <input value={txnRef}
-                  onChange={e => setTxnRef(e.target.value)}
-                  placeholder="Transaction ID (optional)"
-                  className="w-full text-xs border border-[#DDD0B8] rounded-lg px-2.5 py-1.5" />
-                <div className="flex gap-1.5">
-                  <button onClick={() => { setAskTxnRound(null); setTxnRef('') }}
-                    disabled={markingRound === b.approval_round}
-                    className="flex-1 text-[11px] border border-[#DDD0B8] text-[#6B3F1F] py-1.5 rounded-lg">
-                    Not yet
-                  </button>
-                  <button onClick={() => submitMarkPaid(b.approval_round, txnRef.trim() || null)}
-                    disabled={markingRound === b.approval_round}
-                    className="flex-1 text-[11px] bg-[#3A7D44] text-white font-semibold py-1.5 rounded-lg disabled:opacity-50">
-                    {markingRound === b.approval_round ? '…' : "I've paid"}
-                  </button>
-                </div>
               </div>
+            )
+          }
+          if (p.status === 'FARMER_MARKED_PAID') {
+            return (
+              <div key={b.approval_round} className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+                <p className="text-xs text-blue-800 font-semibold">
+                  {batchLabel}Marked paid ₹{p.amount.toLocaleString(locale)} · awaiting dealer confirmation
+                </p>
+              </div>
+            )
+          }
+          if (!p.dealer_upi_available) {
+            return (
+              <div key={b.approval_round} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-1.5">
+                <p className="text-[11px] text-[#7A8C7E]">
+                  {batchLabel}₹{p.amount.toLocaleString(locale)} due · dealer hasn&apos;t set up UPI
+                </p>
+              </div>
+            )
+          }
+          return (
+            <div key={b.approval_round} className="bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs text-[#6B3F1F] font-medium">
+                  {batchLabel}₹{p.amount.toLocaleString(locale)} due
+                </p>
+                <button onClick={() => openPaySheet(b.approval_round)}
+                  className="text-[11px] font-semibold text-white bg-[#3A7D44] px-3 py-1.5 rounded-lg">
+                  Pay via UPI
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* 2026-08-21 — Payment sheet. Copy UPI ID is the primary path
+          (personal-VPA deep links get blocked by PhonePe/GPay under
+          NPCI's tightened P2M rules). Share option covers the "have
+          someone else pay for me" case. No deep-link button — it
+          fails often enough that surfacing it would erode trust in
+          the app. */}
+      {openRound !== null && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4"
+          onClick={() => !marking && setOpenRound(null)}>
+          <div className="bg-white w-full max-w-md rounded-2xl p-5 space-y-4"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-baseline justify-between">
+              <h3 className="text-sm font-bold text-[#6B3F1F]">Pay via UPI</h3>
+              <button onClick={() => !marking && setOpenRound(null)} className="text-[#7A8C7E] text-lg leading-none">×</button>
+            </div>
+            {loading || !intentData ? (
+              <div className="h-32 bg-stone-100 rounded-xl animate-pulse" />
+            ) : (
+              <>
+                <div className="bg-[#F5F0E8]/60 rounded-xl px-4 py-3 space-y-1">
+                  <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">To pay</p>
+                  <p className="text-2xl font-bold text-[#7D4196]">
+                    ₹{intentData.amount.toLocaleString(locale)}
+                  </p>
+                  <p className="text-xs text-[#6B3F1F]">
+                    To <strong>{intentData.dealer_display_name}</strong>
+                  </p>
+                  <p className="text-[10px] text-[#7A8C7E] font-mono mt-1">
+                    Note: {intentData.reference}
+                  </p>
+                </div>
+                <div className="bg-white border border-[#DDD0B8] rounded-xl px-4 py-3">
+                  <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide mb-1">UPI ID</p>
+                  <p className="text-base font-mono font-bold text-[#6B3F1F] break-all">
+                    {intentData.dealer_vpa}
+                  </p>
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => copyVpa(intentData.dealer_vpa)}
+                      className="flex-1 py-2 rounded-lg text-white text-xs font-semibold"
+                      style={{ background: '#3A7D44' }}>
+                      {copied ? '✓ Copied' : 'Copy UPI ID'}
+                    </button>
+                    {shareSupported && (
+                      <button onClick={shareVpa}
+                        className="flex-1 py-2 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-semibold">
+                        Share
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="text-[11px] text-[#7A8C7E] leading-relaxed space-y-1">
+                  <p>1. Copy the UPI ID above (or Share it with someone paying for you).</p>
+                  <p>2. Open your UPI app (PhonePe, GPay, Paytm, BHIM…), paste it, and pay ₹{intentData.amount.toLocaleString(locale)}.</p>
+                  <p>3. Come back here and tap <strong>I&apos;ve paid</strong>.</p>
+                </div>
+                <div className="pt-2 border-t border-[#F0E5D0] space-y-2">
+                  <input value={txnRef}
+                    onChange={e => setTxnRef(e.target.value)}
+                    placeholder="Transaction ID (optional)"
+                    className="w-full text-xs border border-[#DDD0B8] rounded-lg px-3 py-2" />
+                  <div className="flex gap-2">
+                    <button onClick={() => setOpenRound(null)}
+                      disabled={marking}
+                      className="flex-1 text-xs border border-[#DDD0B8] text-[#6B3F1F] font-medium py-2.5 rounded-xl">
+                      Not yet
+                    </button>
+                    <button onClick={submitMarkPaid}
+                      disabled={marking}
+                      className="flex-1 text-xs bg-[#3A7D44] text-white font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                      {marking ? '…' : "I've paid"}
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
-        )
-      })}
-    </div>
+        </div>
+      )}
+    </>
   )
 }
 
