@@ -1638,15 +1638,25 @@ function PaymentChunk({
     } finally { setLoading(false) }
   }
 
-  async function copyVpa(vpa: string) {
+  async function copyVpaAndOpenUpi(vpa: string) {
+    // 2026-08-21 — Copy + lead-to-UPI-app flow. `upi://pay` with no
+    // query params opens the OS UPI-app chooser without carrying a
+    // P2M payment intent (which is what NPCI blocks for personal
+    // VPAs). User picks their app, pastes the VPA from clipboard,
+    // enters amount, pays. Cleaner than making them navigate out
+    // of the PWA themselves.
     try {
       await navigator.clipboard.writeText(vpa)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
     } catch {
-      // Rare — no clipboard permission. Fall back to a browser prompt.
       window.prompt('Copy this UPI ID:', vpa)
+      setCopied(true)
     }
+    // 500ms — long enough to flash "Copied" on the button, short
+    // enough to feel immediate.
+    setTimeout(() => {
+      window.location.href = 'upi://pay'
+    }, 500)
   }
 
   async function shareVpa() {
@@ -1770,10 +1780,10 @@ function PaymentChunk({
                     {intentData.dealer_vpa}
                   </p>
                   <div className="flex gap-2 mt-3">
-                    <button onClick={() => copyVpa(intentData.dealer_vpa)}
+                    <button onClick={() => copyVpaAndOpenUpi(intentData.dealer_vpa)}
                       className="flex-1 py-2 rounded-lg text-white text-xs font-semibold"
                       style={{ background: '#3A7D44' }}>
-                      {copied ? '✓ Copied' : 'Copy UPI ID'}
+                      {copied ? '✓ Copied · opening UPI app…' : 'Copy & Open UPI app'}
                     </button>
                     {shareSupported && (
                       <button onClick={shareVpa}
@@ -1784,8 +1794,8 @@ function PaymentChunk({
                   </div>
                 </div>
                 <div className="text-[11px] text-[#7A8C7E] leading-relaxed space-y-1">
-                  <p>1. Copy the UPI ID above (or Share it with someone paying for you).</p>
-                  <p>2. Open your UPI app (PhonePe, GPay, Paytm, BHIM…), paste it, and pay ₹{intentData.amount.toLocaleString(locale)}.</p>
+                  <p>1. Tap <strong>Copy &amp; Open UPI app</strong> — your UPI apps will open with the UPI ID already copied. (Or Share the UPI ID if someone else is paying for you.)</p>
+                  <p>2. Pick your UPI app, paste the UPI ID, enter ₹{intentData.amount.toLocaleString(locale)}, and pay.</p>
                   <p>3. Come back here and tap <strong>I&apos;ve paid</strong>.</p>
                 </div>
                 <div className="pt-2 border-t border-[#F0E5D0] space-y-2">
