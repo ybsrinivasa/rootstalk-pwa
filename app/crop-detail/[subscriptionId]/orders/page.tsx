@@ -1639,12 +1639,13 @@ function PaymentChunk({
   }
 
   async function copyVpaAndOpenUpi(vpa: string) {
-    // 2026-08-21 — Copy + lead-to-UPI-app flow. `upi://pay` with no
-    // query params opens the OS UPI-app chooser without carrying a
-    // P2M payment intent (which is what NPCI blocks for personal
-    // VPAs). User picks their app, pastes the VPA from clipboard,
-    // enters amount, pays. Cleaner than making them navigate out
-    // of the PWA themselves.
+    // 2026-08-21 — Copy VPA + lead-to-UPI-app. Intent URL includes
+    // only the VPA (no amount, no note) so the picked UPI app opens
+    // its "send money to VPA" screen with recipient pre-filled but
+    // without the pre-filled `am=` that NPCI's rules flag as a
+    // merchant-payment intent (and block for personal VPAs).
+    // Bare `upi://pay` failed — the picked app tried to parse it
+    // as a payment intent and errored with "Something went wrong."
     try {
       await navigator.clipboard.writeText(vpa)
       setCopied(true)
@@ -1652,10 +1653,8 @@ function PaymentChunk({
       window.prompt('Copy this UPI ID:', vpa)
       setCopied(true)
     }
-    // 500ms — long enough to flash "Copied" on the button, short
-    // enough to feel immediate.
     setTimeout(() => {
-      window.location.href = 'upi://pay'
+      window.location.href = `upi://pay?pa=${encodeURIComponent(vpa)}`
     }, 500)
   }
 
