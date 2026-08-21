@@ -1793,39 +1793,18 @@ function PaymentChunk({
                     )}
                   </div>
                 </div>
-                {/* 2026-08-21 — Open-UPI-app buttons. LAUNCHER
-                    category caused Chrome to redirect to Play Store
-                    when the app hadn't registered a LAUNCHER handler.
-                    Simpler intent with MAIN action + package + a
-                    harmless fallback URL (about:blank) so Chrome
-                    doesn't fall back to Play Store on any miss. */}
-                <div>
-                  <p className="text-[11px] text-[#7A8C7E] mb-2">
-                    Open your UPI app:
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=com.phonepe.app;S.browser_fallback_url=about%3Ablank;end"
-                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
-                      PhonePe
-                    </a>
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=com.google.android.apps.nbu.paisa.user;S.browser_fallback_url=about%3Ablank;end"
-                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
-                      GPay
-                    </a>
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=net.one97.paytm;S.browser_fallback_url=about%3Ablank;end"
-                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
-                      Paytm
-                    </a>
-                    <a href="intent://#Intent;action=android.intent.action.MAIN;package=in.org.npci.upiapp;S.browser_fallback_url=about%3Ablank;end"
-                      className="text-[11px] font-semibold text-center py-2.5 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] active:bg-[#F5F0E8]/60">
-                      BHIM
-                    </a>
-                  </div>
-                </div>
+                {/* 2026-08-21 — App-launcher buttons removed after
+                    every deep-link path (custom scheme, intent URL
+                    with/without LAUNCHER, with/without fallback URL)
+                    failed to just-open a UPI app from a PWA. Chrome
+                    + UPI apps + Android's tightened intent handling
+                    made auto-launch a dead end. Farmer opens their
+                    UPI app themselves from the phone's home screen
+                    — reliable, one extra tap. */}
                 <div className="text-[11px] text-[#7A8C7E] leading-relaxed space-y-1">
                   <p>1. Tap <strong>Copy UPI ID</strong>.</p>
-                  <p>2. Tap your UPI app above to open it (or open it yourself if you use a different one).</p>
-                  <p>3. In your UPI app, tap &quot;Send money&quot; or &quot;Pay&quot;, paste the UPI ID as recipient, enter ₹{intentData.amount.toLocaleString(locale)}, and pay.</p>
+                  <p>2. Open your UPI app (PhonePe, GPay, Paytm, BHIM…) from your phone&apos;s home screen.</p>
+                  <p>3. In your UPI app, tap &quot;Send Money&quot;, paste the UPI ID as recipient, enter ₹{intentData.amount.toLocaleString(locale)}, and pay.</p>
                   <p>4. Come back here and tap <strong>I&apos;ve paid</strong>.</p>
                 </div>
                 <div className="pt-2 border-t border-[#F0E5D0] space-y-2">
