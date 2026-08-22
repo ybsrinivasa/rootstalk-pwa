@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 ಧ್ವನಿ ಟಿಪ್ಪಣಿ ಲಗತ್ತಿಸಲಾಗಿದೆ — ಖಚಿತಪಡಿಸಲು ಪ್ಲೇ ಮಾಡಿ",
     "remove": "ತೆಗೆದುಹಾಕಿ",
     "addVoiceNote": "🎙 ಧ್ವನಿ ಟಿಪ್ಪಣಿಯನ್ನು ಸೇರಿಸಿ",
+    "recordVoiceNote": "🎙 ಧ್ವನಿ ಟಿಪ್ಪಣಿ ರೆಕಾರ್ಡ್ ಮಾಡಿ",
+    "uploadVoiceNote": "📁 ಧ್ವನಿ ಟಿಪ್ಪಣಿ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
     "howUrgentLabel": "ಇದು ಎಷ್ಟು ತುರ್ತು?",
     "severity": {
       "CRITICAL": {

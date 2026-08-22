@@ -1311,6 +1311,8 @@
     "voiceNoteAttached": "🎙 Voice note attached — play to confirm",
     "remove": "Remove",
     "addVoiceNote": "🎙 Add a voice note",
+    "recordVoiceNote": "🎙 Record voice note",
+    "uploadVoiceNote": "📁 Upload voice note",
     "howUrgentLabel": "How urgent is this?",
     "severity": {
       "CRITICAL": {

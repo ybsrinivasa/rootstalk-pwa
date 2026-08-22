@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 ଭଏସ୍ ନୋଟ୍ ସଂଲଗ୍ନ କରାଯାଇଛି — ସୁନିଶ୍ଚିତ କରିବାକୁ ଚଲାନ୍ତୁ",
     "remove": "କାଢ଼ିଦିଅନ୍ତୁ",
     "addVoiceNote": "🎙 ଏକ ଭଏସ୍ ନୋଟ୍ ଯୋଗ କରନ୍ତୁ",
+    "recordVoiceNote": "🎙 ଭଏସ୍ ନୋଟ୍ ରେକର୍ଡ୍ କରନ୍ତୁ",
+    "uploadVoiceNote": "📁 ଭଏସ୍ ନୋଟ୍ ଅପଲୋଡ୍ କରନ୍ତୁ",
     "howUrgentLabel": "ଏହା କେତେ ଜରୁରୀ?",
     "severity": {
       "CRITICAL": {

@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 व्हॉइस नोट जोडली आहे — खात्री करण्यासाठी प्ले करा",
     "remove": "काढून टाका",
     "addVoiceNote": "🎙 व्हॉइस नोट जोडा",
+    "recordVoiceNote": "🎙 व्हॉइस नोट रेकॉर्ड करा",
+    "uploadVoiceNote": "📁 व्हॉइस नोट अपलोड करा",
     "howUrgentLabel": "हे किती तातडीचे आहे?",
     "severity": {
       "CRITICAL": {

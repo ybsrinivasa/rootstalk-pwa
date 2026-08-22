@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 কণ্ঠৰ টোকা সংলগ্ন — নিশ্চিত কৰিবলৈ বজাওক",
     "remove": "আঁতৰোৱা",
     "addVoiceNote": "🎙 এটা ভইচ নোট যোগ কৰক",
+    "recordVoiceNote": "🎙 ভয়েচ নোট ৰেকৰ্ড কৰক",
+    "uploadVoiceNote": "📁 ভয়েচ নোট আপলোড কৰক",
     "howUrgentLabel": "এইটো কিমান জৰুৰী?",
     "severity": {
       "CRITICAL": {

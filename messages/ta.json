@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 குரல் பதிவு இணைக்கப்பட்டுள்ளது — உறுதிப்படுத்த இயக்கவும்",
     "remove": "அகற்று",
     "addVoiceNote": "🎙 குரல் குறிப்பைச் சேர்க்கவும்",
+    "recordVoiceNote": "🎙 குரல் குறிப்பைப் பதிவு செய்",
+    "uploadVoiceNote": "📁 குரல் குறிப்பைப் பதிவேற்று",
     "howUrgentLabel": "இது எவ்வளவு அவசரமானது?",
     "severity": {
       "CRITICAL": {

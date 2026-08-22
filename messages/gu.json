@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 વૉઇસ નોટ જોડાયેલ છે — પુષ્ટિ કરવા માટે વગાડો",
     "remove": "દૂર કરો",
     "addVoiceNote": "🎙 વૉઇસ નોટ ઉમેરો",
+    "recordVoiceNote": "🎙 વૉઇસ નોટ રેકોર્ડ કરો",
+    "uploadVoiceNote": "📁 વૉઇસ નોટ અપલોડ કરો",
     "howUrgentLabel": "આ કેટલું તાત્કાલિક છે?",
     "severity": {
       "CRITICAL": {

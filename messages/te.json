@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 వాయిస్ నోట్ జతచేయబడింది — నిర్ధారించుకోవడానికి ప్లే చేయండి",
     "remove": "తొలగించండి",
     "addVoiceNote": "🎙 వాయిస్ నోట్ జోడించండి",
+    "recordVoiceNote": "🎙 వాయిస్ నోట్ రికార్డ్ చేయండి",
+    "uploadVoiceNote": "📁 వాయిస్ నోట్ అప్‌లోడ్ చేయండి",
     "howUrgentLabel": "ఇది ఎంత అత్యవసరం?",
     "severity": {
       "CRITICAL": {

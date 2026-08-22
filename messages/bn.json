@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 ভয়েস নোট সংযুক্ত আছে — নিশ্চিত করতে প্লে করুন।",
     "remove": "অপসারণ করুন",
     "addVoiceNote": "🎙 একটি ভয়েস নোট যোগ করুন",
+    "recordVoiceNote": "🎙 ভয়েস নোট রেকর্ড করুন",
+    "uploadVoiceNote": "📁 ভয়েস নোট আপলোড করুন",
     "howUrgentLabel": "এটা কতটা জরুরি?",
     "severity": {
       "CRITICAL": {

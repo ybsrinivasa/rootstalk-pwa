@@ -72,6 +72,8 @@ export default function AskExpertPage() {
   const [numberOfPlants, setNumberOfPlants] = useState<number | null>(null)
   const photoCameraRef = useRef<HTMLInputElement | null>(null)
   const photoLibraryRef = useRef<HTMLInputElement | null>(null)
+  const audioRecorderRef = useRef<HTMLInputElement | null>(null)
+  const audioLibraryRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -461,15 +463,32 @@ export default function AskExpertPage() {
                 <audio src={form.audio} controls className="w-full" />
               </div>
             ) : (
-              <label className="block w-full py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-center text-xs text-[#7A8C7E] cursor-pointer hover:bg-[#F5F0E8]">
-                {uploading === 'audio' ? t('uploading') : t('addVoiceNote')}
-                <input type="file" accept="audio/*" className="hidden"
+              <>
+                <input ref={audioRecorderRef} type="file" accept="audio/*" capture="user" className="hidden"
                   onChange={e => {
                     const f = e.target.files?.[0]
                     if (f) uploadAudio(f)
                     e.target.value = ''
                   }} />
-              </label>
+                <input ref={audioLibraryRef} type="file" accept="audio/*" className="hidden"
+                  onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (f) uploadAudio(f)
+                    e.target.value = ''
+                  }} />
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => audioRecorderRef.current?.click()}
+                    disabled={uploading === 'audio'}
+                    className="py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-xs text-[#7A8C7E] font-medium hover:bg-[#F5F0E8] disabled:opacity-50">
+                    {uploading === 'audio' ? t('uploading') : t('recordVoiceNote')}
+                  </button>
+                  <button type="button" onClick={() => audioLibraryRef.current?.click()}
+                    disabled={uploading === 'audio'}
+                    className="py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-xs text-[#7A8C7E] font-medium hover:bg-[#F5F0E8] disabled:opacity-50">
+                    {uploading === 'audio' ? t('uploading') : t('uploadVoiceNote')}
+                  </button>
+                </div>
+              </>
             )}
           </div>
 

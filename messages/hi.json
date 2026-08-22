@@ -1284,6 +1284,8 @@
     "voiceNoteAttached": "🎙 साथ में वॉइस नोट संलग्न है — पुष्टि के लिए इसे चलाएँ",
     "remove": "निकालना",
     "addVoiceNote": "🎙 एक वॉइस नोट जोड़ें",
+    "recordVoiceNote": "🎙 वॉइस नोट रिकॉर्ड करें",
+    "uploadVoiceNote": "📁 वॉइस नोट अपलोड करें",
     "howUrgentLabel": "यह कितना जरूरी है?",
     "severity": {
       "CRITICAL": {
