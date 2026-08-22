@@ -1286,6 +1286,9 @@
     "addVoiceNote": "🎙 વૉઇસ નોટ ઉમેરો",
     "recordVoiceNote": "🎙 વૉઇસ નોટ રેકોર્ડ કરો",
     "uploadVoiceNote": "📁 વૉઇસ નોટ અપલોડ કરો",
+    "recordingInProgress": "રેકોર્ડિંગ ચાલી રહ્યું છે…",
+    "cancelRecording": "રદ કરો",
+    "stopAndAttach": "રોકો અને જોડો",
     "howUrgentLabel": "આ કેટલું તાત્કાલિક છે?",
     "severity": {
       "CRITICAL": {
@@ -1322,7 +1325,10 @@
       "paymentCancelled": "ચુકવણી રદ થઈ. તમારી ક્વેરી સબમિટ કરવાનો ફરી પ્રયાસ કરો.",
       "paymentStartFailed": "ચુકવણી શરૂ કરી શકાઈ નથી. ફરી પ્રયાસ કરો.",
       "needOnePhoto": "કૃપા કરીને ઓછામાં ઓછો એક ફોટોગ્રાફ ઉમેરો.",
-      "bypassFailed": "બાયપાસ સબમિટ નિષ્ફળ થયું."
+      "bypassFailed": "બાયપાસ સબમિટ નિષ્ફળ થયું.",
+      "recordingUnsupported": "આ બ્રાઉઝરમાં વૉઇસ રેકોર્ડિંગ સપોર્ટેડ નથી. કૃપા કરીને અપલોડ કરો.",
+      "micPermissionDenied": "માઇક્રોફોન ઍક્સેસ નકારવામાં આવ્યો. બ્રાઉઝર સેટિંગ્સમાં સક્ષમ કરો અથવા અપલોડ કરો.",
+      "recordingFailed": "રેકોર્ડિંગ નિષ્ફળ. ફરી પ્રયાસ કરો અથવા અપલોડ કરો."
     },
     "razorpayDescription": "નિષ્ણાત ક્વેરી (rootsTALK.in ને ચૂકવવામાં આવે છે, {client} ને નહીં)",
     "affectedPlantsLabel": "તમારા {total} છોડમાંથી, કેટલાને અસર થઈ છે? (વૈકલ્પિક)",

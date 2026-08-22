@@ -1286,6 +1286,9 @@
     "addVoiceNote": "🎙 ایک صوتی نوٹ شامل کریں۔",
     "recordVoiceNote": "🎙 صوتی نوٹ ریکارڈ کریں",
     "uploadVoiceNote": "📁 صوتی نوٹ اپ لوڈ کریں",
+    "recordingInProgress": "ریکارڈنگ جاری ہے…",
+    "cancelRecording": "منسوخ کریں",
+    "stopAndAttach": "روکیں اور منسلک کریں",
     "howUrgentLabel": "یہ کتنا ضروری ہے؟",
     "severity": {
       "CRITICAL": {
@@ -1322,7 +1325,10 @@
       "paymentCancelled": "ادائیگی منسوخ کر دی گئی۔ اپنا استفسار جمع کرانے کے لیے دوبارہ کوشش کریں۔",
       "paymentStartFailed": "ادائیگی شروع نہیں ہو سکی۔ دوبارہ کوشش کریں۔",
       "needOnePhoto": "براہ کرم کم از کم ایک تصویر شامل کریں۔",
-      "bypassFailed": "بائی پاس جمع کرانے میں ناکام۔"
+      "bypassFailed": "بائی پاس جمع کرانے میں ناکام۔",
+      "recordingUnsupported": "اس براؤزر میں صوتی ریکارڈنگ کی سہولت نہیں۔ براہ کرم اپ لوڈ کریں۔",
+      "micPermissionDenied": "مائیکروفون تک رسائی مسترد ہو گئی۔ براؤزر سیٹنگز میں فعال کریں یا اپ لوڈ کریں۔",
+      "recordingFailed": "ریکارڈنگ ناکام ہو گئی۔ دوبارہ کوشش کریں یا اپ لوڈ کریں۔"
     },
     "razorpayDescription": "ماہر کا سوال (rootsTALK.in کو ادا کیا گیا، {client} کو نہیں)",
     "affectedPlantsLabel": "آپ کے {total} پودوں میں سے کتنے متاثر ہوئے ہیں؟ (اختیاری)",

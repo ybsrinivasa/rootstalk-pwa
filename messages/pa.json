@@ -1286,6 +1286,9 @@
     "addVoiceNote": "🎙 ਇੱਕ ਵੌਇਸ ਨੋਟ ਸ਼ਾਮਲ ਕਰੋ",
     "recordVoiceNote": "🎙 ਵੌਇਸ ਨੋਟ ਰਿਕਾਰਡ ਕਰੋ",
     "uploadVoiceNote": "📁 ਵੌਇਸ ਨੋਟ ਅੱਪਲੋਡ ਕਰੋ",
+    "recordingInProgress": "ਰਿਕਾਰਡਿੰਗ ਚੱਲ ਰਹੀ ਹੈ…",
+    "cancelRecording": "ਰੱਦ ਕਰੋ",
+    "stopAndAttach": "ਰੋਕੋ ਅਤੇ ਨੱਥੀ ਕਰੋ",
     "howUrgentLabel": "ਇਹ ਕਿੰਨਾ ਕੁ ਜ਼ਰੂਰੀ ਹੈ?",
     "severity": {
       "CRITICAL": {
@@ -1322,7 +1325,10 @@
       "paymentCancelled": "ਭੁਗਤਾਨ ਰੱਦ ਹੋ ਗਿਆ। ਆਪਣੀ ਪੁੱਛਗਿੱਛ ਦੁਬਾਰਾ ਸਪੁਰਦ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
       "paymentStartFailed": "ਭੁਗਤਾਨ ਸ਼ੁਰੂ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
       "needOnePhoto": "ਕਿਰਪਾ ਕਰਕੇ ਘੱਟੋ-ਘੱਟ ਇੱਕ ਫੋਟੋ ਸ਼ਾਮਲ ਕਰੋ।",
-      "bypassFailed": "ਬਾਈਪਾਸ ਸਬਮਿਟ ਅਸਫਲ ਰਿਹਾ।"
+      "bypassFailed": "ਬਾਈਪਾਸ ਸਬਮਿਟ ਅਸਫਲ ਰਿਹਾ।",
+      "recordingUnsupported": "ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਵੌਇਸ ਰਿਕਾਰਡਿੰਗ ਸਮਰਥਿਤ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਅੱਪਲੋਡ ਕਰੋ।",
+      "micPermissionDenied": "ਮਾਈਕ੍ਰੋਫ਼ੋਨ ਪਹੁੰਚ ਤੋਂ ਇਨਕਾਰ ਕੀਤਾ ਗਿਆ। ਬ੍ਰਾਊਜ਼ਰ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਯੋਗ ਕਰੋ ਜਾਂ ਅੱਪਲੋਡ ਕਰੋ।",
+      "recordingFailed": "ਰਿਕਾਰਡਿੰਗ ਅਸਫਲ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ ਜਾਂ ਅੱਪਲੋਡ ਕਰੋ।"
     },
     "razorpayDescription": "ਮਾਹਿਰ ਪੁੱਛਗਿੱਛ (rootsTALK.in ਨੂੰ ਭੁਗਤਾਨ ਕੀਤਾ ਗਿਆ, {client} ਨੂੰ ਨਹੀਂ)",
     "affectedPlantsLabel": "ਤੁਹਾਡੇ {total} ਪੌਦਿਆਂ ਵਿੱਚੋਂ, ਕਿੰਨੇ ਪ੍ਰਭਾਵਿਤ ਹੋਏ ਹਨ? (ਵਿਕਲਪਿਕ)",

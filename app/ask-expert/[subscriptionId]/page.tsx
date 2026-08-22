@@ -72,8 +72,17 @@ export default function AskExpertPage() {
   const [numberOfPlants, setNumberOfPlants] = useState<number | null>(null)
   const photoCameraRef = useRef<HTMLInputElement | null>(null)
   const photoLibraryRef = useRef<HTMLInputElement | null>(null)
-  const audioRecorderRef = useRef<HTMLInputElement | null>(null)
   const audioLibraryRef = useRef<HTMLInputElement | null>(null)
+  // In-browser voice recorder (MediaRecorder API) — the file-input
+  // capture="microphone" fallback was unreliable across Android
+  // browsers (Chrome frequently ignores it and only shows a file
+  // picker with no recorder option).
+  const [recording, setRecording] = useState(false)
+  const [recordingSeconds, setRecordingSeconds] = useState(0)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const recordedChunksRef = useRef<Blob[]>([])
+  const mediaStreamRef = useRef<MediaStream | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -148,6 +157,67 @@ export default function AskExpertPage() {
       setError(extractMsg(err, t('errors.audioUploadFailed')))
     } finally { setUploading(null) }
   }
+
+  function stopRecordingTracks() {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
+    mediaStreamRef.current?.getTracks().forEach(t => t.stop())
+    mediaStreamRef.current = null
+    mediaRecorderRef.current = null
+    setRecording(false)
+    setRecordingSeconds(0)
+  }
+
+  async function startRecording() {
+    setError('')
+    if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      setError(t('errors.recordingUnsupported'))
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaStreamRef.current = stream
+      recordedChunksRef.current = []
+      const preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg']
+      const mimeType = preferred.find(m => MediaRecorder.isTypeSupported(m)) || ''
+      const rec = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
+      mediaRecorderRef.current = rec
+      rec.ondataavailable = e => { if (e.data.size > 0) recordedChunksRef.current.push(e.data) }
+      rec.onstop = () => {
+        const blob = new Blob(recordedChunksRef.current, { type: rec.mimeType || 'audio/webm' })
+        const ext = (rec.mimeType || '').includes('mp4') ? 'm4a'
+          : (rec.mimeType || '').includes('ogg') ? 'ogg' : 'webm'
+        const file = new File([blob], `voice-note-${Date.now()}.${ext}`, { type: blob.type })
+        stopRecordingTracks()
+        uploadAudio(file)
+      }
+      rec.start()
+      setRecording(true)
+      setRecordingSeconds(0)
+      timerRef.current = setInterval(() => setRecordingSeconds(s => s + 1), 1000)
+    } catch (err: unknown) {
+      stopRecordingTracks()
+      const name = (err as { name?: string })?.name
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        setError(t('errors.micPermissionDenied'))
+      } else {
+        setError(t('errors.recordingFailed'))
+      }
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop()
+  }
+
+  function cancelRecording() {
+    try { mediaRecorderRef.current?.stop() } catch { /* ignore */ }
+    recordedChunksRef.current = []
+    stopRecordingTracks()
+  }
+
+  useEffect(() => () => stopRecordingTracks(), [])
+
+  const recordingTimer = `${String(Math.floor(recordingSeconds / 60)).padStart(2, '0')}:${String(recordingSeconds % 60).padStart(2, '0')}`
 
   function extractMsg(err: unknown, fallback: string): string {
     const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
@@ -462,14 +532,26 @@ export default function AskExpertPage() {
                 </div>
                 <audio src={form.audio} controls className="w-full" />
               </div>
+            ) : recording ? (
+              <div className="bg-[#FEF2F2] border border-[#FCA5A5] rounded-xl px-3 py-3 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#DC2626] animate-pulse" />
+                  <span className="text-sm text-[#991B1B] font-medium">{t('recordingInProgress')}</span>
+                  <span className="ml-auto text-sm text-[#991B1B] font-mono tabular-nums">{recordingTimer}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={cancelRecording}
+                    className="py-2.5 border border-[#DDD0B8] bg-white rounded-xl text-xs text-[#7A8C7E] font-medium">
+                    {t('cancelRecording')}
+                  </button>
+                  <button type="button" onClick={stopRecording}
+                    className="py-2.5 bg-[#DC2626] text-white rounded-xl text-xs font-medium">
+                    {t('stopAndAttach')}
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
-                <input ref={audioRecorderRef} type="file" accept="audio/*" capture="user" className="hidden"
-                  onChange={e => {
-                    const f = e.target.files?.[0]
-                    if (f) uploadAudio(f)
-                    e.target.value = ''
-                  }} />
                 <input ref={audioLibraryRef} type="file" accept="audio/*" className="hidden"
                   onChange={e => {
                     const f = e.target.files?.[0]
@@ -477,7 +559,7 @@ export default function AskExpertPage() {
                     e.target.value = ''
                   }} />
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => audioRecorderRef.current?.click()}
+                  <button type="button" onClick={startRecording}
                     disabled={uploading === 'audio'}
                     className="py-2.5 border-2 border-dashed border-[#DDD0B8] rounded-xl text-xs text-[#7A8C7E] font-medium hover:bg-[#F5F0E8] disabled:opacity-50">
                     {uploading === 'audio' ? t('uploading') : t('recordVoiceNote')}

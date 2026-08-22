@@ -1286,6 +1286,9 @@
     "addVoiceNote": "🎙 एक वॉइस नोट जोड़ें",
     "recordVoiceNote": "🎙 वॉइस नोट रिकॉर्ड करें",
     "uploadVoiceNote": "📁 वॉइस नोट अपलोड करें",
+    "recordingInProgress": "रिकॉर्डिंग हो रही है…",
+    "cancelRecording": "रद्द करें",
+    "stopAndAttach": "रोकें और संलग्न करें",
     "howUrgentLabel": "यह कितना जरूरी है?",
     "severity": {
       "CRITICAL": {
@@ -1322,7 +1325,10 @@
       "paymentCancelled": "भुगतान रद्द कर दिया गया है। कृपया अपना प्रश्न दोबारा सबमिट करने का प्रयास करें।",
       "paymentStartFailed": "भुगतान शुरू नहीं हो सका। कृपया पुनः प्रयास करें।",
       "needOnePhoto": "कृपया कम से कम एक तस्वीर जोड़ें।",
-      "bypassFailed": "बायपास सबमिट विफल।"
+      "bypassFailed": "बायपास सबमिट विफल।",
+      "recordingUnsupported": "इस ब्राउज़र में वॉइस रिकॉर्डिंग समर्थित नहीं है। कृपया अपलोड करें।",
+      "micPermissionDenied": "माइक्रोफ़ोन की अनुमति नहीं मिली। ब्राउज़र सेटिंग्स में इसे चालू करें या अपलोड करें।",
+      "recordingFailed": "रिकॉर्डिंग विफल रही। कृपया फिर से प्रयास करें या अपलोड करें।"
     },
     "razorpayDescription": "विशेषज्ञ प्रश्न (rootsTALK.in को भुगतान किया गया, न कि {client} )",
     "affectedPlantsLabel": "आपके {total} पौधों में से कितने पौधे प्रभावित हैं? (वैकल्पिक)",

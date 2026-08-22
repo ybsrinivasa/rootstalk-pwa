@@ -1286,6 +1286,9 @@
     "addVoiceNote": "🎙 এটা ভইচ নোট যোগ কৰক",
     "recordVoiceNote": "🎙 ভয়েচ নোট ৰেকৰ্ড কৰক",
     "uploadVoiceNote": "📁 ভয়েচ নোট আপলোড কৰক",
+    "recordingInProgress": "ৰেকৰ্ডিং চলি আছে…",
+    "cancelRecording": "বাতিল কৰক",
+    "stopAndAttach": "বন্ধ কৰি সংলগ্ন কৰক",
     "howUrgentLabel": "এইটো কিমান জৰুৰী?",
     "severity": {
       "CRITICAL": {
@@ -1322,7 +1325,10 @@
       "paymentCancelled": "পেমেন্ট বাতিল কৰা হৈছে। আপোনাৰ প্ৰশ্ন জমা দিবলৈ পুনৰ চেষ্টা কৰক।",
       "paymentStartFailed": "পেমেণ্ট আৰম্ভ কৰিব পৰা নগ’ল। আকৌ এবাৰ চেষ্টা কৰক।",
       "needOnePhoto": "অনুগ্ৰহ কৰি অন্ততঃ এখন ফটো যোগ কৰক।",
-      "bypassFailed": "বাইপাছ জমা দিয়া বিফল।"
+      "bypassFailed": "বাইপাছ জমা দিয়া বিফল।",
+      "recordingUnsupported": "এই ব্ৰাউজাৰত ভয়েচ ৰেকৰ্ডিং সমৰ্থিত নহয়। অনুগ্ৰহ কৰি আপলোড কৰক।",
+      "micPermissionDenied": "মাইক্ৰফোনৰ অনুমতি অস্বীকৃত। ব্ৰাউজাৰ ছেটিংছত সক্ষম কৰক বা আপলোড কৰক।",
+      "recordingFailed": "ৰেকৰ্ডিং বিফল। পুনৰ চেষ্টা কৰক বা আপলোড কৰক।"
     },
     "razorpayDescription": "বিশেষজ্ঞ প্ৰশ্ন (rootsTALK.in লৈ দিয়া হৈছে, {client} লৈ নহয়)",
     "affectedPlantsLabel": "আপোনাৰ {total} উদ্ভিদৰ ভিতৰত কিমানজন আক্ৰান্ত হয়? (বৈকল্পিক)",

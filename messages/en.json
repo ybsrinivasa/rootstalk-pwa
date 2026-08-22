@@ -1313,6 +1313,9 @@
     "addVoiceNote": "🎙 Add a voice note",
     "recordVoiceNote": "🎙 Record voice note",
     "uploadVoiceNote": "📁 Upload voice note",
+    "recordingInProgress": "Recording…",
+    "cancelRecording": "Cancel",
+    "stopAndAttach": "Stop & attach",
     "howUrgentLabel": "How urgent is this?",
     "severity": {
       "CRITICAL": {
@@ -1349,7 +1352,10 @@
       "paymentCancelled": "Payment cancelled. Try again to submit your query.",
       "paymentStartFailed": "Could not start payment. Try again.",
       "needOnePhoto": "Please add at least one photograph.",
-      "bypassFailed": "Bypass submit failed."
+      "bypassFailed": "Bypass submit failed.",
+      "recordingUnsupported": "Voice recording isn't supported in this browser. Please tap Upload instead.",
+      "micPermissionDenied": "Microphone access denied. Enable mic access in your browser settings, or tap Upload.",
+      "recordingFailed": "Recording failed. Please try again or tap Upload."
     },
     "razorpayDescription": "Expert Query (paid to rootsTALK.in, not {client})",
     "affectedPlantsLabel": "Of your {total} plants, how many are affected? (optional)",

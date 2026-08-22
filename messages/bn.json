@@ -1286,6 +1286,9 @@
     "addVoiceNote": "🎙 একটি ভয়েস নোট যোগ করুন",
     "recordVoiceNote": "🎙 ভয়েস নোট রেকর্ড করুন",
     "uploadVoiceNote": "📁 ভয়েস নোট আপলোড করুন",
+    "recordingInProgress": "রেকর্ডিং চলছে…",
+    "cancelRecording": "বাতিল",
+    "stopAndAttach": "থামান ও সংযুক্ত করুন",
     "howUrgentLabel": "এটা কতটা জরুরি?",
     "severity": {
       "CRITICAL": {
@@ -1322,7 +1325,10 @@
       "paymentCancelled": "পেমেন্ট বাতিল করা হয়েছে। আপনার জিজ্ঞাসা জমা দিতে আবার চেষ্টা করুন।",
       "paymentStartFailed": "পেমেন্ট শুরু করা যায়নি। আবার চেষ্টা করুন।",
       "needOnePhoto": "অনুগ্রহ করে অন্তত একটি ছবি যুক্ত করুন।",
-      "bypassFailed": "বাইপাস সাবমিট ব্যর্থ হয়েছে।"
+      "bypassFailed": "বাইপাস সাবমিট ব্যর্থ হয়েছে।",
+      "recordingUnsupported": "এই ব্রাউজারে ভয়েস রেকর্ডিং সমর্থিত নয়। অনুগ্রহ করে আপলোড করুন।",
+      "micPermissionDenied": "মাইক্রোফোনের অনুমতি অস্বীকৃত। ব্রাউজার সেটিংসে চালু করুন বা আপলোড করুন।",
+      "recordingFailed": "রেকর্ডিং ব্যর্থ। আবার চেষ্টা করুন বা আপলোড করুন।"
     },
     "razorpayDescription": "বিশেষজ্ঞের প্রশ্ন (rootsTALK.in-কে অর্থ প্রদান করা হয়েছে, {client} নয়)",
     "affectedPlantsLabel": "আপনার {total} টি গাছের মধ্যে কয়টি আক্রান্ত হয়েছে? (ঐচ্ছিক)",

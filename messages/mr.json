@@ -1286,6 +1286,9 @@
     "addVoiceNote": "🎙 व्हॉइस नोट जोडा",
     "recordVoiceNote": "🎙 व्हॉइस नोट रेकॉर्ड करा",
     "uploadVoiceNote": "📁 व्हॉइस नोट अपलोड करा",
+    "recordingInProgress": "रेकॉर्डिंग सुरू आहे…",
+    "cancelRecording": "रद्द करा",
+    "stopAndAttach": "थांबवा आणि जोडा",
     "howUrgentLabel": "हे किती तातडीचे आहे?",
     "severity": {
       "CRITICAL": {
@@ -1322,7 +1325,10 @@
       "paymentCancelled": "पेमेंट रद्द झाले आहे. कृपया आपली विचारणा पुन्हा सादर करा.",
       "paymentStartFailed": "पेमेंट सुरू करता आले नाही. पुन्हा प्रयत्न करा.",
       "needOnePhoto": "कृपया किमान एक छायाचित्र जोडा.",
-      "bypassFailed": "बायपास सबमिट अयशस्वी झाले."
+      "bypassFailed": "बायपास सबमिट अयशस्वी झाले.",
+      "recordingUnsupported": "या ब्राउझरमध्ये व्हॉइस रेकॉर्डिंग समर्थित नाही. कृपया अपलोड करा.",
+      "micPermissionDenied": "मायक्रोफोनला परवानगी नाकारली. ब्राउझर सेटिंग्जमध्ये सक्षम करा किंवा अपलोड करा.",
+      "recordingFailed": "रेकॉर्डिंग अयशस्वी. कृपया पुन्हा प्रयत्न करा किंवा अपलोड करा."
     },
     "razorpayDescription": "तज्ञांचा प्रश्न (पैसे rootsTALK.in ला दिले जातील, {client} नाही)",
     "affectedPlantsLabel": "तुमच्या {total} रोपांपैकी किती रोपांवर परिणाम झाला आहे? (ऐच्छिक)",
