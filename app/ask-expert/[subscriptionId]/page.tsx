@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, FormEvent } from 'react'
+import { useState, useEffect, useRef, FormEvent } from 'react'
 import Script from 'next/script'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
@@ -70,6 +70,8 @@ export default function AskExpertPage() {
   // it entirely; the question is meaningless for them.
   const [measure, setMeasure] = useState<'PLANT_WISE' | 'AREA_WISE' | null>(null)
   const [numberOfPlants, setNumberOfPlants] = useState<number | null>(null)
+  const photoCameraRef = useRef<HTMLInputElement | null>(null)
+  const photoLibraryRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -412,18 +414,35 @@ export default function AskExpertPage() {
                     aria-label={t('removePhotoAria')}>×</button>
                 </div>
               ))}
-              {form.photos.length < MAX_PHOTOS && (
-                <label className="h-28 border-2 border-dashed border-[#DDD0B8] rounded-xl flex items-center justify-center cursor-pointer text-xs text-[#7A8C7E] hover:bg-[#F5F0E8]">
-                  {uploading === 'photo' ? t('uploading') : t('addPhoto')}
-                  <input type="file" accept="image/*" className="hidden"
-                    onChange={e => {
-                      const f = e.target.files?.[0]
-                      if (f) uploadPhoto(f)
-                      e.target.value = ''
-                    }} />
-                </label>
-              )}
             </div>
+            {form.photos.length < MAX_PHOTOS && (
+              <>
+                <input ref={photoCameraRef} type="file" accept="image/*" capture="environment" className="hidden"
+                  onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (f) uploadPhoto(f)
+                    e.target.value = ''
+                  }} />
+                <input ref={photoLibraryRef} type="file" accept="image/*" className="hidden"
+                  onChange={e => {
+                    const f = e.target.files?.[0]
+                    if (f) uploadPhoto(f)
+                    e.target.value = ''
+                  }} />
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => photoCameraRef.current?.click()}
+                    disabled={uploading === 'photo'}
+                    className="py-3 border-2 border-dashed border-[#DDD0B8] rounded-xl text-xs text-[#7A8C7E] font-medium hover:bg-[#F5F0E8] disabled:opacity-50">
+                    {uploading === 'photo' ? t('uploading') : t('takePhoto')}
+                  </button>
+                  <button type="button" onClick={() => photoLibraryRef.current?.click()}
+                    disabled={uploading === 'photo'}
+                    className="py-3 border-2 border-dashed border-[#DDD0B8] rounded-xl text-xs text-[#7A8C7E] font-medium hover:bg-[#F5F0E8] disabled:opacity-50">
+                    {uploading === 'photo' ? t('uploading') : t('uploadPhoto')}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Audio — at most 1, optional. */}

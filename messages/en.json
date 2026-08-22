@@ -1305,6 +1305,8 @@
     "removePhotoAria": "Remove photo",
     "uploading": "Uploading…",
     "addPhoto": "+ Add photo",
+    "takePhoto": "📷 Take photo",
+    "uploadPhoto": "📁 Upload photo",
     "voiceNoteLabel": "Voice note (optional)",
     "voiceNoteAttached": "🎙 Voice note attached — play to confirm",
     "remove": "Remove",
