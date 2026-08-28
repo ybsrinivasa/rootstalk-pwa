@@ -4,8 +4,8 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser } from '@/lib/auth'
 import { getLanguage, changeLanguage } from '@/lib/language'
+import { digitsOnly, hasNonAscii, isAsciiName } from '@/lib/input-normalization'
 import api from '@/lib/api'
-import InstallPrompt, { openInstallPrompt } from '@/components/InstallPrompt'
 import AppMark from '@/components/AppMark'
 
 type Stage = 'loading' | 'landing' | 'install-required' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
@@ -145,30 +145,11 @@ function ProgressDots({ filled }: { filled: number }) {
   )
 }
 
-// 2026-07-03 — "Install app" link for the landing footer. Rendered
-// only when the PWA isn't already running in standalone mode; the
-// link always opens the InstallPrompt sheet (which internally decides
-// whether to show the native install button, the iOS Share
-// instruction, or the Chrome Android menu fallback).
-function InstallAppLink() {
-  const tLanding = useTranslations('landing')
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const standalone = window.matchMedia('(display-mode: standalone)').matches
-    setVisible(!standalone)
-  }, [])
-  if (!visible) return null
-  return (
-    <>
-      <span className="text-[#7A8C7E]/60 text-[10px]">·</span>
-      <button onClick={() => openInstallPrompt()}
-        className="text-[#7A8C7E] text-[10px] underline">
-        {tLanding('installApp')}
-      </button>
-    </>
-  )
-}
+// 2026-08-28 — Removed InstallAppLink footer link and InstallPrompt
+// soft popup from the landing screen. The mandatory install gate on
+// Get-started tap (Android non-standalone) is the single install
+// affordance now, per user direction: no redundant prompts on the
+// landing page.
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function RootPage() {
@@ -398,7 +379,6 @@ export default function RootPage() {
   // ── Landing ─────────────────────────────────────────────────────────────────
   if (stage === 'landing') return (
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: BG }}>
-      <InstallPrompt/>
       <DewDrops/>
       <GrassBlades/>
 
@@ -509,7 +489,6 @@ export default function RootPage() {
             className="text-[#7A8C7E] text-[10px] underline">
             {tLanding('privacyPolicy')}
           </button>
-          <InstallAppLink />
         </div>
       </div>
     </div>
@@ -582,17 +561,25 @@ export default function RootPage() {
           </div>
 
           {installOutcome === 'accepted' ? (
-            /* Post-install — Chrome may or may not auto-launch the
-               standalone PWA; either way, direct the farmer to open
-               it from the home screen icon so the next session comes
-               up in standalone mode and the gate lifts. */
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-4">
-              <p className="text-green-800 font-semibold text-sm">
-                {tAuth('installRequired.installedTitle')}
-              </p>
-              <p className="text-green-700/80 text-xs mt-2 leading-relaxed">
-                {tAuth('installRequired.installedBody')}
-              </p>
+            /* Post-install — 2026-08-28 (per user's team feedback):
+               farmers/facilitators find "close browser, open the app
+               icon" confusing and often don't read instructions.
+               Instead we let them continue registering in the current
+               browser tab. The token lands in localStorage, which
+               the standalone PWA shares, so when they next open from
+               the home-screen icon they're already logged in and
+               skip the landing flow entirely. */
+            <div className="space-y-3">
+              <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <p className="text-green-800 font-semibold text-sm">
+                  {tAuth('installRequired.installedTitle')}
+                </p>
+              </div>
+              <button onClick={() => setStage('phone')}
+                className="w-full py-4 rounded-2xl text-white font-semibold text-base transition-all active:scale-[0.98]"
+                style={{ background: G }}>
+                {tCommon('continue')}
+              </button>
             </div>
           ) : deferredInstall ? (
             /* Chrome captured beforeinstallprompt — native install
@@ -1051,7 +1038,7 @@ export default function RootPage() {
               </div>
               <Input type="tel" inputMode="numeric" value={phone} maxLength={10} autoFocus required
                 placeholder={tAuth('phonePlaceholder')}
-                onChange={e => setPhone(e.target.value.replace(/\D/g, ''))}/>
+                onChange={e => setPhone(digitsOnly(e.target.value, 10))}/>
             </div>
             {error && <p className="text-red-500 text-sm px-1">{error}</p>}
             {devOtp && <DevBadge code={devOtp}/>}
@@ -1066,7 +1053,7 @@ export default function RootPage() {
           <form onSubmit={verifyCode} className="flex flex-col gap-4">
             {devOtp && <DevBadge code={devOtp}/>}
             <input type="text" inputMode="numeric" maxLength={6}
-              value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+              value={otp} onChange={e => setOtp(digitsOnly(e.target.value, 6))}
               autoFocus required placeholder="· · · · · ·"
               className="border border-[#DDD0B8] rounded-2xl px-4 py-5 text-center bg-white
                          text-3xl font-mono tracking-[0.7em] text-[#6B3F1F] w-full
@@ -1089,8 +1076,13 @@ export default function RootPage() {
           <form onSubmit={saveName} className="flex flex-col gap-4">
             <Input value={name} onChange={e => setName(e.target.value)}
               autoFocus placeholder={tAuth('namePlaceholder')}/>
+            {hasNonAscii(name) && (
+              <p className="text-amber-700 text-xs bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-relaxed">
+                {tAuth('nameEnglishOnlyHint')}
+              </p>
+            )}
             {error && <p className="text-red-500 text-sm px-1">{error}</p>}
-            <Btn type="submit" disabled={busy || !name.trim()}>
+            <Btn type="submit" disabled={busy || !isAsciiName(name)}>
               {busy ? tCommon('saving') : tAuth('takeMeIn')}
             </Btn>
           </form>
