@@ -3408,5 +3408,24 @@
     "photosLabel": "विभिन्न प्रकार की तस्वीरें",
     "descriptionLabel": "इस किस्म के बारे में",
     "dusCharactersLabel": "विशिष्टता · एकरूपता · स्थिरता"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK को होम स्क्रीन पर जोड़ें",
+    "bannerSubtitle": "तुरंत सूचनाएँ + तेज़ लॉगिन",
+    "bannerCta": "इंस्टॉल करें →",
+    "sheetTitle": "rootsTALK.in जोड़ें",
+    "sheetSubtitle": "तुरंत पहुँच के लिए होम स्क्रीन पर",
+    "benefitFast": "तुरंत खुले",
+    "benefitOffline": "ऑफ़लाइन चले",
+    "benefitAlerts": "सूचनाएँ पाएँ",
+    "installCta": "होम स्क्रीन पर जोड़ें",
+    "installing": "इंस्टॉल हो रहा है…",
+    "iosStep1": "Safari के टूलबार में Share बटन पर टैप करें",
+    "iosStep2": "नीचे स्क्रॉल करें और \"Add to Home Screen\" पर टैप करें",
+    "manualStep1": "{browser} के टूलबार में ⋮ मेनू पर टैप करें",
+    "manualStep2": "Install app या Add to Home screen पर टैप करें",
+    "manualNote": "अगर कोई विकल्प नहीं दिखता, तो कुछ सेकंड रुकें — Chrome अभी तैयार कर रहा हो सकता है।",
+    "yourBrowser": "आपके ब्राउज़र",
+    "close": "बंद करें"
   }
 }

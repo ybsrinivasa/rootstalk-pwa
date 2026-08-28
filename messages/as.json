@@ -3408,5 +3408,24 @@
     "photosLabel": "বিভিন্ন ধৰণৰ ফটো",
     "descriptionLabel": "এই জাতৰ বিষয়ে",
     "dusCharactersLabel": "স্বকীয়তা · একাকাৰীতা · স্থিৰতা"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK হোম স্ক্ৰীনত যোগ কৰক",
+    "bannerSubtitle": "তাৎক্ষণিক সতৰ্কতা + দ্ৰুত লগইন",
+    "bannerCta": "ইনষ্টল →",
+    "sheetTitle": "rootsTALK.in যোগ কৰক",
+    "sheetSubtitle": "দ্ৰুত এক্সেছৰ বাবে হোম স্ক্ৰীনত",
+    "benefitFast": "লগে লগে খোল খায়",
+    "benefitOffline": "অফলাইনত কাম কৰে",
+    "benefitAlerts": "সতৰ্কতা লাভ কৰক",
+    "installCta": "হোম স্ক্ৰীনত যোগ কৰক",
+    "installing": "ইনষ্টল হৈ আছে…",
+    "iosStep1": "Safari ৰ টুলবাৰত Share বুটামত টেপ কৰক",
+    "iosStep2": "তললৈ স্ক্ৰল কৰি \"Add to Home Screen\" ত টেপ কৰক",
+    "manualStep1": "{browser} ৰ টুলবাৰত ⋮ মেনুত টেপ কৰক",
+    "manualStep2": "Install app বা Add to Home screen ত টেপ কৰক",
+    "manualNote": "যদি কোনো বিকল্প দেখা নাযায়, কেইছেকেণ্ডমান অপেক্ষা কৰক — Chrome এতিয়াও প্ৰস্তুত কৰি থাকিব পাৰে।",
+    "yourBrowser": "আপোনাৰ ব্ৰাউজাৰ",
+    "close": "বন্ধ কৰক"
   }
 }

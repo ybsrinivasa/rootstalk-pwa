@@ -3408,5 +3408,24 @@
     "photosLabel": "বিভিন্ন ধরণের ছবি",
     "descriptionLabel": "এই জাতটি সম্পর্কে",
     "dusCharactersLabel": "স্বাতন্ত্র্য · অভিন্নতা · স্থিতিশীলতা"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK হোম স্ক্রিনে যোগ করুন",
+    "bannerSubtitle": "তাৎক্ষণিক সতর্কতা + দ্রুত লগইন",
+    "bannerCta": "ইনস্টল →",
+    "sheetTitle": "rootsTALK.in যোগ করুন",
+    "sheetSubtitle": "দ্রুত অ্যাক্সেসের জন্য হোম স্ক্রিনে",
+    "benefitFast": "তাৎক্ষণিক খোলে",
+    "benefitOffline": "অফলাইনে কাজ করে",
+    "benefitAlerts": "সতর্কতা পান",
+    "installCta": "হোম স্ক্রিনে যোগ করুন",
+    "installing": "ইনস্টল হচ্ছে…",
+    "iosStep1": "Safari-এর টুলবারে Share বোতামে ট্যাপ করুন",
+    "iosStep2": "নিচে স্ক্রল করে \"Add to Home Screen\"-এ ট্যাপ করুন",
+    "manualStep1": "{browser}-এর টুলবারে ⋮ মেনুতে ট্যাপ করুন",
+    "manualStep2": "Install app বা Add to Home screen-এ ট্যাপ করুন",
+    "manualNote": "যদি কোনো বিকল্প না দেখায়, কয়েক সেকেন্ড অপেক্ষা করুন — Chrome এখনও প্রস্তুত করছে হতে পারে।",
+    "yourBrowser": "আপনার ব্রাউজার",
+    "close": "বন্ধ করুন"
   }
 }

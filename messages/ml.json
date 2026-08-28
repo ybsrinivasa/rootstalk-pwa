@@ -3408,5 +3408,24 @@
     "photosLabel": "വൈവിധ്യത്തിന്റെ ഫോട്ടോകൾ",
     "descriptionLabel": "ഈ ഇനത്തെക്കുറിച്ച്",
     "dusCharactersLabel": "വ്യതിരിക്തത · ഏകീകൃതത · സ്ഥിരത"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK ഹോം സ്ക്രീനിലേക്ക് ചേർക്കുക",
+    "bannerSubtitle": "തൽക്ഷണ അലേർട്ടുകൾ + വേഗതയേറിയ ലോഗിൻ",
+    "bannerCta": "ഇൻസ്റ്റാൾ →",
+    "sheetTitle": "rootsTALK.in ചേർക്കുക",
+    "sheetSubtitle": "വേഗത്തിലുള്ള ആക്‌സസിനായി ഹോം സ്ക്രീനിലേക്ക്",
+    "benefitFast": "ഉടനടി തുറക്കുന്നു",
+    "benefitOffline": "ഓഫ്‌ലൈനിൽ പ്രവർത്തിക്കുന്നു",
+    "benefitAlerts": "അലേർട്ടുകൾ നേടുക",
+    "installCta": "ഹോം സ്ക്രീനിലേക്ക് ചേർക്കുക",
+    "installing": "ഇൻസ്റ്റാൾ ചെയ്യുന്നു…",
+    "iosStep1": "Safari ന്റെ ടൂൾബാറിലുള്ള Share ബട്ടണിൽ ടാപ്പ് ചെയ്യുക",
+    "iosStep2": "താഴേക്ക് സ്ക്രോൾ ചെയ്ത് \"Add to Home Screen\" ടാപ്പ് ചെയ്യുക",
+    "manualStep1": "{browser} ന്റെ ടൂൾബാറിലെ ⋮ മെനുവിൽ ടാപ്പ് ചെയ്യുക",
+    "manualStep2": "Install app അല്ലെങ്കിൽ Add to Home screen ടാപ്പ് ചെയ്യുക",
+    "manualNote": "ഒരു ഓപ്‌ഷനും കാണിക്കുന്നില്ലെങ്കിൽ, കുറച്ച് നിമിഷങ്ങൾ കാത്തിരിക്കുക — Chrome ഇപ്പോഴും തയ്യാറാക്കുന്നുണ്ടാകാം.",
+    "yourBrowser": "നിങ്ങളുടെ ബ്രൗസർ",
+    "close": "അടയ്ക്കുക"
   }
 }

@@ -3408,5 +3408,24 @@
     "photosLabel": "பல்வேறு புகைப்படங்கள்",
     "descriptionLabel": "இந்த வகையைப் பற்றி",
     "dusCharactersLabel": "தனித்தன்மை · சீரான தன்மை · நிலைத்தன்மை"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK-ஐ முகப்புத் திரையில் சேர்க்கவும்",
+    "bannerSubtitle": "உடனடி எச்சரிக்கைகள் + விரைவான உள்நுழைவு",
+    "bannerCta": "நிறுவு →",
+    "sheetTitle": "rootsTALK.in சேர்க்கவும்",
+    "sheetSubtitle": "விரைவான அணுகலுக்கு முகப்புத் திரையில்",
+    "benefitFast": "உடனே திறக்கும்",
+    "benefitOffline": "ஆஃப்லைனில் இயங்கும்",
+    "benefitAlerts": "எச்சரிக்கைகள் பெறுக",
+    "installCta": "முகப்புத் திரையில் சேர்க்கவும்",
+    "installing": "நிறுவப்படுகிறது…",
+    "iosStep1": "Safari கருவிப்பட்டியில் Share பொத்தானைத் தட்டவும்",
+    "iosStep2": "கீழே ஸ்க்ரோல் செய்து \"Add to Home Screen\"-ஐ தட்டவும்",
+    "manualStep1": "{browser}-இன் கருவிப்பட்டியில் ⋮ மெனுவை தட்டவும்",
+    "manualStep2": "Install app அல்லது Add to Home screen-ஐ தட்டவும்",
+    "manualNote": "எதுவும் காணப்படவில்லை என்றால், சில வினாடிகள் காத்திருக்கவும் — Chrome இன்னும் தயார் செய்கிறதாக இருக்கலாம்.",
+    "yourBrowser": "உங்கள் உலாவி",
+    "close": "மூடு"
   }
 }

@@ -3441,5 +3441,24 @@
     "photosLabel": "Photos of the variety",
     "descriptionLabel": "About this variety",
     "dusCharactersLabel": "Distinctness · Uniformity · Stability"
+  },
+  "installBanner": {
+    "bannerTitle": "Add rootsTALK to your Home Screen",
+    "bannerSubtitle": "Instant alerts + faster login",
+    "bannerCta": "Install →",
+    "sheetTitle": "Add rootsTALK.in",
+    "sheetSubtitle": "to your Home Screen for quick access",
+    "benefitFast": "Opens instantly",
+    "benefitOffline": "Works offline",
+    "benefitAlerts": "Get alerts",
+    "installCta": "Add to Home Screen",
+    "installing": "Installing…",
+    "iosStep1": "Tap the Share button in Safari's toolbar",
+    "iosStep2": "Scroll down and tap \"Add to Home Screen\"",
+    "manualStep1": "Tap the ⋮ menu in {browser}'s toolbar",
+    "manualStep2": "Tap Install app or Add to Home screen",
+    "manualNote": "If neither option shows, wait a few seconds — Chrome may still be preparing the app.",
+    "yourBrowser": "your browser",
+    "close": "Close"
   }
 }

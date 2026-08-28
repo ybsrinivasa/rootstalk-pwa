@@ -4,6 +4,8 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { isRTL } from "@/lib/locales";
 import PushNotificationSetup from "@/components/PushNotificationSetup";
+import InstallPrompt from "@/components/InstallPrompt";
+import InstallBanner from "@/components/InstallBanner";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -67,6 +69,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 page picks it up; it no-ops when the user isn't
                 logged in. */}
             <PushNotificationSetup />
+            {/* Persistent home-screen banner for users who signed
+                up before the mandatory install gate went in +
+                globally-mounted install sheet the banner triggers.
+                Both self-guard against standalone mode; the banner
+                also filters by pathname so only role home pages
+                surface it. */}
+            <InstallBanner />
+            <InstallPrompt />
           </div>
         </NextIntlClientProvider>
       </body>

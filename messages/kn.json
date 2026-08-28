@@ -3408,5 +3408,24 @@
     "photosLabel": "ವೈವಿಧ್ಯತೆಯ ಫೋಟೋಗಳು",
     "descriptionLabel": "ಈ ತಳಿಯ ಬಗ್ಗೆ",
     "dusCharactersLabel": "ವಿಶಿಷ್ಟತೆ · ಏಕರೂಪತೆ · ಸ್ಥಿರತೆ"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK ಅನ್ನು ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ",
+    "bannerSubtitle": "ತಕ್ಷಣದ ಎಚ್ಚರಿಕೆಗಳು + ವೇಗದ ಲಾಗಿನ್",
+    "bannerCta": "ಇನ್‌ಸ್ಟಾಲ್ →",
+    "sheetTitle": "rootsTALK.in ಸೇರಿಸಿ",
+    "sheetSubtitle": "ತ್ವರಿತ ಪ್ರವೇಶಕ್ಕಾಗಿ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ",
+    "benefitFast": "ತಕ್ಷಣ ತೆರೆಯುತ್ತದೆ",
+    "benefitOffline": "ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿ ಕಾರ್ಯನಿರ್ವಹಿಸುತ್ತದೆ",
+    "benefitAlerts": "ಎಚ್ಚರಿಕೆಗಳನ್ನು ಪಡೆಯಿರಿ",
+    "installCta": "ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ",
+    "installing": "ಇನ್‌ಸ್ಟಾಲ್ ಆಗುತ್ತಿದೆ…",
+    "iosStep1": "Safari ನ ಟೂಲ್‌ಬಾರ್‌ನಲ್ಲಿ Share ಬಟನ್ ಟ್ಯಾಪ್ ಮಾಡಿ",
+    "iosStep2": "ಕೆಳಗೆ ಸ್ಕ್ರೋಲ್ ಮಾಡಿ \"Add to Home Screen\" ಟ್ಯಾಪ್ ಮಾಡಿ",
+    "manualStep1": "{browser} ನ ಟೂಲ್‌ಬಾರ್‌ನಲ್ಲಿ ⋮ ಮೆನುವನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ",
+    "manualStep2": "Install app ಅಥವಾ Add to Home screen ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ",
+    "manualNote": "ಯಾವುದೇ ಆಯ್ಕೆಯು ಕಾಣಿಸದಿದ್ದರೆ, ಕೆಲವು ಸೆಕೆಂಡುಗಳ ಕಾಲ ಕಾಯಿರಿ — Chrome ಇನ್ನೂ ಸಿದ್ಧಗೊಳಿಸುತ್ತಿರಬಹುದು.",
+    "yourBrowser": "ನಿಮ್ಮ ಬ್ರೌಸರ್",
+    "close": "ಮುಚ್ಚಿ"
   }
 }

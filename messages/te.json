@@ -3408,5 +3408,24 @@
     "photosLabel": "వివిధ రకాల ఫోటోలు",
     "descriptionLabel": "ఈ రకం గురించి",
     "dusCharactersLabel": "విలక్షణత · ఏకరూపత · స్థిరత్వం"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK ని హోమ్ స్క్రీన్‌కు జోడించండి",
+    "bannerSubtitle": "తక్షణ హెచ్చరికలు + వేగవంతమైన లాగిన్",
+    "bannerCta": "ఇన్‌స్టాల్ →",
+    "sheetTitle": "rootsTALK.in జోడించండి",
+    "sheetSubtitle": "త్వరిత యాక్సెస్ కోసం హోమ్ స్క్రీన్‌కు",
+    "benefitFast": "వెంటనే తెరుస్తుంది",
+    "benefitOffline": "ఆఫ్‌లైన్‌లో పనిచేస్తుంది",
+    "benefitAlerts": "హెచ్చరికలు పొందండి",
+    "installCta": "హోమ్ స్క్రీన్‌కు జోడించండి",
+    "installing": "ఇన్‌స్టాల్ అవుతోంది…",
+    "iosStep1": "Safari టూల్‌బార్‌లో Share బటన్‌పై నొక్కండి",
+    "iosStep2": "కిందకి స్క్రోల్ చేసి \"Add to Home Screen\"పై నొక్కండి",
+    "manualStep1": "{browser} టూల్‌బార్‌లో ⋮ మెనుపై నొక్కండి",
+    "manualStep2": "Install app లేదా Add to Home screen పై నొక్కండి",
+    "manualNote": "ఏ ఎంపిక కనిపించకపోతే, కొన్ని సెకన్లు వేచి ఉండండి — Chrome ఇంకా సిద్ధం చేస్తుండవచ్చు.",
+    "yourBrowser": "మీ బ్రౌజర్",
+    "close": "మూసివేయి"
   }
 }

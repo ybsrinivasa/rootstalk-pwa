@@ -3408,5 +3408,24 @@
     "photosLabel": "ਕਿਸਮ ਦੀਆਂ ਫੋਟੋਆਂ",
     "descriptionLabel": "ਇਸ ਕਿਸਮ ਬਾਰੇ",
     "dusCharactersLabel": "ਭਿੰਨਤਾ · ਇਕਸਾਰਤਾ · ਸਥਿਰਤਾ"
+  },
+  "installBanner": {
+    "bannerTitle": "rootsTALK ਨੂੰ ਹੋਮ ਸਕ੍ਰੀਨ ਤੇ ਸ਼ਾਮਲ ਕਰੋ",
+    "bannerSubtitle": "ਤੁਰੰਤ ਚੇਤਾਵਨੀਆਂ + ਤੇਜ਼ ਲੌਗਇਨ",
+    "bannerCta": "ਇੰਸਟਾਲ →",
+    "sheetTitle": "rootsTALK.in ਸ਼ਾਮਲ ਕਰੋ",
+    "sheetSubtitle": "ਤੇਜ਼ ਪਹੁੰਚ ਲਈ ਹੋਮ ਸਕ੍ਰੀਨ ਤੇ",
+    "benefitFast": "ਤੁਰੰਤ ਖੁੱਲ੍ਹਦਾ ਹੈ",
+    "benefitOffline": "ਔਫ਼ਲਾਈਨ ਕੰਮ ਕਰਦਾ ਹੈ",
+    "benefitAlerts": "ਚੇਤਾਵਨੀਆਂ ਪ੍ਰਾਪਤ ਕਰੋ",
+    "installCta": "ਹੋਮ ਸਕ੍ਰੀਨ ਤੇ ਸ਼ਾਮਲ ਕਰੋ",
+    "installing": "ਇੰਸਟਾਲ ਹੋ ਰਿਹਾ ਹੈ…",
+    "iosStep1": "Safari ਦੇ ਟੂਲਬਾਰ ਵਿੱਚ Share ਬਟਨ ਤੇ ਟੈਪ ਕਰੋ",
+    "iosStep2": "ਹੇਠਾਂ ਸਕ੍ਰੋਲ ਕਰੋ ਅਤੇ \"Add to Home Screen\" ਤੇ ਟੈਪ ਕਰੋ",
+    "manualStep1": "{browser} ਦੇ ਟੂਲਬਾਰ ਵਿੱਚ ⋮ ਮੈਨੂ ਤੇ ਟੈਪ ਕਰੋ",
+    "manualStep2": "Install app ਜਾਂ Add to Home screen ਤੇ ਟੈਪ ਕਰੋ",
+    "manualNote": "ਜੇ ਕੋਈ ਵਿਕਲਪ ਨਹੀਂ ਦਿਖਾਈ ਦਿੰਦਾ, ਤਾਂ ਕੁਝ ਸਕਿੰਟ ਉਡੀਕ ਕਰੋ — Chrome ਹਾਲੇ ਵੀ ਤਿਆਰ ਕਰ ਰਿਹਾ ਹੋ ਸਕਦਾ ਹੈ।",
+    "yourBrowser": "ਤੁਹਾਡੇ ਬ੍ਰਾਊਜ਼ਰ",
+    "close": "ਬੰਦ ਕਰੋ"
   }
 }
