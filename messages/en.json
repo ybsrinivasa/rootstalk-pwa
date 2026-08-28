@@ -458,6 +458,7 @@
     "otpTitle": "Enter the code we sent",
     "otpSubtitle": "We sent a 6-digit code to +91 {phone}",
     "checking": "Checking…",
+    "readingSms": "Reading OTP from SMS…",
     "verify": "Verify →",
     "resendIn": "Resend in {seconds}s",
     "resendNow": "Send a new code",

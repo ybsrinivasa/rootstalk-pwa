@@ -446,6 +446,7 @@
     "otpTitle": "आम्ही पाठवलेला कोड प्रविष्ट करा",
     "otpSubtitle": "आम्ही +91 {phone} वर ६-अंकी कोड पाठवला.",
     "checking": "तपासत आहे…",
+    "readingSms": "SMS मधून OTP वाचत आहोत…",
     "verify": "पडताळणी करा →",
     "resendIn": "{seconds} मध्ये पुन्हा पाठवा",
     "resendNow": "नवीन कोड पाठवा",

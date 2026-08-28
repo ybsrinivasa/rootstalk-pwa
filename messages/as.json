@@ -446,6 +446,7 @@
     "otpTitle": "আমি পঠোৱা ক’ডটো দিয়ক",
     "otpSubtitle": "আমি +91 {phone} লৈ ৬ অংকৰ ক'ড পঠালোঁ।",
     "checking": "চেক কৰি আছে...",
+    "readingSms": "SMS ৰ পৰা OTP পঢ়ি আছে…",
     "verify": "→ পৰীক্ষা কৰক",
     "resendIn": "{seconds} s ত পুনৰ প্ৰেৰণ কৰক",
     "resendNow": "এটা নতুন ক'ড পঠাওক",
