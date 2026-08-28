@@ -11,6 +11,7 @@ import RecipientMap, { type MapPoint } from '@/components/orders/RecipientMap'
 import LocationSourceToggle, { type LocationSource } from '@/components/orders/LocationSourceToggle'
 import { googleMapsDirections } from '@/lib/directions'
 import api from '@/lib/api'
+import { digitsOnly } from '@/lib/input-normalization'
 
 interface Person {
   user_id: string; name: string | null; phone: string | null; distance_km: number; is_promoter: boolean
@@ -466,7 +467,7 @@ export default function OrderingScreenPage() {
             <p className="text-xs font-semibold text-[#7A8C7E] mb-2">{t('customPhoneLabel')}</p>
             <div className="flex items-center gap-2">
               <span className="text-xs text-[#7A8C7E] px-2 py-2 bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl">+91</span>
-              <input value={customPhone} onChange={e => setCustomPhone(e.target.value)}
+              <input value={customPhone} onChange={e => setCustomPhone(digitsOnly(e.target.value, 10))}
                 placeholder={t('customPhonePlaceholder')}
                 type="tel" inputMode="numeric"
                 className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]" />

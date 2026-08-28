@@ -6,6 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
+import { digitsOnly } from '@/lib/input-normalization'
 
 const COLOUR = '#7D4E00'
 
@@ -322,7 +323,7 @@ export default function FacilitatorPromoterAssignPage() {
                 <input
                   type="tel"
                   value={phone}
-                  onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setError('') }}
+                  onChange={e => { setPhone(digitsOnly(e.target.value, 10)); setError('') }}
                   onKeyDown={e => e.key === 'Enter' && verifyPhone()}
                   placeholder={t('phone.placeholder')}
                   className="flex-1 px-4 py-3.5 text-sm focus:outline-none"

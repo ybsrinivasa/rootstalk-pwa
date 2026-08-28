@@ -6,6 +6,7 @@ import { getToken, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
+import { digitsOnly } from '@/lib/input-normalization'
 
 // What the dealer can sell. Each row carries a regulatory note for
 // the dealer's benefit, but RootsTalk does not collect proof of
@@ -521,7 +522,7 @@ export default function DealerProfilePage() {
               UPI-linked phone (optional)
             </label>
             <input value={form.upi_phone}
-              onChange={e => setForm(f => ({ ...f, upi_phone: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, upi_phone: digitsOnly(e.target.value, 10) }))}
               placeholder="Only if different from your login phone"
               inputMode="tel"
               className="w-full text-sm border border-[#DDD0B8] rounded-xl px-3 py-2.5" />

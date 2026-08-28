@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser, getActiveRoles, logout, refreshUser, ROLE_COLOURS, type PWAUser } from '@/lib/auth'
+import { hasNonAscii, isAsciiName } from '@/lib/input-normalization'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
@@ -309,21 +310,28 @@ export default function ProfilePage() {
             </label>
             <div className="flex-1 min-w-0">
               {editingName ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    value={nameValue}
-                    onChange={e => setNameValue(e.target.value)}
-                    autoFocus
-                    className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-                  />
-                  <button onClick={saveName} disabled={savingName}
-                    className="text-xs text-white bg-[#3A7D44] rounded-lg px-3 py-1.5 font-medium disabled:opacity-50 shrink-0">
-                    {savingName ? '…' : tCommon('save')}
-                  </button>
-                  <button onClick={() => { setEditingName(false); setNameValue(user?.name || '') }}
-                    className="text-xs text-[#7A8C7E] rounded-lg px-2 py-1.5 shrink-0">
-                    {tCommon('cancel')}
-                  </button>
+                <div className="w-full">
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={nameValue}
+                      onChange={e => setNameValue(e.target.value)}
+                      autoFocus
+                      className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
+                    />
+                    <button onClick={saveName} disabled={savingName || !isAsciiName(nameValue)}
+                      className="text-xs text-white bg-[#3A7D44] rounded-lg px-3 py-1.5 font-medium disabled:opacity-50 shrink-0">
+                      {savingName ? '…' : tCommon('save')}
+                    </button>
+                    <button onClick={() => { setEditingName(false); setNameValue(user?.name || '') }}
+                      className="text-xs text-[#7A8C7E] rounded-lg px-2 py-1.5 shrink-0">
+                      {tCommon('cancel')}
+                    </button>
+                  </div>
+                  {hasNonAscii(nameValue) && (
+                    <p className="text-amber-700 text-[11px] bg-amber-50 border border-amber-200 rounded-lg px-2 py-1.5 mt-1.5 leading-relaxed">
+                      {t('nameEnglishOnlyHint')}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="flex items-center gap-2">

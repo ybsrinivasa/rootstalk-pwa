@@ -464,6 +464,7 @@
     "nameTitle": "Nice to meet you",
     "nameSubtitle": "What shall we call you?",
     "namePlaceholder": "e.g. Rajan",
+    "nameEnglishOnlyHint": "Please type your name in English letters. If your keyboard is in another language, tap the globe icon on the keyboard to switch to English.",
     "takeMeIn": "Take me in →",
     "devCode": "Dev code:",
     "errors": {
@@ -1479,7 +1480,8 @@
       "deleting": "Deleting…",
       "errorOtpSend": "Could not send OTP. Please try again.",
       "errorOtpInvalid": "Invalid or expired OTP."
-    }
+    },
+    "nameEnglishOnlyHint": "Please type your name in English letters. If your keyboard is in another language, tap the globe icon on the keyboard to switch to English."
   },
   "dealer": {
     "home": {

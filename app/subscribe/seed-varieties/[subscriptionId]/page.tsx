@@ -6,6 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
+import { digitsOnly } from '@/lib/input-normalization'
 // 2026-06-02 — pinch+pan via react-zoom-pan-pinch (no native
 // `touch-action: pinch-zoom` for scoped containers; browser only
 // pinch-zooms the viewport).
@@ -417,7 +418,7 @@ export default function SeedVarietiesPage() {
             <p className="text-xs font-semibold text-[#7A8C7E] mb-2">{t('phoneEntryLabel')}</p>
             <div className="flex items-center gap-2">
               <span className="text-xs text-[#7A8C7E] px-2 py-2 bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl">+91</span>
-              <input value={phoneInput} onChange={e => setPhoneInput(e.target.value)}
+              <input value={phoneInput} onChange={e => setPhoneInput(digitsOnly(e.target.value, 10))}
                 placeholder={t('phoneEntryPlaceholder')}
                 type="tel" inputMode="numeric"
                 className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#085041]" />

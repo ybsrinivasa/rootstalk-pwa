@@ -32,6 +32,7 @@ import api from '@/lib/api'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import { cropDisplayName } from '@/lib/crop-name'
+import { digitsOnly } from '@/lib/input-normalization'
 
 const COLOUR = '#B45309' // amber-700 — training-frame accent
 
@@ -412,7 +413,7 @@ function PromoterTrainingInviteInner() {
                 type="tel"
                 inputMode="numeric"
                 value={phone}
-                onChange={e => { setPhone(e.target.value.replace(/\D/g, '').slice(0, 10)); setError('') }}
+                onChange={e => { setPhone(digitsOnly(e.target.value, 10)); setError('') }}
                 onKeyDown={e => e.key === 'Enter' && verifyPhone()}
                 placeholder={tTrain('invite.phone.placeholder')}
                 className="flex-1 px-4 py-3.5 text-sm focus:outline-none"

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
+import { digitsOnly } from '@/lib/input-normalization'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 import PhoneVerify from '@/components/PhoneVerify'
@@ -1235,9 +1236,9 @@ export default function CropDetailPage() {
                 <div>
                   <p className="text-xs text-[#7A8C7E] mb-1">{t('alertsSheet.phoneLabel')}</p>
                   <input
-                    type="tel" inputMode="tel"
+                    type="tel" inputMode="tel" maxLength={10}
                     value={alertPhoneInput}
-                    onChange={e => { setAlertPhoneInput(e.target.value); setAlertError(null) }}
+                    onChange={e => { setAlertPhoneInput(digitsOnly(e.target.value, 10)); setAlertError(null) }}
                     placeholder={t('alertsSheet.phonePlaceholder')}
                     className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
                   />
@@ -1295,9 +1296,9 @@ export default function CropDetailPage() {
             <div className="mt-4">
               <p className="text-xs text-[#7A8C7E] mb-1">{t('alertsSheet.phoneLabel')}</p>
               <input
-                type="tel" inputMode="tel"
+                type="tel" inputMode="tel" maxLength={10}
                 value={expertPhoneInput}
-                onChange={e => { setExpertPhoneInput(e.target.value); setExpertError(null) }}
+                onChange={e => { setExpertPhoneInput(digitsOnly(e.target.value, 10)); setExpertError(null) }}
                 placeholder={t('alertsSheet.phonePlaceholder')}
                 className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
               />
