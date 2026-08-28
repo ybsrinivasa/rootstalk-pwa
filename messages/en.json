@@ -485,7 +485,8 @@
       "installedBody": "Open rootsTALK from your home screen icon to continue.",
       "manualStep1": "Tap the ⋮ menu in Chrome's toolbar",
       "manualStep2": "Tap Install app or Add to Home screen",
-      "manualNote": "If neither option shows, wait a few seconds — Chrome may still be preparing the app."
+      "manualNote": "If neither option shows, wait a few seconds — Chrome may still be preparing the app.",
+      "alreadyAdded": "Already added rootsTALK? Continue →"
     }
   },
   "home": {

@@ -473,7 +473,8 @@
       "installedBody": "जारी रखने के लिए होम स्क्रीन आइकन से rootsTALK खोलें।",
       "manualStep1": "Chrome के टूलबार में ⋮ मेनू पर टैप करें",
       "manualStep2": "Install app या Add to Home screen पर टैप करें",
-      "manualNote": "अगर कोई विकल्प नहीं दिखता, तो कुछ सेकंड रुकें — Chrome अभी तैयार कर रहा हो सकता है।"
+      "manualNote": "अगर कोई विकल्प नहीं दिखता, तो कुछ सेकंड रुकें — Chrome अभी तैयार कर रहा हो सकता है।",
+      "alreadyAdded": "क्या आपने rootsTALK पहले ही जोड़ लिया है? आगे बढ़ें →"
     }
   },
   "home": {

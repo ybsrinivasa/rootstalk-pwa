@@ -498,10 +498,19 @@ export default function RootPage() {
         <Btn onClick={() => {
           // Android hard-gate: farmer must install-to-home-screen
           // before entering their phone. iOS + desktop are exempt.
+          // Users who've already installed (via the mandatory gate
+          // or the InstallBanner — both paths set `rt_installed=1`
+          // via their appinstalled listener) are exempt too: they
+          // may be visiting via a browser tab after logout, and
+          // gating them would loop-lock (Chrome won't re-fire
+          // beforeinstallprompt because the app IS installed). The
+          // flag is cleared automatically if we detect the app was
+          // uninstalled (see InstallBanner).
           if (typeof window !== 'undefined') {
             const isAndroid = /android/i.test(navigator.userAgent)
             const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-            if (isAndroid && !isStandalone) {
+            const rtInstalled = localStorage.getItem('rt_installed') === '1'
+            if (isAndroid && !isStandalone && !rtInstalled) {
               setStage('install-required')
               return
             }
@@ -628,26 +637,45 @@ export default function RootPage() {
                 : tAuth('installRequired.installCta')}
             </button>
           ) : (
-            /* Manual instructions — Chrome hasn't fired the event
-               (engagement heuristic not yet satisfied, or event
-               already consumed by dismissal). */
-            <div className="bg-[#F5F0E8] rounded-xl p-4 border border-[#DDD0B8]">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: G }}>1</div>
-                <p className="text-[#6B3F1F] text-sm leading-relaxed">
-                  {tAuth('installRequired.manualStep1')}
+            /* Manual instructions — Chrome hasn't fired the event.
+               Two reasons this happens: (a) engagement heuristic not
+               yet satisfied (rare), or (b) the app is already
+               installed on this device (common for users who installed
+               under an old build that didn't set our rt_installed flag,
+               or via Chrome's own menu). The "Already added?" escape
+               hatch handles case (b) — those users can't install what
+               they've already installed and would otherwise be stuck. */
+            <>
+              <div className="bg-[#F5F0E8] rounded-xl p-4 border border-[#DDD0B8]">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: G }}>1</div>
+                  <p className="text-[#6B3F1F] text-sm leading-relaxed">
+                    {tAuth('installRequired.manualStep1')}
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: G }}>2</div>
+                  <p className="text-[#6B3F1F] text-sm leading-relaxed">
+                    {tAuth('installRequired.manualStep2')}
+                  </p>
+                </div>
+                <p className="text-[#7A8C7E] text-[11px] mt-3 italic leading-relaxed">
+                  {tAuth('installRequired.manualNote')}
                 </p>
               </div>
-              <div className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: G }}>2</div>
-                <p className="text-[#6B3F1F] text-sm leading-relaxed">
-                  {tAuth('installRequired.manualStep2')}
-                </p>
-              </div>
-              <p className="text-[#7A8C7E] text-[11px] mt-3 italic leading-relaxed">
-                {tAuth('installRequired.manualNote')}
-              </p>
-            </div>
+              <button
+                onClick={() => {
+                  // Mark the flag so future Get-Started taps skip
+                  // this stage entirely — no more loop-lock.
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('rt_installed', '1')
+                  }
+                  setStage('phone')
+                }}
+                className="mt-4 w-full text-center text-[#3A7D44] text-sm py-2 underline underline-offset-2">
+                {tAuth('installRequired.alreadyAdded')}
+              </button>
+            </>
           )}
         </div>
       </div>
