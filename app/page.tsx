@@ -8,7 +8,12 @@ import api from '@/lib/api'
 import InstallPrompt, { openInstallPrompt } from '@/components/InstallPrompt'
 import AppMark from '@/components/AppMark'
 
-type Stage = 'loading' | 'landing' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
+type Stage = 'loading' | 'landing' | 'install-required' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
 type Lang  = { language_code: string; language_name_native: string; status?: string }
 
 // Cosh-driven location universe (mirrors the CA portal's
@@ -187,6 +192,14 @@ export default function RootPage() {
   const [resend,       setResend]      = useState(0)
   const [sessionEnded, setSessionEnded] = useState<'another_device' | 'expired' | null>(null)
 
+  // Install-gate state — Android users must install the PWA to their
+  // home screen before they can enter their phone number. The gate
+  // check runs when the user taps Get Started; iOS + desktop are
+  // exempt (iOS has no programmatic install; desktop is a
+  // facilitator/dealer surface we don't want to friction).
+  const [deferredInstall, setDeferredInstall] = useState<BeforeInstallPromptEvent | null>(null)
+  const [installOutcome, setInstallOutcome] = useState<'idle' | 'installing' | 'accepted'>('idle')
+
   // location + gps states
   const [stateId,      setStateId]     = useState('')
   const [stateName,    setStateName]   = useState('')
@@ -213,6 +226,21 @@ export default function RootPage() {
     else if (roles.includes('FARM_PUNDIT')) router.replace('/pundit/home')
     else router.replace('/home')
   }
+
+  // Capture Chrome's install-readiness signal so the Android install
+  // gate can offer the native install dialog. Attached in a dedicated
+  // effect so cleanup is straightforward; safe alongside InstallPrompt's
+  // own listener since beforeinstallprompt fires once and every
+  // listener receives the same event.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setDeferredInstall(e as BeforeInstallPromptEvent)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -452,7 +480,19 @@ export default function RootPage() {
           </div>
         )}
 
-        <Btn onClick={() => setStage('phone')}>{tLanding('getStarted')}</Btn>
+        <Btn onClick={() => {
+          // Android hard-gate: farmer must install-to-home-screen
+          // before entering their phone. iOS + desktop are exempt.
+          if (typeof window !== 'undefined') {
+            const isAndroid = /android/i.test(navigator.userAgent)
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+            if (isAndroid && !isStandalone) {
+              setStage('install-required')
+              return
+            }
+          }
+          setStage('phone')
+        }}>{tLanding('getStarted')}</Btn>
 
         <p className="text-[#7A8C7E] text-xs text-center mt-3 tracking-wide">
           {tLanding('audience')}
@@ -474,6 +514,123 @@ export default function RootPage() {
       </div>
     </div>
   )
+
+  // ── Install-required stage (Android hard-gate) ────────────────────────────
+  // Blocks phone-number entry until the farmer installs the PWA to
+  // their home screen. Native install button when Chrome has fired
+  // beforeinstallprompt; manual "menu → Install app" instructions
+  // when it hasn't. Back button escapes to landing so the farmer
+  // can change language / read the privacy policy / not proceed.
+  if (stage === 'install-required') {
+    async function triggerInstall() {
+      if (!deferredInstall) return
+      setInstallOutcome('installing')
+      try {
+        await deferredInstall.prompt()
+        const { outcome } = await deferredInstall.userChoice
+        if (outcome === 'accepted') {
+          setInstallOutcome('accepted')
+        } else {
+          setInstallOutcome('idle')
+        }
+      } catch {
+        setInstallOutcome('idle')
+      } finally {
+        // The event is single-use — Chrome won't fire it again for
+        // this session even if user cancelled. Clear it so the UI
+        // falls back to the manual-instructions path.
+        setDeferredInstall(null)
+      }
+    }
+    return (
+      <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ background: BG }}>
+        <DewDrops/>
+        <GrassBlades/>
+
+        <div className="w-full max-w-sm mx-auto px-5 relative z-10">
+          <div className="pt-safe-top"/>
+          <BackBtn onClick={() => { setInstallOutcome('idle'); setStage('landing') }}/>
+          <MiniMark/>
+          <h2 className="text-white font-semibold leading-snug mt-5" style={{ fontSize: '1.6rem' }}>
+            {tAuth('installRequired.title')}
+          </h2>
+          <p className="text-white/60 text-sm mt-2 font-light leading-relaxed pb-7">
+            {tAuth('installRequired.subtitle')}
+          </p>
+        </div>
+
+        <div className="flex-1 sm:flex-none flex flex-col w-full sm:max-w-sm sm:mx-auto rounded-t-[2rem] px-5 pt-7 pb-10 relative z-10"
+          style={{
+            background:    '#FAFAF8',
+            boxShadow:     '0 -4px 32px rgba(0,0,0,0.10)',
+            paddingBottom: 'max(2rem, env(safe-area-inset-bottom))',
+          }}>
+
+          {/* Benefits row — mirrors the InstallPrompt sheet so the
+              farmer sees consistent messaging. */}
+          <div className="flex gap-3 mb-5">
+            {[
+              { icon: '⚡', text: tAuth('installRequired.benefitFast') },
+              { icon: '📵', text: tAuth('installRequired.benefitOffline') },
+              { icon: '🔔', text: tAuth('installRequired.benefitAlerts') },
+            ].map(b => (
+              <div key={b.text} className="flex-1 bg-[#F5F0E8] rounded-xl p-3 text-center border border-[#DDD0B8]">
+                <p className="text-xl mb-1">{b.icon}</p>
+                <p className="text-[#6B3F1F] text-xs font-medium leading-tight">{b.text}</p>
+              </div>
+            ))}
+          </div>
+
+          {installOutcome === 'accepted' ? (
+            /* Post-install — Chrome may or may not auto-launch the
+               standalone PWA; either way, direct the farmer to open
+               it from the home screen icon so the next session comes
+               up in standalone mode and the gate lifts. */
+            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-4">
+              <p className="text-green-800 font-semibold text-sm">
+                {tAuth('installRequired.installedTitle')}
+              </p>
+              <p className="text-green-700/80 text-xs mt-2 leading-relaxed">
+                {tAuth('installRequired.installedBody')}
+              </p>
+            </div>
+          ) : deferredInstall ? (
+            /* Chrome captured beforeinstallprompt — native install
+               button available. */
+            <button onClick={triggerInstall}
+              disabled={installOutcome === 'installing'}
+              className="w-full py-4 rounded-2xl text-white font-semibold text-base disabled:opacity-60 transition-opacity"
+              style={{ background: G }}>
+              {installOutcome === 'installing'
+                ? tAuth('installRequired.installing')
+                : tAuth('installRequired.installCta')}
+            </button>
+          ) : (
+            /* Manual instructions — Chrome hasn't fired the event
+               (engagement heuristic not yet satisfied, or event
+               already consumed by dismissal). */
+            <div className="bg-[#F5F0E8] rounded-xl p-4 border border-[#DDD0B8]">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: G }}>1</div>
+                <p className="text-[#6B3F1F] text-sm leading-relaxed">
+                  {tAuth('installRequired.manualStep1')}
+                </p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-6 h-6 rounded-full text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: G }}>2</div>
+                <p className="text-[#6B3F1F] text-sm leading-relaxed">
+                  {tAuth('installRequired.manualStep2')}
+                </p>
+              </div>
+              <p className="text-[#7A8C7E] text-[11px] mt-3 italic leading-relaxed">
+                {tAuth('installRequired.manualNote')}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   // ── Welcome stage ──────────────────────────────────────────────────────────
   if (stage === 'welcome') {

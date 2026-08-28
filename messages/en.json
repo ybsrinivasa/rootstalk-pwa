@@ -470,6 +470,20 @@
       "phoneSendFailed": "Could not send a code. Please check your number.",
       "otpMismatch": "That code didn't match. Please try again.",
       "nameSaveFailed": "Couldn't save your name. Please try again."
+    },
+    "installRequired": {
+      "title": "Add to Home Screen first",
+      "subtitle": "rootsTALK works best from your home screen — install once and you'll get instant alerts, faster login, and offline access.",
+      "benefitFast": "Opens instantly",
+      "benefitOffline": "Works offline",
+      "benefitAlerts": "Get alerts",
+      "installCta": "Add to Home Screen",
+      "installing": "Installing…",
+      "installedTitle": "Installed",
+      "installedBody": "Open rootsTALK from your home screen icon to continue.",
+      "manualStep1": "Tap the ⋮ menu in Chrome's toolbar",
+      "manualStep2": "Tap Install app or Add to Home screen",
+      "manualNote": "If neither option shows, wait a few seconds — Chrome may still be preparing the app."
     }
   },
   "home": {
