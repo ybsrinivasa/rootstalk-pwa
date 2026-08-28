@@ -181,14 +181,17 @@ export default function RootPage() {
   const [deferredInstall, setDeferredInstall] = useState<BeforeInstallPromptEvent | null>(null)
   const [installOutcome, setInstallOutcome] = useState<'idle' | 'installing' | 'accepted'>('idle')
 
-  // OTP auto-read state. `waitingForSms` powers the small "reading OTP
-  // from SMS…" hint under the input; auto-cleared when the farmer
-  // types anything or after 30s so the hint doesn't linger. The
-  // `autoSubmittedRef` gate stops the auto-submit effect from
-  // re-firing on the same 6-digit value if verification failed
-  // (farmer must edit the OTP to retry). WebOTP wiring happens in a
-  // separate effect below.
-  const [waitingForSms, setWaitingForSms] = useState(false)
+  // OTP auto-submit state. The `autoSubmittedRef` gate stops the
+  // auto-submit effect from re-firing on the same 6-digit value if
+  // verification failed (farmer must edit the OTP to retry). The
+  // WebOTP API + "Reading OTP from SMS…" hint were removed 2026-08-28
+  // — the SMS template doesn't yet include the bound-origin line
+  // Chrome needs to actually extract the OTP, so promising "reading
+  // OTP" while nothing is being read is a miscommunication. Both
+  // will be re-added as part of Phase 2 once the DLT-approved
+  // template lands. iOS keyboard-suggestion autofill (via the
+  // `autoComplete="one-time-code"` attribute below) works today
+  // without any special UI hint from us.
   const autoSubmittedRef = useRef(false)
   const otpFormRef = useRef<HTMLFormElement | null>(null)
 
@@ -271,47 +274,6 @@ export default function RootPage() {
     const t = setTimeout(() => setResend(r => r - 1), 1000)
     return () => clearTimeout(t)
   }, [resend])
-
-  // WebOTP API — Chrome on Android extracts the code from an SMS
-  // whose last line matches `@<origin> #<otp>` and offers a "Verify
-  // with 123456?" chip; on farmer's tap the OTP auto-fills here. No
-  // SMS format change needed today for this to be harmless — the
-  // Credentials request just sits waiting until it aborts. It'll
-  // start actually firing the day the DLT-approved SMS template
-  // includes the bound-origin line (backend Phase 2, not yet done).
-  useEffect(() => {
-    if (stage !== 'otp') return
-    if (typeof window === 'undefined') return
-    if (!('OTPCredential' in window)) return
-    const ac = new AbortController()
-    navigator.credentials.get({
-      // TS DOM lib doesn't yet know about the `otp` option, hence the cast.
-      otp: { transport: ['sms'] },
-      signal: ac.signal,
-    } as unknown as CredentialRequestOptions).then((cred) => {
-      const otpCode = (cred as unknown as { code?: string })?.code
-      if (otpCode) setOtp(digitsOnly(otpCode, 6))
-    }).catch(() => {
-      // AbortError on stage change / component unmount is normal;
-      // swallow silently so we don't churn an error toast at the
-      // farmer for what's essentially a background wait.
-    })
-    return () => ac.abort()
-  }, [stage])
-
-  // "Reading OTP from SMS…" hint — shown for 30s after landing on
-  // the OTP stage or until the farmer types anything (whichever
-  // comes first). Signals that we're doing something helpful in the
-  // background so waiting doesn't feel dead.
-  useEffect(() => {
-    if (stage !== 'otp') { setWaitingForSms(false); return }
-    setWaitingForSms(true)
-    const t = setTimeout(() => setWaitingForSms(false), 30000)
-    return () => clearTimeout(t)
-  }, [stage])
-  useEffect(() => {
-    if (otp.length > 0) setWaitingForSms(false)
-  }, [otp])
 
   // Auto-submit gate — reset the "already auto-submitted" flag
   // whenever the OTP shrinks below 6 (farmer edited / cleared it),
@@ -1132,12 +1094,6 @@ export default function RootPage() {
               className="border border-[#DDD0B8] rounded-2xl px-4 py-5 text-center bg-white
                          text-3xl font-mono tracking-[0.7em] text-[#6B3F1F] w-full
                          focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44] transition-all"/>
-            {waitingForSms && !error && (
-              <div className="flex items-center justify-center gap-2 text-xs text-[#7A8C7E] animate-pulse">
-                <div className="w-3 h-3 border-2 border-[#DDD0B8] border-t-[#3A7D44] rounded-full animate-spin" />
-                <span>{tAuth('readingSms')}</span>
-              </div>
-            )}
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
             <Btn type="submit" disabled={busy || otp.length < 6}>
               {busy ? tAuth('checking') : tAuth('verify')}
