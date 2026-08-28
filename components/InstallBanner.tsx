@@ -4,23 +4,26 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { openInstallPrompt } from './InstallPrompt'
 
-// Persistent home-screen banner for logged-in users who signed up
-// before the mandatory install gate went in. Non-dismissible by
+// Persistent home-screen banner for logged-in users who haven't
+// added rootsTALK to their home screen yet. Non-dismissible by
 // design (per user direction, 2026-08-28) — the only way for it to
-// disappear is for the user to add rootsTALK to their home screen.
+// disappear is for the user to install, at which point the standalone
+// check + `rt_installed` localStorage flag both hide it.
 //
 // Tapping the banner tries the fastest path first:
 //   • Android with a captured `beforeinstallprompt` event → fire
-//     `deferredPrompt.prompt()` inline; banner shows a spinner while
-//     Chrome's native install dialog is up; on accept, the banner
-//     unmounts on the spot without ever leaving the home screen.
+//     `deferredPrompt.prompt()` inline; spinner while Chrome's
+//     native dialog is up; on accept, banner unmounts on the spot.
 //   • Everything else (iOS Safari, Android with no captured event
-//     yet) → fall back to the shared InstallPrompt sheet, which
-//     carries the appropriate manual instructions.
+//     yet) → fall back to the shared InstallPrompt sheet.
 //
-// The `appinstalled` event + a localStorage flag both drive
-// permanent hide so the banner stays gone across sessions even
-// before the standalone-mode flip on next launch.
+// Uninstall detection (2026-08-28): if `beforeinstallprompt` fires
+// on a session where `rt_installed = '1'` was already set, the app
+// must have been uninstalled since we set the flag — Chrome only
+// fires beforeinstallprompt when the app is installable, which
+// implies not-currently-installed. Clear the flag so the banner
+// reappears. Listeners attach regardless of current visibility so
+// this signal isn't missed when the flag suppresses the render.
 
 const HOME_PATHS = new Set([
   '/home',
@@ -39,29 +42,46 @@ interface BeforeInstallPromptEvent extends Event {
 export default function InstallBanner() {
   const t = useTranslations('installBanner')
   const pathname = usePathname()
+  // `visible` = "mount criteria met" (mobile UA + not standalone).
+  // `installedFlag` = "user has installed" (from localStorage).
+  // Banner renders only when visible && !installedFlag; keeping the
+  // two separate lets us flip installedFlag → false without losing
+  // the mobile/standalone context.
   const [visible, setVisible] = useState(false)
+  const [installedFlag, setInstalledFlag] = useState(false)
   const [installing, setInstalling] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
-    if (typeof window === 'undefined') { setVisible(false); return }
-    // Never render for users who already installed (either this
-    // session detected standalone, or the appinstalled listener
-    // fired earlier and persisted the flag).
+    if (typeof window === 'undefined') return
+    // Never mount for users currently running as an installed PWA —
+    // display-mode standalone is authoritative.
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     if (isStandalone) { setVisible(false); return }
-    if (localStorage.getItem(INSTALLED_FLAG) === '1') { setVisible(false); return }
     const ua = navigator.userAgent
     const isMobile = /android|iphone|ipad|ipod/i.test(ua)
     setVisible(isMobile)
+    setInstalledFlag(localStorage.getItem(INSTALLED_FLAG) === '1')
 
+    // Listeners attach even when the installedFlag currently
+    // suppresses the render — otherwise we can't detect the
+    // uninstall signal.
     const beforeInstall = (e: Event) => {
       e.preventDefault()
       setDeferredPrompt(e as BeforeInstallPromptEvent)
+      // Uninstall signal: Chrome only fires beforeinstallprompt when
+      // the app is installable (i.e. not currently installed). If our
+      // flag said "installed" and Chrome now says "installable", the
+      // user must have uninstalled. Clear the flag to bring the
+      // banner back.
+      if (localStorage.getItem(INSTALLED_FLAG) === '1') {
+        localStorage.removeItem(INSTALLED_FLAG)
+        setInstalledFlag(false)
+      }
     }
     const appInstalled = () => {
       localStorage.setItem(INSTALLED_FLAG, '1')
-      setVisible(false)
+      setInstalledFlag(true)
     }
     window.addEventListener('beforeinstallprompt', beforeInstall)
     window.addEventListener('appinstalled', appInstalled)
@@ -82,7 +102,7 @@ export default function InstallBanner() {
         const { outcome } = await deferredPrompt.userChoice
         if (outcome === 'accepted') {
           localStorage.setItem(INSTALLED_FLAG, '1')
-          setVisible(false)
+          setInstalledFlag(true)
         }
       } catch {
         // Rare — Chrome refused the prompt. Fall back so user isn't
@@ -102,6 +122,7 @@ export default function InstallBanner() {
   }
 
   if (!visible) return null
+  if (installedFlag) return null
   if (!HOME_PATHS.has(pathname)) return null
 
   return (
