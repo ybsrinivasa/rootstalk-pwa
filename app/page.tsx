@@ -961,36 +961,41 @@ export default function RootPage() {
                   </div>
                 ) : (
                   <>
+                    {/* Search box is optional — the full state list is
+                        rendered below regardless, so farmers who
+                        can't type see + tap the state directly.
+                        Farmers who can type filter it. Anchor
+                        2026-08-30: field feedback that typing the
+                        state name was a friction point. */}
                     <Input
                       placeholder={tLocation('searchState')}
                       value={stateSearch}
                       onChange={e => setStateSearch(e.target.value)}
                     />
-                    {stateSearch && (
-                      <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
-                        {filteredStates.length === 0
-                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noStates')}</p>
-                          : filteredStates.map(s => (
-                            <button key={s.cosh_id}
-                              onClick={() => {
-                                setStateId(s.cosh_id); setStateName(s.name || '')
-                                setStateSearch('')
-                              }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
-                              {s.name}
-                            </button>
-                          ))
-                        }
-                      </div>
-                    )}
+                    <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-56 overflow-y-auto bg-white">
+                      {filteredStates.length === 0
+                        ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noStates')}</p>
+                        : filteredStates.map(s => (
+                          <button key={s.cosh_id}
+                            onClick={() => {
+                              setStateId(s.cosh_id); setStateName(s.name || '')
+                              setStateSearch('')
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                            {s.name}
+                          </button>
+                        ))
+                      }
+                    </div>
                   </>
                 )}
               </div>
             )}
 
-            {/* District selector — same typeahead pattern, bounded to
-                the chosen state's districts so the farmer can't pick
-                a (state, district) pair Cosh doesn't have. */}
+            {/* District selector — bounded to the chosen state's
+                districts so the farmer can't pick a (state, district)
+                pair Cosh doesn't have. Same always-visible list +
+                optional search pattern as the state selector. */}
             {coshLocations && stateId && (
               <div>
                 <p className="text-xs text-[#7A8C7E] font-medium mb-1.5">{tLocation('districtLabel')}</p>
@@ -1013,23 +1018,21 @@ export default function RootPage() {
                       value={districtSearch}
                       onChange={e => setDistrictSearch(e.target.value)}
                     />
-                    {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
-                      <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
-                        {filteredDistricts.length === 0
-                          ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noDistricts')}</p>
-                          : filteredDistricts.map(d => (
-                            <button key={d.cosh_id}
-                              onClick={() => {
-                                setDistrictId(d.cosh_id); setDistrictName(d.name || '')
-                                setDistrictSearch('')
-                              }}
-                              className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
-                              {d.name}
-                            </button>
-                          ))
-                        }
-                      </div>
-                    )}
+                    <div className="mt-2 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-56 overflow-y-auto bg-white">
+                      {filteredDistricts.length === 0
+                        ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noDistricts')}</p>
+                        : filteredDistricts.map(d => (
+                          <button key={d.cosh_id}
+                            onClick={() => {
+                              setDistrictId(d.cosh_id); setDistrictName(d.name || '')
+                              setDistrictSearch('')
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                            {d.name}
+                          </button>
+                        ))
+                      }
+                    </div>
                   </>
                 )}
               </div>
