@@ -18,6 +18,10 @@ import { useEffect, useState } from 'react'
 import { getUser, PWAUser } from '@/lib/auth'
 
 
+// Ribbon height in px. Kept as a single constant so the CSS var
+// published to documentElement and the visible band stay in sync.
+const BANNER_HEIGHT_PX = 32
+
 export default function CoachingBanner() {
   const [user, setUser] = useState<PWAUser | null>(null)
 
@@ -32,10 +36,36 @@ export default function CoachingBanner() {
   }, [])
 
   const ctx = user?.coaching_context
+  const active = !!ctx
+
+  // Publish banner height as a CSS variable on <html> so layout
+  // primitives that must not overlap the ribbon can read it:
+  //   - PWAHeader offsets its `top` by the var (moves the fixed
+  //     header down when the banner is up).
+  //   - .app-scroll padding-top is bumped by the var so page
+  //     content clears the shifted header without touching every
+  //     page's `pt-16`.
+  // Reset to 0px on unmount / when the student's session closes so
+  // the whole tree snaps back to the non-coaching layout.
+  useEffect(() => {
+    const root = document.documentElement
+    if (active) {
+      root.style.setProperty('--coaching-banner-h', `${BANNER_HEIGHT_PX}px`)
+    } else {
+      root.style.setProperty('--coaching-banner-h', '0px')
+    }
+    return () => {
+      root.style.setProperty('--coaching-banner-h', '0px')
+    }
+  }, [active])
+
   if (!ctx) return null
 
   return (
-    <div className="w-full bg-gradient-to-r from-[#7D4196] to-[#5C2C79] text-white text-center py-1.5 px-3 text-xs font-medium shadow-sm z-[100] relative">
+    <div
+      className="fixed top-0 left-0 right-0 bg-gradient-to-r from-[#7D4196] to-[#5C2C79] text-white text-center px-3 text-xs font-medium shadow-sm z-[100] flex items-center justify-center"
+      style={{ height: `${BANNER_HEIGHT_PX}px` }}
+    >
       <span className="opacity-80">🎓</span>
       <span className="ml-1.5">You&apos;re in a coaching session — this is practice.</span>
       <span className="opacity-60 ml-2 hidden sm:inline">

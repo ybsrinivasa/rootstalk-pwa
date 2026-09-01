@@ -26,6 +26,23 @@ body {
   background: white;
 }
 
+/* Coaching Sandbox — a persistent purple ribbon renders at the very
+   top of the frame when the logged-in user is a coaching student.
+   CoachingBanner publishes its own height as a CSS variable on
+   <html> (--coaching-banner-h). Two consumers read it:
+     - PWAHeader offsets its `top` by the var so the fixed header
+       drops below the ribbon.
+     - .app-scroll below adds the same value as extra padding-top
+       so all page bodies clear the shifted header without touching
+       every page's `pt-16`.
+   Default is 0px so the non-coaching layout is unchanged. */
+:root {
+  --coaching-banner-h: 0px;
+}
+.app-scroll {
+  padding-top: var(--coaching-banner-h, 0px);
+}
+
 /* Desktop "phone frame" — ≥md viewports show the PWA inside a
    430-px centred white column on a black backdrop. We do this in
    plain CSS (not Tailwind utilities) so we don't depend on the

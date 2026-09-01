@@ -93,8 +93,14 @@ export default function PWAHeader({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-3 py-3 gap-2"
+      <header className="fixed left-0 right-0 z-40 flex items-center justify-between px-3 py-3 gap-2"
         style={{
+          // `top` offsets by the coaching-banner ribbon height (32px
+          // when active, 0 otherwise) so the fixed header doesn't
+          // hide under the ribbon. CoachingBanner publishes the var
+          // on <html>; content padding-top on .app-scroll bumps in
+          // lockstep so page bodies still clear the header.
+          top: 'var(--coaching-banner-h, 0px)',
           background: colour,
           paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
         }}>
