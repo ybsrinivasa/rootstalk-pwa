@@ -31,6 +31,19 @@ export interface PWAUser {
   // Defaults match production (₹199 / ₹20) on legacy payloads.
   subscription_amount_inr?: number;
   query_amount_inr?: number;
+  // 2026-09-01 — Coaching Sandbox context. Non-null for a user who
+  // is a coaching student in an OPEN (DRAFT / ACTIVE) session.
+  // Drives the persistent purple banner across every PWA screen so
+  // the student always knows they're in practice mode. Non-students
+  // get null and no banner renders.
+  coaching_context?: {
+    session_id: string;
+    session_status: string;
+    coach_name: string | null;
+    reference_client_name: string;
+    workspace_client_id: string;
+    assigned_pwa_roles: string[];
+  } | null;
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {

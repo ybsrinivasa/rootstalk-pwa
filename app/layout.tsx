@@ -6,6 +6,7 @@ import { isRTL } from "@/lib/locales";
 import PushNotificationSetup from "@/components/PushNotificationSetup";
 import InstallPrompt from "@/components/InstallPrompt";
 import InstallBanner from "@/components/InstallBanner";
+import CoachingBanner from "@/components/CoachingBanner";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -63,6 +64,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             On phones (<768px) both wrappers are inert pass-throughs. */}
         <NextIntlClientProvider locale={locale} messages={messages}>
           <div className="app-frame">
+            {/* Coaching Sandbox — persistent purple banner when the
+                logged-in user is a coaching student in an OPEN
+                session. Sits above every page's own header so the
+                student always knows they're in practice mode. Renders
+                nothing for non-students. */}
+            <CoachingBanner />
             <div className="app-scroll">{children}</div>
             {/* FCM permission + token registration + foreground
                 toast. Mounted at layout scope so every authenticated
