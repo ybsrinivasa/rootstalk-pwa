@@ -128,7 +128,14 @@ export default function InstallBanner() {
   return (
     <div
       onClick={handleTap}
-      className="mx-4 mt-3 mb-1 flex items-center gap-3 rounded-2xl border border-[#DDD0B8] bg-[#F5F0E8] px-4 py-3 cursor-pointer active:scale-[0.99] transition-transform"
+      // Positioned above the BottomNav (fixed bottom-0, ~56px tab
+      // height + iOS safe-area inset) so the banner is never hidden
+      // behind the nav on role home screens. z-40 stays below the
+      // nav's z-50 so nav tap targets remain on top when they
+      // visually overlap. `left-3 right-3` matches the previous
+      // `mx-4`-ish horizontal breathing room.
+      className="fixed left-3 right-3 z-40 flex items-center gap-3 rounded-2xl border border-[#DDD0B8] bg-[#F5F0E8] px-4 py-3 cursor-pointer active:scale-[0.99] transition-transform shadow-lg"
+      style={{ bottom: 'calc(56px + env(safe-area-inset-bottom, 0px) + 8px)' }}
       role="button"
     >
       <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
