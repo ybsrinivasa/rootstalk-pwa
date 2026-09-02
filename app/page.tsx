@@ -171,6 +171,13 @@ export default function RootPage() {
   const [error,        setError]       = useState('')
   const [busy,         setBusy]        = useState(false)
   const [resend,       setResend]      = useState(0)
+  // Increments each time an OTP is (re)sent. Drives the WebOTP
+  // useEffect + the "Reading OTP…" hint so they re-arm on Resend —
+  // WebOTP's `navigator.credentials.get({otp})` is a one-shot
+  // promise (resolves on first matching SMS, or aborts on cleanup);
+  // without a re-trigger, Resend fires a new SMS but no listener is
+  // waiting for it, so the second SMS never auto-fills.
+  const [otpEpoch,     setOtpEpoch]    = useState(0)
   const [sessionEnded, setSessionEnded] = useState<'another_device' | 'expired' | null>(null)
 
   // Install-gate state — Android users must install the PWA to their
@@ -300,7 +307,7 @@ export default function RootPage() {
       // AbortError on stage change / component unmount is normal.
     })
     return () => ac.abort()
-  }, [stage])
+  }, [stage, otpEpoch])
 
   // "Reading OTP from SMS…" hint — shown for 30s after landing on
   // the OTP stage or until the farmer types anything (whichever
@@ -312,7 +319,7 @@ export default function RootPage() {
     setWaitingForSms(true)
     const t = setTimeout(() => setWaitingForSms(false), 30000)
     return () => clearTimeout(t)
-  }, [stage])
+  }, [stage, otpEpoch])
   useEffect(() => {
     if (otp.length > 0) setWaitingForSms(false)
   }, [otp])
@@ -343,7 +350,7 @@ export default function RootPage() {
     try {
       const res = await requestOtp('+91' + phone)
       if (res.dev_otp) setDevOtp(res.dev_otp)
-      setStage('otp'); setResend(30)
+      setStage('otp'); setResend(30); setOtpEpoch(e => e + 1)
     } catch { setError(tAuth('errors.phoneSendFailed')) }
     finally { setBusy(false) }
   }
@@ -1178,7 +1185,7 @@ export default function RootPage() {
               {busy ? tAuth('checking') : tAuth('verify')}
             </Btn>
             <button type="button"
-              onClick={() => requestOtp('+91' + phone).then(r => { if (r.dev_otp) setDevOtp(r.dev_otp); setResend(30) })}
+              onClick={() => requestOtp('+91' + phone).then(r => { if (r.dev_otp) setDevOtp(r.dev_otp); setResend(30); setOtpEpoch(e => e + 1) })}
               disabled={resend > 0}
               className="text-center text-sm py-2 transition-opacity disabled:opacity-40"
               style={{ color: G }}>
