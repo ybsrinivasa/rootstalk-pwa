@@ -335,7 +335,13 @@ function SubscribeFlow() {
         subscription_type: 'SELF',
       })
       setSubscription(data)
-      setStage('payment')
+      // Coaching sandbox: backend flips the sub straight to ACTIVE
+      // for a student subscribing to their own workspace (no
+      // Razorpay path exists for is_coaching clients). Skip the
+      // payment stage entirely — otherwise the student sees a
+      // confusing payment screen, taps the staging-bypass button,
+      // and hits an error because the sub is already ACTIVE.
+      setStage(data.status === 'ACTIVE' ? 'done' : 'payment')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
       setError(msg || t('errors.createSub'))
