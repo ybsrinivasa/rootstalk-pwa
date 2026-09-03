@@ -27,7 +27,14 @@ export default function BecomeDealerPage() {
   // `facilitator_declared_at` covers the legacy case where pwa_roles
   // is missing FACILITATOR despite the user having gone through
   // facilitator setup.
-  const blockedByFacilitator = roles.includes('FACILITATOR') || !!user?.facilitator_declared_at
+  //
+  // 2026-09-03 — Coaching Sandbox bypass. Students need both roles
+  // for cross-role practice; backend `/auth/me/claim-role` mirrors
+  // this. Real users still see the block.
+  const isCoachingStudent = !!user?.coaching_context
+  const blockedByFacilitator = !isCoachingStudent && (
+    roles.includes('FACILITATOR') || !!user?.facilitator_declared_at
+  )
 
   const [claiming, setClaiming] = useState(false)
   const [error, setError] = useState('')

@@ -24,7 +24,13 @@ export default function BecomeFacilitatorPage() {
   // 2026-06-23 — LENIENT block. Mirror of /become-dealer's gate.
   // `dealer_profile_complete` covers the legacy case where pwa_roles
   // is missing DEALER despite the user having gone through dealer setup.
-  const blockedByDealer = roles.includes('DEALER') || user?.dealer_profile_complete === true
+  //
+  // 2026-09-03 — Coaching Sandbox bypass. Students need both roles
+  // for cross-role practice; backend claim-role mirrors this.
+  const isCoachingStudent = !!user?.coaching_context
+  const blockedByDealer = !isCoachingStudent && (
+    roles.includes('DEALER') || user?.dealer_profile_complete === true
+  )
 
   const [claiming, setClaiming] = useState(false)
   const [error, setError] = useState('')
