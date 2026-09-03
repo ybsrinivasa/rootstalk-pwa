@@ -142,6 +142,13 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
     !!user?.facilitator_declared_at
 
   function isBlockedByExclusivity(candidate: string): 'DEALER' | 'FACILITATOR' | null {
+    // Coaching Sandbox bypass — students need to practise
+    // cross-role scenarios (farmer sends order to their own
+    // dealer / facilitator persona). The conflict-of-interest
+    // concern doesn't apply inside an isolated coaching workspace.
+    // Backend `/auth/me/claim-role` mirrors this bypass.
+    if (user?.coaching_context) return null
+
     // "Already holds candidate role" bypass only applies when the
     // candidate role is FULLY SET UP. If it's granted (userRoles has
     // it) but not yet complete (facilitator_declared_at is null OR
