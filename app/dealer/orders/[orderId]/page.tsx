@@ -1478,7 +1478,7 @@ export default function DealerOrderDetailPage() {
         {item.status === 'APPROVED' && !item.final_confirmed_at
           && item.dealer_pending_final_confirmation === 'CONFIRM' && (
           <div className="mt-2 flex items-center justify-between bg-purple-100 rounded-lg px-3 py-2">
-            <p className="text-xs text-purple-800 font-semibold">✓ Marked for Final Confirm</p>
+            <p className="text-xs text-purple-800 font-semibold">{t('fcBadge.markedConfirm')}</p>
             <button onClick={() => setFcPendingDecision(item.id, null)}
               className="text-[11px] text-purple-700 underline">
               Undo
@@ -1488,7 +1488,7 @@ export default function DealerOrderDetailPage() {
         {item.status === 'APPROVED' && !item.final_confirmed_at
           && item.dealer_pending_final_confirmation === 'CANCEL' && (
           <div className="mt-2 flex items-center justify-between bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-            <p className="text-xs text-[#D4682E] font-semibold">✗ Marked to Cancel</p>
+            <p className="text-xs text-[#D4682E] font-semibold">{t('fcBadge.markedCancel')}</p>
             <button onClick={() => setFcPendingDecision(item.id, null)}
               className="text-[11px] text-[#D4682E] underline">
               Undo

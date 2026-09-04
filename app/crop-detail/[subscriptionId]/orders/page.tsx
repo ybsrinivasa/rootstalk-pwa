@@ -1595,6 +1595,7 @@ function PaymentChunk({
   reload: () => Promise<void>
 }) {
   const locale = useLocale()
+  const t = useTranslations('orders.upi')
   const [openRound, setOpenRound] = useState<number | null>(null)
   const [intentData, setIntentData] = useState<{
     dealer_vpa: string
@@ -1731,11 +1732,11 @@ function PaymentChunk({
             <div key={b.approval_round} className="bg-white border border-[#DDD0B8] rounded-lg px-3 py-2">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs text-[#6B3F1F] font-medium">
-                  {batchLabel}₹{p.amount.toLocaleString(locale)} due
+                  {batchLabel}₹{p.amount.toLocaleString(locale)} {t('dueSuffix')}
                 </p>
                 <button onClick={() => openPaySheet(b.approval_round)}
                   className="text-[11px] font-semibold text-white bg-[#3A7D44] px-3 py-1.5 rounded-lg">
-                  Pay via UPI
+                  {t('payViaUpi')}
                 </button>
               </div>
             </div>
@@ -1755,7 +1756,7 @@ function PaymentChunk({
           <div className="bg-white w-full max-w-md rounded-2xl p-5 space-y-4"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-baseline justify-between">
-              <h3 className="text-sm font-bold text-[#6B3F1F]">Pay via UPI</h3>
+              <h3 className="text-sm font-bold text-[#6B3F1F]">{t('payViaUpi')}</h3>
               <button onClick={() => !marking && setOpenRound(null)} className="text-[#7A8C7E] text-lg leading-none">×</button>
             </div>
             {loading || !intentData ? (
@@ -1763,19 +1764,19 @@ function PaymentChunk({
             ) : (
               <>
                 <div className="bg-[#F5F0E8]/60 rounded-xl px-4 py-3 space-y-1">
-                  <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">To pay</p>
+                  <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">{t('toPayLabel')}</p>
                   <p className="text-2xl font-bold text-[#7D4196]">
                     ₹{intentData.amount.toLocaleString(locale)}
                   </p>
                   <p className="text-xs text-[#6B3F1F]">
-                    To <strong>{intentData.dealer_display_name}</strong>
+                    {t('toDealerPrefix')} <strong>{intentData.dealer_display_name}</strong>
                   </p>
                   <p className="text-[10px] text-[#7A8C7E] font-mono mt-1">
-                    Note: {intentData.reference}
+                    {t('noteLabel')} {intentData.reference}
                   </p>
                 </div>
                 <div className="bg-white border border-[#DDD0B8] rounded-xl px-4 py-3">
-                  <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide mb-1">UPI ID</p>
+                  <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide mb-1">{t('upiIdLabel')}</p>
                   <p className="text-base font-mono font-bold text-[#6B3F1F] break-all">
                     {intentData.dealer_vpa}
                   </p>
@@ -1783,12 +1784,12 @@ function PaymentChunk({
                     <button onClick={() => copyVpa(intentData.dealer_vpa)}
                       className="flex-1 py-2 rounded-lg text-white text-xs font-semibold"
                       style={{ background: '#3A7D44' }}>
-                      {copied ? '✓ Copied' : 'Copy UPI ID'}
+                      {copied ? t('copied') : t('copyUpiId')}
                     </button>
                     {shareSupported && (
                       <button onClick={shareVpa}
                         className="flex-1 py-2 rounded-lg border border-[#DDD0B8] text-[#6B3F1F] text-xs font-semibold">
-                        Share
+                        {t('share')}
                       </button>
                     )}
                   </div>
@@ -1802,26 +1803,26 @@ function PaymentChunk({
                     UPI app themselves from the phone's home screen
                     — reliable, one extra tap. */}
                 <div className="text-[11px] text-[#7A8C7E] leading-relaxed space-y-1">
-                  <p>1. Tap <strong>Copy UPI ID</strong>.</p>
-                  <p>2. Open your UPI app (PhonePe, GPay, Paytm, BHIM…) from your phone&apos;s home screen.</p>
-                  <p>3. In your UPI app, tap &quot;Send Money&quot;, paste the UPI ID as recipient, enter ₹{intentData.amount.toLocaleString(locale)}, and pay.</p>
-                  <p>4. Come back here and tap <strong>I&apos;ve paid</strong>.</p>
+                  <p>{t('step1', { copyLabel: t('copyUpiId') })}</p>
+                  <p>{t('step2')}</p>
+                  <p>{t('step3', { amount: intentData.amount.toLocaleString(locale) })}</p>
+                  <p>{t('step4', { paidLabel: t('iHavePaid') })}</p>
                 </div>
                 <div className="pt-2 border-t border-[#F0E5D0] space-y-2">
                   <input value={txnRef}
                     onChange={e => setTxnRef(e.target.value)}
-                    placeholder="Transaction ID (optional)"
+                    placeholder={t('txnPlaceholder')}
                     className="w-full text-xs border border-[#DDD0B8] rounded-lg px-3 py-2" />
                   <div className="flex gap-2">
                     <button onClick={() => setOpenRound(null)}
                       disabled={marking}
                       className="flex-1 text-xs border border-[#DDD0B8] text-[#6B3F1F] font-medium py-2.5 rounded-xl">
-                      Not yet
+                      {t('notYet')}
                     </button>
                     <button onClick={submitMarkPaid}
                       disabled={marking}
                       className="flex-1 text-xs bg-[#3A7D44] text-white font-semibold py-2.5 rounded-xl disabled:opacity-50">
-                      {marking ? '…' : "I've paid"}
+                      {marking ? t('marking') : t('iHavePaid')}
                     </button>
                   </div>
                 </div>

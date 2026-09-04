@@ -1466,19 +1466,18 @@ function DealerPillChunk({
         // sees the Final Confirm / Cancel affordances on this pill.
         <div className="px-4 py-3 space-y-2">
           <p className="text-[11px] text-purple-800 leading-snug">
-            <strong>Final Confirmation:</strong> the packing list is populated after this.
-            Confirm only when payment or credit terms with the farmer are settled.
+            <strong>{t('fcInfoLabel')}</strong>{t('fcInfoBody')}
           </p>
           <div className="flex gap-2">
             <button onClick={() => onFinalConfirmSeed(sub)}
               disabled={busy === sub.id}
               className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold py-2.5 rounded-xl">
-              Final Confirmation
+              {t('fcConfirmCta')}
             </button>
             <button onClick={() => onCancelFinalConfirmSeed(sub)}
               disabled={busy === sub.id}
               className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-              Cancel
+              {t('fcCancelCta')}
             </button>
           </div>
         </div>
@@ -1505,19 +1504,18 @@ function DealerPillChunk({
             ) : (
               <>
                 <p className="text-[11px] text-purple-800 leading-snug">
-                  <strong>Final Confirmation:</strong> the packing list is populated after this.
-                  Confirm only when payment or credit terms with the farmer are settled.
+                  <strong>{t('fcInfoLabel')}</strong>{t('fcInfoBody')}
                 </p>
                 <div className="flex gap-2">
                   <button onClick={() => onFinalConfirmSeed(sub)}
                     disabled={busy === sub.id}
                     className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-xs font-semibold py-2.5 rounded-xl">
-                    Final Confirmation
+                    {t('fcConfirmCta')}
                   </button>
                   <button onClick={() => onCancelFinalConfirmSeed(sub)}
                     disabled={busy === sub.id}
                     className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2.5 rounded-xl">
-                    Cancel
+                    {t('fcCancelCta')}
                   </button>
                 </div>
               </>
@@ -1839,9 +1837,7 @@ function PackingChunk({
       {batch.awaiting_final_confirmation > 0 ? (
         <div className="p-3 space-y-2">
           <p className="text-[11px] text-purple-800 leading-snug">
-            <strong>Final Confirmation:</strong> the packing list is populated
-            after this. Confirm only when payment or credit terms with the
-            farmer are settled.
+            <strong>{t('fcInfoLabel')}</strong>{t('fcInfoBody')}
           </p>
           {/* 2026-08-19 — Submit only enables when every awaiting item
               has a tentative decision. Same all-decisions-first gate as

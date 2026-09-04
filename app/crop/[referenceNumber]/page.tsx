@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import api from '@/lib/api'
 
 interface ParameterOption {
@@ -32,6 +32,7 @@ function formatDate(iso: string | null, locale: string): string {
 export default function CropPublicPage() {
   const { referenceNumber } = useParams<{ referenceNumber: string }>()
   const locale = useLocale()
+  const tNotFound = useTranslations('crop.notFound')
   const [record, setRecord] = useState<CropRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -54,8 +55,8 @@ export default function CropPublicPage() {
   if (notFound || !record) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-green-50 px-6 text-center">
       <p className="text-5xl mb-4">🌾</p>
-      <h1 className="text-xl font-bold text-gray-800">Record not found</h1>
-      <p className="text-gray-500 text-sm mt-2">This crop record could not be found. Please check the reference number.</p>
+      <h1 className="text-xl font-bold text-gray-800">{tNotFound('heading')}</h1>
+      <p className="text-gray-500 text-sm mt-2">{tNotFound('body')}</p>
       <p className="text-xs text-gray-400 mt-4 font-mono">{referenceNumber}</p>
     </div>
   )

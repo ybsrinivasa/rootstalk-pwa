@@ -708,6 +708,10 @@
       "title": "No expert on this company yet",
       "body": "This company has not set up a Primary expert yet. You will be able to send queries once they onboard one.",
       "ok": "OK, got it"
+    },
+    "notFound": {
+      "heading": "Record not found",
+      "body": "This crop record could not be found. Please check the reference number."
     }
   },
   "subscribe": {
@@ -1270,6 +1274,25 @@
       "kindOrderFallback": "order",
       "seedFallback": "Seed order",
       "noRecipient": "No recipient"
+    },
+    "upi": {
+      "payViaUpi": "Pay via UPI",
+      "copyUpiId": "Copy UPI ID",
+      "copied": "✓ Copied",
+      "share": "Share",
+      "iHavePaid": "I've paid",
+      "notYet": "Not yet",
+      "txnPlaceholder": "Transaction ID (optional)",
+      "marking": "…",
+      "dueSuffix": "due",
+      "toPayLabel": "To pay",
+      "toDealerPrefix": "To",
+      "noteLabel": "Note:",
+      "upiIdLabel": "UPI ID",
+      "step1": "1. Tap {copyLabel}.",
+      "step2": "2. Open your UPI app (PhonePe, GPay, Paytm, BHIM…) from your phone's home screen.",
+      "step3": "3. In your UPI app, tap \"Send Money\", paste the UPI ID as recipient, enter ₹{amount}, and pay.",
+      "step4": "4. Come back here and tap {paidLabel}."
     }
   },
   "farmerHistory": {
@@ -1630,7 +1653,11 @@
         "waitingForFarmerSeed": "⏳ Waiting for farmer to approve",
         "packingSeedBanner": "📦 Farmer approved. Pack the seed and hand it over.",
         "packingSeedHandoverCta": "Mark as handed over",
-        "packingSeedBusy": "Saving…"
+        "packingSeedBusy": "Saving…",
+        "fcInfoLabel": "Final Confirmation:",
+        "fcInfoBody": " the packing list is populated after this. Confirm only when payment or credit terms with the farmer are settled.",
+        "fcConfirmCta": "Final Confirmation",
+        "fcCancelCta": "Cancel"
       },
       "packing": {
         "packingIdLabel": "Packing ID",
@@ -1645,7 +1672,9 @@
         "shareAgainCta": "↗ Share again",
         "removeCta": "🗑 Remove",
         "confirmHandoverSeed": "Confirm the seed packet has been handed over to the farmer? This closes the order.",
-        "errorHandoverSeed": "Could not mark as handed over. Please try again."
+        "errorHandoverSeed": "Could not mark as handed over. Please try again.",
+        "fcInfoLabel": "Final Confirmation:",
+        "fcInfoBody": " the packing list is populated after this. Confirm only when payment or credit terms with the farmer are settled."
       },
       "seedPending": {
         "blindAcceptHint": "New order — your call. Variety details reveal after you Accept.",
@@ -1967,6 +1996,10 @@
         "acresValue": "{count, plural, one {1 acre} other {# acres}}",
         "ageYears": "{value, plural, one {1 year old} other {# years old}}",
         "ageDays": "{value, plural, one {1 day old} other {# days old}}"
+      },
+      "fcBadge": {
+        "markedConfirm": "✓ Marked for Final Confirm",
+        "markedCancel": "✗ Marked to Cancel"
       }
     },
     "profile": {
@@ -3462,5 +3495,58 @@
     "manualNote": "If neither option shows, wait a few seconds — Chrome may still be preparing the app.",
     "yourBrowser": "your browser",
     "close": "Close"
+  },
+  "becomeDealer": {
+    "title": "Become a Dealer",
+    "blocked": {
+      "heading": "You're already a Facilitator",
+      "explanation1": "A single user cannot be both a Dealer and a Facilitator on RootsTalk. They sit on opposite ends of the order-routing chain — a Facilitator routes farmer orders to Dealers, so the same person can't be on both sides.",
+      "explanation2": "You're free to combine any other role (Farmer + Dealer + Pundit, or Farmer + Facilitator + Pundit, etc.) — just not Dealer and Facilitator together.",
+      "comingSoonLabel": "Coming soon:",
+      "comingSoonBody": " a way to voluntarily end your Facilitator role (once all your pending tasks are clear), after which you'll be able to register as a Dealer.",
+      "backHome": "Back to Farmer Home"
+    },
+    "heading": "Become a Dealer",
+    "intro": "As a dealer, you receive purchase orders from farmers and supply recommended agricultural inputs.",
+    "whatYouCanDo": "What dealers can do",
+    "perks": {
+      "receiveOrders": "Receive and process farmer orders",
+      "selectBrands": "Select brands and enter volumes",
+      "sharePacking": "Share packing lists with farmers",
+      "paymentRequests": "Manage subscription payment requests",
+      "promoterRole": "Become a Promoter and assign advisories"
+    },
+    "afterYouRegisterLabel": "After you register",
+    "afterYouRegisterBody": "You'll set up your shop details (location, licences, what you sell). To start receiving orders, a company will need to recognise you on their Field Manager page using your registered phone number{phoneSuffix}.",
+    "registering": "Registering…",
+    "cta": "Register as a Dealer",
+    "cancel": "Cancel",
+    "errorFallback": "Could not register you as a Dealer. Please try again."
+  },
+  "becomeFacilitator": {
+    "title": "Become a Facilitator",
+    "blocked": {
+      "heading": "You're already a Dealer",
+      "explanation1": "A single user cannot be both a Dealer and a Facilitator on RootsTalk. They sit on opposite ends of the order-routing chain — a Facilitator routes farmer orders to Dealers, so the same person can't be on both sides.",
+      "explanation2": "You're free to combine any other role (Farmer + Dealer + Pundit, or Farmer + Facilitator + Pundit, etc.) — just not Dealer and Facilitator together.",
+      "comingSoonLabel": "Coming soon:",
+      "comingSoonBody": " a way to voluntarily end your Dealer role (once all your pending tasks are clear), after which you'll be able to register as a Facilitator.",
+      "backHome": "Back to Farmer Home"
+    },
+    "heading": "Become a Facilitator",
+    "intro": "As a facilitator, you help farmers by forwarding their orders to dealers and ensuring last-mile delivery. You also assist farmers in subscribing to company advisories.",
+    "whatYouCanDo": "What facilitators can do",
+    "perks": {
+      "acceptRoute": "Accept and route farmer orders to dealers",
+      "lastMile": "Coordinate last-mile delivery to farmers",
+      "paymentRequests": "Handle subscription payment requests",
+      "promoterRole": "Become a Promoter and assign advisories (one company at a time)"
+    },
+    "afterYouRegisterLabel": "After you register",
+    "afterYouRegisterBody": "To start handling orders for a company, a Field Manager from that company must recognise you using your registered phone number{phoneSuffix} on their portal.",
+    "registering": "Registering…",
+    "cta": "Register as a Facilitator",
+    "cancel": "Cancel",
+    "errorFallback": "Could not register you as a Facilitator. Please try again."
   }
 }
