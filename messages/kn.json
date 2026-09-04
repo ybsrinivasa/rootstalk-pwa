@@ -1765,7 +1765,7 @@
       "dueToday": "ಇಂದು ಅಂತಿಮ ದಿನಾಂಕ",
       "daysLeft": "{count, plural, one {1 ದಿನ ಉಳಿದಿದೆ} other {# ದಿನಗಳು ಉಳಿದಿವೆ}}",
       "ctaAvailable": "✓ ಲಭ್ಯವಿದೆ",
-      "ctaNa": "✗ ಶರತ್ಕಾಲ",
+      "ctaNa": "✗ ಲಭ್ಯವಿಲ್ಲ",
       "ctaLater": "⏰ ನಂತರ",
       "confirmNa": {
         "title": "ಲಭ್ಯವಿಲ್ಲ ಎಂದು ಗುರುತಿಸುವುದೇ?",
