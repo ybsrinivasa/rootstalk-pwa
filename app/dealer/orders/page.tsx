@@ -1193,7 +1193,11 @@ function DealerOrderCardHeader({
         ) : (
           head.category && (
             <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider shrink-0">
-              {head.category.toLowerCase()}
+              {(() => {
+                const lc = head.category.toLowerCase()
+                const key = (lc === 'pesticide' || lc === 'fertilizer' || lc === 'seed') ? lc : 'fallback'
+                return t(`categoryLabel.${key}`)
+              })()}
             </span>
           )
         )}
@@ -1226,7 +1230,11 @@ function DealerOrderCardHeader({
             </div>
           )}
           <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-            {head.is_seed ? t('seedCategory') : (head.category?.toLowerCase() || t('categoryFallback'))}
+            {head.is_seed ? t('seedCategory') : (() => {
+              const lc = head.category?.toLowerCase()
+              const key = (lc === 'pesticide' || lc === 'fertilizer' || lc === 'seed') ? lc : 'fallback'
+              return t(`categoryLabel.${key}`)
+            })()}
             {t('receivedSuffix', { date: shortDate(head.created_at, locale) })}
           </p>
         </div>

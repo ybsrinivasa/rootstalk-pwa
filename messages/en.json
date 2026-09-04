@@ -1638,6 +1638,12 @@
           "plants": "{count, plural, one {1 plant} other {# plants}}",
           "ageDays": "{count, plural, one {1 day old} other {# days old}}",
           "ageYears": "{count, plural, one {1 year old} other {# years old}}"
+        },
+        "categoryLabel": {
+          "seed": "seed",
+          "pesticide": "pesticide",
+          "fertilizer": "fertilizer",
+          "fallback": "input"
         }
       },
       "chunk": {
@@ -2000,6 +2006,17 @@
       "fcBadge": {
         "markedConfirm": "✓ Marked for Final Confirm",
         "markedCancel": "✗ Marked to Cancel"
+      },
+      "fcActions": {
+        "confirmCta": "Final Confirmation",
+        "cancelCta": "Cancel"
+      },
+      "fcBatch": {
+        "batchLabel": "Batch {round} · ",
+        "infoLabel": "Final Confirmation:",
+        "infoBody": " the packing list is populated after this. Confirm only when payment or credit terms with the farmer are settled.",
+        "submitCta": "{count, plural, one {Submit 1 decision} other {Submit # decisions}}",
+        "needsDecision": "{count, plural, one {1 item still needs a decision} other {# items still need a decision}}"
       }
     },
     "profile": {

@@ -1627,6 +1627,12 @@
           "plants": "{count, plural, one {1 ಗಿಡ} other {# ಗಿಡಗಳು}}",
           "ageDays": "{count, plural, one {1 ದಿನ ಹಳೆಯದು} other {# ದಿನಗಳ ಹಳೆಯದು}}",
           "ageYears": "{count, plural, one {1 ವರ್ಷ ವಯಸ್ಸು} other {# ವರ್ಷ ವಯಸ್ಸು}}"
+        },
+        "categoryLabel": {
+          "seed": "ಬೀಜ/ಸಸಿ",
+          "pesticide": "ಕೀಟನಾಶಕ",
+          "fertilizer": "ಗೊಬ್ಬರ",
+          "fallback": "ಇನ್ಪುಟ್"
         }
       },
       "chunk": {
@@ -1989,6 +1995,17 @@
       "fcBadge": {
         "markedConfirm": "✓ ಅಂತಿಮ ಖಚಿತಪಡಿಸಲು ಗುರುತಿಸಲಾಗಿದೆ",
         "markedCancel": "✗ ರದ್ದುಗೊಳಿಸಲು ಗುರುತಿಸಲಾಗಿದೆ"
+      },
+      "fcActions": {
+        "confirmCta": "ಅಂತಿಮ ಖಚಿತಪಡಿಸಿ",
+        "cancelCta": "ರದ್ದುಮಾಡಿ"
+      },
+      "fcBatch": {
+        "batchLabel": "ಬ್ಯಾಚ್ {round} · ",
+        "infoLabel": "ಅಂತಿಮ ಖಚಿತಪಡಿಸುವಿಕೆ:",
+        "infoBody": " ಇದರ ನಂತರ ಪ್ಯಾಕಿಂಗ್ ಪಟ್ಟಿ ರೂಪಿಸಲಾಗುತ್ತದೆ. ರೈತರೊಂದಿಗೆ ಪಾವತಿ ಅಥವಾ ಸಾಲದ ಷರತ್ತುಗಳು ನಿರ್ಧಾರವಾದ ಮೇಲೆಯೇ ಖಚಿತಪಡಿಸಿ.",
+        "submitCta": "{count, plural, one {1 ನಿರ್ಧಾರ ಸಲ್ಲಿಸಿ} other {# ನಿರ್ಧಾರಗಳನ್ನು ಸಲ್ಲಿಸಿ}}",
+        "needsDecision": "{count, plural, one {1 ಐಟಂಗೆ ಇನ್ನೂ ನಿರ್ಧಾರ ಬೇಕು} other {# ಐಟಂಗಳಿಗೆ ಇನ್ನೂ ನಿರ್ಧಾರ ಬೇಕು}}"
       }
     },
     "profile": {

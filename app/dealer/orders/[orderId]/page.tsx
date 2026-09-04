@@ -1467,11 +1467,11 @@ export default function DealerOrderDetailPage() {
           <div className="mt-2 flex gap-2">
             <button onClick={() => setFcPendingDecision(item.id, 'CONFIRM')}
               className="flex-1 bg-purple-600 text-white text-xs font-semibold py-2 rounded-lg">
-              Final Confirmation
+              {t('fcActions.confirmCta')}
             </button>
             <button onClick={() => setFcPendingDecision(item.id, 'CANCEL')}
               className="flex-1 bg-red-100 text-[#D4682E] text-xs font-semibold py-2 rounded-lg">
-              Cancel
+              {t('fcActions.cancelCta')}
             </button>
           </div>
         )}
@@ -2819,20 +2819,18 @@ export default function DealerOrderDetailPage() {
           const undecidedN = batchItems.length - tentativeC - tentativeX
           const tentativeTotal = tentativeC + tentativeX
           const ready = undecidedN === 0 && tentativeTotal > 0
-          const batchLabel = awaitingFcByRound.size > 1 ? `Batch ${round} · ` : ''
+          const batchLabel = awaitingFcByRound.size > 1 ? t('fcBatch.batchLabel', { round }) : ''
           return (
             <div key={round} className="bg-purple-50 border border-purple-200 rounded-2xl p-3 space-y-2">
               <p className="text-[11px] text-purple-800 leading-snug">
-                <strong>{batchLabel}Final Confirmation:</strong> the packing list is populated
-                after this. Confirm only when payment or credit terms with the
-                farmer are settled.
+                <strong>{batchLabel}{t('fcBatch.infoLabel')}</strong>{t('fcBatch.infoBody')}
               </p>
               <button onClick={() => submitFcBatchDetail(round)} disabled={!ready}
                 className="w-full py-2.5 rounded-xl text-white font-semibold text-xs disabled:opacity-60"
                 style={{ background: 'linear-gradient(135deg, #7d3aa1, #5b2380)' }}>
                 {ready
-                  ? `Submit ${tentativeTotal} decision${tentativeTotal === 1 ? '' : 's'}`
-                  : `${undecidedN} item${undecidedN === 1 ? '' : 's'} still need${undecidedN === 1 ? 's' : ''} a decision`}
+                  ? t('fcBatch.submitCta', { count: tentativeTotal })
+                  : t('fcBatch.needsDecision', { count: undecidedN })}
               </button>
             </div>
           )
