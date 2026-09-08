@@ -578,6 +578,11 @@ export default function RootPage() {
             {tLanding('companyWebsite')}
           </a>
           <span className="text-[#7A8C7E]/60 text-[10px]">·</span>
+          <a href="https://eywa.farm/about-app" target="_blank" rel="noopener noreferrer"
+            className="text-[#7A8C7E] text-[10px] underline">
+            {tLanding('aboutApp')}
+          </a>
+          <span className="text-[#7A8C7E]/60 text-[10px]">·</span>
           <button onClick={() => router.push('/privacy-policy')}
             className="text-[#7A8C7E] text-[10px] underline">
             {tLanding('privacyPolicy')}

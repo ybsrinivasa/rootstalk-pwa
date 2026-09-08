@@ -410,7 +410,8 @@
     "sessionEndedAnotherDevice": "ನೀವು ಇನ್ನೊಂದು ಸಾಧನದಲ್ಲಿ ಸೈನ್ ಇನ್ ಮಾಡಿದ್ದೀರಿ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.",
     "sessionEndedExpired": "ನಿಮ್ಮ ಅವಧಿ ಮುಗಿದಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.",
     "companyWebsite": "ಕಂಪನಿ ವೆಬ್‌ಸೈಟ್",
-    "installApp": "ಅಪ್ಲಿಕೇಶನ್ ಸ್ಥಾಪಿಸಿ"
+    "installApp": "ಅಪ್ಲಿಕೇಶನ್ ಸ್ಥಾಪಿಸಿ",
+    "aboutApp": "ಆಪ್ ಬಗ್ಗೆ"
   },
   "welcome": {
     "greeting": "ಸ್ವಾಗತ, {name} !",

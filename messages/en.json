@@ -421,7 +421,8 @@
     "sessionEndedAnotherDevice": "You signed in on another device. Please sign in again.",
     "sessionEndedExpired": "Your session expired. Please sign in again.",
     "companyWebsite": "Company Website",
-    "installApp": "Install app"
+    "installApp": "Install app",
+    "aboutApp": "About App"
   },
   "welcome": {
     "greeting": "Welcome, {name}!",

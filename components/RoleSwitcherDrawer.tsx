@@ -420,7 +420,7 @@ export default function RoleSwitcherDrawer({ open, onClose, onSwitch, activeRole
               <p className="text-xs" style={{ color: C.textSecond }}>{t('about.byOrg')}</p>
               <p className="text-xs mt-1" style={{ color: C.textSecond, opacity: 0.7 }}>{t('about.version')}</p>
               <button
-                onClick={() => window.open('https://eywa.farm', '_blank')}
+                onClick={() => window.open('https://eywa.farm/about-app', '_blank')}
                 className="mt-3 px-6 py-2.5 rounded-xl text-white text-sm font-bold"
                 style={{ background: C.primary }}>
                 {t('about.visit')}
