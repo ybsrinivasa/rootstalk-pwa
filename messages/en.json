@@ -583,7 +583,10 @@
       "softSetNote": "Currently set as your tentative area. You can revise it once more when you place your first DAS order at planting time.",
       "confirmedLabel": "Farm area · Confirmed",
       "lockedNote": "Locked on {date}. Volumes for all your inputs are calculated on this.",
-      "unitAcres": "acres"
+      "unitAcres": "acres",
+      "enterCta": "Enter farm area",
+      "updateCta": "Update farm area",
+      "modalTitle": "Enter farm area"
     },
     "plants": {
       "sectionHeader": "Plant Count & Planting Year",
@@ -609,7 +612,8 @@
       "editWindowUntil": "You can change this until {date}.",
       "lockedNote": "Locked on {date}.",
       "changeBtn": "change",
-      "updateCta": "Update"
+      "updateCta": "Update",
+      "modalTitle": "Select start date"
     },
     "authors": {
       "label": "Authored by",

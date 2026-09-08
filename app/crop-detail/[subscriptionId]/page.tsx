@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -128,11 +128,21 @@ export default function CropDetailPage() {
   // Start date state
   const [startDate, setStartDate] = useState('')
   const [savingDate, setSavingDate] = useState(false)
-  const [showStartDate, setShowStartDate] = useState(false)
+  // 2026-09-08 — Was showStartDate=true inline reveal, changed to
+  // a blocking modal so the farmer can't scroll past without
+  // committing (or explicitly cancelling). Field report: farmers
+  // frequently picked a date and forgot to tap Set. Modal also
+  // auto-opens the native calendar picker on mount so opening
+  // takes one tap, not two.
+  const [dateModalOpen, setDateModalOpen] = useState(false)
+  const dateInputRef = useRef<HTMLInputElement | null>(null)
 
-  // Acreage state (area-wise crops)
+  // Acreage state (area-wise crops). Same modal treatment (2026-09-08)
+  // for the same reason — farmers typed the acreage inline and
+  // forgot to tap Save.
   const [areaInput, setAreaInput] = useState('')
   const [savingArea, setSavingArea] = useState(false)
+  const [areaModalOpen, setAreaModalOpen] = useState(false)
 
   // Plant-count state (plant-wise crops). Separate save buttons so
   // the farmer can update one field at a time — backend tolerates
@@ -265,7 +275,7 @@ export default function CropDetailPage() {
         crop_start_date: new Date(startDate).toISOString(),
       })
       setSub(s => s ? { ...s, crop_start_date: new Date(startDate).toISOString() } : s)
-      setShowStartDate(false)
+      setDateModalOpen(false)
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
       showToast(err.response?.data?.detail || t('toast.startDateSaveFailed'))
@@ -281,6 +291,7 @@ export default function CropDetailPage() {
         area_unit: 'acres',
       })
       setSub(s => s ? { ...s, farm_area_acres: parseFloat(areaInput), area_unit: 'acres' } : s)
+      setAreaModalOpen(false)
       showToast(t('toast.areaSaved'))
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
@@ -288,6 +299,24 @@ export default function CropDetailPage() {
       showToast(typeof d === 'string' ? d : (d as { message?: string } | undefined)?.message || t('toast.saveFailed'))
     } finally { setSavingArea(false) }
   }
+
+  // 2026-09-08 — Auto-open the native calendar the moment the date
+  // modal renders. Otherwise Android Chrome needs a first tap to
+  // focus + a second tap to open the picker — farmers regularly
+  // stopped at the first tap. showPicker() is Chromium/Safari 16+;
+  // gracefully falls back to focus() on browsers without it.
+  useEffect(() => {
+    if (!dateModalOpen) return
+    const timer = setTimeout(() => {
+      const el = dateInputRef.current
+      if (!el) return
+      try {
+        (el as HTMLInputElement & { showPicker?: () => void }).showPicker?.()
+      } catch { /* no-op */ }
+      el.focus()
+    }, 120)
+    return () => clearTimeout(timer)
+  }, [dateModalOpen])
 
   async function savePlantContext() {
     // Tolerate partial save — backend accepts either field. We
@@ -566,59 +595,38 @@ export default function CropDetailPage() {
           <>
             <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">{t('area.sectionHeader')}</p>
 
-            {areaTentative && (
+            {(areaTentative || areaSoftSet) && (
+              // 2026-09-08 — Inline input+Save collapsed to a
+              // display card + button that opens a blocking modal.
+              // Farmers were typing acreage but forgetting to tap
+              // Save; the modal makes commit mandatory.
               <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
-                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">{t('area.label')}</p>
-                <div className="flex gap-2">
-                  <input
-                    type="number" inputMode="decimal" step="0.01" min="0"
-                    value={areaInput}
-                    onChange={e => setAreaInput(e.target.value)}
-                    placeholder="0.00"
-                    className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-                  />
-                  <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                    {t('area.unitAcres')}
-                  </span>
-                  <button
-                    onClick={saveArea}
-                    disabled={savingArea || !areaInput}
-                    className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                    style={{ background: colour }}
-                  >
-                    {savingArea ? '…' : tCommon('save')}
-                  </button>
-                </div>
-                <p className="text-[#7A8C7E] text-xs mt-2">{t('area.tentativeNote')}</p>
-              </div>
-            )}
-
-            {areaSoftSet && (
-              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
-                <p className="text-sm font-semibold text-[#6B3F1F] mb-3">{t('area.softSetLabel')}</p>
-                <div className="flex gap-2">
-                  <input
-                    type="number" inputMode="decimal" step="0.01" min="0"
-                    value={areaInput}
-                    onChange={e => setAreaInput(e.target.value)}
-                    placeholder="0.00"
-                    className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-                  />
-                  <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
-                    {t('area.unitAcres')}
-                  </span>
-                  <button
-                    onClick={saveArea}
-                    disabled={savingArea || !areaInput}
-                    className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                    style={{ background: colour }}
-                  >
-                    {savingArea ? '…' : tCommon('save')}
-                  </button>
-                </div>
-                <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
-                  {t('area.softSetNote')}
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">
+                  {areaTentative ? t('area.label') : t('area.softSetLabel')}
                 </p>
+                {sub.farm_area_acres != null && (
+                  <p className="text-lg font-bold text-[#6B3F1F] mb-3">
+                    {sub.farm_area_acres} {t('area.unitAcres')}
+                  </p>
+                )}
+                <button
+                  onClick={() => {
+                    setAreaInput(sub.farm_area_acres != null ? String(sub.farm_area_acres) : '')
+                    setAreaModalOpen(true)
+                  }}
+                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
+                  style={{ background: colour }}
+                >
+                  {sub.farm_area_acres != null ? t('area.updateCta') : t('area.enterCta')}
+                </button>
+                {areaTentative && (
+                  <p className="text-[#7A8C7E] text-xs mt-3">{t('area.tentativeNote')}</p>
+                )}
+                {areaSoftSet && (
+                  <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
+                    {t('area.softSetNote')}
+                  </p>
+                )}
               </div>
             )}
 
@@ -710,24 +718,15 @@ export default function CropDetailPage() {
             <p className="text-amber-600 text-xs mt-1">
               {isPlantWise ? t('startDate.unlockPlantWise') : t('startDate.unlockAreaWise')}
             </p>
-            {showStartDate ? (
-              <div className="mt-3 flex gap-2">
-                <input type="date" value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  className="flex-1 border border-amber-300 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none" />
-                <button onClick={saveStartDate} disabled={savingDate || !startDate}
-                  className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                  style={{ background: colour }}>
-                  {savingDate ? '…' : t('startDate.setShort')}
-                </button>
-              </div>
-            ) : (
-              <button onClick={() => setShowStartDate(true)}
-                className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
-                style={{ background: colour }}>
-                {t('startDate.setCta')}
-              </button>
-            )}
+            <button
+              onClick={() => {
+                setStartDate(sub.crop_start_date?.split('T')[0] || '')
+                setDateModalOpen(true)
+              }}
+              className="mt-3 w-full py-2.5 rounded-xl text-white text-sm font-semibold"
+              style={{ background: colour }}>
+              {t('startDate.setCta')}
+            </button>
           </div>
         ) : (() => {
           // 15-day edit window from first_set_at. Server enforces the
@@ -767,22 +766,13 @@ export default function CropDetailPage() {
                   )}
                 </div>
                 {editable && (
-                  <button onClick={() => setShowStartDate(!showStartDate)}
+                  <button onClick={() => {
+                      setStartDate(sub.crop_start_date?.split('T')[0] || '')
+                      setDateModalOpen(true)
+                    }}
                     className="text-xs text-[#7A8C7E] underline shrink-0">{t('startDate.changeBtn')}</button>
                 )}
               </div>
-              {editable && showStartDate && (
-                <div className="mt-3 bg-white rounded-2xl border border-[#DDD0B8] p-4 flex gap-2">
-                  <input type="date" value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none" />
-                  <button onClick={saveStartDate} disabled={savingDate || !startDate}
-                    className="px-4 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
-                    style={{ background: colour }}>
-                    {savingDate ? '…' : t('startDate.updateCta')}
-                  </button>
-                </div>
-              )}
             </>
           )
         })()}
@@ -1086,6 +1076,86 @@ export default function CropDetailPage() {
         </div>
       </div>
 
+      {/* 2026-09-08 — Farm-area blocking modal. Replaces the inline
+          input+Save pattern that farmers were skipping past without
+          committing. NO backdrop-click-to-close (deliberate) so the
+          farmer must tap Save or Cancel explicitly. */}
+      {areaModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end">
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto">
+            <p className="font-bold text-[#6B3F1F] text-base mb-1">
+              {t('area.modalTitle')}
+            </p>
+            <p className="text-xs text-[#7A8C7E] mb-4">
+              {areaSoftSet ? t('area.softSetNote') : t('area.tentativeNote')}
+            </p>
+            <div className="flex gap-2 mb-5">
+              <input
+                type="number" inputMode="decimal" step="0.01" min="0"
+                value={areaInput}
+                onChange={e => setAreaInput(e.target.value)}
+                placeholder="0.00"
+                autoFocus
+                className="flex-1 min-w-0 border border-[#DDD0B8] rounded-xl px-3 py-2 text-base focus:outline-none focus:border-[#3A7D44]"
+              />
+              <span className="flex items-center px-3 py-2 text-sm text-[#6B3F1F] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl shrink-0">
+                {t('area.unitAcres')}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setAreaModalOpen(false)}
+                disabled={savingArea}
+                className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40">
+                {tCommon('cancel')}
+              </button>
+              <button
+                onClick={saveArea}
+                disabled={savingArea || !areaInput || isNaN(parseFloat(areaInput))}
+                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}>
+                {savingArea ? tCommon('saving') : tCommon('save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2026-09-08 — Start-date blocking modal. Same rationale as
+          the area modal + auto-opens the native calendar picker on
+          mount (see useEffect above) so opening takes one tap
+          instead of two on Android. */}
+      {dateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end">
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto">
+            <p className="font-bold text-[#6B3F1F] text-base mb-4">
+              {t('startDate.modalTitle')}
+            </p>
+            <input
+              ref={dateInputRef}
+              type="date" value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              className="w-full border border-[#DDD0B8] rounded-xl px-3 py-3 text-base bg-white focus:outline-none focus:border-[#3A7D44] mb-5"
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setDateModalOpen(false)}
+                disabled={savingDate}
+                className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40">
+                {tCommon('cancel')}
+              </button>
+              <button
+                onClick={saveStartDate}
+                disabled={savingDate || !startDate}
+                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}>
+                {savingDate ? tCommon('saving') : t('startDate.setShort')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Order bottom sheet */}
       {orderSheet.open && (
         <div className="fixed inset-0 z-40 bg-black/40 flex items-end" onClick={closeOrderSheet}>
@@ -1352,7 +1422,11 @@ export default function CropDetailPage() {
                 : t('needDate.diagnose')}
             </p>
             <button
-              onClick={() => { setShowNeedDateSheet(null); setShowStartDate(true) }}
+              onClick={() => {
+                setShowNeedDateSheet(null)
+                setStartDate(sub?.crop_start_date?.split('T')[0] || '')
+                setDateModalOpen(true)
+              }}
               className="w-full mt-6 py-3.5 rounded-xl text-white font-semibold text-sm"
               style={{ background: colour }}>
               {t('needDate.setNow')}
