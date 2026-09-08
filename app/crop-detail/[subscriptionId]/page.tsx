@@ -777,50 +777,6 @@ export default function CropDetailPage() {
           )
         })()}
 
-        {/* Package author attribution — collapsed by default; hidden
-            entirely when the CA hasn't assigned any authors. Placed
-            above the action tiles so the trust context (Company +
-            Authors) sits together at the top of the dashboard. */}
-        {authors.length > 0 && (
-          <div className="mt-6 bg-white rounded-2xl border border-[#DDD0B8] overflow-hidden">
-            <button
-              onClick={() => setAuthorsExpanded(v => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-[#F7F0E0]/50">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider">
-                  {t('authors.label')}
-                </p>
-                <p className="text-sm font-semibold text-[#6B3F1F] truncate mt-0.5">
-                  {authors[0].name || '—'}
-                  {authors.length > 1 && (
-                    <span className="font-normal text-[#7A8C7E]">
-                      {' '}{t('authors.andOthers', { count: authors.length - 1 })}
-                    </span>
-                  )}
-                </p>
-              </div>
-              <span className={`text-[#7A8C7E] text-lg transition-transform ${authorsExpanded ? 'rotate-180' : ''}`} aria-hidden>▾</span>
-            </button>
-            {authorsExpanded && (
-              <div className="px-4 pb-4 pt-1 space-y-3 border-t border-[#F0E6D2]">
-                {authors.map(a => (
-                  <div key={a.user_id} className="pt-3">
-                    <p className="text-sm font-semibold text-[#6B3F1F]">{a.name || '—'}</p>
-                    {a.designation && (
-                      <p className="text-xs text-[#7A8C7E] mt-0.5">{a.designation}</p>
-                    )}
-                    {a.professional_profile && (
-                      <p className="text-sm text-[#6B3F1F] whitespace-pre-line leading-relaxed mt-2">
-                        {a.professional_profile}
-                      </p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Four action tiles (2026-06-02): Orders joins as a sibling
             to Advisory / Diagnose / Ask Expert. Advisory is "what to
             do", Orders is "what to procure" — different mental
@@ -1074,6 +1030,52 @@ export default function CropDetailPage() {
             </>
           )}
         </div>
+
+        {/* Package author attribution — informational, no farmer
+            action required. Moved to the bottom of the dashboard
+            (2026-09-08, user request) so it doesn't compete with
+            the actionable sections above (area, start date, action
+            tiles, alerts, expert choice). Hidden entirely when the
+            CA hasn't assigned any authors. */}
+        {authors.length > 0 && (
+          <div className="mt-6 bg-white rounded-2xl border border-[#DDD0B8] overflow-hidden">
+            <button
+              onClick={() => setAuthorsExpanded(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left active:bg-[#F7F0E0]/50">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-[#7A8C7E] uppercase tracking-wider">
+                  {t('authors.label')}
+                </p>
+                <p className="text-sm font-semibold text-[#6B3F1F] truncate mt-0.5">
+                  {authors[0].name || '—'}
+                  {authors.length > 1 && (
+                    <span className="font-normal text-[#7A8C7E]">
+                      {' '}{t('authors.andOthers', { count: authors.length - 1 })}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <span className={`text-[#7A8C7E] text-lg transition-transform ${authorsExpanded ? 'rotate-180' : ''}`} aria-hidden>▾</span>
+            </button>
+            {authorsExpanded && (
+              <div className="px-4 pb-4 pt-1 space-y-3 border-t border-[#F0E6D2]">
+                {authors.map(a => (
+                  <div key={a.user_id} className="pt-3">
+                    <p className="text-sm font-semibold text-[#6B3F1F]">{a.name || '—'}</p>
+                    {a.designation && (
+                      <p className="text-xs text-[#7A8C7E] mt-0.5">{a.designation}</p>
+                    )}
+                    {a.professional_profile && (
+                      <p className="text-sm text-[#6B3F1F] whitespace-pre-line leading-relaxed mt-2">
+                        {a.professional_profile}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 2026-09-08 — Farm-area blocking modal. Replaces the inline
