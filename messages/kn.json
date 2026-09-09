@@ -1678,6 +1678,8 @@
         "itemsHeader": "ವಸ್ತುಗಳು:",
         "itemFallback": "ಐಟಂ",
         "totalLine": "*ಒಟ್ಟು: ₹ {amount} *",
+        "paymentReceivedLine": "✓ *ಪಾವತಿ ಸ್ವೀಕರಿಸಲಾಗಿದೆ: ₹{amount} UPI ಮೂಲಕ* ({date})",
+        "paymentRefLine": "  ಉಲ್ಲೇಖ: {ref}",
         "copiedToClipboard": "ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ — ನಿಮ್ಮ ಮೆಸೆಂಜರ್‌ಗೆ ಅಂಟಿಸಿ."
       },
       "reshare": {

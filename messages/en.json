@@ -1689,6 +1689,8 @@
         "itemsHeader": "Items:",
         "itemFallback": "Item",
         "totalLine": "*Total: ₹{amount}*",
+        "paymentReceivedLine": "✓ *Payment received: ₹{amount} via UPI* ({date})",
+        "paymentRefLine": "  Ref: {ref}",
         "copiedToClipboard": "Copied to clipboard — paste into your messenger."
       },
       "reshare": {

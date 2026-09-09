@@ -459,7 +459,7 @@ function DealerOrdersInner() {
 
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
 
-  function buildShareText(o: Order): string {
+  function buildShareText(o: Order, batchPayment?: PackingBatch['batch_payment']): string {
     // Structured for legibility on WhatsApp / SMS.
     const orderDate = new Date(o.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
     const lines: string[] = []
@@ -493,6 +493,24 @@ function DealerOrdersInner() {
     }
     lines.push('')
     lines.push(t('share.totalLine', { amount: total.toLocaleString(locale) }))
+    // 2026-09-09 — Payment receipt line, only after dealer confirms.
+    // Recipients of the shared text (facilitator / farmer / anyone
+    // helping the handover) see whether the batch is paid for and
+    // shouldn't collect cash again.
+    if (batchPayment?.status === 'DEALER_CONFIRMED') {
+      const paid = batchPayment.paid_amount ?? batchPayment.amount
+      const paidDate = batchPayment.dealer_confirmed_at
+        ? new Date(batchPayment.dealer_confirmed_at).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+        : ''
+      lines.push('')
+      lines.push(t('share.paymentReceivedLine', {
+        amount: paid.toLocaleString(locale),
+        date: paidDate,
+      }))
+      if (batchPayment.txn_ref) {
+        lines.push(t('share.paymentRefLine', { ref: batchPayment.txn_ref }))
+      }
+    }
     return lines.join('\n')
   }
 
@@ -512,12 +530,14 @@ function DealerOrdersInner() {
         {},
       )
       const code = data.packing_code || batch.packing_code || null
-      // Build share text from the batch's items only.
+      // Build share text from the batch's items only. Pass the batch's
+      // payment status so a "Payment received" line lands in the shared
+      // text when the dealer has already confirmed receipt.
       const text = buildShareText({
         ...o,
         packing_code: code,
         packing_items: batch.items,
-      })
+      }, batch.batch_payment)
 
       const navigatorAny = navigator as Navigator & { share?: (data: ShareData) => Promise<void> }
       if (navigatorAny.share) {
