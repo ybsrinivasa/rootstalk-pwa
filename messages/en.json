@@ -1937,6 +1937,7 @@
         "qtyPlaceholder": "Qty *",
         "pricePlaceholder": "₹ Price",
         "pickBrandBeforeSaving": "Pick a brand from the list before saving.",
+        "enterPriceBeforeSaving": "Enter a price before saving (₹0 is allowed if free).",
         "saving": "Saving…",
         "saveDetails": "Save details"
       },
@@ -2020,7 +2021,8 @@
         "awaitingApproval": "Waiting for farmer approval",
         "orderComplete": "Order Complete",
         "resetItems": "Reset items",
-        "viewPackingList": "View Packing List"
+        "viewPackingList": "View Packing List",
+        "priceDiscretionLine": "Only this farmer sees the price. We never share it with the company or any other dealer."
       },
       "brandSheet": {
         "title": "Select Brand",

@@ -169,6 +169,10 @@ interface Order {
   // 2026-08-19 — Training marker so the detail page renders the same
   // "This is a Training Order" banner the list page uses.
   client_is_training?: boolean
+  // 2026-09-09 — True for orders created on/after PRICE_MANDATORY_SINCE.
+  // Drives red-asterisk on price input + disable Submit when any
+  // AVAILABLE item has null price. Grandfathered false for older orders.
+  price_required?: boolean
   date_from: string; date_to: string; created_at: string
   farmer_context?: FarmerContext
   facilitator_context?: FacilitatorContext | null
@@ -1596,9 +1600,20 @@ export default function DealerOrderDetailPage() {
         {!itemEdit.brand_cosh_id && (
           <p className="text-[11px] text-amber-700">{t('form.pickBrandBeforeSaving')}</p>
         )}
+        {/* 2026-09-09 — Price becomes mandatory for orders created
+            on/after PRICE_MANDATORY_SINCE. ₹0 is allowed (explicit
+            free / promo choice); only NULL/empty is blocked. */}
+        {order?.price_required && itemEdit.price.trim() === '' && (
+          <p className="text-[11px] text-amber-700">{t('form.enterPriceBeforeSaving')}</p>
+        )}
         <div className="flex gap-2">
           <button onClick={() => markAvailable(item.id)}
-            disabled={!itemEdit.given_volume || !itemEdit.brand_cosh_id || saving}
+            disabled={
+              !itemEdit.given_volume
+              || !itemEdit.brand_cosh_id
+              || (order?.price_required && itemEdit.price.trim() === '')
+              || saving
+            }
             className="flex-1 bg-green-600 text-white text-xs font-semibold py-2.5 rounded-xl disabled:opacity-40">
             {saving ? t('form.saving') : t('form.saveDetails')}
           </button>
@@ -2770,14 +2785,23 @@ export default function DealerOrderDetailPage() {
         )}
 
         {pricedItems.length > 0 && (
-          <div className="bg-white border-2 border-[#7D4196]/15 rounded-2xl p-4 flex items-baseline justify-between gap-3">
-            <div>
-              <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">{t('footer.totalAmount')}</p>
-              <p className="text-[10px] text-[#7A8C7E] mt-0.5">
-                {t('footer.pricedCoverage', { priced: pricedItems.length, total: availableItemCount })}
-              </p>
+          <div className="bg-white border-2 border-[#7D4196]/15 rounded-2xl p-4 space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <div>
+                <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">{t('footer.totalAmount')}</p>
+                <p className="text-[10px] text-[#7A8C7E] mt-0.5">
+                  {t('footer.pricedCoverage', { priced: pricedItems.length, total: availableItemCount })}
+                </p>
+              </div>
+              <p className="text-2xl font-bold text-[#7D4196]">₹{totalAmount.toLocaleString(locale)}</p>
             </div>
-            <p className="text-2xl font-bold text-[#7D4196]">₹{totalAmount.toLocaleString(locale)}</p>
+            {/* 2026-09-09 — Reassurance nudge so the dealer trusts entering
+                actual prices. Zero pricing visibility to companies is a
+                hard architectural principle — see
+                feedback_rootstalk_no_payment_visibility_to_companies. */}
+            <p className="text-[11px] text-[#3A7D44] leading-snug border-t border-[#F0E5D0] pt-2">
+              🔒 {t('footer.priceDiscretionLine')}
+            </p>
           </div>
         )}
 
@@ -3045,7 +3069,12 @@ export default function DealerOrderDetailPage() {
                 </span>
               </div>
             </div>
-            <div className="flex gap-2 mt-5">
+            {/* 2026-09-09 — Price-privacy reassurance right where the
+                dealer is about to commit the batch. */}
+            <p className="text-[11px] text-[#3A7D44] leading-snug mt-3 bg-[#F5F9F0] border border-[#D8E9C7] rounded-lg px-3 py-2">
+              🔒 {t('footer.priceDiscretionLine')}
+            </p>
+            <div className="flex gap-2 mt-4">
               <button onClick={() => setShowSubmitConfirm(false)} disabled={submitting}
                 className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
                 {tCommon('cancel')}
