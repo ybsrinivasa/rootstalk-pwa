@@ -607,23 +607,10 @@ export default function ProfilePage() {
                 canonical entry point; this in-profile copy didn't
                 actually persist the selection. */}
 
-            {/* Alert recipient configuration moved to /crop-detail per
-                Alerts A/B/C (2026-05-29). Each crop's alert sheet there
-                speaks the verified Dealer/Facilitator + opt-out contract;
-                the old send_to_self / raw promoter_user_id form here was
-                no longer reaching the alerts task. */}
-            {subscriptions.length > 0 && (
-              <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
-                <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">{t('prefs.alertsLabel')}</p>
-                <p className="text-sm text-[#6B3F1F]">
-                  {t('prefs.alertsBody')}
-                </p>
-                <button onClick={() => router.push('/home')}
-                  className="mt-3 text-xs font-semibold text-[#7D4E00] underline">
-                  {t('prefs.openMyCrops')}
-                </button>
-              </div>
-            )}
+            {/* 2026-09-09 — Alert Preferences block removed. Was
+                just a link back to the home screen; the real alert
+                recipient config lives per-crop on /crop-detail, so
+                this card added no value on the profile page. */}
 
             {/* 2026-09-09 — Farmer privacy toggle. Default OFF —
                 dealers see cross-shop purchases only when the
@@ -761,14 +748,12 @@ function ShareCrossDealerToggle({
           role="switch"
           aria-checked={value}
           aria-label={t('label')}
-          className={`shrink-0 relative w-12 h-7 rounded-full transition-colors disabled:opacity-50 ${
-            value ? 'bg-[#3A7D44]' : 'bg-[#DDD0B8]'
-          }`}
+          style={{ backgroundColor: value ? '#3A7D44' : '#D1D5DB' }}
+          className="shrink-0 relative inline-flex h-7 w-12 items-center rounded-full transition-colors disabled:opacity-50"
         >
           <span
-            className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
-              value ? 'translate-x-[22px]' : 'translate-x-0.5'
-            }`}
+            style={{ transform: value ? 'translateX(22px)' : 'translateX(2px)' }}
+            className="inline-block h-6 w-6 rounded-full bg-white shadow transition-transform"
           />
         </button>
       </div>
