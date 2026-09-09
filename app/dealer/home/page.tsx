@@ -36,6 +36,7 @@ export default function DealerHomePage() {
   // 2026-07-24 — Training Sandbox. Tile shows only when the dealer
   // has at least one parent client with an ACTIVE training session.
   const [trainingCount, setTrainingCount] = useState(0)
+  const [ledgerCount, setLedgerCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
 
@@ -128,6 +129,9 @@ export default function DealerHomePage() {
         }).catch(() => {}),
         api.get('/promoter/training/available-clients').then(r => {
           setTrainingCount((r.data as unknown[]).length)
+        }).catch(() => {}),
+        api.get<{ total_count: number }>('/dealer/ledger/farmers').then(r => {
+          setLedgerCount(r.data?.total_count || 0)
         }).catch(() => {}),
       ]).finally(() => setLoading(false))
     }).catch(() => setLoading(false))
@@ -296,6 +300,15 @@ export default function DealerHomePage() {
             <span className="text-2xl">👨‍🌾</span>
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.myFarmers')}</p>
             <p className="text-xs text-[#7A8C7E]">{t('tiles.myFarmersSubtitle')}</p>
+          </button>
+          <button onClick={() => router.push('/dealer/ledger')}
+            className="relative bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
+            <span className="absolute top-3 right-4 text-base font-bold text-[#7D4196]">
+              {loading ? '…' : ledgerCount}
+            </span>
+            <span className="text-2xl">📒</span>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.farmerLedger')}</p>
+            <p className="text-xs text-[#7A8C7E]">{t('tiles.farmerLedgerSubtitle')}</p>
           </button>
           {/* 2026-07-24 — Training Sandbox tile. Renders only when
               the dealer has ≥1 parent client with an ACTIVE training
