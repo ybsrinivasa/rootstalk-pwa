@@ -39,6 +39,7 @@ interface FarmerDetail {
   state_name: string | null
   district_name: string | null
   note: string | null
+  is_claimed: boolean
   entries: LedgerEntry[]
 }
 
@@ -176,12 +177,18 @@ export default function DealerLedgerDetailPage() {
                     <p className="text-xs text-[#7A8C7E] truncate">{addressParts.join(', ')}</p>
                   )}
                 </div>
-                <button
-                  onClick={() => setShowEditFarmer(true)}
-                  className="text-xs text-[#7D4196] font-medium"
-                >
-                  {t('edit')}
-                </button>
+                {!detail.is_claimed ? (
+                  <button
+                    onClick={() => setShowEditFarmer(true)}
+                    className="text-xs text-[#7D4196] font-medium"
+                  >
+                    {t('edit')}
+                  </button>
+                ) : (
+                  <span className="text-[10px] text-[#7A8C7E] italic max-w-[90px] text-right leading-tight">
+                    {t('registeredOnRT')}
+                  </span>
+                )}
               </div>
               {/* Personal note */}
               <button
