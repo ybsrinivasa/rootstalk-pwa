@@ -75,6 +75,7 @@ export default function DealerLedgerDetailPage() {
   const [detail, setDetail] = useState<FarmerDetail | null>(null)
   const [filter, setFilter] = useState<FilterKey>('active')
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [showNoteModal, setShowNoteModal] = useState(false)
   const [noteDraft, setNoteDraft] = useState('')
   const [savingNote, setSavingNote] = useState(false)
@@ -86,12 +87,21 @@ export default function DealerLedgerDetailPage() {
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     setLoading(true)
+    setLoadError(null)
     api.get<FarmerDetail>(`/dealer/ledger/farmers/${farmerId}?filter=${filter}`)
       .then(r => {
         setDetail(r.data)
         setNoteDraft(r.data.note || '')
         setNameDraft(r.data.name || '')
         setSubDistrictDraft(r.data.sub_district || '')
+      })
+      .catch((e: unknown) => {
+        const detail = (e as { response?: { status?: number; data?: { detail?: { message?: string; code?: string } } } })?.response
+        setLoadError(
+          detail?.data?.detail?.message
+          || detail?.data?.detail?.code
+          || (detail?.status ? `Failed to load (HTTP ${detail.status})` : 'Failed to load')
+        )
       })
       .finally(() => setLoading(false))
   }, [router, farmerId, filter])
@@ -140,7 +150,13 @@ export default function DealerLedgerDetailPage() {
           </div>
         )}
 
-        {!loading && detail && (
+        {!loading && loadError && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-4">
+            <p className="text-sm text-red-700 font-medium">{loadError}</p>
+          </div>
+        )}
+
+        {!loading && !loadError && detail && (
           <>
             {/* Farmer header card */}
             <div className="mt-4 bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
