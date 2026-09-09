@@ -44,6 +44,10 @@ export interface PWAUser {
     workspace_client_id: string;
     assigned_pwa_roles: string[];
   } | null;
+  // 2026-09-09 — Farmer privacy toggle for the dealer's Farmer
+  // Ledger "Purchased From Another Dealer" rows. Default false.
+  // Farmer flips it via /auth/me/profile.
+  share_cross_dealer_purchases?: boolean;
 }
 
 export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {

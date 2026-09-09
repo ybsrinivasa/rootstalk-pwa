@@ -625,6 +625,15 @@ export default function ProfilePage() {
               </div>
             )}
 
+            {/* 2026-09-09 — Farmer privacy toggle. Default OFF —
+                dealers see cross-shop purchases only when the
+                farmer opts in. Silent to the dealer either way
+                (no "opted out" hint). */}
+            <ShareCrossDealerToggle
+              value={!!user?.share_cross_dealer_purchases}
+              onChanged={(v) => setUser(prev => prev ? { ...prev, share_cross_dealer_purchases: v } : prev)}
+            />
+
             {/* My Subscriptions link moved to the right drawer 2026-05-20
                 so the profile stays focused on personal data + role
                 setup. */}
@@ -713,6 +722,56 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+
+function ShareCrossDealerToggle({
+  value,
+  onChanged,
+}: {
+  value: boolean
+  onChanged: (v: boolean) => void
+}) {
+  const t = useTranslations('farmerProfile.prefs.shareCrossDealer')
+  const [busy, setBusy] = useState(false)
+
+  const flip = async () => {
+    setBusy(true)
+    const next = !value
+    try {
+      await api.put('/auth/me/profile', { share_cross_dealer_purchases: next })
+      onChanged(next)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[#6B3F1F]">{t('label')}</p>
+          <p className="text-xs text-[#7A8C7E] mt-1 leading-snug">{t('body')}</p>
+        </div>
+        <button
+          onClick={flip}
+          disabled={busy}
+          role="switch"
+          aria-checked={value}
+          aria-label={t('label')}
+          className={`shrink-0 relative w-12 h-7 rounded-full transition-colors disabled:opacity-50 ${
+            value ? 'bg-[#3A7D44]' : 'bg-[#DDD0B8]'
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+              value ? 'translate-x-[22px]' : 'translate-x-0.5'
+            }`}
+          />
+        </button>
+      </div>
     </div>
   )
 }

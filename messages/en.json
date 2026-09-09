@@ -1488,7 +1488,11 @@
       "change": "Change",
       "alertsLabel": "Alert Preferences",
       "alertsBody": "Set who else gets alerts on each crop's page — open the crop and tap the alert recipient sheet.",
-      "openMyCrops": "Open my crops →"
+      "openMyCrops": "Open my crops →",
+      "shareCrossDealer": {
+        "label": "Share other-shop purchases with my dealers",
+        "body": "Off by default. When On, your dealers can see the brand + quantity of items you buy at other shops — never the price, never the shop's name."
+      }
     },
     "language": {
       "selectorTitle": "Select language"
