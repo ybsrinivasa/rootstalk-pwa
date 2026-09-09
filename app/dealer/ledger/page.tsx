@@ -127,37 +127,50 @@ export default function DealerLedgerPage() {
               const addr = addressLine(f)
               const lastDate = fmtDate(f.last_purchase_date, locale)
               return (
-                <button
+                <div
                   key={f.user_id}
-                  onClick={() => router.push(`/dealer/ledger/${f.user_id}`)}
-                  className="w-full bg-white rounded-2xl p-3 border border-[#DDD0B8] shadow-sm text-left flex items-center gap-3"
+                  className="w-full bg-white rounded-2xl p-3 border border-[#DDD0B8] shadow-sm flex items-center gap-3"
                 >
-                  {f.photo_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={f.photo_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-[#F5F0E8] flex items-center justify-center flex-shrink-0">
-                      <span className="text-xl">👨‍🌾</span>
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="font-semibold text-[#6B3F1F] truncate">{f.name || t('unnamedFarmer')}</p>
-                      {f.no_purchases_in_12_months && (
-                        <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full flex-shrink-0">
-                          {t('inactive12m')}
-                        </span>
+                  <button
+                    onClick={() => router.push(`/dealer/ledger/${f.user_id}`)}
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                  >
+                    {f.photo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={f.photo_url} alt="" className="w-12 h-12 rounded-full object-cover flex-shrink-0" />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-[#F5F0E8] flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">👨‍🌾</span>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-semibold text-[#6B3F1F] truncate">{f.name || t('unnamedFarmer')}</p>
+                        {f.no_purchases_in_12_months && (
+                          <span className="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full flex-shrink-0">
+                            {t('inactive12m')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-[#7A8C7E] truncate">{f.phone || ''}</p>
+                      {addr && <p className="text-xs text-[#7A8C7E] truncate">{addr}</p>}
+                      {lastDate && (
+                        <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+                          {t('lastPurchase')}: {lastDate}
+                        </p>
                       )}
                     </div>
-                    <p className="text-xs text-[#7A8C7E] truncate">{f.phone || ''}</p>
-                    {addr && <p className="text-xs text-[#7A8C7E] truncate">{addr}</p>}
-                    {lastDate && (
-                      <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-                        {t('lastPurchase')}: {lastDate}
-                      </p>
-                    )}
-                  </div>
-                </button>
+                  </button>
+                  {f.phone && (
+                    <a
+                      href={`tel:${f.phone}`}
+                      aria-label={t('callFarmer')}
+                      className="flex-shrink-0 w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center active:scale-95 transition-transform"
+                    >
+                      <span className="text-lg">📞</span>
+                    </a>
+                  )}
+                </div>
               )
             })}
           </div>

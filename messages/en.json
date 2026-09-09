@@ -1595,6 +1595,7 @@
       "editFarmerTitle": "Edit Farmer Details",
       "editFarmerHint": "Changes update the farmer's shared record — other dealers who see this farmer will see the same details.",
       "registeredOnRT": "Registered on RootsTalk",
+      "callFarmer": "Call farmer",
       "name": "Name",
       "subDistrict": "Sub-district / Village",
       "state": "State",

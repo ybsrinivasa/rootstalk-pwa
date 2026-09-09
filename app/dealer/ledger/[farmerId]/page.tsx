@@ -177,6 +177,15 @@ export default function DealerLedgerDetailPage() {
                     <p className="text-xs text-[#7A8C7E] truncate">{addressParts.join(', ')}</p>
                   )}
                 </div>
+                {detail.phone && (
+                  <a
+                    href={`tel:${detail.phone}`}
+                    aria-label={t('callFarmer')}
+                    className="flex-shrink-0 w-11 h-11 rounded-full bg-green-500 text-white flex items-center justify-center active:scale-95 transition-transform"
+                  >
+                    <span className="text-lg">📞</span>
+                  </a>
+                )}
                 {!detail.is_claimed ? (
                   <button
                     onClick={() => setShowEditFarmer(true)}
