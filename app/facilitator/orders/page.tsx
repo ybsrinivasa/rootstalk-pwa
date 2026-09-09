@@ -97,6 +97,8 @@ interface Order {
       amount: number
       status: 'PENDING' | 'FARMER_MARKED_PAID' | 'DEALER_CONFIRMED'
       txn_ref: string | null
+      paid_amount: number | null
+      screenshot_url: string | null
       farmer_marked_at: string | null
       dealer_confirmed_at: string | null
       dealer_upi_available: boolean
@@ -1206,20 +1208,28 @@ function PillChunk({
                       UPI. Chip visible for FARMER_MARKED_PAID and
                       DEALER_CONFIRMED states; PENDING/no-row states
                       hidden (nothing informative yet). */}
-                  {b.batch_payment?.status === 'DEALER_CONFIRMED' && (
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 mt-2">
-                      <p className="text-[11px] text-emerald-900 font-semibold">
-                        ✓ Farmer paid ₹{b.batch_payment.amount.toLocaleString()} via UPI — do not collect
-                      </p>
-                    </div>
-                  )}
-                  {b.batch_payment?.status === 'FARMER_MARKED_PAID' && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 mt-2">
-                      <p className="text-[11px] text-blue-900 font-semibold">
-                        Farmer marked ₹{b.batch_payment.amount.toLocaleString()} paid via UPI — check with dealer before collecting
-                      </p>
-                    </div>
-                  )}
+                  {b.batch_payment?.status === 'DEALER_CONFIRMED' && (() => {
+                    const p = b.batch_payment!
+                    const shownAmt = p.paid_amount ?? p.amount
+                    return (
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 mt-2">
+                        <p className="text-[11px] text-emerald-900 font-semibold">
+                          ✓ Farmer paid ₹{shownAmt.toLocaleString()} via UPI — do not collect
+                        </p>
+                      </div>
+                    )
+                  })()}
+                  {b.batch_payment?.status === 'FARMER_MARKED_PAID' && (() => {
+                    const p = b.batch_payment!
+                    const shownAmt = p.paid_amount ?? p.amount
+                    return (
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 mt-2">
+                        <p className="text-[11px] text-blue-900 font-semibold">
+                          Farmer marked ₹{shownAmt.toLocaleString()} paid via UPI — check with dealer before collecting
+                        </p>
+                      </div>
+                    )
+                  })()}
                   {!b.picked_up_at ? (
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mt-2">
                       <p className="text-xs text-emerald-900 mb-2">

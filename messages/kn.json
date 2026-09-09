@@ -1276,7 +1276,7 @@
       "share": "ಹಂಚಿಕೊಳ್ಳಿ",
       "iHavePaid": "ಪಾವತಿಸಿದ್ದೇನೆ",
       "notYet": "ಇನ್ನೂ ಇಲ್ಲ",
-      "txnPlaceholder": "ವಹಿವಾಟು ID (ಐಚ್ಛಿಕ)",
+      "txnPlaceholder": "ಉದಾ. 401234567890",
       "marking": "…",
       "dueSuffix": "ಪಾವತಿಸಬೇಕು",
       "toPayLabel": "ಪಾವತಿಸಲು",
@@ -1286,7 +1286,18 @@
       "step1": "1. {copyLabel} ಟ್ಯಾಪ್ ಮಾಡಿ.",
       "step2": "2. ನಿಮ್ಮ ಫೋನ್‌ನ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಿಂದ UPI ಆಪ್ (PhonePe, GPay, Paytm, BHIM…) ತೆರೆಯಿರಿ.",
       "step3": "3. ನಿಮ್ಮ UPI ಆಪ್‌ನಲ್ಲಿ \"Send Money\" ಟ್ಯಾಪ್ ಮಾಡಿ, ಸ್ವೀಕರಿಸುವವರಾಗಿ UPI ID ಅನ್ನು ಅಂಟಿಸಿ, ₹{amount} ನಮೂದಿಸಿ, ಮತ್ತು ಪಾವತಿಸಿ.",
-      "step4": "4. ಇಲ್ಲಿಗೆ ಹಿಂತಿರುಗಿ ಮತ್ತು {paidLabel} ಟ್ಯಾಪ್ ಮಾಡಿ."
+      "step4": "4. ಇಲ್ಲಿಗೆ ಹಿಂತಿರುಗಿ ಮತ್ತು {paidLabel} ಟ್ಯಾಪ್ ಮಾಡಿ.",
+      "paidAmountLabel": "ನೀವು ಪಾವತಿಸಿದ ಮೊತ್ತ",
+      "txnLabel": "ವಹಿವಾಟು ID",
+      "receiptLabel": "ಪಾವತಿ ರಸೀದಿ",
+      "optional": "ಐಚ್ಛಿಕ",
+      "receiptTapToUpload": "ಸ್ಕ್ರೀನ್‌ಶಾಟ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ಟ್ಯಾಪ್ ಮಾಡಿ",
+      "receiptUploading": "ಅಪ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ…",
+      "receiptAttached": "ರಸೀದಿ ಲಗತ್ತಿಸಲಾಗಿದೆ",
+      "receiptRemove": "ತೆಗೆದುಹಾಕಿ",
+      "receiptUploadError": "ಅಪ್‌ಲೋಡ್ ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "amountRequired": "ನೀವು ಪಾವತಿಸಿದ ಮೊತ್ತವನ್ನು ನಮೂದಿಸಿ.",
+      "txnRequired": "UPI ವಹಿವಾಟು ID ಅನ್ನು ನಮೂದಿಸಿ."
     }
   },
   "farmerHistory": {

@@ -1287,7 +1287,7 @@
       "share": "Share",
       "iHavePaid": "I've paid",
       "notYet": "Not yet",
-      "txnPlaceholder": "Transaction ID (optional)",
+      "txnPlaceholder": "e.g. 401234567890",
       "marking": "…",
       "dueSuffix": "due",
       "toPayLabel": "To pay",
@@ -1297,7 +1297,18 @@
       "step1": "1. Tap {copyLabel}.",
       "step2": "2. Open your UPI app (PhonePe, GPay, Paytm, BHIM…) from your phone's home screen.",
       "step3": "3. In your UPI app, tap \"Send Money\", paste the UPI ID as recipient, enter ₹{amount}, and pay.",
-      "step4": "4. Come back here and tap {paidLabel}."
+      "step4": "4. Come back here and tap {paidLabel}.",
+      "paidAmountLabel": "Amount you paid",
+      "txnLabel": "Transaction ID",
+      "receiptLabel": "Payment receipt",
+      "optional": "optional",
+      "receiptTapToUpload": "Tap to upload a screenshot",
+      "receiptUploading": "Uploading…",
+      "receiptAttached": "Receipt attached",
+      "receiptRemove": "Remove",
+      "receiptUploadError": "Could not upload. Try again.",
+      "amountRequired": "Enter the amount you paid.",
+      "txnRequired": "Enter the UPI transaction ID."
     }
   },
   "farmerHistory": {

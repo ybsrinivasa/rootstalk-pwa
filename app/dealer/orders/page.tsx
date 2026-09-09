@@ -66,6 +66,8 @@ interface PackingBatch {
     amount: number
     status: 'PENDING' | 'FARMER_MARKED_PAID' | 'DEALER_CONFIRMED'
     txn_ref: string | null
+    paid_amount: number | null
+    screenshot_url: string | null
     farmer_marked_at: string | null
     dealer_confirmed_at: string | null
     dealer_upi_available: boolean
@@ -1740,32 +1742,56 @@ function PackingChunk({
             pickup lifecycle. FARMER_MARKED_PAID → dealer taps
             "Confirm payment" after verifying in their UPI app.
             DEALER_CONFIRMED is terminal for v1. */}
-        {batch.batch_payment?.status === 'FARMER_MARKED_PAID' && (
-          <div className="mt-2 flex items-center justify-between gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-            <div className="min-w-0">
-              <p className="text-xs text-blue-900 font-semibold">
-                Farmer marked ₹{batch.batch_payment.amount.toLocaleString(locale)} paid via UPI
-              </p>
-              {batch.batch_payment.txn_ref && (
-                <p className="text-[10px] text-blue-700 mt-0.5 truncate">
-                  Ref: {batch.batch_payment.txn_ref}
+        {batch.batch_payment?.status === 'FARMER_MARKED_PAID' && (() => {
+          const p = batch.batch_payment!
+          const shownAmt = p.paid_amount ?? p.amount
+          const mismatch = p.paid_amount !== null && Math.abs(p.paid_amount - p.amount) > 0.01
+          return (
+            <div className="mt-2 flex items-center justify-between gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-xs text-blue-900 font-semibold">
+                  Farmer marked ₹{shownAmt.toLocaleString(locale)} paid via UPI
                 </p>
+                {mismatch && (
+                  <p className="text-[10px] text-amber-700 mt-0.5">
+                    Quoted ₹{p.amount.toLocaleString(locale)}
+                  </p>
+                )}
+                {p.txn_ref && (
+                  <p className="text-[10px] text-blue-700 mt-0.5 truncate">Ref: {p.txn_ref}</p>
+                )}
+                {p.screenshot_url && (
+                  <a href={p.screenshot_url} target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] text-blue-700 underline mt-0.5 inline-block">
+                    View receipt
+                  </a>
+                )}
+              </div>
+              <button onClick={() => onConfirmPayment(order.id, batch.approval_round)}
+                disabled={busy}
+                className="shrink-0 bg-blue-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg disabled:opacity-50">
+                {busy ? '…' : 'Confirm receipt'}
+              </button>
+            </div>
+          )
+        })()}
+        {batch.batch_payment?.status === 'DEALER_CONFIRMED' && (() => {
+          const p = batch.batch_payment!
+          const shownAmt = p.paid_amount ?? p.amount
+          return (
+            <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
+              <p className="text-xs text-emerald-800 font-semibold">
+                ✓ Payment received · ₹{shownAmt.toLocaleString(locale)} via UPI
+              </p>
+              {p.screenshot_url && (
+                <a href={p.screenshot_url} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] text-emerald-700 underline mt-0.5 inline-block">
+                  View receipt
+                </a>
               )}
             </div>
-            <button onClick={() => onConfirmPayment(order.id, batch.approval_round)}
-              disabled={busy}
-              className="shrink-0 bg-blue-600 text-white text-[11px] font-semibold px-3 py-1.5 rounded-lg disabled:opacity-50">
-              {busy ? '…' : 'Confirm receipt'}
-            </button>
-          </div>
-        )}
-        {batch.batch_payment?.status === 'DEALER_CONFIRMED' && (
-          <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
-            <p className="text-xs text-emerald-800 font-semibold">
-              ✓ Payment received · ₹{batch.batch_payment.amount.toLocaleString(locale)} via UPI
-            </p>
-          </div>
-        )}
+          )
+        })()}
       </div>
       <div className="divide-y divide-purple-100">
         {batch.items.map(it => (

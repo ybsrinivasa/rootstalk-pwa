@@ -87,12 +87,15 @@ type SubOrder = {
     final_confirmed: number
     all_final_confirmed: boolean
     item_count: number
-    // 2026-08-21 — Payment UPI v1.
+    // 2026-08-21 — Payment UPI v1. 2026-09-09 — v1.1: paid_amount +
+    // screenshot_url captured when farmer marks paid at the Pickup pill.
     batch_payment?: {
       mode: 'UPI' | 'CASH' | 'CREDIT' | null
       amount: number
       status: 'PENDING' | 'FARMER_MARKED_PAID' | 'DEALER_CONFIRMED'
       txn_ref: string | null
+      paid_amount: number | null
+      screenshot_url: string | null
       farmer_marked_at: string | null
       dealer_confirmed_at: string | null
       dealer_upi_available: boolean
@@ -1277,7 +1280,10 @@ function FarmerPillChunk({
           <PickupChunk sub={sub} />
         )
       )}
-      {(pill === 'routed' || pill === 'approval' || pill === 'pickup') && (
+      {/* 2026-09-09 — v1.1 simplification per user: payment surface
+          restricted to the Pickup pill only. Advance / partial-paid /
+          credit-requested scenarios not supported in v1. */}
+      {pill === 'pickup' && (
         <PaymentChunk sub={sub} reload={reload} />
       )}
       {(pill === 'routed' || pill === 'approval') && (
@@ -1606,6 +1612,13 @@ function PaymentChunk({
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [txnRef, setTxnRef] = useState('')
+  // 2026-09-09 — v1.1: capture what the farmer actually paid (may
+  // differ from the quoted total) + optional screenshot for dispute
+  // evidence. Amount input pre-fills from intent when sheet opens.
+  const [paidAmount, setPaidAmount] = useState('')
+  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [marking, setMarking] = useState(false)
 
   // Only regular (non-seed) orders wired for UPI in v1.
@@ -1622,6 +1635,9 @@ function PaymentChunk({
     setOpenRound(round)
     setCopied(false)
     setTxnRef('')
+    setPaidAmount('')
+    setScreenshotUrl(null)
+    setUploadError(null)
     setIntentData(null)
     setLoading(true)
     try {
@@ -1632,11 +1648,31 @@ function PaymentChunk({
         reference: string
       }>(`/farmer/orders/${sub.id}/batches/${round}/payment-intent`)
       setIntentData(data)
+      // Prefill amount with the quoted batch total; farmer can
+      // edit if they paid a different sum (rounded, discount, etc.).
+      setPaidAmount(String(data.amount))
     } catch (err) {
       const e = err as { response?: { data?: { detail?: { message?: string } } } }
       alert(e?.response?.data?.detail?.message ?? 'Could not load payment details.')
       setOpenRound(null)
     } finally { setLoading(false) }
+  }
+
+  async function uploadScreenshot(file: File) {
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const { data } = await api.post<{ url: string }>(
+        '/media/upload?folder=payment-receipts', form,
+      )
+      setScreenshotUrl(data.url)
+    } catch {
+      setUploadError(t('receiptUploadError'))
+    } finally {
+      setUploading(false)
+    }
   }
 
   async function copyVpa(vpa: string) {
@@ -1676,14 +1712,29 @@ function PaymentChunk({
 
   async function submitMarkPaid() {
     if (openRound === null) return
+    const amt = parseFloat(paidAmount)
+    if (!(amt > 0)) {
+      alert(t('amountRequired'))
+      return
+    }
+    if (!txnRef.trim()) {
+      alert(t('txnRequired'))
+      return
+    }
     setMarking(true)
     try {
       await api.post(
         `/farmer/orders/${sub.id}/batches/${openRound}/mark-paid`,
-        { txn_ref: txnRef.trim() || null },
+        {
+          txn_ref: txnRef.trim(),
+          paid_amount: amt,
+          screenshot_url: screenshotUrl || null,
+        },
       )
       setOpenRound(null)
       setTxnRef('')
+      setPaidAmount('')
+      setScreenshotUrl(null)
       setIntentData(null)
       await reload()
     } catch (err) {
@@ -1711,10 +1762,11 @@ function PaymentChunk({
             )
           }
           if (p.status === 'FARMER_MARKED_PAID') {
+            const shownAmt = p.paid_amount ?? p.amount
             return (
               <div key={b.approval_round} className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
                 <p className="text-xs text-blue-800 font-semibold">
-                  {batchLabel}Marked paid ₹{p.amount.toLocaleString(locale)} · awaiting dealer confirmation
+                  {batchLabel}Marked paid ₹{shownAmt.toLocaleString(locale)} · awaiting dealer confirmation
                 </p>
               </div>
             )
@@ -1809,18 +1861,58 @@ function PaymentChunk({
                   <p>{t('step4', { paidLabel: t('iHavePaid') })}</p>
                 </div>
                 <div className="pt-2 border-t border-[#F0E5D0] space-y-2">
+                  <label className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
+                    {t('paidAmountLabel')} <span className="text-red-500">*</span>
+                  </label>
+                  <input value={paidAmount}
+                    onChange={e => setPaidAmount(e.target.value)}
+                    inputMode="decimal"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="₹"
+                    className="w-full text-sm border border-[#DDD0B8] rounded-lg px-3 py-2" />
+                  <label className="text-[11px] text-[#7A8C7E] uppercase tracking-wide">
+                    {t('txnLabel')} <span className="text-red-500">*</span>
+                  </label>
                   <input value={txnRef}
                     onChange={e => setTxnRef(e.target.value)}
                     placeholder={t('txnPlaceholder')}
                     className="w-full text-xs border border-[#DDD0B8] rounded-lg px-3 py-2" />
-                  <div className="flex gap-2">
+                  <label className="text-[11px] text-[#7A8C7E] uppercase tracking-wide block">
+                    {t('receiptLabel')} <span className="text-[#7A8C7E]/70 normal-case">({t('optional')})</span>
+                  </label>
+                  {screenshotUrl ? (
+                    <div className="flex items-center justify-between gap-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                      <span className="text-xs text-emerald-800">✓ {t('receiptAttached')}</span>
+                      <button onClick={() => setScreenshotUrl(null)}
+                        disabled={uploading}
+                        className="text-[10px] text-emerald-700 underline">
+                        {t('receiptRemove')}
+                      </button>
+                    </div>
+                  ) : (
+                    <label className={`block w-full text-center text-xs border border-dashed border-[#DDD0B8] rounded-lg px-3 py-3 cursor-pointer ${uploading ? 'opacity-50' : ''}`}>
+                      {uploading ? t('receiptUploading') : t('receiptTapToUpload')}
+                      <input type="file" accept="image/*" capture="environment"
+                        disabled={uploading}
+                        onChange={e => {
+                          const f = e.target.files?.[0]
+                          if (f) uploadScreenshot(f)
+                          if (e.target) e.target.value = ''
+                        }}
+                        className="hidden" />
+                    </label>
+                  )}
+                  {uploadError && <p className="text-[11px] text-red-600">{uploadError}</p>}
+                  <div className="flex gap-2 pt-1">
                     <button onClick={() => setOpenRound(null)}
                       disabled={marking}
                       className="flex-1 text-xs border border-[#DDD0B8] text-[#6B3F1F] font-medium py-2.5 rounded-xl">
                       {t('notYet')}
                     </button>
                     <button onClick={submitMarkPaid}
-                      disabled={marking}
+                      disabled={marking || uploading || !paidAmount || !txnRef.trim()}
                       className="flex-1 text-xs bg-[#3A7D44] text-white font-semibold py-2.5 rounded-xl disabled:opacity-50">
                       {marking ? t('marking') : t('iHavePaid')}
                     </button>
