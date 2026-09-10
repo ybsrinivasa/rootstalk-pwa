@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
@@ -29,12 +29,16 @@ type Subscription = {
   planting_year?: number | null
 }
 
-const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-function formatStartDate(iso: string | null | undefined): string | null {
+function formatStartDate(iso: string | null | undefined, locale: string): string | null {
   if (!iso) return null
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return null
-  return `${d.getDate()} ${MONTHS_SHORT[d.getMonth()]} ${d.getFullYear()}`
+  // Locale-aware month rendering — Aug ↔ ಆಗ ↔ अग ↔ ਅਗ etc. per farmer's language.
+  try {
+    return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return d.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })
+  }
 }
 
 type ClientInfo = {
@@ -91,6 +95,8 @@ export default function BrandedSpacePage() {
   const { clientId } = useParams<{ clientId: string }>()
   const router = useRouter()
   const tTrain = useTranslations('training')
+  const t = useTranslations('farmerClientHome')
+  const locale = useLocale()
   const [branding, setBranding] = useState<ClientInfo | null>(null)
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [attention, setAttention] = useState<Record<string, AttentionBucket>>({})
@@ -196,7 +202,7 @@ export default function BrandedSpacePage() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" strokeLinecap="round"/>
                 </svg>
-                Website
+                {t('websiteChip')}
               </a>
             )}
             {/* Social handles — same order the CA profile form uses, so
@@ -241,11 +247,11 @@ export default function BrandedSpacePage() {
         )}
 
         {/* Your Crops section */}
-        <p className="text-[#6B3F1F] font-semibold text-base px-4 pt-5 pb-3">Your Crops</p>
+        <p className="text-[#6B3F1F] font-semibold text-base px-4 pt-5 pb-3">{t('yourCrops')}</p>
 
         {subscriptions.length === 0 ? (
           <div className="mx-4 bg-white border border-[#DDD0B8] rounded-2xl px-4 py-6 text-center">
-            <p className="text-[#7A8C7E] text-sm">No crops found for this company.</p>
+            <p className="text-[#7A8C7E] text-sm">{t('noCropsForCompany')}</p>
           </div>
         ) : (
           // 2026-06-19 — Sort crops by descending attention count so
@@ -264,22 +270,25 @@ export default function BrandedSpacePage() {
             // Skipped silently when the underlying field is missing
             // so partly-filled subscriptions don't render orphans.
             const originLabel = sub.subscription_type === 'ASSIGNED'
-              ? 'Assigned by company'
+              ? t('originAssigned')
               : sub.subscription_type === 'SELF'
-                ? 'Self-subscribed'
+                ? t('originSelf')
                 : null
             const measure = sub.crop_measure ?? 'AREA_WISE'
             let sizeLabel: string | null = null
             if (measure === 'PLANT_WISE' && sub.number_of_plants != null) {
-              sizeLabel = `${sub.number_of_plants} plants`
+              sizeLabel = t('plantsCount', { count: sub.number_of_plants })
             } else if (measure !== 'PLANT_WISE' && sub.farm_area_acres != null) {
-              const unit = sub.area_unit || 'acres'
+              // 2026-09-10 — Only translate the unit when backend didn't
+              // supply one; passthrough existing area_unit strings as-is
+              // (backend owns their content).
+              const unit = sub.area_unit || t('acres')
               sizeLabel = `${sub.farm_area_acres} ${unit}`
             }
-            const startLabel = formatStartDate(sub.crop_start_date)
+            const startLabel = formatStartDate(sub.crop_start_date, locale)
             const timeLabel = measure === 'PLANT_WISE'
-              ? (sub.planting_year ? `Planted ${sub.planting_year}` : null)
-              : (startLabel ? `Started ${startLabel}` : null)
+              ? (sub.planting_year ? t('plantedYear', { year: sub.planting_year }) : null)
+              : (startLabel ? t('startedDate', { date: startLabel }) : null)
             const detailSegments = [originLabel, sizeLabel, timeLabel].filter(Boolean) as string[]
             return (
               <button key={sub.id}
@@ -317,7 +326,7 @@ export default function BrandedSpacePage() {
                     ? 'bg-green-50 text-green-700 border border-green-200'
                     : 'bg-amber-50 text-amber-700 border border-amber-200'
                 } ${attentionCount > 0 ? 'mt-4' : ''}`}>
-                  {hasStartDate ? 'Active' : 'Set start date'}
+                  {hasStartDate ? t('active') : t('setStartDate')}
                 </span>
               </button>
             )

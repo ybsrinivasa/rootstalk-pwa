@@ -1311,6 +1311,19 @@
       "txnRequired": "Enter the UPI transaction ID."
     }
   },
+  "farmerClientHome": {
+    "yourCrops": "Your Crops",
+    "noCropsForCompany": "No crops found for this company.",
+    "websiteChip": "Website",
+    "originAssigned": "Assigned by company",
+    "originSelf": "Self-subscribed",
+    "acres": "acres",
+    "plantsCount": "{count, plural, one {1 plant} other {# plants}}",
+    "plantedYear": "Planted {year}",
+    "startedDate": "Started {date}",
+    "active": "Active",
+    "setStartDate": "Set start date"
+  },
   "farmerHistory": {
     "headerTitle": "Crop History",
     "errorUnsubscribe": "Could not unsubscribe. Please try again.",

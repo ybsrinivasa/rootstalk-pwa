@@ -1300,6 +1300,19 @@
       "txnRequired": "UPI ವಹಿವಾಟು ID ಅನ್ನು ನಮೂದಿಸಿ."
     }
   },
+  "farmerClientHome": {
+    "yourCrops": "ನಿಮ್ಮ ಬೆಳೆಗಳು",
+    "noCropsForCompany": "ಈ ಕಂಪನಿಗೆ ಯಾವುದೇ ಬೆಳೆ ಇಲ್ಲ.",
+    "websiteChip": "ವೆಬ್‌ಸೈಟ್",
+    "originAssigned": "ಕಂಪನಿಯಿಂದ ನಿಯೋಜಿಸಲಾಗಿದೆ",
+    "originSelf": "ಸ್ವಂತವಾಗಿ ಚಂದಾ",
+    "acres": "ಎಕರೆ",
+    "plantsCount": "{count, plural, one {1 ಗಿಡ} other {# ಗಿಡಗಳು}}",
+    "plantedYear": "{year}ರಲ್ಲಿ ನೆಡಲಾಗಿದೆ",
+    "startedDate": "{date}ರಂದು ಪ್ರಾರಂಭ",
+    "active": "ಸಕ್ರಿಯ",
+    "setStartDate": "ಪ್ರಾರಂಭ ದಿನಾಂಕ ಹೊಂದಿಸಿ"
+  },
   "farmerHistory": {
     "headerTitle": "ಬೆಳೆಯ ಇತಿಹಾಸ",
     "errorUnsubscribe": "ಅನ್‌ಸಬ್‌ಸ್ಕ್ರೈಬ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
