@@ -1049,16 +1049,16 @@
         "emptyAwaiting": "ಯಾವುದೇ ಆದೇಶಗಳು ಈಗ ಕ್ರಮಕ್ಕಾಗಿ ಕಾಯುತ್ತಿಲ್ಲ.",
         "errorMarkReceivedSeed": "ತೆಗೆದುಕೊಳ್ಳಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
         "pill": {
-          "routed": "ರೂಟ್ ಮಾಡಲಾಗಿದೆ",
+          "routed": "ಕಳುಹಿಸಲಾಗಿದೆ",
           "approval": "ಅನುಮೋದನೆಗಾಗಿ",
           "returned": "ಹಿಂತಿರುಗಿಸಲಾಗಿದೆ",
-          "pickup": "ಪಿಕಪ್‌ಗೆ ಸಿದ್ಧವಾಗಿದೆ"
+          "pickup": "ಪಡೆಯಲು ಸಿದ್ಧ"
         },
         "historyChip": "📁 ಇತಿಹಾಸ",
         "approvalPeek": "ಅನುಮೋದನೆ",
         "approvalPeekProgress": "{total} ರಲ್ಲಿ 1",
         "approvalPeekHint": "ಇದರ ನಂತರ ಮುಂದಿನದು ಕಾಣಿಸಿಕೊಳ್ಳುತ್ತದೆ.",
-        "emptyPill": "{pillName} ಅಡಿಯಲ್ಲಿ ಏನೂ ಇಲ್ಲ",
+        "emptyPill": "{pillName} — ಯಾವುದೂ ಇಲ್ಲ",
         "cancelOrderBtn": "ಆರ್ಡರ್ ರದ್ದುಗೊಳಿಸಿ",
         "deleteDraftBtn": "ಡ್ರಾಫ್ಟ್ ಅಳಿಸಿ"
       },
