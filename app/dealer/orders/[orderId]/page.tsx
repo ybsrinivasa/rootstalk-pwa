@@ -2636,7 +2636,7 @@ export default function DealerOrderDetailPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-[#7A8C7E]">{t('status.orderStatusLabel')}</p>
-                <p className="font-semibold text-[#6B3F1F]">{order.status.replace(/_/g, ' ')}</p>
+                <p className="font-semibold text-[#6B3F1F]">{t('status.value', { v: order.status })}</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-[#7A8C7E]">{t('status.dateRangeLabel')}</p>

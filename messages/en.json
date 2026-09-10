@@ -1952,7 +1952,8 @@
       },
       "status": {
         "orderStatusLabel": "Order status",
-        "dateRangeLabel": "Date range"
+        "dateRangeLabel": "Date range",
+        "value": "{v, select, SENT {Sent} ACCEPTED {Accepted} PROCESSING {Processing} SENT_FOR_APPROVAL {Sent for approval} PARTIALLY_APPROVED {Partially approved} COMPLETED {Completed} CANCELLED {Cancelled} EXPIRED {Expired} REJECTED {Rejected} other {{v}}}"
       },
       "acceptDecline": {
         "title": "New order — your call",
