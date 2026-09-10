@@ -63,6 +63,7 @@ export default function OrderHistoryPage() {
   const router = useRouter()
   const locale = useLocale()
   const tQr = useTranslations('qrScan')
+  const t = useTranslations('farmerOrdersHistory')
   const [tab, setTab] = useState<'orders' | 'received'>('orders')
   const [orders, setOrders] = useState<Order[]>([])
   const [purchased, setPurchased] = useState<PurchasedItem[]>([])
@@ -100,14 +101,12 @@ export default function OrderHistoryPage() {
               className={`flex-1 py-3 text-sm font-medium transition-colors border-b-2 ${
                 tab === k ? 'border-[#3A7D44] text-[#3A7D44]' : 'border-transparent text-[#7A8C7E]'
               }`}>
-              {k === 'orders' ? 'Orders' : 'Received items'}
+              {k === 'orders' ? t('tabs.orders') : t('tabs.received')}
             </button>
           ))}
         </div>
         <p className="text-xs text-[#7A8C7E] mt-3 mb-3 leading-relaxed px-4">
-          {tab === 'orders'
-            ? "Every order you've placed across all your crops, newest first. Active orders live on each crop's Manage tab."
-            : "Every input you've confirmed receipt of, across all your crops. The per-crop Received tab shows the same items scoped to one crop."}
+          {tab === 'orders' ? t('ordersIntro') : t('receivedIntro')}
         </p>
 
         <div className="px-4">
@@ -185,15 +184,19 @@ export default function OrderHistoryPage() {
                   const today = new Date(); today.setHours(0, 0, 0, 0)
                   let badge: { label: string; cls: string } | null = null
                   if (dFrom && dTo) {
-                    if (dFrom > today) badge = { label: 'Apply later', cls: 'bg-amber-50 text-amber-700 border-amber-200' }
-                    else if (dTo < today) badge = { label: 'Window passed', cls: 'bg-stone-100 text-[#7A8C7E] border-[#DDD0B8]' }
-                    else badge = { label: 'Apply now', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+                    if (dFrom > today) badge = { label: t('applyLater'), cls: 'bg-amber-50 text-amber-700 border-amber-200' }
+                    else if (dTo < today) badge = { label: t('windowPassed'), cls: 'bg-stone-100 text-[#7A8C7E] border-[#DDD0B8]' }
+                    else badge = { label: t('applyNow'), cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
                   }
                   const fmt = (d: Date) => d.toLocaleDateString(locale, { day: '2-digit', month: 'short' })
                   const isPreSowing = item.timeline_from_type === 'DBS'
                   const applyText = (dFrom && dTo)
-                    ? `Apply: ${isPreSowing ? '(Pre-sowing) ' : ''}${fmt(dFrom)} – ${fmt(dTo)}`
-                    : 'Apply: Set crop start date to see'
+                    ? t('applyRangeLine', {
+                        prefix: isPreSowing ? `${t('preSowingLabel')} ` : '',
+                        from: fmt(dFrom),
+                        to: fmt(dTo),
+                      })
+                    : t('applyNeedStartDate')
                   return (
                     <div key={item.id} className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
                       <div className="flex items-start justify-between gap-2">
@@ -261,11 +264,12 @@ function RecipientLineFlat({
   phone?: string | null
   role?: 'DEALER' | 'FACILITATOR' | null
 }) {
+  const t = useTranslations('farmerOrdersHistory')
   if (!name && !shopName && !phone) return null
   const primary = role === 'DEALER' ? (shopName || name) : (name || shopName)
   const secondary = role === 'DEALER'
-    ? (name && shopName && name !== shopName ? `${name} (Dealer)` : 'Dealer')
-    : 'Facilitator'
+    ? (name && shopName && name !== shopName ? t('nameParenDealer', { name }) : t('dealerLabel'))
+    : t('facilitatorLabel')
   return (
     <div className="mt-2 pt-2 border-t border-[#F0E5D0] flex items-center justify-between gap-2">
       <div className="min-w-0">

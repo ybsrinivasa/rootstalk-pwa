@@ -1301,6 +1301,23 @@
       "txnRequired": "UPI ವಹಿವಾಟು ID ಅನ್ನು ನಮೂದಿಸಿ."
     }
   },
+  "farmerOrdersHistory": {
+    "tabs": {
+      "orders": "ಆದೇಶಗಳು",
+      "received": "ಸ್ವೀಕರಿಸಿದವು"
+    },
+    "ordersIntro": "ನೀವು ಎಲ್ಲಾ ಬೆಳೆಗಳಲ್ಲಿ ನೀಡಿದ ಪ್ರತಿ ಆದೇಶ, ಇತ್ತೀಚಿನದು ಮೊದಲು. ಸಕ್ರಿಯ ಆದೇಶಗಳು ಪ್ರತಿ ಬೆಳೆಯ 'ನಿರ್ವಹಿಸಿ' ಟ್ಯಾಬ್‌ನಲ್ಲಿ ಇರುತ್ತವೆ.",
+    "receivedIntro": "ನೀವು ಸ್ವೀಕರಿಸಿದ್ದೀರಿ ಎಂದು ದೃಢಪಡಿಸಿದ ಪ್ರತಿ ಪದಾರ್ಥ, ಎಲ್ಲಾ ಬೆಳೆಗಳಲ್ಲಿ. ಒಂದೇ ಬೆಳೆಗೆ ಸೀಮಿತವಾದ ಪಟ್ಟಿಗೆ ಆ ಬೆಳೆಯ 'ಸ್ವೀಕರಿಸಿದವು' ಟ್ಯಾಬ್ ನೋಡಿ.",
+    "applyLater": "ಆಮೇಲೆ ಬಳಸಿ",
+    "applyNow": "ಈಗ ಬಳಸಿ",
+    "windowPassed": "ಸಮಯ ಮುಗಿದಿದೆ",
+    "applyRangeLine": "ಬಳಸುವ ಅವಧಿ: {prefix}{from} – {to}",
+    "applyNeedStartDate": "ಬಳಸುವ ಅವಧಿ: ಬೆಳೆಯ ಪ್ರಾರಂಭ ದಿನಾಂಕ ಹೊಂದಿಸಿ",
+    "preSowingLabel": "(ಬಿತ್ತನೆಗೆ ಮೊದಲು)",
+    "dealerLabel": "ಡೀಲರ್",
+    "facilitatorLabel": "ಫೆಸಿಲಿಟೇಟರ್",
+    "nameParenDealer": "{name} (ಡೀಲರ್)"
+  },
   "farmerClientHome": {
     "yourCrops": "ನಿಮ್ಮ ಬೆಳೆಗಳು",
     "noCropsForCompany": "ಈ ಕಂಪನಿಗೆ ಯಾವುದೇ ಬೆಳೆ ಇಲ್ಲ.",

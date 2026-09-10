@@ -1312,6 +1312,23 @@
       "txnRequired": "Enter the UPI transaction ID."
     }
   },
+  "farmerOrdersHistory": {
+    "tabs": {
+      "orders": "Orders",
+      "received": "Received items"
+    },
+    "ordersIntro": "Every order you've placed across all your crops, newest first. Active orders live on each crop's Manage tab.",
+    "receivedIntro": "Every input you've confirmed receipt of, across all your crops. The per-crop Received tab shows the same items scoped to one crop.",
+    "applyLater": "Apply later",
+    "applyNow": "Apply now",
+    "windowPassed": "Window passed",
+    "applyRangeLine": "Apply: {prefix}{from} – {to}",
+    "applyNeedStartDate": "Apply: Set crop start date to see",
+    "preSowingLabel": "(Pre-sowing)",
+    "dealerLabel": "Dealer",
+    "facilitatorLabel": "Facilitator",
+    "nameParenDealer": "{name} (Dealer)"
+  },
   "farmerClientHome": {
     "yourCrops": "Your Crops",
     "noCropsForCompany": "No crops found for this company.",
