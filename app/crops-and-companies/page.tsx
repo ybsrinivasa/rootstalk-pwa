@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
@@ -37,6 +38,7 @@ interface DiscoverResponse {
 export default function CropsAndCompaniesPage() {
   const router = useRouter()
   const user = getUser()
+  const t = useTranslations('farmerCropsAndCompanies')
   const [data, setData] = useState<DiscoverResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedCropId, setSelectedCropId] = useState<string | null>(null)
@@ -110,10 +112,10 @@ export default function CropsAndCompaniesPage() {
         <div className="flex items-end justify-between gap-3 mb-1">
           <div>
             <h1 className="text-xl font-bold" style={{ color: C.textPrimary }}>
-              Crops & Companies
+              {t('pageTitle')}
             </h1>
             <p className="text-xs mt-0.5" style={{ color: C.textSecond }}>
-              Active advisories in {data?.district_name || 'your district'}
+              {t('activeInDistrict', { district: data?.district_name || t('yourDistrict') })}
             </p>
           </div>
           <button
@@ -121,7 +123,7 @@ export default function CropsAndCompaniesPage() {
             disabled={!selectedCropId && !selectedClientId}
             className="text-xs font-medium px-3 py-2 rounded-xl border disabled:opacity-30"
             style={{ borderColor: C.divider, color: C.textPrimary }}>
-            ↻ Reset
+            {t('resetBtn')}
           </button>
         </div>
 
@@ -132,23 +134,23 @@ export default function CropsAndCompaniesPage() {
           </div>
         ) : !user?.district_cosh_id ? (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mt-4">
-            <p className="font-semibold text-amber-800 text-sm">Your district isn&apos;t set</p>
+            <p className="font-semibold text-amber-800 text-sm">{t('noDistrictTitle')}</p>
             <p className="text-xs text-amber-700 mt-1">
-              Open Profile and set your district so we can show advisories near you.
+              {t('noDistrictBody')}
             </p>
             <button onClick={() => router.push('/profile')}
               className="mt-3 text-xs font-medium px-3 py-2 rounded-xl bg-amber-100 text-amber-800">
-              Go to Profile →
+              {t('goToProfile')}
             </button>
           </div>
         ) : data && data.crops.length === 0 ? (
           <div className="bg-white border rounded-2xl p-5 mt-4 text-center"
             style={{ borderColor: C.divider }}>
             <p className="font-semibold text-sm" style={{ color: C.textPrimary }}>
-              Nothing here yet
+              {t('emptyTitle')}
             </p>
             <p className="text-xs mt-1" style={{ color: C.textSecond }}>
-              No companies are currently advising in {data.district_name || 'your district'}.
+              {t('emptyBody', { district: data.district_name || t('yourDistrict') })}
             </p>
           </div>
         ) : data && (
@@ -157,7 +159,7 @@ export default function CropsAndCompaniesPage() {
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest mb-2 px-1"
                 style={{ color: C.textSecond }}>
-                Crops ({visibleCrops.length})
+                {t('cropsHeader', { count: visibleCrops.length })}
               </p>
               <div className="space-y-2">
                 {visibleCrops.map(crop => {
@@ -180,7 +182,7 @@ export default function CropsAndCompaniesPage() {
                         )}
                       </div>
                       <p className="text-[10px] mt-1" style={{ color: C.textSecond }}>
-                        {crop.client_ids.length} {crop.client_ids.length === 1 ? 'company' : 'companies'}
+                        {t('companyCount', { count: crop.client_ids.length })}
                       </p>
                     </button>
                   )
@@ -192,7 +194,7 @@ export default function CropsAndCompaniesPage() {
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-widest mb-2 px-1"
                 style={{ color: C.textSecond }}>
-                Companies ({visibleCompanies.length})
+                {t('companiesHeader', { count: visibleCompanies.length })}
               </p>
               <div className="space-y-2">
                 {visibleCompanies.map(company => {
@@ -206,8 +208,8 @@ export default function CropsAndCompaniesPage() {
                   // promoter); FARMER_PAYS clients are open to anyone
                   // in the district.
                   const subscribeHint = company.payment_model === 'COMPANY_PAYS'
-                    ? 'The company should assign advisories'
-                    : 'Farmers can subscribe to advisories'
+                    ? t('subscribeHint.companyPays')
+                    : t('subscribeHint.farmerPays')
                   // The card itself is one big tap target (toggles
                   // the cross-filter). Inline Call + Website icons
                   // need stopPropagation so the filter doesn't also
@@ -246,7 +248,7 @@ export default function CropsAndCompaniesPage() {
                             {company.display_name}
                           </p>
                           <p className="text-[10px] mt-0.5" style={{ color: C.textSecond }}>
-                            {company.crop_cosh_ids.length} {company.crop_cosh_ids.length === 1 ? 'crop' : 'crops'}
+                            {t('cropCount', { count: company.crop_cosh_ids.length })}
                           </p>
                         </div>
                         {isSelected && (
@@ -256,7 +258,7 @@ export default function CropsAndCompaniesPage() {
                       {(tel || site) && (
                         <div className="flex items-center gap-1.5 mt-2">
                           {tel && (
-                            <a href={`tel:${tel}`} onClick={stop} aria-label="Call"
+                            <a href={`tel:${tel}`} onClick={stop} aria-label={t('callAria')}
                               className="inline-flex items-center justify-center w-7 h-7 rounded-md border"
                               style={{ borderColor: C.divider, color: accent, background: 'white' }}>
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -266,7 +268,7 @@ export default function CropsAndCompaniesPage() {
                           )}
                           {site && (
                             <a href={site.startsWith('http') ? site : `https://${site}`}
-                              target="_blank" rel="noreferrer" onClick={stop} aria-label="Website"
+                              target="_blank" rel="noreferrer" onClick={stop} aria-label={t('websiteAria')}
                               className="inline-flex items-center justify-center w-7 h-7 rounded-md border"
                               style={{ borderColor: C.divider, color: accent, background: 'white' }}>
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

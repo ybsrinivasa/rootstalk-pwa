@@ -1339,6 +1339,27 @@
     "l1Type": "{v, select, PESTICIDE {Pesticide} FERTILIZER {Fertiliser} SPECIAL_INPUT {Special input} SEED {Seed} other {{v}}}",
     "l2Type": "{v, select, CHEMICAL_PESTICIDES {Chemical pesticides} MICROBIAL_PESTICIDES {Microbial pesticides} BOTANICAL_PESTICIDES {Botanical pesticides} INSECT_BIOCONTROL_AGENTS {Insect biocontrol agents} INSECT_TRAPS {Insect traps} CHEMICAL_HERBICIDES {Chemical herbicides} OTHER_PESTICIDES {Other pesticides} ADJUVANTS {Adjuvants} MANURES {Manures} CHEMICAL_FERTILIZER_PRODUCTS {Chemical fertilisers} CHEMICAL_FERTILIZER_FERTIGATION_PRODUCTS {Fertigation fertilisers} BIOFERTILIZERS {Biofertilisers} PGR_TONICS {PGR / Tonics} SOIL_AMENDMENTS {Soil amendments} CHEMICAL_FERTILIZERS_NPK_DOSAGES {NPK chemical dosages} FERTIGATION_NPK_DOSAGES {NPK fertigation dosages} other {{v}}}"
   },
+  "farmerCropsAndCompanies": {
+    "pageTitle": "Crops & Companies",
+    "activeInDistrict": "Active advisories in {district}",
+    "yourDistrict": "your district",
+    "resetBtn": "↻ Reset",
+    "noDistrictTitle": "Your district isn't set",
+    "noDistrictBody": "Open Profile and set your district so we can show advisories near you.",
+    "goToProfile": "Go to Profile →",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "No companies are currently advising in {district}.",
+    "cropsHeader": "Crops ({count})",
+    "companiesHeader": "Companies ({count})",
+    "companyCount": "{count, plural, one {1 company} other {# companies}}",
+    "cropCount": "{count, plural, one {1 crop} other {# crops}}",
+    "subscribeHint": {
+      "companyPays": "The company should assign advisories",
+      "farmerPays": "Farmers can subscribe to advisories"
+    },
+    "callAria": "Call",
+    "websiteAria": "Website"
+  },
   "farmerClientHome": {
     "yourCrops": "Your Crops",
     "noCropsForCompany": "No crops found for this company.",
