@@ -1843,40 +1843,40 @@ function PackingChunk({
               <div className="flex gap-2">
                 <button onClick={() => onSetFcPending(order.id, it.id, 'CONFIRM')} disabled={busy}
                   className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-[11px] font-semibold py-1.5 rounded-lg">
-                  Final Confirm
+                  {t('fcItem.confirmBtn')}
                 </button>
                 <button onClick={() => onSetFcPending(order.id, it.id, 'CANCEL')} disabled={busy}
                   className="flex-1 border border-red-200 text-[#D4682E] text-[11px] font-semibold py-1.5 rounded-lg">
-                  Cancel
+                  {t('fcItem.cancelBtn')}
                 </button>
               </div>
             )}
             {!it.final_confirmed_at && it.dealer_pending_final_confirmation === 'CONFIRM' && (
               <div className="flex items-center justify-between bg-purple-100 rounded-lg px-3 py-1.5">
-                <p className="text-[11px] text-purple-800 font-semibold">✓ Marked for Final Confirm</p>
+                <p className="text-[11px] text-purple-800 font-semibold">{t('fcItem.markedConfirm')}</p>
                 <button onClick={() => onSetFcPending(order.id, it.id, null)} disabled={busy}
                   className="text-[10px] text-purple-700 underline disabled:opacity-40">
-                  Undo
+                  {t('fcItem.undo')}
                 </button>
               </div>
             )}
             {!it.final_confirmed_at && it.dealer_pending_final_confirmation === 'CANCEL' && (
               <div className="flex items-center justify-between bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
-                <p className="text-[11px] text-[#D4682E] font-semibold">✗ Marked to Cancel</p>
+                <p className="text-[11px] text-[#D4682E] font-semibold">{t('fcItem.markedCancel')}</p>
                 <button onClick={() => onSetFcPending(order.id, it.id, null)} disabled={busy}
                   className="text-[10px] text-[#D4682E] underline disabled:opacity-40">
-                  Undo
+                  {t('fcItem.undo')}
                 </button>
               </div>
             )}
             {it.final_confirmed_at && (
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-purple-600 font-medium">✓ Final Confirmed</p>
+                <p className="text-[10px] text-purple-600 font-medium">{t('fcItem.finalConfirmed')}</p>
                 {!pickedUp && (
                   <button onClick={() => onUndoFinalConfirmItem(order.id, it.id)}
                     disabled={busy}
                     className="text-[10px] text-[#7A8C7E] underline disabled:opacity-40">
-                    Undo
+                    {t('fcItem.undo')}
                   </button>
                 )}
               </div>

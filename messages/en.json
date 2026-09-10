@@ -1705,6 +1705,14 @@
       },
       "historyChip": "📁 History",
       "emptyPill": "Nothing under {pillName}",
+      "fcItem": {
+        "confirmBtn": "Final Confirm",
+        "cancelBtn": "Cancel",
+        "markedConfirm": "✓ Marked for Final Confirm",
+        "markedCancel": "✗ Marked to Cancel",
+        "finalConfirmed": "✓ Final Confirmed",
+        "undo": "Undo"
+      },
       "shareTitle": "Packing list",
       "share": {
         "header": "*Packing List*",

@@ -1693,7 +1693,15 @@
         "confirm": "ಅಂತಿಮ ಖಚಿತಪಡಿಸುವಿಕೆ"
       },
       "historyChip": "📁 ಇತಿಹಾಸ",
-      "emptyPill": "{pillName} ಅಡಿಯಲ್ಲಿ ಏನೂ ಇಲ್ಲ",
+      "emptyPill": "{pillName} — ಯಾವುದೂ ಇಲ್ಲ",
+      "fcItem": {
+        "confirmBtn": "ಅಂತಿಮ ಖಚಿತಪಡಿಸಿ",
+        "cancelBtn": "ರದ್ದುಮಾಡಿ",
+        "markedConfirm": "✓ ಅಂತಿಮ ಖಚಿತಪಡಿಸಲು ಗುರುತಿಸಲಾಗಿದೆ",
+        "markedCancel": "✗ ರದ್ದುಗೊಳಿಸಲು ಗುರುತಿಸಲಾಗಿದೆ",
+        "finalConfirmed": "✓ ಅಂತಿಮಗೊಳಿಸಲಾಗಿದೆ",
+        "undo": "ಹಿಂತಿರುಗಿಸಿ"
+      },
       "shareTitle": "ಪ್ಯಾಕಿಂಗ್ ಪಟ್ಟಿ",
       "share": {
         "header": "*ಪ್ಯಾಕಿಂಗ್ ಪಟ್ಟಿ*",
