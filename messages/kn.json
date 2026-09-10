@@ -1328,6 +1328,22 @@
     "l1Type": "{v, select, PESTICIDE {ಕೀಟನಾಶಕ} FERTILIZER {ರಸಗೊಬ್ಬರ} SPECIAL_INPUT {ವಿಶೇಷ ಒಳಹರಿವು} SEED {ಬೀಜ} other {{v}}}",
     "l2Type": "{v, select, CHEMICAL_PESTICIDES {ರಾಸಾಯನಿಕ ಕೀಟನಾಶಕಗಳು} MICROBIAL_PESTICIDES {ಸೂಕ್ಷ್ಮಜೀವಿ ಕೀಟನಾಶಕಗಳು} BOTANICAL_PESTICIDES {ಸಸ್ಯಜನ್ಯ ಕೀಟನಾಶಕಗಳು} INSECT_BIOCONTROL_AGENTS {ಕೀಟ ಜೈವಿಕ-ನಿಯಂತ್ರಣ ಸಾಧನಗಳು} INSECT_TRAPS {ಕೀಟ ಬಲೆಗಳು} CHEMICAL_HERBICIDES {ರಾಸಾಯನಿಕ ಕಳೆನಾಶಕಗಳು} OTHER_PESTICIDES {ಇತರ ಕೀಟನಾಶಕಗಳು} ADJUVANTS {ಸಹಾಯಕ ದ್ರಾವಣಗಳು} MANURES {ಗೊಬ್ಬರಗಳು} CHEMICAL_FERTILIZER_PRODUCTS {ರಾಸಾಯನಿಕ ರಸಗೊಬ್ಬರಗಳು} CHEMICAL_FERTILIZER_FERTIGATION_PRODUCTS {ಫರ್ಟಿಗೇಷನ್ ರಸಗೊಬ್ಬರಗಳು} BIOFERTILIZERS {ಜೈವಿಕ ರಸಗೊಬ್ಬರಗಳು} PGR_TONICS {ಬೆಳವಣಿಗೆ ವರ್ಧಕಗಳು / ಟಾನಿಕ್‌ಗಳು} SOIL_AMENDMENTS {ಮಣ್ಣಿನ ಸುಧಾರಕಗಳು} CHEMICAL_FERTILIZERS_NPK_DOSAGES {NPK ರಾಸಾಯನಿಕ ಪ್ರಮಾಣಗಳು} FERTIGATION_NPK_DOSAGES {NPK ಫರ್ಟಿಗೇಷನ್ ಪ್ರಮಾಣಗಳು} other {{v}}}"
   },
+  "farmerAssignment": {
+    "fromYour": "{role, select, FACILITATOR {ನಿಮ್ಮ ಫೆಸಿಲಿಟೇಟರ್‌ನಿಂದ} DEALER {ನಿಮ್ಮ ಡೀಲರ್‌ನಿಂದ} PROMOTER {ನಿಮ್ಮ ಪ್ರವರ್ತಕರಿಂದ} other {ನಿಮ್ಮ {role}ನಿಂದ}}",
+    "promoterFallback": "ಪ್ರವರ್ತಕ",
+    "cropHeader": "ಬೆಳೆ",
+    "durationDays": "{count, plural, one {1 ದಿನ} other {# ದಿನಗಳು}}",
+    "forYourSituation": "ನಿಮ್ಮ ಪರಿಸ್ಥಿತಿಗೆ",
+    "aboutAdvisory": "ಈ ಸಲಹೆಯ ಬಗ್ಗೆ",
+    "paidBy": "{company} ಪಾವತಿಸಿದೆ",
+    "paidByBody": "ನಿಮ್ಮಿಂದ ಯಾವುದೇ ಪಾವತಿ ಅಗತ್ಯವಿಲ್ಲ. ನಂತರ ಚಂದಾ ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗುವುದಿಲ್ಲ — ನಿಮ್ಮ ಕಂಪನಿ ಈ ಸಲಹೆಯನ್ನು ಒದಗಿಸಿದೆ.",
+    "decline": "ನಿರಾಕರಿಸಿ",
+    "accept": "ಸ್ವೀಕರಿಸಿ",
+    "saving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ…",
+    "confirmAccept": "{company}ಯ {crop} ಸಲಹೆಗೆ ಚಂದಾದಾರರಾಗಬೇಕೆ? ಚಂದಾ ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಾಗುವುದಿಲ್ಲ — ನಿಮ್ಮ ಕಂಪನಿ ಇದನ್ನು ಪಾವತಿಸಿದೆ.",
+    "confirmDecline": "{name}ರಿಂದ ಬಂದ ಈ ಸಲಹಾ ವಿನಂತಿಯನ್ನು ನಿರಾಕರಿಸಬೇಕೆ?",
+    "respondFailed": "ಪ್ರತಿಕ್ರಿಯೆ ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+  },
   "farmerCropsAndCompanies": {
     "pageTitle": "ಬೆಳೆಗಳು ಮತ್ತು ಕಂಪನಿಗಳು",
     "activeInDistrict": "{district}ನಲ್ಲಿ ಸಕ್ರಿಯ ಸಲಹೆಗಳು",

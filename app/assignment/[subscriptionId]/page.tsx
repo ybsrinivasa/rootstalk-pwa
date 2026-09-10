@@ -45,6 +45,7 @@ function formatCropName(detail: AssignmentDetail | null): string {
 export default function AssignmentReviewPage() {
   const router = useRouter()
   const tTrain = useTranslations('training')
+  const t = useTranslations('farmerAssignment')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [detail, setDetail] = useState<AssignmentDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -67,8 +68,11 @@ export default function AssignmentReviewPage() {
               company: detail?.company?.name || '',
               crop: formatCropName(detail),
             })
-          : `Subscribe to ${detail?.company?.name}'s ${formatCropName(detail)} advisory? You won't be able to unsubscribe — your company has paid for this.`)
-      : `Decline this advisory request from ${detail?.promoter?.name}?`
+          : t('confirmAccept', {
+              company: detail?.company?.name || '',
+              crop: formatCropName(detail),
+            }))
+      : t('confirmDecline', { name: detail?.promoter?.name || '' })
     if (!confirm(message)) return
     setBusy(true); setError('')
     try {
@@ -76,7 +80,7 @@ export default function AssignmentReviewPage() {
       router.replace('/home')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      setError(msg || 'Could not respond. Please try again.')
+      setError(msg || t('respondFailed'))
     } finally { setBusy(false) }
   }
 
@@ -129,22 +133,22 @@ export default function AssignmentReviewPage() {
         )}
         {/* Promoter card */}
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
-          <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-1">From your {detail.promoter_type.toLowerCase()}</p>
-          <p className="font-semibold text-[#6B3F1F]">{detail.promoter?.name || 'Promoter'}</p>
+          <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-1">{t('fromYour', { role: detail.promoter_type })}</p>
+          <p className="font-semibold text-[#6B3F1F]">{detail.promoter?.name || t('promoterFallback')}</p>
           {detail.promoter?.phone && <p className="text-[#7A8C7E] text-sm font-mono">{detail.promoter.phone}</p>}
         </div>
 
         {/* Crop */}
         <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
-          <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-1">Crop</p>
+          <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-1">{t('cropHeader')}</p>
           <p className="font-semibold text-[#6B3F1F] text-lg">{cropName}</p>
-          {detail.duration_days && <p className="text-[#7A8C7E] text-sm mt-1">{detail.duration_days} days</p>}
+          {detail.duration_days && <p className="text-[#7A8C7E] text-sm mt-1">{t('durationDays', { count: detail.duration_days })}</p>}
         </div>
 
         {/* Plain-language summary */}
         {detail.parameter_variables.length > 0 && (
           <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
-            <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-3">For your situation</p>
+            <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-3">{t('forYourSituation')}</p>
             <div className="space-y-2">
               {detail.parameter_variables.map((pv, i) => (
                 <div key={i} className="flex items-baseline gap-2">
@@ -162,7 +166,7 @@ export default function AssignmentReviewPage() {
         {/* Description */}
         {detail.package_description && (
           <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 mb-4">
-            <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-2">About this advisory</p>
+            <p className="text-[#7A8C7E] text-xs uppercase tracking-widest mb-2">{t('aboutAdvisory')}</p>
             <p className="text-[#6B3F1F] text-sm leading-relaxed">{detail.package_description}</p>
           </div>
         )}
@@ -178,8 +182,8 @@ export default function AssignmentReviewPage() {
           </div>
         ) : (
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-            <p className="text-emerald-800 text-sm font-medium">Paid by {detail.company?.name}</p>
-            <p className="text-emerald-700 text-xs mt-1">No payment needed from you. You won&apos;t be able to unsubscribe later — your company has covered this advisory.</p>
+            <p className="text-emerald-800 text-sm font-medium">{t('paidBy', { company: detail.company?.name || '' })}</p>
+            <p className="text-emerald-700 text-xs mt-1">{t('paidByBody')}</p>
           </div>
         )}
 
@@ -193,12 +197,12 @@ export default function AssignmentReviewPage() {
         <div className="max-w-lg mx-auto flex gap-3">
           <button onClick={() => respond(false)} disabled={busy}
             className="flex-1 py-3.5 rounded-xl font-medium text-[#6B3F1F] border border-[#DDD0B8] disabled:opacity-50">
-            Decline
+            {t('decline')}
           </button>
           <button onClick={() => respond(true)} disabled={busy}
             className="flex-1 py-3.5 rounded-xl font-semibold text-white disabled:opacity-50"
             style={{ background: colour }}>
-            {busy ? 'Saving…' : 'Accept'}
+            {busy ? t('saving') : t('accept')}
           </button>
         </div>
       </div>
