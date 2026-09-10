@@ -33,12 +33,18 @@ function formatStartDate(iso: string | null | undefined, locale: string): string
   if (!iso) return null
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return null
-  // Locale-aware month rendering — Aug ↔ ಆಗ ↔ अग ↔ ਅਗ etc. per farmer's language.
+  // Locale-aware month name only — Aug ↔ ಆಗ ↔ अग per farmer's language.
+  // We assemble day + month + year ourselves so spacing is uniform
+  // ("11 ಆಗ 2026") regardless of the browser's per-locale
+  // toLocaleDateString quirks (kn returns "ಆಗ 11,2026" — month-first,
+  // no space after comma).
+  let monthShort: string
   try {
-    return d.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
+    monthShort = d.toLocaleDateString(locale, { month: 'short' })
   } catch {
-    return d.toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })
+    monthShort = d.toLocaleDateString('en', { month: 'short' })
   }
+  return `${d.getDate()} ${monthShort} ${d.getFullYear()}`
 }
 
 type ClientInfo = {
@@ -279,10 +285,14 @@ export default function BrandedSpacePage() {
             if (measure === 'PLANT_WISE' && sub.number_of_plants != null) {
               sizeLabel = t('plantsCount', { count: sub.number_of_plants })
             } else if (measure !== 'PLANT_WISE' && sub.farm_area_acres != null) {
-              // 2026-09-10 — Only translate the unit when backend didn't
-              // supply one; passthrough existing area_unit strings as-is
-              // (backend owns their content).
-              const unit = sub.area_unit || t('acres')
+              // 2026-09-10 — Backend sends `area_unit: "acres"` as an
+              // English string. Translate the well-known values;
+              // passthrough anything unfamiliar so we don't hide new
+              // units the backend adds later.
+              const rawUnit = (sub.area_unit || 'acres').toLowerCase().trim()
+              const unit = (rawUnit === 'acres' || rawUnit === 'acre')
+                ? t('acres')
+                : rawUnit
               sizeLabel = `${sub.farm_area_acres} ${unit}`
             }
             const startLabel = formatStartDate(sub.crop_start_date, locale)
