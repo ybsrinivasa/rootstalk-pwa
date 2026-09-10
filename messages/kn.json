@@ -798,6 +798,7 @@
       "subtitleAnswers": "ನಿಮ್ಮ ಉತ್ತರಗಳನ್ನು ಆಧರಿಸಿ",
       "subtitleOnly": "ನಿಮ್ಮ ಪ್ರದೇಶಕ್ಕೆ ಹೊಂದಿಕೆಯಾಗುವ ಏಕೈಕ ಸಲಹೆ",
       "fallbackPackageName": "{crop} ಸಲಹಾ",
+      "aboutAdvisoryLabel": "ಈ ಸಲಹೆಯ ಬಗ್ಗೆ",
       "selectionsLabel": "ನಿಮ್ಮ ಆಯ್ಕೆಗಳು",
       "priceLabel": "ಚಂದಾದಾರಿಕೆ ಬೆಲೆ",
       "priceAmount": "₹ {price}",

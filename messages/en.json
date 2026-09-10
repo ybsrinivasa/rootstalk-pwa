@@ -809,6 +809,7 @@
       "subtitleAnswers": "Based on your answers",
       "subtitleOnly": "The only advisory matching your area",
       "fallbackPackageName": "{crop} advisory",
+      "aboutAdvisoryLabel": "About this advisory",
       "selectionsLabel": "Your selections",
       "priceLabel": "Subscription price",
       "priceAmount": "₹{price}",

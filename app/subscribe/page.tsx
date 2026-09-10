@@ -939,10 +939,15 @@ function SubscribeFlow() {
                           {cropDisplay}
                         </p>
                         {packageDescription && (
-                          <p className="text-sm text-[#6B3F1F] mt-2 mb-3 leading-relaxed"
-                            style={{ whiteSpace: 'pre-wrap' }}>
-                            {packageDescription}
-                          </p>
+                          <div className="mt-3">
+                            <p className="text-[11px] uppercase tracking-wide text-[#7A8C7E] font-semibold">
+                              {t('confirm.aboutAdvisoryLabel')}
+                            </p>
+                            <p className="text-sm text-[#6B3F1F] mt-1 mb-3 leading-relaxed"
+                              style={{ whiteSpace: 'pre-wrap' }}>
+                              {packageDescription}
+                            </p>
+                          </div>
                         )}
                         {selectedVars.length > 0 && (
                           <div className="mt-3 pt-3 border-t border-[#DDD0B8] space-y-1">
