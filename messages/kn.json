@@ -1942,7 +1942,7 @@
       "status": {
         "orderStatusLabel": "ಆದೇಶ ಸ್ಥಿತಿ",
         "dateRangeLabel": "ದಿನಾಂಕ ಶ್ರೇಣಿ",
-        "value": "{v, select, SENT {ಕಳುಹಿಸಲಾಗಿದೆ} ACCEPTED {ಸ್ವೀಕರಿಸಲಾಗಿದೆ} PROCESSING {ಸಂಸ್ಕರಣೆಯಲ್ಲಿದೆ} SENT_FOR_APPROVAL {ಅನುಮೋದನೆಗಾಗಿ ಕಳುಹಿಸಲಾಗಿದೆ} PARTIALLY_APPROVED {ಭಾಗಶಃ ಅನುಮೋದಿತ} COMPLETED {ಪೂರ್ಣಗೊಂಡಿದೆ} CANCELLED {ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ} EXPIRED {ಅವಧಿ ಮುಗಿದಿದೆ} REJECTED {ನಿರಾಕರಿಸಲಾಗಿದೆ} other {{v}}}"
+        "value": "{v, select, SENT {ಕಳುಹಿಸಲಾಗಿದೆ} ACCEPTED {ಸ್ವೀಕರಿಸಲಾಗಿದೆ} PROCESSING {ಪ್ರಗತಿಯಲ್ಲಿದೆ} SENT_FOR_APPROVAL {ಅನುಮೋದನೆಗಾಗಿ ಕಳುಹಿಸಲಾಗಿದೆ} PARTIALLY_APPROVED {ಭಾಗಶಃ ಅನುಮೋದಿತ} COMPLETED {ಪೂರ್ಣಗೊಂಡಿದೆ} CANCELLED {ರದ್ದುಗೊಳಿಸಲಾಗಿದೆ} EXPIRED {ಅವಧಿ ಮುಗಿದಿದೆ} REJECTED {ನಿರಾಕರಿಸಲಾಗಿದೆ} other {{v}}}"
       },
       "itemStatus": {
         "value": "{v, select, PENDING {ಬಾಕಿ} AVAILABLE {ಲಭ್ಯ} POSTPONED {ನಂತರ} NOT_AVAILABLE {ಲಭ್ಯವಿಲ್ಲ} NOT_NEEDED {ಅಗತ್ಯವಿಲ್ಲ} SENT_FOR_APPROVAL {ಅನುಮೋದನೆಗಾಗಿ} APPROVED {ಅನುಮೋದಿಸಲಾಗಿದೆ} REJECTED {ನಿರಾಕರಿಸಲಾಗಿದೆ} other {{v}}}"
