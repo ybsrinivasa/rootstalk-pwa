@@ -1955,6 +1955,9 @@
         "dateRangeLabel": "Date range",
         "value": "{v, select, SENT {Sent} ACCEPTED {Accepted} PROCESSING {Processing} SENT_FOR_APPROVAL {Sent for approval} PARTIALLY_APPROVED {Partially approved} COMPLETED {Completed} CANCELLED {Cancelled} EXPIRED {Expired} REJECTED {Rejected} other {{v}}}"
       },
+      "itemStatus": {
+        "value": "{v, select, PENDING {Pending} AVAILABLE {Available} POSTPONED {Later} NOT_AVAILABLE {Not available} NOT_NEEDED {Not needed} SENT_FOR_APPROVAL {Sent for approval} APPROVED {Approved} REJECTED {Rejected} other {{v}}}"
+      },
       "acceptDecline": {
         "title": "New order — your call",
         "body": "Accept this order to see the items and start processing. Decline to send it back to the farmer so they can pick another dealer or facilitator.",

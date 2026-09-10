@@ -1300,7 +1300,7 @@ export default function DealerOrderDetailPage() {
           <div className="flex-1 min-w-0">
             <div className="flex gap-1.5 flex-wrap">
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-[#6B3F1F]'}`}>
-                {item.status.replace(/_/g, ' ')}
+                {t('itemStatus.value', { v: item.status })}
               </span>
               {item.is_brand_locked && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-50 text-blue-700 border border-blue-100">
