@@ -630,6 +630,13 @@ function SubscribeFlow() {
               )}
 
               <div className="bg-white rounded-2xl shadow-sm border border-[#DDD0B8] mt-2 p-5">
+                {/* 2026-09-10 — Persistent wizard-context breadcrumb.
+                    Without it, farmers who land on a mid-wizard step
+                    (esp. Step 1: Location, before a crop is chosen)
+                    can't tell what the multi-step process is for. */}
+                <p className="text-[11px] uppercase tracking-wider text-[#3A7D44] font-semibold mb-2">
+                  {t('wizardContext')}
+                </p>
                 <ProgressBar stage={stage} />
 
                 {/* ── STAGE 1: Location ── */}

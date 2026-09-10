@@ -751,6 +751,7 @@
     },
     "backShort": "← Back",
     "backToHome": "← Back to home",
+    "wizardContext": "New crop advisory",
     "done": {
       "heading": "You're subscribed!",
       "body": "Your {crop} advisory from {company} is now active.",
