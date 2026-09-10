@@ -202,7 +202,12 @@ export default function OrderHistoryPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-[#6B3F1F] text-sm">{item.brand_name || item.l2_type || item.l1_type || 'Item'}</p>
-                          {item.l1_type && <p className="text-xs text-[#7A8C7E] mt-0.5">{item.l1_type}{item.l2_type ? ` · ${item.l2_type}` : ''}</p>}
+                          {item.l1_type && (
+                            <p className="text-xs text-[#7A8C7E] mt-0.5">
+                              {t('l1Type', { v: item.l1_type })}
+                              {item.l2_type ? ` · ${t('l2Type', { v: item.l2_type })}` : ''}
+                            </p>
+                          )}
                           {item.given_volume && (
                             <p className="text-xs text-[#7A8C7E] mt-1">
                               {item.given_volume} {item.volume_unit}

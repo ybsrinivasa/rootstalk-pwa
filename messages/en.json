@@ -1328,7 +1328,9 @@
     "preSowingLabel": "(Pre-sowing)",
     "dealerLabel": "Dealer",
     "facilitatorLabel": "Facilitator",
-    "nameParenDealer": "{name} (Dealer)"
+    "nameParenDealer": "{name} (Dealer)",
+    "l1Type": "{v, select, PESTICIDE {Pesticide} FERTILIZER {Fertiliser} SPECIAL_INPUT {Special input} SEED {Seed} other {{v}}}",
+    "l2Type": "{v, select, CHEMICAL_PESTICIDES {Chemical pesticides} MICROBIAL_PESTICIDES {Microbial pesticides} BOTANICAL_PESTICIDES {Botanical pesticides} INSECT_BIOCONTROL_AGENTS {Insect biocontrol agents} INSECT_TRAPS {Insect traps} CHEMICAL_HERBICIDES {Chemical herbicides} OTHER_PESTICIDES {Other pesticides} ADJUVANTS {Adjuvants} MANURES {Manures} CHEMICAL_FERTILIZER_PRODUCTS {Chemical fertilisers} CHEMICAL_FERTILIZER_FERTIGATION_PRODUCTS {Fertigation fertilisers} BIOFERTILIZERS {Biofertilisers} PGR_TONICS {PGR / Tonics} SOIL_AMENDMENTS {Soil amendments} CHEMICAL_FERTILIZERS_NPK_DOSAGES {NPK chemical dosages} FERTIGATION_NPK_DOSAGES {NPK fertigation dosages} other {{v}}}"
   },
   "farmerClientHome": {
     "yourCrops": "Your Crops",
