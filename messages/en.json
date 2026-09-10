@@ -253,6 +253,9 @@
       "min": "Enter at least 1."
     }
   },
+  "advisory": {
+    "disclaimerFooter": "Advisories are suggestions only. Local factors influence crop growth and yield too."
+  },
   "practice": {
     "label": {
       "today": "Today",

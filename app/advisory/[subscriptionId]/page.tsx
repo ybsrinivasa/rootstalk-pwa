@@ -452,6 +452,7 @@ export default function AdvisoryPage() {
   const router = useRouter()
   const tLabel = useTranslations('practice.label')
   const tEmpty = useTranslations('practice.empty')
+  const tPage = useTranslations('advisory')
   const locale = useLocale()
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
@@ -830,7 +831,7 @@ export default function AdvisoryPage() {
         className="fixed left-0 right-0 z-40 bg-[#F5F0E8]/95 backdrop-blur-sm border-t border-[#DDD0B8] px-4 py-1.5 text-[10px] text-[#7A8C7E] text-center leading-tight"
         style={{ bottom: 'calc(56px + env(safe-area-inset-bottom))' }}
       >
-        Advisories are suggestions only. Local factors influence crop growth and yield too.
+        {tPage('disclaimerFooter')}
       </div>
       <BottomNav color="#3A7D44" />
 
