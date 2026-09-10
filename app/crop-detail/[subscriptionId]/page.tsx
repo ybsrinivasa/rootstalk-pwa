@@ -18,6 +18,20 @@ interface CropAge {
 }
 
 const PLANTING_YEAR_FLOOR = 1970
+
+// 2026-09-10 — Uniform day + short-month + year formatter. Same
+// posture as /home/[clientId]: toLocaleDateString('kn', {short}) on
+// its own produces "ಆಗ 28,2026" (month-first, comma stuck to year);
+// we assemble the parts ourselves for consistent spacing.
+function fmtDayMonYear(iso: string | Date | null | undefined, locale: string): string {
+  if (!iso) return ''
+  const d = iso instanceof Date ? iso : new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  let monthShort: string
+  try { monthShort = d.toLocaleDateString(locale, { month: 'short' }) }
+  catch { monthShort = d.toLocaleDateString('en', { month: 'short' }) }
+  return `${d.getDate()} ${monthShort} ${d.getFullYear()}`
+}
 const PLANTING_YEAR_BEYOND_SENTINEL = 1969   // matches backend's PLANTING_YEAR_FLOOR - 1
 
 interface SubscriptionDetail {
@@ -637,7 +651,7 @@ export default function CropDetailPage() {
                   {sub.farm_area_acres ?? '—'} {t('area.unitAcres')}
                 </p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  {t('area.lockedNote', { date: new Date(sub.farm_area_confirmed_at!).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
+                  {t('area.lockedNote', { date: fmtDayMonYear(sub.farm_area_confirmed_at, locale) })}
                 </p>
               </div>
             )}
@@ -657,7 +671,7 @@ export default function CropDetailPage() {
                       : sub.planting_year}
                 </p>
                 <p className="text-[#7A8C7E] text-xs mt-1">
-                  {t('plants.lockedNote', { date: new Date(sub.plant_count_confirmed_at!).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
+                  {t('plants.lockedNote', { date: fmtDayMonYear(sub.plant_count_confirmed_at, locale) })}
                 </p>
               </div>
             ) : (
@@ -753,15 +767,15 @@ export default function CropDetailPage() {
               <div className="bg-white rounded-2xl border border-[#DDD0B8] px-4 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-[#7A8C7E]">{t('startDate.label')}</p>
-                  <p className="font-semibold text-[#6B3F1F]">{new Date(sub.crop_start_date!).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{fmtDayMonYear(sub.crop_start_date, locale)}</p>
                   {editable && editableUntil && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
-                      {t('startDate.editWindowUntil', { date: editableUntil.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
+                      {t('startDate.editWindowUntil', { date: fmtDayMonYear(editableUntil, locale) })}
                     </p>
                   )}
                   {!editable && lockedAt && (
                     <p className="text-[#7A8C7E] text-xs mt-1">
-                      {t('startDate.lockedNote', { date: lockedAt.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' }) })}
+                      {t('startDate.lockedNote', { date: fmtDayMonYear(lockedAt, locale) })}
                     </p>
                   )}
                 </div>
