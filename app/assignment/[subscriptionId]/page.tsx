@@ -111,7 +111,7 @@ export default function AssignmentReviewPage() {
           ‹
         </button>
         <p className="text-white/70 text-xs uppercase tracking-widest">
-          {detail.company?.is_training ? tTrain('farmerAssignment.headerLabel') : 'Advisory Request'}
+          {detail.company?.is_training ? tTrain('farmerAssignment.headerLabel') : t('headerLabel')}
         </p>
         <h1 className="text-white text-2xl font-bold mt-1">{detail.company?.name}</h1>
         {detail.company?.tagline && <p className="text-white/60 text-sm mt-1">{detail.company.tagline}</p>}
