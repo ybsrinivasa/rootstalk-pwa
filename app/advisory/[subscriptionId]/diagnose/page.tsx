@@ -1118,7 +1118,6 @@ export default function DiagnosisPage() {
                     <button onClick={() => selectKnownProblem(p.cosh_id)}
                       className="w-full p-4 text-left active:scale-98 transition-transform">
                       <p className="font-medium text-[#6B3F1F]">{p.name}</p>
-                      <p className="text-xs text-[#7A8C7E] font-mono mt-0.5">{p.cosh_id}</p>
                     </button>
                     <a
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
@@ -1246,7 +1245,6 @@ export default function DiagnosisPage() {
                     <p className="text-2xl font-bold mt-3" style={{ color: COLOUR }}>
                       {diagnosis.name}
                     </p>
-                    <p className="text-[#7A8C7E] text-xs mt-1 font-mono">{diagnosis.cosh_id}</p>
                     {/* Google Images link — pre-formed search [Crop] [Problem name] */}
                     <a
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
