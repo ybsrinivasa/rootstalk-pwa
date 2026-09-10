@@ -15,6 +15,7 @@ const COLOUR = '#7D4196'
 export default function DealerBrandFormNewPage() {
   const router = useRouter()
   const t = useTranslations('dealer.brandForms.new')
+  const tTax = useTranslations('taxonomy')
   const [taxonomy, setTaxonomy] = useState<L0[] | null>(null)
   const [l1Type, setL1Type] = useState('')
   const [l2Type, setL2Type] = useState('')
@@ -108,7 +109,7 @@ export default function DealerBrandFormNewPage() {
               className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none">
               <option value="">{t('l1Placeholder')}</option>
               {l1Options.map(l1 => (
-                <option key={l1.id} value={l1.id}>{l1.label}</option>
+                <option key={l1.id} value={l1.id}>{tTax('l1Type', { v: l1.id })}</option>
               ))}
             </select>
           </div>
@@ -122,7 +123,7 @@ export default function DealerBrandFormNewPage() {
               className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none disabled:opacity-50">
               <option value="">{t('l2Placeholder')}</option>
               {l2Options.map(l2 => (
-                <option key={l2.id} value={l2.id}>{l2.label}</option>
+                <option key={l2.id} value={l2.id}>{tTax('l2Type', { v: l2.id })}</option>
               ))}
             </select>
           </div>
