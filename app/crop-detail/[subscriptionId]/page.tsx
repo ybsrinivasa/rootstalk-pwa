@@ -578,7 +578,7 @@ export default function CropDetailPage() {
           <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 mb-4">
             <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest">{t('age.label')}</p>
             <p className="font-semibold text-[#6B3F1F] mt-1">
-              {sub.crop_age.is_minimum ? '> ' : ''}{sub.crop_age.value} {sub.crop_age.unit}
+              {sub.crop_age.is_minimum ? '> ' : ''}{sub.crop_age.value} {t('age.unitWord', { unit: sub.crop_age.unit })}
               <span className="text-xs text-[#7A8C7E] font-normal ml-2">
                 {sub.crop_age.source === 'PLANTING_YEAR'
                   ? t('age.fromPlantingYear')

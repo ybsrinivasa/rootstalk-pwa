@@ -574,7 +574,8 @@
     "age": {
       "label": "Crop Age",
       "fromPlantingYear": "from planting year",
-      "fromStartDate": "from start date"
+      "fromStartDate": "from start date",
+      "unitWord": "{unit, select, days {days} years {years} other {{unit}}}"
     },
     "area": {
       "sectionHeader": "Farm Area",

@@ -563,7 +563,8 @@
     "age": {
       "label": "ಬೆಳೆ ವಯಸ್ಸು",
       "fromPlantingYear": "ನೆಟ್ಟ ವರ್ಷದಿಂದ",
-      "fromStartDate": "ಪ್ರಾರಂಭ ದಿನಾಂಕದಿಂದ"
+      "fromStartDate": "ಪ್ರಾರಂಭ ದಿನಾಂಕದಿಂದ",
+      "unitWord": "{unit, select, days {ದಿನಗಳು} years {ವರ್ಷಗಳು} other {{unit}}}"
     },
     "area": {
       "sectionHeader": "ಕೃಷಿ ಪ್ರದೇಶ",
