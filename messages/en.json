@@ -2120,7 +2120,15 @@
         "title": "Select Brand",
         "noBrandsTitle": "No brands in system yet",
         "noBrandsHint": "Tap below to report a missing brand. The system will pick it up once added.",
-        "close": "Close"
+        "close": "Close",
+        "groupLabel": {
+          "recommended": "Recommended Brands",
+          "my": "My Brands",
+          "other": "Other Brands"
+        }
+      },
+      "unit": {
+        "label": "{v, select, kg {kg} g {g} L {L} ml {ml} mL {mL} numbers {Numbers} other {{v}}}"
       },
       "dup": {
         "title": "Possible duplicate purchase",

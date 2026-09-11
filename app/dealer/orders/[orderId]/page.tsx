@@ -202,7 +202,7 @@ interface Order {
   packing_picked_up_by_name?: string | null
   packing_farmer_received_at?: string | null
 }
-interface BrandGroup { label: string; brands: { cosh_id: string; name: string; manufacturer: string | null }[] }
+interface BrandGroup { key?: 'recommended' | 'my' | 'other'; label: string; brands: { cosh_id: string; name: string; manufacturer: string | null }[] }
 interface BrandOptions {
   type: 'LOCKED' | 'UNLOCKED'
   locked_brand_cosh_id: string | null; locked_brand_name: string | null
@@ -1583,7 +1583,7 @@ export default function DealerOrderDetailPage() {
               <select value={itemEdit.volume_unit}
                 onChange={e => setItemEdit(f => ({ ...f, volume_unit: e.target.value }))}
                 className="border border-[#DDD0B8] rounded-lg px-2 py-2 text-sm bg-white focus:outline-none">
-                {allowed.map(u => <option key={u} value={u}>{u}</option>)}
+                {allowed.map(u => <option key={u} value={u}>{t('unit.label', { v: u })}</option>)}
               </select>
               <input type="number" value={itemEdit.price}
                 onChange={e => setItemEdit(f => ({ ...f, price: e.target.value }))}
@@ -2920,7 +2920,7 @@ export default function DealerOrderDetailPage() {
                 {brandOptions.groups.map((group, gi) => group.brands.length > 0 && (
                   <div key={gi}>
                     <p className="px-5 pt-4 pb-2 text-xs font-bold text-[#7A8C7E] uppercase tracking-wider">
-                      {group.label}
+                      {group.key ? t(`brandSheet.groupLabel.${group.key}`) : group.label}
                     </p>
                     {group.brands.map(brand => (
                       <button key={brand.cosh_id}
