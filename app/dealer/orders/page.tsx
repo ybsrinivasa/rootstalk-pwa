@@ -1714,6 +1714,8 @@ function PackingChunk({
   // `dealer.orders.fcItem` namespace so the labels stay identical
   // across the pickup + packing pill flows.
   const tFc = useTranslations('dealer.orders.fcItem')
+  // Reused unit-label ICU select (kg / g / L / ml / numbers → Kannada).
+  const tUnit = useTranslations('dealer.orderDetail.unit')
   const locale = useLocale()
   const shared = !!batch.shared_at
   const total = batch.items.reduce((s, i) => s + (i.price || 0), 0)
@@ -1827,7 +1829,7 @@ function PackingChunk({
                   <p className="text-[11px] text-[#7A8C7E] truncate">{t('byManufacturer', { manufacturer: it.manufacturer_name })}</p>
                 )}
                 {it.given_volume != null && (
-                  <p className="text-[11px] text-[#7A8C7E] mt-0.5">{it.given_volume} {it.volume_unit || ''}</p>
+                  <p className="text-[11px] text-[#7A8C7E] mt-0.5">{it.given_volume} {it.volume_unit ? tUnit('label', { v: it.volume_unit }) : ''}</p>
                 )}
               </div>
               {it.price != null && (
