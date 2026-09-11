@@ -905,6 +905,7 @@
       "headerTitle": "Order Details",
       "statusLabel": "Status",
       "dateLabel": "Date",
+      "statusValue": "{v, select, DRAFT {Draft} SENT {Sent} ACCEPTED {Accepted} PROCESSING {In progress} SENT_FOR_APPROVAL {Sent for approval} PARTIALLY_APPROVED {Partially approved} COMPLETED {Completed} CANCELLED {Cancelled} EXPIRED {Expired} other {{v}}}",
       "statusFarmer": {
         "dealerProcessing": "Dealer processing",
         "delayed": "Delayed",

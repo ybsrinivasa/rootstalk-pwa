@@ -894,6 +894,7 @@
       "headerTitle": "ಆದೇಶದ ವಿವರಗಳು",
       "statusLabel": "ಸ್ಥಿತಿ",
       "dateLabel": "ದಿನಾಂಕ",
+      "statusValue": "{v, select, DRAFT {ಕರಡು} SENT {ಕಳುಹಿಸಲಾಗಿದೆ} ACCEPTED {ಸ್ವೀಕರಿಸಲಾಗಿದೆ} PROCESSING {ಪ್ರಗತಿಯಲ್ಲಿದೆ} SENT_FOR_APPROVAL {ಅನುಮೋದನೆಗಾಗಿ ಕಳುಹಿಸಲಾಗಿದೆ} PARTIALLY_APPROVED {ಭಾಗಶಃ ಅನುಮೋದನೆ} COMPLETED {ಪೂರ್ಣಗೊಂಡಿದೆ} CANCELLED {ರದ್ದುಗೊಂಡಿದೆ} EXPIRED {ಅವಧಿ ಮುಗಿದಿದೆ} other {{v}}}",
       "statusFarmer": {
         "dealerProcessing": "ಡೀಲರ್ ಪ್ರಕ್ರಿಯೆಗೊಳಿಸುವಿಕೆ",
         "delayed": "ವಿಳಂಬವಾಗಿದೆ",
