@@ -1092,6 +1092,8 @@
         "postponedCount": "{count, plural, one {⏰ 1 ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂ} other {⏰ # ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂಗಳು}}",
         "postponedDealerFollowUp": "{count, plural, one {⏰ 1 ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂ · ಡೀಲರ್ ಫಾಲೋ ಅಪ್ ಮಾಡುತ್ತಿದ್ದಾರೆ} other {⏰ # ಮುಂದೂಡಲ್ಪಟ್ಟ ವಸ್ತುಗಳು · ಡೀಲರ್ ಅನುಸರಿಸುತ್ತಿದ್ದಾರೆ}}",
         "notAvailableWithDealer": "{count, plural, one {ಈ ಡೀಲರ್‌ ಬಳಿ 1 ಐಟಂ ಲಭ್ಯವಿಲ್ಲ} other {ಈ ಡೀಲರ್‌ ಬಳಿ # ಐಟಂಗಳು ಲಭ್ಯವಿಲ್ಲ}}",
+        "awaitingFinalConfirm": "{count, plural, one {ಪಿಕಪ್‌ಗಾಗಿ ಡೀಲರ್‌ ಅಂತಿಮ ಖಚಿತಪಡಿಸುವಿಕೆಗಾಗಿ 1 ಐಟಂ ಕಾಯುತ್ತಿದೆ.} other {ಪಿಕಪ್‌ಗಾಗಿ ಡೀಲರ್‌ ಅಂತಿಮ ಖಚಿತಪಡಿಸುವಿಕೆಗಾಗಿ # ಐಟಂಗಳು ಕಾಯುತ್ತಿವೆ.}}",
+        "returnedToYou": "{count, plural, one {1 ಐಟಂ ನಿಮಗೆ ಹಿಂತಿರುಗಿಸಲಾಗಿದೆ} other {# ಐಟಂಗಳು ನಿಮಗೆ ಹಿಂತಿರುಗಿಸಲಾಗಿವೆ}}",
         "sendToAnotherDealer": "ಬೇರೆ ಡೀಲರ್‌ಗೆ ಕಳುಹಿಸಿ",
         "draftPickRecipient": "ಡ್ರಾಫ್ಟ್ - ಕಳುಹಿಸಲು ಸ್ವೀಕರಿಸುವವರನ್ನು ಆರಿಸಿ.",
         "pickRecipientCta": "ಸ್ವೀಕರಿಸುವವರನ್ನು ಆರಿಸಿ →",

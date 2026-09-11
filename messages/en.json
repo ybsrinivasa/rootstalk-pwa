@@ -1103,6 +1103,8 @@
         "postponedCount": "{count, plural, one {⏰ 1 postponed item} other {⏰ # postponed items}}",
         "postponedDealerFollowUp": "{count, plural, one {⏰ 1 postponed item · dealer is following up} other {⏰ # postponed items · dealer is following up}}",
         "notAvailableWithDealer": "{count, plural, one {1 item not available with this dealer} other {# items not available with this dealer}}",
+        "awaitingFinalConfirm": "{count, plural, one {1 item awaiting the dealer's Final Confirmation for pickup.} other {# items awaiting the dealer's Final Confirmation for pickup.}}",
+        "returnedToYou": "{count, plural, one {1 item returned to you} other {# items returned to you}}",
         "sendToAnotherDealer": "Send to another dealer",
         "draftPickRecipient": "Draft — pick a recipient to send.",
         "pickRecipientCta": "Pick a recipient →",

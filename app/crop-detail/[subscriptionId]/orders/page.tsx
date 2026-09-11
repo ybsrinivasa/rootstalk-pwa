@@ -1440,9 +1440,7 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
   if (awaitingFinalConfirm > 0) {
     return (
       <p className="text-xs text-amber-800">
-        {awaitingFinalConfirm === 1
-          ? '1 item awaiting the dealer’s Final Confirmation for pickup.'
-          : `${awaitingFinalConfirm} items awaiting the dealer’s Final Confirmation for pickup.`}
+        {t('awaitingFinalConfirm', { count: awaitingFinalConfirm })}
       </p>
     )
   }
@@ -1456,9 +1454,7 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
   if (active === 0 && returned > 0) {
     return (
       <p className="text-xs text-amber-800">
-        {returned === 1
-          ? '1 item returned to you'
-          : `${returned} items returned to you`}
+        {t('returnedToYou', { count: returned })}
       </p>
     )
   }
