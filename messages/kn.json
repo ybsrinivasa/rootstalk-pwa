@@ -1075,7 +1075,8 @@
         "kindSeed": "ಬೀಜ",
         "kindFallback": "ಆದೇಶ",
         "seedFallback": "ಬೀಜ ಕ್ರಮ",
-        "expandSubs": "{count, plural, one {1 ಉಪ-ಆದೇಶ} other {# ಉಪ-ಆರ್ಡರ್‌ಗಳು}}"
+        "expandSubs": "{count, plural, one {1 ಉಪ-ಆದೇಶ} other {# ಉಪ-ಆರ್ಡರ್‌ಗಳು}}",
+        "categoryLabel": "{v, select, PESTICIDE {ಕೀಟನಾಶಕ} FERTILIZER {ರಸಗೊಬ್ಬರ} FERTILISER {ರಸಗೊಬ್ಬರ} SEED {ಬೀಜ} other {{v}}}"
       },
       "chunk": {
         "subOrderPrefix": "ಉಪ-ಆದೇಶ ·",

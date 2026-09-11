@@ -1086,7 +1086,8 @@
         "kindSeed": "Seed",
         "kindFallback": "order",
         "seedFallback": "Seed order",
-        "expandSubs": "{count, plural, one {1 sub-order} other {# sub-orders}}"
+        "expandSubs": "{count, plural, one {1 sub-order} other {# sub-orders}}",
+        "categoryLabel": "{v, select, PESTICIDE {Pesticide} FERTILIZER {Fertilizer} FERTILISER {Fertilizer} SEED {Seed} other {{v}}}"
       },
       "chunk": {
         "subOrderPrefix": "Sub-order ·",

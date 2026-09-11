@@ -1194,7 +1194,9 @@ function OrderCardHeader({
         </p>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[10px] font-semibold text-[#7A8C7E] uppercase tracking-wider">
-            {head?.kind === 'SEED' ? t('kindSeed') : (head?.category?.toLowerCase() || t('kindFallback'))}
+            {head?.kind === 'SEED'
+              ? t('kindSeed')
+              : (head?.category ? t('categoryLabel', { v: head.category }) : t('kindFallback'))}
           </span>
           <span className="text-[10px] text-[#7A8C7E]">
             {head?.created_at && new Date(head.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}
