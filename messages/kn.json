@@ -2797,6 +2797,7 @@
     "orderDetail": {
       "headerTitle": "ಆದೇಶದ ವಿವರಗಳು",
       "statusLabel": "ಸ್ಥಿತಿ",
+      "statusValue": "{v, select, DRAFT {ಕರಡು} SENT {ಕಳುಹಿಸಲಾಗಿದೆ} ACCEPTED {ಸ್ವೀಕರಿಸಲಾಗಿದೆ} PROCESSING {ಪ್ರಗತಿಯಲ್ಲಿದೆ} SENT_FOR_APPROVAL {ಅನುಮೋದನೆಗಾಗಿ ಕಳುಹಿಸಲಾಗಿದೆ} PARTIALLY_APPROVED {ಭಾಗಶಃ ಅನುಮೋದನೆ} COMPLETED {ಪೂರ್ಣಗೊಂಡಿದೆ} CANCELLED {ರದ್ದುಗೊಂಡಿದೆ} EXPIRED {ಅವಧಿ ಮುಗಿದಿದೆ} other {{v}}}",
       "itemsCount": "{count} ಐಟಂಗಳು",
       "awaitingApproval": "{count, plural, one {ರೈತರ ಅನುಮೋದನೆಗಾಗಿ ಕಾಯುತ್ತಿರುವ 1 ಐಟಂ} other {# ವಸ್ತುಗಳು ರೈತರ ಅನುಮೋದನೆಗಾಗಿ ಕಾಯುತ್ತಿವೆ}}",
       "awaitingApprovalHint": "ರೈತರು ಅನುಮೋದಿಸಿದ ನಂತರ ನೀವು ಬ್ರ್ಯಾಂಡ್ ಮತ್ತು ಬೆಲೆಯನ್ನು ನೋಡುತ್ತೀರಿ.",
