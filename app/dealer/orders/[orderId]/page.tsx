@@ -2460,7 +2460,7 @@ export default function DealerOrderDetailPage() {
             <div className="flex-1 min-w-0">
               <div className="flex gap-1.5 flex-wrap">
                 <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOUR[item.status] || 'bg-slate-100 text-[#6B3F1F]'}`}>
-                  {item.status.replace(/_/g, ' ')}
+                  {t('itemStatus.value', { v: item.status })}
                 </span>
               </div>
               <p className="text-base font-semibold text-[#6B3F1F] mt-1.5 truncate">
