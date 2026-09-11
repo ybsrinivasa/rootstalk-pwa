@@ -1145,6 +1145,7 @@
       }
     },
     "common": {
+      "unitLabel": "{v, select, kg {kg} g {g} L {L} ml {ml} mL {mL} numbers {Numbers} other {{v}}}",
       "unknownRecipient": "Unknown",
       "promoterBadge": "Your Promoter",
       "trainingDealerBadge": "Training",

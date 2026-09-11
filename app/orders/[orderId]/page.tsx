@@ -489,7 +489,7 @@ export default function FarmerOrderDetailPage() {
                       <p className="text-xs text-[#7A8C7E] mt-0.5">{t('approvalSection.byManufacturer', { manufacturer: row.manufacturer_name })}</p>
                     )}
                     <p className="text-sm text-[#6B3F1F] mt-1.5">
-                      {row.given_volume ?? '—'} {row.volume_unit ?? ''}
+                      {row.given_volume ?? '—'} {row.volume_unit ? tOrdersCommon('unitLabel', { v: row.volume_unit }) : ''}
                     </p>
                     {row.merged_timeline_count && row.merged_timeline_count > 1 && (
                       <p className="text-[11px] text-[#7A8C7E] mt-0.5">
@@ -562,7 +562,7 @@ export default function FarmerOrderDetailPage() {
                       <p className="text-xs text-[#7A8C7E] mt-0.5">{t('approvalSection.byManufacturer', { manufacturer: row.manufacturer_name })}</p>
                     )}
                     <p className="text-sm text-emerald-700 mt-1.5">
-                      {row.given_volume ?? '—'} {row.volume_unit ?? ''}
+                      {row.given_volume ?? '—'} {row.volume_unit ? tOrdersCommon('unitLabel', { v: row.volume_unit }) : ''}
                     </p>
                   </div>
                   {row.price != null && (

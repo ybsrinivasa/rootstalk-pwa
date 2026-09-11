@@ -1134,6 +1134,7 @@
       }
     },
     "common": {
+      "unitLabel": "{v, select, kg {ಕೆ.ಜಿ} g {ಗ್ರಾಂ} L {ಲೀ} ml {ಮಿ.ಲೀ} mL {ಮಿ.ಲೀ} numbers {ಸಂಖ್ಯೆ} other {{v}}}",
       "unknownRecipient": "ಅಜ್ಞಾತ",
       "promoterBadge": "ನಿಮ್ಮ ಪ್ರವರ್ತಕ",
       "distanceKm": "{km} ಕಿಮೀ ದೂರ",
