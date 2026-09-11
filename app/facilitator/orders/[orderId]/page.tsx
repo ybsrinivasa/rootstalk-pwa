@@ -502,7 +502,7 @@ export default function FacilitatorOrderDetailPage() {
                         {d.shop_address && <p className="text-xs text-[#7A8C7E]">{d.shop_address}</p>}
                         <div className="flex gap-1 mt-1 flex-wrap">
                           {d.sell_categories.map(c => (
-                            <span key={c} className="text-xs bg-slate-100 text-[#7A8C7E] px-1.5 py-0.5 rounded">{c}</span>
+                            <span key={c} className="text-xs bg-slate-100 text-[#7A8C7E] px-1.5 py-0.5 rounded">{tOrdersCommon('sellCategoryLabel', { v: c })}</span>
                           ))}
                         </div>
                       </div>

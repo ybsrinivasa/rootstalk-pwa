@@ -1153,6 +1153,7 @@
     },
     "common": {
       "unitLabel": "{v, select, kg {kg} g {g} L {L} ml {ml} mL {mL} numbers {Numbers} other {{v}}}",
+      "sellCategoryLabel": "{v, select, SEEDS {Seeds} SEEDLINGS {Seedlings} PESTICIDES {Pesticides} FERTILISERS {Fertilisers} FERTILIZERS {Fertilisers} other {{v}}}",
       "unknownRecipient": "Unknown",
       "promoterBadge": "Your Promoter",
       "trainingDealerBadge": "Training",
