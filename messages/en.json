@@ -1866,7 +1866,9 @@
         "confirmHandoverSeed": "Confirm the seed packet has been handed over to the farmer? This closes the order.",
         "errorHandoverSeed": "Could not mark as handed over. Please try again.",
         "fcInfoLabel": "Final Confirmation:",
-        "fcInfoBody": " the packing list is populated after this. Confirm only when payment or credit terms with the farmer are settled."
+        "fcInfoBody": " the packing list is populated after this. Confirm only when payment or credit terms with the farmer are settled.",
+        "submitDecisions": "{count, plural, one {Submit 1 decision} other {Submit # decisions}}",
+        "submitPendingDecisions": "{count, plural, one {1 item still needs a decision} other {# items still need a decision}}"
       },
       "seedPending": {
         "blindAcceptHint": "New order — your call. Variety details reveal after you Accept.",

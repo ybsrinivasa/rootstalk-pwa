@@ -1710,6 +1710,10 @@ function PackingChunk({
 }) {
   const pickedUp = !!batch.picked_up_at
   const t = useTranslations('dealer.orders.packing')
+  // The per-item Final-Confirm buttons re-use the shared
+  // `dealer.orders.fcItem` namespace so the labels stay identical
+  // across the pickup + packing pill flows.
+  const tFc = useTranslations('dealer.orders.fcItem')
   const locale = useLocale()
   const shared = !!batch.shared_at
   const total = batch.items.reduce((s, i) => s + (i.price || 0), 0)
@@ -1843,40 +1847,40 @@ function PackingChunk({
               <div className="flex gap-2">
                 <button onClick={() => onSetFcPending(order.id, it.id, 'CONFIRM')} disabled={busy}
                   className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white text-[11px] font-semibold py-1.5 rounded-lg">
-                  {t('fcItem.confirmBtn')}
+                  {tFc('confirmBtn')}
                 </button>
                 <button onClick={() => onSetFcPending(order.id, it.id, 'CANCEL')} disabled={busy}
                   className="flex-1 border border-red-200 text-[#D4682E] text-[11px] font-semibold py-1.5 rounded-lg">
-                  {t('fcItem.cancelBtn')}
+                  {tFc('cancelBtn')}
                 </button>
               </div>
             )}
             {!it.final_confirmed_at && it.dealer_pending_final_confirmation === 'CONFIRM' && (
               <div className="flex items-center justify-between bg-purple-100 rounded-lg px-3 py-1.5">
-                <p className="text-[11px] text-purple-800 font-semibold">{t('fcItem.markedConfirm')}</p>
+                <p className="text-[11px] text-purple-800 font-semibold">{tFc('markedConfirm')}</p>
                 <button onClick={() => onSetFcPending(order.id, it.id, null)} disabled={busy}
                   className="text-[10px] text-purple-700 underline disabled:opacity-40">
-                  {t('fcItem.undo')}
+                  {tFc('undo')}
                 </button>
               </div>
             )}
             {!it.final_confirmed_at && it.dealer_pending_final_confirmation === 'CANCEL' && (
               <div className="flex items-center justify-between bg-red-50 border border-red-100 rounded-lg px-3 py-1.5">
-                <p className="text-[11px] text-[#D4682E] font-semibold">{t('fcItem.markedCancel')}</p>
+                <p className="text-[11px] text-[#D4682E] font-semibold">{tFc('markedCancel')}</p>
                 <button onClick={() => onSetFcPending(order.id, it.id, null)} disabled={busy}
                   className="text-[10px] text-[#D4682E] underline disabled:opacity-40">
-                  {t('fcItem.undo')}
+                  {tFc('undo')}
                 </button>
               </div>
             )}
             {it.final_confirmed_at && (
               <div className="flex items-center justify-between">
-                <p className="text-[10px] text-purple-600 font-medium">{t('fcItem.finalConfirmed')}</p>
+                <p className="text-[10px] text-purple-600 font-medium">{tFc('finalConfirmed')}</p>
                 {!pickedUp && (
                   <button onClick={() => onUndoFinalConfirmItem(order.id, it.id)}
                     disabled={busy}
                     className="text-[10px] text-[#7A8C7E] underline disabled:opacity-40">
-                    {t('fcItem.undo')}
+                    {tFc('undo')}
                   </button>
                 )}
               </div>
@@ -1910,8 +1914,8 @@ function PackingChunk({
                 {busy
                   ? '…'
                   : ready
-                    ? `Submit ${tentativeTotal} decision${tentativeTotal === 1 ? '' : 's'}`
-                    : `${undecidedN} item${undecidedN === 1 ? '' : 's'} still need${undecidedN === 1 ? 's' : ''} a decision`}
+                    ? t('submitDecisions', { count: tentativeTotal })
+                    : t('submitPendingDecisions', { count: undecidedN })}
               </button>
             )
           })()}
