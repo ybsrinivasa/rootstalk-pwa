@@ -607,7 +607,14 @@
       "selectYearPlaceholder": "Select…",
       "beyondYear": "Beyond {year}",
       "plantedPrefix": "plants · planted",
-      "helpText": "Both are needed for the advisory to compute volumes correctly. Plant count locks when you place your first order."
+      "helpText": "Both are needed for the advisory to compute volumes correctly. Plant count locks when you place your first order.",
+      "label": "Plant count & planting year",
+      "tentativeNote": "Tentative for now. Will be confirmed when you place your first order.",
+      "softSetLabel": "Plant count & year · Tentative",
+      "softSetNote": "Currently set as your tentative plant count. You can revise it once more when you place your first order.",
+      "enterCta": "Enter plant count & year",
+      "updateCta": "Update plant count & year",
+      "modalTitle": "Enter plant count & year"
     },
     "startDate": {
       "sectionHeader": "Start Date",

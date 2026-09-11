@@ -164,6 +164,9 @@ export default function CropDetailPage() {
   const [plantsInput, setPlantsInput] = useState('')
   const [yearInput, setYearInput] = useState('')
   const [savingPlants, setSavingPlants] = useState(false)
+  // Mirror of areaModalOpen — same "collapsed card + Save modal"
+  // pattern applied to the plant-wise crop context (2026-09-11).
+  const [plantsModalOpen, setPlantsModalOpen] = useState(false)
 
   // Bottom sheets
   const [orderSheet, setOrderSheet] = useState<{ open: boolean; category: 'PESTICIDE' | 'FERTILISER' | null }>({ open: false, category: null })
@@ -353,6 +356,7 @@ export default function CropDetailPage() {
         number_of_plants: body.number_of_plants ?? s.number_of_plants,
         planting_year: body.planting_year ?? s.planting_year,
       } : s)
+      setPlantsModalOpen(false)
       showToast(t('toast.saved'))
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string | { message?: string } } } }
@@ -540,6 +544,8 @@ export default function CropDetailPage() {
   // default to AREA_WISE so existing data renders unchanged.
   const isPlantWise = sub.crop_measure === 'PLANT_WISE'
   const plantsHardLocked = !!sub.plant_count_confirmed_at
+  const plantsSoftSet = !plantsHardLocked && (sub.number_of_plants != null || sub.planting_year != null)
+  const plantsTentative = !plantsHardLocked && sub.number_of_plants == null && sub.planting_year == null
 
   const isAssigned = sub.subscription_type === 'ASSIGNED'
 
@@ -659,7 +665,7 @@ export default function CropDetailPage() {
         ) : (
           <>
             <p className="text-xs font-semibold text-[#7A8C7E] uppercase tracking-widest mb-3 mt-2 px-1">{t('plants.sectionHeader')}</p>
-            {plantsHardLocked ? (
+            {plantsHardLocked && (
               <div className="bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3">
                 <p className="text-sm font-semibold text-[#6B3F1F]">{t('plants.confirmed')}</p>
                 <p className="font-semibold text-[#6B3F1F] mt-1">
@@ -674,51 +680,48 @@ export default function CropDetailPage() {
                   {t('plants.lockedNote', { date: fmtDayMonYear(sub.plant_count_confirmed_at, locale) })}
                 </p>
               </div>
-            ) : (
-              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4 space-y-3">
-                <div>
-                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">{t('plants.plantsLabel')}</label>
-                  <input
-                    type="number" inputMode="numeric" step="1" min="1"
-                    value={plantsInput}
-                    onChange={e => setPlantsInput(e.target.value)}
-                    placeholder={t('plants.plantsPlaceholder')}
-                    className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#3A7D44]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">{t('plants.yearLabel')}</label>
-                  <select
-                    value={yearInput}
-                    onChange={e => setYearInput(e.target.value)}
-                    className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3A7D44]"
-                  >
-                    <option value="">{t('plants.selectYearPlaceholder')}</option>
-                    {/* current year down to the floor; older than the
-                        floor collapses to a single "Beyond" option
-                        which stores the sentinel year. */}
-                    {Array.from(
-                      { length: new Date().getFullYear() - PLANTING_YEAR_FLOOR + 1 },
-                      (_, i) => new Date().getFullYear() - i,
-                    ).map(y => (
-                      <option key={y} value={String(y)}>{y}</option>
-                    ))}
-                    <option value={String(PLANTING_YEAR_BEYOND_SENTINEL)}>
-                      {t('plants.beyondYear', { year: PLANTING_YEAR_FLOOR })}
-                    </option>
-                  </select>
-                </div>
+            )}
+
+            {(plantsTentative || plantsSoftSet) && (
+              // 2026-09-11 — Same collapsed-card + blocking-modal
+              // pattern as the annual-crop farm-area section. Was
+              // an inline input + Save; farmers were typing values
+              // and forgetting to tap Save.
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-4">
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-2">
+                  {plantsTentative ? t('plants.label') : t('plants.softSetLabel')}
+                </p>
+                {(sub.number_of_plants != null || sub.planting_year != null) && (
+                  <p className="text-lg font-bold text-[#6B3F1F] mb-3">
+                    {sub.number_of_plants ?? '—'} {t('plants.plantedPrefix')}{' '}
+                    {sub.planting_year == null
+                      ? '—'
+                      : sub.planting_year < PLANTING_YEAR_FLOOR
+                        ? t('plants.beyondYear', { year: PLANTING_YEAR_FLOOR })
+                        : sub.planting_year}
+                  </p>
+                )}
                 <button
-                  onClick={savePlantContext}
-                  disabled={savingPlants || (!plantsInput && !yearInput)}
-                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                  onClick={() => {
+                    setPlantsInput(sub.number_of_plants != null ? String(sub.number_of_plants) : '')
+                    setYearInput(sub.planting_year != null ? String(sub.planting_year) : '')
+                    setPlantsModalOpen(true)
+                  }}
+                  className="w-full py-2.5 rounded-xl text-white text-sm font-semibold"
                   style={{ background: colour }}
                 >
-                  {savingPlants ? tCommon('saving') : tCommon('save')}
+                  {(sub.number_of_plants != null || sub.planting_year != null)
+                    ? t('plants.updateCta')
+                    : t('plants.enterCta')}
                 </button>
-                <p className="text-[#7A8C7E] text-xs">
-                  {t('plants.helpText')}
-                </p>
+                {plantsTentative && (
+                  <p className="text-[#7A8C7E] text-xs mt-3">{t('plants.tentativeNote')}</p>
+                )}
+                {plantsSoftSet && (
+                  <p className="text-amber-700 bg-amber-50 px-3 py-2 rounded text-xs mt-3">
+                    {t('plants.softSetNote')}
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -1131,6 +1134,75 @@ export default function CropDetailPage() {
                 className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
                 style={{ background: colour }}>
                 {savingArea ? tCommon('saving') : tCommon('save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2026-09-11 — Plant-count blocking modal. Mirror of the
+          area modal for plant-wise crops (mango, coconut, etc.).
+          Same rationale: farmers were typing plant count / year
+          inline and forgetting to tap Save. */}
+      {plantsModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-end">
+          <div className="bg-white w-full rounded-t-3xl p-5 max-w-lg mx-auto">
+            <p className="font-bold text-[#6B3F1F] text-base mb-1">
+              {t('plants.modalTitle')}
+            </p>
+            <p className="text-xs text-[#7A8C7E] mb-4">
+              {plantsSoftSet ? t('plants.softSetNote') : t('plants.tentativeNote')}
+            </p>
+            <div className="space-y-3 mb-5">
+              <div>
+                <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">
+                  {t('plants.plantsLabel')}
+                </label>
+                <input
+                  type="number" inputMode="numeric" step="1" min="1"
+                  value={plantsInput}
+                  onChange={e => setPlantsInput(e.target.value)}
+                  placeholder={t('plants.plantsPlaceholder')}
+                  autoFocus
+                  className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-base focus:outline-none focus:border-[#3A7D44]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-[#6B3F1F] mb-1.5">
+                  {t('plants.yearLabel')}
+                </label>
+                <select
+                  value={yearInput}
+                  onChange={e => setYearInput(e.target.value)}
+                  className="w-full border border-[#DDD0B8] rounded-xl px-3 py-2 text-base bg-white focus:outline-none focus:border-[#3A7D44]"
+                >
+                  <option value="">{t('plants.selectYearPlaceholder')}</option>
+                  {Array.from(
+                    { length: new Date().getFullYear() - PLANTING_YEAR_FLOOR + 1 },
+                    (_, i) => new Date().getFullYear() - i,
+                  ).map(y => (
+                    <option key={y} value={String(y)}>{y}</option>
+                  ))}
+                  <option value={String(PLANTING_YEAR_BEYOND_SENTINEL)}>
+                    {t('plants.beyondYear', { year: PLANTING_YEAR_FLOOR })}
+                  </option>
+                </select>
+              </div>
+              <p className="text-[#7A8C7E] text-xs">{t('plants.helpText')}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setPlantsModalOpen(false)}
+                disabled={savingPlants}
+                className="py-3 rounded-xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-semibold disabled:opacity-40">
+                {tCommon('cancel')}
+              </button>
+              <button
+                onClick={savePlantContext}
+                disabled={savingPlants || (!plantsInput && !yearInput)}
+                className="py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-40"
+                style={{ background: colour }}>
+                {savingPlants ? tCommon('saving') : tCommon('save')}
               </button>
             </div>
           </div>
