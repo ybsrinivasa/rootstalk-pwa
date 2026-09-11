@@ -60,6 +60,7 @@ interface SubscriptionDetail {
 }
 interface Branding {
   display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
+  is_training?: boolean
 }
 interface PreStartInput {
   timeline_id: string; timeline_name: string
@@ -124,6 +125,7 @@ export default function CropDetailPage() {
   const router = useRouter()
   const t = useTranslations('crop')
   const tCommon = useTranslations('common')
+  const tTrain = useTranslations('training')
   const locale = useLocale()
   const [sub, setSub] = useState<SubscriptionDetail | null>(null)
   const [branding, setBranding] = useState<Branding | null>(null)
@@ -576,7 +578,20 @@ export default function CropDetailPage() {
           ) : null}
           <div className="flex-1 min-w-0 leading-tight">
             {branding?.display_name && (
-              <p className="text-white text-[13px] font-semibold opacity-95 truncate">{branding.display_name}</p>
+              <p className="text-white text-[13px] font-semibold opacity-95 truncate">
+                {/* Backend bakes " · Training" into the training-sandbox
+                    client's display_name (training_router.py). Strip it
+                    on this render so we can show a properly localised
+                    badge next to the name. */}
+                {branding.is_training
+                  ? branding.display_name.replace(/\s*[·\-]\s*Training\s*$/i, '')
+                  : branding.display_name}
+                {branding.is_training && (
+                  <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 align-middle">
+                    {tTrain('chip')}
+                  </span>
+                )}
+              </p>
             )}
             <p className="text-white font-bold text-sm truncate">
               {cropDisplayName(sub.crop_cosh_id, sub.crop_name)}

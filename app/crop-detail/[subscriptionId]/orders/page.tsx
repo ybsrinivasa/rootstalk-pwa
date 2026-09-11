@@ -1476,9 +1476,7 @@ function RoutedChunk({ sub }: { sub: SubOrder }) {
     <div className="space-y-1">
       {returned > 0 && (
         <p className="text-xs text-[#D4682E] font-medium">
-          {returned === 1
-            ? '1 item not available with this dealer'
-            : `${returned} items not available with this dealer`}
+          {t('notAvailableWithDealer', { count: returned })}
         </p>
       )}
       {dealerActiveCount > 0 && (

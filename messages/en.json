@@ -1102,6 +1102,7 @@
         "postponedFacilitatorHandling": "{count, plural, one {⏰ 1 postponed item · your facilitator is handling} other {⏰ # postponed items · your facilitator is handling}}",
         "postponedCount": "{count, plural, one {⏰ 1 postponed item} other {⏰ # postponed items}}",
         "postponedDealerFollowUp": "{count, plural, one {⏰ 1 postponed item · dealer is following up} other {⏰ # postponed items · dealer is following up}}",
+        "notAvailableWithDealer": "{count, plural, one {1 item not available with this dealer} other {# items not available with this dealer}}",
         "sendToAnotherDealer": "Send to another dealer",
         "draftPickRecipient": "Draft — pick a recipient to send.",
         "pickRecipientCta": "Pick a recipient →",

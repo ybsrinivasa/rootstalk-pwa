@@ -1091,6 +1091,7 @@
         "postponedFacilitatorHandling": "{count, plural, one {⏰ 1 ಮುಂದೂಡಲಾದ ಐಟಂ · ನಿಮ್ಮ ಫೆಸಿಲಿಟೇಟರ್ ನಿರ್ವಹಿಸುತ್ತಿದ್ದಾರೆ} other {⏰ # ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂಗಳು · ನಿಮ್ಮ ಆಯೋಜಕರು ನಿರ್ವಹಿಸುತ್ತಿದ್ದಾರೆ}}",
         "postponedCount": "{count, plural, one {⏰ 1 ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂ} other {⏰ # ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂಗಳು}}",
         "postponedDealerFollowUp": "{count, plural, one {⏰ 1 ಮುಂದೂಡಲ್ಪಟ್ಟ ಐಟಂ · ಡೀಲರ್ ಫಾಲೋ ಅಪ್ ಮಾಡುತ್ತಿದ್ದಾರೆ} other {⏰ # ಮುಂದೂಡಲ್ಪಟ್ಟ ವಸ್ತುಗಳು · ಡೀಲರ್ ಅನುಸರಿಸುತ್ತಿದ್ದಾರೆ}}",
+        "notAvailableWithDealer": "{count, plural, one {ಈ ಡೀಲರ್‌ ಬಳಿ 1 ಐಟಂ ಲಭ್ಯವಿಲ್ಲ} other {ಈ ಡೀಲರ್‌ ಬಳಿ # ಐಟಂಗಳು ಲಭ್ಯವಿಲ್ಲ}}",
         "sendToAnotherDealer": "ಬೇರೆ ಡೀಲರ್‌ಗೆ ಕಳುಹಿಸಿ",
         "draftPickRecipient": "ಡ್ರಾಫ್ಟ್ - ಕಳುಹಿಸಲು ಸ್ವೀಕರಿಸುವವರನ್ನು ಆರಿಸಿ.",
         "pickRecipientCta": "ಸ್ವೀಕರಿಸುವವರನ್ನು ಆರಿಸಿ →",
