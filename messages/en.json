@@ -1339,6 +1339,8 @@
     },
     "ordersIntro": "Every order you've placed across all your crops, newest first. Active orders live on each crop's Manage tab.",
     "receivedIntro": "Every input you've confirmed receipt of, across all your crops. The per-crop Received tab shows the same items scoped to one crop.",
+    "ordersEmptyTitle": "No order history yet",
+    "ordersEmptyBody": "Completed or cancelled orders will appear here.",
     "applyLater": "Apply later",
     "applyNow": "Apply now",
     "windowPassed": "Window passed",

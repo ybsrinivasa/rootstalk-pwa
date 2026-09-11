@@ -116,8 +116,8 @@ export default function OrderHistoryPage() {
             history.length === 0 ? (
               <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center mt-2">
                 <p className="text-4xl mb-2">📦</p>
-                <p className="text-sm font-semibold text-[#6B3F1F] mb-1">No order history yet</p>
-                <p className="text-xs text-[#7A8C7E]">Completed or cancelled orders will appear here.</p>
+                <p className="text-sm font-semibold text-[#6B3F1F] mb-1">{t('ordersEmptyTitle')}</p>
+                <p className="text-xs text-[#7A8C7E]">{t('ordersEmptyBody')}</p>
               </div>
             ) : (
               <div className="space-y-3">
