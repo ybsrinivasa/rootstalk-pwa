@@ -1239,7 +1239,14 @@ function DealerOrderCardHeader({
           </p>
           {head.client_name && (
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="text-xs text-[#7A8C7E] truncate">{head.client_name}</p>
+              {/* Strip the backend-baked " · Training" suffix — the
+                  amber chip beside it already communicates the
+                  training-sandbox state in the caller's language. */}
+              <p className="text-xs text-[#7A8C7E] truncate">
+                {head.client_is_training
+                  ? head.client_name.replace(/\s*[·\-]\s*Training\s*$/i, '')
+                  : head.client_name}
+              </p>
               {/* 2026-07-24 — Training marker. Yellow chip so the
                   dealer sees it BEFORE tapping Accept — a training
                   order shouldn't touch their real inventory / brand
