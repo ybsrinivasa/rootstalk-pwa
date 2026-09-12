@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import api from '@/lib/api'
 
 interface SubLite {
@@ -12,6 +13,7 @@ interface SubLite {
   client_display_name?: string | null
   client_logo_url?: string | null
   client_primary_colour?: string | null
+  client_is_training?: boolean
 }
 
 const cache: { ts: number; rows: SubLite[] } = { ts: 0, rows: [] }
@@ -33,6 +35,7 @@ interface Props {
 
 export default function ClientCropChip({ subscriptionId, showCrop = true }: Props) {
   const router = useRouter()
+  const tTrain = useTranslations('training')
   const [sub, setSub] = useState<SubLite | null>(null)
 
   useEffect(() => {
@@ -49,7 +52,13 @@ export default function ClientCropChip({ subscriptionId, showCrop = true }: Prop
 
   if (!sub) return null
 
-  const name = sub.client_display_name || 'Company'
+  const rawName = sub.client_display_name || 'Company'
+  // Strip the backend-baked " · Training" suffix; the amber chip
+  // beside the name already communicates the training-sandbox state
+  // in the caller's language (see training_router.py).
+  const name = sub.client_is_training
+    ? rawName.replace(/\s*[·\-]\s*Training\s*$/i, '')
+    : rawName
   const colour = sub.client_primary_colour || '#3A7D44'
   const initials = name.split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase() || '?'
   const crop = sub.crop_name || sub.package_name || ''
@@ -69,7 +78,14 @@ export default function ClientCropChip({ subscriptionId, showCrop = true }: Prop
         </div>
       )}
       <div className="flex-1 min-w-0 text-left leading-tight">
-        <p className="text-[11px] text-[#7A8C7E] truncate">{name}</p>
+        <p className="text-[11px] text-[#7A8C7E] truncate">
+          {name}
+          {sub.client_is_training && (
+            <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 align-middle">
+              {tTrain('chip')}
+            </span>
+          )}
+        </p>
         {showCrop && crop && (
           <p className="text-[13px] font-semibold text-[#6B3F1F] truncate">{crop}</p>
         )}

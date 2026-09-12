@@ -1530,6 +1530,7 @@
     "responded": "Responded ({count})",
     "closed": "Closed",
     "respondedBadge": "RESPONDED",
+    "statusValue": "{v, select, NEW {NEW} FORWARDED {Forwarded} RETURNED {Returned} RESPONDED {Responded} REJECTED {Rejected} EXPIRED {Expired} other {{v}}}",
     "chaAddedTitle": "🔬 Crop Health Advisory Added",
     "chaAddedBodyPrefix": "Treatment recommendations for",
     "chaAddedBodySuffix": "have been added to your advisory timeline.",

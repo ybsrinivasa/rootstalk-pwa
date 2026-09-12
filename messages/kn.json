@@ -1519,6 +1519,7 @@
     "responded": "ಪ್ರತಿಕ್ರಿಯಿಸಲಾಗಿದೆ ( {count} )",
     "closed": "ಮುಚ್ಚಲಾಗಿದೆ",
     "respondedBadge": "ಪ್ರತಿಕ್ರಿಯಿಸಲಾಗಿದೆ",
+    "statusValue": "{v, select, NEW {ಹೊಸ} FORWARDED {ಫಾರ್ವರ್ಡ್} RETURNED {ಹಿಂತಿರುಗಿಸಲಾಗಿದೆ} RESPONDED {ಪ್ರತಿಕ್ರಿಯಿಸಲಾಗಿದೆ} REJECTED {ನಿರಾಕರಿಸಲಾಗಿದೆ} EXPIRED {ಅವಧಿ ಮುಗಿದಿದೆ} other {{v}}}",
     "chaAddedTitle": "🔬 ಬೆಳೆ ಆರೋಗ್ಯ ಸಲಹೆಯನ್ನು ಸೇರಿಸಲಾಗಿದೆ",
     "chaAddedBodyPrefix": "ಚಿಕಿತ್ಸೆಯ ಶಿಫಾರಸುಗಳು",
     "chaAddedBodySuffix": "ನಿಮ್ಮ ಸಲಹಾ ಟೈಮ್‌ಲೈನ್‌ಗೆ ಸೇರಿಸಲಾಗಿದೆ.",

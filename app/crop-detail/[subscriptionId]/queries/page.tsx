@@ -143,7 +143,7 @@ export default function SubscriptionQueriesPage() {
             <p className="font-medium text-[#6B3F1F] text-sm">{q.title}</p>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${variant === 'responded' ? 'bg-green-100 text-green-700' : STATUS_COLOUR[q.status]}`}>
-                {variant === 'responded' ? t('respondedBadge') : q.status}
+                {variant === 'responded' ? t('respondedBadge') : t('statusValue', { v: q.status })}
               </span>
               <span className="text-xs text-[#7A8C7E]">{new Date(q.created_at).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })}</span>
             </div>
