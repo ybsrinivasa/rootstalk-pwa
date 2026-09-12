@@ -50,7 +50,7 @@ export interface PWAUser {
   share_cross_dealer_purchases?: boolean;
 }
 
-export async function requestOtp(phone: string): Promise<{ dev_otp?: string }> {
+export async function requestOtp(phone: string): Promise<{ dev_otp?: string; coaching_temp?: boolean }> {
   const { data } = await api.post("/auth/request-otp", { phone });
   return data;
 }

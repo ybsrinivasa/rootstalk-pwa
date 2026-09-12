@@ -476,6 +476,7 @@
     "nameEnglishOnlyHint": "Please type your name in English letters. If your keyboard is in another language, tap the globe icon on the keyboard to switch to English.",
     "takeMeIn": "Take me in →",
     "devCode": "Dev code:",
+    "coachingPracticeCaption": "Practice number · OTP shown here for training",
     "errors": {
       "phoneSendFailed": "Could not send a code. Please check your number.",
       "otpMismatch": "That code didn't match. Please try again.",

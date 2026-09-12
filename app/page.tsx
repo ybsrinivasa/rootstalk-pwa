@@ -167,6 +167,12 @@ export default function RootPage() {
   const [phone,        setPhone]       = useState('')
   const [otp,          setOtp]         = useState('')
   const [devOtp,       setDevOtp]      = useState('')
+  // 2026-09-12 — Coaching temp phone (+913…) — backend flags this
+  // separately so we can render a distinct "Practice number" caption
+  // + auto-fill the OTP for the tester. `coachingTemp=true` implies
+  // the number is a coaching temp; devOtp holds the OTP surfaced by
+  // the backend (skipped SMS entirely).
+  const [coachingTemp, setCoachingTemp] = useState(false)
   const [name,         setName]        = useState('')
   const [error,        setError]       = useState('')
   const [busy,         setBusy]        = useState(false)
@@ -350,6 +356,15 @@ export default function RootPage() {
     try {
       const res = await requestOtp('+91' + phone)
       if (res.dev_otp) setDevOtp(res.dev_otp)
+      const isCoachingTemp = !!res.coaching_temp
+      setCoachingTemp(isCoachingTemp)
+      // Auto-fill for coaching temp phones — the whole point of
+      // surfacing the OTP in-app is to skip the copy-paste dance for
+      // the tester. Only fires when backend explicitly flags the
+      // phone as an active-session coaching temp; real logins on
+      // non-prod (dev_otp mode) still show the badge but don't auto-
+      // fill to preserve the manual test flow.
+      if (isCoachingTemp && res.dev_otp) setOtp(res.dev_otp)
       setStage('otp'); setResend(30); setOtpEpoch(e => e + 1)
     } catch { setError(tAuth('errors.phoneSendFailed')) }
     finally { setBusy(false) }
@@ -1161,7 +1176,7 @@ export default function RootPage() {
                 onChange={e => setPhone(digitsOnly(e.target.value, 10))}/>
             </div>
             {error && <p className="text-red-500 text-sm px-1">{error}</p>}
-            {devOtp && <DevBadge code={devOtp}/>}
+            {devOtp && <DevBadge code={devOtp} coachingTemp={coachingTemp}/>}
             <Btn type="submit" disabled={busy || phone.length < 10}>
               {busy ? tAuth('sending') : tAuth('sendCode')}
             </Btn>
@@ -1171,7 +1186,7 @@ export default function RootPage() {
 
         {stage === 'otp' && (
           <form ref={otpFormRef} onSubmit={verifyCode} className="flex flex-col gap-4">
-            {devOtp && <DevBadge code={devOtp}/>}
+            {devOtp && <DevBadge code={devOtp} coachingTemp={coachingTemp}/>}
             <input type="text" inputMode="numeric" maxLength={6}
               value={otp} onChange={e => setOtp(digitsOnly(e.target.value, 6))}
               autoFocus required placeholder="· · · · · ·"
@@ -1190,7 +1205,13 @@ export default function RootPage() {
               {busy ? tAuth('checking') : tAuth('verify')}
             </Btn>
             <button type="button"
-              onClick={() => requestOtp('+91' + phone).then(r => { if (r.dev_otp) setDevOtp(r.dev_otp); setResend(30); setOtpEpoch(e => e + 1) })}
+              onClick={() => requestOtp('+91' + phone).then(r => {
+                if (r.dev_otp) setDevOtp(r.dev_otp)
+                const isCoachingTemp = !!r.coaching_temp
+                setCoachingTemp(isCoachingTemp)
+                if (isCoachingTemp && r.dev_otp) setOtp(r.dev_otp)
+                setResend(30); setOtpEpoch(e => e + 1)
+              })}
               disabled={resend > 0}
               className="text-center text-sm py-2 transition-opacity disabled:opacity-40"
               style={{ color: G }}>
@@ -1220,8 +1241,20 @@ export default function RootPage() {
   )
 }
 
-function DevBadge({ code }: { code: string }) {
+function DevBadge({ code, coachingTemp }: { code: string; coachingTemp?: boolean }) {
   const t = useTranslations('auth')
+  if (coachingTemp) {
+    return (
+      <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 text-center">
+        <p className="text-purple-800 text-[11px] font-semibold uppercase tracking-wider mb-1">
+          {t('coachingPracticeCaption')}
+        </p>
+        <p className="text-purple-900 text-2xl font-bold tracking-widest tabular-nums">
+          {code}
+        </p>
+      </div>
+    )
+  }
   return (
     <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
       <p className="text-amber-700 text-xs font-medium">{t('devCode')} <strong>{code}</strong></p>
