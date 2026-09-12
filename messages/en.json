@@ -555,7 +555,7 @@
       "setStartDate": "Set start date",
       "cropsSubscribed": "{count, plural, one {1 crop subscribed} other {# crops subscribed}}"
     },
-    "subscribeAnother": "+ Subscribe to another advisory"
+    "subscribeAnother": "+ Subscribe for another crop"
   },
   "crop": {
     "toast": {

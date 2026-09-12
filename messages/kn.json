@@ -544,7 +544,7 @@
       "setStartDate": "ಪ್ರಾರಂಭ ದಿನಾಂಕವನ್ನು ಹೊಂದಿಸಿ",
       "cropsSubscribed": "{count, plural, one {1 ಕ್ರಾಪ್ ಸಬ್‌ಸ್ಕ್ರೈಬ್ ಮಾಡಲಾಗಿದೆ} other {# ಬೆಳೆಗಳು ಸಬ್‌ಸ್ಕ್ರೈಬ್ ಆಗಿವೆ}}"
     },
-    "subscribeAnother": "+ ಇನ್ನೊಂದು ಸಲಹಾ ಪತ್ರಕ್ಕೆ ಚಂದಾದಾರರಾಗಿ"
+    "subscribeAnother": "+ ಇನ್ನೊಂದು ಬೆಳೆಗೆ ಚಂದಾದಾರರಾಗಿ"
   },
   "crop": {
     "toast": {
