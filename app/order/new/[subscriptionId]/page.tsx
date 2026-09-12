@@ -162,10 +162,18 @@ export default function OrderingScreenPage() {
     const timer = setTimeout(async () => {
       try {
         const pidsParam = practiceIds.length ? `&practice_ids=${encodeURIComponent(practiceIds.join(','))}` : ''
+        // Pass the current tab as intended_role so the backend resolves
+        // to the role the farmer is actually looking for when the
+        // target holds both DEALER + FACILITATOR (coaching students,
+        // multi-role users). Without this, the default precedence
+        // returns DEALER — a farmer on the Facilitators tab typing a
+        // phone would silently get routed as a dealer order.
+        const intendedRole = tab === 'facilitators' ? 'FACILITATOR' : 'DEALER'
         const { data } = await api.get<RecipientLookupResult>(
           `/farmer/subscriptions/${subscriptionId}/lookup-recipient`
             + `?phone=${encodeURIComponent('+91' + digits.slice(-10))}`
-            + `&category=${encodeURIComponent(orderType)}${pidsParam}`,
+            + `&category=${encodeURIComponent(orderType)}${pidsParam}`
+            + `&intended_role=${intendedRole}`,
         )
         setLookup(data)
       } catch {
@@ -176,7 +184,7 @@ export default function OrderingScreenPage() {
     }, 350)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customPhone, subscriptionId, orderType])
+  }, [customPhone, subscriptionId, orderType, tab])
 
   function startSendOrderFromLookup() {
     if (!lookup?.found || !lookup.user_id || !lookup.can_receive || !lookup.role) return
