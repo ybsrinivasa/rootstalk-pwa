@@ -815,10 +815,10 @@
     "payment": {
       "title": "ಬಹುತೇಕ ತಲುಪಿದ್ದೀರಿ!",
       "subtitle": "ಪಾವತಿ ವಿಧಾನ ಆರಿಸಿ",
-      "attributionPrefix": "₹ {price} ಪಾವತಿಸಲಾಗಿದೆ",
-      "attributionMiddle": "ಸಾಫ್ಟ್‌ವೇರ್ ಮೂಲಸೌಕರ್ಯಕ್ಕಾಗಿ. ಅದು",
+      "attributionPrefix": "₹ {price} — ಸಾಫ್ಟ್‌ವೇರ್ ಮೂಲಸೌಕರ್ಯಕ್ಕಾಗಿ",
+      "attributionMiddle": "ಗೆ ಪಾವತಿಯಾಗುತ್ತದೆ. ಇದು",
       "attributionNot": "ಅಲ್ಲ",
-      "attributionSuffix": "{company} ಗೆ ಪಾವತಿಸಲಾಗಿದೆ.",
+      "attributionSuffix": "{company} ಗೆ ಸೇರುವ ಪಾವತಿ.",
       "attributionCompanyFallback": "ಕಂಪನಿ",
       "payNow": "ಈಗಲೇ ₹ {price} ಪಾವತಿಸಿ",
       "payNowBody": "ಪಾವತಿಯ ಬಳಿಕ ತಕ್ಷಣ ಸಕ್ರಿಯಗೊಳ್ಳುತ್ತದೆ",
