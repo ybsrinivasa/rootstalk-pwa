@@ -589,7 +589,7 @@
       "label": "Crop area",
       "tentativeNote": "Tentative for now. Will be confirmed when you place your first order.",
       "softSetLabel": "Crop area · Tentative",
-      "softSetNote": "Currently set as your tentative area. You can revise it once more when you place your first DAS order at planting time.",
+      "softSetNote": "Currently set as your tentative area. You can revise it once more when you place your first DAS order.",
       "confirmedLabel": "Crop area · Confirmed",
       "lockedNote": "Locked on {date}. Volumes for all your inputs are calculated on this.",
       "unitAcres": "acres",
