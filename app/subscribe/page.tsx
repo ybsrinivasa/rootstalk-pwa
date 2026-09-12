@@ -999,7 +999,12 @@ function SubscribeFlow() {
                         not paying the company. Same disclaimer renders
                         on the Razorpay sheet description. */}
                     <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 mb-4 text-xs text-amber-800">
-                      {t('payment.attributionPrefix', { price: user?.subscription_amount_inr ?? 199 })} <strong>rootsTALK.in</strong> {t('payment.attributionMiddle')} <em>{t('payment.attributionNot')}</em> {t('payment.attributionSuffix', { company: company?.display_name || t('payment.attributionCompanyFallback') })}
+                      {t.rich('payment.attribution', {
+                        price: user?.subscription_amount_inr ?? 199,
+                        company: company?.display_name || t('payment.attributionCompanyFallback'),
+                        b: (chunks) => <strong>{chunks}</strong>,
+                        em: (chunks) => <em>{chunks}</em>,
+                      })}
                     </div>
 
                     <div className="space-y-3">

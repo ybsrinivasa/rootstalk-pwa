@@ -820,6 +820,7 @@
       "attributionNot": "ಅಲ್ಲ",
       "attributionSuffix": "{company} ಗೆ ಸೇರುವ ಪಾವತಿ.",
       "attributionCompanyFallback": "ಕಂಪನಿ",
+      "attribution": "₹ {price} — ಸಾಫ್ಟ್‌ವೇರ್ ಮೂಲಸೌಕರ್ಯಕ್ಕಾಗಿ <b>rootsTALK.in</b> ಗೆ ಪಾವತಿಯಾಗುತ್ತದೆ. ಇದು <b>{company}</b> ಗೆ ಸೇರುವ ಪಾವತಿ <em>ಅಲ್ಲ</em>.",
       "payNow": "ಈಗಲೇ ₹ {price} ಪಾವತಿಸಿ",
       "payNowBody": "ಪಾವತಿಯ ಬಳಿಕ ತಕ್ಷಣ ಸಕ್ರಿಯಗೊಳ್ಳುತ್ತದೆ",
       "payUpi": "UPI ಮೂಲಕ ಪಾವತಿಸಿ →",

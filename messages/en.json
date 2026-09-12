@@ -831,6 +831,7 @@
       "attributionNot": "not",
       "attributionSuffix": "paid to {company}.",
       "attributionCompanyFallback": "the company",
+      "attribution": "₹{price} is paid to <b>rootsTALK.in</b> for the software infrastructure. It is <em>not</em> paid to <b>{company}</b>.",
       "payNow": "Pay ₹{price} now",
       "payNowBody": "Instant activation after payment",
       "payUpi": "Pay with UPI →",
