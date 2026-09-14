@@ -144,7 +144,8 @@
       "overdueBadge": "{days, plural, one {# day overdue} other {# days overdue}}",
       "emptyTitle": "No credit accounts",
       "emptyHint": "When a dealer records credit or a payment against your name, it will appear here for you to confirm.",
-      "loadError": "Could not load your credit accounts. Pull down to retry."
+      "loadError": "Could not load your credit accounts. Pull down to retry.",
+      "prefsLink": "Notification preferences"
     },
     "perDealer": {
       "headerTitle": "Credit account",
@@ -250,7 +251,8 @@
       "notInstalledBadge": "Not installed",
       "emptyTitle": "No credit accounts yet",
       "emptyHint": "Open a farmer from your ledger and tap 'Enter opening balance' or 'Add credit' to start.",
-      "loadError": "Couldn't load your credit portfolio."
+      "loadError": "Couldn't load your credit portfolio.",
+      "prefsLink": "Notification preferences"
     },
     "dealerPerFarmer": {
       "headerTitle": "Credit account",
@@ -275,7 +277,8 @@
       "withdrawError": "Couldn't withdraw. Please try again.",
       "withdrawConfirm": "Withdraw this entry?",
       "loadError": "Couldn't load this credit account.",
-      "notFound": "This credit account no longer exists."
+      "notFound": "This credit account no longer exists.",
+      "generateStatement": "Generate PDF statement"
     },
     "openingBalanceSheet": {
       "title": "Enter opening balance",
@@ -309,6 +312,28 @@
       "OFTEN_LATE": "Often late",
       "UNRELIABLE": "Unreliable",
       "NEW_NO_HISTORY": "New — not enough history"
+    },
+    "prefs": {
+      "headerTitle": "Notifications",
+      "newEntryTitle": "Instant alerts",
+      "newEntryHintFarmer": "Push notification when your dealer records a new credit or payment, or confirms your entry.",
+      "newEntryHintDealer": "Push notification when a farmer records a new payment or confirms your entry.",
+      "dailyTitle": "Daily evening digest",
+      "dailyHintDealer": "One push each evening summarising today's activity — payments received, entries awaiting your action, and credits due tomorrow.",
+      "weeklyTitle": "Weekly summary",
+      "weeklyHintFarmer": "A Sunday-morning summary of what you owe, with any credits due soon or already overdue.",
+      "weeklyHintDealer": "A Monday-morning summary of your outstanding book with a highlight of long-overdue farmers."
+    },
+    "statementSheet": {
+      "title": "Generate statement",
+      "help": "A dealer-signed PDF statement of this account for the date range you pick. Only confirmed entries are included.",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "generate": "Generate PDF",
+      "shareTitle": "Credit statement",
+      "badRange": "'From' date must be before 'To' date.",
+      "genericError": "Couldn't generate the statement. Please try again.",
+      "cancel": "Cancel"
     }
   },
   "diagnose": {

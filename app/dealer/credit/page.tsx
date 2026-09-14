@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -175,6 +176,14 @@ export default function DealerCreditPortfolioPage() {
             </div>
           </>
         )}
+
+        {/* Notification prefs link — always shown at the bottom */}
+        <div className="mt-6 text-center">
+          <Link href="/dealer/credit/prefs"
+            className="text-xs text-[#7D4196] font-medium underline">
+            {t('prefsLink')}
+          </Link>
+        </div>
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
     </div>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -145,6 +146,14 @@ export default function FarmerCreditPortfolioPage() {
             )}
           </>
         )}
+
+        {/* Notification prefs link */}
+        <div className="mt-6 text-center">
+          <Link href="/credit/prefs"
+            className="text-xs text-[#3A7D44] font-medium underline">
+            {t('prefsLink')}
+          </Link>
+        </div>
       </div>
       <BottomNav color="#3A7D44" />
     </div>

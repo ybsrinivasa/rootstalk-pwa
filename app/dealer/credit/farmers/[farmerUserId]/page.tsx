@@ -105,7 +105,7 @@ export default function DealerPerFarmerCreditPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [busyEntryId, setBusyEntryId] = useState<string | null>(null)
-  const [sheet, setSheet] = useState<'opening' | 'credit' | 'payment' | null>(null)
+  const [sheet, setSheet] = useState<'opening' | 'credit' | 'payment' | 'statement' | null>(null)
   const [disputeEntryId, setDisputeEntryId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
@@ -369,6 +369,16 @@ export default function DealerPerFarmerCreditPage() {
             )}
           </div>
         )}
+
+        {/* Statement + prefs links */}
+        {detail.entries.length > 0 && (
+          <div className="mt-6 flex items-center justify-center gap-4">
+            <button onClick={() => setSheet('statement')}
+              className="text-xs text-[#7D4196] font-medium underline">
+              {t('generateStatement')}
+            </button>
+          </div>
+        )}
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
 
@@ -383,6 +393,11 @@ export default function DealerPerFarmerCreditPage() {
       {sheet === 'payment' && (
         <DealerPaymentSheet farmerUserId={farmerUserId} onClose={() => setSheet(null)}
           onSaved={() => { setSheet(null); load() }} />
+      )}
+      {sheet === 'statement' && (
+        <StatementSheet farmerUserId={farmerUserId}
+          farmerName={detail.counterparty_name}
+          onClose={() => setSheet(null)} />
       )}
       {disputeEntryId && (
         <DisputeSheet
@@ -739,6 +754,92 @@ function DisputeSheet({
       <SheetActions cancelLabel={t('cancel')} submitLabel={t('submit')}
         onCancel={onClose} onSubmit={() => onSubmit(reason)}
         busy={busy} canSubmit={!!reason.trim()} accent="red" />
+    </SheetShell>
+  )
+}
+
+
+function StatementSheet({
+  farmerUserId, farmerName, onClose,
+}: {
+  farmerUserId: string
+  farmerName: string | null
+  onClose: () => void
+}) {
+  const t = useTranslations('credit.statementSheet')
+  const today = new Date()
+  const defaultFrom = new Date(today.getFullYear(), today.getMonth() - 3, 1).toISOString().slice(0, 10)
+  const defaultTo = today.toISOString().slice(0, 10)
+  const [fromDate, setFromDate] = useState(defaultFrom)
+  const [toDate, setToDate] = useState(defaultTo)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function generate() {
+    setError('')
+    if (fromDate > toDate) { setError(t('badRange')); return }
+    setBusy(true)
+    try {
+      const res = await api.get(
+        `/dealer/credit/farmers/${farmerUserId}/statement.pdf`,
+        {
+          params: { from: fromDate, to: toDate },
+          responseType: 'blob',
+        },
+      )
+      const blob = new Blob([res.data], { type: 'application/pdf' })
+      const url = URL.createObjectURL(blob)
+      // Try sharing first (mobile-native), then fall back to open + download.
+      const nav = navigator as Navigator & {
+        share?: (data: ShareData) => Promise<void>
+        canShare?: (data: ShareData) => boolean
+      }
+      const file = new File(
+        [blob],
+        `statement-${(farmerName || 'farmer').replace(/\s+/g, '_')}-${fromDate}-to-${toDate}.pdf`,
+        { type: 'application/pdf' },
+      )
+      const shareData: ShareData = {
+        title: t('shareTitle'),
+        files: [file],
+      } as ShareData
+      if (nav.share && (!nav.canShare || nav.canShare(shareData))) {
+        try {
+          await nav.share(shareData)
+          onClose()
+          return
+        } catch { /* user cancelled — fall through */ }
+      }
+      window.open(url, '_blank')
+      onClose()
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: unknown } }
+      setError(t('genericError'))
+    } finally { setBusy(false) }
+  }
+
+  return (
+    <SheetShell title={t('title')} onClose={onClose} busy={busy}>
+      <p className="text-xs text-[#7A8C7E] mt-1 leading-snug">
+        {t('help')}
+      </p>
+      <label className="block mt-4">
+        <span className="text-xs text-[#7A8C7E] uppercase tracking-wider font-medium">{t('fromLabel')}</span>
+        <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)}
+          max={toDate}
+          className="w-full mt-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#7D4196]" />
+      </label>
+      <label className="block mt-3">
+        <span className="text-xs text-[#7A8C7E] uppercase tracking-wider font-medium">{t('toLabel')}</span>
+        <input type="date" value={toDate} onChange={e => setToDate(e.target.value)}
+          min={fromDate}
+          max={new Date().toISOString().slice(0, 10)}
+          className="w-full mt-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm outline-none focus:border-[#7D4196]" />
+      </label>
+      {error && <p className="text-xs text-red-700 mt-3">{error}</p>}
+      <SheetActions cancelLabel={t('cancel')} submitLabel={t('generate')}
+        onCancel={onClose} onSubmit={generate} busy={busy}
+        canSubmit={!!fromDate && !!toDate} />
     </SheetShell>
   )
 }
