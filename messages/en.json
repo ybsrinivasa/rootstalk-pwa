@@ -1897,8 +1897,8 @@
       "emptyTitle": "No farmers yet",
       "emptyHint": "Add a purchase entry to start building your ledger.",
       "filter": {
-        "active": "Active Crops",
-        "completed": "Completed",
+        "recent": "Recent",
+        "older": "Older",
         "all": "All"
       },
       "noEntriesForFilter": "No entries for this filter.",
@@ -1958,7 +1958,9 @@
       "removeItem": "Remove",
       "addAnotherItem": "+ Add another item",
       "itemCapReached": "Maximum {max} items per batch. Save and start a new one.",
-      "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}"
+      "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}",
+      "emptyRecent": "No purchases in the last 90 days. Tap Older or All to see earlier activity.",
+      "emptyOlder": "No purchases older than 90 days."
     },
     "payments": {
       "headerTitle": "Farmer Payments",

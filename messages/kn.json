@@ -1680,8 +1680,8 @@
       "emptyTitle": "ಇನ್ನೂ ರೈತರಿಲ್ಲ",
       "emptyHint": "ನಿಮ್ಮ ಖಾತೆ ನಿರ್ಮಿಸಲು ಖರೀದಿ ನಮೂದನ್ನು ಸೇರಿಸಿ.",
       "filter": {
-        "active": "ಸಕ್ರಿಯ ಬೆಳೆಗಳು",
-        "completed": "ಪೂರ್ಣಗೊಂಡ",
+        "recent": "ಇತ್ತೀಚಿನ",
+        "older": "ಹಳೆಯದು",
         "all": "ಎಲ್ಲಾ"
       },
       "noEntriesForFilter": "ಈ ಫಿಲ್ಟರ್‌ಗೆ ನಮೂದುಗಳಿಲ್ಲ.",
@@ -1741,7 +1741,9 @@
       "removeItem": "Remove",
       "addAnotherItem": "+ Add another item",
       "itemCapReached": "Maximum {max} items per batch. Save and start a new one.",
-      "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}"
+      "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}",
+      "emptyRecent": "ಕಳೆದ 90 ದಿನಗಳಲ್ಲಿ ಯಾವುದೇ ಖರೀದಿಗಳಿಲ್ಲ. ಹಳೆಯ ಚಟುವಟಿಕೆಯನ್ನು ನೋಡಲು ಹಳೆಯದು ಅಥವಾ ಎಲ್ಲಾ ಟ್ಯಾಪ್ ಮಾಡಿ.",
+      "emptyOlder": "90 ದಿನಗಳಿಗಿಂತ ಹಳೆಯ ಯಾವುದೇ ಖರೀದಿಗಳಿಲ್ಲ."
     },
     "payments": {
       "headerTitle": "ರೈತರ ಪಾವತಿಗಳು",

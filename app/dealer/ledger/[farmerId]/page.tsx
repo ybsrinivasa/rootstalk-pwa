@@ -9,7 +9,7 @@ import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
 type LedgerSource = 'own' | 'own_manual' | 'other_shop'
-type FilterKey = 'active' | 'completed' | 'all'
+type FilterKey = 'recent' | 'older' | 'all'
 
 interface LedgerEntry {
   source: LedgerSource
@@ -75,7 +75,7 @@ export default function DealerLedgerDetailPage() {
   const locale = useLocale()
   const t = useTranslations('dealer.ledger')
   const [detail, setDetail] = useState<FarmerDetail | null>(null)
-  const [filter, setFilter] = useState<FilterKey>('active')
+  const [filter, setFilter] = useState<FilterKey>('recent')
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [showNoteModal, setShowNoteModal] = useState(false)
@@ -234,7 +234,7 @@ export default function DealerLedgerDetailPage() {
 
             {/* Filter tabs */}
             <div className="mt-3 flex gap-2">
-              {(['active', 'completed', 'all'] as FilterKey[]).map(k => (
+              {(['recent', 'older', 'all'] as FilterKey[]).map(k => (
                 <button
                   key={k}
                   onClick={() => setFilter(k)}
@@ -253,7 +253,13 @@ export default function DealerLedgerDetailPage() {
             {detail.entries.length === 0 ? (
               <div className="mt-6 text-center py-12 bg-white rounded-2xl border border-[#DDD0B8]">
                 <span className="text-3xl">📒</span>
-                <p className="text-[#7A8C7E] text-sm mt-2">{t('noEntriesForFilter')}</p>
+                <p className="text-[#7A8C7E] text-sm mt-2">
+                  {filter === 'recent'
+                    ? t('emptyRecent')
+                    : filter === 'older'
+                      ? t('emptyOlder')
+                      : t('noEntriesForFilter')}
+                </p>
               </div>
             ) : (
               <div className="mt-3 space-y-2">
