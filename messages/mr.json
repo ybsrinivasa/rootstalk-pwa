@@ -127,7 +127,8 @@
     "alerts": "सूचना",
     "pickup": "पिकअप",
     "dashboard": "डॅशबोर्ड",
-    "subscriptions": "सदस्यता"
+    "subscriptions": "सदस्यता",
+    "credit": "Credit"
   },
   "diagnose": {
     "headerTitle": "पिकाच्या समस्येचे निदान करा",
@@ -3429,5 +3430,22 @@
     "manualNote": "जर कोणताही पर्याय दिसत नसेल, तर काही सेकंद थांबा — Chrome अजून तयार करत असू शकते.",
     "yourBrowser": "तुमच्या ब्राउझर",
     "close": "बंद करा"
+  },
+  "credit": {
+    "portfolio": {
+      "headerTitle": "My Credit",
+      "totalOwed": "Total you owe",
+      "acrossDealers": "across {count, plural, one {# dealer} other {# dealers}}",
+      "youOwe": "You owe",
+      "theyOweYou": "In your favour",
+      "settled": "Settled",
+      "pendingSectionTitle": "{count, plural, one {# needs your action} other {# need your action}}",
+      "otherDealers": "Other dealers",
+      "pendingBadge": "{count, plural, one {# pending} other {# pending}}",
+      "overdueBadge": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "emptyTitle": "No credit accounts",
+      "emptyHint": "When a dealer records credit or a payment against your name, it will appear here for you to confirm.",
+      "loadError": "Could not load your credit accounts. Pull down to retry."
+    }
   }
 }

@@ -127,7 +127,8 @@
     "alerts": "അലേർട്ടുകൾ",
     "pickup": "പുരോഗമിക്കുക",
     "dashboard": "ഡാഷ്‌ബോർഡ്",
-    "subscriptions": "സബ്‌സ്‌ക്രിപ്‌ഷനുകൾ"
+    "subscriptions": "സബ്‌സ്‌ക്രിപ്‌ഷനുകൾ",
+    "credit": "Credit"
   },
   "diagnose": {
     "headerTitle": "വിള പ്രശ്നം നിർണ്ണയിക്കുക",
@@ -3429,5 +3430,22 @@
     "manualNote": "ഒരു ഓപ്‌ഷനും കാണിക്കുന്നില്ലെങ്കിൽ, കുറച്ച് നിമിഷങ്ങൾ കാത്തിരിക്കുക — Chrome ഇപ്പോഴും തയ്യാറാക്കുന്നുണ്ടാകാം.",
     "yourBrowser": "നിങ്ങളുടെ ബ്രൗസർ",
     "close": "അടയ്ക്കുക"
+  },
+  "credit": {
+    "portfolio": {
+      "headerTitle": "My Credit",
+      "totalOwed": "Total you owe",
+      "acrossDealers": "across {count, plural, one {# dealer} other {# dealers}}",
+      "youOwe": "You owe",
+      "theyOweYou": "In your favour",
+      "settled": "Settled",
+      "pendingSectionTitle": "{count, plural, one {# needs your action} other {# need your action}}",
+      "otherDealers": "Other dealers",
+      "pendingBadge": "{count, plural, one {# pending} other {# pending}}",
+      "overdueBadge": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "emptyTitle": "No credit accounts",
+      "emptyHint": "When a dealer records credit or a payment against your name, it will appear here for you to confirm.",
+      "loadError": "Could not load your credit accounts. Pull down to retry."
+    }
   }
 }

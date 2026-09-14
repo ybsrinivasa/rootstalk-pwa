@@ -127,7 +127,8 @@
     "alerts": "எச்சரிக்கைகள்",
     "pickup": "பிக்கப்",
     "dashboard": "டாஷ்போர்டு",
-    "subscriptions": "சந்தாக்கள்"
+    "subscriptions": "சந்தாக்கள்",
+    "credit": "Credit"
   },
   "diagnose": {
     "headerTitle": "பயிர் பிரச்சனையை கண்டறியவும்",
@@ -3429,5 +3430,22 @@
     "manualNote": "எதுவும் காணப்படவில்லை என்றால், சில வினாடிகள் காத்திருக்கவும் — Chrome இன்னும் தயார் செய்கிறதாக இருக்கலாம்.",
     "yourBrowser": "உங்கள் உலாவி",
     "close": "மூடு"
+  },
+  "credit": {
+    "portfolio": {
+      "headerTitle": "My Credit",
+      "totalOwed": "Total you owe",
+      "acrossDealers": "across {count, plural, one {# dealer} other {# dealers}}",
+      "youOwe": "You owe",
+      "theyOweYou": "In your favour",
+      "settled": "Settled",
+      "pendingSectionTitle": "{count, plural, one {# needs your action} other {# need your action}}",
+      "otherDealers": "Other dealers",
+      "pendingBadge": "{count, plural, one {# pending} other {# pending}}",
+      "overdueBadge": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "emptyTitle": "No credit accounts",
+      "emptyHint": "When a dealer records credit or a payment against your name, it will appear here for you to confirm.",
+      "loadError": "Could not load your credit accounts. Pull down to retry."
+    }
   }
 }

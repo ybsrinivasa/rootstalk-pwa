@@ -127,7 +127,8 @@
     "alerts": "హెచ్చరికలు",
     "pickup": "పికప్",
     "dashboard": "డాష్‌బోర్డ్",
-    "subscriptions": "సభ్యత్వాలు"
+    "subscriptions": "సభ్యత్వాలు",
+    "credit": "Credit"
   },
   "diagnose": {
     "headerTitle": "పంట సమస్యను నిర్ధారించండి",
@@ -3429,5 +3430,22 @@
     "manualNote": "ఏ ఎంపిక కనిపించకపోతే, కొన్ని సెకన్లు వేచి ఉండండి — Chrome ఇంకా సిద్ధం చేస్తుండవచ్చు.",
     "yourBrowser": "మీ బ్రౌజర్",
     "close": "మూసివేయి"
+  },
+  "credit": {
+    "portfolio": {
+      "headerTitle": "My Credit",
+      "totalOwed": "Total you owe",
+      "acrossDealers": "across {count, plural, one {# dealer} other {# dealers}}",
+      "youOwe": "You owe",
+      "theyOweYou": "In your favour",
+      "settled": "Settled",
+      "pendingSectionTitle": "{count, plural, one {# needs your action} other {# need your action}}",
+      "otherDealers": "Other dealers",
+      "pendingBadge": "{count, plural, one {# pending} other {# pending}}",
+      "overdueBadge": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "emptyTitle": "No credit accounts",
+      "emptyHint": "When a dealer records credit or a payment against your name, it will appear here for you to confirm.",
+      "loadError": "Could not load your credit accounts. Pull down to retry."
+    }
   }
 }

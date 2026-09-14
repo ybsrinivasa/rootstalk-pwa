@@ -127,7 +127,8 @@
     "alerts": "সতর্কতা",
     "pickup": "পিকআপ",
     "dashboard": "ড্যাশবোর্ড",
-    "subscriptions": "সাবস্ক্রিপশন"
+    "subscriptions": "সাবস্ক্রিপশন",
+    "credit": "Credit"
   },
   "diagnose": {
     "headerTitle": "ফসলের সমস্যা নির্ণয় করুন",
@@ -3429,5 +3430,22 @@
     "manualNote": "যদি কোনো বিকল্প না দেখায়, কয়েক সেকেন্ড অপেক্ষা করুন — Chrome এখনও প্রস্তুত করছে হতে পারে।",
     "yourBrowser": "আপনার ব্রাউজার",
     "close": "বন্ধ করুন"
+  },
+  "credit": {
+    "portfolio": {
+      "headerTitle": "My Credit",
+      "totalOwed": "Total you owe",
+      "acrossDealers": "across {count, plural, one {# dealer} other {# dealers}}",
+      "youOwe": "You owe",
+      "theyOweYou": "In your favour",
+      "settled": "Settled",
+      "pendingSectionTitle": "{count, plural, one {# needs your action} other {# need your action}}",
+      "otherDealers": "Other dealers",
+      "pendingBadge": "{count, plural, one {# pending} other {# pending}}",
+      "overdueBadge": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "emptyTitle": "No credit accounts",
+      "emptyHint": "When a dealer records credit or a payment against your name, it will appear here for you to confirm.",
+      "loadError": "Could not load your credit accounts. Pull down to retry."
+    }
   }
 }

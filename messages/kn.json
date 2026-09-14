@@ -127,7 +127,8 @@
     "alerts": "ಸೂಚನೆಗಳು",
     "pickup": "ಪಿಕಪ್",
     "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
-    "subscriptions": "ಚಂದಾದಾರಿಕೆಗಳು"
+    "subscriptions": "ಚಂದಾದಾರಿಕೆಗಳು",
+    "credit": "ಸಾಲ"
   },
   "diagnose": {
     "headerTitle": "ಬೆಳೆ ಸಮಸ್ಯೆಯನ್ನು ಪತ್ತೆಹಚ್ಚಿ",
@@ -3784,5 +3785,22 @@
     "cta": "ಫೆಸಿಲಿಟೇಟರ್ ಆಗಿ ನೋಂದಾಯಿಸಿ",
     "cancel": "ರದ್ದುಮಾಡಿ",
     "errorFallback": "ನಿಮ್ಮನ್ನು ಫೆಸಿಲಿಟೇಟರ್ ಆಗಿ ನೋಂದಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+  },
+  "credit": {
+    "portfolio": {
+      "headerTitle": "My Credit",
+      "totalOwed": "Total you owe",
+      "acrossDealers": "across {count, plural, one {# dealer} other {# dealers}}",
+      "youOwe": "You owe",
+      "theyOweYou": "In your favour",
+      "settled": "Settled",
+      "pendingSectionTitle": "{count, plural, one {# needs your action} other {# need your action}}",
+      "otherDealers": "Other dealers",
+      "pendingBadge": "{count, plural, one {# pending} other {# pending}}",
+      "overdueBadge": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "emptyTitle": "No credit accounts",
+      "emptyHint": "When a dealer records credit or a payment against your name, it will appear here for you to confirm.",
+      "loadError": "Could not load your credit accounts. Pull down to retry."
+    }
   }
 }
