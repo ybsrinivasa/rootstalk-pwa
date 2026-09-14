@@ -1732,7 +1732,16 @@
       "notes": "ಟಿಪ್ಪಣಿಗಳು (ಐಚ್ಛಿಕ)",
       "saveEntry": "ಖರೀದಿ ನಮೂದನ್ನು ಉಳಿಸಿ",
       "saveFailed": "ಉಳಿಸಲು ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-      "creditAccountCta": "View credit account"
+      "creditAccountCta": "View credit account",
+      "addSaleForFarmerCta": "Add sale for this farmer",
+      "recordingSaleFor": "Recording sale for",
+      "changeFarmer": "Change farmer",
+      "saleDateSharedHint": "This date applies to every item below.",
+      "itemNumberLabel": "Item {n}",
+      "removeItem": "Remove",
+      "addAnotherItem": "+ Add another item",
+      "itemCapReached": "Maximum {max} items per batch. Save and start a new one.",
+      "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}"
     },
     "payments": {
       "headerTitle": "ರೈತರ ಪಾವತಿಗಳು",

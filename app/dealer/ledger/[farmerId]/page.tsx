@@ -220,6 +220,18 @@ export default function DealerLedgerDetailPage() {
               </Link>
             </div>
 
+            {/* Add Sale for this farmer — v2 entry point (2026-09-14).
+                Routes to the multi-item Add Sale form pre-populated
+                with this farmer, so the dealer skips phone lookup. */}
+            <Link
+              href={`/dealer/ledger/add-sale?farmer_user_id=${farmerId}`}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-white text-sm font-semibold"
+              style={{ background: '#7D4196' }}
+            >
+              <span className="text-lg leading-none">+</span>
+              {t('addSaleForFarmerCta')}
+            </Link>
+
             {/* Filter tabs */}
             <div className="mt-3 flex gap-2">
               {(['active', 'completed', 'all'] as FilterKey[]).map(k => (

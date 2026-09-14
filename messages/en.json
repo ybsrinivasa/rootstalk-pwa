@@ -1949,7 +1949,16 @@
       "notes": "Notes (optional)",
       "saveEntry": "Save Purchase Entry",
       "saveFailed": "Couldn't save. Try again.",
-      "creditAccountCta": "View credit account"
+      "creditAccountCta": "View credit account",
+      "addSaleForFarmerCta": "Add sale for this farmer",
+      "recordingSaleFor": "Recording sale for",
+      "changeFarmer": "Change farmer",
+      "saleDateSharedHint": "This date applies to every item below.",
+      "itemNumberLabel": "Item {n}",
+      "removeItem": "Remove",
+      "addAnotherItem": "+ Add another item",
+      "itemCapReached": "Maximum {max} items per batch. Save and start a new one.",
+      "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}"
     },
     "payments": {
       "headerTitle": "Farmer Payments",
