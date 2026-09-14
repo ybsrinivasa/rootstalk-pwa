@@ -46,6 +46,7 @@ const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType 
   ],
   DEALER: [
     { href: '/dealer/orders',           key: 'orders',   Icon: BoxIcon },
+    { href: '/dealer/credit',           key: 'credit',   Icon: CreditIcon },
     { href: '/dealer/payments',         key: 'payments', Icon: PaymentIcon },
     { href: '/dealer/alerts-incoming',  key: 'alerts',   Icon: BellIcon },
   ],

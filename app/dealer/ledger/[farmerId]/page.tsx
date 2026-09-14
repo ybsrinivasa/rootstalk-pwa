@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { useLocale, useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -209,6 +210,14 @@ export default function DealerLedgerDetailPage() {
                   {detail.note || <span className="text-[#8A6D0A] italic">{t('addNote')}</span>}
                 </p>
               </button>
+              {/* Credit account link — v1 CMS entry point from Ledger. */}
+              <Link
+                href={`/dealer/credit/farmers/${farmerId}`}
+                className="mt-2 w-full flex items-center justify-between px-3 py-2 rounded-xl bg-[#F5EDF7] border border-[#E3D0EC]"
+              >
+                <span className="text-sm text-[#7D4196] font-medium">{t('creditAccountCta')}</span>
+                <span className="text-[#7D4196]">→</span>
+              </Link>
             </div>
 
             {/* Filter tabs */}
