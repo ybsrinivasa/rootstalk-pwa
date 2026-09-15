@@ -120,11 +120,25 @@ export default function DealerCreditPortfolioPage() {
             <span className="text-4xl">💳</span>
             <p className="text-[#7A8C7E] font-medium mt-3">{t('emptyTitle')}</p>
             <p className="text-[#7A8C7E] text-xs mt-2 max-w-xs mx-auto">{t('emptyHint')}</p>
+            <Link href="/dealer/credit/new"
+              className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-2xl text-white text-sm font-semibold"
+              style={{ background: '#7D4196' }}>
+              <span className="text-lg leading-none">+</span>
+              {t('newCreditCta')}
+            </Link>
           </div>
         ) : (
           <>
+            {/* + New credit for a farmer — dedicated entry point for
+                farmers who aren't yet in the portfolio (walk-in). */}
+            <Link href="/dealer/credit/new"
+              className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-[#DDD0B8] text-sm font-medium text-[#7D4196] hover:bg-white/50">
+              <span className="text-lg leading-none">+</span>
+              {t('newCreditCta')}
+            </Link>
+
             {/* Total outstanding */}
-            <div className="mt-4 bg-white rounded-2xl border border-[#EEE4D2] p-4 shadow-sm">
+            <div className="mt-3 bg-white rounded-2xl border border-[#EEE4D2] p-4 shadow-sm">
               <p className="text-[#7A8C7E] text-xs uppercase tracking-wider font-medium">{t('totalOutstanding')}</p>
               <p className="text-3xl font-bold text-[#6B3F1F] mt-1">
                 {formatRupees(portfolio!.total_outstanding_paise, locale)}

@@ -3553,7 +3553,8 @@
       "emptyTitle": "No credit accounts yet",
       "emptyHint": "Open a farmer from your ledger and tap 'Enter opening balance' or 'Add credit' to start.",
       "loadError": "Couldn't load your credit portfolio.",
-      "prefsLink": "Notification preferences"
+      "prefsLink": "Notification preferences",
+      "newCreditCta": "New credit for a farmer"
     },
     "dealerPerFarmer": {
       "headerTitle": "Credit account",
@@ -3635,6 +3636,11 @@
       "badRange": "'From' date must be before 'To' date.",
       "genericError": "Couldn't generate the statement. Please try again.",
       "cancel": "Cancel"
+    },
+    "newAccount": {
+      "headerTitle": "New credit account",
+      "intro": "Enter the farmer's phone number. If they're already in the system we'll open their credit account directly. Otherwise we'll ask for a few details to add them.",
+      "createAndContinue": "Save & open credit account"
     }
   }
 }
