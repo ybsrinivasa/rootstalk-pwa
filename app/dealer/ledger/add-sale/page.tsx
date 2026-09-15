@@ -158,14 +158,22 @@ function AddSaleInner() {
     }
   }
 
-  const resetLookup = () => {
-    if (preselectedFarmerId) {
-      // Escape hatch — dealer wants to record for a different farmer;
-      // drop the query param + reset to phone-entry.
-      router.replace('/dealer/ledger/add-sale')
-    }
+  // Fires on every phone keystroke — invalidates the previous lookup
+  // result so the user has to tap Lookup again after editing. Does
+  // NOT clear the phone itself (that's what the user is typing into).
+  const invalidateLookup = () => {
     setLookupState('idle'); setExistingUser(null); setError(null)
     setFarmerName(''); setStateId(''); setDistrictId(''); setSubDistrict('')
+  }
+
+  // Full reset — called only from the explicit Change / Change farmer
+  // buttons. Also drops the ?farmer_user_id= query param when the
+  // dealer arrived via the farmer-scoped entry point.
+  const changeFarmer = () => {
+    if (preselectedFarmerId) {
+      router.replace('/dealer/ledger/add-sale')
+    }
+    invalidateLookup()
     setPhone('')
   }
 
@@ -247,7 +255,7 @@ function AddSaleInner() {
               <input
                 type="tel" inputMode="tel"
                 value={phone}
-                onChange={e => { setPhone(normalisePhoneInput(e.target.value)); resetLookup() }}
+                onChange={e => { setPhone(normalisePhoneInput(e.target.value)); invalidateLookup() }}
                 placeholder="+91 98xxxxxxxx"
                 disabled={lookupState === 'found' || lookupState === 'new'}
                 className="flex-1 px-3 py-2 border border-[#DDD0B8] rounded-xl text-sm focus:outline-none focus:border-[#7D4196] disabled:bg-[#F5F0E8]" />
@@ -259,7 +267,7 @@ function AddSaleInner() {
                 </button>
               )}
               {(lookupState === 'found' || lookupState === 'new') && (
-                <button onClick={resetLookup}
+                <button onClick={changeFarmer}
                   className="px-4 py-2 rounded-xl border border-[#DDD0B8] text-sm text-[#6B3F1F]">
                   {t('change')}
                 </button>
@@ -287,7 +295,7 @@ function AddSaleInner() {
                 </p>
               )}
             </div>
-            <button onClick={resetLookup}
+            <button onClick={changeFarmer}
               className="text-xs text-[#7D4196] font-medium flex-shrink-0">
               {t('changeFarmer')}
             </button>
