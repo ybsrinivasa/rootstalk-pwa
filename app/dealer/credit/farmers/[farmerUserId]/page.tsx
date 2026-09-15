@@ -191,9 +191,41 @@ export default function DealerPerFarmerCreditPage() {
     <div className="min-h-screen bg-[#F5F0E8]">
       <PWAHeader title={detail.counterparty_name || t('headerTitle')} activeRole="DEALER" back="/dealer/credit" />
       <div className="pt-16 pb-32 px-4 max-w-lg mx-auto">
+        {/* Farmer identification — name + phone + Call. Repeats the
+            header title on purpose; the top-bar title is easy to miss
+            on this dense screen. */}
+        <div className="mt-4 bg-white rounded-2xl p-3 border border-[#DDD0B8] shadow-sm flex items-center gap-3">
+          <div className="w-11 h-11 rounded-full bg-[#F5F0E8] flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {detail.counterparty_photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={detail.counterparty_photo_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[#7D4196] font-semibold text-sm">
+                {(detail.counterparty_name || '?').trim().charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-[#6B3F1F] truncate">
+              {detail.counterparty_name || t('unnamedFarmerFallback')}
+            </p>
+            {detail.counterparty_phone && (
+              <p className="text-xs text-[#7A8C7E]">{detail.counterparty_phone}</p>
+            )}
+          </div>
+          {detail.counterparty_phone && (
+            <a
+              href={`tel:${detail.counterparty_phone}`}
+              aria-label={t('callFarmerAria')}
+              className="flex-shrink-0 w-11 h-11 rounded-full bg-green-500 text-white flex items-center justify-center active:scale-95 transition-transform">
+              <span className="text-lg">📞</span>
+            </a>
+          )}
+        </div>
+
         {/* Not-registered banner */}
         {detail.is_farmer_registered === false && (
-          <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-3">
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-2xl p-3">
             <p className="text-xs font-semibold text-amber-900 uppercase tracking-wider">
               {t('notInstalledTitle')}
             </p>

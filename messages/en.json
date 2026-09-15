@@ -279,7 +279,9 @@
       "withdrawConfirm": "Withdraw this entry?",
       "loadError": "Couldn't load this credit account.",
       "notFound": "This credit account no longer exists.",
-      "generateStatement": "Generate PDF statement"
+      "generateStatement": "Generate PDF statement",
+      "unnamedFarmerFallback": "Unnamed farmer",
+      "callFarmerAria": "Call farmer"
     },
     "openingBalanceSheet": {
       "title": "Enter opening balance",
