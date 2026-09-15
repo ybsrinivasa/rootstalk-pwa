@@ -4010,9 +4010,14 @@
     },
     "newAccount": {
       "headerTitle": "New credit account",
-      "intro": "Enter the farmer's phone number. If they're already in the system we'll open their credit account directly. Otherwise we'll ask for a few details to add them.",
+      "intro": "Enter the farmer's phone number. If they're already on RootsTalk we'll open their credit account. If not, we'll help you send them an install link.",
       "createAndContinue": "Save & open credit account",
-      "openCreditAccount": "Open credit account"
+      "openCreditAccount": "Open credit account",
+      "notEligibleTitle": "This farmer isn't on RootsTalk yet",
+      "notEligibleBody": "Get them to install and register on RootsTalk first, then you can open their credit account. Tap the button below to send them an install link from your phone.",
+      "sendInstallSmsCta": "Send install link to {phone}",
+      "smsHint": "This opens your SMS app with the message ready. Just tap Send.",
+      "smsBody": "Please install RootsTalk to manage the credit you have with me: {url}"
     }
   }
 }
