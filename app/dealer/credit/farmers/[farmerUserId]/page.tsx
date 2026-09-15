@@ -180,6 +180,16 @@ export default function DealerPerFarmerCreditPage() {
   const pendingFarmerEntries = detail.entries.filter(
     e => e.status === 'PROPOSED' && e.initiated_by === 'FARMER',
   )
+  // Confirm-before-fresh-credit rule: if the farmer has one or more
+  // pending payment claims awaiting the dealer's confirmation, the
+  // dealer must confirm or dispute those first before extending fresh
+  // credit — otherwise the fresh credit is sized against a stale
+  // balance. Only Add-credit is blocked; Record-credit-repayment and
+  // Statement stay usable.
+  const pendingFarmerPayments = pendingFarmerEntries.filter(
+    e => e.entry_type === 'PAYMENT_MADE',
+  )
+  const blockAddCredit = pendingFarmerPayments.length > 0
   const myPendingEntries = detail.entries.filter(
     e => (e.status === 'PROPOSED' || e.status === 'DISPUTED') && e.initiated_by === 'DEALER',
   )
@@ -307,27 +317,11 @@ export default function DealerPerFarmerCreditPage() {
           </div>
         ) : null}
 
-        {/* Action buttons */}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button onClick={() => setSheet('credit')}
-            className="bg-[#7D4196] text-white text-sm font-semibold py-3 rounded-2xl">
-            {t('addCredit')}
-          </button>
-          <button onClick={() => setSheet('payment')}
-            className="bg-green-700 text-white text-sm font-semibold py-3 rounded-2xl">
-            {t('recordPayment')}
-          </button>
-          {detail.can_add_opening_balance && (
-            <button onClick={() => setSheet('opening')}
-              className="col-span-2 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-3 rounded-2xl">
-              {t('enterOpeningBalance')}
-            </button>
-          )}
-        </div>
-
-        {/* Pending farmer entries — top */}
+        {/* Pending farmer entries — moved above the action grid so the
+            resolve-first rule is visually obvious when Add credit is
+            disabled. */}
         {pendingFarmerEntries.length > 0 && (
-          <div className="mt-6">
+          <div className="mt-4">
             <div className="flex items-center gap-2 mb-2 px-1">
               <span className="inline-block w-2 h-2 bg-red-500 rounded-full" />
               <p className="text-xs font-semibold text-[#6B3F1F] uppercase tracking-wider">
@@ -355,6 +349,32 @@ export default function DealerPerFarmerCreditPage() {
             </div>
           </div>
         )}
+
+        {/* Action buttons — Add credit is disabled when a farmer
+            payment is pending (confirm-or-dispute first). */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button onClick={() => setSheet('credit')}
+            disabled={blockAddCredit}
+            title={blockAddCredit ? t('addCreditBlockedHint') : undefined}
+            className="bg-[#7D4196] text-white text-sm font-semibold py-3 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed">
+            {t('addCredit')}
+          </button>
+          <button onClick={() => setSheet('payment')}
+            className="bg-green-700 text-white text-sm font-semibold py-3 rounded-2xl">
+            {t('recordPayment')}
+          </button>
+          {detail.can_add_opening_balance && (
+            <button onClick={() => setSheet('opening')}
+              className="col-span-2 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-3 rounded-2xl">
+              {t('enterOpeningBalance')}
+            </button>
+          )}
+          {blockAddCredit && (
+            <p className="col-span-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 leading-snug">
+              {t('addCreditBlockedHint')}
+            </p>
+          )}
+        </div>
 
         {/* My in-flight entries */}
         {myPendingEntries.length > 0 && (

@@ -3583,7 +3583,8 @@
       "notFound": "This credit account no longer exists.",
       "generateStatement": "Generate PDF statement",
       "unnamedFarmerFallback": "Unnamed farmer",
-      "callFarmerAria": "Call farmer"
+      "callFarmerAria": "Call farmer",
+      "addCreditBlockedHint": "Confirm or dispute the farmer's pending payment above before adding fresh credit."
     },
     "openingBalanceSheet": {
       "title": "Enter opening balance",
