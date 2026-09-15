@@ -74,8 +74,10 @@ export default function DealerCreditNewAccountPage() {
     try {
       const r = await api.post<PhoneLookupResponse>('/dealer/ledger/lookup-phone', { phone })
       if (r.data.found && r.data.user_id) {
-        // Existing farmer — go straight to their credit account.
-        router.replace(`/dealer/credit/farmers/${r.data.user_id}`)
+        // Show the farmer's details so the dealer can confirm they
+        // typed the right number before we open a credit account.
+        setExistingUser(r.data)
+        setLookupState('found')
       } else {
         setExistingUser(null); setLookupState('new')
       }
@@ -132,7 +134,7 @@ export default function DealerCreditNewAccountPage() {
               value={phone}
               onChange={e => { setPhone(normalisePhoneInput(e.target.value)); invalidateLookup() }}
               placeholder="+91 98xxxxxxxx"
-              disabled={lookupState === 'new'}
+              disabled={lookupState === 'found' || lookupState === 'new'}
               className="flex-1 px-3 py-2 border border-[#DDD0B8] rounded-xl text-sm focus:outline-none focus:border-[#7D4196] disabled:bg-[#F5F0E8]" />
             {(lookupState === 'idle' || lookupState === 'looking') && (
               <button onClick={doLookup} disabled={lookupState === 'looking'}
@@ -141,7 +143,7 @@ export default function DealerCreditNewAccountPage() {
                 {lookupState === 'looking' ? tLedger('looking') : tLedger('lookup')}
               </button>
             )}
-            {lookupState === 'new' && (
+            {(lookupState === 'found' || lookupState === 'new') && (
               <button onClick={invalidateLookup}
                 className="px-4 py-2 rounded-xl border border-[#DDD0B8] text-sm text-[#6B3F1F]">
                 {tLedger('change')}
@@ -150,6 +152,33 @@ export default function DealerCreditNewAccountPage() {
           </div>
           {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
         </div>
+
+        {/* Existing farmer preview — confirm-before-open step */}
+        {lookupState === 'found' && existingUser && (
+          <div className="bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm">
+            <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-1">
+              {tLedger('existingFarmer')}
+            </p>
+            <p className="font-semibold text-[#6B3F1F]">
+              {existingUser.name || tLedger('unnamedFarmer')}
+            </p>
+            {existingUser.phone && (
+              <p className="text-xs text-[#7A8C7E]">{existingUser.phone}</p>
+            )}
+            {(existingUser.state_name || existingUser.district_name || existingUser.sub_district) && (
+              <p className="text-xs text-[#7A8C7E] mt-0.5">
+                {[existingUser.sub_district, existingUser.district_name, existingUser.state_name]
+                  .filter(Boolean).join(', ')}
+              </p>
+            )}
+            <button
+              onClick={() => router.replace(`/dealer/credit/farmers/${existingUser.user_id}`)}
+              className="mt-3 w-full py-3 rounded-xl text-white text-sm font-semibold"
+              style={{ background: COLOUR }}>
+              {t('openCreditAccount')}
+            </button>
+          </div>
+        )}
 
         {/* New-farmer form */}
         {lookupState === 'new' && (

@@ -339,7 +339,8 @@
     "newAccount": {
       "headerTitle": "New credit account",
       "intro": "Enter the farmer's phone number. If they're already in the system we'll open their credit account directly. Otherwise we'll ask for a few details to add them.",
-      "createAndContinue": "Save & open credit account"
+      "createAndContinue": "Save & open credit account",
+      "openCreditAccount": "Open credit account"
     }
   },
   "diagnose": {
