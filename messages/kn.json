@@ -1732,7 +1732,7 @@
       "notes": "ಟಿಪ್ಪಣಿಗಳು (ಐಚ್ಛಿಕ)",
       "saveEntry": "ಖರೀದಿ ನಮೂದನ್ನು ಉಳಿಸಿ",
       "saveFailed": "ಉಳಿಸಲು ಆಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-      "creditAccountCta": "View credit account",
+      "creditAccountCta": "See credit balance for this farmer",
       "addSaleForFarmerCta": "Add sale for this farmer",
       "recordingSaleFor": "Recording sale for",
       "changeFarmer": "Change farmer",
@@ -3822,7 +3822,7 @@
       "pendingYourAction": "Pending your action",
       "pendingTheirAction": "Pending their action",
       "ifAllConfirmed": "If all confirmed",
-      "recordPayment": "Record payment",
+      "recordPayment": "Record credit repayment",
       "call": "Call",
       "dealerUpiLabel": "Dealer's UPI ID",
       "copy": "Copy",
@@ -3856,7 +3856,7 @@
       }
     },
     "paymentSheet": {
-      "title": "Record a payment",
+      "title": "Record credit repayment",
       "subtitleFor": "to {name}",
       "amountLabel": "Amount",
       "amountRequired": "Please enter an amount.",
@@ -3876,7 +3876,8 @@
       "genericError": "Couldn't record the payment. Please try again.",
       "cancel": "Cancel",
       "submit": "Send for dealer to confirm",
-      "dateLabel": "Payment date"
+      "dateLabel": "Payment date",
+      "submitAsDealer": "Send for farmer to confirm"
     },
     "disputeSheet": {
       "title": "What is wrong with this entry?",
@@ -3934,7 +3935,7 @@
       "trustBasis": "Based on {count, plural, one {# resolved credit} other {# resolved credits}}",
       "openOverdueTitle": "{count, plural, one {# credit is overdue} other {# credits are overdue}}",
       "addCredit": "Add credit",
-      "recordPayment": "Record payment received",
+      "recordPayment": "Record credit repayment",
       "enterOpeningBalance": "Enter opening balance",
       "needsYourAction": "Needs your action",
       "yourInFlight": "Awaiting farmer's response",

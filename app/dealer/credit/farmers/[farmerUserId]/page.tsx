@@ -736,7 +736,7 @@ function DealerPaymentSheet({
           className="w-full mt-1 border border-[#DDD0B8] rounded-xl px-3 py-2 text-sm outline-none focus:border-green-700" />
       </label>
       {error && <p className="text-xs text-red-700 mt-3">{error}</p>}
-      <SheetActions cancelLabel={t('cancel')} submitLabel={t('submit')}
+      <SheetActions cancelLabel={t('cancel')} submitLabel={t('submitAsDealer')}
         onCancel={onClose} onSubmit={submit} busy={busy} canSubmit={!!amount} accent="green" />
     </SheetShell>
   )
