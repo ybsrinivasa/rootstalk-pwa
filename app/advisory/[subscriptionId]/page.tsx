@@ -1146,6 +1146,7 @@ function PracticeCard({
   const tEl = useTranslations('practice.element')
   const tPill = useTranslations('orders.cropOrders.manage.pill')
   const tAction = useTranslations('practice.action')
+  const tAdvisoryOnlyLocal = useTranslations('advisoryOnly')
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const tL2 = useTranslations('practice.l2')
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
@@ -1200,9 +1201,20 @@ function PracticeCard({
             {labelOverride || l2Label || 'General Advisory'}
           </p>
         </div>
-        {/* Advisory-Only Mode (2026-09-16) — hide the Order/Manage
-            controls entirely. The v1.2 Brands button will land here
-            in the alternative branch. */}
+        {/* Advisory-Only Mode (2026-09-16) — replace the Order/Manage
+            controls with a Brands button. Fertilisers/pesticides only;
+            seeds are handled by the crop-dashboard Recommended Seed
+            Varieties tile (§7.3 of the scoping doc). */}
+        {practice.l0_type === 'INPUT' && advisoryOnly && practice.l1_type !== 'SEED' && (
+          <button
+            onClick={e => {
+              e.stopPropagation()
+              router.push(`/advisory/${subscriptionId}/brands/${practice.id}`)
+            }}
+            className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
+            {tAdvisoryOnlyLocal('brandsButton')}
+          </button>
+        )}
         {practice.l0_type === 'INPUT' && !advisoryOnly && (
           // 2026-06-21 — Status chip (Manage pill name) when the
           // practice has a live OrderItem and isn't yet picked up;

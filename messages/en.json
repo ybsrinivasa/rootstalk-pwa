@@ -4023,6 +4023,16 @@
   "advisoryOnly": {
     "chip": "Advisory Only",
     "datePickerToday": "Today",
-    "pricingHint": "Flat ₹{amount} per crop — no bulk discount."
+    "pricingHint": "Flat ₹{amount} per crop — no bulk discount.",
+    "brandsButton": "Brands",
+    "brands": {
+      "title": "Available brands",
+      "lockedTitle": "Recommended brand",
+      "header": "Some brands available in the market",
+      "lockedHeader": "This input is recommended with a specific brand",
+      "empty": "No brands available yet for this input.",
+      "disclaimer": "This list is not exhaustive. {client} does not endorse the purchase of any brand.",
+      "loadError": "Couldn't load the brand list. Please try again."
+    }
   }
 }
