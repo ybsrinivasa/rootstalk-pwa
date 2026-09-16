@@ -60,6 +60,12 @@ interface AdvisoryDay {
   crop_start_date: string | null
   day_offset: number
   reference_number: string | null
+  // Advisory-Only Mode (2026-09-16, v1.3 mirror). Snapshotted on
+  // Subscription at create; controls the renderElements filter so
+  // the promoter sees the relaxed view the farmer sees on
+  // advisory-only subs.
+  advisory_only_mode?: boolean
+  dealer_list_enabled?: boolean
   timelines: TimelineItem[]
 }
 
@@ -125,16 +131,40 @@ const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
   'INSTRUCTIONS',
 ])
 
+// 2026-09-16 — Advisory-Only Mode (v1.3 mirror). See canonical
+// rationale in app/advisory/[subscriptionId]/page.tsx: farmer is the
+// buyer on advisory-only subs, so SE-authored COMMON_NAME + BRAND_NAME
+// + MANUFACTURER + DOSAGE + APPLICATION_METHOD + VOLUME_PER_PLANT +
+// INSTRUCTIONS all become visible.
+const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  'FORMULATION',
+  'FORMULATION_AI_CONC',
+  'AI_CONCENTRATION',
+  'N_DOSAGE',
+  'P_DOSAGE',
+  'K_DOSAGE',
+  'UNIT',
+  'FERTIGATION_INTERVAL',
+  'IRRIGATION_INTERVAL',
+  'REPEAT_INTERVAL',
+  'NUMBER_OF_APPLICATIONS',
+])
+
 function renderElements(
   elements: ElementRow[],
   isPurchased: boolean,
   elementLabel: (et: string) => string,
+  advisoryOnly = false,
 ): { label: string; value: string }[] {
   const out: { label: string; value: string }[] = []
   for (const e of elements) {
     const type = (e.element_type || '').toUpperCase()
-    if (FARMER_HIDDEN_ELEMENT_TYPES.has(type)) continue
-    if (!isPurchased && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(type)) continue
+    if (advisoryOnly) {
+      if (ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES.has(type)) continue
+    } else {
+      if (FARMER_HIDDEN_ELEMENT_TYPES.has(type)) continue
+      if (!isPurchased && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(type)) continue
+    }
     const valueStr = (e.value ?? '').toString()
     if (!valueStr) continue
     if (type.endsWith('_UNIT')) {
@@ -277,7 +307,10 @@ export default function DealerFarmerAdvisoryPage() {
                       {t('noPracticeToday')}
                     </p>
                   ) : tl.practices.map(p => {
-                    const rows = renderElements(p.elements, !!p.is_purchased, elementLabel)
+                    const rows = renderElements(
+                      p.elements, !!p.is_purchased, elementLabel,
+                      !!day?.advisory_only_mode,
+                    )
                     const l2Label = p.l2_name_loc || (p.l2_type ? humanize(p.l2_type) : null)
                     return (
                       <div key={p.id}
@@ -316,7 +349,11 @@ export default function DealerFarmerAdvisoryPage() {
                           )}
 
                           <div className="flex flex-wrap gap-1.5 mt-2.5">
-                            {p.l0_type === 'INPUT' && (
+                            {/* 2026-09-16 — Advisory-Only Mode (v1.3
+                                mirror): no purchase concept exists,
+                                so hide the purchased/pending chip
+                                entirely. Frequency chip stays. */}
+                            {p.l0_type === 'INPUT' && !day?.advisory_only_mode && (
                               p.is_purchased ? (
                                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-800 font-medium">
                                   {t('farmerPurchased')}

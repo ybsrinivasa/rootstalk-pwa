@@ -103,6 +103,12 @@ interface AdvisoryDay {
   crop_start_date: string | null
   day_offset: number
   reference_number: string | null
+  // Advisory-Only Mode (2026-09-16, v1.3 mirror). Snapshotted on
+  // Subscription at create; controls the PracticeCard element filter
+  // and detailsVisible gate so the facilitator sees the same relaxed
+  // view the farmer sees on an advisory-only sub.
+  advisory_only_mode?: boolean
+  dealer_list_enabled?: boolean
   timelines: TimelineItem[]
 }
 
@@ -158,6 +164,19 @@ const FARMER_HIDDEN_ELEMENT_TYPES = new Set<string>([
 ])
 const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
   'APPLICATION_METHOD', 'DOSAGE', 'VOLUME_PER_PLANT', 'INSTRUCTIONS',
+])
+
+// 2026-09-16 — Advisory-Only Mode (v1.3): mirror of the farmer's
+// advisory page rule set. When advisoryOnly=true, farmer is the
+// buyer; SE-authored COMMON_NAME + BRAND_NAME + MANUFACTURER +
+// DOSAGE + APPLICATION_METHOD + VOLUME_PER_PLANT + INSTRUCTIONS all
+// become visible; only dealer/engine-side math stays hidden. See
+// app/advisory/[subscriptionId]/page.tsx for the canonical rationale.
+const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  'FORMULATION', 'FORMULATION_AI_CONC', 'AI_CONCENTRATION',
+  'N_DOSAGE', 'P_DOSAGE', 'K_DOSAGE', 'UNIT',
+  'FERTIGATION_INTERVAL', 'IRRIGATION_INTERVAL', 'REPEAT_INTERVAL',
+  'NUMBER_OF_APPLICATIONS',
 ])
 
 function isUuid(s: string): boolean {
@@ -316,7 +335,7 @@ function ReadOnlyAckMarker({ marked, label }: { marked: boolean; label: string }
 }
 
 function PracticeCard({
-  practice, elementLabel, t, tPill, labelOverride,
+  practice, elementLabel, t, tPill, labelOverride, advisoryOnly = false,
 }: {
   practice: Practice
   elementLabel: (et: string) => string
@@ -324,6 +343,10 @@ function PracticeCard({
   tPill: (k: string) => string
   // 2026-06-26 — Pure-OR collapse (mirror of farmer page).
   labelOverride?: string
+  // 2026-09-16 — Advisory-Only Mode (v1.3 mirror). When true, use the
+  // relaxed filter set and skip the post-purchase gate — mirrors the
+  // farmer's own advisory view.
+  advisoryOnly?: boolean
 }) {
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
@@ -333,10 +356,15 @@ function PracticeCard({
   const isPurchasable = practice.l0_type === 'INPUT'
   const pickedUp = !!fulf?.farmer_received_at
   const summaryShown = pickedUp && !!fulf?.brand_name
-  const detailsVisible = practice.elements.length > 0 && (!isPurchasable || pickedUp)
+  const detailsVisible =
+    practice.elements.length > 0 && (advisoryOnly || !isPurchasable || pickedUp)
   const visibleEls = detailsVisible
     ? mergeUnitElements(practice.elements).filter(el => {
         const tp = (el.element_type || '').toUpperCase()
+        if (advisoryOnly) {
+          if (ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES.has(tp)) return false
+          return true
+        }
         if (FARMER_HIDDEN_ELEMENT_TYPES.has(tp)) return false
         if (!summaryShown && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(tp)) return false
         if (summaryShown && (tp === 'APPLICATION_METHOD' || tp === 'DOSAGE')) return false
@@ -473,7 +501,7 @@ function PracticeCard({
 }
 
 function RelationGroup({
-  relationType, parts, elementLabel, t, tPill, tRel,
+  relationType, parts, elementLabel, t, tPill, tRel, advisoryOnly = false,
 }: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
@@ -483,6 +511,10 @@ function RelationGroup({
   // 2026-06-26 — shared keys with the farmer page so promoter sees
   // exactly what the farmer sees on a relation block.
   tRel: (k: string, vars?: Record<string, string | number>) => string
+  // 2026-09-16 — Advisory-Only Mode (v1.3 mirror). Forwarded to every
+  // nested PracticeCard so the relaxed element filter kicks in on
+  // advisory-only subs (buyer = farmer, not dealer).
+  advisoryOnly?: boolean
 }) {
   if (parts.length === 0) return null
 
@@ -529,6 +561,7 @@ function RelationGroup({
         elementLabel={elementLabel}
         t={t}
         tPill={tPill}
+        advisoryOnly={advisoryOnly}
       />
     )
   }
@@ -546,7 +579,7 @@ function RelationGroup({
         <div className="divide-y divide-slate-100">
           {opt.practices.map(p => (
             <div key={p.id} className="px-3 py-2">
-              <PracticeCard practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
+              <PracticeCard practice={p} elementLabel={elementLabel} t={t} tPill={tPill} advisoryOnly={advisoryOnly} />
             </div>
           ))}
         </div>
@@ -590,6 +623,7 @@ function RelationGroup({
                 elementLabel={elementLabel}
                 t={t}
                 tPill={tPill}
+                advisoryOnly={advisoryOnly}
               />
               {partIdx < parts.length - 1 && (
                 <div className="flex items-center my-3">
@@ -630,7 +664,7 @@ function RelationGroup({
                     <div className="divide-y divide-slate-100">
                       {opt.practices.map(p => (
                         <div key={p.id} className="px-3 py-2">
-                          <PracticeCard practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
+                          <PracticeCard practice={p} elementLabel={elementLabel} t={t} tPill={tPill} advisoryOnly={advisoryOnly} />
                         </div>
                       ))}
                     </div>
@@ -638,7 +672,7 @@ function RelationGroup({
                 ) : (
                   <div className="space-y-2">
                     {opt.practices.map(p => (
-                      <PracticeCard key={p.id} practice={p} elementLabel={elementLabel} t={t} tPill={tPill} />
+                      <PracticeCard key={p.id} practice={p} elementLabel={elementLabel} t={t} tPill={tPill} advisoryOnly={advisoryOnly} />
                     ))}
                   </div>
                 )}
@@ -837,12 +871,14 @@ export default function FacilitatorAdvisoryViewPage() {
                       row.kind === 'standalone' && row.practice ? (
                         <PracticeCard key={row.practice.id}
                           practice={row.practice}
-                          elementLabel={elementLabel} t={t} tPill={tPill} />
+                          elementLabel={elementLabel} t={t} tPill={tPill}
+                          advisoryOnly={!!day?.advisory_only_mode} />
                       ) : row.kind === 'relation' ? (
                         <RelationGroup key={row.relation_id}
                           relationType={row.relation_type || 'OR'}
                           parts={row.parts || []}
-                          elementLabel={elementLabel} t={t} tPill={tPill} tRel={tRel} />
+                          elementLabel={elementLabel} t={t} tPill={tPill} tRel={tRel}
+                          advisoryOnly={!!day?.advisory_only_mode} />
                       ) : null
                     )}
                   </div>
