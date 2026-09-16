@@ -222,6 +222,32 @@ const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
   'VOLUME_PER_PLANT',
   'INSTRUCTIONS',
 ])
+
+// 2026-09-16 — Advisory-Only Mode (v1.3): the farmer is the buyer.
+// The two default filters above assume the dealer sources and the
+// farmer sees the actual brand only post-pickup — that whole flow
+// doesn't exist here. Instead the farmer needs everything up-front:
+// common name, SE-recommended brand + manufacturer (if authored),
+// dosage, application method, volume-per-plant, instructions.
+//
+// This set is FARMER_HIDDEN_ELEMENT_TYPES minus COMMON_NAME /
+// BRAND_NAME / MANUFACTURER. FORMULATION + AI concentration + NPK
+// sourcing math + frequency-cadence tokens stay hidden — they are
+// still dealer/engine-side. The POST_PURCHASE_ONLY filter is skipped
+// entirely in advisory-only mode (no post-purchase moment exists).
+const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  'FORMULATION',
+  'FORMULATION_AI_CONC',
+  'AI_CONCENTRATION',
+  'N_DOSAGE',
+  'P_DOSAGE',
+  'K_DOSAGE',
+  'UNIT',
+  'FERTIGATION_INTERVAL',
+  'IRRIGATION_INTERVAL',
+  'REPEAT_INTERVAL',
+  'NUMBER_OF_APPLICATIONS',
+])
 // Cosh refs and unit IDs sometimes arrive as bare UUIDs (backend
 // hasn't joined them to a friendly name yet). Strip them in the
 // UI — showing "(d79cfced-8de1-…)" to a farmer is worse than
@@ -1172,9 +1198,14 @@ function PracticeCard({
   // sealed and details can surface.
   const isPurchasable = practice.l0_type === 'INPUT'
   const pickedUp = !!fulf?.farmer_received_at
+  // 2026-09-16 — Advisory-Only Mode (v1.3): no purchase moment exists,
+  // so the "hide until picked up" gate for INPUT cards would leave the
+  // farmer with nothing but an L2 label. Always render details in
+  // advisory-only; the advisoryOnly-branch filter below controls what
+  // shows within the block.
   const detailsVisible =
     practice.elements.length > 0 &&
-    (!isPurchasable || pickedUp)
+    (advisoryOnly || !isPurchasable || pickedUp)
 
   return (
     <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
@@ -1278,6 +1309,14 @@ function PracticeCard({
         const visibleEls = mergeUnitElements(practice.elements)
           .filter(el => {
             const t = (el.element_type || '').toUpperCase()
+            // 2026-09-16 — Advisory-Only Mode (v1.3): swap in the
+            // relaxed hidden-set (COMMON_NAME + BRAND_NAME +
+            // MANUFACTURER now visible) and skip the post-purchase
+            // gate entirely (no purchase moment exists).
+            if (advisoryOnly) {
+              if (ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES.has(t)) return false
+              return true
+            }
             if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
             // 2026-07-11 — POST_PURCHASE_ONLY was designed to hide the
             // "how to apply" details before the farmer picked up an
