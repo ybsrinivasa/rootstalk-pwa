@@ -256,6 +256,28 @@ function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
 }
 
+// 2026-09-16 — Advisory-Only Mode (v1.4): short synopsis for the
+// collapsed PracticeCard header. Farmer scanning a Relation group of
+// 3+ practices wants to identify each leg without expanding.
+// Suggested: <brand> · <dose> when both are authored; degrades
+// gracefully. Returns null if neither is authored.
+function computeSynopsis(
+  elements: Element[],
+  tSuggestedLabel: string,
+): string | null {
+  const merged = mergeUnitElements(elements)
+  const brandEl = merged.find(e => (e.element_type || '').toUpperCase() === 'BRAND_NAME')
+  const dosageEl = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
+  const brand = brandEl?.value?.trim() || ''
+  const dose = dosageEl
+    ? `${dosageEl.value || ''}${dosageEl.trailing_unit ? ' ' + dosageEl.trailing_unit : ''}`.trim()
+    : ''
+  if (brand && dose) return `${tSuggestedLabel}: ${brand} · ${dose}`
+  if (brand) return `${tSuggestedLabel}: ${brand}`
+  if (dose) return dose
+  return null
+}
+
 // Author tools store a unit as its own Element row with
 // element_type ending in `_UNIT` (e.g. DOSAGE / DOSAGE_UNIT pair).
 // "Dosage Unit" should never appear as its own label to the
@@ -1149,6 +1171,8 @@ function PracticeCard({
   practice, onOrder, isOrdering, ordered,
   subscriptionId, timelineLineageId, onAckChanged,
   labelOverride, advisoryOnly = false,
+  collapsed = false, onToggleCollapsed,
+  insideContainer = false,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1167,6 +1191,19 @@ function PracticeCard({
   // button + Manage-status pill on this card. Brands button (v1.2)
   // will render here in the alternative branch.
   advisoryOnly?: boolean
+  // 2026-09-16 — Advisory-Only Mode (v1.4): accordion behavior.
+  // When onToggleCollapsed is set, the header becomes tappable, a
+  // chevron indicator renders on the right, and the details block
+  // + ack footer hide when collapsed=true. Only ever used inside
+  // Relation groups on advisory-only subs; standalone cards omit
+  // both props and render fully expanded.
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
+  // 2026-09-16 — Advisory-Only Mode (v1.4): when rendered inside an
+  // "Apply together" AND container, strip the outer border / shadow
+  // / rounded corners so the nested card looks like a row within
+  // the parent container instead of a bordered card-inside-card.
+  insideContainer?: boolean
 }) {
   const router = useRouter()
   const tEl = useTranslations('practice.element')
@@ -1207,9 +1244,31 @@ function PracticeCard({
     practice.elements.length > 0 &&
     (advisoryOnly || !isPurchasable || pickedUp)
 
+  // 2026-09-16 — v1.4 accordion (advisory-only, inside a Relation).
+  // Synopsis line renders on collapsed cards when SE authored a brand
+  // or dose, so the farmer can identify each leg without expanding.
+  const synopsisLine = (advisoryOnly && collapsed)
+    ? computeSynopsis(practice.elements, tAdvisoryOnlyLocal('suggested'))
+    : null
+  const outerCls = insideContainer
+    ? 'bg-white'
+    : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
   return (
-    <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3.5">
+    <div className={outerCls}>
+      <div
+        className={`flex items-center gap-3 px-4 py-3.5 ${onToggleCollapsed ? 'cursor-pointer active:bg-slate-50' : ''}`}
+        onClick={onToggleCollapsed}
+        role={onToggleCollapsed ? 'button' : undefined}
+        tabIndex={onToggleCollapsed ? 0 : undefined}
+        onKeyDown={onToggleCollapsed
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onToggleCollapsed()
+              }
+            }
+          : undefined}
+      >
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
         <div className="flex-1 min-w-0">
           {(practice.is_special_input
@@ -1231,6 +1290,9 @@ function PracticeCard({
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
             {labelOverride || l2Label || 'General Advisory'}
           </p>
+          {synopsisLine && (
+            <p className="text-xs text-[#7A8C7E] mt-0.5 truncate">{synopsisLine}</p>
+          )}
         </div>
         {/* Advisory-Only Mode (2026-09-16) — replace the Order/Manage
             controls with a Brands button. Fertilisers/pesticides only;
@@ -1278,6 +1340,18 @@ function PracticeCard({
           // Purchased + already-picked-up cases render no badge — the
           // PurchasedSummary block below carries the brand details.
         )}
+        {/* 2026-09-16 — v1.4 accordion chevron. Rotates 180° when the
+            card is expanded so the affordance state is legible from
+            across the screen. Placed AFTER the Brands / Order button
+            so those tap targets remain finger-easy. */}
+        {onToggleCollapsed && (
+          <svg
+            className={`w-5 h-5 text-[#7A8C7E] shrink-0 transition-transform ${collapsed ? '' : 'rotate-180'}`}
+            fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+            aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        )}
       </div>
 
       {/* 2026-06-06 — Post-purchase brand summary on the card itself.
@@ -1287,8 +1361,9 @@ function PracticeCard({
           here; it's filtered out of the details below too.
           2026-06-21 — Gated on pickedUp (farmer_received_at) too:
           before pickup we hide brand identity to avoid third-party
-          interception of the queued purchase at the dealer's shop. */}
-      {pickedUp && fulf?.brand_name && (
+          interception of the queued purchase at the dealer's shop.
+          2026-09-16 — v1.4 accordion: also gate on !collapsed. */}
+      {!collapsed && pickedUp && fulf?.brand_name && (
         <PurchasedSummary
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
@@ -1301,7 +1376,7 @@ function PracticeCard({
         />
       )}
 
-      {detailsVisible && (() => {
+      {!collapsed && detailsVisible && (() => {
         // Strip SE recommendations that are dealer-facing only and
         // collapse post-purchase APPLICATION_METHOD + DOSAGE into
         // PurchasedSummary to avoid duplication.
@@ -1398,12 +1473,16 @@ function PracticeCard({
           </div>
         )
       })()}
-      <PracticeAckFooter
-        practice={practice}
-        subscriptionId={subscriptionId}
-        timelineLineageId={timelineLineageId}
-        onAckChanged={onAckChanged}
-      />
+      {/* 2026-09-16 — v1.4 accordion: hide the ack footer when the
+          card is collapsed. It re-appears on expand. */}
+      {!collapsed && (
+        <PracticeAckFooter
+          practice={practice}
+          subscriptionId={subscriptionId}
+          timelineLineageId={timelineLineageId}
+          onAckChanged={onAckChanged}
+        />
+      )}
     </div>
   )
 }
@@ -1573,6 +1652,7 @@ function RelationGroup({
 }) {
   const tAction = useTranslations('practice.action')
   const tRel = useTranslations('practice.relations')
+  const tAdvisoryOnlyRel = useTranslations('advisoryOnly')
   // 2026-06-26 — Manage-pill chip support inside AND containers so
   // the farmer sees per-leg fulfilment status (Routed / For Approval
   // / Returned / Ready for pickup) without leaving the advisory page.
@@ -1604,7 +1684,66 @@ function RelationGroup({
     parts[0].options.length >= 2 &&
     parts[0].options.every(o => o.practices.length === 1)
 
-  if (isPureOrGroup) {
+  // 2026-09-16 — Advisory-Only Mode (v1.4): accordion state.
+  // Every leaf inside the Relation is collapsed by default; farmer
+  // taps a header to expand a leg. The first leaf of a pure-AND
+  // group is expanded initially (invites the reader in); every other
+  // leaf starts collapsed. Expand-all / collapse-all toggle at the
+  // top of the group flips the whole state.
+  const allLeafIds: string[] = []
+  for (const part of parts) {
+    for (const opt of part.options) {
+      for (const p of opt.practices) allLeafIds.push(p.id)
+    }
+  }
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => {
+    if (!advisoryOnly) return new Set()
+    const s = new Set<string>(allLeafIds)
+    if (isPureAndGroup) {
+      const first = parts[0]?.options[0]?.practices[0]
+      if (first) s.delete(first.id)
+    }
+    return s
+  })
+  const toggleCollapsed = (id: string) => {
+    setCollapsedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  const isAllExpanded = collapsedIds.size === 0
+  const flipAll = () =>
+    setCollapsedIds(isAllExpanded ? new Set(allLeafIds) : new Set())
+  // Per-leaf accordion props — only when advisory-only. Standalone
+  // renderers omit these; PracticeCard treats absence as "always
+  // expanded, no chevron".
+  const cardCollapseProps = (p: Practice) =>
+    advisoryOnly
+      ? { collapsed: collapsedIds.has(p.id), onToggleCollapsed: () => toggleCollapsed(p.id) }
+      : {}
+  // Expand-all / Collapse-all toggle prefix. Only renders in
+  // advisory-only mode + when there's more than one leaf worth
+  // toggling. Same wrapper applied at every return branch that can
+  // be reached in advisory-only mode.
+  const wrapWithToggle = (body: React.ReactNode) => {
+    if (!advisoryOnly || allLeafIds.length < 2) return body
+    return (
+      <div>
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={flipAll}
+            className="text-xs font-semibold text-[#7D4196] px-2 py-1 hover:underline">
+            {isAllExpanded ? tAdvisoryOnlyRel('collapseAll') : tAdvisoryOnlyRel('expandAll')}
+          </button>
+        </div>
+        {body}
+      </div>
+    )
+  }
+
+  if (isPureOrGroup && !advisoryOnly) {
     const orPractices = parts[0].options.map(o => o.practices[0])
     // 2026-06-29 — Pre-decision vs post-decision OR rendering.
     // Once the dealer picks a leg of the OR (the chosen leg's
@@ -1661,7 +1800,7 @@ function RelationGroup({
       const f = p.fulfilment ?? null
       return (f && fulfilmentToPill(f) != null) || p.is_purchased
     })
-    return (
+    return wrapWithToggle(
       <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
           <div className="w-1 h-5 rounded-full bg-emerald-600" />
@@ -1674,6 +1813,30 @@ function RelationGroup({
             const f = p.fulfilment ?? null
             const pillName = f ? fulfilmentToPill(f) : null
             const pillTone = pillName ? MANAGE_PILL_TONE[pillName] : null
+            // 2026-09-16 — v1.4: in advisory-only mode, use the full
+            // PracticeCard (with insideContainer=true to strip its
+            // outer border/shadow so it looks like a row within this
+            // container). InnerPracticeRow only exposes the L2 label
+            // + fulfilment chip; farmer buying independently needs
+            // Common Name + Brand + Dose etc., which live on
+            // PracticeCard's element list.
+            if (advisoryOnly) {
+              return (
+                <PracticeCard
+                  key={p.id}
+                  practice={p}
+                  onOrder={() => {}}
+                  isOrdering={false}
+                  ordered={false}
+                  subscriptionId={subscriptionId}
+                  timelineLineageId={timelineLineageId}
+                  onAckChanged={onAckChanged}
+                  advisoryOnly
+                  insideContainer
+                  {...cardCollapseProps(p)}
+                />
+              )
+            }
             return (
               <InnerPracticeRow
                 key={p.id}
@@ -1693,7 +1856,9 @@ function RelationGroup({
             )
           })}
         </div>
-        {!anyInFlight && (
+        {/* 2026-09-16 — v1.4: no order flow in advisory-only, so no
+            "Order both together" button. */}
+        {!advisoryOnly && !anyInFlight && (
           <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
             <button
               onClick={() => onOrder(ids)}
@@ -1717,7 +1882,7 @@ function RelationGroup({
   // labelled "AND" pill (same shape as the OR pill within a choice
   // Part) so the top-level concatenation is visible. Within a choice
   // Part: OR pills between Options.
-  return (
+  return wrapWithToggle(
     <div className="space-y-2">
       {parts.map((part, partIdx) => {
         // 2026-06-26 — Pure-OR-at-Part-level collapse. When a Part
@@ -1731,7 +1896,10 @@ function RelationGroup({
         const isPartPureOr =
           part.options.length >= 2 &&
           part.options.every(o => o.practices.length === 1)
-        if (isPartPureOr) {
+        // 2026-09-16 — v1.4: skip the Part-level pure-OR collapse in
+        // advisory-only mode too. Farmer is the buyer and needs to
+        // see each leg with its own Brands button + details.
+        if (isPartPureOr && !advisoryOnly) {
           const orPractices = part.options.map(o => o.practices[0])
           // 2026-06-29 — Same pre-/post-decision swap as the
           // top-level pure-OR collapse: once a leg has been picked
@@ -1821,6 +1989,26 @@ function RelationGroup({
                         const f = p.fulfilment ?? null
                         const pillName = f ? fulfilmentToPill(f) : null
                         const pillTone = pillName ? MANAGE_PILL_TONE[pillName] : null
+                        // 2026-09-16 — v1.4: same swap as the pure-AND
+                        // branch above — PracticeCard (insideContainer)
+                        // when advisoryOnly.
+                        if (advisoryOnly) {
+                          return (
+                            <PracticeCard
+                              key={p.id}
+                              practice={p}
+                              onOrder={() => {}}
+                              isOrdering={false}
+                              ordered={false}
+                              subscriptionId={subscriptionId}
+                              timelineLineageId={timelineLineageId}
+                              onAckChanged={onAckChanged}
+                              advisoryOnly
+                              insideContainer
+                              {...cardCollapseProps(p)}
+                            />
+                          )
+                        }
                         return (
                           <InnerPracticeRow
                             key={p.id}
@@ -1840,7 +2028,7 @@ function RelationGroup({
                         )
                       })}
                     </div>
-                    {!anyInFlight && (
+                    {!advisoryOnly && !anyInFlight && (
                       <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
                         <button
                           onClick={() => onOrder(ids)}
@@ -1870,6 +2058,7 @@ function RelationGroup({
                     timelineLineageId={timelineLineageId}
                     onAckChanged={onAckChanged}
                     advisoryOnly={advisoryOnly}
+                    {...cardCollapseProps(opt.practices[0])}
                   />
                 )}
               </div>

@@ -4030,6 +4030,9 @@
     "datePickerToday": "Today",
     "pricingHint": "Flat ₹{amount} per crop — no bulk discount.",
     "brandsButton": "Brands",
+    "suggested": "Suggested",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
     "brands": {
       "title": "Available brands",
       "lockedTitle": "Recommended brand",

@@ -210,6 +210,26 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
   return out
 }
 
+// 2026-09-16 — Advisory-Only Mode (v1.4 mirror). Short synopsis for
+// the collapsed PracticeCard header. See canonical rationale in
+// app/advisory/[subscriptionId]/page.tsx.
+function computeSynopsis(
+  elements: Element[],
+  tSuggestedLabel: string,
+): string | null {
+  const merged = mergeUnitElements(elements)
+  const brandEl = merged.find(e => (e.element_type || '').toUpperCase() === 'BRAND_NAME')
+  const dosageEl = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
+  const brand = brandEl?.value?.trim() || ''
+  const dose = dosageEl
+    ? `${dosageEl.value || ''}${dosageEl.trailing_unit ? ' ' + dosageEl.trailing_unit : ''}`.trim()
+    : ''
+  if (brand && dose) return `${tSuggestedLabel}: ${brand} · ${dose}`
+  if (brand) return `${tSuggestedLabel}: ${brand}`
+  if (dose) return dose
+  return null
+}
+
 // ── Relation grouping helpers — identical to farmer page ───────────
 
 function decodeRole(role: string): { part: number; option: number; position: number } | null {
@@ -336,6 +356,7 @@ function ReadOnlyAckMarker({ marked, label }: { marked: boolean; label: string }
 
 function PracticeCard({
   practice, elementLabel, t, tPill, labelOverride, advisoryOnly = false,
+  collapsed = false, onToggleCollapsed, insideContainer = false, tSuggestedLabel,
 }: {
   practice: Practice
   elementLabel: (et: string) => string
@@ -347,6 +368,13 @@ function PracticeCard({
   // relaxed filter set and skip the post-purchase gate — mirrors the
   // farmer's own advisory view.
   advisoryOnly?: boolean
+  // 2026-09-16 — v1.4 mirror: accordion behaviour + insideContainer
+  // + synopsis label. See canonical rationale in
+  // app/advisory/[subscriptionId]/page.tsx.
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
+  insideContainer?: boolean
+  tSuggestedLabel?: string
 }) {
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
@@ -375,9 +403,29 @@ function PracticeCard({
   const ackable = practice.l0_type !== 'INPUT' || !!fulf?.farmer_received_at
   const ackMarked = practice.ack_status === 'MARKED'
 
+  const synopsisLine = (advisoryOnly && collapsed && tSuggestedLabel)
+    ? computeSynopsis(practice.elements, tSuggestedLabel)
+    : null
+  const outerCls = insideContainer
+    ? 'bg-white'
+    : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
+
   return (
-    <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-      <div className="flex items-center gap-3 px-4 py-3.5">
+    <div className={outerCls}>
+      <div
+        className={`flex items-center gap-3 px-4 py-3.5 ${onToggleCollapsed ? 'cursor-pointer active:bg-slate-50' : ''}`}
+        onClick={onToggleCollapsed}
+        role={onToggleCollapsed ? 'button' : undefined}
+        tabIndex={onToggleCollapsed ? 0 : undefined}
+        onKeyDown={onToggleCollapsed
+          ? e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onToggleCollapsed()
+              }
+            }
+          : undefined}
+      >
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
         <div className="flex-1 min-w-0">
           {(practice.is_special_input
@@ -400,6 +448,9 @@ function PracticeCard({
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
             {labelOverride || l2Label || t('generalAdvisory')}
           </p>
+          {synopsisLine && (
+            <p className="text-xs text-[#7A8C7E] mt-0.5 truncate">{synopsisLine}</p>
+          )}
         </div>
         {/* Read-only status chip (no tap action — promoter is not
             allowed to act). When the practice is INPUT with a live
@@ -414,9 +465,17 @@ function PracticeCard({
               ? ` · ${fulf.postpone_days_remaining}d` : ''}
           </span>
         )}
+        {onToggleCollapsed && (
+          <svg
+            className={`w-5 h-5 text-[#7A8C7E] shrink-0 transition-transform ${collapsed ? '' : 'rotate-180'}`}
+            fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+            aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        )}
       </div>
 
-      {pickedUp && fulf?.brand_name && (
+      {!collapsed && pickedUp && fulf?.brand_name && (
         <PurchasedSummary
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
@@ -425,7 +484,7 @@ function PracticeCard({
         />
       )}
 
-      {visibleEls.length > 0 && (
+      {!collapsed && visibleEls.length > 0 && (
         <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-2">
           {visibleEls.map((el, i) => {
             const type = (el.element_type || '').toUpperCase()
@@ -490,7 +549,7 @@ function PracticeCard({
         </div>
       )}
 
-      {ackable && (
+      {!collapsed && ackable && (
         <ReadOnlyAckMarker
           marked={ackMarked}
           label={ackMarked ? t('ackMarked') : t('ackPending')}
@@ -502,6 +561,7 @@ function PracticeCard({
 
 function RelationGroup({
   relationType, parts, elementLabel, t, tPill, tRel, advisoryOnly = false,
+  tAdvisoryOnly,
 }: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
@@ -515,6 +575,10 @@ function RelationGroup({
   // nested PracticeCard so the relaxed element filter kicks in on
   // advisory-only subs (buyer = farmer, not dealer).
   advisoryOnly?: boolean
+  // 2026-09-16 — v1.4 mirror: translator for the expand-all / suggested
+  // labels. Passed in from the caller so tests + storybook can inject
+  // a stub if ever needed. When absent, defaults collapse to labels.
+  tAdvisoryOnly?: (k: string) => string
 }) {
   if (parts.length === 0) return null
 
@@ -535,7 +599,60 @@ function RelationGroup({
     parts[0].options.length >= 2 &&
     parts[0].options.every(o => o.practices.length === 1)
 
-  if (isPureOrGroup) {
+  // 2026-09-16 — v1.4 mirror: accordion state (see farmer page for
+  // the canonical version).
+  const allLeafIds: string[] = []
+  for (const part of parts) {
+    for (const opt of part.options) {
+      for (const p of opt.practices) allLeafIds.push(p.id)
+    }
+  }
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => {
+    if (!advisoryOnly) return new Set()
+    const s = new Set<string>(allLeafIds)
+    if (isPureAndGroup) {
+      const first = parts[0]?.options[0]?.practices[0]
+      if (first) s.delete(first.id)
+    }
+    return s
+  })
+  const toggleCollapsed = (id: string) => {
+    setCollapsedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+  const isAllExpanded = collapsedIds.size === 0
+  const flipAll = () =>
+    setCollapsedIds(isAllExpanded ? new Set(allLeafIds) : new Set())
+  const suggestedLabel = tAdvisoryOnly ? tAdvisoryOnly('suggested') : 'Suggested'
+  const cardCollapseProps = (p: Practice) =>
+    advisoryOnly
+      ? {
+          collapsed: collapsedIds.has(p.id),
+          onToggleCollapsed: () => toggleCollapsed(p.id),
+          tSuggestedLabel: suggestedLabel,
+        }
+      : {}
+  const wrapWithToggle = (body: React.ReactNode) => {
+    if (!advisoryOnly || allLeafIds.length < 2 || !tAdvisoryOnly) return body
+    return (
+      <div>
+        <div className="flex justify-end mb-2">
+          <button
+            onClick={flipAll}
+            className="text-xs font-semibold text-[#7D4196] px-2 py-1 hover:underline">
+            {isAllExpanded ? tAdvisoryOnly('collapseAll') : tAdvisoryOnly('expandAll')}
+          </button>
+        </div>
+        {body}
+      </div>
+    )
+  }
+
+  if (isPureOrGroup && !advisoryOnly) {
     const orPractices = parts[0].options.map(o => o.practices[0])
     // 2026-06-29 — Mirror of farmer page: once a leg has been
     // picked, the card reflects THAT leg's reality (label, brand,
@@ -568,7 +685,7 @@ function RelationGroup({
 
   if (isPureAndGroup) {
     const opt = parts[0].options[0]
-    return (
+    return wrapWithToggle(
       <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
           <div className="w-1 h-5 rounded-full bg-emerald-600" />
@@ -578,8 +695,14 @@ function RelationGroup({
         </div>
         <div className="divide-y divide-slate-100">
           {opt.practices.map(p => (
-            <div key={p.id} className="px-3 py-2">
-              <PracticeCard practice={p} elementLabel={elementLabel} t={t} tPill={tPill} advisoryOnly={advisoryOnly} />
+            <div key={p.id} className={advisoryOnly ? '' : 'px-3 py-2'}>
+              <PracticeCard
+                practice={p}
+                elementLabel={elementLabel} t={t} tPill={tPill}
+                advisoryOnly={advisoryOnly}
+                insideContainer={advisoryOnly}
+                {...cardCollapseProps(p)}
+              />
             </div>
           ))}
         </div>
@@ -587,7 +710,7 @@ function RelationGroup({
     )
   }
 
-  return (
+  return wrapWithToggle(
     <div className="space-y-2">
       {parts.map((part, partIdx) => {
         // 2026-06-26 — Pure-OR-at-Part-level collapse, mirror of
@@ -597,7 +720,9 @@ function RelationGroup({
         const isPartPureOr =
           part.options.length >= 2 &&
           part.options.every(o => o.practices.length === 1)
-        if (isPartPureOr) {
+        // 2026-09-16 — v1.4 mirror: skip Part-level pure-OR collapse
+        // in advisory-only mode too.
+        if (isPartPureOr && !advisoryOnly) {
           const orPractices = part.options.map(o => o.practices[0])
           // 2026-06-29 — Mirror of farmer page per-Part collapse:
           // chosen leg's data takes over once a leg is picked.
@@ -663,8 +788,14 @@ function RelationGroup({
                     </div>
                     <div className="divide-y divide-slate-100">
                       {opt.practices.map(p => (
-                        <div key={p.id} className="px-3 py-2">
-                          <PracticeCard practice={p} elementLabel={elementLabel} t={t} tPill={tPill} advisoryOnly={advisoryOnly} />
+                        <div key={p.id} className={advisoryOnly ? '' : 'px-3 py-2'}>
+                          <PracticeCard
+                            practice={p}
+                            elementLabel={elementLabel} t={t} tPill={tPill}
+                            advisoryOnly={advisoryOnly}
+                            insideContainer={advisoryOnly}
+                            {...cardCollapseProps(p)}
+                          />
                         </div>
                       ))}
                     </div>
@@ -672,7 +803,13 @@ function RelationGroup({
                 ) : (
                   <div className="space-y-2">
                     {opt.practices.map(p => (
-                      <PracticeCard key={p.id} practice={p} elementLabel={elementLabel} t={t} tPill={tPill} advisoryOnly={advisoryOnly} />
+                      <PracticeCard
+                        key={p.id}
+                        practice={p}
+                        elementLabel={elementLabel} t={t} tPill={tPill}
+                        advisoryOnly={advisoryOnly}
+                        {...cardCollapseProps(p)}
+                      />
                     ))}
                   </div>
                 )}
@@ -702,6 +839,7 @@ export default function FacilitatorAdvisoryViewPage() {
   const t = useTranslations('facilitator.promotedFarmers.detail')
   const tEl = useTranslations('practice.element')
   const tPill = useTranslations('orders.cropOrders.manage.pill')
+  const tAdvisoryOnly = useTranslations('advisoryOnly')
   // 2026-06-26 — shared with farmer page so the relation hierarchy
   // reads identically on both surfaces.
   const tRel = useTranslations('practice.relations')
@@ -878,7 +1016,8 @@ export default function FacilitatorAdvisoryViewPage() {
                           relationType={row.relation_type || 'OR'}
                           parts={row.parts || []}
                           elementLabel={elementLabel} t={t} tPill={tPill} tRel={tRel}
-                          advisoryOnly={!!day?.advisory_only_mode} />
+                          advisoryOnly={!!day?.advisory_only_mode}
+                          tAdvisoryOnly={tAdvisoryOnly} />
                       ) : null
                     )}
                   </div>
