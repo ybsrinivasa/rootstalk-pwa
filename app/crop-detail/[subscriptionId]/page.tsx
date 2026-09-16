@@ -924,7 +924,10 @@ export default function CropDetailPage() {
             need seed orders: replacement stock after poor germination,
             multi-cycle plantings, perennials, or a mid-season variety
             add. Renders whenever the client has varieties available
-            for this subscription's package. */}
+            for this subscription's package.
+            2026-09-16 — Advisory-Only Mode overrides label + copy to
+            "Recommended Seed Varieties" (per scoping §7.3). The
+            underlying page handles the read-only variant. */}
         {seedAvail.has_varieties && (
           <button
             onClick={() => router.push(`/subscribe/seed-varieties/${subscriptionId}`)}
@@ -933,8 +936,32 @@ export default function CropDetailPage() {
             <div className="flex items-center gap-3">
               <span className="text-2xl">🌾</span>
               <div className="text-left">
-                <p className="font-semibold text-[#6B3F1F] text-sm">{t('preStart.seedsTitle')}</p>
-                <p className="text-xs text-[#7A8C7E]">{t('preStart.seedsBody')}</p>
+                <p className="font-semibold text-[#6B3F1F] text-sm">
+                  {sub?.advisory_only_mode ? tAdv('seedVarietiesTile') : t('preStart.seedsTitle')}
+                </p>
+                <p className="text-xs text-[#7A8C7E]">
+                  {sub?.advisory_only_mode ? tAdv('seedVarietiesTileHint') : t('preStart.seedsBody')}
+                </p>
+              </div>
+            </div>
+            <span className="text-[#DDD0B8] text-xl">›</span>
+          </button>
+        )}
+
+        {/* Nearby Dealers tile — Advisory-Only Mode add-on (2026-09-16).
+            Only when the client has dealer_list_enabled ticked in the
+            SA portal. Read-only informational — list of 5 nearest
+            onboarded dealers with Call + Map. No orders. */}
+        {sub?.advisory_only_mode && sub?.dealer_list_enabled && (
+          <button
+            onClick={() => router.push(`/advisory/${subscriptionId}/nearby-dealers`)}
+            className="w-full bg-white rounded-2xl border border-[#DDD0B8] px-4 py-4 flex items-center justify-between active:scale-98 transition-transform mb-3"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📍</span>
+              <div className="text-left">
+                <p className="font-semibold text-[#6B3F1F] text-sm">{tAdv('nearbyDealersTile')}</p>
+                <p className="text-xs text-[#7A8C7E]">{tAdv('nearbyDealersTileHint')}</p>
               </div>
             </div>
             <span className="text-[#DDD0B8] text-xl">›</span>

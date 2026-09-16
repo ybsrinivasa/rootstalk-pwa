@@ -864,7 +864,9 @@
       "roleDealer": "ഡീലർ",
       "roleFacilitator": "ഫെസിലിറ്റേറ്റർ",
       "companyFallback": "വിത്ത് കമ്പനി"
-    }
+    },
+    "howToBuyTitle": "How to buy",
+    "howToBuyNoContact": "Contact details not published yet for this seed producer."
   },
   "orders": {
     "review": {
@@ -3666,6 +3668,21 @@
       "empty": "No brands available yet for this input.",
       "disclaimer": "This list is not exhaustive. {client} does not endorse the purchase of any brand.",
       "loadError": "Couldn't load the brand list. Please try again."
+    },
+    "seedVarietiesTile": "Recommended Seed Varieties",
+    "seedVarietiesTileHint": "See varieties + how to buy",
+    "nearbyDealersTile": "Nearby Dealers",
+    "nearbyDealersTileHint": "5 closest onboarded dealers",
+    "nearbyDealers": {
+      "title": "Nearby Dealers",
+      "header": "{count, plural, one {# nearest dealer} other {# nearest dealers}}",
+      "empty": "No onboarded dealers within range.",
+      "unnamedFallback": "Unnamed shop",
+      "distanceAway": "{km} km away",
+      "callAria": "Call dealer",
+      "mapAria": "Open in Maps",
+      "footerNote": "This is a directory. Contact the dealer directly to place your purchase — no orders happen through this app for this crop.",
+      "loadError": "Couldn't load nearby dealers. Please try again."
     }
   }
 }

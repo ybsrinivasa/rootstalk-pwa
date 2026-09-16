@@ -27,6 +27,14 @@ interface Variety {
   // typed as Record<string,string> which led to a runtime render
   // error when the PWA tried Object.entries it; fixed 2026-06-02.
   dus_characters: DusCharacterRow[] | null
+  // 2026-09-16 — Advisory-Only Mode "How to buy" contact info.
+  // Surfaced from the variety's authoring client (seed company or
+  // university-that-also-produces-seeds). Renders on the read-only
+  // variant of this page when subscription.advisory_only_mode.
+  client_display_name?: string | null
+  client_phone?: string | null
+  client_address?: string | null
+  client_website?: string | null
 }
 
 interface Recipient {
@@ -67,13 +75,26 @@ export default function SeedVarietiesPage() {
   const [phoneInput, setPhoneInput] = useState('')
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookup, setLookup] = useState<LookupResult | null>(null)
+  // 2026-09-16 — Advisory-Only Mode. When true, hide the recipient
+  // picker + order-placement flow; show a read-only varieties page
+  // with a "How to buy" contact block per variety.
+  const [advisoryOnly, setAdvisoryOnly] = useState(false)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     api.get<Variety[]>(`/farmer/subscriptions/${subscriptionId}/seed-varieties`)
       .then(r => setVarieties(r.data))
       .finally(() => setLoading(false))
-  }, [subscriptionId])
+    // Fetch the sub separately so we know the mode. Small extra
+    // round-trip; not worth threading through the /seed-varieties
+    // response since the field lives on Subscription, not Variety.
+    api.get<{ id: string; advisory_only_mode?: boolean }[]>('/farmer/my-subscriptions')
+      .then(r => {
+        const sub = r.data.find(s => s.id === subscriptionId)
+        if (sub?.advisory_only_mode) setAdvisoryOnly(true)
+      })
+      .catch(() => {})
+  }, [subscriptionId, router])
 
   // Debounced recipient lookup. Fires once the input has >=10
   // digits (Indian phone). Clears on empty / under-10. Result
@@ -316,19 +337,64 @@ export default function SeedVarietiesPage() {
             )}
           </div>
 
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#DDD0B8] max-w-lg mx-auto">
-            <div className="flex gap-3">
-              <button onClick={() => setSelected(null)}
-                className="flex-1 py-3.5 rounded-2xl border-2 border-[#DDD0B8] text-[#6B3F1F] font-semibold text-sm">
-                ← {t('back')}
-              </button>
-              <button onClick={() => setConfirming(true)}
-                className="flex-1 py-3.5 rounded-2xl text-white font-semibold text-sm"
-                style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
-                {t('selectThisVariety')}
-              </button>
+          {/* Advisory-Only Mode (2026-09-16): replace the Select →
+              recipient-picker → Send Order flow with a "How to buy"
+              info block. Farmer sees varietal details + contact info
+              and buys the seed offline through the client's own
+              channels (KVK counter, phone booking, Krishi Melas). */}
+          {advisoryOnly && (
+            <div className="px-4 mt-4 mb-32">
+              <div className="bg-purple-50 border border-purple-200 rounded-2xl p-4">
+                <p className="text-xs uppercase tracking-wider text-purple-700 font-semibold">
+                  {t('howToBuyTitle')}
+                </p>
+                {selected.client_display_name && (
+                  <p className="font-semibold text-[#6B3F1F] mt-1">
+                    {selected.client_display_name}
+                  </p>
+                )}
+                {selected.client_phone && (
+                  <a href={`tel:${selected.client_phone}`}
+                    className="inline-flex items-center gap-2 mt-2 text-sm text-[#3A7D44] font-medium">
+                    <span>📞</span>
+                    {selected.client_phone}
+                  </a>
+                )}
+                {selected.client_address && (
+                  <p className="text-sm text-[#6B3F1F] mt-2 leading-snug">
+                    {selected.client_address}
+                  </p>
+                )}
+                {selected.client_website && (
+                  <a href={selected.client_website} target="_blank" rel="noreferrer"
+                    className="inline-block mt-2 text-sm text-[#3A7D44] underline break-all">
+                    {selected.client_website}
+                  </a>
+                )}
+                {!selected.client_phone && !selected.client_address && !selected.client_website && (
+                  <p className="text-xs text-[#7A8C7E] mt-2 italic">
+                    {t('howToBuyNoContact')}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {!advisoryOnly && (
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#DDD0B8] max-w-lg mx-auto">
+              <div className="flex gap-3">
+                <button onClick={() => setSelected(null)}
+                  className="flex-1 py-3.5 rounded-2xl border-2 border-[#DDD0B8] text-[#6B3F1F] font-semibold text-sm">
+                  ← {t('back')}
+                </button>
+                <button onClick={() => setConfirming(true)}
+                  className="flex-1 py-3.5 rounded-2xl text-white font-semibold text-sm"
+                  style={{ background: 'linear-gradient(135deg, #054a3a, #085041)' }}>
+                  {t('selectThisVariety')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Pinch-zoom lightbox — opens when farmer taps any carousel
