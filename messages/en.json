@@ -4031,8 +4031,7 @@
     "pricingHint": "Flat ₹{amount} per crop — no bulk discount.",
     "brandsButton": "Brands",
     "suggested": "Suggested",
-    "expandAll": "Expand all",
-    "collapseAll": "Collapse all",
+    "chooseOne": "Choose one",
     "brands": {
       "title": "Available brands",
       "lockedTitle": "Recommended brand",

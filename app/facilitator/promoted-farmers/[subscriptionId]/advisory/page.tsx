@@ -599,58 +599,18 @@ function RelationGroup({
     parts[0].options.length >= 2 &&
     parts[0].options.every(o => o.practices.length === 1)
 
-  // 2026-09-16 — v1.4 mirror: accordion state (see farmer page for
-  // the canonical version).
-  const allLeafIds: string[] = []
-  for (const part of parts) {
-    for (const opt of part.options) {
-      for (const p of opt.practices) allLeafIds.push(p.id)
-    }
-  }
-  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => {
-    if (!advisoryOnly) return new Set()
-    const s = new Set<string>(allLeafIds)
-    if (isPureAndGroup) {
-      const first = parts[0]?.options[0]?.practices[0]
-      if (first) s.delete(first.id)
-    }
-    return s
-  })
-  const toggleCollapsed = (id: string) => {
-    setCollapsedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-  const isAllExpanded = collapsedIds.size === 0
-  const flipAll = () =>
-    setCollapsedIds(isAllExpanded ? new Set(allLeafIds) : new Set())
+  // 2026-09-16 — v1.5 mirror: exclusive-expand accordion.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const suggestedLabel = tAdvisoryOnly ? tAdvisoryOnly('suggested') : 'Suggested'
   const cardCollapseProps = (p: Practice) =>
     advisoryOnly
       ? {
-          collapsed: collapsedIds.has(p.id),
-          onToggleCollapsed: () => toggleCollapsed(p.id),
+          collapsed: expandedId !== p.id,
+          onToggleCollapsed: () =>
+            setExpandedId(prev => (prev === p.id ? null : p.id)),
           tSuggestedLabel: suggestedLabel,
         }
       : {}
-  const wrapWithToggle = (body: React.ReactNode) => {
-    if (!advisoryOnly || allLeafIds.length < 2 || !tAdvisoryOnly) return body
-    return (
-      <div>
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={flipAll}
-            className="text-xs font-semibold text-[#7D4196] px-2 py-1 hover:underline">
-            {isAllExpanded ? tAdvisoryOnly('collapseAll') : tAdvisoryOnly('expandAll')}
-          </button>
-        </div>
-        {body}
-      </div>
-    )
-  }
 
   if (isPureOrGroup && !advisoryOnly) {
     const orPractices = parts[0].options.map(o => o.practices[0])
@@ -685,7 +645,7 @@ function RelationGroup({
 
   if (isPureAndGroup) {
     const opt = parts[0].options[0]
-    return wrapWithToggle(
+    return (
       <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
           <div className="w-1 h-5 rounded-full bg-emerald-600" />
@@ -710,7 +670,7 @@ function RelationGroup({
     )
   }
 
-  return wrapWithToggle(
+  return (
     <div className="space-y-2">
       {parts.map((part, partIdx) => {
         // 2026-06-26 — Pure-OR-at-Part-level collapse, mirror of
@@ -762,14 +722,16 @@ function RelationGroup({
             </div>
           )
         }
-        return (
-        <div key={part.part}>
-          {part.options.map((opt, optIdx) => {
-            const isChoice = part.options.length > 1
+        // 2026-09-16 — v1.5: mirror the farmer page — hoist isChoice
+        // and wrap the whole Part's options in a blue "Choose one"
+        // container in advisory-only mode.
+        const isChoicePart = part.options.length > 1
+        const optionsBody = part.options.map((opt, optIdx) => {
+            const isChoice = isChoicePart
             const isCompound = opt.practices.length > 1
             return (
               <div key={opt.option}>
-                {isChoice && optIdx > 0 && (
+                {isChoice && optIdx > 0 && !advisoryOnly && (
                   <div className="flex items-center my-2">
                     <div className="h-px flex-1 bg-slate-300" />
                     <span className="px-3 text-xs font-bold text-[#7A8C7E] bg-[#F5F0E8] rounded">
@@ -808,6 +770,7 @@ function RelationGroup({
                         practice={p}
                         elementLabel={elementLabel} t={t} tPill={tPill}
                         advisoryOnly={advisoryOnly}
+                        insideContainer={advisoryOnly && isChoice}
                         {...cardCollapseProps(p)}
                       />
                     ))}
@@ -815,7 +778,22 @@ function RelationGroup({
                 )}
               </div>
             )
-          })}
+        })
+        return (
+        <div key={part.part}>
+          {advisoryOnly && isChoicePart && tAdvisoryOnly ? (
+            <div className="bg-white rounded-2xl border border-blue-200 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-blue-200 bg-blue-50">
+                <div className="w-1 h-5 rounded-full bg-blue-500" />
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
+                  {tAdvisoryOnly('chooseOne')}
+                </p>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {optionsBody}
+              </div>
+            </div>
+          ) : optionsBody}
           {partIdx < parts.length - 1 && (
             <div className="flex items-center my-3">
               <div className="h-px flex-1 bg-emerald-200" />

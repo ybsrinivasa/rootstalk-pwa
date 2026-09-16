@@ -1684,64 +1684,21 @@ function RelationGroup({
     parts[0].options.length >= 2 &&
     parts[0].options.every(o => o.practices.length === 1)
 
-  // 2026-09-16 — Advisory-Only Mode (v1.4): accordion state.
-  // Every leaf inside the Relation is collapsed by default; farmer
-  // taps a header to expand a leg. The first leaf of a pure-AND
-  // group is expanded initially (invites the reader in); every other
-  // leaf starts collapsed. Expand-all / collapse-all toggle at the
-  // top of the group flips the whole state.
-  const allLeafIds: string[] = []
-  for (const part of parts) {
-    for (const opt of part.options) {
-      for (const p of opt.practices) allLeafIds.push(p.id)
-    }
-  }
-  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => {
-    if (!advisoryOnly) return new Set()
-    const s = new Set<string>(allLeafIds)
-    if (isPureAndGroup) {
-      const first = parts[0]?.options[0]?.practices[0]
-      if (first) s.delete(first.id)
-    }
-    return s
-  })
-  const toggleCollapsed = (id: string) => {
-    setCollapsedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-  const isAllExpanded = collapsedIds.size === 0
-  const flipAll = () =>
-    setCollapsedIds(isAllExpanded ? new Set(allLeafIds) : new Set())
-  // Per-leaf accordion props — only when advisory-only. Standalone
-  // renderers omit these; PracticeCard treats absence as "always
-  // expanded, no chevron".
+  // 2026-09-16 — Advisory-Only Mode (v1.5): exclusive-expand accordion
+  // state. Every leaf inside the Relation is collapsed by default;
+  // tapping a leaf's header expands it AND collapses whichever leaf
+  // was previously open. Tap the same leaf again to close. Rationale:
+  // farmers read one option/step at a time; multiple expanded cards
+  // on a small screen quickly become visual noise.
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const cardCollapseProps = (p: Practice) =>
     advisoryOnly
-      ? { collapsed: collapsedIds.has(p.id), onToggleCollapsed: () => toggleCollapsed(p.id) }
+      ? {
+          collapsed: expandedId !== p.id,
+          onToggleCollapsed: () =>
+            setExpandedId(prev => (prev === p.id ? null : p.id)),
+        }
       : {}
-  // Expand-all / Collapse-all toggle prefix. Only renders in
-  // advisory-only mode + when there's more than one leaf worth
-  // toggling. Same wrapper applied at every return branch that can
-  // be reached in advisory-only mode.
-  const wrapWithToggle = (body: React.ReactNode) => {
-    if (!advisoryOnly || allLeafIds.length < 2) return body
-    return (
-      <div>
-        <div className="flex justify-end mb-2">
-          <button
-            onClick={flipAll}
-            className="text-xs font-semibold text-[#7D4196] px-2 py-1 hover:underline">
-            {isAllExpanded ? tAdvisoryOnlyRel('collapseAll') : tAdvisoryOnlyRel('expandAll')}
-          </button>
-        </div>
-        {body}
-      </div>
-    )
-  }
 
   if (isPureOrGroup && !advisoryOnly) {
     const orPractices = parts[0].options.map(o => o.practices[0])
@@ -1800,7 +1757,7 @@ function RelationGroup({
       const f = p.fulfilment ?? null
       return (f && fulfilmentToPill(f) != null) || p.is_purchased
     })
-    return wrapWithToggle(
+    return (
       <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
           <div className="w-1 h-5 rounded-full bg-emerald-600" />
@@ -1882,7 +1839,7 @@ function RelationGroup({
   // labelled "AND" pill (same shape as the OR pill within a choice
   // Part) so the top-level concatenation is visible. Within a choice
   // Part: OR pills between Options.
-  return wrapWithToggle(
+  return (
     <div className="space-y-2">
       {parts.map((part, partIdx) => {
         // 2026-06-26 — Pure-OR-at-Part-level collapse. When a Part
@@ -1948,18 +1905,22 @@ function RelationGroup({
             </div>
           )
         }
-        return (
-        <div key={part.part}>
-          {part.options.map((opt, optIdx) => {
+        // 2026-09-16 — v1.5: hoist isChoice out of the map so the
+        // whole options block can be conditionally wrapped in a blue
+        // "Choose one" container in advisory-only mode. The container
+        // gives OR groups a visual identity that mirrors the existing
+        // green "Apply all together" container for AND groups.
+        const isChoicePart = part.options.length > 1
+        const optionsBody = part.options.map((opt, optIdx) => {
             const ids = opt.practices.map(p => p.id)
             const isOrderingAny = ids.some(id => orderingPractice === id)
             const isAnyOrdered = ids.some(id => orderSuccess === id)
             const isCompound = opt.practices.length > 1
-            const isChoice = part.options.length > 1
+            const isChoice = isChoicePart
 
             return (
               <div key={opt.option}>
-                {isChoice && optIdx > 0 && (
+                {isChoice && optIdx > 0 && !advisoryOnly && (
                   <div className="flex items-center my-2">
                     <div className="h-px flex-1 bg-slate-300" />
                     <span className="px-3 text-xs font-bold text-[#7A8C7E] bg-[#F5F0E8] rounded">
@@ -2049,6 +2010,10 @@ function RelationGroup({
                 })() : (
                   // Single practice in this Option — render a normal practice card with
                   // its own Order button that sends just this practice id.
+                  // 2026-09-16 — v1.5: inside a blue "Choose one"
+                  // container (advisoryOnly + isChoice), strip the
+                  // card's outer border so it renders as a row
+                  // within the container.
                   <PracticeCard
                     practice={opt.practices[0]}
                     onOrder={() => onOrder(ids)}
@@ -2058,12 +2023,28 @@ function RelationGroup({
                     timelineLineageId={timelineLineageId}
                     onAckChanged={onAckChanged}
                     advisoryOnly={advisoryOnly}
+                    insideContainer={advisoryOnly && isChoice}
                     {...cardCollapseProps(opt.practices[0])}
                   />
                 )}
               </div>
             )
-          })}
+        })
+        return (
+        <div key={part.part}>
+          {advisoryOnly && isChoicePart ? (
+            <div className="bg-white rounded-2xl border border-blue-200 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2 border-b border-blue-200 bg-blue-50">
+                <div className="w-1 h-5 rounded-full bg-blue-500" />
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
+                  {tAdvisoryOnlyRel('chooseOne')}
+                </p>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {optionsBody}
+              </div>
+            </div>
+          ) : optionsBody}
           {partIdx < parts.length - 1 && (
             <div className="flex items-center my-3">
               <div className="h-px flex-1 bg-emerald-200" />
