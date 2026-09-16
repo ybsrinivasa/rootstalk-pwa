@@ -125,6 +125,26 @@ interface AdvisoryDay {
   package_type?: 'ANNUAL' | 'PERENNIAL' | string | null
   crop_cosh_id: string; crop_start_date: string | null; day_offset: number
   reference_number: string | null; timelines: TimelineItem[]
+  // 2026-09-16 — Advisory-Only Mode (v1.6). Present when the cluster
+  // endpoint (`/farmer/advisory/cluster`) is called; the daily endpoint
+  // leaves these fields undefined and the UI falls back to the single-day
+  // view.
+  advisory_only_mode?: boolean
+  dealer_list_enabled?: boolean
+  cluster?: {
+    offset: number
+    position: 'past' | 'current' | 'future'
+    day_from: number
+    day_to: number
+    date_from: string  // YYYY-MM-DD
+    date_to: string
+    has_prev: boolean
+    has_next: boolean
+    index: number
+    total: number
+    current_index: number
+  } | null
+  ongoing_timelines?: TimelineItem[]
 }
 interface Subscription {
   id: string; package_id: string; client_id: string; status: string
@@ -523,15 +543,16 @@ export default function AdvisoryPage() {
   const [answeringQuestion, setAnsweringQuestion] = useState<string | null>(null) // question_id being answered
   const [nextDate, setNextDate] = useState<{ next_date: string | null; timeline_name?: string; days_until?: number; reason?: string } | null>(null)
   const [bundleSheet, setBundleSheet] = useState<{ category: 'PESTICIDE' | 'FERTILIZER' } | null>(null)
-  // Advisory-Only Mode date picker (2026-09-16). Renders the advisory
-  // AS IF the picked date were today. Farmer can page ±1 day or snap
-  // back to Today. Only rendered when subscription.advisory_only_mode.
-  const [selectedDate, setSelectedDate] = useState<string>('')  // 'YYYY-MM-DD' or '' = today
+  // Advisory-Only Mode (v1.6, 2026-09-16). Farmer navigates by cluster
+  // (a non-overlapping group of active timelines) instead of by date.
+  // offset=0 is the cluster containing today; Prev/Next steps -1/+1.
+  // Traditional flow doesn't use this — it stays on the daily endpoint.
+  const [clusterOffset, setClusterOffset] = useState<number>(0)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
-  }, [router, subscriptionId, selectedDate])
+  }, [router, subscriptionId, clusterOffset])
 
   useEffect(() => {
     const hasStart = !!subscription?.crop_start_date
@@ -546,21 +567,39 @@ export default function AdvisoryPage() {
 
   async function load() {
     try {
-      const [subsRes, advisoryRes] = await Promise.allSettled([
-        api.get<Subscription[]>('/farmer/my-subscriptions'),
-        api.get<AdvisoryDay[]>(
-          selectedDate
-            ? `/farmer/advisory/today?for_date=${selectedDate}`
-            : '/farmer/advisory/today',
-        ),
-      ])
-      if (subsRes.status === 'fulfilled') {
-        const sub = subsRes.value.data.find(s => s.id === subscriptionId)
+      // 2026-09-16 — v1.6: two-step so we can pick between the daily
+      // and cluster endpoints based on the sub's advisory_only flag.
+      // The cost is one extra round-trip on first load; subsequent
+      // Prev/Next navs are single cluster fetches.
+      let sub: Subscription | null = null
+      try {
+        const subsRes = await api.get<Subscription[]>('/farmer/my-subscriptions')
+        sub = subsRes.data.find(s => s.id === subscriptionId) || null
         if (sub) { setSubscription(sub); setStartDate(sub.crop_start_date?.split('T')[0] || '') }
-      }
-      if (advisoryRes.status === 'fulfilled') {
-        const day = advisoryRes.value.data.find(a => a.subscription_id === subscriptionId)
-        setAdvisory(day || null)
+      } catch { /* leave subscription null; downstream renders the error state */ }
+
+      if (sub?.advisory_only_mode) {
+        try {
+          const cluster = await api.get<AdvisoryDay>(
+            `/farmer/advisory/cluster?subscription_id=${subscriptionId}&offset=${clusterOffset}`,
+          )
+          setAdvisory(cluster.data)
+        } catch (e: unknown) {
+          // 404 = cluster out of range (farmer tapped past the end).
+          // Reset to current cluster; user sees the "Today" state.
+          const err = e as { response?: { status?: number } }
+          if (err?.response?.status === 404 && clusterOffset !== 0) {
+            setClusterOffset(0)  // triggers re-run of load() via effect dep
+          } else {
+            setAdvisory(null)
+          }
+        }
+      } else {
+        try {
+          const advisoryRes = await api.get<AdvisoryDay[]>('/farmer/advisory/today')
+          const day = advisoryRes.data.find(a => a.subscription_id === subscriptionId)
+          setAdvisory(day || null)
+        } catch { setAdvisory(null) }
       }
     } finally { setLoading(false) }
   }
@@ -693,48 +732,57 @@ export default function AdvisoryPage() {
               </div>
             </div>
 
-            {/* Advisory-only date picker (2026-09-16). Only renders for
-                advisory-only subs — traditional farmers rely on the
-                app-mediated INPUT alert timing and don't need to plan
-                ahead. Bounded softly by crop_start_date; upper bound is
-                open (server clips practices past crop_end anyway). */}
-            {subscription?.advisory_only_mode && (
-              <div className="bg-white rounded-2xl px-3 py-2 border border-[#DDD0B8] flex items-center justify-between gap-2">
-                <button
-                  onClick={() => {
-                    const base = selectedDate ? new Date(selectedDate) : new Date()
-                    base.setDate(base.getDate() - 1)
-                    setSelectedDate(base.toISOString().slice(0, 10))
-                  }}
-                  className="w-9 h-9 rounded-full bg-[#F5F0E8] text-[#6B3F1F] text-lg flex items-center justify-center active:scale-95">
-                  ◀
-                </button>
-                <div className="flex-1 text-center">
-                  <input
-                    type="date"
-                    value={selectedDate || new Date().toISOString().slice(0, 10)}
-                    onChange={e => setSelectedDate(e.target.value)}
-                    className="text-sm text-[#6B3F1F] font-semibold bg-transparent border-none focus:outline-none w-full text-center"
-                  />
+            {/* Cluster navigation (2026-09-16, v1.6). Replaces the earlier
+                horizontal date walker. Advisory-only farmers step through
+                non-overlapping clusters of active timelines — one tap per
+                chapter of the crop lifecycle. "Today" jumps back to the
+                cluster containing today's date. */}
+            {subscription?.advisory_only_mode && advisory?.cluster && (() => {
+              const c = advisory.cluster
+              const posKey =
+                c.position === 'past' ? 'clusterPositionPast'
+                : c.position === 'future' ? 'clusterPositionFuture'
+                : 'clusterPositionCurrent'
+              return (
+                <div className="bg-white rounded-2xl px-3 py-3 border border-[#DDD0B8] space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => setClusterOffset(o => o - 1)}
+                      disabled={!c.has_prev}
+                      className="text-xs font-semibold text-[#6B3F1F] px-3 py-2 rounded-xl bg-[#F5F0E8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                      ← {tAdvisoryOnly('clusterPrevious')}
+                    </button>
+                    <button
+                      onClick={() => setClusterOffset(0)}
+                      disabled={c.offset === 0}
+                      className="text-xs font-semibold text-[#7D4196] px-3 py-2 rounded-xl bg-purple-50 border border-purple-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                      {tAdvisoryOnly('clusterToday')}
+                    </button>
+                    <button
+                      onClick={() => setClusterOffset(o => o + 1)}
+                      disabled={!c.has_next}
+                      className="text-xs font-semibold text-[#6B3F1F] px-3 py-2 rounded-xl bg-[#F5F0E8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                      {tAdvisoryOnly('clusterNext')} →
+                    </button>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase tracking-wider font-semibold text-[#7A8C7E]">
+                      {tAdvisoryOnly(posKey)}
+                    </p>
+                    <p className="text-sm font-bold text-[#6B3F1F] mt-0.5">
+                      {tAdvisoryOnly('clusterDayRange', {
+                        from: c.day_from, to: c.day_to,
+                      })}
+                    </p>
+                    <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+                      {c.date_from === c.date_to
+                        ? fmtDate(c.date_from, locale)
+                        : `${fmtDate(c.date_from, locale)} – ${fmtDate(c.date_to, locale)}`}
+                    </p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    const base = selectedDate ? new Date(selectedDate) : new Date()
-                    base.setDate(base.getDate() + 1)
-                    setSelectedDate(base.toISOString().slice(0, 10))
-                  }}
-                  className="w-9 h-9 rounded-full bg-[#F5F0E8] text-[#6B3F1F] text-lg flex items-center justify-center active:scale-95">
-                  ▶
-                </button>
-                {selectedDate && (
-                  <button
-                    onClick={() => setSelectedDate('')}
-                    className="text-xs text-[#7D4196] font-semibold px-2">
-                    {tAdvisoryOnly('datePickerToday')}
-                  </button>
-                )}
-              </div>
-            )}
+              )
+            })()}
 
             {/* "Buy all Pesticides / Fertilisers" buttons removed
                 2026-05-21 — replaced by the per-card Order tap that
@@ -924,6 +972,25 @@ export default function AdvisoryPage() {
                 )}
               </div>
             ))}
+
+            {/* Ongoing panel (2026-09-16, v1.6). Persistent across all
+                clusters — holds frequency + event-triggered practices
+                (recurring fertigation, CHA/QA response windows) that
+                don't fit any single cluster's date range. Collapsed by
+                default so the cluster's fresh work stays the primary
+                focus; tap the header to peek at what's continuously
+                running in the background. */}
+            {subscription?.advisory_only_mode
+              && advisory.ongoing_timelines
+              && advisory.ongoing_timelines.length > 0 && (
+              <OngoingPanel
+                timelines={advisory.ongoing_timelines}
+                subscriptionId={subscriptionId}
+                onAckChanged={load}
+                locale={locale}
+                tLabel={tLabel}
+              />
+            )}
 
             {/* Phase 3+ (2026-06-02) — Diagnose / My Orders quick links
                 removed. The crop dashboard already exposes both as
@@ -2057,6 +2124,80 @@ function RelationGroup({
         </div>
         )
       })}
+    </div>
+  )
+}
+
+// Ongoing panel (2026-09-16, v1.6). Collapsed by default. Holds
+// frequency + event-triggered timelines that don't fit any single
+// cluster — a fertigation schedule that runs every 3 days, a CHA/QA
+// response window that stays open until the farmer acts, etc.
+// Practices render with the same accordion behaviour as inside a
+// cluster (tap header to expand, exclusive-expand within the panel).
+function OngoingPanel({
+  timelines, subscriptionId, onAckChanged, locale, tLabel,
+}: {
+  timelines: TimelineItem[]
+  subscriptionId: string
+  onAckChanged: () => void
+  locale: string
+  tLabel: (k: string, vars?: Record<string, string | number>) => string
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const [expandedPracticeId, setExpandedPracticeId] = useState<string | null>(null)
+  const tAdvisoryOnly = useTranslations('advisoryOnly')
+  const totalPractices = timelines.reduce(
+    (sum, tl) => sum + (tl.practices?.length || 0), 0,
+  )
+  if (totalPractices === 0) return null
+  return (
+    <div className="bg-white rounded-2xl border border-amber-200 shadow-sm overflow-hidden mt-4">
+      <button
+        onClick={() => setExpanded(e => !e)}
+        className="w-full flex items-center justify-between px-4 py-3 bg-amber-50 active:bg-amber-100">
+        <div className="flex items-center gap-2">
+          <span className="text-lg" aria-hidden="true">⟳</span>
+          <p className="text-sm font-bold text-amber-900">
+            {tAdvisoryOnly('ongoingTitle', { count: totalPractices })}
+          </p>
+        </div>
+        <svg
+          className={`w-5 h-5 text-amber-700 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+          aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </button>
+      {expanded && (
+        <div className="p-3 space-y-4">
+          {timelines.map(tl => (
+            <div key={tl.id}>
+              <p className="text-xs font-semibold text-[#6B3F1F] uppercase tracking-wide mb-2">
+                {timelineDateLabel(tl.from_date, tl.to_date, locale, tLabel('today'))}
+              </p>
+              <div className="space-y-2">
+                {(tl.practices || []).map(p => (
+                  <PracticeCard
+                    key={p.id}
+                    practice={p}
+                    onOrder={() => {}}
+                    isOrdering={false}
+                    ordered={false}
+                    subscriptionId={subscriptionId}
+                    timelineLineageId={tl.lineage_id}
+                    onAckChanged={onAckChanged}
+                    advisoryOnly
+                    collapsed={expandedPracticeId !== p.id}
+                    onToggleCollapsed={() =>
+                      setExpandedPracticeId(prev => (prev === p.id ? null : p.id))
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
