@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import AdvisoryOnlyChip from '@/components/AdvisoryOnlyChip'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
@@ -31,6 +32,13 @@ interface CompanyInfo {
   tagline: string | null
   logo_url: string | null
   primary_colour: string
+  // 2026-09-16 — Advisory-Only Mode. Drives:
+  //   - "Advisory Only" chip on the client picker
+  //   - flat pricing preview at the payment step
+  //   - hides dealer/facilitator payment routing (only farmer-direct)
+  advisory_only_mode?: boolean
+  dealer_list_enabled?: boolean
+  subscription_fee_paise?: number | null
 }
 
 interface GuidedStep {
@@ -76,6 +84,7 @@ function CompanyLogo({ company }: { company: CompanyInfo }) {
         </div>
       )}
       <p className="text-white font-semibold text-base flex-1">{company.display_name}</p>
+      {company.advisory_only_mode && <AdvisoryOnlyChip size="sm" />}
     </div>
   )
 }
@@ -101,6 +110,7 @@ function SubscribeFlow() {
   const t = useTranslations('subscribe')
   const tLocation = useTranslations('location')
   const tCommon = useTranslations('common')
+  const tAdvOnly = useTranslations('advisoryOnly')
 
   const [stage, setStage] = useState<Stage>('location')
 
@@ -1008,9 +1018,26 @@ function SubscribeFlow() {
                     </div>
 
                     <div className="space-y-3">
-                      {/* Pay yourself */}
+                      {/* Advisory-Only Mode pricing hint (2026-09-16). */}
+                      {company?.advisory_only_mode && (
+                        <div className="rounded-xl bg-purple-50 border border-purple-200 px-3 py-2 text-xs text-purple-800">
+                          {tAdvOnly('pricingHint', {
+                            amount: company.subscription_fee_paise !== null && company.subscription_fee_paise !== undefined
+                              ? Math.round(company.subscription_fee_paise / 100)
+                              : 99,
+                          })}
+                        </div>
+                      )}
+
+                      {/* Pay yourself — the only channel shown for
+                          advisory-only clients; hidden dealer/facilitator/
+                          share-link routes below. */}
                       <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
-                        <p className="font-semibold text-[#6B3F1F]">{t('payment.payNow', { price: user?.subscription_amount_inr ?? 199 })}</p>
+                        <p className="font-semibold text-[#6B3F1F]">{t('payment.payNow', {
+                          price: company?.advisory_only_mode && company.subscription_fee_paise !== null && company.subscription_fee_paise !== undefined
+                            ? Math.round(company.subscription_fee_paise / 100)
+                            : user?.subscription_amount_inr ?? 199,
+                        })}</p>
                         <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
                           {t('payment.payNowBody')}
                         </p>
@@ -1029,6 +1056,11 @@ function SubscribeFlow() {
                         )}
                       </div>
 
+                      {/* Advisory-Only Mode (2026-09-16): dealer/
+                          facilitator/share-link payment routing is
+                          hidden — farmer must pay directly. Backend
+                          gates block these paths too as defence-in-depth. */}
+                      {!company?.advisory_only_mode && (<>
                       {/* Ask a dealer */}
                       <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
                         <p className="font-semibold text-[#6B3F1F]">{t('payment.askDealer')}</p>
@@ -1081,6 +1113,7 @@ function SubscribeFlow() {
                           {busy ? t('payment.generating') : t('payment.generateCta')}
                         </button>
                       </div>
+                      </>)}
                     </div>
 
                     {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}

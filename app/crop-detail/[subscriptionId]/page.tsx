@@ -57,6 +57,12 @@ interface SubscriptionDetail {
   // True iff the client has at least one ACTIVE PRIMARY pundit. Drives
   // the Ask Expert button + Diagnose-IDK gateway "Ask Expert" path.
   client_has_primary_expert: boolean
+  // 2026-09-16 — Advisory-Only Mode snapshot from Subscription.
+  // Every per-crop UI decision (Orders tile, QR, Received tab,
+  // Brands button, chip, date picker, seed-orders link) reads from
+  // this per-sub flag, not from Client.
+  advisory_only_mode?: boolean
+  dealer_list_enabled?: boolean
 }
 interface Branding {
   display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
@@ -126,6 +132,7 @@ export default function CropDetailPage() {
   const t = useTranslations('crop')
   const tCommon = useTranslations('common')
   const tTrain = useTranslations('training')
+  const tAdv = useTranslations('advisoryOnly')
   const locale = useLocale()
   const [sub, setSub] = useState<SubscriptionDetail | null>(null)
   const [branding, setBranding] = useState<Branding | null>(null)
@@ -591,6 +598,11 @@ export default function CropDetailPage() {
                     {tTrain('chip')}
                   </span>
                 )}
+                {sub.advisory_only_mode && (
+                  <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-200 text-purple-900 align-middle">
+                    {tAdv('chip')}
+                  </span>
+                )}
               </p>
             )}
             <p className="text-white font-bold text-sm truncate">
@@ -874,23 +886,26 @@ export default function CropDetailPage() {
           {/* Orders — entry to the three-tab Orders page. Always
               enabled (the farmer can browse the Order tab to see
               what they could buy even before setting a start date,
-              though specific accordions may gate themselves). */}
-          <button
-            onClick={() => router.push(`/crop-detail/${subscriptionId}/orders`)}
-            className="relative bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
-            <AttentionBadge
-              count={
-                (attention?.orders_awaiting_approval ?? 0)
-                + (attention?.orders_returned ?? 0)
-                + (attention?.orders_pickup_ready ?? 0)
-                + (attention?.seeds_awaiting_approval ?? 0)
-                + (attention?.seeds_returned ?? 0)
-                + (attention?.seeds_pickup_ready ?? 0)
-              }
-            />
-            <span className="text-3xl block mb-2">📦</span>
-            <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.ordersTitle')}</p>
-          </button>
+              though specific accordions may gate themselves).
+              Hidden entirely for advisory-only subs — no order flow. */}
+          {!sub?.advisory_only_mode && (
+            <button
+              onClick={() => router.push(`/crop-detail/${subscriptionId}/orders`)}
+              className="relative bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
+              <AttentionBadge
+                count={
+                  (attention?.orders_awaiting_approval ?? 0)
+                  + (attention?.orders_returned ?? 0)
+                  + (attention?.orders_pickup_ready ?? 0)
+                  + (attention?.seeds_awaiting_approval ?? 0)
+                  + (attention?.seeds_returned ?? 0)
+                  + (attention?.seeds_pickup_ready ?? 0)
+                }
+              />
+              <span className="text-3xl block mb-2">📦</span>
+              <p className="text-xs font-bold text-[#6B3F1F]">{t('tiles.ordersTitle')}</p>
+            </button>
+          )}
         </div>
 
         {/* Missed items link */}

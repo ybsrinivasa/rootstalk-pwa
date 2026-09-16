@@ -4019,5 +4019,10 @@
       "smsHint": "This opens your SMS app with the message ready. Just tap Send.",
       "smsBody": "Please install RootsTalk to manage the credit you have with me: {url}"
     }
+  },
+  "advisoryOnly": {
+    "chip": "Advisory Only",
+    "datePickerToday": "Today",
+    "pricingHint": "Flat ₹{amount} per crop — no bulk discount."
   }
 }

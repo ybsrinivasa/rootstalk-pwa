@@ -4019,5 +4019,10 @@
     "cta": "Register as a Facilitator",
     "cancel": "Cancel",
     "errorFallback": "Could not register you as a Facilitator. Please try again."
+  },
+  "advisoryOnly": {
+    "chip": "Advisory Only",
+    "datePickerToday": "Today",
+    "pricingHint": "Flat ₹{amount} per crop — no bulk discount."
   }
 }

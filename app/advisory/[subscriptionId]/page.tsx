@@ -126,7 +126,16 @@ interface AdvisoryDay {
   crop_cosh_id: string; crop_start_date: string | null; day_offset: number
   reference_number: string | null; timelines: TimelineItem[]
 }
-interface Subscription { id: string; package_id: string; client_id: string; status: string; crop_start_date: string | null; reference_number: string | null }
+interface Subscription {
+  id: string; package_id: string; client_id: string; status: string
+  crop_start_date: string | null; reference_number: string | null
+  // 2026-09-16 — Advisory-Only Mode snapshot. Drives:
+  //   - date-picker visibility above the practice list
+  //   - order-button hides on every recommended-input row
+  //   - Brands button (v1.2) on fertiliser/pesticide inputs
+  advisory_only_mode?: boolean
+  dealer_list_enabled?: boolean
+}
 
 // Muted, equal-brightness tones tuned to the warm earth palette
 // (Crop Green / Soil Brown / Field Cream). The four hue families
@@ -453,6 +462,7 @@ export default function AdvisoryPage() {
   const tLabel = useTranslations('practice.label')
   const tEmpty = useTranslations('practice.empty')
   const tPage = useTranslations('advisory')
+  const tAdvisoryOnly = useTranslations('advisoryOnly')
   const locale = useLocale()
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
@@ -465,11 +475,15 @@ export default function AdvisoryPage() {
   const [answeringQuestion, setAnsweringQuestion] = useState<string | null>(null) // question_id being answered
   const [nextDate, setNextDate] = useState<{ next_date: string | null; timeline_name?: string; days_until?: number; reason?: string } | null>(null)
   const [bundleSheet, setBundleSheet] = useState<{ category: 'PESTICIDE' | 'FERTILIZER' } | null>(null)
+  // Advisory-Only Mode date picker (2026-09-16). Renders the advisory
+  // AS IF the picked date were today. Farmer can page ±1 day or snap
+  // back to Today. Only rendered when subscription.advisory_only_mode.
+  const [selectedDate, setSelectedDate] = useState<string>('')  // 'YYYY-MM-DD' or '' = today
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load()
-  }, [router, subscriptionId])
+  }, [router, subscriptionId, selectedDate])
 
   useEffect(() => {
     const hasStart = !!subscription?.crop_start_date
@@ -486,7 +500,11 @@ export default function AdvisoryPage() {
     try {
       const [subsRes, advisoryRes] = await Promise.allSettled([
         api.get<Subscription[]>('/farmer/my-subscriptions'),
-        api.get<AdvisoryDay[]>('/farmer/advisory/today'),
+        api.get<AdvisoryDay[]>(
+          selectedDate
+            ? `/farmer/advisory/today?for_date=${selectedDate}`
+            : '/farmer/advisory/today',
+        ),
       ])
       if (subsRes.status === 'fulfilled') {
         const sub = subsRes.value.data.find(s => s.id === subscriptionId)
@@ -627,6 +645,49 @@ export default function AdvisoryPage() {
               </div>
             </div>
 
+            {/* Advisory-only date picker (2026-09-16). Only renders for
+                advisory-only subs — traditional farmers rely on the
+                app-mediated INPUT alert timing and don't need to plan
+                ahead. Bounded softly by crop_start_date; upper bound is
+                open (server clips practices past crop_end anyway). */}
+            {subscription?.advisory_only_mode && (
+              <div className="bg-white rounded-2xl px-3 py-2 border border-[#DDD0B8] flex items-center justify-between gap-2">
+                <button
+                  onClick={() => {
+                    const base = selectedDate ? new Date(selectedDate) : new Date()
+                    base.setDate(base.getDate() - 1)
+                    setSelectedDate(base.toISOString().slice(0, 10))
+                  }}
+                  className="w-9 h-9 rounded-full bg-[#F5F0E8] text-[#6B3F1F] text-lg flex items-center justify-center active:scale-95">
+                  ◀
+                </button>
+                <div className="flex-1 text-center">
+                  <input
+                    type="date"
+                    value={selectedDate || new Date().toISOString().slice(0, 10)}
+                    onChange={e => setSelectedDate(e.target.value)}
+                    className="text-sm text-[#6B3F1F] font-semibold bg-transparent border-none focus:outline-none w-full text-center"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    const base = selectedDate ? new Date(selectedDate) : new Date()
+                    base.setDate(base.getDate() + 1)
+                    setSelectedDate(base.toISOString().slice(0, 10))
+                  }}
+                  className="w-9 h-9 rounded-full bg-[#F5F0E8] text-[#6B3F1F] text-lg flex items-center justify-center active:scale-95">
+                  ▶
+                </button>
+                {selectedDate && (
+                  <button
+                    onClick={() => setSelectedDate('')}
+                    className="text-xs text-[#7D4196] font-semibold px-2">
+                    {tAdvisoryOnly('datePickerToday')}
+                  </button>
+                )}
+              </div>
+            )}
+
             {/* "Buy all Pesticides / Fertilisers" buttons removed
                 2026-05-21 — replaced by the per-card Order tap that
                 opens a date-range bundling sheet. The farmer picks
@@ -760,6 +821,7 @@ export default function AdvisoryPage() {
                             subscriptionId={subscriptionId}
                             timelineLineageId={tl.lineage_id}
                             onAckChanged={load}
+                            advisoryOnly={!!subscription?.advisory_only_mode}
                           />
                         )
                       }
@@ -781,6 +843,7 @@ export default function AdvisoryPage() {
                           }}
                           subscriptionId={subscriptionId}
                           timelineLineageId={tl.lineage_id}
+                          advisoryOnly={!!subscription?.advisory_only_mode}
                           onAckChanged={load}
                         />
                       )
@@ -1059,7 +1122,7 @@ function fulfilmentToPill(f: Fulfilment): ManagePill | null {
 function PracticeCard({
   practice, onOrder, isOrdering, ordered,
   subscriptionId, timelineLineageId, onAckChanged,
-  labelOverride,
+  labelOverride, advisoryOnly = false,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1074,6 +1137,10 @@ function PracticeCard({
   // farmer to pick a leg (OR is a dealer-side decision; farmer's
   // authority ends at Package selection).
   labelOverride?: string
+  // 2026-09-16 — Advisory-Only Mode. When true, hides the Order
+  // button + Manage-status pill on this card. Brands button (v1.2)
+  // will render here in the alternative branch.
+  advisoryOnly?: boolean
 }) {
   const router = useRouter()
   const tEl = useTranslations('practice.element')
@@ -1133,7 +1200,10 @@ function PracticeCard({
             {labelOverride || l2Label || 'General Advisory'}
           </p>
         </div>
-        {practice.l0_type === 'INPUT' && (
+        {/* Advisory-Only Mode (2026-09-16) — hide the Order/Manage
+            controls entirely. The v1.2 Brands button will land here
+            in the alternative branch. */}
+        {practice.l0_type === 'INPUT' && !advisoryOnly && (
           // 2026-06-21 — Status chip (Manage pill name) when the
           // practice has a live OrderItem and isn't yet picked up;
           // Order button when there's nothing in flight. The chip
@@ -1431,6 +1501,7 @@ function PracticeAckFooter({
 function RelationGroup({
   relationType, parts, orderingPractice, orderSuccess, onOrder,
   subscriptionId, timelineLineageId, onAckChanged,
+  advisoryOnly = false,
 }: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
@@ -1445,6 +1516,9 @@ function RelationGroup({
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
+  // 2026-09-16 — forwarded to every nested PracticeCard so
+  // Advisory-Only Mode hides work uniformly inside AND/OR groups.
+  advisoryOnly?: boolean
 }) {
   const tAction = useTranslations('practice.action')
   const tRel = useTranslations('practice.relations')
@@ -1519,6 +1593,7 @@ function RelationGroup({
         subscriptionId={subscriptionId}
         timelineLineageId={timelineLineageId}
         onAckChanged={onAckChanged}
+        advisoryOnly={advisoryOnly}
       />
     )
   }
@@ -1640,6 +1715,7 @@ function RelationGroup({
                 subscriptionId={subscriptionId}
                 timelineLineageId={timelineLineageId}
                 onAckChanged={onAckChanged}
+                advisoryOnly={advisoryOnly}
               />
               {partIdx < parts.length - 1 && (
                 <div className="flex items-center my-3">
@@ -1742,6 +1818,7 @@ function RelationGroup({
                     subscriptionId={subscriptionId}
                     timelineLineageId={timelineLineageId}
                     onAckChanged={onAckChanged}
+                    advisoryOnly={advisoryOnly}
                   />
                 )}
               </div>

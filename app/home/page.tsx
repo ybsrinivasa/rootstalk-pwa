@@ -42,6 +42,12 @@ type ClientInfo = {
   // renders a "TRAINING" ribbon on the branded header + a
   // subtitle noting it's a practice session.
   is_training?: boolean
+  // 2026-09-16 — Advisory-Only Mode flag. Renders the "Advisory Only"
+  // chip on the company tile so farmer sees why one card looks
+  // different from another (e.g. university with Advisory Only vs
+  // seed company with traditional flow).
+  advisory_only_mode?: boolean
+  dealer_list_enabled?: boolean
 }
 
 interface PendingAssignment {
@@ -84,6 +90,7 @@ export default function HomePage() {
   const t = useTranslations('home')
   const tCommon = useTranslations('common')
   const tTrain = useTranslations('training')
+  const tAdvisoryOnly = useTranslations('advisoryOnly')
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([])
   const [clientInfos, setClientInfos] = useState<Record<string, ClientInfo>>({})
   const [attentionByClient, setAttentionByClient] = useState<Record<string, number>>({})
@@ -514,6 +521,11 @@ export default function HomePage() {
                       {info?.is_training && (
                         <span className="absolute top-2 left-2 z-10 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-amber-300 text-amber-900 shadow-sm">
                           {tTrain('chip')}
+                        </span>
+                      )}
+                      {info?.advisory_only_mode && (
+                        <span className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-200 text-purple-900 shadow-sm">
+                          {tAdvisoryOnly('chip')}
                         </span>
                       )}
 
