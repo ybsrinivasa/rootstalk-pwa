@@ -2,10 +2,12 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { getToken } from '@/lib/auth'
+import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
+import LocationSourceToggle, { type LocationSource } from '@/components/orders/LocationSourceToggle'
+import RecipientMap, { type MapPoint } from '@/components/orders/RecipientMap'
 
 
 interface DealerRow {
@@ -15,32 +17,41 @@ interface DealerRow {
   distance_km: number
   shop_name: string | null
   shop_address: string | null
-  gps_lat: number | null
-  gps_lng: number | null
   sell_categories: string[] | null
+  // v1.9.4: origin coords exposed so the map component can pin them.
+  shop_gps_lat?: number | null
+  shop_gps_lng?: number | null
 }
 
 
 /**
  * Advisory-Only Mode — Nearby Dealers screen.
  *
- * Read-only informational list of the 5 nearest onboarded dealers.
- * Reused from the existing /nearby-dealers backend endpoint (same
- * query the subscribe-flow dealer picker uses). Farmer sees shop
- * details + can Call the dealer + can View on Map. No Orders.
+ * Read-only directory of the client's onboarded dealers (filtered to
+ * `ClientPromoter` rows for `sub.client_id` since v1.9.3). Farmer sees
+ * shop details + Call + Directions per row; can flip origin between
+ * profile GPS (default) and current device GPS; can pop a map showing
+ * all dealers on one canvas.
  *
- * Reached only from the crop-dashboard "Nearby Dealers" tile, which
- * itself only appears when subscription.dealer_list_enabled === true.
+ * No orders route through this screen — that's the checkbox-3 flow
+ * (not yet designed).
  */
 export default function NearbyDealersPage() {
   const router = useRouter()
   const params = useParams()
   const subscriptionId = params.subscriptionId as string
   const t = useTranslations('advisoryOnly.nearbyDealers')
+  const tOrdersCommon = useTranslations('orders.common')
 
   const [dealers, setDealers] = useState<DealerRow[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // v1.9.4: profile ↔ current GPS toggle + collapsible map, mirroring
+  // the regular-mode order picker (see /order/new/[subscriptionId]).
+  const [locSource, setLocSource] = useState<LocationSource>('profile')
+  const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [showMap, setShowMap] = useState(false)
+  const [refetching, setRefetching] = useState(false)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -57,6 +68,47 @@ export default function NearbyDealersPage() {
       }
     })()
   }, [subscriptionId, router, t])
+
+  async function handleLocationChange(
+    next: LocationSource,
+    coords?: { lat: number; lng: number },
+  ) {
+    setLocSource(next)
+    if (next === 'current' && coords) setCurrentCoords(coords)
+    const useCoords = next === 'current' ? (coords || currentCoords) : null
+    const geoParam = useCoords ? `?lat=${useCoords.lat}&lng=${useCoords.lng}` : ''
+    setRefetching(true)
+    try {
+      const r = await api.get<DealerRow[]>(
+        `/farmer/subscriptions/${subscriptionId}/nearby-dealers${geoParam}`,
+      )
+      setDealers(r.data)
+    } catch { /* keep previous list */ }
+    finally { setRefetching(false) }
+  }
+
+  const farmerUser = getUser()
+  const mapOrigin = (() => {
+    if (locSource === 'current' && currentCoords) return currentCoords
+    if (farmerUser?.gps_lat && farmerUser?.gps_lng) {
+      return { lat: Number(farmerUser.gps_lat), lng: Number(farmerUser.gps_lng) }
+    }
+    return null
+  })()
+
+  const mapPoints: MapPoint[] = (dealers || []).reduce<MapPoint[]>((acc, d) => {
+    if (d.shop_gps_lat != null && d.shop_gps_lng != null) {
+      acc.push({
+        user_id: d.user_id,
+        name: d.name,
+        shop_name: d.shop_name,
+        lat: d.shop_gps_lat,
+        lng: d.shop_gps_lng,
+        distance_km: d.distance_km,
+      })
+    }
+    return acc
+  }, [])
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -78,12 +130,57 @@ export default function NearbyDealersPage() {
           </div>
         ) : (
           <>
+            {/* v1.9.4 — profile/current toggle + collapsible map,
+                borrowed from the regular-mode order picker. */}
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-[#7A8C7E]">
+                  {tOrdersCommon('map.locationSourceLabel')}
+                </span>
+                <LocationSourceToggle
+                  source={locSource}
+                  currentCoords={currentCoords}
+                  onChange={handleLocationChange}
+                  busy={refetching}
+                  labels={{
+                    profile: tOrdersCommon('map.locationProfile'),
+                    current: tOrdersCommon('map.locationCurrent'),
+                    requesting: tOrdersCommon('map.locationRequesting'),
+                    denied: tOrdersCommon('map.locationDenied'),
+                  }}
+                />
+              </div>
+              {mapOrigin && mapPoints.length > 0 && (
+                <>
+                  <button
+                    onClick={() => setShowMap(v => !v)}
+                    className="w-full text-xs text-[#3A7D44] font-medium py-2 rounded-lg border border-[#DDD0B8] bg-white active:bg-[#F7F0E0]">
+                    {showMap ? tOrdersCommon('map.hideBtn') : tOrdersCommon('map.showBtn')}
+                  </button>
+                  {showMap && (
+                    <RecipientMap
+                      origin={mapOrigin}
+                      points={mapPoints}
+                      selectedUserId={null}
+                      onSelect={uid => {
+                        // Scroll the tapped dealer's row into view.
+                        setTimeout(() => {
+                          const el = document.getElementById(`dealer-${uid}`)
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        }, 50)
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+
             <p className="text-xs text-[#7A8C7E] uppercase tracking-wider font-medium mt-4 mb-2">
               {t('header', { count: dealers.length })}
             </p>
             <div className="space-y-3">
               {dealers.map(d => (
-                <div key={d.user_id}
+                <div key={d.user_id} id={`dealer-${d.user_id}`}
                   className="bg-white rounded-2xl border border-[#DDD0B8] p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -111,6 +208,15 @@ export default function NearbyDealersPage() {
                           ))}
                         </div>
                       )}
+                      {d.shop_gps_lat != null && d.shop_gps_lng != null && (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${d.shop_gps_lat},${d.shop_gps_lng}`}
+                          target="_blank" rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-[#3A7D44] font-medium mt-2">
+                          <span>📍</span>
+                          <span>{tOrdersCommon('map.directionsBtn')}</span>
+                        </a>
+                      )}
                     </div>
                     <div className="flex flex-col gap-2 shrink-0">
                       {d.phone && (
@@ -118,15 +224,6 @@ export default function NearbyDealersPage() {
                           aria-label={t('callAria')}
                           className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center active:scale-95">
                           <span>📞</span>
-                        </a>
-                      )}
-                      {d.gps_lat != null && d.gps_lng != null && (
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${d.gps_lat},${d.gps_lng}`}
-                          target="_blank" rel="noreferrer"
-                          aria-label={t('mapAria')}
-                          className="w-10 h-10 rounded-full bg-[#7D4196] text-white flex items-center justify-center active:scale-95">
-                          <span>📍</span>
                         </a>
                       )}
                     </div>
