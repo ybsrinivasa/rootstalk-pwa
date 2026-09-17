@@ -359,8 +359,10 @@ function ReadOnlyAckMarker({ marked, label }: { marked: boolean; label: string }
 // app/advisory/[subscriptionId]/page.tsx.
 function BigPlusSeparator() {
   return (
-    <div className="flex items-center justify-center py-3 bg-emerald-50/30">
+    <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50/30">
+      <div className="h-0.5 flex-1 bg-emerald-200" />
       <span className="text-3xl font-bold text-emerald-600 leading-none">+</span>
+      <div className="h-0.5 flex-1 bg-emerald-200" />
     </div>
   )
 }
@@ -830,8 +832,9 @@ function RelationGroup({
                   {tAdvisoryOnly('chooseOne')}
                 </p>
               </div>
-              {/* 2026-09-17 — v1.7 mirror: BigOrSeparator between options. */}
-              <div className="p-3 space-y-2">
+              {/* 2026-09-17 — v1.7 mirror: BigOrSeparator between options.
+                  v1.7.1: tightened padding to match farmer page. */}
+              <div className="p-2 space-y-1">
                 {optionsBody.flatMap((el, i) =>
                   i === 0
                     ? [el]

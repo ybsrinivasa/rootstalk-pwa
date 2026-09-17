@@ -1281,8 +1281,10 @@ function fulfilmentToPill(f: Fulfilment): ManagePill | null {
 // as the group name.
 function BigPlusSeparator() {
   return (
-    <div className="flex items-center justify-center py-3 bg-emerald-50/30">
+    <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50/30">
+      <div className="h-0.5 flex-1 bg-emerald-200" />
       <span className="text-3xl font-bold text-emerald-600 leading-none">+</span>
+      <div className="h-0.5 flex-1 bg-emerald-200" />
     </div>
   )
 }
@@ -2190,8 +2192,10 @@ function RelationGroup({
               </div>
               {/* 2026-09-17 — v1.7: intersperse a big OR pill between
                   option rows instead of a subtle divide-y. Symbol-first
-                  visual language for low-literacy farmers. */}
-              <div className="p-3 space-y-2">
+                  visual language for low-literacy farmers.
+                  v1.7.1: tightened padding (p-2 + space-y-1) so more
+                  fits per fold on narrow phones. */}
+              <div className="p-2 space-y-1">
                 {optionsBody.flatMap((el, i) =>
                   i === 0
                     ? [el]
