@@ -1272,6 +1272,30 @@ function fulfilmentToPill(f: Fulfilment): ManagePill | null {
   }
 }
 
+// Advisory-Only v1.7 (2026-09-17) — math-notation separators inside
+// Relation groups. Farmers with limited literacy pick up "A + B"
+// and "A OR B" faster than reading "APPLY BOTH TOGETHER" text.
+// The symbols are the operator; the container tint (green AND vs
+// blue OR) reinforces the semantic. Sub-headers are dropped in
+// advisory-only mode; only the top-level "CHOOSE ONE" header stays
+// as the group name.
+function BigPlusSeparator() {
+  return (
+    <div className="flex items-center justify-center py-3 bg-emerald-50/30">
+      <span className="text-3xl font-bold text-emerald-600 leading-none">+</span>
+    </div>
+  )
+}
+function BigOrSeparator() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2">
+      <div className="h-0.5 flex-1 bg-blue-200" />
+      <span className="text-base font-bold text-blue-700 tracking-widest">OR</span>
+      <div className="h-0.5 flex-1 bg-blue-200" />
+    </div>
+  )
+}
+
 function PracticeCard({
   practice, onOrder, isOrdering, ordered,
   subscriptionId, timelineLineageId, onAckChanged,
@@ -1862,16 +1886,25 @@ function RelationGroup({
       const f = p.fulfilment ?? null
       return (f && fulfilmentToPill(f) != null) || p.is_purchased
     })
+    // 2026-09-17 — v1.7: in advisory-only mode drop the text header
+    // ("Apply all together") and put the emerald tint on the outer
+    // border instead — the big green `+` between practices does the
+    // operator work. Traditional flow keeps the header.
+    const andContainerCls = advisoryOnly
+      ? 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
+      : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
     return (
-      <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
-          <div className="w-1 h-5 rounded-full bg-emerald-600" />
-          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-            {tRel('applyAllTogether', { count: ids.length })}
-          </p>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {opt.practices.map(p => {
+      <div className={andContainerCls}>
+        {!advisoryOnly && (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
+            <div className="w-1 h-5 rounded-full bg-emerald-600" />
+            <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+              {tRel('applyAllTogether', { count: ids.length })}
+            </p>
+          </div>
+        )}
+        <div className={advisoryOnly ? '' : 'divide-y divide-slate-100'}>
+          {opt.practices.flatMap((p, i) => {
             const f = p.fulfilment ?? null
             const pillName = f ? fulfilmentToPill(f) : null
             const pillTone = pillName ? MANAGE_PILL_TONE[pillName] : null
@@ -1882,24 +1915,21 @@ function RelationGroup({
             // + fulfilment chip; farmer buying independently needs
             // Common Name + Brand + Dose etc., which live on
             // PracticeCard's element list.
-            if (advisoryOnly) {
-              return (
-                <PracticeCard
-                  key={p.id}
-                  practice={p}
-                  onOrder={() => {}}
-                  isOrdering={false}
-                  ordered={false}
-                  subscriptionId={subscriptionId}
-                  timelineLineageId={timelineLineageId}
-                  onAckChanged={onAckChanged}
-                  advisoryOnly
-                  insideContainer
-                  {...cardCollapseProps(p)}
-                />
-              )
-            }
-            return (
+            const card = advisoryOnly ? (
+              <PracticeCard
+                key={p.id}
+                practice={p}
+                onOrder={() => {}}
+                isOrdering={false}
+                ordered={false}
+                subscriptionId={subscriptionId}
+                timelineLineageId={timelineLineageId}
+                onAckChanged={onAckChanged}
+                advisoryOnly
+                insideContainer
+                {...cardCollapseProps(p)}
+              />
+            ) : (
               <InnerPracticeRow
                 key={p.id}
                 practice={p}
@@ -1916,6 +1946,11 @@ function RelationGroup({
                 onAckChanged={onAckChanged}
               />
             )
+            // 2026-09-17 — v1.7: big green + between practices in
+            // advisory-only. Traditional mode keeps divide-y only.
+            return i === 0 || !advisoryOnly
+              ? [card]
+              : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
           })}
         </div>
         {/* 2026-09-16 — v1.4: no order flow in advisory-only, so no
@@ -2042,40 +2077,45 @@ function RelationGroup({
                     const f = p.fulfilment ?? null
                     return (f && fulfilmentToPill(f) != null) || p.is_purchased
                   })
+                  // v1.7 mirror: same header-drop + emerald border +
+                  // BigPlusSeparator treatment as the top-level
+                  // isPureAndGroup branch above.
+                  const innerAndCls = advisoryOnly
+                    ? 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
+                    : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
                   return (
-                  <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
-                      <div className="w-1 h-5 rounded-full bg-emerald-600" />
-                      <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-                        {tRel('applyAllTogether', { count: ids.length })}
-                      </p>
-                    </div>
-                    <div className="divide-y divide-slate-100">
-                      {opt.practices.map(p => {
+                  <div className={innerAndCls}>
+                    {!advisoryOnly && (
+                      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
+                        <div className="w-1 h-5 rounded-full bg-emerald-600" />
+                        <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                          {tRel('applyAllTogether', { count: ids.length })}
+                        </p>
+                      </div>
+                    )}
+                    <div className={advisoryOnly ? '' : 'divide-y divide-slate-100'}>
+                      {opt.practices.flatMap((p, i) => {
                         const f = p.fulfilment ?? null
                         const pillName = f ? fulfilmentToPill(f) : null
                         const pillTone = pillName ? MANAGE_PILL_TONE[pillName] : null
                         // 2026-09-16 — v1.4: same swap as the pure-AND
                         // branch above — PracticeCard (insideContainer)
                         // when advisoryOnly.
-                        if (advisoryOnly) {
-                          return (
-                            <PracticeCard
-                              key={p.id}
-                              practice={p}
-                              onOrder={() => {}}
-                              isOrdering={false}
-                              ordered={false}
-                              subscriptionId={subscriptionId}
-                              timelineLineageId={timelineLineageId}
-                              onAckChanged={onAckChanged}
-                              advisoryOnly
-                              insideContainer
-                              {...cardCollapseProps(p)}
-                            />
-                          )
-                        }
-                        return (
+                        const card = advisoryOnly ? (
+                          <PracticeCard
+                            key={p.id}
+                            practice={p}
+                            onOrder={() => {}}
+                            isOrdering={false}
+                            ordered={false}
+                            subscriptionId={subscriptionId}
+                            timelineLineageId={timelineLineageId}
+                            onAckChanged={onAckChanged}
+                            advisoryOnly
+                            insideContainer
+                            {...cardCollapseProps(p)}
+                          />
+                        ) : (
                           <InnerPracticeRow
                             key={p.id}
                             practice={p}
@@ -2092,6 +2132,9 @@ function RelationGroup({
                             onAckChanged={onAckChanged}
                           />
                         )
+                        return i === 0 || !advisoryOnly
+                          ? [card]
+                          : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
                       })}
                     </div>
                     {!advisoryOnly && !anyInFlight && (
@@ -2145,8 +2188,15 @@ function RelationGroup({
                   {tAdvisoryOnlyRel('chooseOne')}
                 </p>
               </div>
-              <div className="divide-y divide-slate-100">
-                {optionsBody}
+              {/* 2026-09-17 — v1.7: intersperse a big OR pill between
+                  option rows instead of a subtle divide-y. Symbol-first
+                  visual language for low-literacy farmers. */}
+              <div className="p-3 space-y-2">
+                {optionsBody.flatMap((el, i) =>
+                  i === 0
+                    ? [el]
+                    : [<BigOrSeparator key={`or-${i}`} />, el],
+                )}
               </div>
             </div>
           ) : optionsBody}

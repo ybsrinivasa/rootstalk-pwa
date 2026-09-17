@@ -354,6 +354,26 @@ function ReadOnlyAckMarker({ marked, label }: { marked: boolean; label: string }
   )
 }
 
+// Advisory-Only v1.7 mirror (2026-09-17) — math-notation separators
+// inside Relation groups. See canonical rationale in
+// app/advisory/[subscriptionId]/page.tsx.
+function BigPlusSeparator() {
+  return (
+    <div className="flex items-center justify-center py-3 bg-emerald-50/30">
+      <span className="text-3xl font-bold text-emerald-600 leading-none">+</span>
+    </div>
+  )
+}
+function BigOrSeparator() {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2">
+      <div className="h-0.5 flex-1 bg-blue-200" />
+      <span className="text-base font-bold text-blue-700 tracking-widest">OR</span>
+      <div className="h-0.5 flex-1 bg-blue-200" />
+    </div>
+  )
+}
+
 function PracticeCard({
   practice, elementLabel, t, tPill, labelOverride, advisoryOnly = false,
   collapsed = false, onToggleCollapsed, insideContainer = false, tSuggestedLabel,
@@ -645,26 +665,38 @@ function RelationGroup({
 
   if (isPureAndGroup) {
     const opt = parts[0].options[0]
+    // v1.7 mirror: drop header + green border + BigPlusSeparator when
+    // advisoryOnly. See canonical rationale on farmer page.
+    const andCls = advisoryOnly
+      ? 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
+      : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
     return (
-      <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
-          <div className="w-1 h-5 rounded-full bg-emerald-600" />
-          <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-            {tRel('applyAllTogether', { count: opt.practices.length })}
-          </p>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {opt.practices.map(p => (
-            <div key={p.id} className={advisoryOnly ? '' : 'px-3 py-2'}>
-              <PracticeCard
-                practice={p}
-                elementLabel={elementLabel} t={t} tPill={tPill}
-                advisoryOnly={advisoryOnly}
-                insideContainer={advisoryOnly}
-                {...cardCollapseProps(p)}
-              />
-            </div>
-          ))}
+      <div className={andCls}>
+        {!advisoryOnly && (
+          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
+            <div className="w-1 h-5 rounded-full bg-emerald-600" />
+            <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+              {tRel('applyAllTogether', { count: opt.practices.length })}
+            </p>
+          </div>
+        )}
+        <div className={advisoryOnly ? '' : 'divide-y divide-slate-100'}>
+          {opt.practices.flatMap((p, i) => {
+            const card = (
+              <div key={p.id} className={advisoryOnly ? '' : 'px-3 py-2'}>
+                <PracticeCard
+                  practice={p}
+                  elementLabel={elementLabel} t={t} tPill={tPill}
+                  advisoryOnly={advisoryOnly}
+                  insideContainer={advisoryOnly}
+                  {...cardCollapseProps(p)}
+                />
+              </div>
+            )
+            return i === 0 || !advisoryOnly
+              ? [card]
+              : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
+          })}
         </div>
       </div>
     )
@@ -741,25 +773,34 @@ function RelationGroup({
                   </div>
                 )}
                 {isCompound ? (
-                  <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
-                      <div className="w-1 h-5 rounded-full bg-emerald-600" />
-                      <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-                        {tRel('applyAllTogether', { count: opt.practices.length })}
-                      </p>
-                    </div>
-                    <div className="divide-y divide-slate-100">
-                      {opt.practices.map(p => (
-                        <div key={p.id} className={advisoryOnly ? '' : 'px-3 py-2'}>
-                          <PracticeCard
-                            practice={p}
-                            elementLabel={elementLabel} t={t} tPill={tPill}
-                            advisoryOnly={advisoryOnly}
-                            insideContainer={advisoryOnly}
-                            {...cardCollapseProps(p)}
-                          />
-                        </div>
-                      ))}
+                  <div className={advisoryOnly
+                    ? 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
+                    : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'}>
+                    {!advisoryOnly && (
+                      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
+                        <div className="w-1 h-5 rounded-full bg-emerald-600" />
+                        <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
+                          {tRel('applyAllTogether', { count: opt.practices.length })}
+                        </p>
+                      </div>
+                    )}
+                    <div className={advisoryOnly ? '' : 'divide-y divide-slate-100'}>
+                      {opt.practices.flatMap((p, i) => {
+                        const card = (
+                          <div key={p.id} className={advisoryOnly ? '' : 'px-3 py-2'}>
+                            <PracticeCard
+                              practice={p}
+                              elementLabel={elementLabel} t={t} tPill={tPill}
+                              advisoryOnly={advisoryOnly}
+                              insideContainer={advisoryOnly}
+                              {...cardCollapseProps(p)}
+                            />
+                          </div>
+                        )
+                        return i === 0 || !advisoryOnly
+                          ? [card]
+                          : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
+                      })}
                     </div>
                   </div>
                 ) : (
@@ -789,8 +830,13 @@ function RelationGroup({
                   {tAdvisoryOnly('chooseOne')}
                 </p>
               </div>
-              <div className="divide-y divide-slate-100">
-                {optionsBody}
+              {/* 2026-09-17 — v1.7 mirror: BigOrSeparator between options. */}
+              <div className="p-3 space-y-2">
+                {optionsBody.flatMap((el, i) =>
+                  i === 0
+                    ? [el]
+                    : [<BigOrSeparator key={`or-${i}`} />, el],
+                )}
               </div>
             </div>
           ) : optionsBody}
