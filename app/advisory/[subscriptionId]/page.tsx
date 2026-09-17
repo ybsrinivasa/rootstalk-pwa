@@ -86,6 +86,11 @@ interface Practice {
   fulfilment?: Fulfilment | null
   // 2026-06-19 — per-occurrence acknowledgement state
   ack_status?: 'ACTIVE' | 'MARKED'
+  // 2026-09-17 (v1.8) — Advisory-Only Mode two-stage ack. When
+  // non-null, farmer has tapped "I've purchased this" on this INPUT
+  // occurrence. Traditional flow leaves this null. Gates the
+  // "I've done this" checkbox (can't be done without purchased).
+  purchased_at?: string | null
   occurrence_date?: string  // ISO date
 }
 interface PendingConditionalQuestion {
@@ -1612,6 +1617,7 @@ function PracticeCard({
           subscriptionId={subscriptionId}
           timelineLineageId={timelineLineageId}
           onAckChanged={onAckChanged}
+          advisoryOnly={advisoryOnly}
         />
       )}
     </div>
@@ -1635,11 +1641,17 @@ function PracticeCard({
 // only friction — once acknowledged, subsequent hides are instant).
 function PracticeAckFooter({
   practice, subscriptionId, timelineLineageId, onAckChanged,
+  advisoryOnly = false,
 }: {
   practice: Practice
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
+  // 2026-09-17 (v1.8) — Advisory-Only Mode. In this mode INPUT
+  // practices get a two-stage ack (I've purchased this → I've done
+  // this) and no delete option. Non-INPUT gets a single "I've done
+  // this" checkbox, also no delete. Traditional flow unchanged.
+  advisoryOnly?: boolean
 }) {
   const tAck = useTranslations('practice.ack')
   const [busy, setBusy] = useState(false)
@@ -1655,11 +1667,17 @@ function PracticeAckFooter({
   // I've done it?" The fallback is a real edge case (purchased + then
   // timeline-archived without reroute) — those farmers won't see the
   // tick anymore, accepted trade-off.
-  const ackable = practice.l0_type !== 'INPUT' || !!fulf?.farmer_received_at
+  //
+  // 2026-09-17 (v1.8): in advisory-only mode INPUT is ALWAYS ackable
+  // (there's no fulfilment flow — farmer buys independently and marks
+  // it themselves via the purchased checkbox).
+  const ackable = advisoryOnly
+    || practice.l0_type !== 'INPUT'
+    || !!fulf?.farmer_received_at
   if (!ackable) return null
   if (!timelineLineageId || !practice.occurrence_date) return null
 
-  async function call(action: 'mark' | 'unmark' | 'hide') {
+  async function call(action: 'mark' | 'unmark' | 'hide' | 'purchase' | 'unpurchase') {
     setBusy(true)
     try {
       await api.post(`/farmer/practice-ack/${action}`, {
@@ -1683,6 +1701,76 @@ function PracticeAckFooter({
   }
 
   const marked = practice.ack_status === 'MARKED'
+
+  // 2026-09-17 (v1.8) — Advisory-Only Mode variants. See
+  // feedback_symbols_beat_text_labels_for_low_literacy.md for the
+  // surrounding UX rationale.
+  if (advisoryOnly) {
+    const purchased = !!practice.purchased_at
+    const isInput = practice.l0_type === 'INPUT'
+    // Time gate — "done" only enabled when the practice's own
+    // occurrence date has passed. Farmer looking at a future
+    // recommendation in the "Coming up" cluster can pre-purchase but
+    // can't say they've applied something that hasn't come due yet.
+    const todayIso = new Date().toISOString().slice(0, 10)
+    const occDate = (practice.occurrence_date || '').slice(0, 10)
+    const dueReached = !!occDate && occDate <= todayIso
+    // "Done" ready when time-gate passes AND (for INPUT) purchase set.
+    const doneEnabled = !busy && dueReached && (!isInput || purchased)
+    const doneHint = !dueReached
+      ? tAck('doneNotYetDue')
+      : (isInput && !purchased ? tAck('donePurchaseFirst') : null)
+
+    const CheckPill = ({
+      active, enabled, label, onTap,
+    }: { active: boolean; enabled: boolean; label: string; onTap: () => void }) => (
+      <button
+        onClick={onTap}
+        disabled={!enabled}
+        className="flex items-center gap-2 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed text-left flex-1 min-w-0">
+        <span
+          className={`inline-flex items-center justify-center w-6 h-6 rounded-full border shrink-0 ${
+            active
+              ? 'bg-emerald-600 border-emerald-700 text-white'
+              : 'bg-[#F5F0E8] border-[#DDD0B8] text-[#7A8C7E]'
+          }`}>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        </span>
+        <span className={`truncate ${active ? 'text-emerald-700' : 'text-[#6B3F1F]'}`}>
+          {label}
+        </span>
+      </button>
+    )
+    return (
+      <div className="border-t border-[#DDD0B8] px-4 py-2.5">
+        <div className="flex items-center gap-3">
+          {isInput && (
+            <CheckPill
+              active={purchased}
+              enabled={!busy}
+              label={tAck('purchased')}
+              onTap={() => call(purchased ? 'unpurchase' : 'purchase')}
+            />
+          )}
+          <CheckPill
+            active={marked}
+            enabled={doneEnabled}
+            label={tAck('mark')}
+            onTap={() => call(marked ? 'unmark' : 'mark')}
+          />
+        </div>
+        {!marked && doneHint && (
+          <p className="text-[10px] text-[#7A8C7E] mt-1 leading-tight">
+            {doneHint}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  // Traditional (non-advisory-only) flow — unchanged.
   return (
     <>
       <div className="border-t border-[#DDD0B8] px-4 py-2.5 flex items-center justify-between gap-3">
