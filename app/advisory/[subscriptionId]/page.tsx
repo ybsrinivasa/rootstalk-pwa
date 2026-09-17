@@ -1376,6 +1376,7 @@ function PracticeCard({
   labelOverride, advisoryOnly = false,
   collapsed = false, onToggleCollapsed,
   insideContainer = false,
+  purchaseCrossOptionLocked = false,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1384,6 +1385,7 @@ function PracticeCard({
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
+  purchaseCrossOptionLocked?: boolean
   // 2026-06-26 — Replaces the L2 label when set. Used by the
   // pure-OR collapsed render to show "Microbial Pesticide or
   // Botanical Pesticide" on a single card instead of asking the
@@ -1694,6 +1696,7 @@ function PracticeCard({
           timelineLineageId={timelineLineageId}
           onAckChanged={onAckChanged}
           advisoryOnly={advisoryOnly}
+          purchaseCrossOptionLocked={purchaseCrossOptionLocked}
         />
       )}
     </div>
@@ -1718,6 +1721,7 @@ function PracticeCard({
 function PracticeAckFooter({
   practice, subscriptionId, timelineLineageId, onAckChanged,
   advisoryOnly = false,
+  purchaseCrossOptionLocked = false,
 }: {
   practice: Practice
   subscriptionId: string
@@ -1728,6 +1732,11 @@ function PracticeAckFooter({
   // this) and no delete option. Non-INPUT gets a single "I've done
   // this" checkbox, also no delete. Traditional flow unchanged.
   advisoryOnly?: boolean
+  // 2026-09-17 (v1.9.5) — set by RelationGroup when a sibling
+  // option in the same Part already has a purchased practice. OR
+  // means "choose one" — committing to option X locks out purchases
+  // in the alternative options.
+  purchaseCrossOptionLocked?: boolean
 }) {
   const tAck = useTranslations('practice.ack')
   const [busy, setBusy] = useState(false)
@@ -1791,11 +1800,19 @@ function PracticeAckFooter({
     const todayIso = new Date().toISOString().slice(0, 10)
     const occDate = (practice.occurrence_date || '').slice(0, 10)
     const dueReached = !!occDate && occDate <= todayIso
+    // v1.9.5 cross-option lockout: OR alternatives disable each
+    // other's purchase once one is chosen. Doesn't affect already-
+    // purchased items (rule is symmetrical — you can still un-mark
+    // to change your mind).
+    const purchaseEnabled = !busy && (!purchaseCrossOptionLocked || purchased)
     // "Done" ready when time-gate passes AND (for INPUT) purchase set.
     const doneEnabled = !busy && dueReached && (!isInput || purchased)
     const doneHint = !dueReached
       ? tAck('doneNotYetDue')
       : (isInput && !purchased ? tAck('donePurchaseFirst') : null)
+    const purchaseHint = (isInput && !purchased && purchaseCrossOptionLocked)
+      ? tAck('purchaseOtherOptionChosen')
+      : null
 
     const CheckPill = ({
       active, enabled, label, onTap,
@@ -1825,7 +1842,7 @@ function PracticeAckFooter({
           {isInput && (
             <CheckPill
               active={purchased}
-              enabled={!busy}
+              enabled={purchaseEnabled}
               label={tAck('purchased')}
               onTap={() => call(purchased ? 'unpurchase' : 'purchase')}
             />
@@ -1837,7 +1854,12 @@ function PracticeAckFooter({
             onTap={() => call(marked ? 'unmark' : 'mark')}
           />
         </div>
-        {!marked && doneHint && (
+        {purchaseHint && (
+          <p className="text-[10px] text-[#7A8C7E] mt-1 leading-tight">
+            {purchaseHint}
+          </p>
+        )}
+        {!marked && !purchaseHint && doneHint && (
           <p className="text-[10px] text-[#7A8C7E] mt-1 leading-tight">
             {doneHint}
           </p>
@@ -1986,12 +2008,38 @@ function RelationGroup({
   // farmers read one option/step at a time; multiple expanded cards
   // on a small screen quickly become visual noise.
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  // 2026-09-17 (v1.9.5) — Cross-option purchase lockout. Once the
+  // farmer marks "I've purchased this" on any practice in an OR
+  // option, every practice in the SIBLING options of the same Part
+  // gets its purchase disabled. Rationale: OR means "choose one" —
+  // committing to option X means the alternatives are no longer in
+  // play; leaving their purchase enabled invites the farmer to
+  // double-buy. Compound options (A+B) stay unlocked internally —
+  // farmer needs both to fulfil their chosen option.
+  const purchaseLockedPracticeIds = new Set<string>()
+  if (advisoryOnly) {
+    for (const part of parts) {
+      if (part.options.length < 2) continue  // no OR alternatives to lock
+      const chosenOptionIds = new Set<number>()
+      for (const opt of part.options) {
+        if (opt.practices.some(p => !!p.purchased_at)) {
+          chosenOptionIds.add(opt.option)
+        }
+      }
+      if (chosenOptionIds.size === 0) continue
+      for (const opt of part.options) {
+        if (chosenOptionIds.has(opt.option)) continue
+        for (const p of opt.practices) purchaseLockedPracticeIds.add(p.id)
+      }
+    }
+  }
   const cardCollapseProps = (p: Practice) =>
     advisoryOnly
       ? {
           collapsed: expandedId !== p.id,
           onToggleCollapsed: () =>
             setExpandedId(prev => (prev === p.id ? null : p.id)),
+          purchaseCrossOptionLocked: purchaseLockedPracticeIds.has(p.id),
         }
       : {}
 
