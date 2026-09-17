@@ -757,7 +757,7 @@ export default function AdvisoryPage() {
                     </div>
                     {sizeLabel && (
                       <div className="text-center min-w-0">
-                        <p className="text-xs text-[#7A8C7E]">{tLabel('farmSize')}</p>
+                        <p className="text-xs text-[#7A8C7E]">{tLabel('cropSize')}</p>
                         <p className="font-bold text-[#6B3F1F] truncate">{sizeLabel}</p>
                       </div>
                     )}
