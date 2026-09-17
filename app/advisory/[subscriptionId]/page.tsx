@@ -155,6 +155,13 @@ interface Subscription {
   //   - Brands button (v1.2) on fertiliser/pesticide inputs
   advisory_only_mode?: boolean
   dealer_list_enabled?: boolean
+  // 2026-09-17 — Farm size shown in the sticky header so an
+  // advisory-only farmer can hand the phone to the dealer and the
+  // dealer can size the volume from the screen alone.
+  crop_measure?: 'AREA_WISE' | 'PLANT_WISE' | null
+  farm_area_acres?: number | null
+  area_unit?: string | null
+  number_of_plants?: number | null
 }
 
 // Muted, equal-brightness tones tuned to the warm earth palette
@@ -531,6 +538,7 @@ export default function AdvisoryPage() {
   const tEmpty = useTranslations('practice.empty')
   const tPage = useTranslations('advisory')
   const tAdvisoryOnly = useTranslations('advisoryOnly')
+  const tFarm = useTranslations('farmerClientHome')
   const locale = useLocale()
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
@@ -712,25 +720,55 @@ export default function AdvisoryPage() {
         {/* Active advisory */}
         {hasStartDate && advisory && (
           <div className="px-4 mt-4 space-y-8">
-            {/* Day counter. Annual packages anchor to crop_start_date
-                so "Day N" (days after sowing) is the right label. Perennial
-                packages are calendar-driven (timelines fire by day-of-year,
-                not by elapsed days from sowing) — "Day +N" would be
-                meaningless, so we show today's date instead. */}
-            <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] flex items-center justify-between">
-              <div>
-                <p className="text-xs text-[#7A8C7E]">{tLabel('today')}</p>
-                <p className="font-bold text-[#6B3F1F]">
-                  {advisory.package_type === 'PERENNIAL'
-                    ? new Date().toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
-                    : `${tLabel('day')} ${advisory.day_offset}`}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-[#7A8C7E]">{tLabel('reference')}</p>
-                <p className="text-xs font-mono text-[#6B3F1F]">{advisory.reference_number || '—'}</p>
-              </div>
-            </div>
+            {/* Day counter + farm size + reference. Annual packages
+                anchor to crop_start_date so "Day N" (days after sowing)
+                is the right label. Perennial packages are calendar-
+                driven — "Day +N" would be meaningless, so we show
+                today's date instead.
+                2026-09-17 — farm size (acres or plant count) now
+                sits between the day and the reference so an
+                advisory-only farmer can hand the phone to the dealer
+                and the dealer sizes the volume from the screen. Card
+                is sticky in advisory-only mode (top: PWAHeader height)
+                so it stays visible while scrolling the practice list. */}
+            {(() => {
+              const measure = subscription?.crop_measure ?? 'AREA_WISE'
+              let sizeLabel: string | null = null
+              if (measure === 'PLANT_WISE' && subscription?.number_of_plants != null) {
+                sizeLabel = tFarm('plantsCount', { count: subscription.number_of_plants })
+              } else if (measure !== 'PLANT_WISE' && subscription?.farm_area_acres != null) {
+                const rawUnit = (subscription.area_unit || 'acres').toLowerCase().trim()
+                const unit = (rawUnit === 'acres' || rawUnit === 'acre') ? tFarm('acres') : rawUnit
+                sizeLabel = `${subscription.farm_area_acres} ${unit}`
+              }
+              const stickyWrap = subscription?.advisory_only_mode
+                ? 'sticky top-16 z-30 bg-[#F5F0E8] -mx-4 px-4 py-2'
+                : ''
+              return (
+                <div className={stickyWrap}>
+                  <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] shadow-sm flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs text-[#7A8C7E]">{tLabel('today')}</p>
+                      <p className="font-bold text-[#6B3F1F]">
+                        {advisory.package_type === 'PERENNIAL'
+                          ? new Date().toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+                          : `${tLabel('day')} ${advisory.day_offset}`}
+                      </p>
+                    </div>
+                    {sizeLabel && (
+                      <div className="text-center min-w-0">
+                        <p className="text-xs text-[#7A8C7E]">{tLabel('farmSize')}</p>
+                        <p className="font-bold text-[#6B3F1F] truncate">{sizeLabel}</p>
+                      </div>
+                    )}
+                    <div className="text-right min-w-0">
+                      <p className="text-xs text-[#7A8C7E]">{tLabel('reference')}</p>
+                      <p className="text-xs font-mono text-[#6B3F1F] truncate">{advisory.reference_number || '—'}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Cluster navigation (2026-09-16, v1.6). Replaces the earlier
                 horizontal date walker. Advisory-only farmers step through

@@ -488,6 +488,7 @@
       "today": "Today",
       "reference": "Reference",
       "day": "Day",
+      "farmSize": "Farm",
       "coversAlso": "Covers also: {names}"
     },
     "empty": {
