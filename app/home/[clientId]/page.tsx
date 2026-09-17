@@ -6,6 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
+import AdvisoryOnlyChip from '@/components/AdvisoryOnlyChip'
 
 type Subscription = {
   id: string; client_id: string; package_id: string
@@ -27,6 +28,11 @@ type Subscription = {
   area_unit?: string | null
   number_of_plants?: number | null
   planting_year?: number | null
+  // 2026-09-17 — Advisory-Only Mode snapshot. Farmer glances at the
+  // client's crop list and sees which subs are advisory-only vs
+  // traditional at a glance (mirrors chip placements on
+  // /my-subscriptions and the /home company tile).
+  advisory_only_mode?: boolean
 }
 
 function formatStartDate(iso: string | null | undefined, locale: string): string | null {
@@ -321,7 +327,10 @@ export default function BrandedSpacePage() {
                   </span>
                 )}
                 <div className="min-w-0 flex-1 pr-2">
-                  <p className="text-[#6B3F1F] font-semibold text-[15px]">{cropLabel}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-[#6B3F1F] font-semibold text-[15px]">{cropLabel}</p>
+                    {sub.advisory_only_mode && <AdvisoryOnlyChip size="sm" />}
+                  </div>
                   {sub.reference_number && (
                     <p className="text-[#7A8C7E] text-[11px] mt-0.5 font-mono">{sub.reference_number}</p>
                   )}
