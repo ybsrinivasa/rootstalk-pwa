@@ -173,6 +173,9 @@ const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
 // become visible; only dealer/engine-side math stays hidden. See
 // app/advisory/[subscriptionId]/page.tsx for the canonical rationale.
 const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  // v1.9: COMMON_NAME now surfaced via composeChemistryIdentifier
+  // subheader — hide from bullet list to avoid duplication.
+  'COMMON_NAME',
   'FORMULATION', 'FORMULATION_AI_CONC', 'AI_CONCENTRATION',
   'N_DOSAGE', 'P_DOSAGE', 'K_DOSAGE', 'UNIT',
   'FERTIGATION_INTERVAL', 'IRRIGATION_INTERVAL', 'REPEAT_INTERVAL',
@@ -208,6 +211,31 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
     out.push({ ...el })
   }
   return out
+}
+
+// 2026-09-17 (v1.9 mirror) — chemistry identifier line. See canonical
+// rationale in app/advisory/[subscriptionId]/page.tsx.
+function composeChemistryIdentifier(elements: Element[]): string | null {
+  const merged = mergeUnitElements(elements)
+  const cn = merged.find(e => (e.element_type || '').toUpperCase() === 'COMMON_NAME')
+  const ai = merged.find(e => (e.element_type || '').toUpperCase() === 'AI_CONCENTRATION')
+  const fmt = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION')
+  const combined = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION_AI_CONC')
+  const cnStr = cn?.value?.trim() || ''
+  const aiStr = ai?.value?.trim() || ''
+  const fmtStr = fmt?.value?.trim() || ''
+  const combinedStr = combined?.value?.trim() || ''
+  if (aiStr || fmtStr) {
+    const parts: string[] = []
+    if (cnStr) parts.push(cnStr)
+    if (aiStr) parts.push(`${aiStr}%`)
+    if (fmtStr) parts.push(fmtStr)
+    return parts.length > 0 ? parts.join(' ') : null
+  }
+  if (combinedStr) {
+    return cnStr ? `${cnStr} ${combinedStr}` : combinedStr
+  }
+  return cnStr || null
 }
 
 // 2026-09-16 — Advisory-Only Mode (v1.4 mirror). Short synopsis for
@@ -425,6 +453,8 @@ function PracticeCard({
   const ackable = practice.l0_type !== 'INPUT' || !!fulf?.farmer_received_at
   const ackMarked = practice.ack_status === 'MARKED'
 
+  // v1.9 mirror — chemistry identifier line, both modes, always visible.
+  const chemistryLine = composeChemistryIdentifier(practice.elements)
   const synopsisLine = (advisoryOnly && collapsed && tSuggestedLabel)
     ? computeSynopsis(practice.elements, tSuggestedLabel)
     : null
@@ -470,6 +500,11 @@ function PracticeCard({
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
             {labelOverride || l2Label || t('generalAdvisory')}
           </p>
+          {chemistryLine && (
+            <p className="text-sm font-bold text-[#6B3F1F] mt-0.5 truncate">
+              {chemistryLine}
+            </p>
+          )}
           {synopsisLine && (
             <p className="text-xs text-[#7A8C7E] mt-0.5 truncate">{synopsisLine}</p>
           )}

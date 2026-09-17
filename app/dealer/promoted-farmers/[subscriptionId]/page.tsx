@@ -137,6 +137,9 @@ const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
 // + MANUFACTURER + DOSAGE + APPLICATION_METHOD + VOLUME_PER_PLANT +
 // INSTRUCTIONS all become visible.
 const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  // v1.9: COMMON_NAME now surfaced via composeChemistryIdentifier
+  // subheader — hide from bullet list to avoid duplication.
+  'COMMON_NAME',
   'FORMULATION',
   'FORMULATION_AI_CONC',
   'AI_CONCENTRATION',
@@ -149,6 +152,28 @@ const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'REPEAT_INTERVAL',
   'NUMBER_OF_APPLICATIONS',
 ])
+
+// 2026-09-17 (v1.9 mirror) — chemistry identifier line. See canonical
+// rationale in app/advisory/[subscriptionId]/page.tsx.
+function composeChemistryIdentifier(elements: ElementRow[]): string | null {
+  const byType = (t: string) =>
+    elements.find(e => (e.element_type || '').toUpperCase() === t)
+  const cnStr = (byType('COMMON_NAME')?.value || '').toString().trim()
+  const aiStr = (byType('AI_CONCENTRATION')?.value || '').toString().trim()
+  const fmtStr = (byType('FORMULATION')?.value || '').toString().trim()
+  const combinedStr = (byType('FORMULATION_AI_CONC')?.value || '').toString().trim()
+  if (aiStr || fmtStr) {
+    const parts: string[] = []
+    if (cnStr) parts.push(cnStr)
+    if (aiStr) parts.push(`${aiStr}%`)
+    if (fmtStr) parts.push(fmtStr)
+    return parts.length > 0 ? parts.join(' ') : null
+  }
+  if (combinedStr) {
+    return cnStr ? `${cnStr} ${combinedStr}` : combinedStr
+  }
+  return cnStr || null
+}
 
 function renderElements(
   elements: ElementRow[],
@@ -312,6 +337,9 @@ export default function DealerFarmerAdvisoryPage() {
                       !!day?.advisory_only_mode,
                     )
                     const l2Label = p.l2_name_loc || (p.l2_type ? humanize(p.l2_type) : null)
+                    // v1.9 — Common Name AI% Formulation identifier
+                    // for chemical L2s, sits above the elements list.
+                    const chemistryLine = composeChemistryIdentifier(p.elements)
                     return (
                       <div key={p.id}
                         className="rounded-xl border border-[#DDD0B8] overflow-hidden">
@@ -320,6 +348,11 @@ export default function DealerFarmerAdvisoryPage() {
                           {l2Label}
                         </div>
                         <div className="p-3 text-sm">
+                          {chemistryLine && (
+                            <p className="text-sm font-bold text-[#6B3F1F] mb-2">
+                              {chemistryLine}
+                            </p>
+                          )}
                           {/* 2026-06-12 — When the farmer has purchased
                               this input, surface the brand + manufacturer
                               the dealer actually delivered. Promoter

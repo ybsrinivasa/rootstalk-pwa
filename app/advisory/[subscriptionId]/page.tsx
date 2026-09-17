@@ -262,12 +262,15 @@ const POST_PURCHASE_ONLY_ELEMENT_TYPES = new Set<string>([
 // common name, SE-recommended brand + manufacturer (if authored),
 // dosage, application method, volume-per-plant, instructions.
 //
-// This set is FARMER_HIDDEN_ELEMENT_TYPES minus COMMON_NAME /
-// BRAND_NAME / MANUFACTURER. FORMULATION + AI concentration + NPK
-// sourcing math + frequency-cadence tokens stay hidden — they are
-// still dealer/engine-side. The POST_PURCHASE_ONLY filter is skipped
-// entirely in advisory-only mode (no post-purchase moment exists).
+// This set is FARMER_HIDDEN_ELEMENT_TYPES minus BRAND_NAME /
+// MANUFACTURER. FORMULATION + AI concentration + NPK sourcing math
+// + frequency-cadence tokens stay hidden — they are still dealer/
+// engine-side. COMMON_NAME hidden as of v1.9 — it's now surfaced by
+// the composed chemistry identifier subheader instead. The
+// POST_PURCHASE_ONLY filter is skipped entirely in advisory-only
+// mode (no post-purchase moment exists).
 const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
+  'COMMON_NAME',
   'FORMULATION',
   'FORMULATION_AI_CONC',
   'AI_CONCENTRATION',
@@ -286,6 +289,43 @@ const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
 // showing nothing.
 function isUuid(s: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+}
+
+// 2026-09-17 (v1.9) — chemistry identifier line. For L2s where SE
+// authored COMMON_NAME + AI_CONCENTRATION + FORMULATION (mandatory
+// on CHEMICAL_PESTICIDES / CHEMICAL_HERBICIDES per l2_element_rules),
+// compose them into one prominent header line — "Acephate 40% EC".
+// Farmer + dealer need this together: dose is directly proportional
+// to a.i. %, application method depends on formulation. Falls back
+// gracefully to what's authored (CN alone, CN + F, or the text-box
+// FORMULATION_AI_CONC variant). Returns null when nothing authored.
+// Applies in BOTH modes — the display change is not advisory-only.
+function composeChemistryIdentifier(elements: Element[]): string | null {
+  const merged = mergeUnitElements(elements)
+  const cn = merged.find(e => (e.element_type || '').toUpperCase() === 'COMMON_NAME')
+  const ai = merged.find(e => (e.element_type || '').toUpperCase() === 'AI_CONCENTRATION')
+  const fmt = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION')
+  const combined = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION_AI_CONC')
+  const cnStr = cn?.value?.trim() || ''
+  const aiStr = ai?.value?.trim() || ''
+  const fmtStr = fmt?.value?.trim() || ''
+  const combinedStr = combined?.value?.trim() || ''
+  // Cascade-authored case: AI + Formulation are separate cosh-cascade
+  // elements. Preferred shape.
+  if (aiStr || fmtStr) {
+    const parts: string[] = []
+    if (cnStr) parts.push(cnStr)
+    if (aiStr) parts.push(`${aiStr}%`)
+    if (fmtStr) parts.push(fmtStr)
+    return parts.length > 0 ? parts.join(' ') : null
+  }
+  // Text-box variant: FORMULATION_AI_CONC is a free-string like "40% EC"
+  // for L2s that don't run the strict cascade. Concat with CN.
+  if (combinedStr) {
+    return cnStr ? `${cnStr} ${combinedStr}` : combinedStr
+  }
+  // Only Common Name authored (or nothing).
+  return cnStr || null
 }
 
 // 2026-09-16 — Advisory-Only Mode (v1.4): short synopsis for the
@@ -1380,6 +1420,10 @@ function PracticeCard({
     practice.elements.length > 0 &&
     (advisoryOnly || !isPurchasable || pickedUp)
 
+  // 2026-09-17 (v1.9) — chemistry identifier line, both modes,
+  // always visible when composable. Sits directly under the L2
+  // label as the primary specification of the recommended input.
+  const chemistryLine = composeChemistryIdentifier(practice.elements)
   // 2026-09-16 — v1.4 accordion (advisory-only, inside a Relation).
   // Synopsis line renders on collapsed cards when SE authored a brand
   // or dose, so the farmer can identify each leg without expanding.
@@ -1426,6 +1470,11 @@ function PracticeCard({
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
             {labelOverride || l2Label || 'General Advisory'}
           </p>
+          {chemistryLine && (
+            <p className="text-sm font-bold text-[#6B3F1F] mt-0.5 truncate">
+              {chemistryLine}
+            </p>
+          )}
           {synopsisLine && (
             <p className="text-xs text-[#7A8C7E] mt-0.5 truncate">{synopsisLine}</p>
           )}
