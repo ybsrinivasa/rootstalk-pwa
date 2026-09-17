@@ -300,16 +300,31 @@ function isUuid(s: string): boolean {
 // gracefully to what's authored (CN alone, CN + F, or the text-box
 // FORMULATION_AI_CONC variant). Returns null when nothing authored.
 // Applies in BOTH modes — the display change is not advisory-only.
+// v1.9 helper — resolve an element's display string. Cascade-sourced
+// elements (COMMON_NAME, AI_CONCENTRATION, FORMULATION) have empty
+// `.value` and the friendly name lives in `.cosh_ref` (backend
+// resolves the UUID to its Cosh translation before responding).
+// Text-box elements go the other way — `.value` is set, `.cosh_ref`
+// is null. Try value first, fall back to a non-UUID cosh_ref.
+function elementDisplay(el: Element | undefined): string {
+  if (!el) return ''
+  const v = el.value?.trim()
+  if (v) return v
+  const ref = el.cosh_ref?.trim()
+  if (ref && !isUuid(ref)) return ref
+  return ''
+}
+
 function composeChemistryIdentifier(elements: Element[]): string | null {
   const merged = mergeUnitElements(elements)
   const cn = merged.find(e => (e.element_type || '').toUpperCase() === 'COMMON_NAME')
   const ai = merged.find(e => (e.element_type || '').toUpperCase() === 'AI_CONCENTRATION')
   const fmt = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION')
   const combined = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION_AI_CONC')
-  const cnStr = cn?.value?.trim() || ''
-  const aiStr = ai?.value?.trim() || ''
-  const fmtStr = fmt?.value?.trim() || ''
-  const combinedStr = combined?.value?.trim() || ''
+  const cnStr = elementDisplay(cn)
+  const aiStr = elementDisplay(ai)
+  const fmtStr = elementDisplay(fmt)
+  const combinedStr = elementDisplay(combined)
   // Cascade-authored case: AI + Formulation are separate cosh-cascade
   // elements. Preferred shape.
   if (aiStr || fmtStr) {
@@ -340,7 +355,8 @@ function computeSynopsis(
   const merged = mergeUnitElements(elements)
   const brandEl = merged.find(e => (e.element_type || '').toUpperCase() === 'BRAND_NAME')
   const dosageEl = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
-  const brand = brandEl?.value?.trim() || ''
+  // v1.9 fix — BRAND_NAME is cascade-sourced too (see elementDisplay).
+  const brand = elementDisplay(brandEl)
   const dose = dosageEl
     ? `${dosageEl.value || ''}${dosageEl.trailing_unit ? ' ' + dosageEl.trailing_unit : ''}`.trim()
     : ''

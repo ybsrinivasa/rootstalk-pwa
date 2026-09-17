@@ -153,15 +153,27 @@ const ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES = new Set<string>([
   'NUMBER_OF_APPLICATIONS',
 ])
 
+// v1.9 helper — cascade-sourced elements (COMMON_NAME etc.) carry
+// the friendly name in cosh_ref, not value. See canonical
+// elementDisplay comment in app/advisory/[subscriptionId]/page.tsx.
+function elementDisplay(el: ElementRow | undefined): string {
+  if (!el) return ''
+  const v = (el.value ?? '').toString().trim()
+  if (v) return v
+  const ref = (el.cosh_ref ?? '').toString().trim()
+  if (ref && !isUuid(ref)) return ref
+  return ''
+}
+
 // 2026-09-17 (v1.9 mirror) — chemistry identifier line. See canonical
 // rationale in app/advisory/[subscriptionId]/page.tsx.
 function composeChemistryIdentifier(elements: ElementRow[]): string | null {
   const byType = (t: string) =>
     elements.find(e => (e.element_type || '').toUpperCase() === t)
-  const cnStr = (byType('COMMON_NAME')?.value || '').toString().trim()
-  const aiStr = (byType('AI_CONCENTRATION')?.value || '').toString().trim()
-  const fmtStr = (byType('FORMULATION')?.value || '').toString().trim()
-  const combinedStr = (byType('FORMULATION_AI_CONC')?.value || '').toString().trim()
+  const cnStr = elementDisplay(byType('COMMON_NAME'))
+  const aiStr = elementDisplay(byType('AI_CONCENTRATION'))
+  const fmtStr = elementDisplay(byType('FORMULATION'))
+  const combinedStr = elementDisplay(byType('FORMULATION_AI_CONC'))
   if (aiStr || fmtStr) {
     const parts: string[] = []
     if (cnStr) parts.push(cnStr)

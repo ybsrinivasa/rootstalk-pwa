@@ -213,6 +213,17 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
   return out
 }
 
+// v1.9 helper — see canonical elementDisplay comment in
+// app/advisory/[subscriptionId]/page.tsx.
+function elementDisplay(el: Element | undefined): string {
+  if (!el) return ''
+  const v = el.value?.trim()
+  if (v) return v
+  const ref = el.cosh_ref?.trim()
+  if (ref && !isUuid(ref)) return ref
+  return ''
+}
+
 // 2026-09-17 (v1.9 mirror) — chemistry identifier line. See canonical
 // rationale in app/advisory/[subscriptionId]/page.tsx.
 function composeChemistryIdentifier(elements: Element[]): string | null {
@@ -221,10 +232,10 @@ function composeChemistryIdentifier(elements: Element[]): string | null {
   const ai = merged.find(e => (e.element_type || '').toUpperCase() === 'AI_CONCENTRATION')
   const fmt = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION')
   const combined = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION_AI_CONC')
-  const cnStr = cn?.value?.trim() || ''
-  const aiStr = ai?.value?.trim() || ''
-  const fmtStr = fmt?.value?.trim() || ''
-  const combinedStr = combined?.value?.trim() || ''
+  const cnStr = elementDisplay(cn)
+  const aiStr = elementDisplay(ai)
+  const fmtStr = elementDisplay(fmt)
+  const combinedStr = elementDisplay(combined)
   if (aiStr || fmtStr) {
     const parts: string[] = []
     if (cnStr) parts.push(cnStr)
@@ -248,7 +259,7 @@ function computeSynopsis(
   const merged = mergeUnitElements(elements)
   const brandEl = merged.find(e => (e.element_type || '').toUpperCase() === 'BRAND_NAME')
   const dosageEl = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
-  const brand = brandEl?.value?.trim() || ''
+  const brand = elementDisplay(brandEl)
   const dose = dosageEl
     ? `${dosageEl.value || ''}${dosageEl.trailing_unit ? ' ' + dosageEl.trailing_unit : ''}`.trim()
     : ''
