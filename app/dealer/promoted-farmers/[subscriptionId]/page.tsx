@@ -164,6 +164,12 @@ function elementDisplay(el: ElementRow | undefined): string {
   if (ref && !isUuid(ref)) return ref
   return ''
 }
+// v1.9.2 helper — extract acronym from "Emulsifiable Concentrate (EC)".
+function formulationAcronym(name: string): string {
+  if (!name) return ''
+  const m = name.match(/\(([^)]+)\)\s*$/)
+  return (m ? m[1] : name).trim()
+}
 
 // 2026-09-17 (v1.9 mirror) — chemistry identifier line. See canonical
 // rationale in app/advisory/[subscriptionId]/page.tsx.
@@ -172,7 +178,8 @@ function composeChemistryIdentifier(elements: ElementRow[]): string | null {
     elements.find(e => (e.element_type || '').toUpperCase() === t)
   const cnStr = elementDisplay(byType('COMMON_NAME'))
   const aiStr = elementDisplay(byType('AI_CONCENTRATION'))
-  const fmtStr = elementDisplay(byType('FORMULATION'))
+  const fmtRaw = elementDisplay(byType('FORMULATION'))
+  const fmtStr = fmtRaw ? formulationAcronym(fmtRaw) : ''
   const combinedStr = elementDisplay(byType('FORMULATION_AI_CONC'))
   if (aiStr || fmtStr) {
     const parts: string[] = []

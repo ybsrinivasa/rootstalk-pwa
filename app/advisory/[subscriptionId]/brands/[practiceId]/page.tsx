@@ -18,6 +18,58 @@ interface BrandsResponse {
   locked_brand_name: string | null
   brands: BrandRow[]
   client_name: string
+  // v1.9.2 — chemistry pieces the practice was authored with. Every
+  // brand on the filtered list shares these values (that's the filter);
+  // rendered ONCE at the top instead of on every row.
+  practice_common_name?: string | null
+  practice_ai_display?: string | null
+  practice_formulation_display?: string | null
+  practice_combined_display?: string | null
+}
+
+
+// v1.9.2 helpers — mirror of formulationAcronym on the advisory page.
+// Cosh stores formulations as "Emulsifiable Concentrate (EC)"; farmers
+// know the acronym from packaging, not the long form.
+function formulationAcronym(name: string): string {
+  if (!name) return ''
+  const m = name.match(/\(([^)]+)\)\s*$/)
+  return (m ? m[1] : name).trim()
+}
+
+// Cosh trade names often carry the chemistry as a suffix
+// ("Assault - Acephate 40% EC"). Since we put chemistry at the top of
+// the Brands page as one header line, strip the redundant suffix from
+// every brand row. Handles the two shapes Cosh uses:
+//   "Assault - Acephate 40% EC"  → "Assault"
+//   "Roger DF"                   → "Roger DF"
+function shortBrandName(fullName: string): string {
+  if (!fullName) return ''
+  const idx = fullName.indexOf(' - ')
+  return idx > 0 ? fullName.slice(0, idx).trim() : fullName.trim()
+}
+
+// Compose "Acephate 40% EC" from the three chemistry pieces returned
+// by the Brands endpoint. Degrades gracefully — CN alone, CN + F,
+// CN + AI + F, or nothing. Text-box FORMULATION_AI_CONC variant is a
+// pre-composed string; concat with CN.
+function composeChemistryLine(data: BrandsResponse): string | null {
+  const cn = (data.practice_common_name || '').trim()
+  const ai = (data.practice_ai_display || '').trim()
+  const fmtRaw = (data.practice_formulation_display || '').trim()
+  const combined = (data.practice_combined_display || '').trim()
+  const fmt = fmtRaw ? formulationAcronym(fmtRaw) : ''
+  if (ai || fmt) {
+    const parts: string[] = []
+    if (cn) parts.push(cn)
+    if (ai) parts.push(`${ai}%`)
+    if (fmt) parts.push(fmt)
+    return parts.length > 0 ? parts.join(' ') : null
+  }
+  if (combined) {
+    return cn ? `${cn} ${combined}` : combined
+  }
+  return cn || null
 }
 
 
@@ -29,8 +81,8 @@ interface BrandsResponse {
  * action buttons. Positioned as "some brands available in the market"
  * with an explicit no-endorsement disclaimer.
  *
- * Data source is the Cosh brand catalog via the dealer-side query;
- * see backend get_practice_brands_farmer. No new plumbing.
+ * v1.9.2 — chemistry identifier moved to top of page (was repeated per
+ * row); brand rows show just the short trade name + manufacturer.
  */
 export default function AdvisoryBrandsPage() {
   const router = useRouter()
@@ -63,6 +115,7 @@ export default function AdvisoryBrandsPage() {
   }, [subscriptionId, practiceId, router, t])
 
   const isLocked = data?.is_locked
+  const chemistryLine = data ? composeChemistryLine(data) : null
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -83,19 +136,33 @@ export default function AdvisoryBrandsPage() {
             {error}
           </div>
         ) : !data || data.brands.length === 0 ? (
-          <div className="mt-8 text-center py-8">
-            <p className="text-[#7A8C7E] text-sm">{t('empty')}</p>
-          </div>
+          <>
+            {/* v1.9.2 — still show the chemistry header on empty results
+                so the farmer sees what's being searched for. */}
+            {chemistryLine && (
+              <div className="mt-4 bg-white rounded-2xl border border-emerald-200 shadow-sm px-4 py-3">
+                <p className="text-base font-bold text-[#6B3F1F]">{chemistryLine}</p>
+              </div>
+            )}
+            <div className="mt-6 text-center py-8">
+              <p className="text-[#7A8C7E] text-sm">{t('empty')}</p>
+            </div>
+          </>
         ) : (
           <>
-            <p className="text-xs text-[#7A8C7E] uppercase tracking-wider font-medium mt-4">
+            {chemistryLine && (
+              <div className="mt-4 bg-white rounded-2xl border border-emerald-200 shadow-sm px-4 py-3">
+                <p className="text-base font-bold text-[#6B3F1F]">{chemistryLine}</p>
+              </div>
+            )}
+            <p className="text-xs text-[#7A8C7E] uppercase tracking-wider font-medium mt-5">
               {isLocked ? t('lockedHeader') : t('header')}
             </p>
             <div className="mt-2 bg-white rounded-2xl border border-[#DDD0B8] overflow-hidden">
               {data.brands.map((b, idx) => (
                 <div key={`${b.name}-${idx}`}
                   className={`px-4 py-3 ${idx > 0 ? 'border-t border-[#EEE4D2]' : ''}`}>
-                  <p className="font-semibold text-[#6B3F1F]">{b.name}</p>
+                  <p className="font-semibold text-[#6B3F1F]">{shortBrandName(b.name)}</p>
                   {b.manufacturer && (
                     <p className="text-xs text-[#7A8C7E] mt-0.5">{b.manufacturer}</p>
                   )}

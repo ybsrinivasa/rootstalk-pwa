@@ -315,6 +315,16 @@ function elementDisplay(el: Element | undefined): string {
   return ''
 }
 
+// v1.9.2 helper — extract the acronym from Cosh's formulation display
+// name. Cosh stores formulations as "Emulsifiable Concentrate (EC)";
+// farmers know the acronym "EC" from packaging, not the long form.
+// Falls back to the raw string when no parenthetical is present.
+function formulationAcronym(name: string): string {
+  if (!name) return ''
+  const m = name.match(/\(([^)]+)\)\s*$/)
+  return (m ? m[1] : name).trim()
+}
+
 function composeChemistryIdentifier(elements: Element[]): string | null {
   const merged = mergeUnitElements(elements)
   const cn = merged.find(e => (e.element_type || '').toUpperCase() === 'COMMON_NAME')
@@ -323,7 +333,8 @@ function composeChemistryIdentifier(elements: Element[]): string | null {
   const combined = merged.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION_AI_CONC')
   const cnStr = elementDisplay(cn)
   const aiStr = elementDisplay(ai)
-  const fmtStr = elementDisplay(fmt)
+  const fmtRaw = elementDisplay(fmt)
+  const fmtStr = fmtRaw ? formulationAcronym(fmtRaw) : ''
   const combinedStr = elementDisplay(combined)
   // Cascade-authored case: AI + Formulation are separate cosh-cascade
   // elements. Preferred shape.
