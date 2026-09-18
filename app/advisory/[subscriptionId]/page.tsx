@@ -1512,28 +1512,6 @@ function PracticeCard({
               {chemistryLine}
             </p>
           )}
-          {/* Brand-Lock (v1.12) — persistent identity strip on the
-              card header. Farmer must buy THIS brand from THIS
-              manufacturer; showing both means the label at the shop
-              can be matched even when the farmer hands the phone
-              over to the dealer. Always visible (collapsed or not)
-              on locked practices in advisory-only mode. */}
-          {advisoryOnly && practice.is_brand_locked && (practice.locked_brand_name || practice.locked_manufacturer_name) && (
-            <div className="mt-1.5 rounded-lg border border-amber-200 bg-amber-50/60 px-2 py-1 text-xs">
-              {practice.locked_brand_name && (
-                <p className="text-[#6B3F1F]">
-                  <span className="text-[#7A8C7E]">{tAdvisoryOnlyLocal('brandLabel')}:</span>{' '}
-                  <span className="font-semibold">{practice.locked_brand_name}</span>
-                </p>
-              )}
-              {practice.locked_manufacturer_name && (
-                <p className="text-[#6B3F1F]">
-                  <span className="text-[#7A8C7E]">{tAdvisoryOnlyLocal('manufacturerLabel')}:</span>{' '}
-                  <span className="font-semibold">{practice.locked_manufacturer_name}</span>
-                </p>
-              )}
-            </div>
-          )}
           {synopsisLine && (
             <p className="text-xs text-[#7A8C7E] mt-0.5 truncate">{synopsisLine}</p>
           )}
@@ -1665,12 +1643,32 @@ function PracticeCard({
             return true
           })
         if (visibleEls.length === 0) return null
+        // v1.12.1 (2026-09-18) — when the SE brand-locked this practice
+        // in advisory-only mode, hoist BRAND_NAME then MANUFACTURER to
+        // the top of the list so the farmer's shop-label reading order
+        // matches ("Harrier by ADAMA"), and those two rows carry an
+        // amber accent + 🔒 in the renderer below. Traditional flow
+        // leaves order untouched (SE-authored display_order).
+        const isLocked = !!(advisoryOnly && practice.is_brand_locked)
+        const orderedVisibleEls = isLocked
+          ? [
+              ...visibleEls.filter(e => (e.element_type || '').toUpperCase() === 'BRAND_NAME'),
+              ...visibleEls.filter(e => (e.element_type || '').toUpperCase() === 'MANUFACTURER'),
+              ...visibleEls.filter(e => {
+                const t = (e.element_type || '').toUpperCase()
+                return t !== 'BRAND_NAME' && t !== 'MANUFACTURER'
+              }),
+            ]
+          : visibleEls
         return (
           <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-2">
-            {visibleEls.map((el, i) => {
+            {orderedVisibleEls.map((el, i) => {
               const type = (el.element_type || '').toUpperCase()
               const url = (el.value || '').trim()
               const isSafe = /^https?:\/\//i.test(url)
+              // v1.12.1 — highlight the brand-lock identity rows. Amber
+              // border-left, bolder text, 🔒 prefix on BRAND_NAME.
+              const isLockedIdentityRow = isLocked && (type === 'BRAND_NAME' || type === 'MANUFACTURER')
               // 2026-06-24 — Media element types ship the asset URL in
               // el.value. The previous render leaked them as plain
               // text so farmers couldn't open images / play audio /
@@ -1712,6 +1710,27 @@ function PracticeCard({
               const inlineUnit =
                 (el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : '')
                 || el.trailing_unit || ''
+              if (isLockedIdentityRow) {
+                // v1.12.1 — the two locked-brand identity rows earn a
+                // distinct amber left-accent + bold label+value so the
+                // farmer's eye lands on them immediately, matching the
+                // "🔒 Brand Locked" affordance on the card header.
+                return (
+                  <div key={i} className="flex items-start gap-2 text-sm border-l-2 border-amber-400 bg-amber-50/50 pl-2 py-0.5 rounded-r">
+                    <span className="text-amber-700 text-xs mt-0.5">{type === 'BRAND_NAME' ? '🔒' : '•'}</span>
+                    <div>
+                      <span className="text-amber-900 font-bold">{elementLabel(type)}</span>
+                      {el.value
+                        ? <span className="text-amber-900 font-bold ml-1">: {el.value}{inlineUnit ? ` ${inlineUnit}` : ''}</span>
+                        : showRef
+                          ? <span className="text-amber-900 font-bold ml-1">: {el.cosh_ref}</span>
+                          : inlineUnit
+                            ? <span className="text-amber-900 font-bold ml-1">: {inlineUnit}</span>
+                            : null}
+                    </div>
+                  </div>
+                )
+              }
               return (
                 <div key={i} className="flex items-start gap-2 text-sm">
                   <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
