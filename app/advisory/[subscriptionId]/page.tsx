@@ -92,6 +92,14 @@ interface Practice {
   // "I've done this" checkbox (can't be done without purchased).
   purchased_at?: string | null
   occurrence_date?: string  // ISO date
+  // Brand-Lock in Advisory-Only Mode (v1.12) — when the SE locked a
+  // brand at authoring time, the farmer PWA reveals the brand +
+  // manufacturer strip on the PracticeCard and disables the Brands
+  // button (relabelled "Brand Locked"). Names come pre-localised
+  // from the backend BrandLookupCache batch.
+  is_brand_locked?: boolean
+  locked_brand_name?: string | null
+  locked_manufacturer_name?: string | null
 }
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
@@ -1504,6 +1512,28 @@ function PracticeCard({
               {chemistryLine}
             </p>
           )}
+          {/* Brand-Lock (v1.12) — persistent identity strip on the
+              card header. Farmer must buy THIS brand from THIS
+              manufacturer; showing both means the label at the shop
+              can be matched even when the farmer hands the phone
+              over to the dealer. Always visible (collapsed or not)
+              on locked practices in advisory-only mode. */}
+          {advisoryOnly && practice.is_brand_locked && (practice.locked_brand_name || practice.locked_manufacturer_name) && (
+            <div className="mt-1.5 rounded-lg border border-amber-200 bg-amber-50/60 px-2 py-1 text-xs">
+              {practice.locked_brand_name && (
+                <p className="text-[#6B3F1F]">
+                  <span className="text-[#7A8C7E]">{tAdvisoryOnlyLocal('brandLabel')}:</span>{' '}
+                  <span className="font-semibold">{practice.locked_brand_name}</span>
+                </p>
+              )}
+              {practice.locked_manufacturer_name && (
+                <p className="text-[#6B3F1F]">
+                  <span className="text-[#7A8C7E]">{tAdvisoryOnlyLocal('manufacturerLabel')}:</span>{' '}
+                  <span className="font-semibold">{practice.locked_manufacturer_name}</span>
+                </p>
+              )}
+            </div>
+          )}
           {synopsisLine && (
             <p className="text-xs text-[#7A8C7E] mt-0.5 truncate">{synopsisLine}</p>
           )}
@@ -1511,16 +1541,30 @@ function PracticeCard({
         {/* Advisory-Only Mode (2026-09-16) — replace the Order/Manage
             controls with a Brands button. Fertilisers/pesticides only;
             seeds are handled by the crop-dashboard Recommended Seed
-            Varieties tile (§7.3 of the scoping doc). */}
+            Varieties tile (§7.3 of the scoping doc).
+            v1.12 — when the SE brand-locked this practice, disable
+            the button and relabel to "Brand Locked" so the farmer
+            knows the choice is fixed. The brand + manufacturer strip
+            renders below the header (see next block). */}
         {practice.l0_type === 'INPUT' && advisoryOnly && practice.l1_type !== 'SEED' && (
-          <button
-            onClick={e => {
-              e.stopPropagation()
-              router.push(`/advisory/${subscriptionId}/brands/${practice.id}`)
-            }}
-            className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
-            {tAdvisoryOnlyLocal('brandsButton')}
-          </button>
+          practice.is_brand_locked ? (
+            <button
+              type="button"
+              disabled
+              onClick={e => e.stopPropagation()}
+              className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed">
+              🔒 {tAdvisoryOnlyLocal('brandsButtonLocked')}
+            </button>
+          ) : (
+            <button
+              onClick={e => {
+                e.stopPropagation()
+                router.push(`/advisory/${subscriptionId}/brands/${practice.id}`)
+              }}
+              className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
+              {tAdvisoryOnlyLocal('brandsButton')}
+            </button>
+          )
         )}
         {practice.l0_type === 'INPUT' && !advisoryOnly && (
           // 2026-06-21 — Status chip (Manage pill name) when the
