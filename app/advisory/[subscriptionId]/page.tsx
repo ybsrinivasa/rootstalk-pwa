@@ -949,13 +949,26 @@ export default function AdvisoryPage() {
                 const bIsCha = b.source === 'CHA' || b.source === 'QA'
                 if (aIsCha !== bIsCha) return aIsCha ? -1 : 1
                 if (aIsCha && bIsCha) {
-                  // newest CHA on top, fall back to date if triggered_at missing
+                  // newest CHA on top — fresh diagnosis / query response
+                  // is the thing the farmer just acted on, surface it
+                  // immediately. Falls back to from_date if triggered_at
+                  // missing.
                   const aT = new Date(a.triggered_at || a.from_date || 0).getTime()
                   const bT = new Date(b.triggered_at || b.from_date || 0).getTime()
                   return bT - aT
                 }
-                return new Date(b.to_date || b.from_date || 0).getTime()
-                     - new Date(a.to_date || a.from_date || 0).getTime()
+                // CCA — earliest from_date first (2026-09-18 field
+                // feedback). Overlapping timelines in the same cluster
+                // should surface in calendar order so the farmer reads
+                // "what starts first" top-down. Previous rule was
+                // latest to_date first, which surfaced a longer-window
+                // timeline ending Oct 28 above a shorter one starting
+                // Sep 28 in the same cluster. to_date as tie-break.
+                const aFrom = new Date(a.from_date || 0).getTime()
+                const bFrom = new Date(b.from_date || 0).getTime()
+                if (aFrom !== bFrom) return aFrom - bFrom
+                return new Date(a.to_date || 0).getTime()
+                     - new Date(b.to_date || 0).getTime()
               })
               .map(tl => (
               <div key={tl.id}>
