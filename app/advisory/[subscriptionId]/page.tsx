@@ -6,7 +6,6 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import ClientCropChip from '@/components/ClientCropChip'
-import PurchaseBrandPickerSheet from '@/components/PurchaseBrandPickerSheet'
 import api from '@/lib/api'
 
 interface Element { element_type: string; cosh_ref: string | null; value: string | null; unit_cosh_id: string | null }
@@ -105,6 +104,7 @@ interface Practice {
   // captured on the "I've purchased this" ack (from the picker). All
   // NULL when no ack recorded or the ack has no brand attached
   // (legacy pre-v2 rows).
+  purchased_brand_cosh_id?: string | null
   purchased_brand_name?: string | null
   purchased_brand_manufacturer_name?: string | null
   purchased_brand_text?: string | null
@@ -1643,7 +1643,14 @@ function PracticeCard({
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed">
                   🔒 {tAdvisoryOnlyLocal('brandsButtonLocked')}
                 </button>
-              ) : (practice.purchase_locked_by_order || !!practice.purchased_at) ? (
+              ) : practice.purchase_locked_by_order ? (
+                // v2 (2026-09-23 Option A) — Brands button is disabled
+                // ONLY when the practice is order-locked (in-app
+                // pickup received; state is truly immutable). After a
+                // manual ack the button stays enabled so the farmer
+                // can re-open the Brands screen to change / edit their
+                // recorded brand or photo without having to un-tick
+                // first.
                 <button
                   type="button"
                   disabled
@@ -1656,7 +1663,25 @@ function PracticeCard({
                 <button
                   onClick={e => {
                     e.stopPropagation()
-                    router.push(`/advisory/${subscriptionId}/brands/${practice.id}`)
+                    // Navigate with ack context (lineage + occurrence
+                    // date) + existing ack state (brand + text +
+                    // photo, when present) so the Brands screen can
+                    // both POST the ack on Save AND pre-populate for
+                    // edit mode.
+                    const q = new URLSearchParams({
+                      lineage: timelineLineageId || '',
+                      date: practice.occurrence_date || '',
+                    })
+                    if (practice.purchased_brand_cosh_id) {
+                      q.set('brand', practice.purchased_brand_cosh_id)
+                    }
+                    if (practice.purchased_brand_text) {
+                      q.set('text', practice.purchased_brand_text)
+                    }
+                    if (practice.purchased_photo_url) {
+                      q.set('photo', practice.purchased_photo_url)
+                    }
+                    router.push(`/advisory/${subscriptionId}/brands/${practice.id}?${q.toString()}`)
                   }}
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
                   {tAdvisoryOnlyLocal('brandsButton')}
@@ -1904,10 +1929,9 @@ function PracticeAckFooter({
   purchaseCrossOptionLocked?: boolean
 }) {
   const tAck = useTranslations('practice.ack')
+  const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [confirmHide, setConfirmHide] = useState(false)
-  // v2 Checkbox 3 follow-up (2026-09-22) — purchase-brand picker.
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
   const fulf = practice.fulfilment
   // 2026-06-22 — Tightened: INPUT cards REQUIRE a live fulfilment
@@ -2032,16 +2056,22 @@ function PracticeAckFooter({
               label={tAck('purchased')}
               onTap={() => {
                 if (purchased) {
-                  // Un-marking clears everything — no picker.
+                  // Un-marking clears everything (brand + photo + ack).
                   call('unpurchase')
                   return
                 }
-                // v2 (2026-09-22 Checkbox 3): recording a fresh
-                // purchase opens the brand-picker sheet. Ack only
-                // fires on Confirm inside the sheet (with brand +
-                // optional photo). Auto-locked case (in-app pickup)
-                // never reaches here — purchaseEnabled is false.
-                setPickerOpen(true)
+                // v2 (2026-09-23 Option A): recording a fresh purchase
+                // navigates to the unified Brands + record-purchase
+                // screen. Farmer picks a brand (or types Other) +
+                // optional photo there and taps Save; that call
+                // POSTs the ack with brand + photo. Auto-locked case
+                // (in-app pickup) never reaches here — purchaseEnabled
+                // is false.
+                const q = new URLSearchParams({
+                  lineage: timelineLineageId || '',
+                  date: practice.occurrence_date || '',
+                })
+                router.push(`/advisory/${subscriptionId}/brands/${practice.id}?${q.toString()}`)
               }}
             />
           )}
@@ -2105,19 +2135,6 @@ function PracticeAckFooter({
             </button>
           </div>
         )}
-        {/* Brand picker sheet — opens when farmer taps to record a
-            fresh purchase. Cancel closes without ack. Confirm POSTs
-            the ack with brand + optional photo. */}
-        <PurchaseBrandPickerSheet
-          open={pickerOpen}
-          subscriptionId={subscriptionId}
-          practiceId={practice.id}
-          onCancel={() => setPickerOpen(false)}
-          onConfirm={async (payload) => {
-            await call('purchase', payload)
-            setPickerOpen(false)
-          }}
-        />
       </div>
     )
   }
