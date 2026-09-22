@@ -2277,7 +2277,13 @@ function RelationGroup({
                 timelineLineageId={timelineLineageId}
                 onAckChanged={onAckChanged}
                 advisoryOnly
-                enableInAppOrders={canOrderInApp}
+                // v2 (2026-09-22 Checkbox 3) — per-item Order button
+                // suppressed inside an AND container: the group-level
+                // "Order both together" below handles the whole AND
+                // as one order. Matches Regular Mode semantic.
+                // Brands button (advisory-only info) still shows per
+                // item so farmer can browse each input's alternatives.
+                enableInAppOrders={false}
                 insideContainer
                 {...cardCollapseProps(p)}
               />
@@ -2305,9 +2311,12 @@ function RelationGroup({
               : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
           })}
         </div>
-        {/* 2026-09-16 — v1.4: no order flow in advisory-only, so no
-            "Order both together" button. */}
-        {!advisoryOnly && !anyInFlight && (
+        {/* 2026-09-16 — v1.4: no order flow in pure advisory-only, so
+            no "Order both together" button.
+            v2 (2026-09-22 Checkbox 3): hybrid mode gets the button
+            back — inputs shown upfront via advisory-only layout AND
+            group-level order via canOrderInApp. */}
+        {canOrderInApp && !anyInFlight && (
           <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
             <button
               onClick={() => onOrder(ids)}
@@ -2465,7 +2474,12 @@ function RelationGroup({
                             timelineLineageId={timelineLineageId}
                             onAckChanged={onAckChanged}
                             advisoryOnly
-                            enableInAppOrders={canOrderInApp}
+                            // v2 — same as pure-AND branch above:
+                            // per-item Order suppressed inside a
+                            // compound option's AND; the compound-
+                            // level "Order all together" button below
+                            // orders the whole compound as one.
+                            enableInAppOrders={false}
                             insideContainer
                             {...cardCollapseProps(p)}
                           />
@@ -2491,7 +2505,7 @@ function RelationGroup({
                           : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
                       })}
                     </div>
-                    {!advisoryOnly && !anyInFlight && (
+                    {canOrderInApp && !anyInFlight && (
                       <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
                         <button
                           onClick={() => onOrder(ids)}
