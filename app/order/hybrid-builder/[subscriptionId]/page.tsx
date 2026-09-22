@@ -417,6 +417,11 @@ export default function HybridOrderBuilder() {
                         <p className="text-sm font-medium text-[#6B3F1F] truncate">
                           {p.l2_name_loc || p.l2_type || 'Input'}
                         </p>
+                        {chemistryLine(p.elements) && (
+                          <p className="text-xs font-semibold text-[#6B3F1F] truncate">
+                            {chemistryLine(p.elements)}
+                          </p>
+                        )}
                         {brandLabel(p) && (
                           <p className="text-xs text-[#7A8C7E] truncate">{brandLabel(p)}</p>
                         )}
