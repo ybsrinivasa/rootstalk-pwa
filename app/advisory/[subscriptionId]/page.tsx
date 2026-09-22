@@ -6,6 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import ClientCropChip from '@/components/ClientCropChip'
+import PurchaseBrandPickerSheet from '@/components/PurchaseBrandPickerSheet'
 import api from '@/lib/api'
 
 interface Element { element_type: string; cosh_ref: string | null; value: string | null; unit_cosh_id: string | null }
@@ -100,6 +101,14 @@ interface Practice {
   is_brand_locked?: boolean
   locked_brand_name?: string | null
   locked_manufacturer_name?: string | null
+  // v2 Checkbox 3 follow-up (2026-09-22) — brand + optional photo
+  // captured on the "I've purchased this" ack (from the picker). All
+  // NULL when no ack recorded or the ack has no brand attached
+  // (legacy pre-v2 rows).
+  purchased_brand_name?: string | null
+  purchased_brand_manufacturer_name?: string | null
+  purchased_brand_text?: string | null
+  purchased_photo_url?: string | null
   // v2 (2026-09-22 Checkbox 3) — auto-tick + lock the "I've purchased
   // this" checkbox when this practice has been received via an in-app
   // order (PackingList.farmer_received_at set on an APPROVED
@@ -1704,8 +1713,21 @@ function PracticeCard({
             // relaxed hidden-set (COMMON_NAME + BRAND_NAME +
             // MANUFACTURER now visible) and skip the post-purchase
             // gate entirely (no purchase moment exists).
+            // v2 Checkbox 3 follow-up (2026-09-22) — hide BRAND_NAME
+            // and MANUFACTURER when the SE recommended a brand but
+            // did NOT lock it. Rendering them as bullets mis-signals
+            // that the recommended brand is required — the farmer
+            // might buy a different brand of the same chemistry and
+            // tick "I've purchased this," corrupting the brand-mix
+            // data. Recommended brand is now surfaced only on the
+            // dedicated Brands screen (highlighted at top). Locked
+            // brands keep the bullets (they carry v1.12 amber-
+            // highlighted treatment upstream — must-buy signal).
             if (advisoryOnly) {
               if (ADVISORY_ONLY_HIDDEN_ELEMENT_TYPES.has(t)) return false
+              if (!practice.is_brand_locked && (t === 'BRAND_NAME' || t === 'MANUFACTURER')) {
+                return false
+              }
               return true
             }
             if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
@@ -1884,6 +1906,9 @@ function PracticeAckFooter({
   const tAck = useTranslations('practice.ack')
   const [busy, setBusy] = useState(false)
   const [confirmHide, setConfirmHide] = useState(false)
+  // v2 Checkbox 3 follow-up (2026-09-22) — purchase-brand picker.
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
   const fulf = practice.fulfilment
   // 2026-06-22 — Tightened: INPUT cards REQUIRE a live fulfilment
   // with farmer_received_at to be ackable. Pre-fix the `is_purchased`
@@ -1905,7 +1930,14 @@ function PracticeAckFooter({
   if (!ackable) return null
   if (!timelineLineageId || !practice.occurrence_date) return null
 
-  async function call(action: 'mark' | 'unmark' | 'hide' | 'purchase' | 'unpurchase') {
+  async function call(
+    action: 'mark' | 'unmark' | 'hide' | 'purchase' | 'unpurchase',
+    extra?: {
+      purchased_brand_cosh_id?: string | null
+      purchased_brand_text?: string | null
+      purchased_photo_url?: string | null
+    },
+  ) {
     setBusy(true)
     try {
       await api.post(`/farmer/practice-ack/${action}`, {
@@ -1913,6 +1945,7 @@ function PracticeAckFooter({
         timeline_lineage_id: timelineLineageId,
         practice_id: practice.id,
         occurrence_date: practice.occurrence_date,
+        ...(extra || {}),
       })
       onAckChanged()
     } catch { /* leave state as-is; PWA will refresh on next focus */ }
@@ -1997,7 +2030,19 @@ function PracticeAckFooter({
               active={purchased}
               enabled={purchaseEnabled}
               label={tAck('purchased')}
-              onTap={() => call(purchased ? 'unpurchase' : 'purchase')}
+              onTap={() => {
+                if (purchased) {
+                  // Un-marking clears everything — no picker.
+                  call('unpurchase')
+                  return
+                }
+                // v2 (2026-09-22 Checkbox 3): recording a fresh
+                // purchase opens the brand-picker sheet. Ack only
+                // fires on Confirm inside the sheet (with brand +
+                // optional photo). Auto-locked case (in-app pickup)
+                // never reaches here — purchaseEnabled is false.
+                setPickerOpen(true)
+              }}
             />
           )}
           <CheckPill
@@ -2017,6 +2062,62 @@ function PracticeAckFooter({
             {doneHint}
           </p>
         )}
+        {/* v2 (2026-09-22): once purchased, show WHAT was recorded so
+            the farmer sees the app captured their choice. Brand name
+            + optional camera icon that opens a photo preview modal. */}
+        {purchased && !orderLocked && (practice.purchased_brand_name || practice.purchased_brand_text || practice.purchased_photo_url) && (
+          <div className="mt-1.5 flex items-center gap-2">
+            <p className="text-[11px] text-[#6B3F1F] flex-1 truncate">
+              <span className="text-[#7A8C7E]">{tAck('purchasedLabel')}: </span>
+              <span className="font-semibold">
+                {practice.purchased_brand_name || practice.purchased_brand_text}
+              </span>
+              {practice.purchased_brand_manufacturer_name && (
+                <span className="text-[#7A8C7E]"> · {practice.purchased_brand_manufacturer_name}</span>
+              )}
+            </p>
+            {practice.purchased_photo_url && (
+              <button
+                onClick={() => setPhotoPreviewOpen(true)}
+                className="text-base shrink-0 opacity-70 active:opacity-100"
+                aria-label={tAck('viewPhoto')}>
+                📷
+              </button>
+            )}
+          </div>
+        )}
+        {/* Photo preview modal */}
+        {photoPreviewOpen && practice.purchased_photo_url && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onClick={() => setPhotoPreviewOpen(false)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={practice.purchased_photo_url}
+              alt=""
+              className="max-w-full max-h-full rounded-lg"
+              onClick={e => e.stopPropagation()} />
+            <button
+              onClick={() => setPhotoPreviewOpen(false)}
+              className="absolute top-4 right-4 text-white text-2xl"
+              aria-label={tAck('closePhoto')}>
+              ✕
+            </button>
+          </div>
+        )}
+        {/* Brand picker sheet — opens when farmer taps to record a
+            fresh purchase. Cancel closes without ack. Confirm POSTs
+            the ack with brand + optional photo. */}
+        <PurchaseBrandPickerSheet
+          open={pickerOpen}
+          subscriptionId={subscriptionId}
+          practiceId={practice.id}
+          onCancel={() => setPickerOpen(false)}
+          onConfirm={async (payload) => {
+            await call('purchase', payload)
+            setPickerOpen(false)
+          }}
+        />
       </div>
     )
   }

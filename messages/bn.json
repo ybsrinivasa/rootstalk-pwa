@@ -294,7 +294,10 @@
       "confirmBody": "তুমি এটা ফেরত আনতে পারবে না। আমরা এটা তোমার জন্য লুকিয়ে রাখব।",
       "confirmCancel": "এটা রাখুন",
       "confirmYes": "হ্যাঁ, সরিয়ে ফেলুন",
-      "purchaseLockedByOrder": "Received via in-app order — locked."
+      "purchaseLockedByOrder": "Received via in-app order — locked.",
+      "purchasedLabel": "Purchased",
+      "viewPhoto": "View photo",
+      "closePhoto": "Close"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {একসাথে প্রয়োগ করুন} =2 {উভয় একসাথে প্রয়োগ করুন} other {সবগুলো একসাথে প্রয়োগ করুন #}}",
@@ -3668,7 +3671,9 @@
       "lockedHeader": "This input is recommended with a specific brand",
       "empty": "No brands available yet for this input.",
       "disclaimer": "This list is not exhaustive. {client} does not endorse the purchase of any brand.",
-      "loadError": "Couldn't load the brand list. Please try again."
+      "loadError": "Couldn't load the brand list. Please try again.",
+      "recommendedBy": "Recommended by {client}",
+      "recommendedNote": "This is a suggestion — you may substitute another brand of the same input."
     },
     "seedVarietiesTile": "Recommended Seed Varieties",
     "seedVarietiesTileHint": "See varieties + how to buy",
@@ -3703,5 +3708,23 @@
       "loadError": "Could not load your order details. Please go back and try again.",
       "dueList": "{count, plural, one {Due for order (# item)} other {Due for order (# items)}}"
     }
+  },
+  "purchaseBrandPicker": {
+    "title": "Which brand did you buy?",
+    "searchPlaceholder": "Search brand or manufacturer",
+    "noResults": "No matching brands.",
+    "otherLabel": "Not on this list? Type it in",
+    "backToList": "Back to list",
+    "otherTypeLabel": "Brand name (and manufacturer, if you know)",
+    "otherTypePlaceholder": "e.g. Acefast by XYZ Agrochem",
+    "otherHint": "This helps us add missing brands to the catalogue. You can also add a photo of the label below.",
+    "addPhoto": "Add photo of the product (optional)",
+    "photoAttached": "Photo attached",
+    "photoRetake": "Change",
+    "photoUploading": "Uploading…",
+    "confirm": "Confirm purchase",
+    "submitting": "Saving…",
+    "cancel": "Cancel",
+    "loadError": "Could not load brand list. Please try again."
   }
 }

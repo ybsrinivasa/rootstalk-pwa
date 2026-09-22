@@ -25,6 +25,11 @@ interface BrandsResponse {
   practice_ai_display?: string | null
   practice_formulation_display?: string | null
   practice_combined_display?: string | null
+  // v2 Checkbox 3 follow-up (2026-09-22) — SE's recommended brand
+  // (BRAND_NAME element on the practice, non-locked). Highlighted at
+  // top of the Brands screen with a "you may substitute" note.
+  recommended_brand_name?: string | null
+  recommended_manufacturer_name?: string | null
 }
 
 
@@ -153,6 +158,29 @@ export default function AdvisoryBrandsPage() {
             {chemistryLine && (
               <div className="mt-4 bg-white rounded-2xl border border-emerald-200 shadow-sm px-4 py-3">
                 <p className="text-base font-bold text-[#6B3F1F]">{chemistryLine}</p>
+              </div>
+            )}
+            {/* v2 Checkbox 3 follow-up (2026-09-22) — surface the SE's
+                recommended brand (if any) at the top with an explicit
+                "may substitute" note. Distinguished from the brand-
+                locked treatment (v1.12): recommended is guidance, not
+                a requirement. */}
+            {data.recommended_brand_name && !isLocked && (
+              <div className="mt-4 bg-white rounded-2xl border-2 border-purple-200 shadow-sm px-4 py-3">
+                <p className="text-[11px] text-purple-700 uppercase tracking-wider font-bold">
+                  {t('recommendedBy', { client: data.client_name || '' })}
+                </p>
+                <p className="text-base font-bold text-[#6B3F1F] mt-1">
+                  {shortBrandName(data.recommended_brand_name)}
+                </p>
+                {data.recommended_manufacturer_name && (
+                  <p className="text-xs text-[#7A8C7E] mt-0.5">
+                    {data.recommended_manufacturer_name}
+                  </p>
+                )}
+                <p className="text-[11px] text-purple-600 mt-2 leading-relaxed">
+                  {t('recommendedNote')}
+                </p>
               </div>
             )}
             <p className="text-xs text-[#7A8C7E] uppercase tracking-wider font-medium mt-5">
