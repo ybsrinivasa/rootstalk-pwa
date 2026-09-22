@@ -4085,7 +4085,8 @@
       "reasonOrdered": "You have an order in progress for this input.",
       "reasonPurchased": "You marked this as purchased.",
       "continue": "{count, plural, one {Continue with # item} other {Continue with # items}}",
-      "loadError": "Could not load your order details. Please go back and try again."
+      "loadError": "Could not load your order details. Please go back and try again.",
+      "dueList": "{count, plural, one {Due for order (# item)} other {Due for order (# items)}}"
     }
   }
 }

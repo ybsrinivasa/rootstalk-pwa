@@ -235,22 +235,24 @@ export default function HybridOrderBuilder() {
     return null
   }, [lockedIds, allPractices])
 
-  // Partition candidates.
-  const { lockedPractices, availableCandidates, handledCandidates } = useMemo(() => {
-    const locked: { p: Practice; tl: TimelineItem }[] = []
-    const available: { p: Practice; tl: TimelineItem }[] = []
+  // Partition candidates. Everything actionable (both the tapped
+  // practice(s) and other in-window candidates) lives in a single
+  // `orderableCandidates` list. The tapped items are simply
+  // PRE-TICKED — they still render with the same affordance as the
+  // rest and the farmer can un-tick them freely. Prevents the
+  // "these are special" perception of a separate locked section
+  // (user feedback 2026-09-22). `handled` stays separate because
+  // its rows are genuinely non-interactive (already in-flight or
+  // already ack'd).
+  const { orderableCandidates, handledCandidates } = useMemo(() => {
+    const orderable: { p: Practice; tl: TimelineItem }[] = []
     const handled: { p: Practice; tl: TimelineItem; reason: 'ordered' | 'purchased_ack' }[] = []
-    if (!category) return { lockedPractices: locked, availableCandidates: available, handledCandidates: handled }
+    if (!category) return { orderableCandidates: orderable, handledCandidates: handled }
     const l1s = l1sForCategory(category)
-    const lockedSet = new Set(lockedIds)
-    for (const [pid, entry] of allPractices) {
+    for (const [, entry] of allPractices) {
       if (entry.p.l0_type !== 'INPUT') continue
       const l1u = (entry.p.l1_type || '').toUpperCase()
       if (!l1s.has(l1u)) continue
-      if (lockedSet.has(pid)) {
-        locked.push(entry)
-        continue
-      }
       // Handled buckets — read-only context to the farmer.
       const fulfNotDone = !!entry.p.fulfilment
       const ackDone = !!entry.p.purchased_at
@@ -262,13 +264,30 @@ export default function HybridOrderBuilder() {
         handled.push({ ...entry, reason: 'purchased_ack' })
         continue
       }
-      available.push(entry)
+      orderable.push(entry)
     }
-    return { lockedPractices: locked, availableCandidates: available, handledCandidates: handled }
+    // Order the list so the tapped practice(s) render first — they're
+    // the farmer's explicit intent, natural to see up top.
+    const lockedSet = new Set(lockedIds)
+    orderable.sort((a, b) => {
+      const aLocked = lockedSet.has(a.p.id) ? 0 : 1
+      const bLocked = lockedSet.has(b.p.id) ? 0 : 1
+      return aLocked - bLocked
+    })
+    return { orderableCandidates: orderable, handledCandidates: handled }
   }, [allPractices, category, lockedIds])
 
-  const totalSelected = lockedPractices.length + ticked.size
-  const canContinue = totalSelected > 0 && !!category
+  // Initialise `ticked` with the tapped practices when they become
+  // available in the resolved orderable list. Empty until the load
+  // completes; refreshed when lockedIds change.
+  useEffect(() => {
+    if (orderableCandidates.length === 0) return
+    const orderableSet = new Set(orderableCandidates.map(x => x.p.id))
+    const initial = new Set(lockedIds.filter(id => orderableSet.has(id)))
+    setTicked(initial)
+  }, [orderableCandidates, lockedIds])
+
+  const canContinue = ticked.size > 0 && !!category
 
   function toggleTick(id: string) {
     setTicked(prev => {
@@ -280,15 +299,16 @@ export default function HybridOrderBuilder() {
   }
 
   function includeAllAvailable() {
-    setTicked(new Set(availableCandidates.map(x => x.p.id)))
+    setTicked(new Set(orderableCandidates.map(x => x.p.id)))
   }
+
+  const allTicked = ticked.size === orderableCandidates.length
 
   function onContinue() {
     if (!canContinue || !category) return
-    const allIds = [
-      ...lockedPractices.map(x => x.p.id),
-      ...availableCandidates.filter(x => ticked.has(x.p.id)).map(x => x.p.id),
-    ]
+    const allIds = orderableCandidates
+      .filter(x => ticked.has(x.p.id))
+      .map(x => x.p.id)
     // Compute date span across the selected practices' timelines so
     // downstream (order-create + advisory refresh) has correct date
     // context. date_from is always today (matches Regular Mode); date_to
@@ -319,7 +339,13 @@ export default function HybridOrderBuilder() {
     )
   }
 
-  if (error || !subscription || !category || lockedPractices.length === 0) {
+  // Fail-safe: bail out with the error card when the tapped
+  // practice(s) can't be found in the current cluster (stale link,
+  // sub deleted, wrong id in URL). "Can't find any orderable
+  // candidates" is a reasonable trigger too — but we only bail if
+  // the tapped ids specifically didn't resolve.
+  const tappedFound = lockedIds.some(id => orderableCandidates.some(x => x.p.id === id))
+  if (error || !subscription || !category || !tappedFound) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
         <PWAHeader title={tAdv('orderBuilder.title')} activeRole="FARMER" back={`/advisory/${subscriptionId}`} />
@@ -348,46 +374,18 @@ export default function HybridOrderBuilder() {
           </p>
         </div>
 
-        {/* Your order — locked items (tapped practice + any group siblings) */}
-        <div className="bg-white rounded-2xl border border-emerald-300 shadow-sm overflow-hidden mb-4">
-          <div className="px-4 py-2 bg-emerald-50 border-b border-emerald-200">
-            <p className="text-xs font-bold text-emerald-800 uppercase tracking-wide">
-              {tAdv('orderBuilder.yourOrder', { count: lockedPractices.length })}
-            </p>
-          </div>
-          <ul className="divide-y divide-emerald-100">
-            {lockedPractices.map(({ p, tl }) => (
-              <li key={p.id} className="px-4 py-3 flex items-start gap-3">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-600 text-white text-xs shrink-0 mt-0.5">✓</span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#6B3F1F] truncate">
-                    {p.l2_name_loc || p.l2_type || 'Input'}
-                  </p>
-                  {chemistryLine(p.elements) && (
-                    <p className="text-xs font-semibold text-[#6B3F1F] truncate">
-                      {chemistryLine(p.elements)}
-                    </p>
-                  )}
-                  {brandLabel(p) && (
-                    <p className="text-xs text-[#7A8C7E] truncate">{brandLabel(p)}</p>
-                  )}
-                  <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-                    {tAdv('orderBuilder.dueLabel')}: {formatWindow(tl.from_date, tl.to_date)}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Also due — opt-in tickable candidates */}
-        {availableCandidates.length > 0 && (
+        {/* Unified orderable list — tapped practice(s) pre-ticked, all
+            others opt-in. Every row uses the same tickbox affordance
+            so the tapped items don't visually claim a "special" locked
+            status. Farmer can un-tick any row, including the tapped
+            one (if they change their mind before continuing). */}
+        {orderableCandidates.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden mb-4">
             <div className="px-4 py-2 bg-[#F5F0E8] border-b border-[#DDD0B8] flex items-center justify-between">
               <p className="text-xs font-bold text-[#6B3F1F] uppercase tracking-wide">
-                {tAdv('orderBuilder.alsoDue', { count: availableCandidates.length })}
+                {tAdv('orderBuilder.dueList', { count: orderableCandidates.length })}
               </p>
-              {availableCandidates.length > 0 && ticked.size < availableCandidates.length && (
+              {orderableCandidates.length > 1 && !allTicked && (
                 <button
                   onClick={includeAllAvailable}
                   className="text-[11px] font-semibold text-emerald-700 underline">
@@ -396,7 +394,7 @@ export default function HybridOrderBuilder() {
               )}
             </div>
             <ul className="divide-y divide-slate-100">
-              {availableCandidates.map(({ p, tl }) => {
+              {orderableCandidates.map(({ p, tl }) => {
                 const active = ticked.has(p.id)
                 return (
                   <li key={p.id}>
@@ -477,7 +475,7 @@ export default function HybridOrderBuilder() {
             disabled={!canContinue}
             className="w-full py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
             style={{ background: '#3A7D44' }}>
-            {tAdv('orderBuilder.continue', { count: totalSelected })}
+            {tAdv('orderBuilder.continue', { count: ticked.size })}
           </button>
         </div>
       </div>
