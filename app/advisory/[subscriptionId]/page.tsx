@@ -1587,7 +1587,7 @@ function PracticeCard({
                   {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
                     ? ` · ${fulf.postpone_days_remaining}d` : ''}
                 </button>
-              ) : !fulf && !practice.is_purchased ? (
+              ) : !fulf && !practice.is_purchased && !practice.purchased_at ? (
                 <button
                   onClick={e => { e.stopPropagation(); onOrder() }}
                   disabled={isOrdering || ordered}
@@ -2235,7 +2235,7 @@ function RelationGroup({
     // standalones (pillName || is_purchased).
     const anyInFlight = opt.practices.some(p => {
       const f = p.fulfilment ?? null
-      return (f && fulfilmentToPill(f) != null) || p.is_purchased
+      return (f && fulfilmentToPill(f) != null) || p.is_purchased || !!p.purchased_at
     })
     // 2026-09-17 — v1.7: in advisory-only mode drop the text header
     // ("Apply all together") and put the emerald tint on the outer
@@ -2437,7 +2437,7 @@ function RelationGroup({
                   // captures `opt`/`ids` per iteration.
                   const anyInFlight = opt.practices.some(p => {
                     const f = p.fulfilment ?? null
-                    return (f && fulfilmentToPill(f) != null) || p.is_purchased
+                    return (f && fulfilmentToPill(f) != null) || p.is_purchased || !!p.purchased_at
                   })
                   // v1.7 mirror: same header-drop + emerald border +
                   // BigPlusSeparator treatment as the top-level
