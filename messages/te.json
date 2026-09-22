@@ -293,7 +293,8 @@
       "confirmTitle": "మీ జాబితా నుండి దీన్ని తొలగించాలా?",
       "confirmBody": "మీరు దాన్ని తిరిగి తీసుకురాలేరు. మేము మీ కోసం దాన్ని దాచిపెడతాము.",
       "confirmCancel": "దాన్ని ఉంచండి",
-      "confirmYes": "అవును, తొలగించండి"
+      "confirmYes": "అవును, తొలగించండి",
+      "purchaseLockedByOrder": "Received via in-app order — locked."
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {కలిసి వర్తింపజేయండి} =2 {రెండింటినీ కలిపి వర్తింపజేయండి} other {అన్ని # కలిపి వర్తింపజేయండి}}",

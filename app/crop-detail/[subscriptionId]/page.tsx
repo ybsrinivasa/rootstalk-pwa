@@ -63,6 +63,11 @@ interface SubscriptionDetail {
   // this per-sub flag, not from Client.
   advisory_only_mode?: boolean
   dealer_list_enabled?: boolean
+  // v2 (2026-09-22 Checkbox 3) — hybrid mode: inputs upfront (like
+  // pure Advisory-Only) + Orders tile + in-app Order flow (like
+  // Regular Mode). Nearby Dealers tile suppressed since dealer list
+  // is already surfaced via the order-recipient picker at Order time.
+  in_app_orders_enabled?: boolean
 }
 interface Branding {
   display_name: string; primary_colour: string; tagline: string | null; logo_url: string | null
@@ -887,8 +892,12 @@ export default function CropDetailPage() {
               enabled (the farmer can browse the Order tab to see
               what they could buy even before setting a start date,
               though specific accordions may gate themselves).
-              Hidden entirely for advisory-only subs — no order flow. */}
-          {!sub?.advisory_only_mode && (
+              Hidden for pure advisory-only subs — no order flow.
+              v2 (2026-09-22 Checkbox 3): hybrid mode subs get the
+              Orders tile back (in_app_orders_enabled=true means
+              Regular Mode-style order flow is available on top of
+              the advisory-only display). */}
+          {(!sub?.advisory_only_mode || sub?.in_app_orders_enabled) && (
             <button
               onClick={() => router.push(`/crop-detail/${subscriptionId}/orders`)}
               className="relative bg-white rounded-2xl p-4 text-center border border-[#DDD0B8] shadow-sm active:scale-95">
@@ -951,8 +960,13 @@ export default function CropDetailPage() {
         {/* Nearby Dealers tile — Advisory-Only Mode add-on (2026-09-16).
             Only when the client has dealer_list_enabled ticked in the
             SA portal. Read-only informational — list of 5 nearest
-            onboarded dealers with Call + Map. No orders. */}
-        {sub?.advisory_only_mode && sub?.dealer_list_enabled && (
+            onboarded dealers with Call + Map. No orders.
+            v2 (2026-09-22 Checkbox 3): suppressed in hybrid mode — the
+            dealer list is already surfaced at Order time via the
+            order-recipient picker; showing it on the dashboard would
+            be redundant and take space. Farmer picks a dealer when
+            they hit Order. */}
+        {sub?.advisory_only_mode && sub?.dealer_list_enabled && !sub?.in_app_orders_enabled && (
           <button
             onClick={() => router.push(`/advisory/${subscriptionId}/nearby-dealers`)}
             className="w-full bg-white rounded-2xl border border-[#DDD0B8] px-4 py-4 flex items-center justify-between active:scale-98 transition-transform mb-3"

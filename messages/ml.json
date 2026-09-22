@@ -293,7 +293,8 @@
       "confirmTitle": "ഇത് നിങ്ങളുടെ പട്ടികയിൽ നിന്ന് നീക്കം ചെയ്യണോ?",
       "confirmBody": "നിങ്ങൾക്ക് അത് തിരികെ കൊണ്ടുവരാൻ കഴിയില്ല. ഞങ്ങൾ അത് നിങ്ങൾക്കായി മറച്ചുവെക്കാം.",
       "confirmCancel": "സൂക്ഷിക്കുക",
-      "confirmYes": "അതെ, നീക്കം ചെയ്യുക"
+      "confirmYes": "അതെ, നീക്കം ചെയ്യുക",
+      "purchaseLockedByOrder": "Received via in-app order — locked."
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ഒരുമിച്ച് പ്രയോഗിക്കുക} =2 {രണ്ടും ഒരുമിച്ച് പ്രയോഗിക്കുക} other {എല്ലാ # ഒരുമിച്ച് പ്രയോഗിക്കുക}}",

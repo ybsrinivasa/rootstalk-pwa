@@ -100,6 +100,13 @@ interface Practice {
   is_brand_locked?: boolean
   locked_brand_name?: string | null
   locked_manufacturer_name?: string | null
+  // v2 (2026-09-22 Checkbox 3) — auto-tick + lock the "I've purchased
+  // this" checkbox when this practice has been received via an in-app
+  // order (PackingList.farmer_received_at set on an APPROVED
+  // OrderItem for this practice on this sub). Once true the checkbox
+  // renders as ticked + disabled; the unpurchase endpoint refuses to
+  // clear the ack (defence-in-depth).
+  purchase_locked_by_order?: boolean
 }
 interface PendingConditionalQuestion {
   question_id: string; question_text: string; display_order: number
@@ -144,6 +151,8 @@ interface AdvisoryDay {
   // view.
   advisory_only_mode?: boolean
   dealer_list_enabled?: boolean
+  // v2 (2026-09-22 Checkbox 3) — hybrid mode marker on the sub.
+  in_app_orders_enabled?: boolean
   cluster?: {
     offset: number
     position: 'past' | 'current' | 'future'
@@ -168,6 +177,11 @@ interface Subscription {
   //   - Brands button (v1.2) on fertiliser/pesticide inputs
   advisory_only_mode?: boolean
   dealer_list_enabled?: boolean
+  // v2 (2026-09-22 Checkbox 3) — hybrid mode: inputs shown upfront
+  // AND in-app order buttons + Orders tile visible. Regular Mode
+  // subs (advisory_only_mode=false) always have orders available
+  // regardless of this flag.
+  in_app_orders_enabled?: boolean
   // 2026-09-17 — Farm size shown in the sticky header so an
   // advisory-only farmer can hand the phone to the dealer and the
   // dealer can size the volume from the screen alone.
@@ -1049,6 +1063,7 @@ export default function AdvisoryPage() {
                             timelineLineageId={tl.lineage_id}
                             onAckChanged={load}
                             advisoryOnly={!!subscription?.advisory_only_mode}
+                            enableInAppOrders={!subscription?.advisory_only_mode || !!subscription?.in_app_orders_enabled}
                           />
                         )
                       }
@@ -1071,6 +1086,7 @@ export default function AdvisoryPage() {
                           subscriptionId={subscriptionId}
                           timelineLineageId={tl.lineage_id}
                           advisoryOnly={!!subscription?.advisory_only_mode}
+                          enableInAppOrders={!subscription?.advisory_only_mode || !!subscription?.in_app_orders_enabled}
                           onAckChanged={load}
                         />
                       )
@@ -1395,6 +1411,7 @@ function PracticeCard({
   practice, onOrder, isOrdering, ordered,
   subscriptionId, timelineLineageId, onAckChanged,
   labelOverride, advisoryOnly = false,
+  enableInAppOrders,
   collapsed = false, onToggleCollapsed,
   insideContainer = false,
   purchaseCrossOptionLocked = false,
@@ -1407,6 +1424,12 @@ function PracticeCard({
   timelineLineageId: string | undefined
   onAckChanged: () => void
   purchaseCrossOptionLocked?: boolean
+  // v2 (2026-09-22 Checkbox 3) — whether in-app ordering is available
+  // for this practice. Default: `!advisoryOnly` (Regular Mode has
+  // orders; pure Advisory-Only does not). Hybrid callers pass true
+  // explicitly so the Order button + Manage-status pill light up
+  // while the inputs-shown-upfront layout of Advisory-Only stays.
+  enableInAppOrders?: boolean
   // 2026-06-26 — Replaces the L2 label when set. Used by the
   // pure-OR collapsed render to show "Microbial Pesticide or
   // Botanical Pesticide" on a single card instead of asking the
@@ -1439,6 +1462,9 @@ function PracticeCard({
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const tL2 = useTranslations('practice.l2')
   const colour = L0_BG[practice.l0_type] || '#3A7D44'
+  // v2 (2026-09-22 Checkbox 3) — resolve `enableInAppOrders` with the
+  // Regular-vs-pure-Advisory-Only default. Hybrid callers override.
+  const canOrderInApp = enableInAppOrders ?? !advisoryOnly
   // 2026-07-11 — L2 fallback ladder: backend `l2_name_loc` (Cosh-
   // sourced) → i18n `practice.l2.<ENUM>` (covers the enums Cosh hasn't
   // shipped: GENERAL_INSTRUCTIONS, MEDIA_*) → humanized enum.
@@ -1536,8 +1562,13 @@ function PracticeCard({
             v1.12 — when the SE brand-locked this practice, disable
             the button and relabel to "Brand Locked" so the farmer
             knows the choice is fixed. The brand + manufacturer strip
-            renders below the header (see next block). */}
-        {practice.l0_type === 'INPUT' && advisoryOnly && practice.l1_type !== 'SEED' && (
+            renders below the header (see next block).
+            v2 (2026-09-22 Checkbox 3) — hybrid mode (advisory-only +
+            in-app orders) suppresses the Brands button — the farmer
+            now has the Regular Mode Order button (next block) which
+            surfaces the brand picker inside the order flow, so a
+            separate offline Brands screen would be redundant. */}
+        {practice.l0_type === 'INPUT' && advisoryOnly && !canOrderInApp && practice.l1_type !== 'SEED' && (
           practice.is_brand_locked ? (
             <button
               type="button"
@@ -1557,7 +1588,7 @@ function PracticeCard({
             </button>
           )
         )}
-        {practice.l0_type === 'INPUT' && !advisoryOnly && (
+        {practice.l0_type === 'INPUT' && canOrderInApp && (
           // 2026-06-21 — Status chip (Manage pill name) when the
           // practice has a live OrderItem and isn't yet picked up;
           // Order button when there's nothing in flight. The chip
@@ -1867,7 +1898,14 @@ function PracticeAckFooter({
   // feedback_symbols_beat_text_labels_for_low_literacy.md for the
   // surrounding UX rationale.
   if (advisoryOnly) {
-    const purchased = !!practice.purchased_at
+    // v2 (2026-09-22 Checkbox 3) — auto-tick + lock the "purchased"
+    // checkbox once the item has been physically received via an
+    // in-app order (hybrid mode farmers can order in-app; the moment
+    // pickup happens the ack becomes an irrefutable truth). The lock
+    // reads from `practice.purchase_locked_by_order` computed by the
+    // backend (`_today_advisory_for_user`) — no local state.
+    const orderLocked = !!practice.purchase_locked_by_order
+    const purchased = orderLocked || !!practice.purchased_at
     const isInput = practice.l0_type === 'INPUT'
     // Time gate — "done" only enabled when the practice's own
     // occurrence date has passed. Farmer looking at a future
@@ -1880,15 +1918,18 @@ function PracticeAckFooter({
     // other's purchase once one is chosen. Doesn't affect already-
     // purchased items (rule is symmetrical — you can still un-mark
     // to change your mind).
-    const purchaseEnabled = !busy && (!purchaseCrossOptionLocked || purchased)
+    // v2 — orderLocked overrides everything: farmer cannot untick.
+    const purchaseEnabled = !busy && !orderLocked && (!purchaseCrossOptionLocked || purchased)
     // "Done" ready when time-gate passes AND (for INPUT) purchase set.
     const doneEnabled = !busy && dueReached && (!isInput || purchased)
     const doneHint = !dueReached
       ? tAck('doneNotYetDue')
       : (isInput && !purchased ? tAck('donePurchaseFirst') : null)
-    const purchaseHint = (isInput && !purchased && purchaseCrossOptionLocked)
-      ? tAck('purchaseOtherOptionChosen')
-      : null
+    const purchaseHint = orderLocked
+      ? tAck('purchaseLockedByOrder')
+      : (isInput && !purchased && purchaseCrossOptionLocked)
+        ? tAck('purchaseOtherOptionChosen')
+        : null
 
     const CheckPill = ({
       active, enabled, label, onTap,
@@ -2025,6 +2066,7 @@ function RelationGroup({
   relationType, parts, orderingPractice, orderSuccess, onOrder,
   subscriptionId, timelineLineageId, onAckChanged,
   advisoryOnly = false,
+  enableInAppOrders,
 }: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
@@ -2042,6 +2084,9 @@ function RelationGroup({
   // 2026-09-16 — forwarded to every nested PracticeCard so
   // Advisory-Only Mode hides work uniformly inside AND/OR groups.
   advisoryOnly?: boolean
+  // v2 (2026-09-22 Checkbox 3) — forwarded to nested PracticeCards
+  // so hybrid mode gets Order buttons back inside AND/OR groups.
+  enableInAppOrders?: boolean
 }) {
   const tAction = useTranslations('practice.action')
   const tRel = useTranslations('practice.relations')
@@ -2051,7 +2096,11 @@ function RelationGroup({
   // / Returned / Ready for pickup) without leaving the advisory page.
   const tPill = useTranslations('orders.cropOrders.manage.pill')
   const router = useRouter()
-  if (parts.length === 0) return null
+  // v2 (2026-09-22 Checkbox 3) — same default as PracticeCard so
+  // pre-v2 callers who don't pass `enableInAppOrders` keep their
+  // current behaviour (Regular Mode has orders, pure Advisory-Only
+  // doesn't).
+  const canOrderInApp = enableInAppOrders ?? !advisoryOnly
 
   // Single Part with single Option AND-group: paired card with "Order N together"
   const isPureAndGroup =
@@ -2160,6 +2209,7 @@ function RelationGroup({
         timelineLineageId={timelineLineageId}
         onAckChanged={onAckChanged}
         advisoryOnly={advisoryOnly}
+        enableInAppOrders={canOrderInApp}
       />
     )
   }
@@ -2322,6 +2372,7 @@ function RelationGroup({
                 timelineLineageId={timelineLineageId}
                 onAckChanged={onAckChanged}
                 advisoryOnly={advisoryOnly}
+                enableInAppOrders={canOrderInApp}
               />
               {partIdx < parts.length - 1 && (
                 <div className="flex items-center my-3">
@@ -2461,6 +2512,7 @@ function RelationGroup({
                     timelineLineageId={timelineLineageId}
                     onAckChanged={onAckChanged}
                     advisoryOnly={advisoryOnly}
+                    enableInAppOrders={canOrderInApp}
                     insideContainer={advisoryOnly && isChoice}
                     {...cardCollapseProps(opt.practices[0])}
                   />

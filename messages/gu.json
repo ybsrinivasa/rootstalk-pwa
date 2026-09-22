@@ -293,7 +293,8 @@
       "confirmTitle": "આને તમારી યાદીમાંથી કાઢી નાખીએ?",
       "confirmBody": "તમે તેને પાછું લાવી શકશો નહીં. અમે તેને તમારા માટે છુપાવીશું.",
       "confirmCancel": "રાખો",
-      "confirmYes": "હા, દૂર કરો"
+      "confirmYes": "હા, દૂર કરો",
+      "purchaseLockedByOrder": "Received via in-app order — locked."
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {સાથે અરજી કરો} =2 {બંને એકસાથે લગાવો} other {બધા # એકસાથે લાગુ કરો}}",

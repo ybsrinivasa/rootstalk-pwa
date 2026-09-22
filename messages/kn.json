@@ -305,7 +305,8 @@
       "confirmTitle": "ಇದನ್ನು ನಿಮ್ಮ ಪಟ್ಟಿಯಿಂದ ತೆಗೆದುಹಾಕುವುದೇ?",
       "confirmBody": "ನೀವು ಅದನ್ನು ಮರಳಿ ತರಲು ಸಾಧ್ಯವಾಗುವುದಿಲ್ಲ. ನಾವು ಅದನ್ನು ನಿಮಗಾಗಿ ಮರೆಮಾಡುತ್ತೇವೆ.",
       "confirmCancel": "ಇಟ್ಟುಕೊಳ್ಳಿ",
-      "confirmYes": "ಹೌದು, ತೆಗೆದುಹಾಕಿ"
+      "confirmYes": "ಹೌದು, ತೆಗೆದುಹಾಕಿ",
+      "purchaseLockedByOrder": "Received via in-app order — locked."
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ} =2 {ಎರಡನ್ನೂ ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ} other {ಎಲ್ಲಾ # ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ}}",

@@ -527,7 +527,8 @@
       "confirmTitle": "Remove this from your list?",
       "confirmBody": "You won't be able to bring it back. We'll just hide it for you.",
       "confirmCancel": "Keep it",
-      "confirmYes": "Yes, remove"
+      "confirmYes": "Yes, remove",
+      "purchaseLockedByOrder": "Received via in-app order — locked."
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {Apply together} =2 {Apply both together} other {Apply all # together}}",

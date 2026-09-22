@@ -293,7 +293,8 @@
       "confirmTitle": "এইটো আপোনাৰ তালিকাৰ পৰা আঁতৰাই পেলাওক?",
       "confirmBody": "ঘূৰাই আনিব নোৱাৰিবা। আমি মাত্ৰ তোমাৰ বাবে লুকুৱাই ৰাখিম।",
       "confirmCancel": "ৰাখক",
-      "confirmYes": "হয়, আঁতৰাই পেলাওক"
+      "confirmYes": "হয়, আঁতৰাই পেলাওক",
+      "purchaseLockedByOrder": "Received via in-app order — locked."
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {একেলগে প্ৰয়োগ কৰক} =2 {দুয়োটা একেলগে প্ৰয়োগ কৰক} other {সকলো # একেলগে প্ৰয়োগ কৰক}}",

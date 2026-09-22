@@ -293,7 +293,8 @@
       "confirmTitle": "اسے اپنی فہرست سے ہٹائیں؟",
       "confirmBody": "آپ اسے واپس نہیں لا سکیں گے۔ ہم اسے صرف آپ کے لیے چھپائیں گے۔",
       "confirmCancel": "رکھ لو",
-      "confirmYes": "ہاں، ہٹا دیں۔"
+      "confirmYes": "ہاں، ہٹا دیں۔",
+      "purchaseLockedByOrder": "Received via in-app order — locked."
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ایک ساتھ درخواست دیں۔} =2 {دونوں کو ایک ساتھ لگائیں۔} other {سب # ایک ساتھ لگائیں۔}}",
