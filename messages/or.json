@@ -3685,6 +3685,7 @@
       "footerNote": "This is a directory. Contact the dealer directly to place your purchase — no orders happen through this app for this crop.",
       "loadError": "Couldn't load nearby dealers. Please try again."
     },
-    "brandsButtonLocked": "Brand Locked"
+    "brandsButtonLocked": "Brand Locked",
+    "brandsButtonDisabledHint": "You have already marked this as purchased."
   }
 }

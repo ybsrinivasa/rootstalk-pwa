@@ -1136,6 +1136,7 @@ export default function AdvisoryPage() {
                 onAckChanged={load}
                 locale={locale}
                 tLabel={tLabel}
+                enableInAppOrders={!subscription?.advisory_only_mode || !!subscription?.in_app_orders_enabled}
               />
             )}
 
@@ -1555,70 +1556,80 @@ function PracticeCard({
             <p className="text-xs text-[#7A8C7E] mt-0.5 truncate">{synopsisLine}</p>
           )}
         </div>
-        {/* Advisory-Only Mode (2026-09-16) — replace the Order/Manage
-            controls with a Brands button. Fertilisers/pesticides only;
-            seeds are handled by the crop-dashboard Recommended Seed
-            Varieties tile (§7.3 of the scoping doc).
-            v1.12 — when the SE brand-locked this practice, disable
-            the button and relabel to "Brand Locked" so the farmer
-            knows the choice is fixed. The brand + manufacturer strip
-            renders below the header (see next block).
-            v2 (2026-09-22 Checkbox 3) — hybrid mode (advisory-only +
-            in-app orders) suppresses the Brands button — the farmer
-            now has the Regular Mode Order button (next block) which
-            surfaces the brand picker inside the order flow, so a
-            separate offline Brands screen would be redundant. */}
-        {practice.l0_type === 'INPUT' && advisoryOnly && !canOrderInApp && practice.l1_type !== 'SEED' && (
-          practice.is_brand_locked ? (
-            <button
-              type="button"
-              disabled
-              onClick={e => e.stopPropagation()}
-              className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed">
-              🔒 {tAdvisoryOnlyLocal('brandsButtonLocked')}
-            </button>
-          ) : (
-            <button
-              onClick={e => {
-                e.stopPropagation()
-                router.push(`/advisory/${subscriptionId}/brands/${practice.id}`)
-              }}
-              className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
-              {tAdvisoryOnlyLocal('brandsButton')}
-            </button>
-          )
-        )}
-        {practice.l0_type === 'INPUT' && canOrderInApp && (
-          // 2026-06-21 — Status chip (Manage pill name) when the
-          // practice has a live OrderItem and isn't yet picked up;
-          // Order button when there's nothing in flight. The chip
-          // navigates directly to the matching Manage pill — no
-          // intermediate bottom-sheet. Once the item is picked up
-          // (pillName === null), the chip drops entirely and the
-          // practice card just renders its details (per detailsVisible).
-          pillName && pillTone ? (
-            <button
-              onClick={e => {
-                e.stopPropagation()
-                router.push(`/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`)
-              }}
-              className="shrink-0 text-xs font-semibold px-3 py-2 rounded-xl"
-              style={{ background: pillTone.bg, color: pillTone.fg }}>
-              {tPill(pillName)}
-              {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
-                ? ` · ${fulf.postpone_days_remaining}d` : ''}
-            </button>
-          ) : !fulf && !practice.is_purchased ? (
-            <button
-              onClick={e => { e.stopPropagation(); onOrder() }}
-              disabled={isOrdering || ordered}
-              className="shrink-0 text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
-              style={{ background: ordered ? '#16a34a' : '#3A7D44' }}>
-              {ordered ? tAction('ordered') : isOrdering ? '…' : tAction('order')}
-            </button>
-          ) : null
-          // Purchased + already-picked-up cases render no badge — the
-          // PurchasedSummary block below carries the brand details.
+        {/* Top-right controls block (v2 2026-09-22 Checkbox 3).
+            Stacks vertically (Order on top, Brands below) so hybrid
+            mode fits both without truncating on narrow phones.
+            Pure Advisory-Only shows only Brands (or the Brand-Locked
+            pill). Regular Mode shows only the Order button / status
+            pill. Hybrid shows both.
+            Brands is disabled once the farmer has signalled purchase
+            (either the auto-lock from an in-app pickup — reflected
+            in `purchase_locked_by_order` — or the manual "I've
+            purchased this" ack — reflected in `purchased_at`). Once
+            purchased the brand info is no longer decision-support;
+            it's history, and the receipt is already elsewhere.
+            Fertilisers/pesticides only; seeds are handled by the
+            crop-dashboard Recommended Seed Varieties tile. */}
+        {practice.l0_type === 'INPUT' && (advisoryOnly || canOrderInApp) && (
+          <div className="flex flex-col gap-1.5 shrink-0 items-end">
+            {/* Order button / status pill — visible whenever in-app
+                ordering is available (Regular Mode + hybrid). */}
+            {canOrderInApp && (
+              pillName && pillTone ? (
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    router.push(`/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`)
+                  }}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl"
+                  style={{ background: pillTone.bg, color: pillTone.fg }}>
+                  {tPill(pillName)}
+                  {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
+                    ? ` · ${fulf.postpone_days_remaining}d` : ''}
+                </button>
+              ) : !fulf && !practice.is_purchased ? (
+                <button
+                  onClick={e => { e.stopPropagation(); onOrder() }}
+                  disabled={isOrdering || ordered}
+                  className="text-xs font-semibold text-white px-3 py-2 rounded-xl disabled:opacity-60"
+                  style={{ background: ordered ? '#16a34a' : '#3A7D44' }}>
+                  {ordered ? tAction('ordered') : isOrdering ? '…' : tAction('order')}
+                </button>
+              ) : null
+            )}
+            {/* Brands button — pure Advisory-Only + hybrid. Disabled
+                once the farmer has signalled purchase. Brand-Locked
+                pill replaces it when the SE has locked the brand. */}
+            {advisoryOnly && practice.l1_type !== 'SEED' && (
+              practice.is_brand_locked ? (
+                <button
+                  type="button"
+                  disabled
+                  onClick={e => e.stopPropagation()}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed">
+                  🔒 {tAdvisoryOnlyLocal('brandsButtonLocked')}
+                </button>
+              ) : (practice.purchase_locked_by_order || !!practice.purchased_at) ? (
+                <button
+                  type="button"
+                  disabled
+                  onClick={e => e.stopPropagation()}
+                  title={tAdvisoryOnlyLocal('brandsButtonDisabledHint')}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-purple-50 text-purple-400 border border-purple-100 cursor-not-allowed opacity-60">
+                  {tAdvisoryOnlyLocal('brandsButton')}
+                </button>
+              ) : (
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    router.push(`/advisory/${subscriptionId}/brands/${practice.id}`)
+                  }}
+                  className="text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
+                  {tAdvisoryOnlyLocal('brandsButton')}
+                </button>
+              )
+            )}
+          </div>
         )}
         {/* 2026-09-16 — v1.4 accordion chevron. Rotates 180° when the
             card is expanded so the affordance state is legible from
@@ -2266,6 +2277,7 @@ function RelationGroup({
                 timelineLineageId={timelineLineageId}
                 onAckChanged={onAckChanged}
                 advisoryOnly
+                enableInAppOrders={canOrderInApp}
                 insideContainer
                 {...cardCollapseProps(p)}
               />
@@ -2453,6 +2465,7 @@ function RelationGroup({
                             timelineLineageId={timelineLineageId}
                             onAckChanged={onAckChanged}
                             advisoryOnly
+                            enableInAppOrders={canOrderInApp}
                             insideContainer
                             {...cardCollapseProps(p)}
                           />
@@ -2568,12 +2581,17 @@ function RelationGroup({
 // cluster (tap header to expand, exclusive-expand within the panel).
 function OngoingPanel({
   timelines, subscriptionId, onAckChanged, locale, tLabel,
+  enableInAppOrders = false,
 }: {
   timelines: TimelineItem[]
   subscriptionId: string
   onAckChanged: () => void
   locale: string
   tLabel: (k: string, vars?: Record<string, string | number>) => string
+  // v2 (2026-09-22 Checkbox 3) — forwarded to Ongoing PracticeCards
+  // so hybrid mode gets Order buttons on ongoing (frequency /
+  // event-triggered) practices too.
+  enableInAppOrders?: boolean
 }) {
   const [expanded, setExpanded] = useState(false)
   const [expandedPracticeId, setExpandedPracticeId] = useState<string | null>(null)
@@ -2619,6 +2637,7 @@ function OngoingPanel({
                     timelineLineageId={tl.lineage_id}
                     onAckChanged={onAckChanged}
                     advisoryOnly
+                    enableInAppOrders={enableInAppOrders}
                     collapsed={expandedPracticeId !== p.id}
                     onToggleCollapsed={() =>
                       setExpandedPracticeId(prev => (prev === p.id ? null : p.id))
