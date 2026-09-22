@@ -747,19 +747,33 @@ export default function AdvisoryPage() {
     if (u === 'FERTILIZER') return 'FERTILIZER'
     return null
   }
-  function orderPractice(practice: Practice, timeline?: TimelineItem) {
-    // Phase 3 of the Orders restructure (2026-06-02) — Advisory taps
-    // now route to the package's Orders page with the right
-    // accordion pre-opened and the practice's date range prefilled.
-    // BundleOrderSheet stays defined below for the legacy direct
-    // flow but no longer mounts from here.
-    const cat = basketCategoryFor(practice.l1_type)
+  // v2 (2026-09-22 Checkbox 3) — Hybrid mode routes to a per-practice
+  // basket builder (Option 5) instead of the Regular-Mode date-range
+  // orders page. The builder locks the tapped practice(s) in the
+  // order and shows any other in-window candidates as opt-in
+  // tickable rows — avoids the double-buy failure mode of the
+  // date-range bundle when the farmer has ack'd some items offline.
+  // Regular Mode subs keep the existing date-range flow.
+  function openOrderFlow(practices: Practice[], timeline?: TimelineItem) {
+    const first = practices[0]
+    if (!first) return
+    const cat = basketCategoryFor(first.l1_type)
     if (!cat) return
+    const isHybrid = !!(
+      subscription?.advisory_only_mode && subscription?.in_app_orders_enabled
+    )
+    if (isHybrid) {
+      const q = new URLSearchParams({
+        practice_ids: practices.map(p => p.id).join(','),
+      })
+      router.push(`/order/hybrid-builder/${subscriptionId}?${q.toString()}`)
+      return
+    }
+    // Regular Mode — existing date-range flow.
+    // Phase 3 of the Orders restructure (2026-06-02) — Advisory taps
+    // route to the package's Orders page with the right accordion
+    // pre-opened and the practice's date range prefilled.
     const todayIso = new Date().toISOString().split('T')[0]
-    // Default to_date = the timeline's to_date the practice belongs
-    // to. CategorySection on the next page re-previews against the
-    // bundle for this window — identical to what BundleOrderSheet
-    // computed inline before.
     const toIso = (timeline?.to_date || '').slice(0, 10)
     const params = new URLSearchParams({
       tab: 'order',
@@ -768,6 +782,10 @@ export default function AdvisoryPage() {
     })
     if (toIso) params.set('date_to', toIso)
     router.push(`/crop-detail/${subscriptionId}/orders?${params.toString()}`)
+  }
+
+  function orderPractice(practice: Practice, timeline?: TimelineItem) {
+    openOrderFlow([practice], timeline)
   }
 
   if (loading) return (
@@ -1075,13 +1093,20 @@ export default function AdvisoryPage() {
                           parts={row.parts || []}
                           orderingPractice={orderingPractice}
                           orderSuccess={orderSuccess}
-                          onOrder={() => {
-                            // Relation-group "Order both together" — same
-                            // date-range bundling. We derive the category
-                            // from the first practice's L1; AND/OR groups
-                            // are always homogeneous by L1. ids ignored.
-                            const first = row.parts?.[0]?.options?.[0]?.practices?.[0]
-                            if (first) orderPractice(first, tl)
+                          onOrder={(ids) => {
+                            // Relation-group "Order both together".
+                            // v2 (2026-09-22 Checkbox 3): hybrid mode
+                            // needs the exact practice_ids the group
+                            // is committing to (basket-builder locks
+                            // them). Regular Mode continues to just
+                            // date-range bundle from the first
+                            // practice; passing the whole set is
+                            // harmless there (openOrderFlow uses the
+                            // first for the category, ignores the
+                            // rest in Regular).
+                            const idSet = new Set(ids)
+                            const groupPractices = (tl.practices || []).filter(p => idSet.has(p.id))
+                            if (groupPractices.length) openOrderFlow(groupPractices, tl)
                           }}
                           subscriptionId={subscriptionId}
                           timelineLineageId={tl.lineage_id}

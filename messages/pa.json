@@ -3686,6 +3686,21 @@
       "loadError": "Couldn't load nearby dealers. Please try again."
     },
     "brandsButtonLocked": "Brand Locked",
-    "brandsButtonDisabledHint": "You have already marked this as purchased."
+    "brandsButtonDisabledHint": "You have already marked this as purchased.",
+    "orderBuilder": {
+      "title": "Prepare order",
+      "categoryLabel": "Category",
+      "categoryPesticide": "Pesticides",
+      "categoryFertilizer": "Fertilizers",
+      "yourOrder": "{count, plural, one {In your order (# item)} other {In your order (# items)}}",
+      "alsoDue": "{count, plural, one {Also due (# item)} other {Also due (# items)}}",
+      "alreadyHandled": "{count, plural, one {Already handled (# item)} other {Already handled (# items)}}",
+      "includeAll": "Include all",
+      "dueLabel": "Due",
+      "reasonOrdered": "You have an order in progress for this input.",
+      "reasonPurchased": "You marked this as purchased.",
+      "continue": "{count, plural, one {Continue with # item} other {Continue with # items}}",
+      "loadError": "Could not load your order details. Please go back and try again."
+    }
   }
 }
