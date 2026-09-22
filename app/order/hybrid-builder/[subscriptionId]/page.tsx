@@ -95,6 +95,49 @@ function brandLabel(p: Practice): string | null {
   return v || null
 }
 
+// Chemistry line helpers mirrored from the advisory page (v1.9 +
+// v1.9.2). Farmer-facing "Common Name AI% Formulation-acronym"
+// identifier — the true product identity when brand is not
+// authored. Kept inline here rather than extracted to a shared
+// module because this is the second consumer only; extract if a
+// third surface needs the same later.
+function isUuid(s: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)
+}
+function elementDisplay(el: Element | undefined): string {
+  if (!el) return ''
+  const v = el.value?.trim()
+  if (v) return v
+  const ref = el.cosh_ref?.trim()
+  if (ref && !isUuid(ref)) return ref
+  return ''
+}
+function formulationAcronym(name: string): string {
+  if (!name) return ''
+  const m = name.match(/\(([^)]+)\)\s*$/)
+  return (m ? m[1] : name).trim()
+}
+function chemistryLine(elements: Element[]): string | null {
+  const cn = elements.find(e => (e.element_type || '').toUpperCase() === 'COMMON_NAME')
+  const ai = elements.find(e => (e.element_type || '').toUpperCase() === 'AI_CONCENTRATION')
+  const fmt = elements.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION')
+  const combined = elements.find(e => (e.element_type || '').toUpperCase() === 'FORMULATION_AI_CONC')
+  const cnStr = elementDisplay(cn)
+  const aiStr = elementDisplay(ai)
+  const fmtRaw = elementDisplay(fmt)
+  const fmtStr = fmtRaw ? formulationAcronym(fmtRaw) : ''
+  const combinedStr = elementDisplay(combined)
+  if (aiStr || fmtStr) {
+    const parts: string[] = []
+    if (cnStr) parts.push(cnStr)
+    if (aiStr) parts.push(`${aiStr}%`)
+    if (fmtStr) parts.push(fmtStr)
+    return parts.length > 0 ? parts.join(' ') : null
+  }
+  if (combinedStr) return cnStr ? `${cnStr} ${combinedStr}` : combinedStr
+  return cnStr || null
+}
+
 function formatWindow(from: string, to: string): string {
   const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short' }
   const f = new Date(from).toLocaleDateString('en-GB', opts)
@@ -320,6 +363,11 @@ export default function HybridOrderBuilder() {
                   <p className="text-sm font-medium text-[#6B3F1F] truncate">
                     {p.l2_name_loc || p.l2_type || 'Input'}
                   </p>
+                  {chemistryLine(p.elements) && (
+                    <p className="text-xs font-semibold text-[#6B3F1F] truncate">
+                      {chemistryLine(p.elements)}
+                    </p>
+                  )}
                   {brandLabel(p) && (
                     <p className="text-xs text-[#7A8C7E] truncate">{brandLabel(p)}</p>
                   )}
@@ -400,6 +448,11 @@ export default function HybridOrderBuilder() {
                     <p className="text-sm text-slate-600 truncate">
                       {p.l2_name_loc || p.l2_type || 'Input'}
                     </p>
+                    {chemistryLine(p.elements) && (
+                      <p className="text-xs font-semibold text-slate-500 truncate">
+                        {chemistryLine(p.elements)}
+                      </p>
+                    )}
                     <p className="text-[11px] text-slate-500 mt-0.5">
                       {reason === 'ordered'
                         ? tAdv('orderBuilder.reasonOrdered')
