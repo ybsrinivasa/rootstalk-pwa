@@ -48,3 +48,5 @@ public/workbox-*.js
 # loads via env / mounted secret; the file is convenience for local
 # dev only.
 .rootstalk/firebase-admin.json
+.claude/
+KANNADA_AUDIT.md
