@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
@@ -200,6 +201,7 @@ export default function DealerCreditPortfolioPage() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
+      <ExitOnDoubleBack />
     </div>
   )
 }

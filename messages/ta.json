@@ -128,7 +128,10 @@
     "pickup": "பிக்கப்",
     "dashboard": "டாஷ்போர்டு",
     "subscriptions": "சந்தாக்கள்",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "பயிர் பிரச்சனையை கண்டறியவும்",

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import AdvisoryOnlyChip from '@/components/AdvisoryOnlyChip'
 import api from '@/lib/api'
@@ -128,7 +129,7 @@ export default function MySubscriptionsPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FARMER" back="/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARMER" />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {loading ? (
           <div className="mt-4 space-y-3">
@@ -170,6 +171,7 @@ export default function MySubscriptionsPage() {
         )}
       </div>
       <BottomNav color="#3A7D44" />
+      <ExitOnDoubleBack />
 
       {/* QR bottom sheet */}
       {qrSub && (

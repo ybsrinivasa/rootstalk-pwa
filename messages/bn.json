@@ -128,7 +128,10 @@
     "pickup": "পিকআপ",
     "dashboard": "ড্যাশবোর্ড",
     "subscriptions": "সাবস্ক্রিপশন",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "ফসলের সমস্যা নির্ণয় করুন",

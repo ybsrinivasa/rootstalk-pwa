@@ -73,7 +73,11 @@ export default function BottomNav({ color = C.primary, activeRole = 'FARMER' }: 
       {tabs.map(tab => {
         const active = path === tab.href || path.startsWith(tab.href + '/')
         return (
-          <Link key={tab.href} href={tab.href}
+          // v2 (2026-09-23 exit-PWA nav): use `replace` so tab
+          // switches don't stack history entries. Peer tabs are
+          // navigation-siblings — jumping Home → Credit → Home
+          // shouldn't require three back presses to exit.
+          <Link key={tab.href} href={tab.href} replace
             className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-colors"
             style={{ color: active ? color : C.textSecond, minHeight: 56 }}>
             <tab.Icon />

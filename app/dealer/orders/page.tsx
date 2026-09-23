@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
@@ -998,6 +999,7 @@ function DealerOrdersInner() {
       )}
 
       <BottomNav color="#7D4196" activeRole="DEALER" />
+      <ExitOnDoubleBack />
     </div>
   )
 }

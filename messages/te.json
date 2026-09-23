@@ -128,7 +128,10 @@
     "pickup": "పికప్",
     "dashboard": "డాష్‌బోర్డ్",
     "subscriptions": "సభ్యత్వాలు",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "పంట సమస్యను నిర్ధారించండి",

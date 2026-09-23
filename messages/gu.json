@@ -128,7 +128,10 @@
     "pickup": "પિકઅપ",
     "dashboard": "ડેશબોર્ડ",
     "subscriptions": "સબ્સ્ક્રિપ્શન્સ",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "પાકની સમસ્યાનું નિદાન કરો",

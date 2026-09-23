@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import AvatarLightbox from '@/components/AvatarLightbox'
@@ -596,6 +597,7 @@ export default function HomePage() {
       </div>
 
       <BottomNav color={C.primary}/>
+      <ExitOnDoubleBack />
 
       <RoleSwitcherDrawer
         open={showRoleDrawer}

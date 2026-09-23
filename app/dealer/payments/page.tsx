@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
 
@@ -166,6 +167,7 @@ export default function DealerPaymentsPage() {
           </div>
         </div>
         <BottomNav color={COLOUR} activeRole="DEALER" />
+      <ExitOnDoubleBack />
       </div>
     </>
   )

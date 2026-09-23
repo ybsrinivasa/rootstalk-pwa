@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser, refreshUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
@@ -354,6 +355,7 @@ export default function DealerHomePage() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
+      <ExitOnDoubleBack />
 
       <RoleSwitcherDrawer
         open={showRoleDrawer}

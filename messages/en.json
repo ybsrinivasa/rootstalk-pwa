@@ -128,7 +128,10 @@
     "pickup": "Pickup",
     "dashboard": "Dashboard",
     "subscriptions": "Subscriptions",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "credit": {
     "portfolio": {

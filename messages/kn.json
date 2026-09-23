@@ -128,7 +128,10 @@
     "pickup": "ಪಿಕಪ್",
     "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
     "subscriptions": "ಚಂದಾದಾರಿಕೆಗಳು",
-    "credit": "ಸಾಲ"
+    "credit": "ಸಾಲ",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "ಬೆಳೆ ಸಮಸ್ಯೆಯನ್ನು ಪತ್ತೆಹಚ್ಚಿ",

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import RoleSwitcherDrawer from '@/components/RoleSwitcherDrawer'
 import api from '@/lib/api'
@@ -228,6 +229,7 @@ export default function PunditHomePage() {
       </div>
 
       <BottomNav color={COLOUR} activeRole="FARM_PUNDIT" />
+      <ExitOnDoubleBack />
 
       <RoleSwitcherDrawer
         open={showRoleDrawer}

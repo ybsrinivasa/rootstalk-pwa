@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
@@ -205,7 +206,7 @@ function PunditQueriesInner() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FARM_PUNDIT" back="/pundit/home" />
+      <PWAHeader title={t('headerTitle')} activeRole="FARM_PUNDIT" />
       <div className="pt-16 pb-20">
         {/* Per-org filter chip — visible when arrived via a dashboard
             count pill. Tap × to clear. */}
@@ -380,6 +381,7 @@ function PunditQueriesInner() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="FARM_PUNDIT" />
+      <ExitOnDoubleBack />
     </div>
   )
 }

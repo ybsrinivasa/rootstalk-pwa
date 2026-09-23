@@ -128,7 +128,10 @@
     "pickup": "اٹھاؤ",
     "dashboard": "ڈیش بورڈ",
     "subscriptions": "سبسکرپشنز",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "فصل کے مسئلے کی تشخیص کریں۔",

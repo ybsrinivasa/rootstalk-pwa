@@ -128,7 +128,10 @@
     "pickup": "ପିକଅପ୍",
     "dashboard": "ଡ୍ୟାସବୋର୍ଡ",
     "subscriptions": "ସଦସ୍ୟତା",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "ଫସଲ ସମସ୍ୟା ନିର୍ଣ୍ଣୟ କରନ୍ତୁ",

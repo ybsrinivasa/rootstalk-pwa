@@ -128,7 +128,10 @@
     "pickup": "উঠাওক",
     "dashboard": "ডেচব'ৰ্ড",
     "subscriptions": "চাবস্ক্ৰিপচন",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "শস্যৰ সমস্যা নিৰ্ণয় কৰা",

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
+import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
 import AvatarLightbox from '@/components/AvatarLightbox'
 import api from '@/lib/api'
@@ -248,6 +249,7 @@ export default function FacilitatorAlertsIncomingPage() {
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="FACILITATOR" />
+      <ExitOnDoubleBack />
     </div>
   )
 }

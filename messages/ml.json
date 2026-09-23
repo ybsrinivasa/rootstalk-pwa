@@ -128,7 +128,10 @@
     "pickup": "പുരോഗമിക്കുക",
     "dashboard": "ഡാഷ്‌ബോർഡ്",
     "subscriptions": "സബ്‌സ്‌ക്രിപ്‌ഷനുകൾ",
-    "credit": "Credit"
+    "credit": "Credit",
+    "exit": {
+      "tapAgainToExit": "Tap back once more to close the app"
+    }
   },
   "diagnose": {
     "headerTitle": "വിള പ്രശ്നം നിർണ്ണയിക്കുക",
