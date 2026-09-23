@@ -274,9 +274,38 @@ export default function HybridOrderBuilder() {
   // already ack'd).
   const { orderableCandidates, handledCandidates } = useMemo(() => {
     const orderable: { p: Practice; tl: TimelineItem }[] = []
-    const handled: { p: Practice; tl: TimelineItem; reason: 'ordered' | 'purchased_ack' }[] = []
+    const handled: {
+      p: Practice; tl: TimelineItem;
+      reason: 'ordered' | 'purchased_ack' | 'or_alternative';
+    }[] = []
     if (!category) return { orderableCandidates: orderable, handledCandidates: handled }
     const l1s = l1sForCategory(category)
+    // v2 (2026-09-23 complex-in-Checkbox3): if any camp of the OR
+    // mutex has already been committed (any of its practices is
+    // purchased or order-locked), the practices in OTHER camps are
+    // effectively out of play — the farmer has chosen the alternative.
+    // Move them into "already handled" with a distinct reason instead
+    // of showing them as tickable in "Due for order." Single reset
+    // path stays on the advisory (un-tick the chosen ack).
+    const committedCampIds = new Set<string>()
+    for (const camp of orMutexCamps) {
+      const anyCommitted = camp.some(id => {
+        const hit = allPractices.get(id)
+        if (!hit) return false
+        return !!hit.p.purchased_at
+          || !!hit.p.fulfilment
+          || !!(hit.p as Practice & { purchase_locked_by_order?: boolean }).purchase_locked_by_order
+      })
+      if (anyCommitted) for (const id of camp) committedCampIds.add(id)
+    }
+    const losingCampIds = new Set<string>()
+    if (committedCampIds.size > 0) {
+      for (const camp of orMutexCamps) {
+        const inCommittedCamp = camp.every(id => committedCampIds.has(id))
+        if (inCommittedCamp) continue
+        for (const id of camp) losingCampIds.add(id)
+      }
+    }
     for (const [, entry] of allPractices) {
       if (entry.p.l0_type !== 'INPUT') continue
       const l1u = (entry.p.l1_type || '').toUpperCase()
@@ -292,6 +321,10 @@ export default function HybridOrderBuilder() {
         handled.push({ ...entry, reason: 'purchased_ack' })
         continue
       }
+      if (losingCampIds.has(entry.p.id)) {
+        handled.push({ ...entry, reason: 'or_alternative' })
+        continue
+      }
       orderable.push(entry)
     }
     // Order the list so the tapped practice(s) render first — they're
@@ -303,7 +336,7 @@ export default function HybridOrderBuilder() {
       return aLocked - bLocked
     })
     return { orderableCandidates: orderable, handledCandidates: handled }
-  }, [allPractices, category, lockedIds])
+  }, [allPractices, category, lockedIds, orMutexCamps])
 
   // Initialise `ticked` with the tapped practices when they become
   // available in the resolved orderable list. Empty until the load
@@ -375,6 +408,14 @@ export default function HybridOrderBuilder() {
   const firstCampSize = orMutexCamps[0]?.length ?? 0
   const effectiveMax = nonMutexCount + firstCampSize
   const allTicked = ticked.size === effectiveMax
+  // Number of OR camps that still have at least one member in the
+  // orderable list. Drives the OR-chip + hint: they only make sense
+  // when the farmer actually has an alternative to choose from here.
+  const campsVisibleInOrderable = useMemo(() => {
+    if (orMutexCamps.length === 0) return 0
+    const orderableIds = new Set(orderableCandidates.map(x => x.p.id))
+    return orMutexCamps.filter(camp => camp.some(id => orderableIds.has(id))).length
+  }, [orMutexCamps, orderableCandidates])
 
   function onContinue() {
     if (!canContinue || !category) return
@@ -473,7 +514,7 @@ export default function HybridOrderBuilder() {
                 </button>
               )}
             </div>
-            {orMutexIds.length > 1 && (
+            {campsVisibleInOrderable > 1 && (
               <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
                 <p className="text-[11px] text-blue-800">
                   <span className="inline-block px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] mr-1.5">OR</span>
@@ -484,7 +525,12 @@ export default function HybridOrderBuilder() {
             <ul className="divide-y divide-slate-100">
               {orderableCandidates.map(({ p, tl }) => {
                 const active = ticked.has(p.id)
-                const isMutex = orMutexIds.includes(p.id)
+                // v2 (2026-09-23 complex-in-Checkbox3): OR chip only
+                // makes sense when there ARE still alternatives visible
+                // to the farmer. Once a camp is committed on advisory
+                // and the losing camp is moved to "already handled,"
+                // the surviving practice has no live alternative here.
+                const isMutex = orMutexIds.includes(p.id) && campsVisibleInOrderable > 1
                 return (
                   <li key={p.id}>
                     <button
@@ -553,7 +599,9 @@ export default function HybridOrderBuilder() {
                     <p className="text-[11px] text-slate-500 mt-0.5">
                       {reason === 'ordered'
                         ? tAdv('orderBuilder.reasonOrdered')
-                        : tAdv('orderBuilder.reasonPurchased')}
+                        : reason === 'or_alternative'
+                          ? tAdv('orderBuilder.reasonOrAlternative')
+                          : tAdv('orderBuilder.reasonPurchased')}
                     </p>
                   </div>
                 </li>
