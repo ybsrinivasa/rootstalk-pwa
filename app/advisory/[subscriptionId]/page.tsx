@@ -2357,15 +2357,21 @@ function RelationGroup({
       }
     }
   }
-  const cardCollapseProps = (p: Practice) =>
-    advisoryOnly
-      ? {
-          collapsed: expandedId !== p.id,
-          onToggleCollapsed: () =>
-            setExpandedId(prev => (prev === p.id ? null : p.id)),
-          purchaseCrossOptionLocked: purchaseLockedPracticeIds.has(p.id),
-        }
-      : {}
+  const cardCollapseProps = (p: Practice) => {
+    if (!advisoryOnly) return {}
+    // v2 (2026-09-23 OR-in-Checkbox3): the losing side of an OR pair
+    // is force-collapsed AND non-expandable — dropping the accordion
+    // toggle removes the chevron, kills the header tap-target, and
+    // makes the "out of play" state unmistakable to the farmer.
+    const isOrLocked = purchaseLockedPracticeIds.has(p.id)
+    return {
+      collapsed: isOrLocked || expandedId !== p.id,
+      onToggleCollapsed: isOrLocked
+        ? undefined
+        : () => setExpandedId(prev => (prev === p.id ? null : p.id)),
+      purchaseCrossOptionLocked: isOrLocked,
+    }
+  }
 
   if (isPureOrGroup && !advisoryOnly) {
     const orPractices = parts[0].options.map(o => o.practices[0])
