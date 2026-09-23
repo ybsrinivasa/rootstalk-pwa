@@ -231,20 +231,21 @@ export default function HybridOrderBuilder() {
   }, [advisory])
 
   // v2 (2026-09-23 OR-in-Checkbox3, refactored 2026-09-23 evening) —
-  // derive OR mutex camps from the ENTIRE cluster's relation metadata
-  // (relation_id + relation_role + relation_type), not just the URL-
-  // passed slice. Bug repro before this refactor: farmer tapped the
-  // shared "Order one of these" on Part 1 of ((A OR B) + (C OR D));
-  // basket-builder enforced Part 1's mutex but was blind to Part 2's,
-  // so both Azadirachtin and Eretmocerus could be ticked together
-  // (violates Part 2's OR). Cluster derivation covers all OR groups
-  // uniformly.
-  //   Grouping key: `relation_id::PART_n` → an OR group
-  //   Within a group: `OPT_m` distinguishes camps
+  // derive OR mutex structure from the ENTIRE cluster's relation
+  // metadata (relation_id + relation_role + relation_type). Data
+  // shape is groups-of-camps, because ((A OR B) + (C OR D)) has TWO
+  // independent OR groups and ticking in one must not affect the
+  // other. Flattening to camps alone (my previous cut) lost that.
+  //   Grouping key: `relation_id::PART_n` → one OR group
+  //   Within a group: `OPT_m` distinguishes camps (Options)
   //   Each camp = list of practice ids in that Option
-  const orMutexCamps = useMemo(() => {
-    if (!advisory) return [] as string[][]
-    const groups = new Map<string, Map<string, string[]>>()
+  //
+  //   Pure OR-of-singles (A OR B)         → [[[A],[B]]]
+  //   Compound OR ((A+B) OR (C+D))        → [[[A,B],[C,D]]]
+  //   Independent ORs ((A OR B) + (C OR D)) → [[[A],[B]], [[C],[D]]]
+  const orMutexGroups = useMemo(() => {
+    if (!advisory) return [] as string[][][]
+    const raw = new Map<string, Map<string, string[]>>()
     const walk = (tls?: TimelineItem[]) => {
       for (const tl of tls || []) {
         for (const p of tl.practices || []) {
@@ -255,8 +256,8 @@ export default function HybridOrderBuilder() {
           if (!partMatch || !optMatch) continue
           const relKey = `${p.relation_id}::PART_${partMatch[1]}`
           const optKey = `OPT_${optMatch[1]}`
-          if (!groups.has(relKey)) groups.set(relKey, new Map())
-          const optMap = groups.get(relKey)!
+          if (!raw.has(relKey)) raw.set(relKey, new Map())
+          const optMap = raw.get(relKey)!
           if (!optMap.has(optKey)) optMap.set(optKey, [])
           optMap.get(optKey)!.push(p.id)
         }
@@ -264,21 +265,39 @@ export default function HybridOrderBuilder() {
     }
     walk(advisory.timelines)
     walk(advisory.ongoing_timelines)
-    const camps: string[][] = []
-    for (const [, optMap] of groups) {
+    const groups: string[][][] = []
+    for (const [, optMap] of raw) {
       // Only meaningful when the Part has 2+ Options (an actual
       // "Choose one" set). Single-Option Parts are structural noise.
       if (optMap.size < 2) continue
+      const camps: string[][] = []
       for (const [, ids] of optMap) camps.push(ids)
+      groups.push(camps)
     }
-    return camps
+    return groups
   }, [advisory])
-  const orMutexIds = useMemo(() => orMutexCamps.flat(), [orMutexCamps])
+  // Flat lookups for rendering + toggle enforcement.
+  const orMutexIds = useMemo(
+    () => orMutexGroups.flatMap(g => g.flat()),
+    [orMutexGroups],
+  )
   const campForId = useMemo(() => {
     const m = new Map<string, string[]>()
-    for (const camp of orMutexCamps) for (const id of camp) m.set(id, camp)
+    for (const g of orMutexGroups) for (const camp of g) for (const id of camp) m.set(id, camp)
     return m
-  }, [orMutexCamps])
+  }, [orMutexGroups])
+  const groupForId = useMemo(() => {
+    const m = new Map<string, string[][]>()
+    for (const g of orMutexGroups) for (const camp of g) for (const id of camp) m.set(id, g)
+    return m
+  }, [orMutexGroups])
+  // Back-compat alias: rest of the file uses `orMutexCamps` for the
+  // flattened camp list (mutex enforcement wraps in groupForId to
+  // stay group-aware).
+  const orMutexCamps = useMemo(
+    () => orMutexGroups.flatMap(g => g),
+    [orMutexGroups],
+  )
 
   // Derive the category from the first tapped practice — all group
   // callers pass same-category practice ids together (AND/OR groups
@@ -368,7 +387,9 @@ export default function HybridOrderBuilder() {
     // just saw on the advisory — disorienting mental-model break. The
     // tapped practice is still visually highlighted by its ✓ pre-tick;
     // no need to reorder the list.
-    orderable.sort((a, b) => a.p.display_order - b.p.display_order)
+    orderable.sort((a, b) =>
+      (a.p.display_order ?? 0) - (b.p.display_order ?? 0),
+    )
     return { orderableCandidates: orderable, handledCandidates: handled }
   }, [allPractices, category, orMutexCamps])
 
@@ -399,12 +420,14 @@ export default function HybridOrderBuilder() {
         next.delete(id)
       } else {
         next.add(id)
-        // Camp-aware OR mutex: ticking a member of camp X un-ticks all
-        // members of OTHER camps. Same-camp members co-exist (they're
-        // the ingredients of the same "mix" option in a compound OR).
+        // Group-aware OR mutex: ticking a member of camp X in group G
+        // un-ticks all members of OTHER camps IN G. Camps in OTHER
+        // groups are untouched (independent ORs). Same-camp members
+        // co-exist (compound-OR mix ingredients).
         const myCamp = campForId.get(id)
-        if (myCamp) {
-          for (const camp of orMutexCamps) {
+        const myGroup = groupForId.get(id)
+        if (myCamp && myGroup) {
+          for (const camp of myGroup) {
             if (camp === myCamp) continue
             for (const otherId of camp) next.delete(otherId)
           }
@@ -415,18 +438,21 @@ export default function HybridOrderBuilder() {
   }
 
   function includeAllAvailable() {
-    // v2 (2026-09-23 OR-in-Checkbox3): "Include all" cannot violate an
-    // OR mutex — pick every non-mutex candidate PLUS every member of
-    // the first camp we encounter (the whole "mix" if compound, the
-    // single practice if single-option). Farmer can still swap by
-    // tapping into a different camp — that flips the whole camp.
-    const chosenCamp = orMutexCamps[0]
-    const chosenCampSet = new Set(chosenCamp || [])
+    // v2 (2026-09-23 OR-in-Checkbox3, updated): "Include all" cannot
+    // violate any OR group — pick every non-mutex candidate PLUS the
+    // first camp of EACH group. For ((A OR B) + (C OR D)) that means
+    // one from each OR (A + C by default). Farmer can still swap by
+    // tapping a different camp; group-aware toggle handles the swap.
+    const chosenCampIds = new Set<string>()
+    for (const group of orMutexGroups) {
+      const first = group[0]
+      if (first) for (const id of first) chosenCampIds.add(id)
+    }
     const mutexSet = new Set(orMutexIds)
     const next = new Set<string>()
     for (const { p } of orderableCandidates) {
       if (mutexSet.has(p.id)) {
-        if (chosenCampSet.has(p.id)) next.add(p.id)
+        if (chosenCampIds.has(p.id)) next.add(p.id)
       } else {
         next.add(p.id)
       }
@@ -435,12 +461,14 @@ export default function HybridOrderBuilder() {
   }
 
   // "Include all" hides once every non-mutex candidate is ticked and
-  // one whole camp is picked (its full membership) — same as the
-  // effective ceiling.
+  // one whole camp is picked per group — the effective ceiling.
   const mutexSetForCap = new Set(orMutexIds)
   const nonMutexCount = orderableCandidates.filter(x => !mutexSetForCap.has(x.p.id)).length
-  const firstCampSize = orMutexCamps[0]?.length ?? 0
-  const effectiveMax = nonMutexCount + firstCampSize
+  const oneCampPerGroupTotal = orMutexGroups.reduce(
+    (n, g) => n + (g[0]?.length ?? 0),
+    0,
+  )
+  const effectiveMax = nonMutexCount + oneCampPerGroupTotal
   const allTicked = ticked.size === effectiveMax
   // Number of OR camps that still have at least one member in the
   // orderable list. Drives the OR-chip + hint: they only make sense
