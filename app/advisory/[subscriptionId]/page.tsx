@@ -1972,6 +1972,27 @@ function PracticeAckFooter({
   const [busy, setBusy] = useState(false)
   const [confirmHide, setConfirmHide] = useState(false)
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
+  // v2 (2026-09-23) — device-back handling for the photo preview
+  // modal. In a PWA (installed or in browser), device back is a plain
+  // browser history pop — a React-state modal doesn't intercept it,
+  // so back skips right past the modal and pops the previous route
+  // (e.g. the Brands screen the farmer just came from on Save). We
+  // push a history entry when the modal opens and listen for popstate
+  // to close the modal instead of navigating. On close via ✕/backdrop,
+  // we unwind the fake entry with history.back() so history stays
+  // clean.
+  useEffect(() => {
+    if (!photoPreviewOpen) return
+    window.history.pushState({ rtModal: 'photoPreview' }, '')
+    const onPop = () => setPhotoPreviewOpen(false)
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      if ((window.history.state as { rtModal?: string } | null)?.rtModal === 'photoPreview') {
+        window.history.back()
+      }
+    }
+  }, [photoPreviewOpen])
   const fulf = practice.fulfilment
   // 2026-06-22 — Tightened: INPUT cards REQUIRE a live fulfilment
   // with farmer_received_at to be ackable. Pre-fix the `is_purchased`
