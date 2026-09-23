@@ -65,6 +65,7 @@ interface AdvisoryDay {
   // the promoter sees the relaxed view the farmer sees on
   // advisory-only subs.
   advisory_only_mode?: boolean
+  in_app_orders_enabled?: boolean
   dealer_list_enabled?: boolean
   timelines: TimelineItem[]
 }
@@ -401,11 +402,12 @@ export default function DealerFarmerAdvisoryPage() {
                           )}
 
                           <div className="flex flex-wrap gap-1.5 mt-2.5">
-                            {/* 2026-09-16 — Advisory-Only Mode (v1.3
-                                mirror): no purchase concept exists,
-                                so hide the purchased/pending chip
-                                entirely. Frequency chip stays. */}
-                            {p.l0_type === 'INPUT' && !day?.advisory_only_mode && (
+                            {/* 2026-09-16 — Pure Advisory-Only has no
+                                purchase concept, so hide the chip.
+                                2026-09-23 — Hybrid (Checkbox 3) DOES
+                                have purchases; keep the chip visible
+                                there, same as Regular Mode. */}
+                            {p.l0_type === 'INPUT' && !(day?.advisory_only_mode && !day?.in_app_orders_enabled) && (
                               p.is_purchased ? (
                                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-800 font-medium">
                                   {t('farmerPurchased')}
