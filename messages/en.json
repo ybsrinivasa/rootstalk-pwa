@@ -1908,12 +1908,12 @@
         "unreadCount": "{count} unread",
         "brandForms": "Brand Submissions",
         "brandFormsSubtitle": "Can't find a brand? Send it in",
-        "farmerLedger": "Farmer Ledger",
+        "farmerLedger": "Sale Ledger",
         "farmerLedgerSubtitle": "My customers + purchases"
       }
     },
     "ledger": {
-      "headerTitle": "Farmer Ledger",
+      "headerTitle": "Sale Ledger",
       "detailHeaderTitle": "Purchase History",
       "addSaleHeaderTitle": "Add Purchase Entry",
       "addSaleCta": "+ Add Sale",
