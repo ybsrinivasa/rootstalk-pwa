@@ -766,7 +766,7 @@ export default function AdvisoryPage() {
   function openOrderFlow(
     practices: Practice[],
     timeline?: TimelineItem,
-    orMutex?: string[],
+    orMutexCamps?: string[][],
   ) {
     const first = practices[0]
     if (!first) return
@@ -776,13 +776,29 @@ export default function AdvisoryPage() {
       subscription?.advisory_only_mode && subscription?.in_app_orders_enabled
     )
     if (isHybrid) {
-      const q = new URLSearchParams({
-        practice_ids: practices.map(p => p.id).join(','),
-      })
-      // v2 (2026-09-23 OR-in-Checkbox3) — pass mutex-linked practice
-      // ids so the basket-builder enforces "choose one" among them.
-      if (orMutex && orMutex.length > 1) {
-        q.set('or_mutex', orMutex.join(','))
+      // v2 (2026-09-23 OR-in-Checkbox3) — pass mutex camps. Encoded
+      // as `A,B|C,D`: each camp is a comma-separated list of practice
+      // ids; camps are separated by pipes. Basket-builder enforces
+      // "ticking from one camp un-ticks all others."
+      // Auto-detect the "shared OR button" flow: if practices span
+      // MULTIPLE camps, treat as shared — no pre-tick; farmer must
+      // make an explicit choice. Otherwise pre-tick the tapped
+      // practices (per-item tap or AND group order).
+      let preTickIds = practices.map(p => p.id)
+      if (orMutexCamps && orMutexCamps.length > 1) {
+        const campIndex = new Map<string, number>()
+        orMutexCamps.forEach((camp, i) => camp.forEach(id => campIndex.set(id, i)))
+        const distinctCamps = new Set<number>()
+        for (const id of preTickIds) {
+          const idx = campIndex.get(id)
+          if (idx !== undefined) distinctCamps.add(idx)
+        }
+        if (distinctCamps.size > 1) preTickIds = []
+      }
+      const q = new URLSearchParams()
+      if (preTickIds.length > 0) q.set('practice_ids', preTickIds.join(','))
+      if (orMutexCamps && orMutexCamps.length > 1) {
+        q.set('or_mutex', orMutexCamps.map(c => c.join(',')).join('|'))
       }
       router.push(`/order/hybrid-builder/${subscriptionId}?${q.toString()}`)
       return
@@ -1111,25 +1127,18 @@ export default function AdvisoryPage() {
                           parts={row.parts || []}
                           orderingPractice={orderingPractice}
                           orderSuccess={orderSuccess}
-                          onOrder={(ids, orMutex) => {
-                            // Relation-group "Order both together".
-                            // v2 (2026-09-22 Checkbox 3): hybrid mode
-                            // needs the exact practice_ids the group
-                            // is committing to (basket-builder locks
-                            // them). Regular Mode continues to just
-                            // date-range bundle from the first
-                            // practice; passing the whole set is
-                            // harmless there (openOrderFlow uses the
-                            // first for the category, ignores the
-                            // rest in Regular).
-                            // v2 (2026-09-23 OR-in-Checkbox3): when the
-                            // group is a pure-OR container, the shared
-                            // Order button also passes orMutex so the
-                            // basket-builder enforces "choose one" among
-                            // the alternatives.
+                          onOrder={(ids, orMutexCamps) => {
+                            // Relation-group order tap. Regular Mode
+                            // still uses the group button (bundles by
+                            // date-range). Hybrid path threads through
+                            // the basket-builder; orMutexCamps carries
+                            // the OR camp structure when the tap
+                            // originated from an OR context (shared OR
+                            // button, or per-item Order button inside
+                            // a compound-in-OR).
                             const idSet = new Set(ids)
                             const groupPractices = (tl.practices || []).filter(p => idSet.has(p.id))
-                            if (groupPractices.length) openOrderFlow(groupPractices, tl, orMutex)
+                            if (groupPractices.length) openOrderFlow(groupPractices, tl, orMutexCamps)
                           }}
                           subscriptionId={subscriptionId}
                           timelineLineageId={tl.lineage_id}
@@ -1653,7 +1662,12 @@ function PracticeCard({
                   {fulf?.status === 'POSTPONED' && fulf.postpone_days_remaining != null
                     ? ` · ${fulf.postpone_days_remaining}d` : ''}
                 </button>
-              ) : !fulf && !practice.is_purchased && !practice.purchased_at ? (
+              ) : !fulf && !practice.is_purchased && !practice.purchased_at
+                    && !purchaseCrossOptionLocked ? (
+                // v2 (2026-09-23 complex-in-Checkbox3): also hide the
+                // Order button on the LOSING side of an OR pair —
+                // committing offline elsewhere means this practice is
+                // no longer in play; ordering it would be a double-buy.
                 <button
                   onClick={e => { e.stopPropagation(); onOrder() }}
                   disabled={isOrdering || ordered}
@@ -2291,10 +2305,14 @@ function RelationGroup({
   // always homogeneous by L1). The unused practiceIds arg is kept
   // in the signature for backward shape so the internal callers
   // don't need rework — the parent just ignores it.
-  // v2 (2026-09-23 OR-in-Checkbox3) — second arg carries the OR
-  // mutex set (all practice ids across the OR options) so the parent
-  // can hint the basket-builder to enforce "choose one" among them.
-  onOrder: (practiceIds: string[], orMutex?: string[]) => void
+  // v2 (2026-09-23 OR-in-Checkbox3) — second arg carries the OR camp
+  // structure: an outer array of camps (options) where each camp is
+  // the list of practice ids in that option. Ticking any practice
+  // from one camp un-ticks all practices in OTHER camps (mutex at
+  // option level, not practice level).
+  // Pure OR-of-singles → [[A],[B]]
+  // Compound OR ((A+B) OR (C+D)) → [[A,B],[C,D]]
+  onOrder: (practiceIds: string[], orMutexCamps?: string[][]) => void
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
@@ -2485,20 +2503,20 @@ function RelationGroup({
               <PracticeCard
                 key={p.id}
                 practice={p}
-                onOrder={() => {}}
-                isOrdering={false}
-                ordered={false}
+                onOrder={() => onOrder([p.id])}
+                isOrdering={orderingPractice === p.id}
+                ordered={orderSuccess === p.id}
                 subscriptionId={subscriptionId}
                 timelineLineageId={timelineLineageId}
                 onAckChanged={onAckChanged}
                 advisoryOnly
-                // v2 (2026-09-22 Checkbox 3) — per-item Order button
-                // suppressed inside an AND container: the group-level
-                // "Order both together" below handles the whole AND
-                // as one order. Matches Regular Mode semantic.
-                // Brands button (advisory-only info) still shows per
-                // item so farmer can browse each input's alternatives.
-                enableInAppOrders={false}
+                // v2 (2026-09-22 Checkbox 3, updated 2026-09-23): in
+                // hybrid mode AND is treated as "buy each separately
+                // and mix and apply" — per-item Order buttons ON, no
+                // group "Order both together" button. Regular Mode
+                // keeps the group semantic (per-item off, group on).
+                // Pure Advisory-Only: no Order buttons at all.
+                enableInAppOrders={canOrderInApp}
                 insideContainer
                 {...cardCollapseProps(p)}
               />
@@ -2526,12 +2544,11 @@ function RelationGroup({
               : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
           })}
         </div>
-        {/* 2026-09-16 — v1.4: no order flow in pure advisory-only, so
-            no "Order both together" button.
-            v2 (2026-09-22 Checkbox 3): hybrid mode gets the button
-            back — inputs shown upfront via advisory-only layout AND
-            group-level order via canOrderInApp. */}
-        {canOrderInApp && !anyInFlight && (
+        {/* Group "Order both together" button. Regular Mode only —
+            hybrid AND uses per-item Order buttons (each ingredient is
+            its own purchase decision; farmer might already have one).
+            Pure Advisory-Only has no order flow. */}
+        {canOrderInApp && !advisoryOnly && !anyInFlight && (
           <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
             <button
               onClick={() => onOrder(ids)}
@@ -2663,6 +2680,16 @@ function RelationGroup({
                     const f = p.fulfilment ?? null
                     return (f && fulfilmentToPill(f) != null) || p.is_purchased || !!p.purchased_at
                   })
+                  // v2 (2026-09-23 complex-in-Checkbox3): if this
+                  // compound sits inside an OR (isChoicePart=true),
+                  // per-item Order taps must carry the OR camp mutex
+                  // so the basket-builder enforces "one mix only" —
+                  // ticking A (from A+B camp) un-ticks C and D (the
+                  // C+D camp). No mutex if the compound is standalone
+                  // (isPureAndGroup handles that case).
+                  const compoundCamps = isChoicePart
+                    ? part.options.map(o => o.practices.map(pp => pp.id))
+                    : undefined
                   // v1.7 mirror: same header-drop + emerald border +
                   // BigPlusSeparator treatment as the top-level
                   // isPureAndGroup branch above.
@@ -2691,19 +2718,18 @@ function RelationGroup({
                           <PracticeCard
                             key={p.id}
                             practice={p}
-                            onOrder={() => {}}
-                            isOrdering={false}
-                            ordered={false}
+                            onOrder={() => onOrder([p.id], compoundCamps)}
+                            isOrdering={orderingPractice === p.id}
+                            ordered={orderSuccess === p.id}
                             subscriptionId={subscriptionId}
                             timelineLineageId={timelineLineageId}
                             onAckChanged={onAckChanged}
                             advisoryOnly
-                            // v2 — same as pure-AND branch above:
-                            // per-item Order suppressed inside a
-                            // compound option's AND; the compound-
-                            // level "Order all together" button below
-                            // orders the whole compound as one.
-                            enableInAppOrders={false}
+                            // v2 (2026-09-23 complex-in-Checkbox3):
+                            // hybrid AND = per-item Order buttons on.
+                            // Regular Mode still uses the group button
+                            // below; Pure Advisory-Only shows neither.
+                            enableInAppOrders={canOrderInApp}
                             insideContainer
                             {...cardCollapseProps(p)}
                           />
@@ -2729,7 +2755,10 @@ function RelationGroup({
                           : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
                       })}
                     </div>
-                    {canOrderInApp && !anyInFlight && (
+                    {/* Group "Order both together" — Regular Mode only.
+                        Hybrid uses per-item Order buttons above so the
+                        farmer can order each ingredient separately. */}
+                    {canOrderInApp && !advisoryOnly && !anyInFlight && (
                       <div className="px-4 py-3 border-t border-[#DDD0B8] flex justify-end">
                         <button
                           onClick={() => onOrder(ids)}
@@ -2819,7 +2848,12 @@ function RelationGroup({
               {orShowGroupOrder && (
                 <div className="px-4 py-3 border-t border-blue-200 flex justify-end">
                   <button
-                    onClick={() => onOrder(orIds, orIds)}
+                    onClick={() => onOrder(
+                      orIds,
+                      // Camps: each Option is a camp; here every camp
+                      // is a single practice (pure OR-of-singles).
+                      part.options.map(o => o.practices.map(p => p.id)),
+                    )}
                     className="text-xs font-semibold text-white px-4 py-2 rounded-xl"
                     style={{ background: '#3A7D44' }}>
                     {tAdvisoryOnlyRel('orderOneOfThese')}

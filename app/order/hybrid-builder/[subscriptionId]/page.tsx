@@ -156,14 +156,30 @@ export default function HybridOrderBuilder() {
     const raw = searchParams.get('practice_ids') || ''
     return raw.split(',').map(s => s.trim()).filter(Boolean)
   }, [searchParams])
-  // v2 (2026-09-23 OR-in-Checkbox3) — practices that form an OR
-  // mutex set. Ticking one un-ticks all others in the set. The
-  // basket-builder shows all mutex members with an "OR" chip; none
-  // are pre-ticked (mutex demands an explicit choice).
-  const orMutexIds = useMemo(() => {
+  // v2 (2026-09-23 OR-in-Checkbox3, updated 2026-09-23 complex) — OR
+  // mutex camps. URL format: `A,B|C,D` where `,` groups practices
+  // within one Option (camp) and `|` separates alternative Options.
+  // Ticking any practice in one camp un-ticks all practices in OTHER
+  // camps; practices in the SAME camp co-exist (compound-OR mix).
+  //   Pure OR-of-singles ((A OR B))       → `A|B`     → [[A],[B]]
+  //   Compound OR ((A+B) OR (C+D))        → `A,B|C,D` → [[A,B],[C,D]]
+  const orMutexCamps = useMemo(() => {
     const raw = searchParams.get('or_mutex') || ''
-    return raw.split(',').map(s => s.trim()).filter(Boolean)
+    if (!raw) return [] as string[][]
+    return raw.split('|').map(camp =>
+      camp.split(',').map(s => s.trim()).filter(Boolean),
+    ).filter(camp => camp.length > 0)
   }, [searchParams])
+  const orMutexIds = useMemo(
+    () => orMutexCamps.flat(),
+    [orMutexCamps],
+  )
+  // For a given practice, look up which camp it belongs to (if any).
+  const campForId = useMemo(() => {
+    const m = new Map<string, string[]>()
+    for (const camp of orMutexCamps) for (const id of camp) m.set(id, camp)
+    return m
+  }, [orMutexCamps])
 
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
@@ -232,8 +248,12 @@ export default function HybridOrderBuilder() {
   // Derive the category from the first tapped practice — all group
   // callers pass same-category practice ids together (AND/OR groups
   // are homogeneous by L1).
+  // v2 (2026-09-23 complex-in-Checkbox3): shared "Order one of these"
+  // flow may omit lockedIds (mutex demands explicit choice) — fall
+  // back to any mutex member for category derivation.
   const category = useMemo<'PESTICIDE' | 'FERTILIZER' | null>(() => {
-    for (const id of lockedIds) {
+    const candidates = lockedIds.length > 0 ? lockedIds : orMutexIds
+    for (const id of candidates) {
       const hit = allPractices.get(id)
       if (hit) {
         const c = basketCategoryFor(hit.p.l1_type)
@@ -241,7 +261,7 @@ export default function HybridOrderBuilder() {
       }
     }
     return null
-  }, [lockedIds, allPractices])
+  }, [lockedIds, orMutexIds, allPractices])
 
   // Partition candidates. Everything actionable (both the tapped
   // practice(s) and other in-window candidates) lives in a single
@@ -288,18 +308,20 @@ export default function HybridOrderBuilder() {
   // Initialise `ticked` with the tapped practices when they become
   // available in the resolved orderable list. Empty until the load
   // completes; refreshed when lockedIds change.
-  // v2 (2026-09-23 OR-in-Checkbox3): mutex members are NEVER pre-
-  // ticked — the whole point is that the farmer must make an
-  // explicit choice among the alternatives.
+  // v2 (2026-09-23 OR-in-Checkbox3, updated for complex): lockedIds
+  // is now the pure "pre-tick intent" — the caller (advisory page)
+  // already suppresses lockedIds for the shared OR-button flow (where
+  // mutex demands an explicit choice). Per-item Order taps INSIDE an
+  // OR camp still get their tapped id pre-ticked; farmer un-ticks it
+  // if they change their mind.
   useEffect(() => {
     if (orderableCandidates.length === 0) return
     const orderableSet = new Set(orderableCandidates.map(x => x.p.id))
-    const mutexSet = new Set(orMutexIds)
     const initial = new Set(
-      lockedIds.filter(id => orderableSet.has(id) && !mutexSet.has(id)),
+      lockedIds.filter(id => orderableSet.has(id)),
     )
     setTicked(initial)
-  }, [orderableCandidates, lockedIds, orMutexIds])
+  }, [orderableCandidates, lockedIds])
 
   const canContinue = ticked.size > 0 && !!category
 
@@ -310,9 +332,15 @@ export default function HybridOrderBuilder() {
         next.delete(id)
       } else {
         next.add(id)
-        // OR mutex: ticking one member un-ticks all its siblings.
-        if (orMutexIds.includes(id)) {
-          for (const sib of orMutexIds) if (sib !== id) next.delete(sib)
+        // Camp-aware OR mutex: ticking a member of camp X un-ticks all
+        // members of OTHER camps. Same-camp members co-exist (they're
+        // the ingredients of the same "mix" option in a compound OR).
+        const myCamp = campForId.get(id)
+        if (myCamp) {
+          for (const camp of orMutexCamps) {
+            if (camp === myCamp) continue
+            for (const otherId of camp) next.delete(otherId)
+          }
         }
       }
       return next
@@ -321,17 +349,17 @@ export default function HybridOrderBuilder() {
 
   function includeAllAvailable() {
     // v2 (2026-09-23 OR-in-Checkbox3): "Include all" cannot violate an
-    // OR mutex — pick at most the FIRST mutex member and drop the
-    // rest. Farmer can still swap the pick manually if they want a
-    // different alternative.
+    // OR mutex — pick every non-mutex candidate PLUS every member of
+    // the first camp we encounter (the whole "mix" if compound, the
+    // single practice if single-option). Farmer can still swap by
+    // tapping into a different camp — that flips the whole camp.
+    const chosenCamp = orMutexCamps[0]
+    const chosenCampSet = new Set(chosenCamp || [])
     const mutexSet = new Set(orMutexIds)
-    const seen = new Set<string>()
     const next = new Set<string>()
     for (const { p } of orderableCandidates) {
       if (mutexSet.has(p.id)) {
-        if (seen.has('__mutex__')) continue
-        seen.add('__mutex__')
-        next.add(p.id)
+        if (chosenCampSet.has(p.id)) next.add(p.id)
       } else {
         next.add(p.id)
       }
@@ -340,11 +368,12 @@ export default function HybridOrderBuilder() {
   }
 
   // "Include all" hides once every non-mutex candidate is ticked and
-  // exactly one mutex member is picked — same as the effective ceiling.
+  // one whole camp is picked (its full membership) — same as the
+  // effective ceiling.
   const mutexSetForCap = new Set(orMutexIds)
   const nonMutexCount = orderableCandidates.filter(x => !mutexSetForCap.has(x.p.id)).length
-  const hasMutex = orMutexIds.length > 0
-  const effectiveMax = nonMutexCount + (hasMutex ? 1 : 0)
+  const firstCampSize = orMutexCamps[0]?.length ?? 0
+  const effectiveMax = nonMutexCount + firstCampSize
   const allTicked = ticked.size === effectiveMax
 
   function onContinue() {
@@ -387,7 +416,11 @@ export default function HybridOrderBuilder() {
   // sub deleted, wrong id in URL). "Can't find any orderable
   // candidates" is a reasonable trigger too — but we only bail if
   // the tapped ids specifically didn't resolve.
-  const tappedFound = lockedIds.some(id => orderableCandidates.some(x => x.p.id === id))
+  // v2 (2026-09-23 complex-in-Checkbox3): shared OR-button flow omits
+  // lockedIds — fall back to orMutexIds so tappedFound still gates on
+  // "did we resolve at least one candidate from the intended set."
+  const tappedFound = (lockedIds.length > 0 ? lockedIds : orMutexIds)
+    .some(id => orderableCandidates.some(x => x.p.id === id))
   if (error || !subscription || !category || !tappedFound) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
