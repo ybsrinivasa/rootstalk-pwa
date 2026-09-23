@@ -48,8 +48,18 @@ interface Practice {
   elements: Element[]
   is_purchased?: boolean
   purchased_at?: string | null
+  purchase_locked_by_order?: boolean
   fulfilment?: Fulfilment | null
   occurrence_date?: string
+  // Advisory-page render order + relation metadata. Used to:
+  //  - Sort orderable candidates in advisory order (was Map insertion)
+  //  - Derive OR camps for the ENTIRE cluster (not just the tapped
+  //    Part's OR) so the basket-builder enforces mutex on every OR
+  //    group, not only the one the farmer originated the tap from.
+  display_order: number
+  relation_id?: string | null
+  relation_role?: string | null    // e.g. "PART_1__OPT_2__POS_1"
+  relation_type?: 'AND' | 'OR' | 'IF' | null
 }
 interface TimelineItem {
   id: string
@@ -156,31 +166,6 @@ export default function HybridOrderBuilder() {
     const raw = searchParams.get('practice_ids') || ''
     return raw.split(',').map(s => s.trim()).filter(Boolean)
   }, [searchParams])
-  // v2 (2026-09-23 OR-in-Checkbox3, updated 2026-09-23 complex) — OR
-  // mutex camps. URL format: `A,B|C,D` where `,` groups practices
-  // within one Option (camp) and `|` separates alternative Options.
-  // Ticking any practice in one camp un-ticks all practices in OTHER
-  // camps; practices in the SAME camp co-exist (compound-OR mix).
-  //   Pure OR-of-singles ((A OR B))       → `A|B`     → [[A],[B]]
-  //   Compound OR ((A+B) OR (C+D))        → `A,B|C,D` → [[A,B],[C,D]]
-  const orMutexCamps = useMemo(() => {
-    const raw = searchParams.get('or_mutex') || ''
-    if (!raw) return [] as string[][]
-    return raw.split('|').map(camp =>
-      camp.split(',').map(s => s.trim()).filter(Boolean),
-    ).filter(camp => camp.length > 0)
-  }, [searchParams])
-  const orMutexIds = useMemo(
-    () => orMutexCamps.flat(),
-    [orMutexCamps],
-  )
-  // For a given practice, look up which camp it belongs to (if any).
-  const campForId = useMemo(() => {
-    const m = new Map<string, string[]>()
-    for (const camp of orMutexCamps) for (const id of camp) m.set(id, camp)
-    return m
-  }, [orMutexCamps])
-
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -245,6 +230,56 @@ export default function HybridOrderBuilder() {
     return map
   }, [advisory])
 
+  // v2 (2026-09-23 OR-in-Checkbox3, refactored 2026-09-23 evening) —
+  // derive OR mutex camps from the ENTIRE cluster's relation metadata
+  // (relation_id + relation_role + relation_type), not just the URL-
+  // passed slice. Bug repro before this refactor: farmer tapped the
+  // shared "Order one of these" on Part 1 of ((A OR B) + (C OR D));
+  // basket-builder enforced Part 1's mutex but was blind to Part 2's,
+  // so both Azadirachtin and Eretmocerus could be ticked together
+  // (violates Part 2's OR). Cluster derivation covers all OR groups
+  // uniformly.
+  //   Grouping key: `relation_id::PART_n` → an OR group
+  //   Within a group: `OPT_m` distinguishes camps
+  //   Each camp = list of practice ids in that Option
+  const orMutexCamps = useMemo(() => {
+    if (!advisory) return [] as string[][]
+    const groups = new Map<string, Map<string, string[]>>()
+    const walk = (tls?: TimelineItem[]) => {
+      for (const tl of tls || []) {
+        for (const p of tl.practices || []) {
+          if (!p.relation_id || p.relation_type !== 'OR') continue
+          const role = p.relation_role || ''
+          const partMatch = role.match(/PART_(\d+)/)
+          const optMatch = role.match(/OPT_(\d+)/)
+          if (!partMatch || !optMatch) continue
+          const relKey = `${p.relation_id}::PART_${partMatch[1]}`
+          const optKey = `OPT_${optMatch[1]}`
+          if (!groups.has(relKey)) groups.set(relKey, new Map())
+          const optMap = groups.get(relKey)!
+          if (!optMap.has(optKey)) optMap.set(optKey, [])
+          optMap.get(optKey)!.push(p.id)
+        }
+      }
+    }
+    walk(advisory.timelines)
+    walk(advisory.ongoing_timelines)
+    const camps: string[][] = []
+    for (const [, optMap] of groups) {
+      // Only meaningful when the Part has 2+ Options (an actual
+      // "Choose one" set). Single-Option Parts are structural noise.
+      if (optMap.size < 2) continue
+      for (const [, ids] of optMap) camps.push(ids)
+    }
+    return camps
+  }, [advisory])
+  const orMutexIds = useMemo(() => orMutexCamps.flat(), [orMutexCamps])
+  const campForId = useMemo(() => {
+    const m = new Map<string, string[]>()
+    for (const camp of orMutexCamps) for (const id of camp) m.set(id, camp)
+    return m
+  }, [orMutexCamps])
+
   // Derive the category from the first tapped practice — all group
   // callers pass same-category practice ids together (AND/OR groups
   // are homogeneous by L1).
@@ -294,7 +329,7 @@ export default function HybridOrderBuilder() {
         if (!hit) return false
         return !!hit.p.purchased_at
           || !!hit.p.fulfilment
-          || !!(hit.p as Practice & { purchase_locked_by_order?: boolean }).purchase_locked_by_order
+          || !!hit.p.purchase_locked_by_order
       })
       if (anyCommitted) for (const id of camp) committedCampIds.add(id)
     }
@@ -327,16 +362,15 @@ export default function HybridOrderBuilder() {
       }
       orderable.push(entry)
     }
-    // Order the list so the tapped practice(s) render first — they're
-    // the farmer's explicit intent, natural to see up top.
-    const lockedSet = new Set(lockedIds)
-    orderable.sort((a, b) => {
-      const aLocked = lockedSet.has(a.p.id) ? 0 : 1
-      const bLocked = lockedSet.has(b.p.id) ? 0 : 1
-      return aLocked - bLocked
-    })
+    // v2 (2026-09-23 evening): sort in advisory render order via the
+    // per-practice display_order. Previously we sorted "tapped items
+    // first" which shuffled the sequence relative to what the farmer
+    // just saw on the advisory — disorienting mental-model break. The
+    // tapped practice is still visually highlighted by its ✓ pre-tick;
+    // no need to reorder the list.
+    orderable.sort((a, b) => a.p.display_order - b.p.display_order)
     return { orderableCandidates: orderable, handledCandidates: handled }
-  }, [allPractices, category, lockedIds, orMutexCamps])
+  }, [allPractices, category, orMutexCamps])
 
   // Initialise `ticked` with the tapped practices when they become
   // available in the resolved orderable list. Empty until the load
