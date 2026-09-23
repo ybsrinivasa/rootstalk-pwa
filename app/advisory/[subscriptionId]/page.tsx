@@ -2572,6 +2572,17 @@ function RelationGroup({
   // labelled "AND" pill (same shape as the OR pill within a choice
   // Part) so the top-level concatenation is visible. Within a choice
   // Part: OR pills between Options.
+  // v2 (2026-09-23 complex-in-Checkbox3): when a Relation contains 2+
+  // choice Parts (e.g. ((A OR B) + (C OR D))), each blue "Choose one"
+  // container gets a step number in its header — "1. Choose one" /
+  // "2. Choose one" — so the farmer sees the AND concatenation as
+  // discrete steps rather than two independent OR lists. The AND
+  // pill between the containers is easy to miss; the numbering
+  // makes "you need one from each" self-evident.
+  const totalChoiceParts = parts.reduce(
+    (n, pt) => n + (pt.options.length > 1 ? 1 : 0),
+    0,
+  )
   return (
     <div className="space-y-2">
       {parts.map((part, partIdx) => {
@@ -2823,6 +2834,13 @@ function RelationGroup({
         const orIds = orPractices.map(p => p.id)
         const orShowGroupOrder = isPurePartOrOfSingles && canOrderInApp && advisoryOnly
           && !orAnyCommitted && !orAnyInFlight
+        // 1-indexed ordinal of THIS choice-part among all choice-parts
+        // in the current Relation. Only used when totalChoiceParts > 1
+        // (single choice-part gets no number — no ambiguity to resolve).
+        const choicePartOrdinal = parts
+          .slice(0, partIdx + 1)
+          .reduce((n, pt) => n + (pt.options.length > 1 ? 1 : 0), 0)
+        const showStepNumber = totalChoiceParts > 1 && isChoicePart
         return (
         <div key={part.part}>
           {advisoryOnly && isChoicePart ? (
@@ -2830,6 +2848,7 @@ function RelationGroup({
               <div className="flex items-center gap-2 px-4 py-2 border-b border-blue-200 bg-blue-50">
                 <div className="w-1 h-5 rounded-full bg-blue-500" />
                 <p className="text-xs font-bold text-blue-700 uppercase tracking-wide">
+                  {showStepNumber ? `${choicePartOrdinal}. ` : ''}
                   {tAdvisoryOnlyRel('chooseOne')}
                 </p>
               </div>
