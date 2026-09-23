@@ -231,51 +231,61 @@ export default function HybridOrderBuilder() {
   }, [advisory])
 
   // v2 (2026-09-23 OR-in-Checkbox3, refactored 2026-09-23 evening) —
-  // derive OR mutex structure from the ENTIRE cluster's relation
-  // metadata (relation_id + relation_role + relation_type). Data
-  // shape is groups-of-camps, because ((A OR B) + (C OR D)) has TWO
-  // independent OR groups and ticking in one must not affect the
-  // other. Flattening to camps alone (my previous cut) lost that.
-  //   Grouping key: `relation_id::PART_n` → one OR group
-  //   Within a group: `OPT_m` distinguishes camps (Options)
-  //   Each camp = list of practice ids in that Option
+  // OR mutex structure as groups-of-camps. ((A OR B) + (C OR D))
+  // has TWO independent OR groups: ticking in one must not affect
+  // the other. Flattening to camps alone (my earlier cut) lost that.
+  //   Pure OR-of-singles (A OR B)          → [[[A],[B]]]
+  //   Compound OR ((A+B) OR (C+D))         → [[[A,B],[C,D]]]
+  //   Independent ORs ((A OR B) + (C OR D))→ [[[A],[B]], [[C],[D]]]
   //
-  //   Pure OR-of-singles (A OR B)         → [[[A],[B]]]
-  //   Compound OR ((A+B) OR (C+D))        → [[[A,B],[C,D]]]
-  //   Independent ORs ((A OR B) + (C OR D)) → [[[A],[B]], [[C],[D]]]
+  // Derivation strategy: try to reconstruct from cluster metadata
+  // (relation_id + relation_role + relation_type). If the flat
+  // tl.practices[] response doesn't include those fields for every
+  // practice — which it may not — fall back to parsing the URL's
+  // or_mutex param. URL camps form ONE group (the OR the farmer
+  // tapped from). Two independent ORs would need cluster metadata
+  // to be enforced simultaneously.
+  const urlOrCamps = useMemo(() => {
+    const raw = searchParams.get('or_mutex') || ''
+    if (!raw) return [] as string[][]
+    return raw.split('|').map(camp =>
+      camp.split(',').map(s => s.trim()).filter(Boolean),
+    ).filter(camp => camp.length > 0)
+  }, [searchParams])
   const orMutexGroups = useMemo(() => {
-    if (!advisory) return [] as string[][][]
-    const raw = new Map<string, Map<string, string[]>>()
-    const walk = (tls?: TimelineItem[]) => {
-      for (const tl of tls || []) {
-        for (const p of tl.practices || []) {
-          if (!p.relation_id || p.relation_type !== 'OR') continue
-          const role = p.relation_role || ''
-          const partMatch = role.match(/PART_(\d+)/)
-          const optMatch = role.match(/OPT_(\d+)/)
-          if (!partMatch || !optMatch) continue
-          const relKey = `${p.relation_id}::PART_${partMatch[1]}`
-          const optKey = `OPT_${optMatch[1]}`
-          if (!raw.has(relKey)) raw.set(relKey, new Map())
-          const optMap = raw.get(relKey)!
-          if (!optMap.has(optKey)) optMap.set(optKey, [])
-          optMap.get(optKey)!.push(p.id)
+    const clusterGroups: string[][][] = []
+    if (advisory) {
+      const raw = new Map<string, Map<string, string[]>>()
+      const walk = (tls?: TimelineItem[]) => {
+        for (const tl of tls || []) {
+          for (const p of tl.practices || []) {
+            if (!p.relation_id || p.relation_type !== 'OR') continue
+            const role = p.relation_role || ''
+            const partMatch = role.match(/PART_(\d+)/)
+            const optMatch = role.match(/OPT_(\d+)/)
+            if (!partMatch || !optMatch) continue
+            const relKey = `${p.relation_id}::PART_${partMatch[1]}`
+            const optKey = `OPT_${optMatch[1]}`
+            if (!raw.has(relKey)) raw.set(relKey, new Map())
+            const optMap = raw.get(relKey)!
+            if (!optMap.has(optKey)) optMap.set(optKey, [])
+            optMap.get(optKey)!.push(p.id)
+          }
         }
       }
+      walk(advisory.timelines)
+      walk(advisory.ongoing_timelines)
+      for (const [, optMap] of raw) {
+        if (optMap.size < 2) continue
+        const camps: string[][] = []
+        for (const [, ids] of optMap) camps.push(ids)
+        clusterGroups.push(camps)
+      }
     }
-    walk(advisory.timelines)
-    walk(advisory.ongoing_timelines)
-    const groups: string[][][] = []
-    for (const [, optMap] of raw) {
-      // Only meaningful when the Part has 2+ Options (an actual
-      // "Choose one" set). Single-Option Parts are structural noise.
-      if (optMap.size < 2) continue
-      const camps: string[][] = []
-      for (const [, ids] of optMap) camps.push(ids)
-      groups.push(camps)
-    }
-    return groups
-  }, [advisory])
+    if (clusterGroups.length > 0) return clusterGroups
+    // Fallback: URL camps form one group.
+    return urlOrCamps.length > 1 ? [urlOrCamps] : []
+  }, [advisory, urlOrCamps])
   // Flat lookups for rendering + toggle enforcement.
   const orMutexIds = useMemo(
     () => orMutexGroups.flatMap(g => g.flat()),
