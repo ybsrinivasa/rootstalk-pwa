@@ -255,35 +255,45 @@ export default function HybridOrderBuilder() {
   const orMutexGroups = useMemo(() => {
     const clusterGroups: string[][][] = []
     if (advisory) {
-      const raw = new Map<string, Map<string, string[]>>()
+      // Don't require relation_type on every practice — the backend
+      // may only set it on the first row of a relation (advisory page
+      // uses .find() to pluck it). Use STRUCTURE instead: any Part in
+      // any Relation with 2+ Options IS an OR (that's what "Choose
+      // one" means). Standalones and single-Option Parts are ignored.
+      const byRelation = new Map<string, Map<number, Map<number, string[]>>>()
       const walk = (tls?: TimelineItem[]) => {
         for (const tl of tls || []) {
           for (const p of tl.practices || []) {
-            if (!p.relation_id || p.relation_type !== 'OR') continue
+            if (!p.relation_id) continue
             const role = p.relation_role || ''
-            const partMatch = role.match(/PART_(\d+)/)
-            const optMatch = role.match(/OPT_(\d+)/)
-            if (!partMatch || !optMatch) continue
-            const relKey = `${p.relation_id}::PART_${partMatch[1]}`
-            const optKey = `OPT_${optMatch[1]}`
-            if (!raw.has(relKey)) raw.set(relKey, new Map())
-            const optMap = raw.get(relKey)!
-            if (!optMap.has(optKey)) optMap.set(optKey, [])
-            optMap.get(optKey)!.push(p.id)
+            const m = /^PART_(\d+)__OPT_(\d+)__POS_(\d+)$/.exec(role)
+            if (!m) continue
+            const part = +m[1]
+            const option = +m[2]
+            if (!byRelation.has(p.relation_id)) {
+              byRelation.set(p.relation_id, new Map())
+            }
+            const partMap = byRelation.get(p.relation_id)!
+            if (!partMap.has(part)) partMap.set(part, new Map())
+            const optMap = partMap.get(part)!
+            if (!optMap.has(option)) optMap.set(option, [])
+            optMap.get(option)!.push(p.id)
           }
         }
       }
       walk(advisory.timelines)
       walk(advisory.ongoing_timelines)
-      for (const [, optMap] of raw) {
-        if (optMap.size < 2) continue
-        const camps: string[][] = []
-        for (const [, ids] of optMap) camps.push(ids)
-        clusterGroups.push(camps)
+      for (const [, partMap] of byRelation) {
+        for (const [, optMap] of partMap) {
+          if (optMap.size < 2) continue
+          const camps: string[][] = []
+          for (const [, ids] of optMap) camps.push(ids)
+          clusterGroups.push(camps)
+        }
       }
     }
     if (clusterGroups.length > 0) return clusterGroups
-    // Fallback: URL camps form one group.
+    // Fallback: URL camps form one group (the tapped OR only).
     return urlOrCamps.length > 1 ? [urlOrCamps] : []
   }, [advisory, urlOrCamps])
   // Flat lookups for rendering + toggle enforcement.
@@ -397,9 +407,23 @@ export default function HybridOrderBuilder() {
     // just saw on the advisory — disorienting mental-model break. The
     // tapped practice is still visually highlighted by its ✓ pre-tick;
     // no need to reorder the list.
-    orderable.sort((a, b) =>
-      (a.p.display_order ?? 0) - (b.p.display_order ?? 0),
-    )
+    // Sort in advisory render order: primary display_order; tiebreak
+    // on relation_role's (PART, OPT, POS) so practices within the
+    // same Relation follow their nested tree order. If backend sends
+    // display_order = 0 for all (or is missing), the relation_role
+    // tiebreak still produces the right sequence for the OR/AND
+    // practices the farmer just tapped from.
+    const roleKey = (role?: string | null) => {
+      const m = /^PART_(\d+)__OPT_(\d+)__POS_(\d+)$/.exec(role || '')
+      if (!m) return 0
+      return (+m[1]) * 10000 + (+m[2]) * 100 + (+m[3])
+    }
+    orderable.sort((a, b) => {
+      const dA = a.p.display_order ?? 0
+      const dB = b.p.display_order ?? 0
+      if (dA !== dB) return dA - dB
+      return roleKey(a.p.relation_role) - roleKey(b.p.relation_role)
+    })
     return { orderableCandidates: orderable, handledCandidates: handled }
   }, [allPractices, category, orMutexCamps])
 
