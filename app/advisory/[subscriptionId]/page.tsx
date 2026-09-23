@@ -763,7 +763,11 @@ export default function AdvisoryPage() {
   // tickable rows — avoids the double-buy failure mode of the
   // date-range bundle when the farmer has ack'd some items offline.
   // Regular Mode subs keep the existing date-range flow.
-  function openOrderFlow(practices: Practice[], timeline?: TimelineItem) {
+  function openOrderFlow(
+    practices: Practice[],
+    timeline?: TimelineItem,
+    orMutex?: string[],
+  ) {
     const first = practices[0]
     if (!first) return
     const cat = basketCategoryFor(first.l1_type)
@@ -775,6 +779,11 @@ export default function AdvisoryPage() {
       const q = new URLSearchParams({
         practice_ids: practices.map(p => p.id).join(','),
       })
+      // v2 (2026-09-23 OR-in-Checkbox3) — pass mutex-linked practice
+      // ids so the basket-builder enforces "choose one" among them.
+      if (orMutex && orMutex.length > 1) {
+        q.set('or_mutex', orMutex.join(','))
+      }
       router.push(`/order/hybrid-builder/${subscriptionId}?${q.toString()}`)
       return
     }
@@ -1102,7 +1111,7 @@ export default function AdvisoryPage() {
                           parts={row.parts || []}
                           orderingPractice={orderingPractice}
                           orderSuccess={orderSuccess}
-                          onOrder={(ids) => {
+                          onOrder={(ids, orMutex) => {
                             // Relation-group "Order both together".
                             // v2 (2026-09-22 Checkbox 3): hybrid mode
                             // needs the exact practice_ids the group
@@ -1113,9 +1122,14 @@ export default function AdvisoryPage() {
                             // harmless there (openOrderFlow uses the
                             // first for the category, ignores the
                             // rest in Regular).
+                            // v2 (2026-09-23 OR-in-Checkbox3): when the
+                            // group is a pure-OR container, the shared
+                            // Order button also passes orMutex so the
+                            // basket-builder enforces "choose one" among
+                            // the alternatives.
                             const idSet = new Set(ids)
                             const groupPractices = (tl.practices || []).filter(p => idSet.has(p.id))
-                            if (groupPractices.length) openOrderFlow(groupPractices, tl)
+                            if (groupPractices.length) openOrderFlow(groupPractices, tl, orMutex)
                           }}
                           subscriptionId={subscriptionId}
                           timelineLineageId={tl.lineage_id}
@@ -1643,7 +1657,7 @@ function PracticeCard({
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 cursor-not-allowed">
                   🔒 {tAdvisoryOnlyLocal('brandsButtonLocked')}
                 </button>
-              ) : practice.purchase_locked_by_order ? (
+              ) : (practice.purchase_locked_by_order || purchaseCrossOptionLocked) ? (
                 // v2 (2026-09-23 Option A) — Brands button is disabled
                 // ONLY when the practice is order-locked (in-app
                 // pickup received; state is truly immutable). After a
@@ -1651,11 +1665,18 @@ function PracticeCard({
                 // can re-open the Brands screen to change / edit their
                 // recorded brand or photo without having to un-tick
                 // first.
+                // v2 (2026-09-23 OR-in-Checkbox3) — also disabled when
+                // the farmer has committed to a SIBLING option in the
+                // OR pair (manual ack OR in-app order on side A locks
+                // out side B's Brands too, since only one of the pair
+                // can be bought).
                 <button
                   type="button"
                   disabled
                   onClick={e => e.stopPropagation()}
-                  title={tAdvisoryOnlyLocal('brandsButtonDisabledHint')}
+                  title={purchaseCrossOptionLocked
+                    ? tAdvisoryOnlyLocal('brandsButtonDisabledOrSibling')
+                    : tAdvisoryOnlyLocal('brandsButtonDisabledHint')}
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-purple-50 text-purple-400 border border-purple-100 cursor-not-allowed opacity-60">
                   {tAdvisoryOnlyLocal('brandsButton')}
                 </button>
@@ -2231,7 +2252,10 @@ function RelationGroup({
   // always homogeneous by L1). The unused practiceIds arg is kept
   // in the signature for backward shape so the internal callers
   // don't need rework — the parent just ignores it.
-  onOrder: (practiceIds: string[]) => void
+  // v2 (2026-09-23 OR-in-Checkbox3) — second arg carries the OR
+  // mutex set (all practice ids across the OR options) so the parent
+  // can hint the basket-builder to enforce "choose one" among them.
+  onOrder: (practiceIds: string[], orMutex?: string[]) => void
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
@@ -2295,13 +2319,16 @@ function RelationGroup({
   // play; leaving their purchase enabled invites the farmer to
   // double-buy. Compound options (A+B) stay unlocked internally —
   // farmer needs both to fulfil their chosen option.
+  // v2 (2026-09-23 Checkbox 3) — commit signal broadened: an in-app
+  // order that reached pickup (`purchase_locked_by_order`) also locks
+  // sibling options. Symmetric with the manual-ack path.
   const purchaseLockedPracticeIds = new Set<string>()
   if (advisoryOnly) {
     for (const part of parts) {
       if (part.options.length < 2) continue  // no OR alternatives to lock
       const chosenOptionIds = new Set<number>()
       for (const opt of part.options) {
-        if (opt.practices.some(p => !!p.purchased_at)) {
+        if (opt.practices.some(p => !!p.purchased_at || !!p.purchase_locked_by_order)) {
           chosenOptionIds.add(opt.option)
         }
       }
@@ -2556,6 +2583,15 @@ function RelationGroup({
         // gives OR groups a visual identity that mirrors the existing
         // green "Apply all together" container for AND groups.
         const isChoicePart = part.options.length > 1
+        // v2 (2026-09-23 OR-in-Checkbox3) — pure OR-of-singles: every
+        // option is a single practice. Only THIS shape gets the shared
+        // Order button treatment + per-item Order-button suppression.
+        // Mixed OR (contains a compound option) keeps its per-item
+        // Order buttons on the singles so the farmer still has an
+        // order path for those legs; the compound retains its own
+        // "Order all together" button as before.
+        const isPurePartOrOfSingles = isChoicePart
+          && part.options.every(o => o.practices.length === 1)
         const optionsBody = part.options.map((opt, optIdx) => {
             const ids = opt.practices.map(p => p.id)
             const isOrderingAny = ids.some(id => orderingPractice === id)
@@ -2673,6 +2709,12 @@ function RelationGroup({
                   // container (advisoryOnly + isChoice), strip the
                   // card's outer border so it renders as a row
                   // within the container.
+                  // v2 (2026-09-23 OR-in-Checkbox3): inside an OR
+                  // container in advisory-only (incl. hybrid) mode,
+                  // suppress the per-item Order button — the whole
+                  // "Choose one" container gets ONE shared Order
+                  // button below since only one of the pair can be
+                  // bought. Regular Mode keeps its per-item buttons.
                   <PracticeCard
                     practice={opt.practices[0]}
                     onOrder={() => onOrder(ids)}
@@ -2682,7 +2724,7 @@ function RelationGroup({
                     timelineLineageId={timelineLineageId}
                     onAckChanged={onAckChanged}
                     advisoryOnly={advisoryOnly}
-                    enableInAppOrders={canOrderInApp}
+                    enableInAppOrders={canOrderInApp && !(isPurePartOrOfSingles && advisoryOnly)}
                     insideContainer={advisoryOnly && isChoice}
                     {...cardCollapseProps(opt.practices[0])}
                   />
@@ -2690,6 +2732,23 @@ function RelationGroup({
               </div>
             )
         })
+        // v2 (2026-09-23 OR-in-Checkbox3) — shared Order button for the
+        // "Choose one" container. Applies to the pure OR-of-singles
+        // case (every Option has exactly one practice). Mixed OR groups
+        // that contain a compound Option keep the compound's own group-
+        // level "Order all together" button — layering a second shared
+        // button on top would be ambiguous ("order which leg?").
+        const orPractices = isPurePartOrOfSingles ? part.options.map(o => o.practices[0]) : []
+        const orAnyCommitted = orPractices.some(
+          p => !!p.purchased_at || !!p.purchase_locked_by_order,
+        )
+        const orAnyInFlight = orPractices.some(p => {
+          const f = p.fulfilment ?? null
+          return f != null && fulfilmentToPill(f) != null
+        })
+        const orIds = orPractices.map(p => p.id)
+        const orShowGroupOrder = isPurePartOrOfSingles && canOrderInApp && advisoryOnly
+          && !orAnyCommitted && !orAnyInFlight
         return (
         <div key={part.part}>
           {advisoryOnly && isChoicePart ? (
@@ -2712,6 +2771,16 @@ function RelationGroup({
                     : [<BigOrSeparator key={`or-${i}`} />, el],
                 )}
               </div>
+              {orShowGroupOrder && (
+                <div className="px-4 py-3 border-t border-blue-200 flex justify-end">
+                  <button
+                    onClick={() => onOrder(orIds, orIds)}
+                    className="text-xs font-semibold text-white px-4 py-2 rounded-xl"
+                    style={{ background: '#3A7D44' }}>
+                    {tAdvisoryOnlyRel('orderOneOfThese')}
+                  </button>
+                </div>
+              )}
             </div>
           ) : optionsBody}
           {partIdx < parts.length - 1 && (

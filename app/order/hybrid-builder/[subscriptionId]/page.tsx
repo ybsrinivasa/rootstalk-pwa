@@ -156,6 +156,14 @@ export default function HybridOrderBuilder() {
     const raw = searchParams.get('practice_ids') || ''
     return raw.split(',').map(s => s.trim()).filter(Boolean)
   }, [searchParams])
+  // v2 (2026-09-23 OR-in-Checkbox3) — practices that form an OR
+  // mutex set. Ticking one un-ticks all others in the set. The
+  // basket-builder shows all mutex members with an "OR" chip; none
+  // are pre-ticked (mutex demands an explicit choice).
+  const orMutexIds = useMemo(() => {
+    const raw = searchParams.get('or_mutex') || ''
+    return raw.split(',').map(s => s.trim()).filter(Boolean)
+  }, [searchParams])
 
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
@@ -280,29 +288,64 @@ export default function HybridOrderBuilder() {
   // Initialise `ticked` with the tapped practices when they become
   // available in the resolved orderable list. Empty until the load
   // completes; refreshed when lockedIds change.
+  // v2 (2026-09-23 OR-in-Checkbox3): mutex members are NEVER pre-
+  // ticked — the whole point is that the farmer must make an
+  // explicit choice among the alternatives.
   useEffect(() => {
     if (orderableCandidates.length === 0) return
     const orderableSet = new Set(orderableCandidates.map(x => x.p.id))
-    const initial = new Set(lockedIds.filter(id => orderableSet.has(id)))
+    const mutexSet = new Set(orMutexIds)
+    const initial = new Set(
+      lockedIds.filter(id => orderableSet.has(id) && !mutexSet.has(id)),
+    )
     setTicked(initial)
-  }, [orderableCandidates, lockedIds])
+  }, [orderableCandidates, lockedIds, orMutexIds])
 
   const canContinue = ticked.size > 0 && !!category
 
   function toggleTick(id: string) {
     setTicked(prev => {
       const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+        // OR mutex: ticking one member un-ticks all its siblings.
+        if (orMutexIds.includes(id)) {
+          for (const sib of orMutexIds) if (sib !== id) next.delete(sib)
+        }
+      }
       return next
     })
   }
 
   function includeAllAvailable() {
-    setTicked(new Set(orderableCandidates.map(x => x.p.id)))
+    // v2 (2026-09-23 OR-in-Checkbox3): "Include all" cannot violate an
+    // OR mutex — pick at most the FIRST mutex member and drop the
+    // rest. Farmer can still swap the pick manually if they want a
+    // different alternative.
+    const mutexSet = new Set(orMutexIds)
+    const seen = new Set<string>()
+    const next = new Set<string>()
+    for (const { p } of orderableCandidates) {
+      if (mutexSet.has(p.id)) {
+        if (seen.has('__mutex__')) continue
+        seen.add('__mutex__')
+        next.add(p.id)
+      } else {
+        next.add(p.id)
+      }
+    }
+    setTicked(next)
   }
 
-  const allTicked = ticked.size === orderableCandidates.length
+  // "Include all" hides once every non-mutex candidate is ticked and
+  // exactly one mutex member is picked — same as the effective ceiling.
+  const mutexSetForCap = new Set(orMutexIds)
+  const nonMutexCount = orderableCandidates.filter(x => !mutexSetForCap.has(x.p.id)).length
+  const hasMutex = orMutexIds.length > 0
+  const effectiveMax = nonMutexCount + (hasMutex ? 1 : 0)
+  const allTicked = ticked.size === effectiveMax
 
   function onContinue() {
     if (!canContinue || !category) return
@@ -378,7 +421,11 @@ export default function HybridOrderBuilder() {
             others opt-in. Every row uses the same tickbox affordance
             so the tapped items don't visually claim a "special" locked
             status. Farmer can un-tick any row, including the tapped
-            one (if they change their mind before continuing). */}
+            one (if they change their mind before continuing).
+            v2 (2026-09-23 OR-in-Checkbox3): rows in an OR mutex set
+            get a small blue "OR" chip; ticking one un-ticks the
+            others in the same set. A hint at the top of the list
+            explains the rule. */}
         {orderableCandidates.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden mb-4">
             <div className="px-4 py-2 bg-[#F5F0E8] border-b border-[#DDD0B8] flex items-center justify-between">
@@ -393,9 +440,18 @@ export default function HybridOrderBuilder() {
                 </button>
               )}
             </div>
+            {orMutexIds.length > 1 && (
+              <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
+                <p className="text-[11px] text-blue-800">
+                  <span className="inline-block px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] mr-1.5">OR</span>
+                  {tAdv('orderBuilder.orMutexHint')}
+                </p>
+              </div>
+            )}
             <ul className="divide-y divide-slate-100">
               {orderableCandidates.map(({ p, tl }) => {
                 const active = ticked.has(p.id)
+                const isMutex = orMutexIds.includes(p.id)
                 return (
                   <li key={p.id}>
                     <button
@@ -412,9 +468,14 @@ export default function HybridOrderBuilder() {
                         </svg>
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-[#6B3F1F] truncate">
-                          {p.l2_name_loc || p.l2_type || 'Input'}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-medium text-[#6B3F1F] truncate">
+                            {p.l2_name_loc || p.l2_type || 'Input'}
+                          </p>
+                          {isMutex && (
+                            <span className="inline-block px-1.5 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] shrink-0">OR</span>
+                          )}
+                        </div>
                         {chemistryLine(p.elements) && (
                           <p className="text-xs font-semibold text-[#6B3F1F] truncate">
                             {chemistryLine(p.elements)}
