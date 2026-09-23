@@ -2882,13 +2882,24 @@ function RelationGroup({
             </div>
           ) : optionsBody}
           {partIdx < parts.length - 1 && (
-            <div className="flex items-center my-3">
-              <div className="h-px flex-1 bg-emerald-200" />
-              <span className="px-3 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded">
-                {tRel('andBetweenParts')}
-              </span>
-              <div className="h-px flex-1 bg-emerald-200" />
-            </div>
+            // v2 (2026-09-23 complex-in-Checkbox3): in advisory-only,
+            // use the big green + between Parts (same symbol as inside
+            // AND compounds) so the operator has the same visual
+            // weight as the OR pill inside a Choose-one box. Reinforces
+            // the "you need one from each" reading with symbol-first
+            // language rather than a small mint pill lost between the
+            // two blue containers.
+            advisoryOnly ? (
+              <BigPlusSeparator />
+            ) : (
+              <div className="flex items-center my-3">
+                <div className="h-px flex-1 bg-emerald-200" />
+                <span className="px-3 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded">
+                  {tRel('andBetweenParts')}
+                </span>
+                <div className="h-px flex-1 bg-emerald-200" />
+              </div>
+            )
           )}
         </div>
         )
