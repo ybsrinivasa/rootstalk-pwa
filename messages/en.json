@@ -4095,6 +4095,7 @@
     "brandsButtonDisabledHint": "You have already marked this as purchased.",
     "brandsButtonDisabledOrSibling": "You have chosen the other option in this group.",
     "orderOneOfThese": "Order one of these",
+    "purchasedShort": "Purchased",
     "orderBuilder": {
       "title": "Prepare order",
       "categoryLabel": "Category",

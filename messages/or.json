@@ -3726,6 +3726,7 @@
       "orMutexHint": "Items marked OR are alternatives — you can pick only one."
     },
     "brandsButtonDisabledOrSibling": "You have chosen the other option in this group.",
-    "orderOneOfThese": "Order one of these"
+    "orderOneOfThese": "Order one of these",
+    "purchasedShort": "Purchased"
   }
 }

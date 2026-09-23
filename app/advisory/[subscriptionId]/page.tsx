@@ -1552,12 +1552,30 @@ function PracticeCard({
   // 2026-09-16 — v1.4 accordion (advisory-only, inside a Relation).
   // Synopsis line renders on collapsed cards when SE authored a brand
   // or dose, so the farmer can identify each leg without expanding.
+  // v2 (2026-09-23 OR-in-Checkbox3): once the farmer has recorded a
+  // purchase (manual ack with a brand OR in-app order pickup), the
+  // synopsis flips to "Purchased: <brand>" so the SE's recommended
+  // brand no longer misleads. The recorded brand is truth-of-record.
+  const purchasedBrandForSynopsis =
+    practice.purchased_brand_name || practice.purchased_brand_text || null
   const synopsisLine = (advisoryOnly && collapsed)
-    ? computeSynopsis(practice.elements, tAdvisoryOnlyLocal('suggested'))
+    ? (purchasedBrandForSynopsis
+        ? `${tAdvisoryOnlyLocal('purchasedShort')}: ${purchasedBrandForSynopsis}`
+        : computeSynopsis(practice.elements, tAdvisoryOnlyLocal('suggested')))
     : null
-  const outerCls = insideContainer
+  // v2 (2026-09-23 OR-in-Checkbox3) — sibling lockout: when this card
+  // is the LOSING side of an OR pair (farmer committed elsewhere),
+  // dim the entire card so the farmer sees at a glance that this
+  // alternative is no longer in play. Only applies to cards that
+  // aren't themselves purchased (the chosen side keeps full opacity).
+  const orSiblingLocked = purchaseCrossOptionLocked
+    && !practice.purchased_at
+    && !practice.purchase_locked_by_order
+  const dimCls = orSiblingLocked ? ' opacity-60' : ''
+  const outerCls = (insideContainer
     ? 'bg-white'
     : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
+  ) + dimCls
   return (
     <div className={outerCls}>
       <div

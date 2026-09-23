@@ -4111,6 +4111,7 @@
       "loadError": "Could not load your order details. Please go back and try again.",
       "dueList": "{count, plural, one {Due for order (# item)} other {Due for order (# items)}}",
       "orMutexHint": "Items marked OR are alternatives — you can pick only one."
-    }
+    },
+    "purchasedShort": "Purchased"
   }
 }
