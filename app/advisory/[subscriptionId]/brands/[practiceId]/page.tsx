@@ -187,7 +187,11 @@ export default function AdvisoryBrandsPage() {
         purchased_photo_url: photoUrl,
       }
       await api.post('/farmer/practice-ack/purchase', payload)
-      router.push(`/advisory/${subscriptionId}`)
+      // v2 (2026-09-23) — replace, don't push, so the device back
+      // button from Advisory doesn't return the farmer to this Brands
+      // screen. Bug repro: Advisory → Brands → Save → Advisory → 📷 →
+      // device back landed on Brands instead of leaving Advisory.
+      router.replace(`/advisory/${subscriptionId}`)
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: { message?: string } | string } } }
       const detail = err?.response?.data?.detail
@@ -201,7 +205,10 @@ export default function AdvisoryBrandsPage() {
   ])
 
   const onCancel = useCallback(() => {
-    router.push(`/advisory/${subscriptionId}`)
+    // v2 (2026-09-23) — same reasoning as onSave: replace, don't push,
+    // so the device back button from Advisory doesn't return the farmer
+    // to this Brands screen.
+    router.replace(`/advisory/${subscriptionId}`)
   }, [router, subscriptionId])
 
   return (
