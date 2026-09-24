@@ -248,17 +248,20 @@ export default function NearbyDealersPage() {
                         </a>
                       )}
                       {/* 2026-09-24: shop photo (storefront) preview.
-                          Icon renders only when the dealer has
-                          uploaded a photo in their Shop Profile.
-                          Farmers navigate rural areas by landmarks —
-                          storefront photo helps them recognise a shop
-                          they haven't visited before. */}
+                          Thumbnail is the button — farmer sees the
+                          shop at a glance, tap enlarges. Avoids the
+                          "camera icon = capture" ambiguity. Renders
+                          only when the dealer has uploaded a photo. */}
                       {d.shop_photo_url && (
                         <button
                           onClick={() => setPhotoPreviewUrl(d.shop_photo_url || null)}
                           aria-label={t('viewPhotoAria')}
-                          className="w-10 h-10 rounded-full bg-[#F5F0E8] border border-[#DDD0B8] text-[#6B3F1F] flex items-center justify-center active:scale-95">
-                          <span>📷</span>
+                          className="w-10 h-10 rounded-lg border border-[#DDD0B8] overflow-hidden active:scale-95">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={d.shop_photo_url}
+                            alt=""
+                            className="w-full h-full object-cover" />
                         </button>
                       )}
                     </div>

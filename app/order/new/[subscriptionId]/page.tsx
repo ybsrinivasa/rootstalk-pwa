@@ -359,16 +359,20 @@ export default function OrderingScreenPage() {
                 {tOrdersCommon('callBtn')}
               </a>
             )}
-            {/* 2026-09-24: storefront photo preview for the shop.
-                Farmers use landmarks to navigate rural areas — the
-                photo makes an unfamiliar shop instantly recognisable.
-                Only renders when the dealer has uploaded one. */}
+            {/* 2026-09-24: storefront photo preview — thumbnail is
+                the button (photo IS the affordance). Avoids the
+                "camera = capture" ambiguity. Renders only when the
+                dealer has uploaded one. */}
             {isDealer && person.shop_photo_url && (
               <button
                 onClick={() => setPhotoPreviewUrl(person.shop_photo_url || null)}
                 aria-label={tOrdersCommon('viewShopPhotoAria')}
-                className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
-                📷
+                className="w-10 h-10 rounded-lg border border-slate-200 overflow-hidden active:scale-95">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={person.shop_photo_url}
+                  alt=""
+                  className="w-full h-full object-cover" />
               </button>
             )}
             <button onClick={() => requestSendOrder(person, isDealer)}

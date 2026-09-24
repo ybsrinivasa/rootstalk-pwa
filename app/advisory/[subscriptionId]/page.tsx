@@ -2181,11 +2181,19 @@ function PracticeAckFooter({
               )}
             </p>
             {practice.purchased_photo_url && (
+              // 2026-09-24: 32×32 thumbnail-as-button (compact inline
+              // context — smaller than the 40×40 used on shop cards).
+              // Farmer sees the recorded product at a glance; tap
+              // enlarges. Avoids "camera = capture" ambiguity.
               <button
                 onClick={() => setPhotoPreviewOpen(true)}
-                className="text-base shrink-0 opacity-70 active:opacity-100"
+                className="w-8 h-8 rounded-md border border-[#DDD0B8] overflow-hidden shrink-0 active:scale-95"
                 aria-label={tAck('viewPhoto')}>
-                📷
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={practice.purchased_photo_url}
+                  alt=""
+                  className="w-full h-full object-cover" />
               </button>
             )}
           </div>
