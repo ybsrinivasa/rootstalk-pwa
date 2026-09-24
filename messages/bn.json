@@ -1146,7 +1146,9 @@
       "tabFacilitators": "সহায়কগণ ( {count} )",
       "emptyDealers": "আশেপাশে কোনো ডিলার পাওয়া যায়নি।",
       "emptyFacilitators": "আশেপাশে কোনো সহায়তাকারী পাওয়া যায়নি।",
-      "tryPhoneHint": "নিচে একটি ফোন নম্বর প্রবেশ করানোর চেষ্টা করুন।"
+      "tryPhoneHint": "নিচে একটি ফোন নম্বর প্রবেশ করানোর চেষ্টা করুন।",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "ফেরত পাঠানো আইটেমগুলি",

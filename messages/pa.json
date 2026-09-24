@@ -1146,7 +1146,9 @@
       "tabFacilitators": "ਸੁਵਿਧਾਕਰਤਾ ( {count} )",
       "emptyDealers": "ਨੇੜੇ-ਤੇੜੇ ਕੋਈ ਡੀਲਰ ਨਹੀਂ ਮਿਲਿਆ।",
       "emptyFacilitators": "ਨੇੜੇ-ਤੇੜੇ ਕੋਈ ਸੁਵਿਧਾਕਰਤਾ ਨਹੀਂ ਮਿਲਿਆ।",
-      "tryPhoneHint": "ਹੇਠਾਂ ਇੱਕ ਫ਼ੋਨ ਨੰਬਰ ਦਰਜ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+      "tryPhoneHint": "ਹੇਠਾਂ ਇੱਕ ਫ਼ੋਨ ਨੰਬਰ ਦਰਜ ਕਰਨ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "ਵਾਪਸ ਕੀਤੀਆਂ ਗਈਆਂ ਚੀਜ਼ਾਂ ਅੱਗੇ ਭੇਜੀਆਂ ਗਈਆਂ",

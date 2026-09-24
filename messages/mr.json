@@ -1146,7 +1146,9 @@
       "tabFacilitators": "सुविधा देणारे ( {count} )",
       "emptyDealers": "जवळपास कोणतेही विक्रेते आढळले नाहीत.",
       "emptyFacilitators": "जवळपास कोणीही सुविधादाते आढळले नाहीत.",
-      "tryPhoneHint": "खाली फोन नंबर टाकून बघा."
+      "tryPhoneHint": "खाली फोन नंबर टाकून बघा.",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "परत आलेल्या वस्तू पुढे पाठवा",

@@ -1146,7 +1146,9 @@
       "tabFacilitators": "સુવિધા આપનારાઓ ( {count} )",
       "emptyDealers": "નજીકમાં કોઈ ડીલર મળ્યા નથી.",
       "emptyFacilitators": "નજીકમાં કોઈ સુવિધા આપનાર મળ્યા નથી.",
-      "tryPhoneHint": "નીચે ફોન નંબર દાખલ કરવાનો પ્રયાસ કરો."
+      "tryPhoneHint": "નીચે ફોન નંબર દાખલ કરવાનો પ્રયાસ કરો.",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "પરત કરેલી વસ્તુઓ ફોરવર્ડ કરો",

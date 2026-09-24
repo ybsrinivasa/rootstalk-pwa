@@ -1405,6 +1405,8 @@
       "distanceKm": "{km, plural, =0 {< 1 km away} other {# km away}}",
       "send": "Send →",
       "callBtn": "📞 Call",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo",
       "noRecipient": "No recipient",
       "map": {
         "showBtn": "Show on map",

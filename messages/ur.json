@@ -1146,7 +1146,9 @@
       "tabFacilitators": "سہولت کار ( {count} )",
       "emptyDealers": "آس پاس کوئی ڈیلر نہیں ملا۔",
       "emptyFacilitators": "آس پاس کوئی سہولت کار نہیں ملا۔",
-      "tryPhoneHint": "نیچے ایک فون نمبر درج کرنے کی کوشش کریں۔"
+      "tryPhoneHint": "نیچے ایک فون نمبر درج کرنے کی کوشش کریں۔",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "واپس کی گئی اشیاء کو آگے بھیجیں۔",

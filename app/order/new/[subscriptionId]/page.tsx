@@ -17,6 +17,9 @@ interface Person {
   user_id: string; name: string | null; phone: string | null; distance_km: number; is_promoter: boolean
   is_training_dealer?: boolean
   shop_name?: string | null; shop_address?: string | null; sell_categories?: string[]
+  // 2026-09-24: storefront photo captured in dealer Shop Profile. Icon
+  // renders on the card only when the dealer has uploaded one.
+  shop_photo_url?: string | null
   shop_gps_lat?: number; shop_gps_lng?: number
   gps_lat?: number; gps_lng?: number
 }
@@ -75,6 +78,21 @@ export default function OrderingScreenPage() {
   const [showMap, setShowMap] = useState(false)
   const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null)
   const [refetchingRecipients, setRefetchingRecipients] = useState(false)
+  // 2026-09-24: shop-photo preview modal. Same device-back intercept
+  // pattern as the advisory-page purchase-photo preview.
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!photoPreviewUrl) return
+    window.history.pushState({ rtModal: 'shopPhoto' }, '')
+    const onPop = () => setPhotoPreviewUrl(null)
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      if ((window.history.state as { rtModal?: string } | null)?.rtModal === 'shopPhoto') {
+        window.history.back()
+      }
+    }
+  }, [photoPreviewUrl])
 
   function buildEligibleUrl(coords?: { lat: number; lng: number } | null): string {
     const pidsParam = practiceIds.length ? `&practice_ids=${encodeURIComponent(practiceIds.join(','))}` : ''
@@ -341,6 +359,18 @@ export default function OrderingScreenPage() {
                 {tOrdersCommon('callBtn')}
               </a>
             )}
+            {/* 2026-09-24: storefront photo preview for the shop.
+                Farmers use landmarks to navigate rural areas — the
+                photo makes an unfamiliar shop instantly recognisable.
+                Only renders when the dealer has uploaded one. */}
+            {isDealer && person.shop_photo_url && (
+              <button
+                onClick={() => setPhotoPreviewUrl(person.shop_photo_url || null)}
+                aria-label={tOrdersCommon('viewShopPhotoAria')}
+                className="text-xs bg-slate-100 text-[#6B3F1F] px-3 py-1.5 rounded-lg text-center font-medium">
+                📷
+              </button>
+            )}
             <button onClick={() => requestSendOrder(person, isDealer)}
               disabled={placing === person.user_id}
               className="text-xs text-white px-3 py-1.5 rounded-lg font-semibold disabled:opacity-50"
@@ -574,6 +604,26 @@ export default function OrderingScreenPage() {
           }
         }}
       />
+      {/* Shop photo preview modal (2026-09-24). Backdrop dismisses;
+          device back dismisses via the popstate handler above. */}
+      {photoPreviewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setPhotoPreviewUrl(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photoPreviewUrl}
+            alt=""
+            className="max-w-full max-h-full rounded-lg"
+            onClick={e => e.stopPropagation()} />
+          <button
+            onClick={() => setPhotoPreviewUrl(null)}
+            className="absolute top-4 right-4 text-white text-2xl"
+            aria-label={tOrdersCommon('closeShopPhotoAria')}>
+            ✕
+          </button>
+        </div>
+      )}
     </div>
   )
 }

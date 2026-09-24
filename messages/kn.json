@@ -1205,7 +1205,9 @@
         "locationDenied": "ಪ್ರಸ್ತುತ ಸ್ಥಳ ಸಿಗಲಿಲ್ಲ — ಪ್ರೊಫೈಲ್ ಬಳಸಲಾಗುತ್ತಿದೆ.",
         "locationSourceLabel": "ದೂರಗಳು ಇಲ್ಲಿಂದ:"
       },
-      "trainingDealerBadge": "ತರಬೇತಿ"
+      "trainingDealerBadge": "ತರಬೇತಿ",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "ಫಾರ್ವರ್ಡ್ ಮಾಡಿದ ಐಟಂಗಳು ಹಿಂತಿರುಗಿದವು",

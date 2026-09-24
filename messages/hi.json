@@ -1146,7 +1146,9 @@
       "tabFacilitators": "सुविधादाता ( {count} )",
       "emptyDealers": "आस-पास कोई विक्रेता नहीं मिला।",
       "emptyFacilitators": "आस-पास कोई सुविधादाता नहीं मिला।",
-      "tryPhoneHint": "नीचे फ़ोन नंबर दर्ज करने का प्रयास करें।"
+      "tryPhoneHint": "नीचे फ़ोन नंबर दर्ज करने का प्रयास करें।",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "आगे लौटाई गई वस्तुएँ",

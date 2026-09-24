@@ -1146,7 +1146,9 @@
       "tabFacilitators": "ସୁବିଧାଦାତା ( {count} )",
       "emptyDealers": "ନିକଟରେ କୌଣସି ଡିଲର ମିଳିଲେ ନାହିଁ।",
       "emptyFacilitators": "ନିକଟରେ କୌଣସି ସହାୟତାକାରୀ ମିଳିଲେ ନାହିଁ।",
-      "tryPhoneHint": "ତଳେ ଏକ ଫୋନ୍ ନମ୍ବର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।"
+      "tryPhoneHint": "ତଳେ ଏକ ଫୋନ୍ ନମ୍ବର ଲେଖି ଚେଷ୍ଟା କରନ୍ତୁ।",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "ଫେରସ୍ତ କରାଯାଇଥିବା ଆଇଟମ୍‌ଗୁଡ଼ିକୁ ଫରୱାର୍ଡ କରାଯାଇଛି",

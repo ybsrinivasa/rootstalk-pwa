@@ -1146,7 +1146,9 @@
       "tabFacilitators": "സഹായികൾ ( {count} )",
       "emptyDealers": "സമീപത്ത് ഡീലർമാരെയൊന്നും കണ്ടെത്തിയില്ല.",
       "emptyFacilitators": "സമീപത്ത് സഹായികളെ ആരെയും കണ്ടെത്തിയില്ല.",
-      "tryPhoneHint": "താഴെ ഒരു ഫോൺ നമ്പർ നൽകാൻ ശ്രമിക്കുക."
+      "tryPhoneHint": "താഴെ ഒരു ഫോൺ നമ്പർ നൽകാൻ ശ്രമിക്കുക.",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "ഫോർവേഡ് റിട്ടേൺ ചെയ്ത ഇനങ്ങൾ",

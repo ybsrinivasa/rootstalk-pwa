@@ -1146,7 +1146,9 @@
       "tabFacilitators": "সুবিধা প্ৰদানকাৰী ( {count} )",
       "emptyDealers": "ওচৰত কোনো ডিলাৰ পোৱা নগ’ল।",
       "emptyFacilitators": "ওচৰত কোনো সুবিধা প্ৰদানকাৰী পোৱা নগ’ল।",
-      "tryPhoneHint": "তলত এটা ফোন নম্বৰ দিব চেষ্টা কৰক।"
+      "tryPhoneHint": "তলত এটা ফোন নম্বৰ দিব চেষ্টা কৰক।",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "ঘূৰাই দিয়া বস্তুবোৰ ফৰৱাৰ্ড কৰক",

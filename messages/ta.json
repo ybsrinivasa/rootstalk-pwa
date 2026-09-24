@@ -1146,7 +1146,9 @@
       "tabFacilitators": "ஒருங்கிணைப்பாளர்கள் ( {count} )",
       "emptyDealers": "அருகில் விற்பனையாளர்கள் யாரும் காணப்படவில்லை.",
       "emptyFacilitators": "அருகில் ஒருங்கிணைப்பாளர்கள் யாரும் காணப்படவில்லை.",
-      "tryPhoneHint": "கீழே ஒரு தொலைபேசி எண்ணை உள்ளிட்டுப் பார்க்கவும்."
+      "tryPhoneHint": "கீழே ஒரு தொலைபேசி எண்ணை உள்ளிட்டுப் பார்க்கவும்.",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "திருப்பி அனுப்பப்பட்ட பொருட்களை அனுப்பவும்",

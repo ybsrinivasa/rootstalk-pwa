@@ -1146,7 +1146,9 @@
       "tabFacilitators": "సహాయకులు ( {count} )",
       "emptyDealers": "సమీపంలో డీలర్లు ఎవరూ కనబడలేదు.",
       "emptyFacilitators": "సమీపంలో సహాయకులు ఎవరూ కనబడలేదు.",
-      "tryPhoneHint": "క్రింద ఫోన్ నంబర్‌ను నమోదు చేసి ప్రయత్నించండి."
+      "tryPhoneHint": "క్రింద ఫోన్ నంబర్‌ను నమోదు చేసి ప్రయత్నించండి.",
+      "viewShopPhotoAria": "View shop photo",
+      "closeShopPhotoAria": "Close photo"
     },
     "forward": {
       "headerTitle": "తిరిగి వచ్చిన వస్తువులను ఫార్వార్డ్ చేయండి",
