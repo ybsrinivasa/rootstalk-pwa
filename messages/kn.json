@@ -4093,7 +4093,9 @@
       "callAria": "Call dealer",
       "mapAria": "Open in Maps",
       "footerNote": "This is a directory. Contact the dealer directly to place your purchase — no orders happen through this app for this crop.",
-      "loadError": "Couldn't load nearby dealers. Please try again."
+      "loadError": "Couldn't load nearby dealers. Please try again.",
+      "viewPhotoAria": "View shop photo",
+      "closePhotoAria": "Close photo"
     },
     "brandsButtonDisabledHint": "You have already marked this as purchased.",
     "brandsButtonDisabledOrSibling": "You have chosen the other option in this group.",

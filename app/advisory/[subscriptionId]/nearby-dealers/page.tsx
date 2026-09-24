@@ -17,6 +17,10 @@ interface DealerRow {
   distance_km: number
   shop_name: string | null
   shop_address: string | null
+  // 2026-09-24: storefront photo captured in the dealer Shop Profile.
+  // When present, an icon renders on the row → tap opens a full-
+  // screen preview. Hidden when the dealer hasn't uploaded one.
+  shop_photo_url?: string | null
   sell_categories: string[] | null
   // v1.9.4: origin coords exposed so the map component can pin them.
   shop_gps_lat?: number | null
@@ -52,6 +56,23 @@ export default function NearbyDealersPage() {
   const [currentCoords, setCurrentCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [showMap, setShowMap] = useState(false)
   const [refetching, setRefetching] = useState(false)
+  // 2026-09-24: shop photo preview modal. Holds the URL of the shop
+  // whose photo is currently being viewed; null when the modal is
+  // closed. Device-back is intercepted via a sentinel history entry
+  // (same pattern as the advisory-page purchase-photo preview).
+  const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null)
+  useEffect(() => {
+    if (!photoPreviewUrl) return
+    window.history.pushState({ rtModal: 'shopPhoto' }, '')
+    const onPop = () => setPhotoPreviewUrl(null)
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      if ((window.history.state as { rtModal?: string } | null)?.rtModal === 'shopPhoto') {
+        window.history.back()
+      }
+    }
+  }, [photoPreviewUrl])
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -226,6 +247,20 @@ export default function NearbyDealersPage() {
                           <span>📞</span>
                         </a>
                       )}
+                      {/* 2026-09-24: shop photo (storefront) preview.
+                          Icon renders only when the dealer has
+                          uploaded a photo in their Shop Profile.
+                          Farmers navigate rural areas by landmarks —
+                          storefront photo helps them recognise a shop
+                          they haven't visited before. */}
+                      {d.shop_photo_url && (
+                        <button
+                          onClick={() => setPhotoPreviewUrl(d.shop_photo_url || null)}
+                          aria-label={t('viewPhotoAria')}
+                          className="w-10 h-10 rounded-full bg-[#F5F0E8] border border-[#DDD0B8] text-[#6B3F1F] flex items-center justify-center active:scale-95">
+                          <span>📷</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -237,6 +272,26 @@ export default function NearbyDealersPage() {
           </>
         )}
       </div>
+      {/* Shop photo preview modal (2026-09-24). Backdrop dismisses;
+          device back dismisses via the popstate handler above. */}
+      {photoPreviewUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setPhotoPreviewUrl(null)}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photoPreviewUrl}
+            alt=""
+            className="max-w-full max-h-full rounded-lg"
+            onClick={e => e.stopPropagation()} />
+          <button
+            onClick={() => setPhotoPreviewUrl(null)}
+            className="absolute top-4 right-4 text-white text-2xl"
+            aria-label={t('closePhotoAria')}>
+            ✕
+          </button>
+        </div>
+      )}
       <BottomNav color="#3A7D44" />
     </div>
   )
