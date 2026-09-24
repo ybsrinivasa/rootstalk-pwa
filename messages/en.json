@@ -2842,7 +2842,7 @@
         "manufacturerLabel": "Manufacturer's name",
         "manufacturerPlaceholder": "e.g. Rallis India",
         "photosLabel": "Product photos",
-        "photosHint": "{count} of 2-4",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ Add photo",
         "uploading": "Uploading…",
         "notesLabel": "Anything else? (optional)",

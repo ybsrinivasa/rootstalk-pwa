@@ -2302,7 +2302,7 @@
         "manufacturerLabel": "निर्माता का नाम",
         "manufacturerPlaceholder": "उदाहरण के लिए, रैली इंडिया",
         "photosLabel": "उत्पाद की तस्वीरें",
-        "photosHint": "2-4 की {count}",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ फ़ोटो जोड़ें",
         "uploading": "अपलोड हो रहा है…",
         "notesLabel": "कुछ और? (वैकल्पिक)",

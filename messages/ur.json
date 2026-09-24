@@ -2302,7 +2302,7 @@
         "manufacturerLabel": "کارخانہ دار کا نام",
         "manufacturerPlaceholder": "مثال کے طور پر ریلیز انڈیا",
         "photosLabel": "مصنوعات کی تصاویر",
-        "photosHint": "{count} از 2-4",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ تصویر شامل کریں۔",
         "uploading": "اپ لوڈ ہو رہا ہے…",
         "notesLabel": "کچھ اور؟ (اختیاری)",

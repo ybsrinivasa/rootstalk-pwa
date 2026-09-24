@@ -2302,7 +2302,7 @@
         "manufacturerLabel": "നിർമ്മാതാവിന്റെ പേര്",
         "manufacturerPlaceholder": "ഉദാ: റാലിസ് ഇന്ത്യ",
         "photosLabel": "ഉൽപ്പന്ന ഫോട്ടോകൾ",
-        "photosHint": "2-4 എണ്ണത്തിൽ {count}",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ ഫോട്ടോ ചേർക്കുക",
         "uploading": "അപ്‌ലോഡ് ചെയ്യുന്നു...",
         "notesLabel": "വേറെ എന്തെങ്കിലും? (ഓപ്ഷണൽ)",

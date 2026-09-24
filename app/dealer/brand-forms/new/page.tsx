@@ -63,7 +63,11 @@ export default function DealerBrandFormNewPage() {
     !!manufacturer.trim() &&
     !!l1Type &&
     !!l2Type &&
-    photos.length >= 2 &&
+    // 2026-09-24: minimum 1 photo (was 2). Aligns with the farmer
+    // purchase-ack "Other" path which accepts a single photo. If a
+    // report has insufficient photos, the SA rejects at Brand
+    // Handling review — a hard gate here just adds friction.
+    photos.length >= 1 &&
     photos.length <= 4 &&
     !uploading &&
     !submitting

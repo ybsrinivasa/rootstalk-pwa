@@ -2302,7 +2302,7 @@
         "manufacturerLabel": "తయారీదారు పేరు",
         "manufacturerPlaceholder": "ఉదా. రాలీస్ ఇండియా",
         "photosLabel": "ఉత్పత్తి ఫోటోలు",
-        "photosHint": "2-4 లలో {count}",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ ఫోటోను జోడించండి",
         "uploading": "అప్‌లోడ్ అవుతోంది…",
         "notesLabel": "ఇంకేమైనా ఉందా? (ఐచ్ఛికం)",

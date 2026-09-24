@@ -2609,7 +2609,7 @@
         "manufacturerLabel": "ತಯಾರಕರ ಹೆಸರು",
         "manufacturerPlaceholder": "ಉದಾ: ರಾಲಿಸ್ ಇಂಡಿಯಾ",
         "photosLabel": "ಉತ್ಪನ್ನ ಫೋಟೋಗಳು",
-        "photosHint": "2-4 ರಲ್ಲಿ {count}",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ ಫೋಟೋ ಸೇರಿಸಿ",
         "uploading": "ಅಪ್‌ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...",
         "notesLabel": "ಇನ್ನೇನಾದರೂ? (ಐಚ್ಛಿಕ)",

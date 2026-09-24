@@ -2302,7 +2302,7 @@
         "manufacturerLabel": "ઉત્પાદકનું નામ",
         "manufacturerPlaceholder": "દા.ત. રેલિસ ઇન્ડિયા",
         "photosLabel": "ઉત્પાદનના ફોટા",
-        "photosHint": "2-4 માંથી {count}",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ ફોટો ઉમેરો",
         "uploading": "અપલોડ કરી રહ્યું છે...",
         "notesLabel": "બીજું કંઈ? (વૈકલ્પિક)",

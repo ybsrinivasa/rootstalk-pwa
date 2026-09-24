@@ -2302,7 +2302,7 @@
         "manufacturerLabel": "ਨਿਰਮਾਤਾ ਦਾ ਨਾਮ",
         "manufacturerPlaceholder": "ਜਿਵੇਂ ਕਿ ਰੈਲਿਸ ਇੰਡੀਆ",
         "photosLabel": "ਉਤਪਾਦ ਦੀਆਂ ਫੋਟੋਆਂ",
-        "photosHint": "2-4 ਵਿੱਚੋਂ {count}",
+        "photosHint": "{count} added (up to 4)",
         "addPhoto": "+ ਫੋਟੋ ਸ਼ਾਮਲ ਕਰੋ",
         "uploading": "ਅੱਪਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
         "notesLabel": "ਹੋਰ ਕੁਝ? (ਵਿਕਲਪਿਕ)",
