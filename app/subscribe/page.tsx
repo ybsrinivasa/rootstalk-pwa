@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import Script from 'next/script'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
-import AdvisoryOnlyChip from '@/components/AdvisoryOnlyChip'
+import ShopLedChip from '@/components/ShopLedChip'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
 
@@ -84,7 +84,7 @@ function CompanyLogo({ company }: { company: CompanyInfo }) {
         </div>
       )}
       <p className="text-white font-semibold text-base flex-1">{company.display_name}</p>
-      {company.advisory_only_mode && <AdvisoryOnlyChip size="sm" />}
+      {!company.advisory_only_mode && <ShopLedChip size="sm" />}
     </div>
   )
 }

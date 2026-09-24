@@ -6,7 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import ExitOnDoubleBack from '@/components/ExitOnDoubleBack'
 import BottomNav from '@/components/layout/BottomNav'
-import AdvisoryOnlyChip from '@/components/AdvisoryOnlyChip'
+import ShopLedChip from '@/components/ShopLedChip'
 import api from '@/lib/api'
 
 // 2026-06-22 — Merged former /history into this page. The right-drawer
@@ -306,7 +306,7 @@ function SubCard({
         <p className="text-sm font-bold flex-1 truncate" style={{ color: colour }}>
           {sub.client_display_name || t('companyFallback')}
         </p>
-        {sub.advisory_only_mode && <AdvisoryOnlyChip size="sm" />}
+        {!sub.advisory_only_mode && <ShopLedChip size="sm" />}
         <StatusBadge kind={kind} t={t} />
       </div>
       <div className="px-4 pt-3">

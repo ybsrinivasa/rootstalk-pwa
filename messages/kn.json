@@ -4116,6 +4116,7 @@
       "orMutexHint": "Items marked OR are alternatives — you can pick only one.",
       "reasonOrAlternative": "You chose the alternative."
     },
-    "purchasedShort": "Purchased"
+    "purchasedShort": "Purchased",
+    "shopLedChip": "ಅಂಗಡಿ ಆಧಾರಿತ"
   }
 }

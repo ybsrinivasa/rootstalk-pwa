@@ -524,9 +524,9 @@ export default function HomePage() {
                           {tTrain('chip')}
                         </span>
                       )}
-                      {info?.advisory_only_mode && (
-                        <span className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-purple-200 text-purple-900 shadow-sm">
-                          {tAdvisoryOnly('chip')}
+                      {info && !info.advisory_only_mode && (
+                        <span className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-200 text-emerald-900 shadow-sm">
+                          {tAdvisoryOnly('shopLedChip')}
                         </span>
                       )}
 

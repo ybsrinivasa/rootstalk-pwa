@@ -4039,6 +4039,7 @@
   },
   "advisoryOnly": {
     "chip": "Advisory Only",
+    "shopLedChip": "Shop-Led",
     "datePickerToday": "Today",
     "pricingHint": "Flat ₹{amount} per crop — no bulk discount.",
     "brandsButton": "Brands",

@@ -603,9 +603,9 @@ export default function CropDetailPage() {
                     {tTrain('chip')}
                   </span>
                 )}
-                {sub.advisory_only_mode && (
-                  <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-purple-200 text-purple-900 align-middle">
-                    {tAdv('chip')}
+                {!sub.advisory_only_mode && (
+                  <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-emerald-200 text-emerald-900 align-middle">
+                    {tAdv('shopLedChip')}
                   </span>
                 )}
               </p>

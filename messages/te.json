@@ -3731,6 +3731,7 @@
     },
     "brandsButtonDisabledOrSibling": "You have chosen the other option in this group.",
     "orderOneOfThese": "Order one of these",
-    "purchasedShort": "Purchased"
+    "purchasedShort": "Purchased",
+    "shopLedChip": "Shop-Led"
   }
 }

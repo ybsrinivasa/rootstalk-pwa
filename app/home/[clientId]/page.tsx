@@ -6,7 +6,7 @@ import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
-import AdvisoryOnlyChip from '@/components/AdvisoryOnlyChip'
+import ShopLedChip from '@/components/ShopLedChip'
 
 type Subscription = {
   id: string; client_id: string; package_id: string
@@ -329,7 +329,7 @@ export default function BrandedSpacePage() {
                 <div className="min-w-0 flex-1 pr-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-[#6B3F1F] font-semibold text-[15px]">{cropLabel}</p>
-                    {sub.advisory_only_mode && <AdvisoryOnlyChip size="sm" />}
+                    {!sub.advisory_only_mode && <ShopLedChip size="sm" />}
                   </div>
                   {sub.reference_number && (
                     <p className="text-[#7A8C7E] text-[11px] mt-0.5 font-mono">{sub.reference_number}</p>
