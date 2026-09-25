@@ -4062,6 +4062,7 @@
     "clusterPositionPast": "Earlier",
     "clusterPositionFuture": "Coming up",
     "clusterDayRange": "Day {from} – Day {to}",
+    "clusterDaySingle": "Day {day}",
     "ongoingTitle": "{count, plural, one {# ongoing practice} other {# ongoing practices}}",
     "brands": {
       "title": "Available brands",

@@ -4128,6 +4128,7 @@
       "reasonOrAlternative": "You chose the alternative."
     },
     "purchasedShort": "Purchased",
-    "shopLedChip": "ಅಂಗಡಿ ಆಧಾರಿತ"
+    "shopLedChip": "ಅಂಗಡಿ ಆಧಾರಿತ",
+    "clusterDaySingle": "Day {day}"
   }
 }

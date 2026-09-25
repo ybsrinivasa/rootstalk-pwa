@@ -932,16 +932,37 @@ export default function AdvisoryPage() {
                     <p className="text-[10px] uppercase tracking-wider font-semibold text-[#7A8C7E]">
                       {tAdvisoryOnly(posKey)}
                     </p>
-                    <p className="text-sm font-bold text-[#6B3F1F] mt-0.5">
-                      {tAdvisoryOnly('clusterDayRange', {
-                        from: c.day_from, to: c.day_to,
-                      })}
-                    </p>
-                    <p className="text-[11px] text-[#7A8C7E] mt-0.5">
-                      {c.date_from === c.date_to
-                        ? fmtDate(c.date_from, locale)
-                        : `${fmtDate(c.date_from, locale)} – ${fmtDate(c.date_to, locale)}`}
-                    </p>
+                    {(() => {
+                      // 2026-09-25 — cluster's day_to / date_to are
+                      // the EXCLUSIVE upper endpoint (half-open
+                      // windows). Display the LAST INCLUSIVE day so
+                      // farmers see the range they actually cover.
+                      // Collapse to single-day when the cluster
+                      // spans just one day (from == to - 1).
+                      const lastInclusiveDay = c.day_to - 1
+                      const dateToInclusive = (() => {
+                        const d = new Date(c.date_to + 'T00:00:00')
+                        d.setDate(d.getDate() - 1)
+                        return d.toISOString().slice(0, 10)
+                      })()
+                      const singleDay = c.day_from === lastInclusiveDay
+                      return (
+                        <>
+                          <p className="text-sm font-bold text-[#6B3F1F] mt-0.5">
+                            {singleDay
+                              ? tAdvisoryOnly('clusterDaySingle', { day: c.day_from })
+                              : tAdvisoryOnly('clusterDayRange', {
+                                  from: c.day_from, to: lastInclusiveDay,
+                                })}
+                          </p>
+                          <p className="text-[11px] text-[#7A8C7E] mt-0.5">
+                            {singleDay
+                              ? fmtDate(c.date_from, locale)
+                              : `${fmtDate(c.date_from, locale)} – ${fmtDate(dateToInclusive, locale)}`}
+                          </p>
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               )
