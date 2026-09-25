@@ -21,6 +21,16 @@ export default function DealerBrandFormNewPage() {
   // the taxonomy and prefill both so the dealer doesn't retype what
   // the system already knows.
   const prefillL2 = searchParams.get('l2_type') || ''
+  // 2026-09-25: when the dealer was mid-sale on an order, `return_to`
+  // points to that order (with the item pre-focused). After submit
+  // we send them back so they can postpone the item or continue
+  // with a different one — instead of dumping them on the generic
+  // submissions list. Sanity-check the value stays same-origin +
+  // starts with a `/` (no protocol / no `//` escapes).
+  const returnToRaw = searchParams.get('return_to') || ''
+  const returnTo = (returnToRaw.startsWith('/') && !returnToRaw.startsWith('//'))
+    ? returnToRaw
+    : ''
   const t = useTranslations('dealer.brandForms.new')
   const tTax = useTranslations('taxonomy')
   const [taxonomy, setTaxonomy] = useState<L0[] | null>(null)
@@ -106,7 +116,7 @@ export default function DealerBrandFormNewPage() {
         additional_info: notes.trim() || undefined,
         photos,
       })
-      router.replace('/dealer/brand-forms')
+      router.replace(returnTo || '/dealer/brand-forms')
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: unknown } } })?.response?.data?.detail
       const msg = typeof detail === 'string' ? detail

@@ -2965,8 +2965,16 @@ export default function DealerOrderDetailPage() {
                   <button
                     onClick={() => {
                       const item = editingItem ? order?.items?.find(i => i.id === editingItem) : null
-                      const q = item?.l2_type ? `?l2_type=${encodeURIComponent(item.l2_type)}` : ''
-                      router.push(`/dealer/brand-forms/new${q}`)
+                      const q = new URLSearchParams()
+                      if (item?.l2_type) q.set('l2_type', item.l2_type)
+                      // 2026-09-25: send dealer back to this order (with the same
+                      // item focused) after they submit. Otherwise they'd land on
+                      // the generic brand-forms list and have to re-navigate.
+                      const returnTo = editingItem
+                        ? `/dealer/orders/${orderId}?focus_item=${editingItem}`
+                        : `/dealer/orders/${orderId}`
+                      q.set('return_to', returnTo)
+                      router.push(`/dealer/brand-forms/new?${q.toString()}`)
                     }}
                     className="w-full py-2.5 border border-[#7D4196] text-[#7D4196] rounded-xl text-sm font-semibold hover:bg-[#7D4196]/5">
                     {t('brandSheet.submitMissingCta')}
