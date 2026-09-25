@@ -1806,6 +1806,13 @@ function PracticeCard({
               if (!practice.is_brand_locked && (t === 'BRAND_NAME' || t === 'MANUFACTURER')) {
                 return false
               }
+              // 2026-09-25: hybrid mode (advisoryOnly + in-app orders)
+              // shows PurchasedSummary when farmer_received_at fires.
+              // That summary carries Application Method + Dosage — the
+              // bullet list must drop them here to avoid duplication.
+              // Regular Mode gets the same filter at line 1822 in the
+              // else-branch below.
+              if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
               return true
             }
             if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
