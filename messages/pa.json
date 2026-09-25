@@ -303,7 +303,8 @@
       "closePhoto": "Close",
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
-      "photoAttached": "Photo attached"
+      "photoAttached": "Photo attached",
+      "photoRetake": "Retake"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ਇਕੱਠੇ ਅਰਜ਼ੀ ਦਿਓ} =2 {ਦੋਵੇਂ ਇਕੱਠੇ ਲਗਾਓ} other {ਸਾਰੇ # ਇਕੱਠੇ ਲਾਗੂ ਕਰੋ}}",

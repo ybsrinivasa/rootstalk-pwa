@@ -303,7 +303,8 @@
       "closePhoto": "Close",
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
-      "photoAttached": "Photo attached"
+      "photoAttached": "Photo attached",
+      "photoRetake": "Retake"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {కలిసి వర్తింపజేయండి} =2 {రెండింటినీ కలిపి వర్తింపజేయండి} other {అన్ని # కలిపి వర్తింపజేయండి}}",

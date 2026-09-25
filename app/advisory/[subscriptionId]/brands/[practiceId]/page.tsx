@@ -24,7 +24,7 @@
  *   - Cancel = navigate back without saving (preserves pure-browse).
  */
 'use client'
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -98,7 +98,6 @@ export default function AdvisoryBrandsPage() {
   // previously-recorded purchase. Empty for fresh recordings.
   const initialCoshId = searchParams.get('brand') || ''
   const initialText = searchParams.get('text') || ''
-  const initialPhotoUrl = searchParams.get('photo') || ''
 
   const [data, setData] = useState<BrandsResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -109,11 +108,12 @@ export default function AdvisoryBrandsPage() {
   )
   const [otherMode, setOtherMode] = useState(!!initialText)
   const [otherText, setOtherText] = useState(initialText)
-  const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl || null)
-  const [uploading, setUploading] = useState(false)
+  // 2026-09-25: photo capture moved OUT of this screen — it now lives
+  // inline on the practice card (unified with the auto-lock case) so
+  // farmers have ONE place to capture/retake regardless of the
+  // purchase path. This screen is brand + manufacturer only.
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -154,29 +154,14 @@ export default function AdvisoryBrandsPage() {
     || (!otherMode && !!selectedCoshId)
   )
 
-  async function onPickPhoto(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const form = new FormData()
-      form.append('file', file)
-      const { data: up } = await api.post<{ url: string }>(
-        '/media/upload?folder=purchase-photos', form,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
-      )
-      setPhotoUrl(up.url)
-    } catch { /* silent — farmer can retry */ }
-    finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
-    }
-  }
-
   const onSave = useCallback(async () => {
     if (!canSave || saving) return
     setSaving(true)
     try {
+      // 2026-09-25: purchased_photo_url intentionally NOT included —
+      // backend preserves the existing photo when the field is
+      // omitted, so brand edits from here don't clobber a photo the
+      // farmer captured inline on the practice card.
       const payload = {
         subscription_id: subscriptionId,
         timeline_lineage_id: lineageParam,
@@ -184,7 +169,6 @@ export default function AdvisoryBrandsPage() {
         occurrence_date: dateParam,
         purchased_brand_cosh_id: otherMode ? null : selectedCoshId,
         purchased_brand_text: otherMode ? otherText.trim() : null,
-        purchased_photo_url: photoUrl,
       }
       await api.post('/farmer/practice-ack/purchase', payload)
       // v2 (2026-09-23) — replace, don't push, so the device back
@@ -201,7 +185,7 @@ export default function AdvisoryBrandsPage() {
     }
   }, [
     canSave, saving, subscriptionId, lineageParam, practiceId, dateParam,
-    otherMode, otherText, selectedCoshId, photoUrl, router, t,
+    otherMode, otherText, selectedCoshId, router, t,
   ])
 
   const onCancel = useCallback(() => {
@@ -362,44 +346,13 @@ export default function AdvisoryBrandsPage() {
               </>
             )}
 
-            {/* Recording-mode footer: photo + save/cancel. Locked or
-                missing ack context (no lineage/date) hides these; then
-                the screen behaves like pure browse (back button = out). */}
+            {/* Recording-mode footer: save/cancel. Locked or missing
+                ack context (no lineage/date) hides these; then the
+                screen behaves like pure browse (back button = out).
+                2026-09-25: photo affordance removed — moved inline to
+                the practice card (unified with the auto-lock case). */}
             {canRecord && (
               <div className="fixed inset-x-0 bottom-16 bg-white border-t border-[#DDD0B8] px-4 py-3 shadow-lg">
-                {/* Photo affordance — no "(optional)" label per
-                    2026-09-23 direction. Behaviour still optional. */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={onPickPhoto}
-                  className="hidden" />
-                <div className="mb-2">
-                  {photoUrl ? (
-                    <div className="flex items-center gap-2 text-xs text-emerald-700">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photoUrl} alt="" className="w-10 h-10 object-cover rounded" />
-                      <span className="flex-1">{t('photoAttached')}</span>
-                      <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="text-[11px] text-slate-600 underline">
-                        {t('photoRetake')}
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-dashed border-slate-300 rounded-lg text-sm text-slate-700 active:bg-slate-100 disabled:opacity-60">
-                      <span>📷</span>
-                      <span>{uploading ? t('photoUploading') : t('addPhoto')}</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Save + Cancel */}
                 <div className="flex gap-2">
                   <button
                     onClick={onCancel}
@@ -408,7 +361,7 @@ export default function AdvisoryBrandsPage() {
                   </button>
                   <button
                     onClick={onSave}
-                    disabled={!canSave || saving || uploading}
+                    disabled={!canSave || saving}
                     className="flex-1 py-3 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
                     style={{ background: '#3A7D44' }}>
                     {saving ? t('saving') : t('saveButton')}

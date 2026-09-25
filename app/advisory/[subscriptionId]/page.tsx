@@ -1710,9 +1710,9 @@ function PracticeCard({
                     if (practice.purchased_brand_text) {
                       q.set('text', practice.purchased_brand_text)
                     }
-                    if (practice.purchased_photo_url) {
-                      q.set('photo', practice.purchased_photo_url)
-                    }
+                    // 2026-09-25: `?photo=` no longer passed — the
+                    // Brands screen dropped its photo section; photo
+                    // capture lives inline on the practice card now.
                     router.push(`/advisory/${subscriptionId}/brands/${practice.id}?${q.toString()}`)
                   }}
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
@@ -1737,25 +1737,41 @@ function PracticeCard({
       </div>
 
       {/* 2026-06-06 — Post-purchase brand summary on the card itself.
-          What the farmer most needs to see — brand + manufacturer +
-          how to apply — is visible without expanding. Common Name
-          (the SE authoring vocabulary) is intentionally NOT shown
-          here; it's filtered out of the details below too.
+          What the farmer most needs to see — brand + manufacturer —
+          is visible without expanding. Common Name (SE authoring
+          vocabulary) is intentionally NOT shown here; it's filtered
+          out of the details below too.
           2026-06-21 — Gated on pickedUp (farmer_received_at) too:
           before pickup we hide brand identity to avoid third-party
           interception of the queued purchase at the dealer's shop.
-          2026-09-16 — v1.4 accordion: also gate on !collapsed. */}
-      {!collapsed && pickedUp && fulf?.brand_name && (
-        <PurchasedSummary
-          brand={fulf.brand_name}
-          manufacturer={fulf.manufacturer_name}
-          siblings={fulf.siblings}
-          primaryVolume={fulf.given_volume}
-          primaryPerApplicationVolume={fulf.per_application_volume}
-          primaryUnit={fulf.volume_unit}
-          primaryRole={null}
-        />
-      )}
+          2026-09-16 — v1.4 accordion: also gate on !collapsed.
+          2026-09-25 — extended to the MANUAL-ACK case too so both
+          in-app-received and manually-ack'd purchases render brand +
+          manufacturer in the same position (above the bullets). Pre-
+          this, manual ack showed brand as an inline text row below
+          the checkboxes — inconsistent + wrong mental order. */}
+      {!collapsed && (() => {
+        const orderLockedBrand = pickedUp ? (fulf?.brand_name || null) : null
+        const manualAckBrand = practice.purchased_brand_name
+          || practice.purchased_brand_text
+          || null
+        const summaryBrand = orderLockedBrand || manualAckBrand
+        if (!summaryBrand) return null
+        const summaryManufacturer = orderLockedBrand
+          ? (fulf?.manufacturer_name ?? null)
+          : (practice.purchased_brand_manufacturer_name ?? null)
+        return (
+          <PurchasedSummary
+            brand={summaryBrand}
+            manufacturer={summaryManufacturer}
+            siblings={orderLockedBrand ? fulf?.siblings : undefined}
+            primaryVolume={orderLockedBrand ? fulf?.given_volume : undefined}
+            primaryPerApplicationVolume={orderLockedBrand ? fulf?.per_application_volume : undefined}
+            primaryUnit={orderLockedBrand ? fulf?.volume_unit : undefined}
+            primaryRole={null}
+          />
+        )
+      })()}
 
       {!collapsed && detailsVisible && (() => {
         // Strip SE recommendations that are dealer-facing only and
@@ -2183,45 +2199,16 @@ function PracticeAckFooter({
             {doneHint}
           </p>
         )}
-        {/* v2 (2026-09-22): once purchased, show WHAT was recorded so
-            the farmer sees the app captured their choice. Brand name
-            + optional camera icon that opens a photo preview modal. */}
-        {purchased && !orderLocked && (practice.purchased_brand_name || practice.purchased_brand_text || practice.purchased_photo_url) && (
-          <div className="mt-1.5 flex items-center gap-2">
-            <p className="text-[11px] text-[#6B3F1F] flex-1 truncate">
-              <span className="text-[#7A8C7E]">{tAck('purchasedLabel')}: </span>
-              <span className="font-semibold">
-                {practice.purchased_brand_name || practice.purchased_brand_text}
-              </span>
-              {practice.purchased_brand_manufacturer_name && (
-                <span className="text-[#7A8C7E]"> · {practice.purchased_brand_manufacturer_name}</span>
-              )}
-            </p>
-            {practice.purchased_photo_url && (
-              // 2026-09-24: 32×32 thumbnail-as-button (compact inline
-              // context — smaller than the 40×40 used on shop cards).
-              // Farmer sees the recorded product at a glance; tap
-              // enlarges. Avoids "camera = capture" ambiguity.
-              <button
-                onClick={() => setPhotoPreviewOpen(true)}
-                className="w-8 h-8 rounded-md border border-[#DDD0B8] overflow-hidden shrink-0 active:scale-95"
-                aria-label={tAck('viewPhoto')}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={practice.purchased_photo_url}
-                  alt=""
-                  className="w-full h-full object-cover" />
-              </button>
-            )}
-          </div>
-        )}
-        {/* 2026-09-25: auto-lock case — brand is truth-of-record from
-            the dealer, but farmer can still attach a verification
-            photo of the received product. CAMERA-CAPTURE ONLY
-            (capture="environment") — gallery-upload disallowed to
-            keep the photo a real-time proof, consistent with the
-            Brands screen's manual-ack photo pattern. */}
-        {purchased && orderLocked && isInput && (
+        {/* 2026-09-25: unified inline photo affordance. Applies to
+            BOTH auto-lock (in-app received) and manual-ack cases so
+            farmers have ONE place to capture/retake the photo of
+            the received product regardless of purchase path. Camera-
+            capture only (`capture="environment"`) — gallery-upload
+            disallowed since uploaded images can't be trusted as
+            proof of the actual purchase. Brand + manufacturer render
+            in the green PurchasedSummary box above; this row is
+            photo-only. */}
+        {purchased && isInput && (
           <div className="mt-1.5 flex items-center gap-2">
             {practice.purchased_photo_url ? (
               <>
@@ -2237,6 +2224,12 @@ function PracticeAckFooter({
                     src={practice.purchased_photo_url}
                     alt=""
                     className="w-full h-full object-cover" />
+                </button>
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  disabled={uploadingAckPhoto}
+                  className="text-[11px] text-slate-600 underline shrink-0 disabled:opacity-50">
+                  {uploadingAckPhoto ? tAck('uploadingPhoto') : tAck('photoRetake')}
                 </button>
               </>
             ) : (

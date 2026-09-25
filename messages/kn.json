@@ -315,7 +315,8 @@
       "closePhoto": "Close",
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
-      "photoAttached": "Photo attached"
+      "photoAttached": "Photo attached",
+      "photoRetake": "Retake"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ} =2 {ಎರಡನ್ನೂ ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ} other {ಎಲ್ಲಾ # ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ}}",
