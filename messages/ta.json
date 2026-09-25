@@ -300,7 +300,10 @@
       "purchaseLockedByOrder": "Received via in-app order — locked.",
       "purchasedLabel": "Purchased",
       "viewPhoto": "View photo",
-      "closePhoto": "Close"
+      "closePhoto": "Close",
+      "addPhoto": "Add a photo of the product",
+      "uploadingPhoto": "Uploading…",
+      "photoAttached": "Photo attached"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ஒன்றாக விண்ணப்பிக்கவும்} =2 {இரண்டையும் ஒன்றாகப் பயன்படுத்துங்கள்} other {# ஒன்றாகப் பயன்படுத்துங்கள்}}",

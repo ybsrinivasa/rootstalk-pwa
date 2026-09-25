@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -438,12 +438,11 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
 // items — the farmer shouldn't have to expand to see what they
 // bought.
 function PurchasedSummary({
-  brand, manufacturer, elements, siblings, primaryVolume, primaryUnit,
+  brand, manufacturer, siblings, primaryVolume, primaryUnit,
   primaryRole, primaryPerApplicationVolume,
 }: {
   brand: string
   manufacturer: string | null
-  elements: Element[]
   // 2026-07-13 — NPK auto-AND (spec §3.2). When the practice was
   // fulfilled by a Mixed+Straight combo, the backend attaches the
   // remaining APPROVED items as `siblings[]` on the fulfilment
@@ -464,21 +463,17 @@ function PurchasedSummary({
   primaryRole?: string | null
   primaryPerApplicationVolume?: number | null
 }) {
-  // Pull application method + dosage from the SE elements; merged
-  // so the dosage + unit appear on one line.
+  // 2026-09-25 (revised): summary is now brand + manufacturer only.
+  // Application Method + Dosage stay in the element bullet list so
+  // the farmer sees a stable list before and after purchase (nothing
+  // "goes missing" mid-flow). Prior version showed both here + in
+  // the bullets — field-flagged as duplication.
   //
   // 2026-06-12 — Dropped the `givenVolume + volumeUnit` chip that used
   // to render next to the brand. The actual purchased volume is already
   // surfaced on the Purchased Items list — duplicating it on the
   // advisory card was noise.
-  const tEl = useTranslations('practice.element')
   const tRel = useTranslations('practice.relations')
-  const merged = mergeUnitElements(elements)
-  const appMethod = merged.find(e => (e.element_type || '').toUpperCase() === 'APPLICATION_METHOD')
-  const dosage = merged.find(e => (e.element_type || '').toUpperCase() === 'DOSAGE')
-  const dosageUnit = (dosage?.unit_cosh_id && !isUuid(dosage.unit_cosh_id))
-    ? dosage.unit_cosh_id
-    : (dosage?.trailing_unit || '')
   const hasSiblings = !!siblings && siblings.length > 0
   // Order Mixed (POS_1) first, then Straights in position order.
   const rolePos = (r: string | null | undefined): number => {
@@ -543,22 +538,6 @@ function PurchasedSummary({
           )}
         </>
       )}
-      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-emerald-900 pt-1">
-        {appMethod && (appMethod.value || appMethod.cosh_ref) && (
-          <p>
-            <span className="text-emerald-700">{tEl.has('APPLICATION_METHOD') ? tEl('APPLICATION_METHOD') : 'Application Method'}:</span>{' '}
-            <span className="font-medium">{appMethod.value || appMethod.cosh_ref}</span>
-          </p>
-        )}
-        {dosage && (dosage.value || dosage.cosh_ref) && (
-          <p>
-            <span className="text-emerald-700">{tEl.has('DOSAGE') ? tEl('DOSAGE') : 'Dosage'}:</span>{' '}
-            <span className="font-medium">
-              {dosage.value || dosage.cosh_ref}{dosageUnit ? ` ${dosageUnit}` : ''}
-            </span>
-          </p>
-        )}
-      </div>
     </div>
   )
 }
@@ -1770,7 +1749,6 @@ function PracticeCard({
         <PurchasedSummary
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
-          elements={practice.elements}
           siblings={fulf.siblings}
           primaryVolume={fulf.given_volume}
           primaryPerApplicationVolume={fulf.per_application_volume}
@@ -1806,13 +1784,6 @@ function PracticeCard({
               if (!practice.is_brand_locked && (t === 'BRAND_NAME' || t === 'MANUFACTURER')) {
                 return false
               }
-              // 2026-09-25: hybrid mode (advisoryOnly + in-app orders)
-              // shows PurchasedSummary when farmer_received_at fires.
-              // That summary carries Application Method + Dosage — the
-              // bullet list must drop them here to avoid duplication.
-              // Regular Mode gets the same filter at line 1822 in the
-              // else-branch below.
-              if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
               return true
             }
             if (FARMER_HIDDEN_ELEMENT_TYPES.has(t)) return false
@@ -1826,7 +1797,11 @@ function PracticeCard({
             // VOLUME_PER_PLANT + APPLICATION_METHOD + DOSAGE. INPUT
             // pre-purchase behaviour unchanged.
             if (isPurchasable && !summaryShown && POST_PURCHASE_ONLY_ELEMENT_TYPES.has(t)) return false
-            if (summaryShown && (t === 'APPLICATION_METHOD' || t === 'DOSAGE')) return false
+            // 2026-09-25 (revised): PurchasedSummary is now brand +
+            // manufacturer only. Application Method + Dosage stay in
+            // the bullet list even post-purchase so the farmer sees
+            // the same list they saw pre-purchase (nothing "goes
+            // missing" mid-flow). Prior filter dropped.
             return true
           })
         if (visibleEls.length === 0) return null
@@ -1993,6 +1968,14 @@ function PracticeAckFooter({
   const [busy, setBusy] = useState(false)
   const [confirmHide, setConfirmHide] = useState(false)
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
+  // 2026-09-25: optional photo capture for the auto-lock case
+  // (purchase_locked_by_order = true). Brand comes from the dealer's
+  // AVAILABLE pick and is truth-of-record — the Brands screen stays
+  // disabled. But the farmer may still want to attach a verification
+  // photo of the received product. This ref + state drives the
+  // hidden file input beneath the "📷 Add photo" affordance.
+  const photoInputRef = useRef<HTMLInputElement | null>(null)
+  const [uploadingAckPhoto, setUploadingAckPhoto] = useState(false)
   // v2 (2026-09-23) — device-back handling for the photo preview
   // modal. In a PWA (installed or in browser), device back is a plain
   // browser history pop — a React-state modal doesn't intercept it,
@@ -2055,6 +2038,33 @@ function PracticeAckFooter({
       onAckChanged()
     } catch { /* leave state as-is; PWA will refresh on next focus */ }
     finally { setBusy(false) }
+  }
+
+  // 2026-09-25: upload a photo for the auto-lock case + POST to the
+  // photo-only ack endpoint. Doesn't touch brand or purchased_at
+  // state — the backend `photo` action sets only purchased_photo_url.
+  async function onAckPhotoSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setUploadingAckPhoto(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('folder', 'purchase-photos')
+      const { data } = await api.post<{ url: string }>('/media/upload', form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      await api.post('/farmer/practice-ack/photo', {
+        subscription_id: subscriptionId,
+        timeline_lineage_id: timelineLineageId,
+        practice_id: practice.id,
+        occurrence_date: practice.occurrence_date,
+        purchased_photo_url: data.url,
+      })
+      onAckChanged()
+    } catch { /* leave state as-is; PWA will refresh on next focus */ }
+    finally { setUploadingAckPhoto(false) }
   }
 
   async function onHideTap() {
@@ -2203,6 +2213,46 @@ function PracticeAckFooter({
                   className="w-full h-full object-cover" />
               </button>
             )}
+          </div>
+        )}
+        {/* 2026-09-25: auto-lock case — brand is truth-of-record from
+            the dealer, but farmer can still attach a verification
+            photo of the received product. Shows a thumbnail (tap to
+            enlarge) when set, or a "📷 Add photo" affordance when not. */}
+        {purchased && orderLocked && isInput && (
+          <div className="mt-1.5 flex items-center gap-2">
+            {practice.purchased_photo_url ? (
+              <>
+                <p className="text-[11px] text-[#7A8C7E] flex-1">
+                  {tAck('photoAttached')}
+                </p>
+                <button
+                  onClick={() => setPhotoPreviewOpen(true)}
+                  className="w-8 h-8 rounded-md border border-[#DDD0B8] overflow-hidden shrink-0 active:scale-95"
+                  aria-label={tAck('viewPhoto')}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={practice.purchased_photo_url}
+                    alt=""
+                    className="w-full h-full object-cover" />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => photoInputRef.current?.click()}
+                disabled={uploadingAckPhoto}
+                className="text-[11px] text-[#7A8C7E] hover:text-[#6B3F1F] flex items-center gap-1 disabled:opacity-50">
+                <span>📷</span>
+                <span>{uploadingAckPhoto ? tAck('uploadingPhoto') : tAck('addPhoto')}</span>
+              </button>
+            )}
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onAckPhotoSelected}
+            />
           </div>
         )}
         {/* Photo preview modal */}
@@ -3074,7 +3124,6 @@ function InnerPracticeRow({
         <PurchasedSummary
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
-          elements={practice.elements}
           siblings={fulf.siblings}
           primaryVolume={fulf.given_volume}
           primaryPerApplicationVolume={fulf.per_application_volume}

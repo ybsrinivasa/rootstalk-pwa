@@ -300,7 +300,10 @@
       "purchaseLockedByOrder": "Received via in-app order — locked.",
       "purchasedLabel": "Purchased",
       "viewPhoto": "View photo",
-      "closePhoto": "Close"
+      "closePhoto": "Close",
+      "addPhoto": "Add a photo of the product",
+      "uploadingPhoto": "Uploading…",
+      "photoAttached": "Photo attached"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {एक साथ आवेदन करें} =2 {दोनों को एक साथ लगाएं} other {# को एक साथ लागू करें}}",
