@@ -2217,8 +2217,10 @@ function PracticeAckFooter({
         )}
         {/* 2026-09-25: auto-lock case — brand is truth-of-record from
             the dealer, but farmer can still attach a verification
-            photo of the received product. Shows a thumbnail (tap to
-            enlarge) when set, or a "📷 Add photo" affordance when not. */}
+            photo of the received product. CAMERA-CAPTURE ONLY
+            (capture="environment") — gallery-upload disallowed to
+            keep the photo a real-time proof, consistent with the
+            Brands screen's manual-ack photo pattern. */}
         {purchased && orderLocked && isInput && (
           <div className="mt-1.5 flex items-center gap-2">
             {practice.purchased_photo_url ? (
@@ -2250,6 +2252,7 @@ function PracticeAckFooter({
               ref={photoInputRef}
               type="file"
               accept="image/*"
+              capture="environment"
               className="hidden"
               onChange={onAckPhotoSelected}
             />
