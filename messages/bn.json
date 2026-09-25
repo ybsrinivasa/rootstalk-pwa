@@ -1879,7 +1879,9 @@
         "title": "ব্র্যান্ড নির্বাচন করুন",
         "noBrandsTitle": "সিস্টেমে এখনও কোনো ব্র্যান্ড নেই",
         "noBrandsHint": "কোনো ব্র্যান্ড অনুপস্থিত থাকলে তা জানাতে নিচে ট্যাপ করুন। যোগ করা হলে সিস্টেমটি তা গ্রহণ করবে।",
-        "close": "বন্ধ করুন"
+        "close": "বন্ধ করুন",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "সম্ভাব্য নকল ক্রয়",
@@ -2310,7 +2312,8 @@
         "submit": "RootsTalk-এ পাঠান",
         "submitting": "প্রেরণ করা হচ্ছে…",
         "submitFailed": "পাঠানো যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
-        "photoUploadFailed": "ছবি আপলোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
+        "photoUploadFailed": "ছবি আপলোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

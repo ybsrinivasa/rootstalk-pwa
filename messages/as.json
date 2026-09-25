@@ -1879,7 +1879,9 @@
         "title": "ব্ৰেণ্ড নিৰ্বাচন কৰক",
         "noBrandsTitle": "এতিয়াও চিষ্টেমত কোনো ব্ৰেণ্ড নাই",
         "noBrandsHint": "এটা হেৰাই যোৱা ব্ৰেণ্ডৰ ৰিপৰ্ট দিবলৈ তলত টেপ কৰক। এবাৰ যোগ কৰাৰ পিছত চিষ্টেমে ইয়াক তুলি ল’ব।",
-        "close": "বন্ধ"
+        "close": "বন্ধ",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "সম্ভাৱ্য ডুপ্লিকেট ক্ৰয়",
@@ -2310,7 +2312,8 @@
         "submit": "RootsTalk লৈ পঠাওক",
         "submitting": "Sending...",
         "submitFailed": "পঠাব পৰা নাই। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
-        "photoUploadFailed": "ফটো আপলোড কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।"
+        "photoUploadFailed": "ফটো আপলোড কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

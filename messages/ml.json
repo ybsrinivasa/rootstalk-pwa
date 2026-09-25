@@ -1879,7 +1879,9 @@
         "title": "ബ്രാൻഡ് തിരഞ്ഞെടുക്കുക",
         "noBrandsTitle": "സിസ്റ്റത്തിൽ ഇതുവരെ ബ്രാൻഡുകളൊന്നുമില്ല.",
         "noBrandsHint": "നഷ്ടപ്പെട്ട ബ്രാൻഡ് റിപ്പോർട്ട് ചെയ്യാൻ താഴെ ടാപ്പ് ചെയ്യുക. ചേർത്തുകഴിഞ്ഞാൽ സിസ്റ്റം അത് എടുക്കും.",
-        "close": "അടയ്ക്കുക"
+        "close": "അടയ്ക്കുക",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "സാധ്യമായ ഡ്യൂപ്ലിക്കേറ്റ് വാങ്ങൽ",
@@ -2310,7 +2312,8 @@
         "submit": "റൂട്ട്‌സ് ടോക്കിലേക്ക് അയയ്ക്കുക",
         "submitting": "അയയ്ക്കുന്നു...",
         "submitFailed": "അയയ്ക്കാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.",
-        "photoUploadFailed": "ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക."
+        "photoUploadFailed": "ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

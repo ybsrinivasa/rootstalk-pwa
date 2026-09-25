@@ -1879,7 +1879,9 @@
         "title": "బ్రాండ్‌ను ఎంచుకోండి",
         "noBrandsTitle": "సిస్టమ్‌లో ఇంకా బ్రాండ్‌లు లేవు",
         "noBrandsHint": "కనిపించని బ్రాండ్‌ను నివేదించడానికి క్రింద నొక్కండి. జోడించిన తర్వాత సిస్టమ్ దానిని గుర్తిస్తుంది.",
-        "close": "మూసివేయండి"
+        "close": "మూసివేయండి",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "నకిలీ కొనుగోలు అయ్యే అవకాశం ఉంది",
@@ -2310,7 +2312,8 @@
         "submit": "రూట్స్‌టాక్‌కు పంపండి",
         "submitting": "పంపుతున్నాను…",
         "submitFailed": "పంపలేకపోయాము. దయచేసి మళ్ళీ ప్రయత్నించండి.",
-        "photoUploadFailed": "ఫోటోను అప్‌లోడ్ చేయలేకపోయాను. దయచేసి మళ్ళీ ప్రయత్నించండి."
+        "photoUploadFailed": "ఫోటోను అప్‌లోడ్ చేయలేకపోయాను. దయచేసి మళ్ళీ ప్రయత్నించండి.",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

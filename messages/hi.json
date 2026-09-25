@@ -1879,7 +1879,9 @@
         "title": "ब्रांड चुनें",
         "noBrandsTitle": "सिस्टम में अभी तक कोई ब्रांड मौजूद नहीं है",
         "noBrandsHint": "किसी अनुपलब्ध ब्रांड की रिपोर्ट करने के लिए नीचे टैप करें। सिस्टम उसे जोड़ने के बाद अपने आप पहचान लेगा।",
-        "close": "बंद करना"
+        "close": "बंद करना",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "डुप्लिकेट खरीदारी की संभावना",
@@ -2310,7 +2312,8 @@
         "submit": "रूट्सटॉक को भेजें",
         "submitting": "भेजा जा रहा है…",
         "submitFailed": "भेजा नहीं जा सका। कृपया पुनः प्रयास करें।",
-        "photoUploadFailed": "फोटो अपलोड नहीं हो पाई। कृपया दोबारा कोशिश करें।"
+        "photoUploadFailed": "फोटो अपलोड नहीं हो पाई। कृपया दोबारा कोशिश करें।",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

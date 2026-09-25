@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -14,6 +14,13 @@ const COLOUR = '#7D4196'
 
 export default function DealerBrandFormNewPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  // 2026-09-25: when the dealer arrives here from the brand picker on
+  // an order (via "Not on the list? Submit brand →"), the OrderItem's
+  // l2_type comes through as a query param. We derive l1_type from
+  // the taxonomy and prefill both so the dealer doesn't retype what
+  // the system already knows.
+  const prefillL2 = searchParams.get('l2_type') || ''
   const t = useTranslations('dealer.brandForms.new')
   const tTax = useTranslations('taxonomy')
   const [taxonomy, setTaxonomy] = useState<L0[] | null>(null)
@@ -30,9 +37,24 @@ export default function DealerBrandFormNewPage() {
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     api.get<L0[]>('/practice-taxonomy')
-      .then(r => setTaxonomy(r.data))
+      .then(r => {
+        setTaxonomy(r.data)
+        // 2026-09-25: apply prefill once taxonomy is available. Find
+        // the l1 that contains prefillL2 and set both. If the l2
+        // isn't in any INPUT l1, silently skip (dealer picks manually).
+        if (prefillL2) {
+          const inputL0 = r.data.find(x => x.id === 'INPUT')
+          const parentL1 = inputL0?.l1.find(l1 =>
+            l1.l2.some(l2 => l2.id === prefillL2),
+          )
+          if (parentL1) {
+            setL1Type(parentL1.id)
+            setL2Type(prefillL2)
+          }
+        }
+      })
       .catch(() => setTaxonomy([]))
-  }, [router])
+  }, [router, prefillL2])
 
   // Only INPUT L0 is meaningful for dealers stocking products.
   const inputL0 = (taxonomy || []).find(x => x.id === 'INPUT')
@@ -195,6 +217,14 @@ export default function DealerBrandFormNewPage() {
               {error}
             </p>
           )}
+
+          {/* 2026-09-25: fast-track reassurance so the dealer knows
+              what happens after submit + that the review is prioritised. */}
+          <div className="bg-purple-50 border border-purple-100 rounded-lg px-3 py-2.5">
+            <p className="text-xs text-purple-800 leading-relaxed">
+              {t('fastTrackHint')}
+            </p>
+          </div>
 
           <button onClick={submit} disabled={!canSubmit}
             className="w-full py-3.5 rounded-2xl text-white font-semibold disabled:opacity-50"

@@ -1879,7 +1879,9 @@
         "title": "ବ୍ରାଣ୍ଡ ଚୟନ କରନ୍ତୁ",
         "noBrandsTitle": "ସିଷ୍ଟମରେ ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ବ୍ରାଣ୍ଡ ନାହିଁ।",
         "noBrandsHint": "ଏକ ଅନୁପସ୍ଥିତ ବ୍ରାଣ୍ଡ ରିପୋର୍ଟ କରିବାକୁ ତଳେ ଟାପ୍ କରନ୍ତୁ। ଯୋଡା ହେବା ପରେ ସିଷ୍ଟମ୍ ଏହାକୁ ଉଠାଇ ନେବ।",
-        "close": "ବନ୍ଦ କରନ୍ତୁ"
+        "close": "ବନ୍ଦ କରନ୍ତୁ",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "ସମ୍ଭାବ୍ୟ ଡୁପ୍ଲିକେଟ୍ କ୍ରୟ",
@@ -2310,7 +2312,8 @@
         "submit": "ରୁଟସଟକକୁ ପଠାନ୍ତୁ",
         "submitting": "ପଠାଯାଉଛି…",
         "submitFailed": "ପଠାଯାଇପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
-        "photoUploadFailed": "ଫଟୋ ଅପଲୋଡ୍ କରିପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।"
+        "photoUploadFailed": "ଫଟୋ ଅପଲୋଡ୍ କରିପାରିଲା ନାହିଁ। ଦୟାକରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

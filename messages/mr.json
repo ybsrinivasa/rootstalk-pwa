@@ -1879,7 +1879,9 @@
         "title": "ब्रँड निवडा",
         "noBrandsTitle": "सिस्टममध्ये अद्याप कोणतेही ब्रँड नाहीत",
         "noBrandsHint": "गहाळ झालेल्या ब्रँडची तक्रार करण्यासाठी खाली टॅप करा. एकदा जोडल्यावर सिस्टम त्याची नोंद घेईल.",
-        "close": "बंद करा"
+        "close": "बंद करा",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "दुहेरी खरेदीची शक्यता",
@@ -2310,7 +2312,8 @@
         "submit": "रूट्सटॉकला पाठवा",
         "submitting": "पाठवत आहे…",
         "submitFailed": "पाठवता आले नाही. कृपया पुन्हा प्रयत्न करा.",
-        "photoUploadFailed": "फोटो अपलोड करता आला नाही. कृपया पुन्हा प्रयत्न करा."
+        "photoUploadFailed": "फोटो अपलोड करता आला नाही. कृपया पुन्हा प्रयत्न करा.",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

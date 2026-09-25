@@ -1879,7 +1879,9 @@
         "title": "બ્રાન્ડ પસંદ કરો",
         "noBrandsTitle": "સિસ્ટમમાં હજુ સુધી કોઈ બ્રાન્ડ નથી.",
         "noBrandsHint": "ખૂટતી બ્રાન્ડની જાણ કરવા માટે નીચે ટૅપ કરો. ઉમેરાયા પછી સિસ્ટમ તેને ઉપાડી લેશે.",
-        "close": "બંધ કરો"
+        "close": "બંધ કરો",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "શક્ય ડુપ્લિકેટ ખરીદી",
@@ -2310,7 +2312,8 @@
         "submit": "રૂટ્સટોક પર મોકલો",
         "submitting": "મોકલી રહ્યું છે...",
         "submitFailed": "મોકલી શકાયું નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
-        "photoUploadFailed": "ફોટો અપલોડ કરી શકાયો નથી. કૃપા કરીને ફરી પ્રયાસ કરો."
+        "photoUploadFailed": "ફોટો અપલોડ કરી શકાયો નથી. કૃપા કરીને ફરી પ્રયાસ કરો.",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

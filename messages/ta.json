@@ -1879,7 +1879,9 @@
         "title": "பிராண்டைத் தேர்ந்தெடுக்கவும்",
         "noBrandsTitle": "இன்னும் எந்த பிராண்டுகளும் சிஸ்டத்தில் இல்லை",
         "noBrandsHint": "விடுபட்ட பிராண்டைப் புகாரளிக்க கீழே தட்டவும். அது சேர்க்கப்பட்டவுடன், கணினி அமைப்பு அதைக் கண்டறிந்துவிடும்.",
-        "close": "அருகில்"
+        "close": "அருகில்",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "நகல் கொள்முதல் செய்ய வாய்ப்புள்ளது",
@@ -2310,7 +2312,8 @@
         "submit": "ரூட்ஸ்டாக்-க்கு அனுப்பவும்",
         "submitting": "அனுப்புகிறது…",
         "submitFailed": "அனுப்ப முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
-        "photoUploadFailed": "புகைப்படத்தைப் பதிவேற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
+        "photoUploadFailed": "புகைப்படத்தைப் பதிவேற்ற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

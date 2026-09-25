@@ -2396,6 +2396,8 @@
         "noBrandsTitle": "No brands in system yet",
         "noBrandsHint": "Tap below to report a missing brand. The system will pick it up once added.",
         "close": "Close",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →",
         "groupLabel": {
           "recommended": "Recommended Brands",
           "my": "My Brands",
@@ -2847,6 +2849,7 @@
         "uploading": "Uploading…",
         "notesLabel": "Anything else? (optional)",
         "notesPlaceholder": "Batch code, pack size, or anything that helps us identify the product",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track.",
         "submit": "Send to RootsTalk",
         "submitting": "Sending…",
         "submitFailed": "Couldn't send. Please try again.",

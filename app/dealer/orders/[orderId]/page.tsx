@@ -2910,38 +2910,69 @@ export default function DealerOrderDetailPage() {
                 <p className="text-[#7A8C7E] text-xs mt-1">
                   {t('brandSheet.noBrandsHint')}
                 </p>
+                {/* 2026-09-25: in-context CTA to the Brand Form. Prefills
+                    l2_type from the item so the dealer doesn't retype
+                    the category on arrival. */}
+                <button
+                  onClick={() => {
+                    const item = editingItem ? order?.items?.find(i => i.id === editingItem) : null
+                    const q = item?.l2_type ? `?l2_type=${encodeURIComponent(item.l2_type)}` : ''
+                    router.push(`/dealer/brand-forms/new${q}`)
+                  }}
+                  className="mt-4 px-4 py-2 bg-[#7D4196] text-white rounded-xl text-sm font-semibold">
+                  {t('brandSheet.submitMissingCta')}
+                </button>
                 <button onClick={() => setShowBrandSheet(false)}
-                  className="mt-4 px-4 py-2 border border-[#7D4196] text-[#7D4196] rounded-xl text-sm font-medium">
+                  className="mt-2 block mx-auto px-4 py-2 text-[#7A8C7E] text-sm">
                   {t('brandSheet.close')}
                 </button>
               </div>
             ) : (
-              <div className="divide-y divide-slate-50">
-                {brandOptions.groups.map((group, gi) => group.brands.length > 0 && (
-                  <div key={gi}>
-                    <p className="px-5 pt-4 pb-2 text-xs font-bold text-[#7A8C7E] uppercase tracking-wider">
-                      {group.key ? t(`brandSheet.groupLabel.${group.key}`) : group.label}
-                    </p>
-                    {group.brands.map(brand => (
-                      <button key={brand.cosh_id}
-                        onClick={() => selectBrand(brand.cosh_id, brand.name)}
-                        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#F5F0E8] text-left">
-                        <div>
-                          <p className="text-sm font-semibold text-[#6B3F1F]">{brand.name}</p>
-                          {brand.manufacturer && (
-                            <p className="text-xs text-[#7A8C7E]">{brand.manufacturer}</p>
-                          )}
-                        </div>
-                        {/* Batch 25 — group label is the affordance now;
-                            the old "Your brand" badge presumed group 0
-                            was My Brands but with three groups that's
-                            no longer true. The section header tells
-                            the dealer where this brand sits. */}
-                      </button>
-                    ))}
-                  </div>
-                ))}
-              </div>
+              <>
+                <div className="divide-y divide-slate-50">
+                  {brandOptions.groups.map((group, gi) => group.brands.length > 0 && (
+                    <div key={gi}>
+                      <p className="px-5 pt-4 pb-2 text-xs font-bold text-[#7A8C7E] uppercase tracking-wider">
+                        {group.key ? t(`brandSheet.groupLabel.${group.key}`) : group.label}
+                      </p>
+                      {group.brands.map(brand => (
+                        <button key={brand.cosh_id}
+                          onClick={() => selectBrand(brand.cosh_id, brand.name)}
+                          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-[#F5F0E8] text-left">
+                          <div>
+                            <p className="text-sm font-semibold text-[#6B3F1F]">{brand.name}</p>
+                            {brand.manufacturer && (
+                              <p className="text-xs text-[#7A8C7E]">{brand.manufacturer}</p>
+                            )}
+                          </div>
+                          {/* Batch 25 — group label is the affordance now;
+                              the old "Your brand" badge presumed group 0
+                              was My Brands but with three groups that's
+                              no longer true. The section header tells
+                              the dealer where this brand sits. */}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                {/* 2026-09-25: bottom CTA — dealer's brand may not be in
+                    any of the three groups. Sends them to the Brand Form
+                    with l2_type prefilled + fast-track messaging. */}
+                <div className="px-5 py-4 border-t border-[#DDD0B8] bg-[#F5F0E8]/50">
+                  <p className="text-xs text-[#7A8C7E] mb-2">
+                    {t('brandSheet.missingHint')}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const item = editingItem ? order?.items?.find(i => i.id === editingItem) : null
+                      const q = item?.l2_type ? `?l2_type=${encodeURIComponent(item.l2_type)}` : ''
+                      router.push(`/dealer/brand-forms/new${q}`)
+                    }}
+                    className="w-full py-2.5 border border-[#7D4196] text-[#7D4196] rounded-xl text-sm font-semibold hover:bg-[#7D4196]/5">
+                    {t('brandSheet.submitMissingCta')}
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

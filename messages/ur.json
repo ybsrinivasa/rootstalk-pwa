@@ -1879,7 +1879,9 @@
         "title": "برانڈ منتخب کریں۔",
         "noBrandsTitle": "سسٹم میں ابھی تک کوئی برانڈ نہیں ہے۔",
         "noBrandsHint": "گمشدہ برانڈ کی اطلاع دینے کے لیے نیچے تھپتھپائیں۔ شامل ہونے کے بعد سسٹم اسے اٹھا لے گا۔",
-        "close": "بند"
+        "close": "بند",
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "dup": {
         "title": "ممکنہ ڈپلیکیٹ خریداری",
@@ -2310,7 +2312,8 @@
         "submit": "روٹس ٹاک کو بھیجیں۔",
         "submitting": "بھیج رہا ہے…",
         "submitFailed": "نہیں بھیج سکا۔ براہ کرم دوبارہ کوشش کریں۔",
-        "photoUploadFailed": "تصویر اپ لوڈ نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔"
+        "photoUploadFailed": "تصویر اپ لوڈ نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },

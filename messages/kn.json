@@ -2167,7 +2167,9 @@
           "recommended": "ಶಿಫಾರಸು ಮಾಡಲಾದ ಬ್ರ್ಯಾಂಡ್‌ಗಳು",
           "my": "ನನ್ನ ಬ್ರ್ಯಾಂಡ್‌ಗಳು",
           "other": "ಇತರ ಬ್ರ್ಯಾಂಡ್‌ಗಳು"
-        }
+        },
+        "missingHint": "Can't find your brand?",
+        "submitMissingCta": "Submit this brand →"
       },
       "unit": {
         "label": "{v, select, kg {ಕೆ.ಜಿ} g {ಗ್ರಾಂ} L {ಲೀ} ml {ಮಿ.ಲೀ} mL {ಮಿ.ಲೀ} numbers {ಸಂಖ್ಯೆ} other {{v}}}"
@@ -2617,7 +2619,8 @@
         "submit": "ರೂಟ್ಸ್‌ಟಾಕ್‌ಗೆ ಕಳುಹಿಸಿ",
         "submitting": "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...",
         "submitFailed": "ಕಳುಹಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-        "photoUploadFailed": "ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
+        "photoUploadFailed": "ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+        "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
     }
   },
