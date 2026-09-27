@@ -166,6 +166,11 @@ export default function HybridOrderBuilder() {
     const raw = searchParams.get('practice_ids') || ''
     return raw.split(',').map(s => s.trim()).filter(Boolean)
   }, [searchParams])
+  const clusterOffset = useMemo(() => {
+    const raw = searchParams.get('cluster_offset')
+    const n = raw ? parseInt(raw, 10) : 0
+    return Number.isFinite(n) ? n : 0
+  }, [searchParams])
   const [subscription, setSubscription] = useState<Subscription | null>(null)
   const [advisory, setAdvisory] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
@@ -193,7 +198,7 @@ export default function HybridOrderBuilder() {
         let day: AdvisoryDay | null = null
         try {
           const r = await api.get<AdvisoryDay>(
-            `/farmer/advisory/cluster?subscription_id=${subscriptionId}&offset=0`,
+            `/farmer/advisory/cluster?subscription_id=${subscriptionId}&offset=${clusterOffset}`,
           )
           day = r.data
         } catch {
@@ -210,7 +215,7 @@ export default function HybridOrderBuilder() {
     }
     load()
     return () => { cancelled = true }
-  }, [subscriptionId])
+  }, [subscriptionId, clusterOffset])
 
   // Flatten all practices (fixed-window timelines + ongoing) into one
   // list keyed by practice id. Dedup — a practice in multiple

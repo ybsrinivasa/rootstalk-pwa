@@ -779,6 +779,7 @@ export default function AdvisoryPage() {
       if (orMutexCamps && orMutexCamps.length > 1) {
         q.set('or_mutex', orMutexCamps.map(c => c.join(',')).join('|'))
       }
+      if (clusterOffset !== 0) q.set('cluster_offset', String(clusterOffset))
       router.push(`/order/hybrid-builder/${subscriptionId}?${q.toString()}`)
       return
     }
