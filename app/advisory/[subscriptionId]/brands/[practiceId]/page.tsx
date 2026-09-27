@@ -50,6 +50,11 @@ interface BrandsResponse {
   practice_combined_display?: string | null
   recommended_brand_name?: string | null
   recommended_manufacturer_name?: string | null
+  // 2026-09-27 — backend-computed past-window flag. Source of truth
+  // for read-only mode (URL `past=1` still respected as fallback so
+  // the advisory page can hint at read-only-ness immediately without
+  // waiting for the fetch).
+  past_window?: boolean
 }
 
 function formulationAcronym(name: string): string {
@@ -103,7 +108,11 @@ export default function AdvisoryBrandsPage() {
   // closed (today >= to_date under half-open semantics). Brand list
   // renders for reference; brand selection, "Other" text, save/cancel
   // footer all disabled — matches the backend ack guard.
-  const isPast = searchParams.get('past') === '1'
+  // Backend response also carries `past_window` (authoritative);
+  // OR them so read-only mode kicks in whether the URL param is set
+  // or not. Belt-and-suspenders in case a farmer lands here from a
+  // path that didn't stamp the URL.
+  const isPastFromUrl = searchParams.get('past') === '1'
 
   const [data, setData] = useState<BrandsResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -154,6 +163,7 @@ export default function AdvisoryBrandsPage() {
   }, [data, search])
 
   const isEditMode = !!(initialCoshId || initialText)
+  const isPast = isPastFromUrl || !!data?.past_window
   const readOnly = isLocked || isPast
   const canRecord = !readOnly && !!lineageParam && !!dateParam
   const canSave = canRecord && (
