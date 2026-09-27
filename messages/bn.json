@@ -262,7 +262,8 @@
       "today": "আজ",
       "reference": "রেফারেন্স",
       "day": "দিন",
-      "coversAlso": "এছাড়াও অন্তর্ভুক্ত: {names}"
+      "coversAlso": "এছাড়াও অন্তর্ভুক্ত: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "আজকের জন্য কোনো পরামর্শ নেই",

@@ -262,7 +262,8 @@
       "today": "ਅੱਜ",
       "reference": "ਹਵਾਲਾ",
       "day": "ਦਿਨ",
-      "coversAlso": "ਇਹ ਵੀ ਕਵਰ ਕਰਦਾ ਹੈ: {names}"
+      "coversAlso": "ਇਹ ਵੀ ਕਵਰ ਕਰਦਾ ਹੈ: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "ਅੱਜ ਲਈ ਕੋਈ ਸਲਾਹ ਨਹੀਂ",

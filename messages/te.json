@@ -262,7 +262,8 @@
       "today": "ఈరోజు",
       "reference": "సూచన",
       "day": "రోజు",
-      "coversAlso": "వీటిని కూడా కవర్ చేస్తుంది: {names}"
+      "coversAlso": "వీటిని కూడా కవర్ చేస్తుంది: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "ఈరోజుకి సలహా ఏమీ లేదు",

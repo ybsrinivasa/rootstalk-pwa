@@ -1084,6 +1084,20 @@ export default function AdvisoryPage() {
                       <p className="text-xs font-semibold text-[#6B3F1F] tracking-wide">
                         {timelineDateLabel(tl.from_date, tl.to_date, locale, tLabel('today'))}
                       </p>
+                      {/* 2026-09-27 — Expired pill for TLs whose
+                          window has closed. Cluster-level position
+                          ("NOW" / "Earlier" / …) reflects the union
+                          of all TLs in the cluster; an individual
+                          TL inside a mixed-state cluster can be
+                          past even while the cluster reads "NOW".
+                          This pill removes the ambiguity at the TL
+                          subheader — the practice cards below it
+                          are already in read-only mode. */}
+                      {tl.past_window && (
+                        <span className="text-xs font-bold text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded">
+                          {tLabel('timelineExpired')}
+                        </span>
+                      )}
                     </div>
                     <div className="h-px flex-1 bg-slate-200" />
                   </div>

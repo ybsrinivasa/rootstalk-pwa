@@ -262,7 +262,8 @@
       "today": "आज",
       "reference": "संदर्भ",
       "day": "दिन",
-      "coversAlso": "कवर भी शामिल हैं: {names}"
+      "coversAlso": "कवर भी शामिल हैं: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "आज के लिए कोई सलाह नहीं।",

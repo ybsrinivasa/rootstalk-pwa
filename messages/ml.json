@@ -262,7 +262,8 @@
       "today": "ഇന്ന്",
       "reference": "റഫറൻസ്",
       "day": "ദിവസം",
-      "coversAlso": "ഇതും ഉൾക്കൊള്ളുന്നു: {names}"
+      "coversAlso": "ഇതും ഉൾക്കൊള്ളുന്നു: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "ഇന്നത്തേക്ക് ഉപദേശമൊന്നുമില്ല",

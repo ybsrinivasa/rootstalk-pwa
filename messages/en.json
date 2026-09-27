@@ -492,7 +492,8 @@
       "reference": "Reference",
       "day": "Day",
       "cropSize": "Crop",
-      "coversAlso": "Covers also: {names}"
+      "coversAlso": "Covers also: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "No advice for today",

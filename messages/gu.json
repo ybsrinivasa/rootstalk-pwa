@@ -262,7 +262,8 @@
       "today": "આજે",
       "reference": "સંદર્ભ",
       "day": "દિવસ",
-      "coversAlso": "આ પણ આવરી લે છે: {names}"
+      "coversAlso": "આ પણ આવરી લે છે: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "આજે કોઈ સલાહ નથી.",

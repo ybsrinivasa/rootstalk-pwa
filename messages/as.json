@@ -262,7 +262,8 @@
       "today": "আজি",
       "reference": "সন্দৰ্ভ",
       "day": "দিন",
-      "coversAlso": "ইয়াৰ উপৰিও: {names}"
+      "coversAlso": "ইয়াৰ উপৰিও: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "আজিৰ বাবে কোনো পৰামৰ্শ নাই",

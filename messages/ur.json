@@ -262,7 +262,8 @@
       "today": "آج",
       "reference": "حوالہ",
       "day": "دن",
-      "coversAlso": "احاطہ بھی: {names}"
+      "coversAlso": "احاطہ بھی: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "آج کے لیے کوئی مشورہ نہیں۔",

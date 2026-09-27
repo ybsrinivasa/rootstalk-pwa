@@ -262,7 +262,8 @@
       "today": "ଆଜି",
       "reference": "ସନ୍ଦର୍ଭ",
       "day": "ଦିନ",
-      "coversAlso": "ଏହା ମଧ୍ୟ କଭର୍ କରେ: {names}"
+      "coversAlso": "ଏହା ମଧ୍ୟ କଭର୍ କରେ: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "ଆଜି ପାଇଁ କୌଣସି ପରାମର୍ଶ ନାହିଁ",

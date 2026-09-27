@@ -262,7 +262,8 @@
       "today": "இன்று",
       "reference": "குறிப்பு",
       "day": "வாரம்",
-      "coversAlso": "இதையும் உள்ளடக்கியது: {names}"
+      "coversAlso": "இதையும் உள்ளடக்கியது: {names}",
+      "timelineExpired": "Expired"
     },
     "empty": {
       "noAdviceToday": "இன்றைக்கு எந்த ஆலோசனையும் இல்லை.",
