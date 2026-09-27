@@ -168,11 +168,15 @@ interface AdvisoryDay {
   in_app_orders_enabled?: boolean
   cluster?: {
     offset: number
-    position: 'past' | 'current' | 'future'
-    day_from: number
-    day_to: number
-    date_from: string  // YYYY-MM-DD
-    date_to: string
+    // 2026-09-27 — 'before_start' when today is before every cluster
+    // (pre-sowing with no DBS TL). In that state day_from / day_to /
+    // date_from / date_to are null and timelines is empty; PWA
+    // renders an empty state with a Next → affordance.
+    position: 'past' | 'current' | 'future' | 'before_start'
+    day_from: number | null
+    day_to: number | null
+    date_from: string | null  // YYYY-MM-DD
+    date_to: string | null
     has_prev: boolean
     has_next: boolean
     index: number
@@ -907,8 +911,9 @@ export default function AdvisoryPage() {
                 cluster containing today's date. */}
             {subscription?.advisory_only_mode && advisory?.cluster && (() => {
               const c = advisory.cluster
-              const posKey =
-                c.position === 'past' ? 'clusterPositionPast'
+              const isEmpty = c.position === 'before_start'
+              const posKey = isEmpty ? 'clusterPositionNone'
+                : c.position === 'past' ? 'clusterPositionPast'
                 : c.position === 'future' ? 'clusterPositionFuture'
                 : 'clusterPositionCurrent'
               return (
@@ -937,33 +942,53 @@ export default function AdvisoryPage() {
                     <p className="text-[10px] uppercase tracking-wider font-semibold text-[#7A8C7E]">
                       {tAdvisoryOnly(posKey)}
                     </p>
-                    {(() => {
+                    {isEmpty ? (
+                      // 2026-09-27 — pre-sowing empty state: crop
+                      // hasn't started and no DBS TL covers today.
+                      // Point the farmer at the crop start date and
+                      // invite them to step forward for the first
+                      // recommendations.
+                      <p className="text-sm font-medium text-[#6B3F1F] mt-0.5">
+                        {subscription?.crop_start_date
+                          ? tAdvisoryOnly('clusterBeforeStart', {
+                              date: fmtDate(
+                                subscription.crop_start_date.slice(0, 10),
+                                locale,
+                              ),
+                            })
+                          : tAdvisoryOnly('clusterBeforeStartNoDate')}
+                      </p>
+                    ) : (() => {
                       // 2026-09-25 — cluster's day_to / date_to are
                       // the EXCLUSIVE upper endpoint (half-open
                       // windows). Display the LAST INCLUSIVE day so
                       // farmers see the range they actually cover.
                       // Collapse to single-day when the cluster
                       // spans just one day (from == to - 1).
-                      const lastInclusiveDay = c.day_to - 1
+                      const day_from = c.day_from as number
+                      const day_to = c.day_to as number
+                      const date_from = c.date_from as string
+                      const date_to = c.date_to as string
+                      const lastInclusiveDay = day_to - 1
                       const dateToInclusive = (() => {
-                        const d = new Date(c.date_to + 'T00:00:00')
+                        const d = new Date(date_to + 'T00:00:00')
                         d.setDate(d.getDate() - 1)
                         return d.toISOString().slice(0, 10)
                       })()
-                      const singleDay = c.day_from === lastInclusiveDay
+                      const singleDay = day_from === lastInclusiveDay
                       return (
                         <>
                           <p className="text-sm font-bold text-[#6B3F1F] mt-0.5">
                             {singleDay
-                              ? tAdvisoryOnly('clusterDaySingle', { day: c.day_from })
+                              ? tAdvisoryOnly('clusterDaySingle', { day: day_from })
                               : tAdvisoryOnly('clusterDayRange', {
-                                  from: c.day_from, to: lastInclusiveDay,
+                                  from: day_from, to: lastInclusiveDay,
                                 })}
                           </p>
                           <p className="text-[11px] text-[#7A8C7E] mt-0.5">
                             {singleDay
-                              ? fmtDate(c.date_from, locale)
-                              : `${fmtDate(c.date_from, locale)} – ${fmtDate(dateToInclusive, locale)}`}
+                              ? fmtDate(date_from, locale)
+                              : `${fmtDate(date_from, locale)} – ${fmtDate(dateToInclusive, locale)}`}
                           </p>
                         </>
                       )

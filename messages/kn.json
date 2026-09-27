@@ -4063,6 +4063,9 @@
     "clusterPositionCurrent": "Now",
     "clusterPositionPast": "Earlier",
     "clusterPositionFuture": "Coming up",
+    "clusterPositionNone": "No advisory today",
+    "clusterBeforeStart": "Your crop starts on {date}. Tap Next → to see the first recommendations.",
+    "clusterBeforeStartNoDate": "Your crop hasn't started yet. Tap Next → to see the first recommendations.",
     "clusterDayRange": "Day {from} – Day {to}",
     "ongoingTitle": "{count, plural, one {# ongoing practice} other {# ongoing practices}}",
     "brands": {
