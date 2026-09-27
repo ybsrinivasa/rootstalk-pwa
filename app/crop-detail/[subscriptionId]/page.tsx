@@ -917,8 +917,16 @@ export default function CropDetailPage() {
           )}
         </div>
 
-        {/* Missed items link */}
-        {missedCount > 0 && (
+        {/* Missed items link — Regular Mode only. Advisory-Only Mode
+            surfaces the same items on the advisory screen via the
+            Previous cluster nav (with localized L2 labels + the
+            differentiated "You seem to have missed…" messaging), so
+            this tile would just duplicate — and its drill-down page
+            uses raw enum labels (CHEMICAL_PESTICIDES) that read worse
+            than the advisory screen it competes with. Hide entirely
+            for advisory-only subs; the /missed-items route also
+            redirects those farmers back to advisory. */}
+        {missedCount > 0 && !sub?.advisory_only_mode && (
           <button onClick={() => router.push(`/missed-items/${subscriptionId}`)}
             className="mt-4 w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center justify-between">
             <p className="text-sm text-amber-700 font-medium">

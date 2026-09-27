@@ -13,6 +13,11 @@ interface MissedTimeline {
   practices: { id: string; l0_type: string; l1_type: string | null; l2_type: string | null }[]
 }
 
+interface SubscriptionRow {
+  id: string
+  advisory_only_mode?: boolean
+}
+
 export default function MissedItemsPage() {
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
   const router = useRouter()
@@ -22,10 +27,33 @@ export default function MissedItemsPage() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<MissedTimeline[]>(`/farmer/subscriptions/${subscriptionId}/missed-items`)
-      .then(r => setTimelines(r.data))
-      .finally(() => setLoading(false))
-  }, [subscriptionId])
+    let cancelled = false
+    ;(async () => {
+      try {
+        // 2026-09-27 — Advisory-Only Mode subs surface past-window
+        // practices on the advisory screen itself (Previous cluster
+        // nav shows the past chapter read-only with localized
+        // labels and "You seem to have missed…" messaging). This
+        // Regular-Mode page duplicates without adding value, so
+        // redirect advisory-only farmers back to their advisory.
+        const subsRes = await api.get<SubscriptionRow[]>('/farmer/my-subscriptions')
+        const sub = subsRes.data.find(s => s.id === subscriptionId)
+        if (cancelled) return
+        if (sub?.advisory_only_mode) {
+          router.replace(`/advisory/${subscriptionId}`)
+          return
+        }
+        const r = await api.get<MissedTimeline[]>(
+          `/farmer/subscriptions/${subscriptionId}/missed-items`,
+        )
+        if (cancelled) return
+        setTimelines(r.data)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  }, [subscriptionId, router])
 
   const TYPE_BADGE: Record<string, string> = {
     INPUT: 'bg-blue-100 text-blue-700',
