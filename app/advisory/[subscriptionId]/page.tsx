@@ -169,10 +169,11 @@ interface AdvisoryDay {
   cluster?: {
     offset: number
     // 2026-09-27 — 'before_start' when today is before every cluster
-    // (pre-sowing with no DBS TL). In that state day_from / day_to /
-    // date_from / date_to are null and timelines is empty; PWA
-    // renders an empty state with a Next → affordance.
-    position: 'past' | 'current' | 'future' | 'before_start'
+    // (pre-sowing with no DBS TL); 'after_end' when today is after
+    // every cluster (crop cycle concluded). In both states day_from /
+    // day_to / date_from / date_to are null and timelines is empty;
+    // PWA renders an empty state with the appropriate nav affordance.
+    position: 'past' | 'current' | 'future' | 'before_start' | 'after_end'
     day_from: number | null
     day_to: number | null
     date_from: string | null  // YYYY-MM-DD
@@ -912,6 +913,7 @@ export default function AdvisoryPage() {
             {subscription?.advisory_only_mode && advisory?.cluster && (() => {
               const c = advisory.cluster
               const isEmpty = c.position === 'before_start'
+                || c.position === 'after_end'
               const posKey = isEmpty ? 'clusterPositionNone'
                 : c.position === 'past' ? 'clusterPositionPast'
                 : c.position === 'future' ? 'clusterPositionFuture'
@@ -943,20 +945,21 @@ export default function AdvisoryPage() {
                       {tAdvisoryOnly(posKey)}
                     </p>
                     {isEmpty ? (
-                      // 2026-09-27 — pre-sowing empty state: crop
-                      // hasn't started and no DBS TL covers today.
-                      // Point the farmer at the crop start date and
-                      // invite them to step forward for the first
-                      // recommendations.
+                      // 2026-09-27 — pre-sowing / post-cycle empty
+                      // states. Before start: name the crop start
+                      // date, invite Next. After end: cycle
+                      // concluded, invite Previous.
                       <p className="text-sm font-medium text-[#6B3F1F] mt-0.5">
-                        {subscription?.crop_start_date
-                          ? tAdvisoryOnly('clusterBeforeStart', {
-                              date: fmtDate(
-                                subscription.crop_start_date.slice(0, 10),
-                                locale,
-                              ),
-                            })
-                          : tAdvisoryOnly('clusterBeforeStartNoDate')}
+                        {c.position === 'after_end'
+                          ? tAdvisoryOnly('clusterAfterEnd')
+                          : subscription?.crop_start_date
+                            ? tAdvisoryOnly('clusterBeforeStart', {
+                                date: fmtDate(
+                                  subscription.crop_start_date.slice(0, 10),
+                                  locale,
+                                ),
+                              })
+                            : tAdvisoryOnly('clusterBeforeStartNoDate')}
                       </p>
                     ) : (() => {
                       // 2026-09-25 — cluster's day_to / date_to are

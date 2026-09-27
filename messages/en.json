@@ -4067,6 +4067,7 @@
     "clusterPositionNone": "No advisory today",
     "clusterBeforeStart": "Your crop starts on {date}. Tap Next → to see the first recommendations.",
     "clusterBeforeStartNoDate": "Your crop hasn't started yet. Tap Next → to see the first recommendations.",
+    "clusterAfterEnd": "All recommendations for this crop have concluded. Tap ← Previous to review earlier advice.",
     "clusterDayRange": "Day {from} – Day {to}",
     "clusterDaySingle": "Day {day}",
     "ongoingTitle": "{count, plural, one {# ongoing practice} other {# ongoing practices}}",
