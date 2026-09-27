@@ -2172,18 +2172,31 @@ function PracticeAckFooter({
     // "Done" ready when time-gate passes AND (for INPUT) purchase set.
     const doneEnabled = !busy && !pastWindow && dueReached
       && (!isInput || purchased)
-    const doneHint = pastWindow
-      ? tAck('pastWindowLocked')
-      : !dueReached
-        ? tAck('doneNotYetDue')
-        : (isInput && !purchased ? tAck('donePurchaseFirst') : null)
-    const purchaseHint = pastWindow
-      ? tAck('pastWindowLocked')
+    // 2026-09-27 — past-window hints reflect what the farmer actually
+    // missed (four-state model). Silent when the loop was completed:
+    //   INPUT + !purchased            → "missed purchasing in time"
+    //   INPUT + purchased + !marked   → "missed applying in time"
+    //   INPUT + purchased + marked    → (nothing — completed)
+    //   non-INPUT + !marked           → "missed doing in time"
+    // Rendered in the purchaseHint slot for the not-purchased case,
+    // in the doneHint slot for the not-done cases so each message
+    // sits under the pill it relates to.
+    const purchaseHint = pastWindow && isInput && !purchased
+      ? tAck('pastMissedPurchase')
       : orderLocked
         ? tAck('purchaseLockedByOrder')
         : (isInput && !purchased && purchaseCrossOptionLocked)
           ? tAck('purchaseOtherOptionChosen')
           : null
+    const doneHint = pastWindow && !marked
+      ? (isInput && purchased
+          ? tAck('pastMissedApply')
+          : !isInput
+            ? tAck('pastMissedDo')
+            : null)
+      : !dueReached
+        ? tAck('doneNotYetDue')
+        : (isInput && !purchased ? tAck('donePurchaseFirst') : null)
 
     const CheckPill = ({
       active, enabled, label, onTap,
