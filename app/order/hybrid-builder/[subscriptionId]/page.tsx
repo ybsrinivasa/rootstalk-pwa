@@ -539,7 +539,13 @@ export default function HybridOrderBuilder() {
       date_from: todayIso,
       date_to: maxTo.slice(0, 10),
     })
-    router.push(`/order/new/${subscriptionId}?${q.toString()}`)
+    // 2026-09-27 — replace (not push) so the hybrid-builder falls
+    // out of history. Combined with /order/new's replace-on-success
+    // (→ /crop-detail/.../orders?tab=manage) the back stack after
+    // an in-app order collapses to [advisory, manage]. Device-back
+    // from the Manage tab lands on the advisory screen — no stale
+    // hybrid-builder mount that can't refind now-purchased practices.
+    router.replace(`/order/new/${subscriptionId}?${q.toString()}`)
   }
 
   if (loading) {
