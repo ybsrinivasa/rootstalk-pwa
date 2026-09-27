@@ -98,6 +98,12 @@ export default function AdvisoryBrandsPage() {
   // previously-recorded purchase. Empty for fresh recordings.
   const initialCoshId = searchParams.get('brand') || ''
   const initialText = searchParams.get('text') || ''
+  // 2026-09-27 — past-window read-only mode. Advisory page appends
+  // `?past=1` on the Brands button URL when the practice's TL has
+  // closed (today >= to_date under half-open semantics). Brand list
+  // renders for reference; brand selection, "Other" text, save/cancel
+  // footer all disabled — matches the backend ack guard.
+  const isPast = searchParams.get('past') === '1'
 
   const [data, setData] = useState<BrandsResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -148,7 +154,8 @@ export default function AdvisoryBrandsPage() {
   }, [data, search])
 
   const isEditMode = !!(initialCoshId || initialText)
-  const canRecord = !isLocked && !!lineageParam && !!dateParam
+  const readOnly = isLocked || isPast
+  const canRecord = !readOnly && !!lineageParam && !!dateParam
   const canSave = canRecord && (
     (otherMode && otherText.trim().length > 0)
     || (!otherMode && !!selectedCoshId)
@@ -245,8 +252,23 @@ export default function AdvisoryBrandsPage() {
               </div>
             )}
 
-            {/* Search (hidden in other/typing mode + locked view) */}
-            {!isLocked && !otherMode && data.brands.length > 0 && (
+            {/* 2026-09-27 — Past-window strip. Shown when the farmer
+                navigated here from a TL whose window has closed. The
+                brand list still renders (reference) but every action
+                is disabled. */}
+            {isPast && !isLocked && (
+              <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                <p className="text-sm text-amber-800 font-medium">
+                  {t('pastWindowTitle')}
+                </p>
+                <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                  {t('pastWindowBody')}
+                </p>
+              </div>
+            )}
+
+            {/* Search (hidden in other/typing mode + read-only view) */}
+            {!readOnly && !otherMode && data.brands.length > 0 && (
               <div className="mt-5">
                 <input
                   type="text"
@@ -257,10 +279,10 @@ export default function AdvisoryBrandsPage() {
               </div>
             )}
 
-            {isLocked ? (
+            {readOnly ? (
               <>
                 <p className="text-xs text-[#7A8C7E] uppercase tracking-wider font-medium mt-5">
-                  {t('lockedHeader')}
+                  {isLocked ? t('lockedHeader') : t('header')}
                 </p>
                 <div className="mt-2 bg-white rounded-2xl border border-[#DDD0B8] overflow-hidden">
                   {data.brands.map((b, idx) => (

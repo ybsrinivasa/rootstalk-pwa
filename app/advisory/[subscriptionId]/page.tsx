@@ -129,6 +129,10 @@ interface TimelineItem {
   // practice-acknowledgement key. Survives publishes.
   lineage_id?: string
   from_date: string; to_date: string; day_number: number
+  // 2026-09-27 — half-open past cutoff. True when today >= to_date.
+  // Past-window TLs render read-only: no Order, no ack, Brands
+  // list visible for reference only.
+  past_window?: boolean
   practices: Practice[]
   pending_conditional_question?: PendingConditionalQuestion
   has_pending_question?: boolean
@@ -1117,6 +1121,7 @@ export default function AdvisoryPage() {
                             onAckChanged={load}
                             advisoryOnly={!!subscription?.advisory_only_mode}
                             enableInAppOrders={!subscription?.advisory_only_mode || !!subscription?.in_app_orders_enabled}
+                            pastWindow={!!tl.past_window}
                           />
                         )
                       }
@@ -1128,6 +1133,7 @@ export default function AdvisoryPage() {
                           parts={row.parts || []}
                           orderingPractice={orderingPractice}
                           orderSuccess={orderSuccess}
+                          pastWindow={!!tl.past_window}
                           onOrder={(ids, orMutexCamps) => {
                             // Relation-group order tap. Regular Mode
                             // still uses the group button (bundles by
@@ -1474,6 +1480,7 @@ function PracticeCard({
   collapsed = false, onToggleCollapsed,
   insideContainer = false,
   purchaseCrossOptionLocked = false,
+  pastWindow = false,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1483,6 +1490,11 @@ function PracticeCard({
   timelineLineageId: string | undefined
   onAckChanged: () => void
   purchaseCrossOptionLocked?: boolean
+  // 2026-09-27 — Past-window read-only mode. When true (today >=
+  // timeline.to_date under half-open semantics), the Order button
+  // is hidden, purchase + done ack pills are disabled, and the
+  // Brands screen (still reachable for reference) renders read-only.
+  pastWindow?: boolean
   // v2 (2026-09-22 Checkbox 3) — whether in-app ordering is available
   // for this practice. Default: `!advisoryOnly` (Regular Mode has
   // orders; pure Advisory-Only does not). Hybrid callers pass true
@@ -1664,11 +1676,14 @@ function PracticeCard({
                     ? ` · ${fulf.postpone_days_remaining}d` : ''}
                 </button>
               ) : !fulf && !practice.is_purchased && !practice.purchased_at
-                    && !purchaseCrossOptionLocked ? (
+                    && !purchaseCrossOptionLocked && !pastWindow ? (
                 // v2 (2026-09-23 complex-in-Checkbox3): also hide the
                 // Order button on the LOSING side of an OR pair —
                 // committing offline elsewhere means this practice is
                 // no longer in play; ordering it would be a double-buy.
+                // 2026-09-27: also hidden on past-window TLs — the
+                // application window has closed; ordering after the
+                // fact makes no advisory sense.
                 <button
                   onClick={e => { e.stopPropagation(); onOrder() }}
                   disabled={isOrdering || ordered}
@@ -1735,6 +1750,10 @@ function PracticeCard({
                     // 2026-09-25: `?photo=` no longer passed — the
                     // Brands screen dropped its photo section; photo
                     // capture lives inline on the practice card now.
+                    // 2026-09-27: signal past-window so the Brands
+                    // screen renders read-only (list visible, actions
+                    // disabled).
+                    if (pastWindow) q.set('past', '1')
                     router.push(`/advisory/${subscriptionId}/brands/${practice.id}?${q.toString()}`)
                   }}
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
@@ -1960,6 +1979,7 @@ function PracticeCard({
           onAckChanged={onAckChanged}
           advisoryOnly={advisoryOnly}
           purchaseCrossOptionLocked={purchaseCrossOptionLocked}
+          pastWindow={pastWindow}
         />
       )}
     </div>
@@ -1985,6 +2005,7 @@ function PracticeAckFooter({
   practice, subscriptionId, timelineLineageId, onAckChanged,
   advisoryOnly = false,
   purchaseCrossOptionLocked = false,
+  pastWindow = false,
 }: {
   practice: Practice
   subscriptionId: string
@@ -2000,6 +2021,9 @@ function PracticeAckFooter({
   // means "choose one" — committing to option X locks out purchases
   // in the alternative options.
   purchaseCrossOptionLocked?: boolean
+  // 2026-09-27 — read-only past-window mode. When true, all
+  // purchase / done acks are disabled. Matches the backend guard.
+  pastWindow?: boolean
 }) {
   const tAck = useTranslations('practice.ack')
   const router = useRouter()
@@ -2141,17 +2165,25 @@ function PracticeAckFooter({
     // purchased items (rule is symmetrical — you can still un-mark
     // to change your mind).
     // v2 — orderLocked overrides everything: farmer cannot untick.
-    const purchaseEnabled = !busy && !orderLocked && (!purchaseCrossOptionLocked || purchased)
+    // 2026-09-27 — pastWindow overrides too: the recommendation
+    // window has closed, no fresh acks (matches backend guard).
+    const purchaseEnabled = !busy && !orderLocked && !pastWindow
+      && (!purchaseCrossOptionLocked || purchased)
     // "Done" ready when time-gate passes AND (for INPUT) purchase set.
-    const doneEnabled = !busy && dueReached && (!isInput || purchased)
-    const doneHint = !dueReached
-      ? tAck('doneNotYetDue')
-      : (isInput && !purchased ? tAck('donePurchaseFirst') : null)
-    const purchaseHint = orderLocked
-      ? tAck('purchaseLockedByOrder')
-      : (isInput && !purchased && purchaseCrossOptionLocked)
-        ? tAck('purchaseOtherOptionChosen')
-        : null
+    const doneEnabled = !busy && !pastWindow && dueReached
+      && (!isInput || purchased)
+    const doneHint = pastWindow
+      ? tAck('pastWindowLocked')
+      : !dueReached
+        ? tAck('doneNotYetDue')
+        : (isInput && !purchased ? tAck('donePurchaseFirst') : null)
+    const purchaseHint = pastWindow
+      ? tAck('pastWindowLocked')
+      : orderLocked
+        ? tAck('purchaseLockedByOrder')
+        : (isInput && !purchased && purchaseCrossOptionLocked)
+          ? tAck('purchaseOtherOptionChosen')
+          : null
 
     const CheckPill = ({
       active, enabled, label, onTap,
@@ -2378,6 +2410,7 @@ function RelationGroup({
   subscriptionId, timelineLineageId, onAckChanged,
   advisoryOnly = false,
   enableInAppOrders,
+  pastWindow = false,
 }: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
@@ -2405,6 +2438,9 @@ function RelationGroup({
   // v2 (2026-09-22 Checkbox 3) — forwarded to nested PracticeCards
   // so hybrid mode gets Order buttons back inside AND/OR groups.
   enableInAppOrders?: boolean
+  // 2026-09-27 — forwarded to nested PracticeCards so past-window
+  // TLs disable Order + ack across every AND/OR arrangement.
+  pastWindow?: boolean
 }) {
   const tAction = useTranslations('practice.action')
   const tRel = useTranslations('practice.relations')
@@ -2537,6 +2573,7 @@ function RelationGroup({
         onAckChanged={onAckChanged}
         advisoryOnly={advisoryOnly}
         enableInAppOrders={canOrderInApp}
+        pastWindow={pastWindow}
       />
     )
   }
@@ -2600,6 +2637,7 @@ function RelationGroup({
                 // keeps the group semantic (per-item off, group on).
                 // Pure Advisory-Only: no Order buttons at all.
                 enableInAppOrders={canOrderInApp}
+                pastWindow={pastWindow}
                 insideContainer
                 {...cardCollapseProps(p)}
               />
@@ -2720,6 +2758,7 @@ function RelationGroup({
                 onAckChanged={onAckChanged}
                 advisoryOnly={advisoryOnly}
                 enableInAppOrders={canOrderInApp}
+                pastWindow={pastWindow}
               />
               {partIdx < parts.length - 1 && (
                 <div className="flex items-center my-3">
@@ -2824,6 +2863,7 @@ function RelationGroup({
                             // Regular Mode still uses the group button
                             // below; Pure Advisory-Only shows neither.
                             enableInAppOrders={canOrderInApp}
+                            pastWindow={pastWindow}
                             insideContainer
                             {...cardCollapseProps(p)}
                           />
@@ -2893,6 +2933,7 @@ function RelationGroup({
                     onAckChanged={onAckChanged}
                     advisoryOnly={advisoryOnly}
                     enableInAppOrders={canOrderInApp && !(isPurePartOrOfSingles && advisoryOnly)}
+                    pastWindow={pastWindow}
                     insideContainer={advisoryOnly && isChoice}
                     {...cardCollapseProps(opt.practices[0])}
                   />
@@ -3056,6 +3097,7 @@ function OngoingPanel({
                     onAckChanged={onAckChanged}
                     advisoryOnly
                     enableInAppOrders={enableInAppOrders}
+                    pastWindow={!!tl.past_window}
                     collapsed={expandedPracticeId !== p.id}
                     onToggleCollapsed={() =>
                       setExpandedPracticeId(prev => (prev === p.id ? null : p.id))
