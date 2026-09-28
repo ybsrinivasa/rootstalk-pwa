@@ -41,7 +41,17 @@ messaging.onBackgroundMessage((payload) => {
   const tag = (d.type || 'default') + (d.order_id ? ':' + d.order_id : (d.query_id ? ':' + d.query_id : ''))
   self.registration.showNotification(title, {
     body,
-    icon: '/icon.png',
+    // 2026-09-28 — use the green-backed white-tree maskable icon
+    // (same asset the manifest's maskable purpose uses for the
+    // notification's left-avatar) so the right-side "large icon"
+    // matches. Previously used /icon.png which is a coloured tree
+    // on a transparent background — rendered washed-out over the
+    // beige notification card.
+    icon: '/logos/icon-maskable-512.png',
+    // badge stays as the small monochrome silhouette (Android
+    // status-bar). System auto-tints it based on OS theme; keeping
+    // /icon.png for now until we ship a dedicated white-on-
+    // transparent notification-badge asset.
     badge: '/icon.png',
     data: d,
     tag,
