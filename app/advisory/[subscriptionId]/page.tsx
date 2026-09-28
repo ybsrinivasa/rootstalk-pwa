@@ -664,6 +664,46 @@ export default function AdvisoryPage() {
     }
   }, [advisory, subscription, subscriptionId])
 
+  // 2026-09-28 — Auto-scroll past expired TLs on the CURRENT cluster.
+  // In a mixed-state cluster (some TLs elapsed, others still active)
+  // the farmer's most useful landing point is the first still-active
+  // TL. Expired TLs stay above (scroll up to review). Guards:
+  //  1. Only fires for cluster.position === 'current' — never on
+  //     past ('Earlier') or future ('Coming up') clusters (farmer
+  //     navigated there on purpose).
+  //  2. Only fires once per (subscription, cluster-offset) pair via
+  //     the scrolledKeyRef guard — otherwise every ack re-render
+  //     would re-scroll and disrupt the farmer.
+  //  3. Skips if the state isn't actually mixed (all past or all
+  //     current) — the scroll would be a no-op or jarring.
+  const scrolledKeyRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!advisory?.cluster || advisory.cluster.position !== 'current') return
+    const tls = advisory.timelines || []
+    if (tls.length === 0) return
+    const anyPast = tls.some(tl => tl.past_window)
+    const anyActive = tls.some(tl => !tl.past_window)
+    if (!anyPast || !anyActive) return
+    const key = `${advisory.subscription_id}:${advisory.cluster.offset}`
+    if (scrolledKeyRef.current === key) return
+    scrolledKeyRef.current = key
+    const firstActive = [...tls]
+      .sort((a, b) => {
+        const aFrom = new Date(a.from_date || 0).getTime()
+        const bFrom = new Date(b.from_date || 0).getTime()
+        return aFrom - bFrom
+      })
+      .find(tl => !tl.past_window)
+    if (!firstActive) return
+    // Defer one frame so the DOM has finished the layout for the
+    // cluster's render before scrollIntoView runs.
+    const raf = requestAnimationFrame(() => {
+      const el = document.getElementById(`tl-${firstActive.id}`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [advisory])
+
   async function load() {
     try {
       // 2026-09-16 — v1.6: two-step so we can pick between the daily
@@ -1070,7 +1110,7 @@ export default function AdvisoryPage() {
                      - new Date(b.to_date || 0).getTime()
               })
               .map(tl => (
-              <div key={tl.id}>
+              <div key={tl.id} id={`tl-${tl.id}`} className="scroll-mt-4">
                 <div className="mb-3">
                   <div className="flex items-center gap-2">
                     <div className="h-px flex-1 bg-slate-200" />
