@@ -48,11 +48,14 @@ messaging.onBackgroundMessage((payload) => {
     // on a transparent background — rendered washed-out over the
     // beige notification card.
     icon: '/logos/icon-maskable-512.png',
-    // badge stays as the small monochrome silhouette (Android
-    // status-bar). System auto-tints it based on OS theme; keeping
-    // /icon.png for now until we ship a dedicated white-on-
-    // transparent notification-badge asset.
-    badge: '/icon.png',
+    // 2026-09-28 — status-bar badge is a 96×96 white-tree
+    // silhouette on fully transparent background. Android's
+    // status-bar pipeline tints the white pixels with the OS
+    // theme; because the surrounding area is alpha=0, only the
+    // tree shape is rendered — clean silhouette instead of the
+    // mangled blob that resulted from feeding the coloured
+    // /icon.png through the monochrome-tint pipeline.
+    badge: '/logos/notification-badge.png',
     data: d,
     tag,
     renotify: true,
