@@ -2357,7 +2357,14 @@ function PracticeAckFooter({
             proof of the actual purchase. Brand + manufacturer render
             in the green PurchasedSummary box above; this row is
             photo-only. */}
-        {purchased && isInput && (
+        {/* 2026-09-28 — Past-window: keep an already-attached photo
+            viewable as a historical record; hide both Retake and
+            Add-photo affordances so no fresh evidence is captured
+            after the window closes. Matches the backend's rejection
+            of "photo" as a mutating action on past TLs and mirrors
+            the read-only stance on purchase / done acks. */}
+        {purchased && isInput
+          && (practice.purchased_photo_url || !pastWindow) && (
           <div className="mt-1.5 flex items-center gap-2">
             {practice.purchased_photo_url ? (
               <>
@@ -2374,12 +2381,14 @@ function PracticeAckFooter({
                     alt=""
                     className="w-full h-full object-cover" />
                 </button>
-                <button
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={uploadingAckPhoto}
-                  className="text-[11px] text-slate-600 underline shrink-0 disabled:opacity-50">
-                  {uploadingAckPhoto ? tAck('uploadingPhoto') : tAck('photoRetake')}
-                </button>
+                {!pastWindow && (
+                  <button
+                    onClick={() => photoInputRef.current?.click()}
+                    disabled={uploadingAckPhoto}
+                    className="text-[11px] text-slate-600 underline shrink-0 disabled:opacity-50">
+                    {uploadingAckPhoto ? tAck('uploadingPhoto') : tAck('photoRetake')}
+                  </button>
+                )}
               </>
             ) : (
               <button
