@@ -446,6 +446,11 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
 // what used to live behind the "Hide details" toggle for purchased
 // items — the farmer shouldn't have to expand to see what they
 // bought.
+function _formatVol(vol: number | null | undefined, unit: string | null | undefined): string | null {
+  if (vol == null || !unit) return null
+  return `${vol} ${unit}`
+}
+
 function PurchasedSummary({
   brand, manufacturer, siblings, primaryVolume, primaryUnit,
   primaryRole, primaryPerApplicationVolume,
@@ -541,7 +546,23 @@ function PurchasedSummary({
         </>
       ) : (
         <>
-          <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
+          <p className="text-base font-bold text-emerald-900 truncate">
+            {brand}
+            {(() => {
+              // 2026-09-29 — Include dose alongside the brand on the
+              // single-brand render. Prefer per-application volume
+              // (what the farmer applies today) over the total
+              // procured, matching the sibling-stack renderer above.
+              const v = displayVolume({
+                given_volume: primaryVolume ?? null,
+                per_application_volume: primaryPerApplicationVolume ?? null,
+              })
+              const label = _formatVol(v, primaryUnit ?? null)
+              return label ? (
+                <span className="ml-2 text-xs font-medium text-emerald-800">· {label}</span>
+              ) : null
+            })()}
+          </p>
           {manufacturer && (
             <p className="text-xs text-emerald-800">by {manufacturer}</p>
           )}
@@ -2775,6 +2796,7 @@ function RelationGroup({
                 subscriptionId={subscriptionId}
                 timelineLineageId={timelineLineageId}
                 onAckChanged={onAckChanged}
+                hideAckFooter
               />
             )
             // 2026-09-17 — v1.7: big green + between practices in
@@ -2784,6 +2806,21 @@ function RelationGroup({
               : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
           })}
         </div>
+        {/* 2026-09-29 — Group-level "I've done this" for AND. The
+            per-row ack was defeating the "APPLY BOTH TOGETHER"
+            semantic — farmer had to tick each row separately, which
+            reads as "I did this one, but the other?". One consolidated
+            tick marks (or unmarks) every leg atomically via a mark-
+            all / unmark-all loop. Only renders in Regular Mode when
+            every leg has been picked up (has fulfilment). */}
+        {!advisoryOnly && (
+          <GroupAckFooter
+            practices={opt.practices}
+            subscriptionId={subscriptionId}
+            timelineLineageId={timelineLineageId}
+            onAckChanged={onAckChanged}
+          />
+        )}
         {/* Group "Order both together" button. Regular Mode only —
             hybrid AND uses per-item Order buttons (each ingredient is
             its own purchase decision; farmer might already have one).
@@ -3001,6 +3038,7 @@ function RelationGroup({
                             subscriptionId={subscriptionId}
                             timelineLineageId={timelineLineageId}
                             onAckChanged={onAckChanged}
+                            hideAckFooter
                           />
                         )
                         return i === 0 || !advisoryOnly
@@ -3008,6 +3046,14 @@ function RelationGroup({
                           : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
                       })}
                     </div>
+                    {!advisoryOnly && (
+                      <GroupAckFooter
+                        practices={opt.practices}
+                        subscriptionId={subscriptionId}
+                        timelineLineageId={timelineLineageId}
+                        onAckChanged={onAckChanged}
+                      />
+                    )}
                     {/* Group "Order both together" — Regular Mode only.
                         Hybrid uses per-item Order buttons above so the
                         farmer can order each ingredient separately. */}
@@ -3233,10 +3279,77 @@ function OngoingPanel({
 }
 
 // Compact in-group practice row (used inside a paired AND-group card)
+// 2026-09-29 — Group-level "I've done this" for AND containers in
+// Regular Mode. Renders one ack pill for the whole group so ticking
+// once marks every leg as done (matching the "APPLY BOTH TOGETHER"
+// semantic). No-op when any leg hasn't been picked up (fulfilment
+// missing farmer_received_at) — matches the per-row footer's
+// pickup gate.
+function GroupAckFooter({
+  practices, subscriptionId, timelineLineageId, onAckChanged,
+}: {
+  practices: Practice[]
+  subscriptionId?: string
+  timelineLineageId?: string | undefined
+  onAckChanged?: () => void
+}) {
+  const tAck = useTranslations('practice.ack')
+  const [busy, setBusy] = useState(false)
+  if (!subscriptionId) return null
+  const allPickedUp = practices.length > 0
+    && practices.every(p => !!p.fulfilment?.farmer_received_at)
+  if (!allPickedUp) return null
+  const allMarked = practices.every(p => p.ack_status === 'MARKED')
+  async function toggle() {
+    if (busy) return
+    setBusy(true)
+    try {
+      const action = allMarked ? 'unmark' : 'mark'
+      for (const p of practices) {
+        await api.post(`/farmer/practice-ack/${action}`, {
+          subscription_id: subscriptionId,
+          timeline_lineage_id: timelineLineageId || '',
+          practice_id: p.id,
+          occurrence_date: p.occurrence_date || '',
+        })
+      }
+      onAckChanged?.()
+    } catch {
+      // best-effort; individual failures re-surface via reload state
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="border-t border-[#DDD0B8] px-4 py-2.5">
+      <button
+        onClick={toggle}
+        disabled={busy}
+        className="flex items-center gap-2 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed">
+        <span
+          className={`inline-flex items-center justify-center w-6 h-6 rounded-full border shrink-0 ${
+            allMarked
+              ? 'bg-emerald-600 border-emerald-700 text-white'
+              : 'bg-[#F5F0E8] border-[#DDD0B8] text-[#7A8C7E]'
+          }`}>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+          </svg>
+        </span>
+        <span className={`${allMarked ? 'text-emerald-700' : 'text-[#6B3F1F]'}`}>
+          {tAck('mark')}
+        </span>
+      </button>
+    </div>
+  )
+}
+
+
 function InnerPracticeRow({
   practice,
   pillName, pillTone, onPillClick, tPill,
   subscriptionId, timelineLineageId, onAckChanged,
+  hideAckFooter = false,
 }: {
   practice: Practice
   // 2026-06-26 — Optional Manage-pill chip on the right edge of the
@@ -3263,6 +3376,12 @@ function InnerPracticeRow({
   subscriptionId?: string
   timelineLineageId?: string | undefined
   onAckChanged?: () => void
+  // 2026-09-29 — When rendered inside an AND container (Regular
+  // Mode), the ack pill is consolidated at the group level so
+  // "I've done this" ticks the whole AND at once — matching the
+  // "APPLY BOTH TOGETHER" semantic. Individual row ticks defeat
+  // the joint-application meaning and produce visible duplication.
+  hideAckFooter?: boolean
 }) {
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
@@ -3321,7 +3440,7 @@ function InnerPracticeRow({
           primaryRole={null}
         />
       )}
-      {pickedUp && subscriptionId && (
+      {pickedUp && subscriptionId && !hideAckFooter && (
         <PracticeAckFooter
           practice={practice}
           subscriptionId={subscriptionId}
