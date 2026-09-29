@@ -1109,6 +1109,21 @@ export default function AdvisoryPage() {
                 return new Date(a.to_date || 0).getTime()
                      - new Date(b.to_date || 0).getTime()
               })
+              // 2026-09-29 — Hide TL sections that carry nothing
+              // renderable. When cluster-level BL-03 dedup suppresses
+              // every practice on a TL (e.g., standalone A absorbed
+              // by a later TL's AND(A+B)), the section would
+              // otherwise render an empty subheader + a stale
+              // "no plans yet"-style message that reads as an app
+              // bug to the farmer. Skip when practices is empty AND
+              // there's no pending conditional Q AND no blank-path
+              // Q — those two carry independent farmer-facing
+              // affordances that render even without practices.
+              .filter(tl => (
+                (tl.practices?.length ?? 0) > 0
+                || !!tl.has_pending_question
+                || !!tl.blank_path_questions?.length
+              ))
               .map(tl => (
               <div key={tl.id} id={`tl-${tl.id}`} className="scroll-mt-4">
                 <div className="mb-3">
