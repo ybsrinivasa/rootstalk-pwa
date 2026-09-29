@@ -446,11 +446,6 @@ function mergeUnitElements(elements: Element[]): ElementWithUnit[] {
 // what used to live behind the "Hide details" toggle for purchased
 // items — the farmer shouldn't have to expand to see what they
 // bought.
-function _formatVol(vol: number | null | undefined, unit: string | null | undefined): string | null {
-  if (vol == null || !unit) return null
-  return `${vol} ${unit}`
-}
-
 function PurchasedSummary({
   brand, manufacturer, siblings, primaryVolume, primaryUnit,
   primaryRole, primaryPerApplicationVolume,
@@ -546,23 +541,7 @@ function PurchasedSummary({
         </>
       ) : (
         <>
-          <p className="text-base font-bold text-emerald-900 truncate">
-            {brand}
-            {(() => {
-              // 2026-09-29 — Include dose alongside the brand on the
-              // single-brand render. Prefer per-application volume
-              // (what the farmer applies today) over the total
-              // procured, matching the sibling-stack renderer above.
-              const v = displayVolume({
-                given_volume: primaryVolume ?? null,
-                per_application_volume: primaryPerApplicationVolume ?? null,
-              })
-              const label = _formatVol(v, primaryUnit ?? null)
-              return label ? (
-                <span className="ml-2 text-xs font-medium text-emerald-800">· {label}</span>
-              ) : null
-            })()}
-          </p>
+          <p className="text-base font-bold text-emerald-900 truncate">{brand}</p>
           {manufacturer && (
             <p className="text-xs text-emerald-800">by {manufacturer}</p>
           )}
@@ -1599,6 +1578,7 @@ function PracticeCard({
   insideContainer = false,
   purchaseCrossOptionLocked = false,
   pastWindow = false,
+  hideAckFooter = false,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1642,6 +1622,11 @@ function PracticeCard({
   // / rounded corners so the nested card looks like a row within
   // the parent container instead of a bordered card-inside-card.
   insideContainer?: boolean
+  // 2026-09-29 — Suppress the per-card PracticeAckFooter. Used by
+  // AND-container callsites in Regular Mode that consolidate a
+  // group-level "I've done this" (GroupAckFooter) below all
+  // sibling cards — matches the "APPLY BOTH TOGETHER" semantic.
+  hideAckFooter?: boolean
 }) {
   const router = useRouter()
   const tEl = useTranslations('practice.element')
@@ -2088,8 +2073,10 @@ function PracticeCard({
         )
       })()}
       {/* 2026-09-16 — v1.4 accordion: hide the ack footer when the
-          card is collapsed. It re-appears on expand. */}
-      {!collapsed && (
+          card is collapsed. It re-appears on expand.
+          2026-09-29 — Also hide when the parent AND container is
+          rendering a consolidated group-level ack (hideAckFooter). */}
+      {!collapsed && !hideAckFooter && (
         <PracticeAckFooter
           practice={practice}
           subscriptionId={subscriptionId}
@@ -2759,7 +2746,17 @@ function RelationGroup({
             // + fulfilment chip; farmer buying independently needs
             // Common Name + Brand + Dose etc., which live on
             // PracticeCard's element list.
-            const card = advisoryOnly ? (
+            // 2026-09-29 — Regular Mode now ALSO uses PracticeCard
+            // inside the AND container (with insideContainer +
+            // hideAckFooter). Post-purchase the farmer needs the
+            // same full context per leg — brand, manufacturer,
+            // dose with correct unit, application method,
+            // instructions, everything on the element list — that
+            // he gets on a standalone card. Per-card acks are
+            // suppressed; the container renders one consolidated
+            // GroupAckFooter below so "I've done this" ticks every
+            // leg at once, matching "APPLY BOTH TOGETHER".
+            const card = (
               <PracticeCard
                 key={p.id}
                 practice={p}
@@ -2769,7 +2766,7 @@ function RelationGroup({
                 subscriptionId={subscriptionId}
                 timelineLineageId={timelineLineageId}
                 onAckChanged={onAckChanged}
-                advisoryOnly
+                advisoryOnly={advisoryOnly}
                 // v2 (2026-09-22 Checkbox 3, updated 2026-09-23): in
                 // hybrid mode AND is treated as "buy each separately
                 // and mix and apply" — per-item Order buttons ON, no
@@ -2779,26 +2776,14 @@ function RelationGroup({
                 enableInAppOrders={canOrderInApp}
                 pastWindow={pastWindow}
                 insideContainer
+                hideAckFooter
                 {...cardCollapseProps(p)}
               />
-            ) : (
-              <InnerPracticeRow
-                key={p.id}
-                practice={p}
-                pillName={pillName}
-                pillTone={pillTone}
-                tPill={tPill}
-                onPillClick={pillName
-                  ? () => router.push(
-                      `/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`,
-                    )
-                  : undefined}
-                subscriptionId={subscriptionId}
-                timelineLineageId={timelineLineageId}
-                onAckChanged={onAckChanged}
-                hideAckFooter
-              />
             )
+            // Regular Mode's per-row fulfilment pill is preserved
+            // via PracticeCard's own pill render — no need for the
+            // InnerPracticeRow.pillName wiring here.
+            void pillName; void pillTone;
             // 2026-09-17 — v1.7: big green + between practices in
             // advisory-only. Traditional mode keeps divide-y only.
             return i === 0 || !advisoryOnly
@@ -3003,7 +2988,14 @@ function RelationGroup({
                         // 2026-09-16 — v1.4: same swap as the pure-AND
                         // branch above — PracticeCard (insideContainer)
                         // when advisoryOnly.
-                        const card = advisoryOnly ? (
+                        // 2026-09-29 — Same as pure-AND branch:
+                        // Regular Mode also uses PracticeCard with
+                        // insideContainer + hideAckFooter so each
+                        // leg carries the full post-purchase
+                        // context (brand, dose, application method,
+                        // instructions) and the container renders
+                        // one group-level ack.
+                        const card = (
                           <PracticeCard
                             key={p.id}
                             practice={p}
@@ -3013,7 +3005,7 @@ function RelationGroup({
                             subscriptionId={subscriptionId}
                             timelineLineageId={timelineLineageId}
                             onAckChanged={onAckChanged}
-                            advisoryOnly
+                            advisoryOnly={advisoryOnly}
                             // v2 (2026-09-23 complex-in-Checkbox3):
                             // hybrid AND = per-item Order buttons on.
                             // Regular Mode still uses the group button
@@ -3021,26 +3013,11 @@ function RelationGroup({
                             enableInAppOrders={canOrderInApp}
                             pastWindow={pastWindow}
                             insideContainer
+                            hideAckFooter
                             {...cardCollapseProps(p)}
                           />
-                        ) : (
-                          <InnerPracticeRow
-                            key={p.id}
-                            practice={p}
-                            pillName={pillName}
-                            pillTone={pillTone}
-                            tPill={tPill}
-                            onPillClick={pillName
-                              ? () => router.push(
-                                  `/crop-detail/${subscriptionId}/orders?tab=manage&pill=${pillName}`,
-                                )
-                              : undefined}
-                            subscriptionId={subscriptionId}
-                            timelineLineageId={timelineLineageId}
-                            onAckChanged={onAckChanged}
-                            hideAckFooter
-                          />
                         )
+                        void pillName; void pillTone;
                         return i === 0 || !advisoryOnly
                           ? [card]
                           : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
@@ -3349,7 +3326,6 @@ function InnerPracticeRow({
   practice,
   pillName, pillTone, onPillClick, tPill,
   subscriptionId, timelineLineageId, onAckChanged,
-  hideAckFooter = false,
 }: {
   practice: Practice
   // 2026-06-26 — Optional Manage-pill chip on the right edge of the
@@ -3376,12 +3352,6 @@ function InnerPracticeRow({
   subscriptionId?: string
   timelineLineageId?: string | undefined
   onAckChanged?: () => void
-  // 2026-09-29 — When rendered inside an AND container (Regular
-  // Mode), the ack pill is consolidated at the group level so
-  // "I've done this" ticks the whole AND at once — matching the
-  // "APPLY BOTH TOGETHER" semantic. Individual row ticks defeat
-  // the joint-application meaning and produce visible duplication.
-  hideAckFooter?: boolean
 }) {
   const l2Label = practice.l2_name_loc || humanizeType(practice.l2_type)
   const fulf = practice.fulfilment ?? null
@@ -3419,28 +3389,17 @@ function InnerPracticeRow({
         )}
       </div>
       {pickedUp && fulf?.brand_name && (
-        // 2026-09-29 — Do NOT pass `siblings` here. This row lives
-        // inside an AND container (RelationGroup) that already
-        // renders an "APPLY BOTH TOGETHER" header above the whole
-        // group; if every row also passed siblings, PurchasedSummary
-        // would show the full sibling stack per row and the same
-        // brands would appear once per member — visible duplication
-        // reported 2026-09-29 on KR-26-000198 (Regular Mode, post-
-        // pickup on an AND pair: both cards showed the full stack
-        // with brands just re-ordered). NPK auto-AND (Mixed+Straight)
-        // is handled by the parent standalone PracticeCard rendering,
-        // not this InnerPracticeRow — that path still surfaces
-        // siblings correctly.
         <PurchasedSummary
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
+          siblings={fulf.siblings}
           primaryVolume={fulf.given_volume}
           primaryPerApplicationVolume={fulf.per_application_volume}
           primaryUnit={fulf.volume_unit}
           primaryRole={null}
         />
       )}
-      {pickedUp && subscriptionId && !hideAckFooter && (
+      {pickedUp && subscriptionId && (
         <PracticeAckFooter
           practice={practice}
           subscriptionId={subscriptionId}
