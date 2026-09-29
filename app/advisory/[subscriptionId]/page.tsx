@@ -3300,10 +3300,21 @@ function InnerPracticeRow({
         )}
       </div>
       {pickedUp && fulf?.brand_name && (
+        // 2026-09-29 — Do NOT pass `siblings` here. This row lives
+        // inside an AND container (RelationGroup) that already
+        // renders an "APPLY BOTH TOGETHER" header above the whole
+        // group; if every row also passed siblings, PurchasedSummary
+        // would show the full sibling stack per row and the same
+        // brands would appear once per member — visible duplication
+        // reported 2026-09-29 on KR-26-000198 (Regular Mode, post-
+        // pickup on an AND pair: both cards showed the full stack
+        // with brands just re-ordered). NPK auto-AND (Mixed+Straight)
+        // is handled by the parent standalone PracticeCard rendering,
+        // not this InnerPracticeRow — that path still surfaces
+        // siblings correctly.
         <PurchasedSummary
           brand={fulf.brand_name}
           manufacturer={fulf.manufacturer_name}
-          siblings={fulf.siblings}
           primaryVolume={fulf.given_volume}
           primaryPerApplicationVolume={fulf.per_application_volume}
           primaryUnit={fulf.volume_unit}
