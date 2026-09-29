@@ -1907,8 +1907,17 @@ function PracticeCard({
         return (
           <PurchasedSummary
             brand={summaryBrand}
+            // 2026-09-29 — Skip the sibling stack when this card is
+            // rendered inside a parent AND container (e.g. the
+            // RelationGroup emerald container). The container's
+            // BigPlusSeparator + adjacent sibling cards already
+            // communicate the group; a stacked "APPLY BOTH
+            // TOGETHER" list per card produces the duplication the
+            // user flagged on KR-26-000198. NPK auto-AND
+            // (Mixed+Straight) still surfaces via the standalone
+            // (non-insideContainer) render path.
+            siblings={orderLockedBrand && !insideContainer ? fulf?.siblings : undefined}
             manufacturer={summaryManufacturer}
-            siblings={orderLockedBrand ? fulf?.siblings : undefined}
             primaryVolume={orderLockedBrand ? fulf?.given_volume : undefined}
             primaryPerApplicationVolume={orderLockedBrand ? fulf?.per_application_volume : undefined}
             primaryUnit={orderLockedBrand ? fulf?.volume_unit : undefined}
@@ -2721,20 +2730,16 @@ function RelationGroup({
     // ("Apply all together") and put the emerald tint on the outer
     // border instead — the big green `+` between practices does the
     // operator work. Traditional flow keeps the header.
-    const andContainerCls = advisoryOnly
-      ? 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
-      : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
+    // 2026-09-29 — Regular Mode now uses the same emerald-bordered
+    // container as Advisory-Only, and drops the top "APPLY BOTH
+    // TOGETHER" text pill. The border + BigPlusSeparator between
+    // legs carries the AND semantic without an extra text label —
+    // matches Advisory-Only's v1.7 symbol-over-text philosophy and
+    // removes visual noise in the merged view.
+    const andContainerCls = 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
     return (
       <div className={andContainerCls}>
-        {!advisoryOnly && (
-          <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
-            <div className="w-1 h-5 rounded-full bg-emerald-600" />
-            <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-              {tRel('applyAllTogether', { count: ids.length })}
-            </p>
-          </div>
-        )}
-        <div className={advisoryOnly ? '' : 'divide-y divide-slate-100'}>
+        <div>
           {opt.practices.flatMap((p, i) => {
             const f = p.fulfilment ?? null
             const pillName = f ? fulfilmentToPill(f) : null
@@ -2777,16 +2782,24 @@ function RelationGroup({
                 pastWindow={pastWindow}
                 insideContainer
                 hideAckFooter
-                {...cardCollapseProps(p)}
+                // 2026-09-29 — Collapse/expand is Advisory-Only for
+                // now. Regular Mode intentionally omits it — user
+                // wants to see how the full-height card reads next
+                // to the group "Order both together" button before
+                // adding accordion behavior there (a collapsed
+                // card would hide the button and complicate the
+                // farmer's flow).
+                {...(advisoryOnly ? cardCollapseProps(p) : {})}
               />
             )
             // Regular Mode's per-row fulfilment pill is preserved
-            // via PracticeCard's own pill render — no need for the
-            // InnerPracticeRow.pillName wiring here.
+            // via PracticeCard's own pill render.
             void pillName; void pillTone;
-            // 2026-09-17 — v1.7: big green + between practices in
-            // advisory-only. Traditional mode keeps divide-y only.
-            return i === 0 || !advisoryOnly
+            // 2026-09-29 — big green + between legs in BOTH modes
+            // (matches Advisory-Only v1.7). Regular Mode used to
+            // rely on divide-y; the separator is more emphatic
+            // and matches the emerald-container framing.
+            return i === 0
               ? [card]
               : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
           })}
@@ -2967,20 +2980,13 @@ function RelationGroup({
                   // v1.7 mirror: same header-drop + emerald border +
                   // BigPlusSeparator treatment as the top-level
                   // isPureAndGroup branch above.
-                  const innerAndCls = advisoryOnly
-                    ? 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
-                    : 'bg-white rounded-2xl border border-[#DDD0B8] shadow-sm overflow-hidden'
+                  // 2026-09-29 — Mirror the pure-AND branch:
+                  // emerald container + no top pill in both modes;
+                  // the border + BigPlusSeparator convey the AND.
+                  const innerAndCls = 'bg-white rounded-2xl border border-emerald-200 shadow-sm overflow-hidden'
                   return (
                   <div className={innerAndCls}>
-                    {!advisoryOnly && (
-                      <div className="flex items-center gap-2 px-4 py-2 border-b border-[#DDD0B8] bg-emerald-50">
-                        <div className="w-1 h-5 rounded-full bg-emerald-600" />
-                        <p className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-                          {tRel('applyAllTogether', { count: ids.length })}
-                        </p>
-                      </div>
-                    )}
-                    <div className={advisoryOnly ? '' : 'divide-y divide-slate-100'}>
+                    <div>
                       {opt.practices.flatMap((p, i) => {
                         const f = p.fulfilment ?? null
                         const pillName = f ? fulfilmentToPill(f) : null
@@ -3014,11 +3020,15 @@ function RelationGroup({
                             pastWindow={pastWindow}
                             insideContainer
                             hideAckFooter
-                            {...cardCollapseProps(p)}
+                            // 2026-09-29 — Collapse/expand
+                            // Advisory-Only only; see pure-AND
+                            // branch above for rationale.
+                            {...(advisoryOnly ? cardCollapseProps(p) : {})}
                           />
                         )
                         void pillName; void pillTone;
-                        return i === 0 || !advisoryOnly
+                        // 2026-09-29 — separator in both modes.
+                        return i === 0
                           ? [card]
                           : [<BigPlusSeparator key={`plus-${p.id}`} />, card]
                       })}
