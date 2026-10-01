@@ -96,11 +96,22 @@ export default function DiagnosisPage() {
   // distinct from the in-loop Ask AI verdict below).
   const [analyzingImage, setAnalyzingImage] = useState(false)
   const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysis | null>(null)
-  // 2026-10-01 — General-management suggestions. When the AI couldn't
-  // match the photo to any curated catalogue entry, farmer can
-  // optionally request safe general guidance while waiting for the
-  // Expert. Textbox output, no advisory integration.
-  const [fetchingSuggestions, setFetchingSuggestions] = useState(false)
+  // 2026-10-01 — AI-fallback flow when the catalogue had no match.
+  // Three-step mini state machine: (1) show symptoms, farmer confirms
+  // "yes, that's what I see too"; (2) reveal tentative name + ask
+  // if he wants suggestions; (3) show suggestions. Expert CTA
+  // available throughout.
+  type AIFallbackPhase =
+    | 'loading_symptoms'
+    | 'awaiting_symptom_confirmation'
+    | 'symptom_denied'
+    | 'awaiting_management_choice'
+    | 'loading_suggestions'
+    | 'suggestions_shown'
+    | 'symptoms_unavailable'
+  const [aiFallbackPhase, setAiFallbackPhase] = useState<AIFallbackPhase>('loading_symptoms')
+  const [aiSymptomsDescription, setAiSymptomsDescription] = useState<string>('')
+  const [aiTentativeName, setAiTentativeName] = useState<string | null>(null)
   const [aiSuggestions, setAiSuggestions] = useState<string | null>(null)
   const [aiSuggestionsUnavailable, setAiSuggestionsUnavailable] = useState(false)
   // In-loop Ask AI verdict — answers the current Yes/No question, does
@@ -394,9 +405,44 @@ export default function DiagnosisPage() {
     })
   }
 
+  function resetAiFallback() {
+    setAiFallbackPhase('loading_symptoms')
+    setAiSymptomsDescription('')
+    setAiTentativeName(null)
+    setAiSuggestions(null)
+    setAiSuggestionsUnavailable(false)
+  }
+
+  async function fetchAiSymptomCheck() {
+    if (!cropCoshId || aiImages.length === 0) return
+    setAiFallbackPhase('loading_symptoms')
+    try {
+      const payload = {
+        subscription_id: subscriptionId,
+        crop_cosh_id: cropCoshId,
+        crop_stage_cosh_id: selectedStage?.cosh_id || null,
+        images: aiImages.map(i => ({ base64: i.base64, media_type: i.media_type })),
+      }
+      const { data } = await api.post<{
+        symptoms_description: string
+        tentative_name: string | null
+        unavailable: boolean
+      }>('/diagnosis/ai-symptom-check', payload)
+      if (data.unavailable || !data.symptoms_description) {
+        setAiFallbackPhase('symptoms_unavailable')
+        return
+      }
+      setAiSymptomsDescription(data.symptoms_description)
+      setAiTentativeName(data.tentative_name)
+      setAiFallbackPhase('awaiting_symptom_confirmation')
+    } catch {
+      setAiFallbackPhase('symptoms_unavailable')
+    }
+  }
+
   async function fetchAiSuggestions() {
-    if (!cropCoshId || aiImages.length === 0 || fetchingSuggestions) return
-    setFetchingSuggestions(true)
+    if (!cropCoshId || aiImages.length === 0) return
+    setAiFallbackPhase('loading_suggestions')
     setAiSuggestionsUnavailable(false)
     try {
       const payload = {
@@ -404,6 +450,8 @@ export default function DiagnosisPage() {
         crop_cosh_id: cropCoshId,
         crop_stage_cosh_id: selectedStage?.cosh_id || null,
         images: aiImages.map(i => ({ base64: i.base64, media_type: i.media_type })),
+        tentative_name: aiTentativeName,
+        symptoms_description: aiSymptomsDescription || null,
       }
       const { data } = await api.post<{
         guidance: string
@@ -415,11 +463,11 @@ export default function DiagnosisPage() {
       } else {
         setAiSuggestions(data.guidance)
       }
+      setAiFallbackPhase('suggestions_shown')
     } catch {
       setAiSuggestionsUnavailable(true)
       setAiSuggestions(null)
-    } finally {
-      setFetchingSuggestions(false)
+      setAiFallbackPhase('suggestions_shown')
     }
   }
 
@@ -443,6 +491,11 @@ export default function DiagnosisPage() {
       if (data.needs_expert) {
         setStage('ai_needs_expert')
         setImageAnalysis(data.analysis)
+        // 2026-10-01 — Kick off the symptom-check call immediately so
+        // the farmer sees a loading spinner, then the symptoms card,
+        // instead of a bare "ask the Expert" screen.
+        resetAiFallback()
+        fetchAiSymptomCheck()
         return
       }
       // Confident match → reuse the diagnosed-screen path so the
@@ -853,65 +906,170 @@ export default function DiagnosisPage() {
           </div>
         )}
 
-        {/* AI couldn't match — route to FarmPundit, with optional
-            general-guidance fallback (2026-10-01). */}
+        {/* AI couldn't match — three-step farmer-centric fallback
+            flow (2026-10-01):
+              1. Show symptoms, farmer confirms
+              2. Reveal tentative name + "want suggestions?"
+              3. Show suggestions
+            Expert CTA available throughout. */}
         {stage === 'ai_needs_expert' && (
           <div className="mt-4 space-y-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-              <p className="text-base font-semibold text-amber-900">{t('aiNeedsExpert.title')}</p>
-              <p className="text-sm text-amber-800 mt-2">
-                {t('aiNeedsExpert.body')}
-              </p>
-            </div>
-            <button onClick={() => goToAskExpert()}
-              className="w-full py-4 rounded-2xl text-white font-semibold"
-              style={{ background: COLOUR }}>
-              {t('aiNeedsExpert.askExpert')}
-            </button>
 
-            {/* Secondary: AI general guidance while waiting for the
-                Expert. Hidden once suggestions have been rendered. */}
-            {!aiSuggestions && !aiSuggestionsUnavailable && (
-              <button
-                onClick={fetchAiSuggestions}
-                disabled={fetchingSuggestions}
-                className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50">
-                {fetchingSuggestions
-                  ? t('aiNeedsExpert.suggestionsLoading')
-                  : t('aiNeedsExpert.suggestionsCta')}
-              </button>
-            )}
-
-            {aiSuggestionsUnavailable && (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
-                <p className="text-xs text-slate-600">
-                  {t('aiNeedsExpert.suggestionsUnavailable')}
-                </p>
+            {aiFallbackPhase === 'loading_symptoms' && (
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
+                <div className="inline-block w-6 h-6 border-2 border-[#3A7D44] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-[#7A8C7E] mt-3">{t('aiNeedsExpert.symptomsLoading')}</p>
               </div>
             )}
 
-            {aiSuggestions && (
-              <div className="bg-white border border-emerald-200 rounded-2xl p-4 space-y-2">
-                <p className="text-[11px] text-emerald-700 uppercase tracking-wider font-semibold">
-                  {t('aiNeedsExpert.suggestionsHeader')}
+            {aiFallbackPhase === 'symptoms_unavailable' && (
+              <>
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                  <p className="text-base font-semibold text-amber-900">{t('aiNeedsExpert.title')}</p>
+                  <p className="text-sm text-amber-800 mt-2">{t('aiNeedsExpert.body')}</p>
+                </div>
+                <button onClick={() => goToAskExpert()}
+                  className="w-full py-4 rounded-2xl text-white font-semibold"
+                  style={{ background: COLOUR }}>
+                  {t('aiNeedsExpert.askExpert')}
+                </button>
+              </>
+            )}
+
+            {aiFallbackPhase === 'awaiting_symptom_confirmation' && (
+              <>
+                <div className="bg-white border border-[#DDD0B8] rounded-2xl p-5 space-y-2">
+                  <p className="text-[11px] text-[#7A8C7E] uppercase tracking-wider font-semibold">
+                    {t('aiNeedsExpert.observedSymptomsHeader')}
+                  </p>
+                  <p className="text-sm text-[#6B3F1F] leading-relaxed whitespace-pre-wrap">
+                    {aiSymptomsDescription}
+                  </p>
+                </div>
+                <p className="text-sm text-[#6B3F1F] text-center font-medium">
+                  {t('aiNeedsExpert.symptomsConfirmPrompt')}
                 </p>
-                <p className="text-sm text-[#6B3F1F] whitespace-pre-wrap leading-relaxed">
-                  {aiSuggestions}
+                <button
+                  onClick={() => setAiFallbackPhase('awaiting_management_choice')}
+                  className="w-full py-4 rounded-2xl text-white font-semibold"
+                  style={{ background: COLOUR }}>
+                  {t('aiNeedsExpert.symptomsConfirmYes')}
+                </button>
+                <button
+                  onClick={() => setAiFallbackPhase('symptom_denied')}
+                  className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
+                  {t('aiNeedsExpert.symptomsConfirmNo')}
+                </button>
+              </>
+            )}
+
+            {aiFallbackPhase === 'symptom_denied' && (
+              <>
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                  <p className="text-base font-semibold text-amber-900">
+                    {t('aiNeedsExpert.symptomsDeniedTitle')}
+                  </p>
+                  <p className="text-sm text-amber-800 mt-2">
+                    {t('aiNeedsExpert.symptomsDeniedBody')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => { setImageAnalysis(null); resetAiFallback(); setStage('ai_capture') }}
+                  className="w-full py-4 rounded-2xl text-white font-semibold"
+                  style={{ background: COLOUR }}>
+                  {t('aiNeedsExpert.tryDifferent')}
+                </button>
+                <button onClick={() => goToAskExpert()}
+                  className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
+                  {t('aiNeedsExpert.askExpert')}
+                </button>
+              </>
+            )}
+
+            {aiFallbackPhase === 'awaiting_management_choice' && (
+              <>
+                {aiTentativeName ? (
+                  <div className="bg-white border border-amber-200 rounded-2xl p-5 space-y-2">
+                    <p className="text-sm text-[#6B3F1F]">
+                      {t('aiNeedsExpert.tentativeNamePrefix')}
+                    </p>
+                    <p className="text-xl font-bold text-amber-900">{aiTentativeName}</p>
+                    <p className="text-[11px] text-slate-500 italic pt-1">
+                      {t('aiNeedsExpert.tentativeNameNote')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-white border border-[#DDD0B8] rounded-2xl p-5">
+                    <p className="text-sm text-[#6B3F1F]">
+                      {t('aiNeedsExpert.noTentativeName')}
+                    </p>
+                  </div>
+                )}
+                <p className="text-sm text-[#6B3F1F] text-center font-medium">
+                  {t('aiNeedsExpert.tentativeNamePrompt')}
                 </p>
-                <p className="text-[11px] text-slate-500 italic pt-2 border-t border-slate-100">
-                  {t('aiNeedsExpert.suggestionsDisclaimer')}
-                </p>
+                <button
+                  onClick={() => goToAskExpert()}
+                  className="w-full py-4 rounded-2xl text-white font-semibold"
+                  style={{ background: COLOUR }}>
+                  {t('aiNeedsExpert.askExpert')}
+                </button>
+                <button
+                  onClick={fetchAiSuggestions}
+                  className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium">
+                  {t('aiNeedsExpert.showSuggestionsCta')}
+                </button>
+              </>
+            )}
+
+            {aiFallbackPhase === 'loading_suggestions' && (
+              <div className="bg-white border border-[#DDD0B8] rounded-2xl p-6 text-center">
+                <div className="inline-block w-6 h-6 border-2 border-[#3A7D44] border-t-transparent rounded-full animate-spin" />
+                <p className="text-sm text-[#7A8C7E] mt-3">{t('aiNeedsExpert.suggestionsLoading')}</p>
               </div>
             )}
 
-            <button onClick={() => { setImageAnalysis(null); setAiSuggestions(null); setAiSuggestionsUnavailable(false); setStage('ai_capture') }}
-              className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
-              {t('aiNeedsExpert.tryDifferent')}
-            </button>
-            <button onClick={() => { setImageAnalysis(null); setAiSuggestions(null); setAiSuggestionsUnavailable(false); setStage('select_method') }}
-              className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
-              {t('aiNeedsExpert.switchGuided')}
-            </button>
+            {aiFallbackPhase === 'suggestions_shown' && (
+              <>
+                {aiSuggestions ? (
+                  <div className="bg-white border border-emerald-200 rounded-2xl p-4 space-y-2">
+                    <p className="text-[11px] text-emerald-700 uppercase tracking-wider font-semibold">
+                      {t('aiNeedsExpert.suggestionsHeader')}
+                    </p>
+                    {aiTentativeName && (
+                      <p className="text-sm font-semibold text-[#6B3F1F]">
+                        {t('aiNeedsExpert.suggestionsForLabel')}: {aiTentativeName}
+                      </p>
+                    )}
+                    <p className="text-sm text-[#6B3F1F] whitespace-pre-wrap leading-relaxed">
+                      {aiSuggestions}
+                    </p>
+                    <p className="text-[11px] text-slate-500 italic pt-2 border-t border-slate-100">
+                      {t('aiNeedsExpert.suggestionsDisclaimer')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+                    <p className="text-xs text-slate-600">
+                      {t('aiNeedsExpert.suggestionsUnavailable')}
+                    </p>
+                  </div>
+                )}
+                <button onClick={() => goToAskExpert()}
+                  className="w-full py-4 rounded-2xl text-white font-semibold"
+                  style={{ background: COLOUR }}>
+                  {t('aiNeedsExpert.askExpert')}
+                </button>
+                <button onClick={() => { setImageAnalysis(null); resetAiFallback(); setStage('ai_capture') }}
+                  className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
+                  {t('aiNeedsExpert.tryDifferent')}
+                </button>
+                <button onClick={() => { setImageAnalysis(null); resetAiFallback(); setStage('select_method') }}
+                  className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
+                  {t('aiNeedsExpert.switchGuided')}
+                </button>
+              </>
+            )}
           </div>
         )}
 
