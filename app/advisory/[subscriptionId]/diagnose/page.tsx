@@ -96,6 +96,13 @@ export default function DiagnosisPage() {
   // distinct from the in-loop Ask AI verdict below).
   const [analyzingImage, setAnalyzingImage] = useState(false)
   const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysis | null>(null)
+  // 2026-10-01 — General-management suggestions. When the AI couldn't
+  // match the photo to any curated catalogue entry, farmer can
+  // optionally request safe general guidance while waiting for the
+  // Expert. Textbox output, no advisory integration.
+  const [fetchingSuggestions, setFetchingSuggestions] = useState(false)
+  const [aiSuggestions, setAiSuggestions] = useState<string | null>(null)
+  const [aiSuggestionsUnavailable, setAiSuggestionsUnavailable] = useState(false)
   // In-loop Ask AI verdict — answers the current Yes/No question, does
   // NOT advance the diagnose flow on its own.
   const [symptomCheck, setSymptomCheck] = useState<SymptomCheck | null>(null)
@@ -385,6 +392,35 @@ export default function DiagnosisPage() {
       if (removed?.preview) URL.revokeObjectURL(removed.preview)
       return next
     })
+  }
+
+  async function fetchAiSuggestions() {
+    if (!cropCoshId || aiImages.length === 0 || fetchingSuggestions) return
+    setFetchingSuggestions(true)
+    setAiSuggestionsUnavailable(false)
+    try {
+      const payload = {
+        subscription_id: subscriptionId,
+        crop_cosh_id: cropCoshId,
+        crop_stage_cosh_id: selectedStage?.cosh_id || null,
+        images: aiImages.map(i => ({ base64: i.base64, media_type: i.media_type })),
+      }
+      const { data } = await api.post<{
+        guidance: string
+        unavailable: boolean
+      }>('/diagnosis/ai-general-suggestions', payload)
+      if (data.unavailable || !data.guidance) {
+        setAiSuggestionsUnavailable(true)
+        setAiSuggestions(null)
+      } else {
+        setAiSuggestions(data.guidance)
+      }
+    } catch {
+      setAiSuggestionsUnavailable(true)
+      setAiSuggestions(null)
+    } finally {
+      setFetchingSuggestions(false)
+    }
   }
 
   async function submitAiDiagnosis() {
@@ -817,13 +853,14 @@ export default function DiagnosisPage() {
           </div>
         )}
 
-        {/* AI couldn't match — route to FarmPundit */}
+        {/* AI couldn't match — route to FarmPundit, with optional
+            general-guidance fallback (2026-10-01). */}
         {stage === 'ai_needs_expert' && (
           <div className="mt-4 space-y-4">
             <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
               <p className="text-base font-semibold text-amber-900">{t('aiNeedsExpert.title')}</p>
               <p className="text-sm text-amber-800 mt-2">
-                {imageAnalysis?.description || t('aiNeedsExpert.bodyFallback')}
+                {t('aiNeedsExpert.body')}
               </p>
             </div>
             <button onClick={() => goToAskExpert()}
@@ -831,11 +868,47 @@ export default function DiagnosisPage() {
               style={{ background: COLOUR }}>
               {t('aiNeedsExpert.askExpert')}
             </button>
-            <button onClick={() => { setImageAnalysis(null); setStage('ai_capture') }}
+
+            {/* Secondary: AI general guidance while waiting for the
+                Expert. Hidden once suggestions have been rendered. */}
+            {!aiSuggestions && !aiSuggestionsUnavailable && (
+              <button
+                onClick={fetchAiSuggestions}
+                disabled={fetchingSuggestions}
+                className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium disabled:opacity-50">
+                {fetchingSuggestions
+                  ? t('aiNeedsExpert.suggestionsLoading')
+                  : t('aiNeedsExpert.suggestionsCta')}
+              </button>
+            )}
+
+            {aiSuggestionsUnavailable && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+                <p className="text-xs text-slate-600">
+                  {t('aiNeedsExpert.suggestionsUnavailable')}
+                </p>
+              </div>
+            )}
+
+            {aiSuggestions && (
+              <div className="bg-white border border-emerald-200 rounded-2xl p-4 space-y-2">
+                <p className="text-[11px] text-emerald-700 uppercase tracking-wider font-semibold">
+                  {t('aiNeedsExpert.suggestionsHeader')}
+                </p>
+                <p className="text-sm text-[#6B3F1F] whitespace-pre-wrap leading-relaxed">
+                  {aiSuggestions}
+                </p>
+                <p className="text-[11px] text-slate-500 italic pt-2 border-t border-slate-100">
+                  {t('aiNeedsExpert.suggestionsDisclaimer')}
+                </p>
+              </div>
+            )}
+
+            <button onClick={() => { setImageAnalysis(null); setAiSuggestions(null); setAiSuggestionsUnavailable(false); setStage('ai_capture') }}
               className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
               {t('aiNeedsExpert.tryDifferent')}
             </button>
-            <button onClick={() => { setImageAnalysis(null); setStage('select_method') }}
+            <button onClick={() => { setImageAnalysis(null); setAiSuggestions(null); setAiSuggestionsUnavailable(false); setStage('select_method') }}
               className="w-full py-3 rounded-2xl border border-[#DDD0B8] text-[#6B3F1F] text-sm">
               {t('aiNeedsExpert.switchGuided')}
             </button>

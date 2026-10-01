@@ -439,11 +439,17 @@
       "back": "← Back"
     },
     "aiNeedsExpert": {
-      "title": "AI is not sure about this one",
+      "title": "Our experts should take a look at this one",
+      "body": "Based on the photos, this needs a closer look from a FarmPundit expert. We recommend asking an expert for the most reliable guidance.",
       "bodyFallback": "The photos didn't match a problem the AI is confident about for this crop and stage. A FarmPundit expert will give you a more reliable answer.",
       "tryDifferent": "📷 Try different photos",
       "switchGuided": "🧑‍🌾 Switch to guided diagnosis",
-      "askExpert": "👨‍🌾 Ask Expert →"
+      "askExpert": "👨‍🌾 Ask Expert →",
+      "suggestionsCta": "Get general suggestions from AI (while you wait)",
+      "suggestionsLoading": "Getting suggestions…",
+      "suggestionsHeader": "AI's general suggestions",
+      "suggestionsUnavailable": "AI couldn't generate suggestions right now. Please ask the Expert for guidance.",
+      "suggestionsDisclaimer": "This is general guidance from AI — not a verified diagnosis. Please confirm with the Expert before applying any inputs."
     },
     "knowProblem": {
       "title": "Select the Problem",

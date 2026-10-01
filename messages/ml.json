@@ -219,6 +219,12 @@
     "aiNeedsExpert": {
       "title": "AI-ക്ക് ഇതിനെക്കുറിച്ച് ഉറപ്പില്ല.",
       "bodyFallback": "ഈ വിളയ്ക്കും ഘട്ടത്തിനും AI ഉറപ്പ് നൽകുന്ന ഒരു പ്രശ്നവുമായി ഫോട്ടോകൾ പൊരുത്തപ്പെടുന്നില്ല. ഒരു ഫാംപണ്ടിറ്റ് വിദഗ്ദ്ധൻ നിങ്ങൾക്ക് കൂടുതൽ വിശ്വസനീയമായ ഉത്തരം നൽകും.",
+      "body": "Based on the photos, this needs a closer look from a FarmPundit expert. We recommend asking an expert for the most reliable guidance.",
+      "suggestionsCta": "Get general suggestions from AI (while you wait)",
+      "suggestionsLoading": "Getting suggestions…",
+      "suggestionsHeader": "AI's general suggestions",
+      "suggestionsUnavailable": "AI couldn't generate suggestions right now. Please ask the Expert for guidance.",
+      "suggestionsDisclaimer": "This is general guidance from AI — not a verified diagnosis. Please confirm with the Expert before applying any inputs.",
       "tryDifferent": "📷 വ്യത്യസ്ത ഫോട്ടോകൾ പരീക്ഷിച്ചുനോക്കൂ",
       "switchGuided": "🧑‍🌾 ഗൈഡഡ് ഡയഗ്നോസിസ് എന്നതിലേക്ക് മാറുക",
       "askExpert": "👨‍🌾 വിദഗ്ദ്ധനോട് ചോദിക്കുക →"

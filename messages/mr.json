@@ -219,6 +219,12 @@
     "aiNeedsExpert": {
       "title": "एआयला याबद्दल खात्री नाही.",
       "bodyFallback": "फोटो त्या समस्येशी जुळले नाहीत, ज्याबद्दल एआयला या पिकासाठी आणि टप्प्यासाठी खात्री आहे. फार्मपंडिटचे तज्ञ तुम्हाला अधिक विश्वसनीय उत्तर देतील.",
+      "body": "Based on the photos, this needs a closer look from a FarmPundit expert. We recommend asking an expert for the most reliable guidance.",
+      "suggestionsCta": "Get general suggestions from AI (while you wait)",
+      "suggestionsLoading": "Getting suggestions…",
+      "suggestionsHeader": "AI's general suggestions",
+      "suggestionsUnavailable": "AI couldn't generate suggestions right now. Please ask the Expert for guidance.",
+      "suggestionsDisclaimer": "This is general guidance from AI — not a verified diagnosis. Please confirm with the Expert before applying any inputs.",
       "tryDifferent": "📷 वेगवेगळे फोटो काढून बघा",
       "switchGuided": "🧑‍🌾 मार्गदर्शित निदानावर स्विच करा",
       "askExpert": "👨‍🌾 तज्ञांना विचारा →"

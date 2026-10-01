@@ -219,6 +219,12 @@
     "aiNeedsExpert": {
       "title": "செயற்கை நுண்ணறிவுக்கு இதுபற்றி உறுதியாகத் தெரியவில்லை.",
       "bodyFallback": "இந்தப் பயிர் மற்றும் வளர்ச்சி நிலைக்கு, செயற்கை நுண்ணறிவு உறுதியாகக் கூறும் ஒரு பிரச்சனையுடன் இந்தப் புகைப்படங்கள் பொருந்தவில்லை. ஒரு FarmPundit நிபுணர் உங்களுக்கு மிகவும் நம்பகமான பதிலை வழங்குவார்.",
+      "body": "Based on the photos, this needs a closer look from a FarmPundit expert. We recommend asking an expert for the most reliable guidance.",
+      "suggestionsCta": "Get general suggestions from AI (while you wait)",
+      "suggestionsLoading": "Getting suggestions…",
+      "suggestionsHeader": "AI's general suggestions",
+      "suggestionsUnavailable": "AI couldn't generate suggestions right now. Please ask the Expert for guidance.",
+      "suggestionsDisclaimer": "This is general guidance from AI — not a verified diagnosis. Please confirm with the Expert before applying any inputs.",
       "tryDifferent": "📷 வெவ்வேறு புகைப்படங்களை முயற்சித்துப் பாருங்கள்",
       "switchGuided": "🧑‍🌾 வழிகாட்டப்பட்ட நோயறிதலுக்கு மாறுங்கள்",
       "askExpert": "👨‍🌾 நிபுணரிடம் கேளுங்கள் →"

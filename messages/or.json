@@ -219,6 +219,12 @@
     "aiNeedsExpert": {
       "title": "AI ଏହା ବିଷୟରେ ନିଶ୍ଚିତ ନୁହେଁ।",
       "bodyFallback": "ଏହି ଫସଲ ଏବଂ ପର୍ଯ୍ୟାୟ ପାଇଁ AI ଯେଉଁ ସମସ୍ୟା ବିଷୟରେ ବିଶ୍ୱାସ କରେ ତାହା ସହିତ ଫଟୋଗୁଡ଼ିକ ମେଳ ଖାଉନାହିଁ। ଜଣେ FarmPundit ବିଶେଷଜ୍ଞ ଆପଣଙ୍କୁ ଅଧିକ ନିର୍ଭରଯୋଗ୍ୟ ଉତ୍ତର ଦେବେ।",
+      "body": "Based on the photos, this needs a closer look from a FarmPundit expert. We recommend asking an expert for the most reliable guidance.",
+      "suggestionsCta": "Get general suggestions from AI (while you wait)",
+      "suggestionsLoading": "Getting suggestions…",
+      "suggestionsHeader": "AI's general suggestions",
+      "suggestionsUnavailable": "AI couldn't generate suggestions right now. Please ask the Expert for guidance.",
+      "suggestionsDisclaimer": "This is general guidance from AI — not a verified diagnosis. Please confirm with the Expert before applying any inputs.",
       "tryDifferent": "📷 ଭିନ୍ନ ଫଟୋ ଚେଷ୍ଟା କରନ୍ତୁ",
       "switchGuided": "🧑‍🌾 ନିର୍ଦ୍ଦେଶିତ ରୋଗ ନିର୍ଣ୍ଣୟକୁ ସ୍ୱିଚ୍ କରନ୍ତୁ",
       "askExpert": "👨‍🌾 ବିଶେଷଜ୍ଞଙ୍କୁ ପଚାରନ୍ତୁ →"

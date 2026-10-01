@@ -219,6 +219,12 @@
     "aiNeedsExpert": {
       "title": "ಇದರ ಬಗ್ಗೆ AI ಗೆ ಖಚಿತವಿಲ್ಲ.",
       "bodyFallback": "ಈ ಬೆಳೆ ಮತ್ತು ಹಂತಕ್ಕೆ ಸಂಬಂಧಿಸಿದಂತೆ AI ವಿಶ್ವಾಸ ಹೊಂದಿರುವ ಸಮಸ್ಯೆಗೆ ಫೋಟೋಗಳು ಹೊಂದಿಕೆಯಾಗಲಿಲ್ಲ. ಫಾರ್ಮ್‌ಪಂಡಿಟ್ ತಜ್ಞರು ನಿಮಗೆ ಹೆಚ್ಚು ವಿಶ್ವಾಸಾರ್ಹ ಉತ್ತರವನ್ನು ನೀಡುತ್ತಾರೆ.",
+      "body": "Based on the photos, this needs a closer look from a FarmPundit expert. We recommend asking an expert for the most reliable guidance.",
+      "suggestionsCta": "Get general suggestions from AI (while you wait)",
+      "suggestionsLoading": "Getting suggestions…",
+      "suggestionsHeader": "AI's general suggestions",
+      "suggestionsUnavailable": "AI couldn't generate suggestions right now. Please ask the Expert for guidance.",
+      "suggestionsDisclaimer": "This is general guidance from AI — not a verified diagnosis. Please confirm with the Expert before applying any inputs.",
       "tryDifferent": "📷 ವಿಭಿನ್ನ ಫೋಟೋಗಳನ್ನು ಪ್ರಯತ್ನಿಸಿ",
       "switchGuided": "🧑‍🌾 ಮಾರ್ಗದರ್ಶಿ ರೋಗನಿರ್ಣಯಕ್ಕೆ ಬದಲಿಸಿ",
       "askExpert": "👨‍🌾 ತಜ್ಞರನ್ನು ಕೇಳಿ →"
