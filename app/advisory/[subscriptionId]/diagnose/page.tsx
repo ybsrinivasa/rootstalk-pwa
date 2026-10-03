@@ -18,7 +18,7 @@ interface Question {
   question_type: string; display_text: string
 }
 interface ProblemInfo {
-  cosh_id: string; name: string; type: string; parent_cosh_id?: string
+  cosh_id: string; name: string; name_en?: string; type: string; parent_cosh_id?: string
   claude_description?: string    // 2-sentence farmer-friendly description from Claude
 }
 interface CommitResult { committed_to_advisory: boolean; already_committed?: boolean }
@@ -89,6 +89,13 @@ export default function DiagnosisPage() {
   const aiFileInputRef = useRef<HTMLInputElement>(null)
   const [cropCoshId, setCropCoshId] = useState<string | null>(null)
   const [cropName, setCropName] = useState<string | null>(null)
+  // 2026-10-03 — English crop name used for Google Images searches.
+  // Agri reference databases (TNAU, CABI, KAU, etc.) index primarily
+  // in English, so even a Kannada farmer gets better reference hits
+  // on an English query. Falls back to cropName when the backend
+  // doesn't ship an English name (older /farmer/my-subscriptions
+  // responses).
+  const [cropNameEn, setCropNameEn] = useState<string | null>(null)
   const [answering, setAnswering] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -152,7 +159,7 @@ export default function DiagnosisPage() {
     if (!getToken()) { router.replace('/register'); return }
     // Load subscription to get crop_cosh_id + Ask-Expert eligibility.
     api.get<{
-      id: string; crop_cosh_id?: string; crop_name?: string
+      id: string; crop_cosh_id?: string; crop_name?: string; crop_name_en?: string
       client_has_primary_expert?: boolean
     }[]>('/farmer/my-subscriptions')
       .then(r => {
@@ -161,6 +168,7 @@ export default function DiagnosisPage() {
         if (sub?.crop_cosh_id) {
           setCropCoshId(sub.crop_cosh_id)
           setCropName(sub.crop_name || null)
+          setCropNameEn(sub.crop_name_en || sub.crop_name || null)
           loadCropStages(sub.crop_cosh_id)
         } else {
           setLoading(false)
@@ -1187,7 +1195,7 @@ export default function DiagnosisPage() {
                         {t('questioning.seeMore', { count: refImages.length - 2 })}
                       </button>
                     ) : <span />}
-                    <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
+                    <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropNameEn || cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
                       target="_blank" rel="noopener noreferrer"
                       className="text-[11px] text-[#7A8C7E] underline underline-offset-2">
                       {t('questioning.searchGoogle')}
@@ -1199,7 +1207,7 @@ export default function DiagnosisPage() {
                   <p className="text-xs text-[#7A8C7E]">
                     {t('questioning.noCuratedExamples')}
                   </p>
-                  <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
+                  <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropNameEn || cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
                     target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 underline underline-offset-2">
                     {t('questioning.searchGoogleImages')}
@@ -1352,7 +1360,14 @@ export default function DiagnosisPage() {
                     </button>
                     <a
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-                        [cropCoshId?.replace(/_/g, ' '), p.name].filter(Boolean).join(' ')
+                        // 2026-10-03 — English-only query terms.
+                        // Previously used cropCoshId.replace(/_/g,' ')
+                        // which just emitted the UUID into the search
+                        // (legacy slug-format expectation that no
+                        // longer holds). Also uses English problem
+                        // name because agri reference databases index
+                        // primarily in English.
+                        [cropNameEn || cropName, p.name_en || p.name].filter(Boolean).join(' ')
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -1407,8 +1422,10 @@ export default function DiagnosisPage() {
               {/* Google Images for quick visual check */}
               {diagnosis && (
                 <a
+                  // 2026-10-03 — English-only query terms; see
+                  // knowProblem.seeImages above for rationale.
                   href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-                    [cropCoshId?.replace(/_/g, ' '), diagnosis.name].filter(Boolean).join(' ')
+                    [cropNameEn || cropName, diagnosis.name_en || diagnosis.name].filter(Boolean).join(' ')
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -1478,8 +1495,10 @@ export default function DiagnosisPage() {
                     </p>
                     {/* Google Images link — pre-formed search [Crop] [Problem name] */}
                     <a
+                      // 2026-10-03 — English-only query; see confirming
+                      // card above for rationale.
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-                        [cropCoshId?.replace(/_/g, ' '), diagnosis.name].filter(Boolean).join(' ')
+                        [cropNameEn || cropName, diagnosis.name_en || diagnosis.name].filter(Boolean).join(' ')
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
