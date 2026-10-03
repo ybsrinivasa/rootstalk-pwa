@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 பொருளைச் சேமி} other {# பொருட்களைச் சேமி}}",
       "unitPlaceholder": "கிகி / லி / பாக்கெட்",
       "recordingSaleFor": "விற்பனையை பதிவு செய்கிறோம்",
-      "changeFarmer": "விவசாயியை மாற்றவும்"
+      "changeFarmer": "விவசாயியை மாற்றவும்",
+      "creditAccountCta": "இந்த விவசாயியின் கடன் இருப்பைப் பார்க்க",
+      "addSaleForFarmerCta": "இந்த விவசாயிக்கு விற்பனையைச் சேர்க்கவும்"
     }
   },
   "facilitator": {

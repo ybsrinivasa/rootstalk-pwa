@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 వస్తువును సేవ్ చేయండి} other {# వస్తువులను సేవ్ చేయండి}}",
       "unitPlaceholder": "కిలో / లీ / ప్యాకెట్",
       "recordingSaleFor": "ఇతనికి అమ్మకం నమోదు చేస్తున్నాం",
-      "changeFarmer": "రైతును మార్చండి"
+      "changeFarmer": "రైతును మార్చండి",
+      "creditAccountCta": "ఈ రైతు క్రెడిట్ బ్యాలెన్స్ చూడండి",
+      "addSaleForFarmerCta": "ఈ రైతుకు అమ్మకాన్ని జోడించండి"
     }
   },
   "facilitator": {

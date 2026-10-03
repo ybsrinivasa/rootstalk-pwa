@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 آئٹم محفوظ کریں} other {# آئٹمز محفوظ کریں}}",
       "unitPlaceholder": "کلو / لیٹر / پیکٹ",
       "recordingSaleFor": "فروخت درج کی جا رہی ہے",
-      "changeFarmer": "کسان تبدیل کریں"
+      "changeFarmer": "کسان تبدیل کریں",
+      "creditAccountCta": "اس کسان کا کریڈٹ بیلنس دیکھیں",
+      "addSaleForFarmerCta": "اس کسان کے لیے فروخت شامل کریں"
     }
   },
   "facilitator": {

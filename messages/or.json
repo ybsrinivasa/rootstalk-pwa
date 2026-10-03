@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 ବସ୍ତୁ ସଞ୍ଚୟ କରନ୍ତୁ} other {# ବସ୍ତୁ ସଞ୍ଚୟ କରନ୍ତୁ}}",
       "unitPlaceholder": "କିଗ୍ରା / ଲି / ପ୍ୟାକେଟ",
       "recordingSaleFor": "ବିକ୍ରୟ ରେକର୍ଡ କରୁଛୁ",
-      "changeFarmer": "କୃଷକ ବଦଳାନ୍ତୁ"
+      "changeFarmer": "କୃଷକ ବଦଳାନ୍ତୁ",
+      "creditAccountCta": "ଏହି କୃଷକଙ୍କ ଉଧାର ବ୍ୟାଲାନ୍ସ ଦେଖନ୍ତୁ",
+      "addSaleForFarmerCta": "ଏହି କୃଷକ ପାଇଁ ବିକ୍ରୟ ଯୋଡ଼ନ୍ତୁ"
     }
   },
   "facilitator": {

@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 વસ્તુ સાચવો} other {# વસ્તુઓ સાચવો}}",
       "unitPlaceholder": "કિગ્રા / લિટર / પેકેટ",
       "recordingSaleFor": "વેચાણ નોંધી રહ્યા છીએ",
-      "changeFarmer": "ખેડૂત બદલો"
+      "changeFarmer": "ખેડૂત બદલો",
+      "creditAccountCta": "આ ખેડૂતનું ઉધાર બેલેન્સ જુઓ",
+      "addSaleForFarmerCta": "આ ખેડૂત માટે વેચાણ ઉમેરો"
     }
   },
   "facilitator": {

@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 সামগ্ৰী ছেভ কৰক} other {# সামগ্ৰী ছেভ কৰক}}",
       "unitPlaceholder": "কেজি / লিটাৰ / পেকেট",
       "recordingSaleFor": "বিক্ৰী ৰেকৰ্ড কৰিছো",
-      "changeFarmer": "কৃষক সলনি কৰক"
+      "changeFarmer": "কৃষক সলনি কৰক",
+      "creditAccountCta": "এই কৃষকৰ ক্ৰেডিট বেলেন্স চাওক",
+      "addSaleForFarmerCta": "এই কৃষকৰ বাবে বিক্ৰী যোগ কৰক"
     }
   },
   "facilitator": {

@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 ഇനം സേവ് ചെയ്യുക} other {# ഇനങ്ങൾ സേവ് ചെയ്യുക}}",
       "unitPlaceholder": "കിലോ / ലീറ്റർ / പാക്കറ്റ്",
       "recordingSaleFor": "വില്പന രേഖപ്പെടുത്തുന്നു",
-      "changeFarmer": "കർഷകനെ മാറ്റുക"
+      "changeFarmer": "കർഷകനെ മാറ്റുക",
+      "creditAccountCta": "ഈ കർഷകന്റെ ക്രെഡിറ്റ് ബാലൻസ് കാണുക",
+      "addSaleForFarmerCta": "ഈ കർഷകനായി വില്പന ചേർക്കുക"
     }
   },
   "facilitator": {

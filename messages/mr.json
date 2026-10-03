@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 वस्तू जतन करा} other {# वस्तू जतन करा}}",
       "unitPlaceholder": "किलो / लिटर / पॅकेट",
       "recordingSaleFor": "विक्री नोंदवत आहे",
-      "changeFarmer": "शेतकरी बदला"
+      "changeFarmer": "शेतकरी बदला",
+      "creditAccountCta": "या शेतकऱ्याची उधारी शिल्लक पहा",
+      "addSaleForFarmerCta": "या शेतकऱ्यासाठी विक्री जोडा"
     }
   },
   "facilitator": {

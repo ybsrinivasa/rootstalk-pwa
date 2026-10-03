@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 আইটেম সংরক্ষণ করুন} other {# আইটেম সংরক্ষণ করুন}}",
       "unitPlaceholder": "কেজি / লিটার / প্যাকেট",
       "recordingSaleFor": "বিক্রয় রেকর্ড করছি",
-      "changeFarmer": "কৃষক পরিবর্তন করুন"
+      "changeFarmer": "কৃষক পরিবর্তন করুন",
+      "creditAccountCta": "এই কৃষকের ক্রেডিট ব্যালেন্স দেখুন",
+      "addSaleForFarmerCta": "এই কৃষকের জন্য বিক্রয় যোগ করুন"
     }
   },
   "facilitator": {

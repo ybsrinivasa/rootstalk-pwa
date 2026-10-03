@@ -2351,7 +2351,9 @@
       "saveBatchButton": "{count, plural, one {1 ਵਸਤੂ ਸੰਭਾਲੋ} other {# ਵਸਤੂਆਂ ਸੰਭਾਲੋ}}",
       "unitPlaceholder": "ਕਿਲੋ / ਲੀਟਰ / ਪੈਕੇਟ",
       "recordingSaleFor": "ਵਿਕਰੀ ਦਰਜ ਕਰ ਰਹੇ ਹਾਂ",
-      "changeFarmer": "ਕਿਸਾਨ ਬਦਲੋ"
+      "changeFarmer": "ਕਿਸਾਨ ਬਦਲੋ",
+      "creditAccountCta": "ਇਸ ਕਿਸਾਨ ਦਾ ਉਧਾਰ ਬਕਾਇਆ ਦੇਖੋ",
+      "addSaleForFarmerCta": "ਇਸ ਕਿਸਾਨ ਲਈ ਵਿਕਰੀ ਸ਼ਾਮਲ ਕਰੋ"
     }
   },
   "facilitator": {
