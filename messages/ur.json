@@ -2342,6 +2342,14 @@
         "photoUploadFailed": "تصویر اپ لوڈ نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔",
         "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
+    },
+    "ledger": {
+      "saleDateSharedHint": "یہ تاریخ نیچے دی گئی ہر چیز پر لاگو ہوتی ہے۔",
+      "itemNumberLabel": "آئٹم {n}",
+      "addAnotherItem": "+ ایک اور آئٹم شامل کریں",
+      "itemCapReached": "زیادہ سے زیادہ {max} آئٹمز۔ محفوظ کریں اور نیا شروع کریں۔",
+      "saveBatchButton": "{count, plural, one {1 آئٹم محفوظ کریں} other {# آئٹمز محفوظ کریں}}",
+      "unitPlaceholder": "کلو / لیٹر / پیکٹ"
     }
   },
   "facilitator": {

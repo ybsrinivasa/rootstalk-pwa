@@ -2021,7 +2021,8 @@
       "itemCapReached": "Maximum {max} items per batch. Save and start a new one.",
       "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}",
       "emptyRecent": "No purchases in the last 90 days. Tap Older or All to see earlier activity.",
-      "emptyOlder": "No purchases older than 90 days."
+      "emptyOlder": "No purchases older than 90 days.",
+      "unitPlaceholder": "kg / L / packet"
     },
     "payments": {
       "headerTitle": "Farmer Payments",

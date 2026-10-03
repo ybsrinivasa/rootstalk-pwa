@@ -2342,6 +2342,14 @@
         "photoUploadFailed": "ఫోటోను అప్‌లోడ్ చేయలేకపోయాను. దయచేసి మళ్ళీ ప్రయత్నించండి.",
         "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
+    },
+    "ledger": {
+      "saleDateSharedHint": "ఈ తేదీ క్రింది ప్రతి వస్తువుకి వర్తిస్తుంది.",
+      "itemNumberLabel": "వస్తువు {n}",
+      "addAnotherItem": "+ మరొక వస్తువును జోడించండి",
+      "itemCapReached": "గరిష్ఠంగా {max} వస్తువులు. సేవ్ చేసి కొత్తది ప్రారంభించండి.",
+      "saveBatchButton": "{count, plural, one {1 వస్తువును సేవ్ చేయండి} other {# వస్తువులను సేవ్ చేయండి}}",
+      "unitPlaceholder": "కిలో / లీ / ప్యాకెట్"
     }
   },
   "facilitator": {

@@ -1782,14 +1782,15 @@
       "addSaleForFarmerCta": "Add sale for this farmer",
       "recordingSaleFor": "Recording sale for",
       "changeFarmer": "Change farmer",
-      "saleDateSharedHint": "This date applies to every item below.",
-      "itemNumberLabel": "Item {n}",
+      "saleDateSharedHint": "ಈ ದಿನಾಂಕ ಕೆಳಗಿನ ಪ್ರತಿಯೊಂದು ಸಾಮಗ್ರಿಗೆ ಅನ್ವಯಿಸುತ್ತದೆ.",
+      "itemNumberLabel": "ಸಾಮಗ್ರಿ {n}",
       "removeItem": "Remove",
-      "addAnotherItem": "+ Add another item",
-      "itemCapReached": "Maximum {max} items per batch. Save and start a new one.",
-      "saveBatchButton": "{count, plural, one {Save 1 item} other {Save # items}}",
+      "addAnotherItem": "+ ಮತ್ತೊಂದು ಸಾಮಗ್ರಿ ಸೇರಿಸಿ",
+      "itemCapReached": "ಗರಿಷ್ಠ {max} ಸಾಮಗ್ರಿಗಳು. ಉಳಿಸಿ ಹೊಸತು ಪ್ರಾರಂಭಿಸಿ.",
+      "saveBatchButton": "{count, plural, one {1 ಸಾಮಗ್ರಿಯನ್ನು ಉಳಿಸಿ} other {# ಸಾಮಗ್ರಿಗಳನ್ನು ಉಳಿಸಿ}}",
       "emptyRecent": "ಕಳೆದ 90 ದಿನಗಳಲ್ಲಿ ಯಾವುದೇ ಖರೀದಿಗಳಿಲ್ಲ. ಹಳೆಯ ಚಟುವಟಿಕೆಯನ್ನು ನೋಡಲು ಹಳೆಯದು ಅಥವಾ ಎಲ್ಲಾ ಟ್ಯಾಪ್ ಮಾಡಿ.",
-      "emptyOlder": "90 ದಿನಗಳಿಗಿಂತ ಹಳೆಯ ಯಾವುದೇ ಖರೀದಿಗಳಿಲ್ಲ."
+      "emptyOlder": "90 ದಿನಗಳಿಗಿಂತ ಹಳೆಯ ಯಾವುದೇ ಖರೀದಿಗಳಿಲ್ಲ.",
+      "unitPlaceholder": "ಕೆ.ಜಿ / ಲೀ / ಪ್ಯಾಕೆಟ್"
     },
     "payments": {
       "headerTitle": "ರೈತರ ಪಾವತಿಗಳು",

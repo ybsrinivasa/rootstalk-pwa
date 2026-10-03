@@ -458,7 +458,7 @@ function ItemCard({
         <div>
           <label className="text-xs text-[#7A8C7E]">{t('unit')} *</label>
           <input value={item.unit} onChange={e => onPatch({ unit: e.target.value })}
-            placeholder="kg / L / packet"
+            placeholder={t('unitPlaceholder')}
             className="w-full px-3 py-2 border border-[#DDD0B8] rounded-xl text-sm mt-0.5" />
         </div>
         <div>

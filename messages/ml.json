@@ -2342,6 +2342,14 @@
         "photoUploadFailed": "ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല. വീണ്ടും ശ്രമിക്കുക.",
         "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
+    },
+    "ledger": {
+      "saleDateSharedHint": "ഈ തീയതി താഴെയുള്ള എല്ലാ ഇനങ്ങൾക്കും ബാധകമാണ്.",
+      "itemNumberLabel": "ഇനം {n}",
+      "addAnotherItem": "+ മറ്റൊരു ഇനം ചേർക്കുക",
+      "itemCapReached": "പരമാവധി {max} ഇനങ്ങൾ. സേവ് ചെയ്‌ത് പുതിയത് ആരംഭിക്കുക.",
+      "saveBatchButton": "{count, plural, one {1 ഇനം സേവ് ചെയ്യുക} other {# ഇനങ്ങൾ സേവ് ചെയ്യുക}}",
+      "unitPlaceholder": "കിലോ / ലീറ്റർ / പാക്കറ്റ്"
     }
   },
   "facilitator": {

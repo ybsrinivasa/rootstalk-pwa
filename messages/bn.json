@@ -2342,6 +2342,14 @@
         "photoUploadFailed": "ছবি আপলোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
         "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
+    },
+    "ledger": {
+      "saleDateSharedHint": "এই তারিখটি নীচের প্রতিটি আইটেমের জন্য প্রযোজ্য।",
+      "itemNumberLabel": "আইটেম {n}",
+      "addAnotherItem": "+ আরেকটি আইটেম যোগ করুন",
+      "itemCapReached": "সর্বাধিক {max} আইটেম। সংরক্ষণ করুন এবং নতুন শুরু করুন।",
+      "saveBatchButton": "{count, plural, one {1 আইটেম সংরক্ষণ করুন} other {# আইটেম সংরক্ষণ করুন}}",
+      "unitPlaceholder": "কেজি / লিটার / প্যাকেট"
     }
   },
   "facilitator": {

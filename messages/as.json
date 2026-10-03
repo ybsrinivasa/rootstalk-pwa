@@ -2342,6 +2342,14 @@
         "photoUploadFailed": "ফটো আপলোড কৰিব পৰা নগ'ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।",
         "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
+    },
+    "ledger": {
+      "saleDateSharedHint": "এই তাৰিখ তলৰ প্ৰতিটো সামগ্ৰীৰ বাবে প্ৰযোজ্য।",
+      "itemNumberLabel": "সামগ্ৰী {n}",
+      "addAnotherItem": "+ আন এটা সামগ্ৰী যোগ কৰক",
+      "itemCapReached": "সৰ্বাধিক {max} সামগ্ৰী। ছেভ কৰি নতুন আৰম্ভ কৰক।",
+      "saveBatchButton": "{count, plural, one {1 সামগ্ৰী ছেভ কৰক} other {# সামগ্ৰী ছেভ কৰক}}",
+      "unitPlaceholder": "কেজি / লিটাৰ / পেকেট"
     }
   },
   "facilitator": {

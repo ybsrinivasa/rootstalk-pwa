@@ -2342,6 +2342,14 @@
         "photoUploadFailed": "ਫੋਟੋ ਅੱਪਲੋਡ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
         "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
+    },
+    "ledger": {
+      "saleDateSharedHint": "ਇਹ ਤਾਰੀਖ ਹੇਠਾਂ ਦਿੱਤੀ ਹਰ ਵਸਤੂ ਉੱਤੇ ਲਾਗੂ ਹੁੰਦੀ ਹੈ।",
+      "itemNumberLabel": "ਵਸਤੂ {n}",
+      "addAnotherItem": "+ ਹੋਰ ਵਸਤੂ ਸ਼ਾਮਲ ਕਰੋ",
+      "itemCapReached": "ਵੱਧ ਤੋਂ ਵੱਧ {max} ਵਸਤੂਆਂ। ਸੰਭਾਲੋ ਅਤੇ ਨਵੀਂ ਸ਼ੁਰੂ ਕਰੋ।",
+      "saveBatchButton": "{count, plural, one {1 ਵਸਤੂ ਸੰਭਾਲੋ} other {# ਵਸਤੂਆਂ ਸੰਭਾਲੋ}}",
+      "unitPlaceholder": "ਕਿਲੋ / ਲੀਟਰ / ਪੈਕੇਟ"
     }
   },
   "facilitator": {

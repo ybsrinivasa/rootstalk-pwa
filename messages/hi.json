@@ -2342,6 +2342,14 @@
         "photoUploadFailed": "फोटो अपलोड नहीं हो पाई। कृपया दोबारा कोशिश करें।",
         "fastTrackHint": "Once approved, this brand will show in your brand list and you can complete the sale. Submissions are reviewed on fast-track."
       }
+    },
+    "ledger": {
+      "saleDateSharedHint": "यह दिनांक नीचे की सभी वस्तुओं पर लागू होता है।",
+      "itemNumberLabel": "वस्तु {n}",
+      "addAnotherItem": "+ दूसरी वस्तु जोड़ें",
+      "itemCapReached": "एक बार में अधिकतम {max} वस्तुएँ। सहेजें और नया प्रारंभ करें।",
+      "saveBatchButton": "{count, plural, one {1 वस्तु सहेजें} other {# वस्तुएँ सहेजें}}",
+      "unitPlaceholder": "किग्रा / लीटर / पैकेट"
     }
   },
   "facilitator": {
