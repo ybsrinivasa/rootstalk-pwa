@@ -1206,7 +1206,7 @@ export default function DiagnosisPage() {
                         {t('questioning.seeMore', { count: refImages.length - 2 })}
                       </button>
                     ) : <span />}
-                    <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(currentQuestion.plant_part_name), quoteIfPhrase(currentQuestion.symptom_name)].filter(Boolean).join(' '))}`}
+                    <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(currentQuestion.plant_part_name), currentQuestion.symptom_name ? `"${currentQuestion.symptom_name} symptom"` : ''].filter(Boolean).join(' '))}`}
                       target="_blank" rel="noopener noreferrer"
                       className="text-[11px] text-[#7A8C7E] underline underline-offset-2">
                       {t('questioning.searchGoogle')}
@@ -1218,7 +1218,7 @@ export default function DiagnosisPage() {
                   <p className="text-xs text-[#7A8C7E]">
                     {t('questioning.noCuratedExamples')}
                   </p>
-                  <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(currentQuestion.plant_part_name), quoteIfPhrase(currentQuestion.symptom_name)].filter(Boolean).join(' '))}`}
+                  <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(currentQuestion.plant_part_name), currentQuestion.symptom_name ? `"${currentQuestion.symptom_name} symptom"` : ''].filter(Boolean).join(' '))}`}
                     target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 underline underline-offset-2">
                     {t('questioning.searchGoogleImages')}
