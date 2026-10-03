@@ -785,7 +785,7 @@ export default function DiagnosisPage() {
                 {stages.map(st => (
                   <button key={st.cosh_id} onClick={() => pickStage(st)}
                     className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform flex items-center gap-4">
-                    <span className="text-3xl">{getStageEmoji(st.name_en || st.name)}</span>
+                    <StageIcon nameEn={st.name_en || st.name} pixelSize={56} />
                     <p className="font-medium text-[#6B3F1F] text-base">{st.name}</p>
                   </button>
                 ))}
@@ -1098,7 +1098,7 @@ export default function DiagnosisPage() {
                 {parts.map(part => (
                   <button key={part.cosh_id} onClick={() => startDiagnosis(part)}
                     className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform">
-                    <span className="text-3xl">{getPartEmoji(part.name_en || part.name)}</span>
+                    <PartIcon nameEn={part.name_en || part.name} pixelSize={64} />
                     <p className="font-medium text-[#6B3F1F] mt-2">{part.name}</p>
                   </button>
                 ))}
@@ -1125,7 +1125,7 @@ export default function DiagnosisPage() {
             {/* Question card */}
             <div className="bg-white rounded-3xl p-6 border border-[#DDD0B8] shadow-sm">
               <div className="text-center mb-6">
-                <span className="text-5xl">{getPartEmoji(currentQuestion.plant_part_name)}</span>
+                <PartIcon nameEn={currentQuestion.plant_part_name} pixelSize={88} />
                 <div className="flex items-center justify-center gap-2 mt-4">
                   <p className="text-xl font-bold text-[#6B3F1F] leading-tight">
                     {buildQuestionText(currentQuestion)}
@@ -1676,4 +1676,70 @@ function getPartEmoji(partName: string | null | undefined): string {
     if (lower.includes(key)) return emoji
   }
   return '🌱'
+}
+
+
+// 2026-10-03 — Illustration icons for stage + plant-part pickers.
+// Keyed on the English name so a locale change doesn't collapse all
+// options to the default sprite. Falls back to emoji when the image
+// hasn't shipped yet (so a missing sprite never leaves an empty tile).
+// English-name matching here MUST stay in sync with the emoji helpers
+// above — one map, two render paths.
+function getStageImage(nameEn: string | null | undefined): string | null {
+  if (!nameEn) return null
+  const lower = nameEn.toLowerCase()
+  if (lower.includes('seedling')) return '/icons/stages/seedling.png'
+  if (lower.includes('veget')) return '/icons/stages/vegetative.png'
+  if (lower.includes('reproduct') || lower.includes('flower'))
+    return '/icons/stages/reproductive.png'
+  return null
+}
+
+
+function getPartImage(nameEn: string | null | undefined): string | null {
+  if (!nameEn) return null
+  const lower = nameEn.toLowerCase()
+  // Order matters — "whole plant" must come before any "plant" or
+  // "leaf" (which it incidentally contains the substring of in some
+  // locales). Multi-word matches first.
+  if (lower.includes('whole plant')) return '/icons/plantparts/whole-plant.png'
+  if (lower.includes('upper canopy')) return '/icons/plantparts/upper-canopy.png'
+  if (lower.includes('lower canopy')) return '/icons/plantparts/lower-canopy.png'
+  if (lower.includes('leaf')) return '/icons/plantparts/leaf.png'
+  if (lower.includes('stem')) return '/icons/plantparts/stem.png'
+  if (lower.includes('root')) return '/icons/plantparts/root.png'
+  if (lower.includes('flower')) return '/icons/plantparts/flower.png'
+  if (lower.includes('fruit')) return '/icons/plantparts/fruit.png'
+  return null
+}
+
+
+// Combined-render helpers used at the three callsites. Return a
+// ready-to-mount JSX fragment so the diagnose page doesn't have to
+// branch on image-vs-emoji at every site.
+function StageIcon({ nameEn, pixelSize }: { nameEn: string | null | undefined; pixelSize: number }) {
+  const src = getStageImage(nameEn)
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" width={pixelSize} height={pixelSize}
+        className="object-contain inline-block"
+        style={{ width: pixelSize, height: pixelSize }} />
+    )
+  }
+  return <span style={{ fontSize: pixelSize * 0.75 }}>{getStageEmoji(nameEn)}</span>
+}
+
+
+function PartIcon({ nameEn, pixelSize }: { nameEn: string | null | undefined; pixelSize: number }) {
+  const src = getPartImage(nameEn)
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={src} alt="" width={pixelSize} height={pixelSize}
+        className="object-contain inline-block"
+        style={{ width: pixelSize, height: pixelSize }} />
+    )
+  }
+  return <span style={{ fontSize: pixelSize * 0.75 }}>{getPartEmoji(nameEn)}</span>
 }
