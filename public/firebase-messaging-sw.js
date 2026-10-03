@@ -64,15 +64,48 @@ messaging.onBackgroundMessage((payload) => {
 
 // Tap-through: bring the app to focus (or open it) at whatever route
 // the backend included in `data.click_action`, falling back to /.
+//
+// 2026-10-03 — Scope-aware navigate. This SW is registered at
+// `/firebase-cloud-messaging-push-scope` so it coexists with the
+// Workbox SW at `/sw.js` (which owns the app-wide scope).
+// Consequence: existing app windows (/home, /advisory/..., etc.)
+// are controlled by Workbox, NOT by this SW. `client.navigate()`
+// rejects on uncontrolled clients, which the previous
+// `.catch(() => {})` + unconditional `return client.focus()` turned
+// into "nothing happens on tap" — the tab just focused with URL
+// unchanged. Fix: try navigate inside try/catch and fall through to
+// openWindow on any failure, so the farmer always lands on the
+// intended screen even if we have to open a fresh window to do it.
+// Also: if an existing window is already at the target URL, just
+// focus it (saves a navigation).
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
   const target = (event.notification.data && event.notification.data.click_action) || '/'
   event.waitUntil((async () => {
-    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    for (const client of clients) {
+    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    // Prefer a window already at the target URL — just focus it.
+    for (const client of allClients) {
+      try {
+        const url = new URL(client.url)
+        if (url.pathname === target.split('?')[0].split('#')[0] && 'focus' in client) {
+          return client.focus()
+        }
+      } catch {
+        // Non-URL client (e.g. about:blank) — skip.
+      }
+    }
+    // Next: try to steer an existing window to the target. May
+    // reject if the client isn't controlled by this SW; fall
+    // through to openWindow in that case.
+    for (const client of allClients) {
       if ('focus' in client) {
-        client.navigate(target).catch(() => {})
-        return client.focus()
+        try {
+          await client.navigate(target)
+          return client.focus()
+        } catch {
+          // Scope / cross-origin / controller mismatch — try next
+          // client, else fall through to openWindow.
+        }
       }
     }
     if (self.clients.openWindow) {
