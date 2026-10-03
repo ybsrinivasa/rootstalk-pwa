@@ -1483,7 +1483,7 @@
     "expertWithin2Days": "ಫಾರ್ಮ್‌ಪಂಡಿಟ್ ತಜ್ಞರು 2 ದಿನಗಳಲ್ಲಿ ಪ್ರತಿಕ್ರಿಯಿಸುತ್ತಾರೆ.",
     "quotaPaidTitle": "{client} ಗೆ ನೀವು ಬಳಸಬಹುದಾದ {limit} ಉಚಿತ ಪ್ರಶ್ನೆಗಳು ಮುಗಿದಿವೆ.",
     "quotaPaidBody": "ಈ ಪ್ರಶ್ನೆಗೆ ₹ {price} ವೆಚ್ಚವಾಗುತ್ತದೆ, ಸಾಫ್ಟ್‌ವೇರ್ ಮೂಲಸೌಕರ್ಯಕ್ಕಾಗಿ <strong>rootsTALK.in</strong> ಗೆ ಪಾವತಿಸಲಾಗುತ್ತದೆ. ಇದನ್ನು {client} ಗೆ <em>ಪಾವತಿಸಲಾಗುವುದಿಲ್ಲ</em> .",
-    "quotaFreeRemaining": "{client} ಗೆ <strong>{remaining} {limit}</strong> ಉಚಿತ ಪ್ರಶ್ನೆಗಳು ಉಳಿದಿವೆ.",
+    "quotaFreeRemaining": "{client} ಗೆ <strong>{limit} ರಲ್ಲಿ {remaining}</strong> ಉಚಿತ ಪ್ರಶ್ನೆಗಳು ಉಳಿದಿವೆ.",
     "natureOfQueryLabel": "ಪ್ರಶ್ನೆಯ ಸ್ವರೂಪ",
     "selectPlaceholder": "ಆಯ್ಕೆ ಮಾಡಿ...",
     "cropAgeLabel": "ಬೆಳೆ ವಯಸ್ಸು (ಐಚ್ಛಿಕ)",
