@@ -7,8 +7,8 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import ClientCropChip from '@/components/ClientCropChip'
 import api from '@/lib/api'
 
-interface PlantPart { cosh_id: string; name: string }
-interface CropStage { cosh_id: string; name: string }
+interface PlantPart { cosh_id: string; name: string; name_en?: string }
+interface CropStage { cosh_id: string; name: string; name_en?: string }
 interface ReferenceImage { cosh_id: string; url: string; caption?: string | null; media_type?: string }
 interface Question {
   plant_part_cosh_id: string; symptom_cosh_id: string
@@ -785,7 +785,7 @@ export default function DiagnosisPage() {
                 {stages.map(st => (
                   <button key={st.cosh_id} onClick={() => pickStage(st)}
                     className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform flex items-center gap-4">
-                    <span className="text-3xl">{getStageEmoji(st.name)}</span>
+                    <span className="text-3xl">{getStageEmoji(st.name_en || st.name)}</span>
                     <p className="font-medium text-[#6B3F1F] text-base">{st.name}</p>
                   </button>
                 ))}
@@ -1098,7 +1098,7 @@ export default function DiagnosisPage() {
                 {parts.map(part => (
                   <button key={part.cosh_id} onClick={() => startDiagnosis(part)}
                     className="bg-white rounded-2xl p-5 border border-[#DDD0B8] shadow-sm text-left active:scale-95 transition-transform">
-                    <span className="text-3xl">{getPartEmoji(part.name)}</span>
+                    <span className="text-3xl">{getPartEmoji(part.name_en || part.name)}</span>
                     <p className="font-medium text-[#6B3F1F] mt-2">{part.name}</p>
                   </button>
                 ))}
@@ -1663,8 +1663,11 @@ function getStageEmoji(stageName: string | null | undefined): string {
 
 function getPartEmoji(partName: string | null | undefined): string {
   if (!partName) return '🌱'
+  // 2026-10-03 — Root was previously 🪴 (potted plant), which farmers
+  // read as "indoor plant" rather than "root". Swapped to 🥕 (carrot)
+  // which is literally a root and visually unambiguous.
   const emojis: Record<string, string> = {
-    leaf: '🍃', stem: '🌿', root: '🪴', flower: '🌸', fruit: '🍅',
+    leaf: '🍃', stem: '🌿', root: '🥕', flower: '🌸', fruit: '🍅',
     nut: '🌰', tendril: '🌾', seed: '🌱', trunk: '🌳', branch: '🌲',
     canopy: '🌳', 'whole plant': '🌿', shoot: '🌱', tuber: '🥔',
   }
