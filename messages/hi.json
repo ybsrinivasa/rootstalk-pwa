@@ -2349,7 +2349,9 @@
       "addAnotherItem": "+ दूसरी वस्तु जोड़ें",
       "itemCapReached": "एक बार में अधिकतम {max} वस्तुएँ। सहेजें और नया प्रारंभ करें।",
       "saveBatchButton": "{count, plural, one {1 वस्तु सहेजें} other {# वस्तुएँ सहेजें}}",
-      "unitPlaceholder": "किग्रा / लीटर / पैकेट"
+      "unitPlaceholder": "किग्रा / लीटर / पैकेट",
+      "recordingSaleFor": "विक्री दर्ज कर रहे हैं",
+      "changeFarmer": "किसान बदलें"
     }
   },
   "facilitator": {

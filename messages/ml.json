@@ -2349,7 +2349,9 @@
       "addAnotherItem": "+ മറ്റൊരു ഇനം ചേർക്കുക",
       "itemCapReached": "പരമാവധി {max} ഇനങ്ങൾ. സേവ് ചെയ്‌ത് പുതിയത് ആരംഭിക്കുക.",
       "saveBatchButton": "{count, plural, one {1 ഇനം സേവ് ചെയ്യുക} other {# ഇനങ്ങൾ സേവ് ചെയ്യുക}}",
-      "unitPlaceholder": "കിലോ / ലീറ്റർ / പാക്കറ്റ്"
+      "unitPlaceholder": "കിലോ / ലീറ്റർ / പാക്കറ്റ്",
+      "recordingSaleFor": "വില്പന രേഖപ്പെടുത്തുന്നു",
+      "changeFarmer": "കർഷകനെ മാറ്റുക"
     }
   },
   "facilitator": {

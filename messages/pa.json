@@ -2349,7 +2349,9 @@
       "addAnotherItem": "+ ਹੋਰ ਵਸਤੂ ਸ਼ਾਮਲ ਕਰੋ",
       "itemCapReached": "ਵੱਧ ਤੋਂ ਵੱਧ {max} ਵਸਤੂਆਂ। ਸੰਭਾਲੋ ਅਤੇ ਨਵੀਂ ਸ਼ੁਰੂ ਕਰੋ।",
       "saveBatchButton": "{count, plural, one {1 ਵਸਤੂ ਸੰਭਾਲੋ} other {# ਵਸਤੂਆਂ ਸੰਭਾਲੋ}}",
-      "unitPlaceholder": "ਕਿਲੋ / ਲੀਟਰ / ਪੈਕੇਟ"
+      "unitPlaceholder": "ਕਿਲੋ / ਲੀਟਰ / ਪੈਕੇਟ",
+      "recordingSaleFor": "ਵਿਕਰੀ ਦਰਜ ਕਰ ਰਹੇ ਹਾਂ",
+      "changeFarmer": "ਕਿਸਾਨ ਬਦਲੋ"
     }
   },
   "facilitator": {

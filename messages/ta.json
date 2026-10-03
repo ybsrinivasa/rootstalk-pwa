@@ -2349,7 +2349,9 @@
       "addAnotherItem": "+ மற்றொரு பொருள் சேர்க்கவும்",
       "itemCapReached": "அதிகபட்சம் {max} பொருட்கள். சேமித்து புதிதாகத் தொடங்கவும்.",
       "saveBatchButton": "{count, plural, one {1 பொருளைச் சேமி} other {# பொருட்களைச் சேமி}}",
-      "unitPlaceholder": "கிகி / லி / பாக்கெட்"
+      "unitPlaceholder": "கிகி / லி / பாக்கெட்",
+      "recordingSaleFor": "விற்பனையை பதிவு செய்கிறோம்",
+      "changeFarmer": "விவசாயியை மாற்றவும்"
     }
   },
   "facilitator": {

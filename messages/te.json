@@ -2349,7 +2349,9 @@
       "addAnotherItem": "+ మరొక వస్తువును జోడించండి",
       "itemCapReached": "గరిష్ఠంగా {max} వస్తువులు. సేవ్ చేసి కొత్తది ప్రారంభించండి.",
       "saveBatchButton": "{count, plural, one {1 వస్తువును సేవ్ చేయండి} other {# వస్తువులను సేవ్ చేయండి}}",
-      "unitPlaceholder": "కిలో / లీ / ప్యాకెట్"
+      "unitPlaceholder": "కిలో / లీ / ప్యాకెట్",
+      "recordingSaleFor": "ఇతనికి అమ్మకం నమోదు చేస్తున్నాం",
+      "changeFarmer": "రైతును మార్చండి"
     }
   },
   "facilitator": {

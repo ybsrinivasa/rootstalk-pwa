@@ -2349,7 +2349,9 @@
       "addAnotherItem": "+ আরেকটি আইটেম যোগ করুন",
       "itemCapReached": "সর্বাধিক {max} আইটেম। সংরক্ষণ করুন এবং নতুন শুরু করুন।",
       "saveBatchButton": "{count, plural, one {1 আইটেম সংরক্ষণ করুন} other {# আইটেম সংরক্ষণ করুন}}",
-      "unitPlaceholder": "কেজি / লিটার / প্যাকেট"
+      "unitPlaceholder": "কেজি / লিটার / প্যাকেট",
+      "recordingSaleFor": "বিক্রয় রেকর্ড করছি",
+      "changeFarmer": "কৃষক পরিবর্তন করুন"
     }
   },
   "facilitator": {

@@ -2349,7 +2349,9 @@
       "addAnotherItem": "+ आणखी वस्तू जोडा",
       "itemCapReached": "कमाल {max} वस्तू. जतन करा आणि नवीन सुरू करा.",
       "saveBatchButton": "{count, plural, one {1 वस्तू जतन करा} other {# वस्तू जतन करा}}",
-      "unitPlaceholder": "किलो / लिटर / पॅकेट"
+      "unitPlaceholder": "किलो / लिटर / पॅकेट",
+      "recordingSaleFor": "विक्री नोंदवत आहे",
+      "changeFarmer": "शेतकरी बदला"
     }
   },
   "facilitator": {
