@@ -44,6 +44,17 @@ interface SymptomCheck {
 
 const COLOUR = '#3A7D44'
 
+// 2026-10-03 — Google Images query hygiene. Multi-word terms like
+// "Fruit Fly", "Powdery Mildew", "Upper Canopy" get much tighter
+// agri-reference image hits when wrapped in quotes (phrase match).
+// Single words don't need it. Falsy inputs disappear so the caller
+// can .filter(Boolean) uniformly.
+const quoteIfPhrase = (s: string | null | undefined): string => {
+  if (!s) return ''
+  const trimmed = s.trim()
+  return trimmed.includes(' ') ? `"${trimmed}"` : trimmed
+}
+
 export default function DiagnosisPage() {
   const t = useTranslations('diagnose')
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
@@ -1195,7 +1206,7 @@ export default function DiagnosisPage() {
                         {t('questioning.seeMore', { count: refImages.length - 2 })}
                       </button>
                     ) : <span />}
-                    <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropNameEn || cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
+                    <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(currentQuestion.plant_part_name), quoteIfPhrase(currentQuestion.symptom_name)].filter(Boolean).join(' '))}`}
                       target="_blank" rel="noopener noreferrer"
                       className="text-[11px] text-[#7A8C7E] underline underline-offset-2">
                       {t('questioning.searchGoogle')}
@@ -1207,7 +1218,7 @@ export default function DiagnosisPage() {
                   <p className="text-xs text-[#7A8C7E]">
                     {t('questioning.noCuratedExamples')}
                   </p>
-                  <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([cropNameEn || cropName, currentQuestion.plant_part_name, currentQuestion.symptom_name].filter(Boolean).join(' '))}`}
+                  <a href={googleFallbackUrl || `https://www.google.com/search?tbm=isch&q=${encodeURIComponent([quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(currentQuestion.plant_part_name), quoteIfPhrase(currentQuestion.symptom_name)].filter(Boolean).join(' '))}`}
                     target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 mt-1 text-xs text-blue-600 underline underline-offset-2">
                     {t('questioning.searchGoogleImages')}
@@ -1367,7 +1378,7 @@ export default function DiagnosisPage() {
                         // longer holds). Also uses English problem
                         // name because agri reference databases index
                         // primarily in English.
-                        [cropNameEn || cropName, p.name_en || p.name].filter(Boolean).join(' ')
+                        [quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(p.name_en || p.name)].filter(Boolean).join(' ')
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -1425,7 +1436,7 @@ export default function DiagnosisPage() {
                   // 2026-10-03 — English-only query terms; see
                   // knowProblem.seeImages above for rationale.
                   href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-                    [cropNameEn || cropName, diagnosis.name_en || diagnosis.name].filter(Boolean).join(' ')
+                    [quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(diagnosis.name_en || diagnosis.name)].filter(Boolean).join(' ')
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -1498,7 +1509,7 @@ export default function DiagnosisPage() {
                       // 2026-10-03 — English-only query; see confirming
                       // card above for rationale.
                       href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(
-                        [cropNameEn || cropName, diagnosis.name_en || diagnosis.name].filter(Boolean).join(' ')
+                        [quoteIfPhrase(cropNameEn || cropName), quoteIfPhrase(diagnosis.name_en || diagnosis.name)].filter(Boolean).join(' ')
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
