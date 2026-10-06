@@ -1173,7 +1173,9 @@
       "companyFallback": "the seed company"
     },
     "howToBuyTitle": "How to buy",
-    "howToBuyNoContact": "Contact details not published yet for this seed producer."
+    "howToBuyNoContact": "Contact details not published yet for this seed producer.",
+    "seedDealersTitle": "Seed / seedling dealers near you",
+    "seedDealersDistance": "{km} km away"
   },
   "orders": {
     "review": {
