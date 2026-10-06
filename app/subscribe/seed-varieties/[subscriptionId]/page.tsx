@@ -125,6 +125,31 @@ export default function SeedVarietiesPage() {
     return () => clearTimeout(timer)
   }, [phoneInput, selected])
 
+  // 2026-10-06 — Advisory-Only: fetch the nearby seeds/seedlings
+  // dealer list on variety-detail view. In Regular Mode this fetch
+  // lives inside `openPicker()` (triggered by the Place-order CTA),
+  // but Advisory-Only has no such CTA — the list is shown
+  // informationally below the HOW TO BUY card. Keyed on
+  // (advisoryOnly, selected.id) so it refreshes when the farmer
+  // switches between varieties within the page.
+  useEffect(() => {
+    if (!advisoryOnly || !selected) {
+      return
+    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data } = await api.get<Recipient[]>(
+          `/farmer/subscriptions/${subscriptionId}/nearby-dealers?order_type=SEED&variety_id=${encodeURIComponent(selected.id)}`,
+        )
+        if (!cancelled) setDealers(data)
+      } catch {
+        if (!cancelled) setDealers([])
+      }
+    })()
+    return () => { cancelled = true }
+  }, [advisoryOnly, selected, subscriptionId])
+
   // 2026-06-19 — Confirm-before-send. Two flavours of pending state
   // — one for lookup (synthetic recipient), one for picker (existing
   // Recipient row). Both flow through the same ConfirmSendOrderSheet
