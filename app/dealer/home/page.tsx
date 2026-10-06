@@ -259,12 +259,15 @@ export default function DealerHomePage() {
         )}
 
         {/* Quick actions grid */}
-        {/* 2026-06-19 — Tile order reorganised + Seed Orders replaced
-            by Packing. Row 1: Alerts | Packing. Row 2: Payments |
-            My Farmers. Row 3: Shop details | My dealerships. Each
-            tile now shows a clean top-right corner count (no badge,
-            no background) so the dealer reads task-load at a glance
-            without visual noise. Loading shows '…'. */}
+        {/* 2026-10-06 — Tile order per user. Payments tile removed
+            (bottom-nav Payments icon still reaches /dealer/payments;
+            the amber payment-requests banner above the grid still
+            fires when there are pending requests). New row order:
+            Row 1: Alerts | Packing
+            Row 2: My Farmers | Sale Ledger
+            Row 3: My Dealerships | Brand Submissions
+            Training Sandbox (conditional) appended after Row 3 when
+            active so the 6 base tiles stay in clean 3×2 rhythm. */}
         <div className="grid grid-cols-2 gap-3">
           <button onClick={() => router.push('/dealer/alerts-incoming')}
             className="relative bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
@@ -284,15 +287,6 @@ export default function DealerHomePage() {
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.packing')}</p>
             <p className="text-xs text-[#7A8C7E]">{t('tiles.packingSubtitle')}</p>
           </button>
-          <button onClick={() => router.push('/dealer/payments')}
-            className="relative bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
-            <span className="absolute top-3 right-4 text-base font-bold text-[#7D4196]">
-              {loading ? '…' : paymentCount}
-            </span>
-            <span className="text-2xl">💳</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.payments')}</p>
-            <p className="text-xs text-[#7A8C7E]">{t('tiles.paymentsSubtitle')}</p>
-          </button>
           <button onClick={() => router.push('/dealer/promoted-farmers')}
             className="relative bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
             <span className="absolute top-3 right-4 text-base font-bold text-[#7D4196]">
@@ -311,22 +305,15 @@ export default function DealerHomePage() {
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.farmerLedger')}</p>
             <p className="text-xs text-[#7A8C7E]">{t('tiles.farmerLedgerSubtitle')}</p>
           </button>
-          {/* 2026-07-24 — Training Sandbox tile. Renders only when
-              the dealer has ≥1 parent client with an ACTIVE training
-              session (the endpoint returns []) so the tile disappears
-              cleanly the moment training ends. Amber styling matches
-              the training frame everywhere else. */}
-          {trainingCount > 0 && (
-            <button onClick={() => router.push('/promoter-training?role=DEALER')}
-              className="relative bg-amber-50 rounded-2xl p-4 border-2 border-amber-300 shadow-sm text-left">
-              <span className="absolute top-3 right-4 text-base font-bold text-amber-800">
-                {trainingCount}
-              </span>
-              <span className="text-2xl">🎓</span>
-              <p className="text-sm font-semibold text-amber-900 mt-2">{tTrain('promoterTile.title')}</p>
-              <p className="text-xs text-amber-700">{tTrain('promoterTile.subtitle')}</p>
-            </button>
-          )}
+          <button onClick={() => router.push('/dealer/dealerships')}
+            className="relative bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
+            <span className="absolute top-3 right-4 text-base font-bold text-[#7D4196]">
+              {loading ? '…' : dealershipCount}
+            </span>
+            <span className="text-2xl">🏭</span>
+            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.myDealerships')}</p>
+            <p className="text-xs text-[#7A8C7E]">{t('tiles.myDealershipsSubtitle')}</p>
+          </button>
           {/* 2026-07-04 — Shop Details tile removed from dashboard;
               same access lives in the drawer under Personal Details.
               Replaced by Brand Submissions, an action-oriented tile
@@ -343,15 +330,22 @@ export default function DealerHomePage() {
             <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.brandForms')}</p>
             <p className="text-xs text-[#7A8C7E]">{t('tiles.brandFormsSubtitle')}</p>
           </button>
-          <button onClick={() => router.push('/dealer/dealerships')}
-            className="relative bg-white rounded-2xl p-4 border border-[#DDD0B8] shadow-sm text-left">
-            <span className="absolute top-3 right-4 text-base font-bold text-[#7D4196]">
-              {loading ? '…' : dealershipCount}
-            </span>
-            <span className="text-2xl">🏭</span>
-            <p className="text-sm font-semibold text-[#6B3F1F] mt-2">{t('tiles.myDealerships')}</p>
-            <p className="text-xs text-[#7A8C7E]">{t('tiles.myDealershipsSubtitle')}</p>
-          </button>
+          {/* 2026-07-24 — Training Sandbox tile. Renders only when
+              the dealer has ≥1 parent client with an ACTIVE training
+              session (the endpoint returns []) so the tile disappears
+              cleanly the moment training ends. Amber styling matches
+              the training frame everywhere else. */}
+          {trainingCount > 0 && (
+            <button onClick={() => router.push('/promoter-training?role=DEALER')}
+              className="relative bg-amber-50 rounded-2xl p-4 border-2 border-amber-300 shadow-sm text-left">
+              <span className="absolute top-3 right-4 text-base font-bold text-amber-800">
+                {trainingCount}
+              </span>
+              <span className="text-2xl">🎓</span>
+              <p className="text-sm font-semibold text-amber-900 mt-2">{tTrain('promoterTile.title')}</p>
+              <p className="text-xs text-amber-700">{tTrain('promoterTile.subtitle')}</p>
+            </button>
+          )}
         </div>
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
