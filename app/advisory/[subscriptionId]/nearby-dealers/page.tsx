@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { getToken, getUser } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -43,9 +43,23 @@ interface DealerRow {
 export default function NearbyDealersPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const subscriptionId = params.subscriptionId as string
   const t = useTranslations('advisoryOnly.nearbyDealers')
   const tOrdersCommon = useTranslations('orders.common')
+  // 2026-10-06 — Entry-point-driven filter. When the farmer taps the
+  // "Seed / seedling dealers near you" button on the variety-details
+  // page, we land here with `?category=SEED`. Forward it as
+  // `order_type=SEED` to the backend so the list narrows to dealers
+  // whose Shop Profile sell_categories include SEEDS or SEEDLINGS
+  // (union — the backend's category_map treats the two as one
+  // category since 2026-10-06). All other features of this screen
+  // (Profile/Current GPS toggle, Show on map, Call, Directions,
+  // sell-category chips per row) remain unchanged. When no
+  // `?category=` is present (default entry from the Crop Dashboard
+  // tile), the list stays unfiltered.
+  const categoryParam = searchParams.get('category') || ''
+  const categoryQuery = categoryParam ? `&order_type=${encodeURIComponent(categoryParam)}` : ''
 
   const [dealers, setDealers] = useState<DealerRow[] | null>(null)
   const [loading, setLoading] = useState(true)
@@ -78,8 +92,11 @@ export default function NearbyDealersPage() {
     if (!getToken()) { router.replace('/register'); return }
     (async () => {
       try {
+        // Base path always needs a leading `?` because we may append
+        // the category filter. Use `?_=1` as a benign starter so the
+        // concat is clean regardless of whether categoryQuery fires.
         const r = await api.get<DealerRow[]>(
-          `/farmer/subscriptions/${subscriptionId}/nearby-dealers`,
+          `/farmer/subscriptions/${subscriptionId}/nearby-dealers?_=1${categoryQuery}`,
         )
         setDealers(r.data)
       } catch {
@@ -88,7 +105,7 @@ export default function NearbyDealersPage() {
         setLoading(false)
       }
     })()
-  }, [subscriptionId, router, t])
+  }, [subscriptionId, router, t, categoryQuery])
 
   async function handleLocationChange(
     next: LocationSource,
@@ -97,11 +114,11 @@ export default function NearbyDealersPage() {
     setLocSource(next)
     if (next === 'current' && coords) setCurrentCoords(coords)
     const useCoords = next === 'current' ? (coords || currentCoords) : null
-    const geoParam = useCoords ? `?lat=${useCoords.lat}&lng=${useCoords.lng}` : ''
+    const geoParam = useCoords ? `&lat=${useCoords.lat}&lng=${useCoords.lng}` : ''
     setRefetching(true)
     try {
       const r = await api.get<DealerRow[]>(
-        `/farmer/subscriptions/${subscriptionId}/nearby-dealers${geoParam}`,
+        `/farmer/subscriptions/${subscriptionId}/nearby-dealers?_=1${categoryQuery}${geoParam}`,
       )
       setDealers(r.data)
     } catch { /* keep previous list */ }
