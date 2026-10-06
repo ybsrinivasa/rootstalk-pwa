@@ -1579,6 +1579,7 @@ function PracticeCard({
   purchaseCrossOptionLocked = false,
   pastWindow = false,
   hideAckFooter = false,
+  hideDoneAck = false,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1627,6 +1628,13 @@ function PracticeCard({
   // group-level "I've done this" (GroupAckFooter) below all
   // sibling cards — matches the "APPLY BOTH TOGETHER" semantic.
   hideAckFooter?: boolean
+  // 2026-10-06 — Suppress only the per-row "I've done this" pill +
+  // its hint; keep the "I've purchased this" pill + inline photo
+  // row visible. Used by AND-container callsites in Advisory-Only
+  // Mode so each leg can record its own brand + photo via the
+  // Brands screen while the group-level GroupAckFooter still owns
+  // "I've done this".
+  hideDoneAck?: boolean
 }) {
   const router = useRouter()
   const tEl = useTranslations('practice.element')
@@ -2094,6 +2102,7 @@ function PracticeCard({
           advisoryOnly={advisoryOnly}
           purchaseCrossOptionLocked={purchaseCrossOptionLocked}
           pastWindow={pastWindow}
+          hideDoneAck={hideDoneAck}
         />
       )}
     </div>
@@ -2120,6 +2129,7 @@ function PracticeAckFooter({
   advisoryOnly = false,
   purchaseCrossOptionLocked = false,
   pastWindow = false,
+  hideDoneAck = false,
 }: {
   practice: Practice
   subscriptionId: string
@@ -2138,6 +2148,11 @@ function PracticeAckFooter({
   // 2026-09-27 — read-only past-window mode. When true, all
   // purchase / done acks are disabled. Matches the backend guard.
   pastWindow?: boolean
+  // 2026-10-06 — Hide the per-row "I've done this" pill + its hint
+  // so the AND container can expose per-item "I've purchased this"
+  // (brand + photo) while the group-level GroupAckFooter still owns
+  // the "done" state. Keeps the purchase + photo rhythm per leg.
+  hideDoneAck?: boolean
 }) {
   const tAck = useTranslations('practice.ack')
   const router = useRouter()
@@ -2363,19 +2378,21 @@ function PracticeAckFooter({
               }}
             />
           )}
-          <CheckPill
-            active={marked}
-            enabled={doneEnabled}
-            label={tAck('mark')}
-            onTap={() => call(marked ? 'unmark' : 'mark')}
-          />
+          {!hideDoneAck && (
+            <CheckPill
+              active={marked}
+              enabled={doneEnabled}
+              label={tAck('mark')}
+              onTap={() => call(marked ? 'unmark' : 'mark')}
+            />
+          )}
         </div>
         {purchaseHint && (
           <p className="text-[10px] text-[#7A8C7E] mt-1 leading-tight">
             {purchaseHint}
           </p>
         )}
-        {!marked && !purchaseHint && doneHint && (
+        {!hideDoneAck && !marked && !purchaseHint && doneHint && (
           <p className="text-[10px] text-[#7A8C7E] mt-1 leading-tight">
             {doneHint}
           </p>
@@ -2781,7 +2798,15 @@ function RelationGroup({
                 enableInAppOrders={canOrderInApp}
                 pastWindow={pastWindow}
                 insideContainer
-                hideAckFooter
+                // 2026-10-06 — Advisory-Only AND: keep the per-row
+                // "I've purchased this" pill + inline photo capture
+                // so each leg can record its own brand + photo via
+                // the Brands screen. The group-level GroupAckFooter
+                // still owns "I've done this" so the AND semantic is
+                // intact. `hideDoneAck` suppresses only the per-row
+                // done pill + its hint. Regular Mode keeps the
+                // original `hideAckFooter` (no per-row acks of any
+                // kind; group-level done handles everything).
                 // 2026-09-29 — Collapse/expand is Advisory-Only for
                 // now. Regular Mode intentionally omits it — user
                 // wants to see how the full-height card reads next
@@ -2789,7 +2814,10 @@ function RelationGroup({
                 // adding accordion behavior there (a collapsed
                 // card would hide the button and complicate the
                 // farmer's flow).
-                {...(advisoryOnly ? cardCollapseProps(p) : {})}
+                {...(advisoryOnly
+                  ? { hideDoneAck: true, ...cardCollapseProps(p) }
+                  : { hideAckFooter: true })
+                }
               />
             )
             // Regular Mode's per-row fulfilment pill is preserved
