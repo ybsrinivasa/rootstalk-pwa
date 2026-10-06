@@ -41,6 +41,11 @@ interface Recipient {
   user_id: string; name: string | null; phone: string | null; distance_km: number
   is_promoter?: boolean
   shop_name?: string | null; shop_address?: string | null
+  // 2026-10-06 — surfaced on the Advisory-Only variety-details page's
+  // Seeds/Seedlings dealer list below HOW TO BUY. Backend already
+  // returns it; add to the type so the compact card can render the
+  // shop photo thumbnail.
+  shop_photo_url?: string | null
 }
 
 // Result type re-exported from the shared component so the seed
@@ -377,6 +382,63 @@ export default function SeedVarietiesPage() {
                   </p>
                 )}
               </div>
+
+              {/* 2026-10-06 — Nearby seed / seedling dealers below the
+                  HOW TO BUY card. Backend already filters to:
+                    * dealers onboarded by this variety's client
+                      (variety_id=... in the /nearby-dealers call at
+                      line ~174), and
+                    * sell_categories contains SEEDS or SEEDLINGS
+                      (order_type=SEED now matches the union server-
+                      side as of today's commit).
+                  Hidden entirely when the list is empty so the farmer
+                  falls back to the client contact above. */}
+              {dealers.length > 0 && (
+                <div className="mt-4 bg-white border border-[#DDD0B8] rounded-2xl overflow-hidden">
+                  <p className="text-xs uppercase tracking-wider text-[#6B3F1F] font-semibold px-4 pt-3 pb-2">
+                    {t('seedDealersTitle')}
+                  </p>
+                  <ul className="divide-y divide-[#F0E8D8]">
+                    {dealers.map(d => (
+                      <li key={d.user_id} className="px-4 py-3 flex items-start gap-3">
+                        {d.shop_photo_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={d.shop_photo_url}
+                            alt=""
+                            className="w-10 h-10 rounded-md object-cover shrink-0 border border-[#DDD0B8]" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-md bg-[#F5F0E8] border border-[#DDD0B8] shrink-0 flex items-center justify-center text-base">
+                            🌱
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-[#6B3F1F] truncate">
+                            {d.shop_name || d.name || ''}
+                          </p>
+                          {d.shop_address && (
+                            <p className="text-xs text-[#7A8C7E] leading-snug mt-0.5">
+                              {d.shop_address}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-3 mt-1.5">
+                            <span className="text-[11px] text-[#7A8C7E]">
+                              {t('seedDealersDistance', { km: d.distance_km.toFixed(1) })}
+                            </span>
+                            {d.phone && (
+                              <a href={`tel:${d.phone}`}
+                                className="inline-flex items-center gap-1 text-xs text-[#3A7D44] font-medium">
+                                <span>📞</span>
+                                {d.phone}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
