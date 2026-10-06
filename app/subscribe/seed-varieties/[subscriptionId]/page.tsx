@@ -84,6 +84,15 @@ export default function SeedVarietiesPage() {
   // picker + order-placement flow; show a read-only varieties page
   // with a "How to buy" contact block per variety.
   const [advisoryOnly, setAdvisoryOnly] = useState(false)
+  // 2026-10-06 — Mirror the Crop Dashboard's Nearby Dealers tile
+  // visibility (crop-detail page line ~977):
+  //   advisory_only_mode && dealer_list_enabled && !in_app_orders_enabled
+  // dealer_list_enabled is a client-level SA-portal opt-in; the hybrid
+  // mode (in_app_orders_enabled) suppresses the tile because dealers
+  // are already surfaced at Order time via the recipient picker.
+  // Our variety-details CTA must obey the same gates.
+  const [dealerListEnabled, setDealerListEnabled] = useState(false)
+  const [inAppOrdersEnabled, setInAppOrdersEnabled] = useState(false)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -93,10 +102,12 @@ export default function SeedVarietiesPage() {
     // Fetch the sub separately so we know the mode. Small extra
     // round-trip; not worth threading through the /seed-varieties
     // response since the field lives on Subscription, not Variety.
-    api.get<{ id: string; advisory_only_mode?: boolean }[]>('/farmer/my-subscriptions')
+    api.get<{ id: string; advisory_only_mode?: boolean; dealer_list_enabled?: boolean; in_app_orders_enabled?: boolean }[]>('/farmer/my-subscriptions')
       .then(r => {
         const sub = r.data.find(s => s.id === subscriptionId)
         if (sub?.advisory_only_mode) setAdvisoryOnly(true)
+        if (sub?.dealer_list_enabled) setDealerListEnabled(true)
+        if (sub?.in_app_orders_enabled) setInAppOrdersEnabled(true)
       })
       .catch(() => {})
   }, [subscriptionId, router])
@@ -389,18 +400,28 @@ export default function SeedVarietiesPage() {
                   GPS toggle, Show on map, Call, Directions, SEEDS /
                   PESTICIDES / FERTILISERS category pills). We append
                   `?category=SEED` so the page applies the Seeds /
-                  Seedlings filter before rendering. */}
-              <button
-                onClick={() => router.push(`/advisory/${subscriptionId}/nearby-dealers?category=SEED`)}
-                className="mt-4 w-full bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 flex items-center justify-between active:scale-98 transition-transform shadow-sm">
-                <span className="flex items-center gap-3">
-                  <span className="text-2xl">📍</span>
-                  <span className="text-sm font-semibold text-[#6B3F1F] text-left">
-                    {t('seedDealersCta')}
+                  Seedlings filter before rendering.
+                  Visibility mirrors the Crop Dashboard's Nearby
+                  Dealers tile (crop-detail/[sub]/page.tsx :977):
+                  only when dealer_list_enabled is on AND the sub
+                  isn't hybrid (in_app_orders_enabled suppresses this
+                  because dealers are already surfaced at Order
+                  time via the recipient picker). The outer
+                  `advisoryOnly` guard here is already applied by
+                  the surrounding block. */}
+              {dealerListEnabled && !inAppOrdersEnabled && (
+                <button
+                  onClick={() => router.push(`/advisory/${subscriptionId}/nearby-dealers?category=SEED`)}
+                  className="mt-4 w-full bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 flex items-center justify-between active:scale-98 transition-transform shadow-sm">
+                  <span className="flex items-center gap-3">
+                    <span className="text-2xl">📍</span>
+                    <span className="text-sm font-semibold text-[#6B3F1F] text-left">
+                      {t('seedDealersCta')}
+                    </span>
                   </span>
-                </span>
-                <span className="text-[#7A8C7E]">›</span>
-              </button>
+                  <span className="text-[#7A8C7E]">›</span>
+                </button>
+              )}
             </div>
           )}
 
