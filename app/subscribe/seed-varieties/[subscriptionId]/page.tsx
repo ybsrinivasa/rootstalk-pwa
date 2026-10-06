@@ -125,31 +125,6 @@ export default function SeedVarietiesPage() {
     return () => clearTimeout(timer)
   }, [phoneInput, selected])
 
-  // 2026-10-06 — Advisory-Only: fetch the nearby seeds/seedlings
-  // dealer list on variety-detail view. In Regular Mode this fetch
-  // lives inside `openPicker()` (triggered by the Place-order CTA),
-  // but Advisory-Only has no such CTA — the list is shown
-  // informationally below the HOW TO BUY card. Keyed on
-  // (advisoryOnly, selected.id) so it refreshes when the farmer
-  // switches between varieties within the page.
-  useEffect(() => {
-    if (!advisoryOnly || !selected) {
-      return
-    }
-    let cancelled = false
-    ;(async () => {
-      try {
-        const { data } = await api.get<Recipient[]>(
-          `/farmer/subscriptions/${subscriptionId}/nearby-dealers?order_type=SEED&variety_id=${encodeURIComponent(selected.id)}`,
-        )
-        if (!cancelled) setDealers(data)
-      } catch {
-        if (!cancelled) setDealers([])
-      }
-    })()
-    return () => { cancelled = true }
-  }, [advisoryOnly, selected, subscriptionId])
-
   // 2026-06-19 — Confirm-before-send. Two flavours of pending state
   // — one for lookup (synthetic recipient), one for picker (existing
   // Recipient row). Both flow through the same ConfirmSendOrderSheet
@@ -408,62 +383,24 @@ export default function SeedVarietiesPage() {
                 )}
               </div>
 
-              {/* 2026-10-06 — Nearby seed / seedling dealers below the
-                  HOW TO BUY card. Backend already filters to:
-                    * dealers onboarded by this variety's client
-                      (variety_id=... in the /nearby-dealers call at
-                      line ~174), and
-                    * sell_categories contains SEEDS or SEEDLINGS
-                      (order_type=SEED now matches the union server-
-                      side as of today's commit).
-                  Hidden entirely when the list is empty so the farmer
-                  falls back to the client contact above. */}
-              {dealers.length > 0 && (
-                <div className="mt-4 bg-white border border-[#DDD0B8] rounded-2xl overflow-hidden">
-                  <p className="text-xs uppercase tracking-wider text-[#6B3F1F] font-semibold px-4 pt-3 pb-2">
-                    {t('seedDealersTitle')}
-                  </p>
-                  <ul className="divide-y divide-[#F0E8D8]">
-                    {dealers.map(d => (
-                      <li key={d.user_id} className="px-4 py-3 flex items-start gap-3">
-                        {d.shop_photo_url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={d.shop_photo_url}
-                            alt=""
-                            className="w-10 h-10 rounded-md object-cover shrink-0 border border-[#DDD0B8]" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-md bg-[#F5F0E8] border border-[#DDD0B8] shrink-0 flex items-center justify-center text-base">
-                            🌱
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-[#6B3F1F] truncate">
-                            {d.shop_name || d.name || ''}
-                          </p>
-                          {d.shop_address && (
-                            <p className="text-xs text-[#7A8C7E] leading-snug mt-0.5">
-                              {d.shop_address}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-3 mt-1.5">
-                            <span className="text-[11px] text-[#7A8C7E]">
-                              {t('seedDealersDistance', { km: d.distance_km.toFixed(1) })}
-                            </span>
-                            {d.phone && (
-                              <a href={`tel:${d.phone}`}
-                                className="inline-flex items-center gap-1 text-xs text-[#3A7D44] font-medium">
-                                <span>📞</span>
-                                {d.phone}
-                              </a>
-                            )}
-                          </div>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              {/* 2026-10-06 — "Nearest Dealers" CTA. Routes to the
+                  shared /advisory/[sub]/nearby-dealers page which
+                  already has the full feature set (Profile / Current
+                  GPS toggle, Show on map, Call, Directions, SEEDS /
+                  PESTICIDES / FERTILISERS category pills). We append
+                  `?category=SEED` so the page applies the Seeds /
+                  Seedlings filter before rendering. */}
+              <button
+                onClick={() => router.push(`/advisory/${subscriptionId}/nearby-dealers?category=SEED`)}
+                className="mt-4 w-full bg-white border border-[#DDD0B8] rounded-2xl px-4 py-3 flex items-center justify-between active:scale-98 transition-transform shadow-sm">
+                <span className="flex items-center gap-3">
+                  <span className="text-2xl">📍</span>
+                  <span className="text-sm font-semibold text-[#6B3F1F] text-left">
+                    {t('seedDealersCta')}
+                  </span>
+                </span>
+                <span className="text-[#7A8C7E]">›</span>
+              </button>
             </div>
           )}
 
