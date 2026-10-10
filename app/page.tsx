@@ -6,6 +6,7 @@ import { getToken, getUser, getActiveRoles, requestOtp, verifyOtp, refreshUser }
 import { getLanguage, changeLanguage } from '@/lib/language'
 import { digitsOnly, hasNonAscii, isAsciiName } from '@/lib/input-normalization'
 import api from '@/lib/api'
+import { locationMatches } from '@/lib/location-match'
 import AppMark from '@/components/AppMark'
 
 type Stage = 'loading' | 'landing' | 'install-required' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
@@ -25,8 +26,8 @@ type Lang  = { language_code: string; language_name_native: string; status?: str
 // granularity (packages target down to district only); we keep it
 // as an optional free-text village field for the farmer's own
 // reference.
-type CoshDistrict = { cosh_id: string; name: string | null }
-type CoshState    = { cosh_id: string; name: string | null; districts: CoshDistrict[] }
+type CoshDistrict = { cosh_id: string; name: string | null; name_en: string | null }
+type CoshState    = { cosh_id: string; name: string | null; name_en: string | null; districts: CoshDistrict[] }
 type CoshLocations = { states: CoshState[] }
 
 // Brand tokens for the landing surface. G mirrors C.primary (Crop
@@ -969,11 +970,11 @@ export default function RootPage() {
     const coshStates = coshLocations?.states ?? []
     const filteredStates = coshStates
       .filter(s => s.name)
-      .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+      .filter(s => locationMatches(stateSearch, s.name, s.name_en))
     const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
     const filteredDistricts = (selectedState?.districts ?? [])
       .filter(d => d.name)
-      .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
+      .filter(d => locationMatches(districtSearch, d.name, d.name_en))
     return (
       <div className="flex flex-col overflow-hidden" style={{ background: BG, height: '100svh' }}>
         <div className="w-full max-w-sm mx-auto px-5 relative z-10">

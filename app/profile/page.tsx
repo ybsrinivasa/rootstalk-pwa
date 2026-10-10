@@ -7,6 +7,7 @@ import { hasNonAscii, isAsciiName } from '@/lib/input-normalization'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
 import api from '@/lib/api'
+import { locationMatches } from '@/lib/location-match'
 
 // 2026-06-23 — Role-aware via `?role=<activeRole>` from the drawer.
 // The Personal Details surface should preserve whichever role the
@@ -28,8 +29,8 @@ interface Subscription { id: string; status: string; package_id: string; client_
 // picker. Used here only to resolve the cached state_cosh_id +
 // district_cosh_id into friendly names like "Karnataka · Tumakuru".
 type CoshLocations = {
-  states: { cosh_id: string; name: string | null;
-            districts: { cosh_id: string; name: string | null }[] }[]
+  states: { cosh_id: string; name: string | null; name_en: string | null;
+            districts: { cosh_id: string; name: string | null; name_en: string | null }[] }[]
 }
 
 export default function ProfilePage() {
@@ -363,11 +364,11 @@ export default function ProfilePage() {
               const coshStates = coshLocations?.states ?? []
               const filteredStates = coshStates
                 .filter(s => s.name)
-                .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+                .filter(s => locationMatches(stateSearch, s.name, s.name_en))
               const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
               const filteredDistricts = (selectedState?.districts ?? [])
                 .filter(d => d.name)
-                .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
+                .filter(d => locationMatches(districtSearch, d.name, d.name_en))
               return (
                 <div>
                   <div className="flex items-center justify-between mb-2">
