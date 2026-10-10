@@ -67,20 +67,15 @@ function ProgressBar({ stage }: { stage: Stage }) {
 export default function FacilitatorPromoterAssignPage() {
   const router = useRouter()
   const t = useTranslations('facilitator.promoterAssign')
-  const tCommon = useTranslations('common')
   const locale = useLocale()
   const [stage, setStage] = useState<Stage>('gate')
   const [kitty, setKitty] = useState<KittyInfo | null>(null)
   const [kittyError, setKittyError] = useState<string | null>(null)
   const [phone, setPhone] = useState('')
   const [farmer, setFarmer] = useState<FarmerInfo | null>(null)
-  // Location typeahead state — mirrors /subscribe shape.
   const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
   const [stateId, setStateId] = useState('')
-  const [stateSearch, setStateSearch] = useState('')
   const [district, setDistrict] = useState('')
-  const [districtSearch, setDistrictSearch] = useState('')
-  const [editingLocation, setEditingLocation] = useState(false)
   const [crops, setCrops] = useState<CropOption[]>([])
   const [selectedCrop, setSelectedCrop] = useState('')
   const [answers, setAnswers] = useState('')
@@ -136,13 +131,8 @@ export default function FacilitatorPromoterAssignPage() {
     try {
       const { data } = await api.get<FarmerInfo>(`/promoter/farmer-lookup?phone=%2B91${phone}`)
       setFarmer(data)
-      // Pre-fill state + district from the farmer's saved profile.
-      // The F-P can tap Change to switch plots within the next stage.
       setStateId(data.state_cosh_id || '')
       setDistrict(data.district_cosh_id || '')
-      setEditingLocation(!data.district_cosh_id)
-      setStateSearch('')
-      setDistrictSearch('')
       setStage('confirm_farmer')
     } catch (e: unknown) {
       const err = e as { response?: { data?: { detail?: string } } }
@@ -342,23 +332,9 @@ export default function FacilitatorPromoterAssignPage() {
 
           {/* ── STAGE: confirm_farmer ── */}
           {stage === 'confirm_farmer' && farmer && (() => {
-            // Typeahead state — mirrors /subscribe so the F-P can override
-            // the farmer's saved district (e.g. for a plot in a different
-            // district than the farmer's home). The Package they end up
-            // resolving carries its own PackageLocation, so the
-            // Subscription's location is implicit in the Package.
             const coshStates = coshLocations?.states ?? []
             const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
-            const selectedDistrict = (selectedState?.districts ?? []).find(d => d.cosh_id === district) || null
-            const stateName = selectedState?.name || ''
-            const districtName = selectedDistrict?.name || ''
-            const filteredStates = coshStates
-              .filter(s => s.name)
-              .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
-            const filteredDistricts = (selectedState?.districts ?? [])
-              .filter(d => d.name)
-              .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
-            const hasResolvedLocation = !!(district && districtName)
+            const districtOptions = (selectedState?.districts ?? []).filter(d => d.name)
 
             return (
               <div>
@@ -378,100 +354,32 @@ export default function FacilitatorPromoterAssignPage() {
                   </div>
                 )}
 
-                {/* Resolved-location chip. Tap Change to switch plots. */}
-                {coshLocations && hasResolvedLocation && !editingLocation && (
-                  <div className="mb-4 px-4 py-3 rounded-2xl border border-[#7D4E00]/30 bg-[#7D4E00]/10 flex items-start gap-3">
-                    <span className="text-lg leading-none mt-0.5">📍</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] uppercase tracking-wide font-semibold text-[#7D4E00]">{t('confirmFarmer.savedLabel')}</p>
-                      <p className="text-[#6B3F1F] font-semibold text-[15px] mt-0.5">
-                        {districtName} <span className="text-[#7A8C7E] font-normal">· {stateName || '—'}</span>
-                      </p>
-                    </div>
-                    <button onClick={() => { setEditingLocation(true); setStateSearch(''); setDistrictSearch('') }}
-                      className="text-[12px] text-[#7D4E00] underline shrink-0">
-                      {tCommon('change')}
-                    </button>
-                  </div>
-                )}
-
-                {coshLocations && (!hasResolvedLocation || editingLocation) && (
+                {coshLocations && (
                   <div className="space-y-3 mb-4">
-                    {/* State */}
                     <div>
                       <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{t('confirmFarmer.stateLabel')}</label>
-                      {stateId ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#7D4E00]/10 text-[#7D4E00] text-sm font-medium px-3 py-1.5 rounded-full">
-                            {stateName || t('confirmFarmer.unnamed')}
-                          </span>
-                          <button onClick={() => {
-                              setStateId(''); setStateSearch('')
-                              setDistrict(''); setDistrictSearch('')
-                            }}
-                            className="text-[11px] text-[#7A8C7E] underline">{tCommon('change')}</button>
-                        </div>
-                      ) : (
-                        <>
-                          <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
-                            placeholder={t('confirmFarmer.searchState')}
-                            className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"/>
-                          {stateSearch && (
-                            <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
-                              {filteredStates.length === 0
-                                ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{t('confirmFarmer.noStates')}</p>
-                                : filteredStates.map(s => (
-                                  <button key={s.cosh_id}
-                                    onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
-                                    className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
-                                    {s.name}
-                                  </button>
-                                ))
-                              }
-                            </div>
-                          )}
-                        </>
-                      )}
+                      <select value={stateId}
+                        onChange={e => { setStateId(e.target.value); setDistrict('') }}
+                        className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20">
+                        <option value="">{t('confirmFarmer.pickState')}</option>
+                        {coshStates.filter(s => s.name).map(s => (
+                          <option key={s.cosh_id} value={s.cosh_id}>{s.name || s.cosh_id}</option>
+                        ))}
+                      </select>
                     </div>
 
-                    {/* District — bounded to the chosen state. */}
-                    {stateId && (
-                      <div>
-                        <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{t('confirmFarmer.districtLabel')}</label>
-                        {district ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#7D4E00]/10 text-[#7D4E00] text-sm font-medium px-3 py-1.5 rounded-full">
-                              {districtName || t('confirmFarmer.unnamed')}
-                            </span>
-                            <button onClick={() => { setDistrict(''); setDistrictSearch('') }}
-                              className="text-[11px] text-[#7A8C7E] underline">{tCommon('change')}</button>
-                          </div>
-                        ) : (
-                          <>
-                            <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
-                              placeholder={t('confirmFarmer.searchDistrict')}
-                              className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20"/>
-                            {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
-                              <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
-                                {filteredDistricts.length === 0
-                                  ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{t('confirmFarmer.noDistricts')}</p>
-                                  : filteredDistricts.map(d => (
-                                    <button key={d.cosh_id}
-                                      onClick={() => {
-                                        setDistrict(d.cosh_id); setDistrictSearch('')
-                                        setEditingLocation(false)
-                                      }}
-                                      className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
-                                      {d.name}
-                                    </button>
-                                  ))
-                                }
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    )}
+                    <div>
+                      <label className="text-xs text-[#7A8C7E] font-medium mb-1 block">{t('confirmFarmer.districtLabel')}</label>
+                      <select value={district}
+                        onChange={e => setDistrict(e.target.value)}
+                        disabled={!stateId}
+                        className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm bg-white disabled:bg-[#F5F0E8] disabled:text-[#B5A892] focus:outline-none focus:ring-2 focus:ring-[#7D4E00]/20">
+                        <option value="">{t('confirmFarmer.pickDistrict')}</option>
+                        {districtOptions.map(d => (
+                          <option key={d.cosh_id} value={d.cosh_id}>{d.name || d.cosh_id}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
 
