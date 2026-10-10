@@ -8,12 +8,13 @@ import PWAHeader from '@/components/layout/PWAHeader'
 import ShopLedChip from '@/components/ShopLedChip'
 import api from '@/lib/api'
 import { cropDisplayName } from '@/lib/crop-name'
+import { locationMatches } from '@/lib/location-match'
 
 // Cosh-driven location universe — same shape as onboarding /
 // Profile. Used here so the farmer picks a real state/district
 // by name (we send the cosh_id to /farmer/discover/* APIs).
-type CoshDistrict = { cosh_id: string; name: string | null }
-type CoshState    = { cosh_id: string; name: string | null; districts: CoshDistrict[] }
+type CoshDistrict = { cosh_id: string; name: string | null; name_en: string | null }
+type CoshState    = { cosh_id: string; name: string | null; name_en: string | null; districts: CoshDistrict[] }
 type CoshLocations = { states: CoshState[] }
 
 declare global {
@@ -654,11 +655,11 @@ function SubscribeFlow() {
                   const coshStates = coshLocations?.states ?? []
                   const filteredStates = coshStates
                     .filter(s => s.name)
-                    .filter(s => !stateSearch || (s.name || '').toLowerCase().includes(stateSearch.toLowerCase()))
+                    .filter(s => locationMatches(stateSearch, s.name, s.name_en))
                   const selectedState = coshStates.find(s => s.cosh_id === stateId) || null
                   const filteredDistricts = (selectedState?.districts ?? [])
                     .filter(d => d.name)
-                    .filter(d => !districtSearch || (d.name || '').toLowerCase().includes(districtSearch.toLowerCase()))
+                    .filter(d => locationMatches(districtSearch, d.name, d.name_en))
                   const hasSavedLocation = !!(district && districtName)
 
                   return (
@@ -716,20 +717,18 @@ function SubscribeFlow() {
                                 <input value={stateSearch} onChange={e => setStateSearch(e.target.value)}
                                   placeholder={tLocation('searchState')}
                                   className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44]"/>
-                                {stateSearch && (
-                                  <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
-                                    {filteredStates.length === 0
-                                      ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noStates')}</p>
-                                      : filteredStates.map(s => (
-                                        <button key={s.cosh_id}
-                                          onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
-                                          className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
-                                          {s.name}
-                                        </button>
-                                      ))
-                                    }
-                                  </div>
-                                )}
+                                <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-52 overflow-y-auto bg-white">
+                                  {filteredStates.length === 0
+                                    ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noStates')}</p>
+                                    : filteredStates.map(s => (
+                                      <button key={s.cosh_id}
+                                        onClick={() => { setStateId(s.cosh_id); setStateSearch('') }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                        {s.name}
+                                      </button>
+                                    ))
+                                  }
+                                </div>
                               </>
                             )}
                           </div>
@@ -751,20 +750,18 @@ function SubscribeFlow() {
                                   <input value={districtSearch} onChange={e => setDistrictSearch(e.target.value)}
                                     placeholder={tLocation('searchDistrict')}
                                     className="w-full border border-[#DDD0B8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#3A7D44]/30 focus:border-[#3A7D44]"/>
-                                  {(districtSearch || (selectedState?.districts.length || 0) <= 30) && (
-                                    <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-40 overflow-y-auto bg-white">
-                                      {filteredDistricts.length === 0
-                                        ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noDistricts')}</p>
-                                        : filteredDistricts.map(d => (
-                                          <button key={d.cosh_id}
-                                            onClick={() => { setDistrict(d.cosh_id); setDistrictSearch('') }}
-                                            className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
-                                            {d.name}
-                                          </button>
-                                        ))
-                                      }
-                                    </div>
-                                  )}
+                                  <div className="mt-1 border border-[#DDD0B8] rounded-xl overflow-hidden max-h-52 overflow-y-auto bg-white">
+                                    {filteredDistricts.length === 0
+                                      ? <p className="text-[#7A8C7E] text-sm px-4 py-3">{tLocation('noDistricts')}</p>
+                                      : filteredDistricts.map(d => (
+                                        <button key={d.cosh_id}
+                                          onClick={() => { setDistrict(d.cosh_id); setDistrictSearch('') }}
+                                          className="w-full text-left px-4 py-2.5 text-sm text-[#6B3F1F] hover:bg-[#F5F0E8] border-b border-[#DDD0B8] last:border-0">
+                                          {d.name}
+                                        </button>
+                                      ))
+                                    }
+                                  </div>
                                 </>
                               )}
                             </div>
