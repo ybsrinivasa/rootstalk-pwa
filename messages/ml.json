@@ -811,6 +811,7 @@
       "subtitleOnly": "നിങ്ങളുടെ പ്രദേശവുമായി പൊരുത്തപ്പെടുന്ന ഒരേയൊരു ഉപദേശം",
       "fallbackPackageName": "{crop} ഉപദേശം",
       "selectionsLabel": "നിങ്ങളുടെ തിരഞ്ഞെടുപ്പുകൾ",
+      "alsoIncludedLabel": "ഈ പാക്കേജിൽ ഇതും ഉൾപ്പെടുന്നു",
       "priceLabel": "സബ്‌സ്‌ക്രിപ്‌ഷൻ വില",
       "priceAmount": "₹ {price}",
       "settingUp": "സജ്ജീകരിക്കുന്നു...",
@@ -2214,6 +2215,7 @@
         "cropLabel": "വിള",
         "packageLabel": "ഉപദേശക പാക്കേജ്",
         "selectionsLabel": "നിങ്ങളുടെ തിരഞ്ഞെടുപ്പുകൾ",
+        "alsoIncludedLabel": "ഈ പാക്കേജിൽ ഇതും ഉൾപ്പെടുന്നു",
         "sending": "അയയ്ക്കുന്നു...",
         "sendRequest": "ഉപദേശക അഭ്യർത്ഥന അയയ്ക്കുക →",
         "startOver": "↺ വീണ്ടും ആരംഭിക്കുക"
@@ -2472,6 +2474,7 @@
         "cropLabel": "വിള",
         "packageLabel": "ഉപദേശക പാക്കേജ്",
         "selectionsLabel": "നിങ്ങളുടെ തിരഞ്ഞെടുപ്പുകൾ",
+        "alsoIncludedLabel": "ഈ പാക്കേജിൽ ഇതും ഉൾപ്പെടുന്നു",
         "sending": "അയയ്ക്കുന്നു...",
         "sendRequest": "ഉപദേശക അഭ്യർത്ഥന അയയ്ക്കുക →",
         "startOver": "↺ വീണ്ടും ആരംഭിക്കുക"

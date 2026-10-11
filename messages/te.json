@@ -811,6 +811,7 @@
       "subtitleOnly": "మీ ప్రాంతానికి సరిపోయే ఏకైక సలహా",
       "fallbackPackageName": "{crop} సలహా",
       "selectionsLabel": "మీ ఎంపికలు",
+      "alsoIncludedLabel": "ఈ ప్యాకేజీలో ఇది కూడా ఉంది",
       "priceLabel": "సభ్యత్వ ధర",
       "priceAmount": "₹ {price}",
       "settingUp": "ఏర్పాటు చేస్తోంది…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "పంట",
         "packageLabel": "సలహా ప్యాకేజీ",
         "selectionsLabel": "మీ ఎంపికలు",
+        "alsoIncludedLabel": "ఈ ప్యాకేజీలో ఇది కూడా ఉంది",
         "sending": "పంపుతున్నాను…",
         "sendRequest": "సలహా అభ్యర్థనను పంపండి →",
         "startOver": "↺ మళ్ళీ ప్రారంభించండి"
@@ -2472,6 +2474,7 @@
         "cropLabel": "పంట",
         "packageLabel": "సలహా ప్యాకేజీ",
         "selectionsLabel": "మీ ఎంపికలు",
+        "alsoIncludedLabel": "ఈ ప్యాకేజీలో ఇది కూడా ఉంది",
         "sending": "పంపుతున్నాను…",
         "sendRequest": "సలహా అభ్యర్థనను పంపండి →",
         "startOver": "↺ మళ్ళీ ప్రారంభించండి"

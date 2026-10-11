@@ -811,6 +811,7 @@
       "subtitleOnly": "আপোনাৰ অঞ্চলৰ সৈতে মিল থকা একমাত্ৰ পৰামৰ্শদাতা",
       "fallbackPackageName": "{crop} পৰামৰ্শদাতা",
       "selectionsLabel": "আপোনাৰ নিৰ্বাচনসমূহ",
+      "alsoIncludedLabel": "এই পেকেজত ইয়াকো অন্তৰ্ভুক্ত কৰা হৈছে",
       "priceLabel": "চাবস্ক্ৰিপচনৰ মূল্য",
       "priceAmount": "₹ {price}",
       "settingUp": "ছেট আপ...",
@@ -2214,6 +2215,7 @@
         "cropLabel": "শস্য",
         "packageLabel": "পৰামৰ্শদাতা পেকেজ",
         "selectionsLabel": "আপোনাৰ নিৰ্বাচনসমূহ",
+        "alsoIncludedLabel": "এই পেকেজত ইয়াকো অন্তৰ্ভুক্ত কৰা হৈছে",
         "sending": "Sending...",
         "sendRequest": "পৰামৰ্শদাতা অনুৰোধ প্ৰেৰণ কৰক →",
         "startOver": "↺ নতুনকৈ আৰম্ভ কৰক"
@@ -2472,6 +2474,7 @@
         "cropLabel": "শস্য",
         "packageLabel": "পৰামৰ্শদাতা পেকেজ",
         "selectionsLabel": "আপোনাৰ নিৰ্বাচনসমূহ",
+        "alsoIncludedLabel": "এই পেকেজত ইয়াকো অন্তৰ্ভুক্ত কৰা হৈছে",
         "sending": "Sending...",
         "sendRequest": "পৰামৰ্শদাতা অনুৰোধ প্ৰেৰণ কৰক →",
         "startOver": "↺ নতুনকৈ আৰম্ভ কৰক"

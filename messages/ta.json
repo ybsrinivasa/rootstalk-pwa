@@ -811,6 +811,7 @@
       "subtitleOnly": "உங்கள் பகுதிக்கு பொருந்தும் ஒரே ஆலோசனை",
       "fallbackPackageName": "{crop} ஆலோசனை",
       "selectionsLabel": "உங்கள் தேர்வுகள்",
+      "alsoIncludedLabel": "இந்த தொகுப்பில் இதுவும் அடங்கும்",
       "priceLabel": "சந்தா விலை",
       "priceAmount": "₹ {price}",
       "settingUp": "அமைத்துக் கொண்டிருக்கிறது…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "பயிர்",
         "packageLabel": "ஆலோசனைத் தொகுப்பு",
         "selectionsLabel": "உங்கள் தேர்வுகள்",
+        "alsoIncludedLabel": "இந்த தொகுப்பில் இதுவும் அடங்கும்",
         "sending": "அனுப்புகிறது…",
         "sendRequest": "ஆலோசனை கோரிக்கையை அனுப்பவும் →",
         "startOver": "↺ மீண்டும் தொடங்கு"
@@ -2472,6 +2474,7 @@
         "cropLabel": "பயிர்",
         "packageLabel": "ஆலோசனைத் தொகுப்பு",
         "selectionsLabel": "உங்கள் தேர்வுகள்",
+        "alsoIncludedLabel": "இந்த தொகுப்பில் இதுவும் அடங்கும்",
         "sending": "அனுப்புகிறது…",
         "sendRequest": "ஆலோசனை கோரிக்கையை அனுப்பவும் →",
         "startOver": "↺ மீண்டும் தொடங்கு"

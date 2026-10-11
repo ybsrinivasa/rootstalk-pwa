@@ -811,6 +811,7 @@
       "subtitleOnly": "તમારા વિસ્તાર સાથે મેળ ખાતી એકમાત્ર સલાહ",
       "fallbackPackageName": "{crop} સલાહકાર",
       "selectionsLabel": "તમારી પસંદગીઓ",
+      "alsoIncludedLabel": "આ પેકેજમાં આ પણ સામેલ છે",
       "priceLabel": "સબ્સ્ક્રિપ્શન કિંમત",
       "priceAmount": "₹ {price}",
       "settingUp": "સેટ કરી રહ્યું છે...",
@@ -2214,6 +2215,7 @@
         "cropLabel": "પાક",
         "packageLabel": "સલાહકાર પેકેજ",
         "selectionsLabel": "તમારી પસંદગીઓ",
+        "alsoIncludedLabel": "આ પેકેજમાં આ પણ સામેલ છે",
         "sending": "મોકલી રહ્યું છે...",
         "sendRequest": "સલાહકાર વિનંતી મોકલો →",
         "startOver": "↺ ફરી શરૂ કરો"
@@ -2472,6 +2474,7 @@
         "cropLabel": "પાક",
         "packageLabel": "સલાહકાર પેકેજ",
         "selectionsLabel": "તમારી પસંદગીઓ",
+        "alsoIncludedLabel": "આ પેકેજમાં આ પણ સામેલ છે",
         "sending": "મોકલી રહ્યું છે...",
         "sendRequest": "સલાહકાર વિનંતી મોકલો →",
         "startOver": "↺ ફરી શરૂ કરો"

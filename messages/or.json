@@ -811,6 +811,7 @@
       "subtitleOnly": "ଆପଣଙ୍କ ଅଞ୍ଚଳ ସହିତ ମେଳ ଖାଉଥିବା ଏକମାତ୍ର ପରାମର୍ଶଦାତା",
       "fallbackPackageName": "{crop} ପରାମର୍ଶଦାତା",
       "selectionsLabel": "ଆପଣଙ୍କର ଚୟନଗୁଡ଼ିକ",
+      "alsoIncludedLabel": "ଏହି ପ୍ୟାକେଜରେ ଏହା ମଧ୍ୟ ଅନ୍ତର୍ଭୁକ୍ତ",
       "priceLabel": "ସଦସ୍ୟତା ମୂଲ୍ୟ",
       "priceAmount": "₹ {price}",
       "settingUp": "ସେଟ୍ ଅପ୍ କରାଯାଉଛି…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "କାଟନ୍ତୁ",
         "packageLabel": "ପରାମର୍ଶଦାତା ପ୍ୟାକେଜ୍",
         "selectionsLabel": "ଆପଣଙ୍କର ଚୟନଗୁଡ଼ିକ",
+        "alsoIncludedLabel": "ଏହି ପ୍ୟାକେଜରେ ଏହା ମଧ୍ୟ ଅନ୍ତର୍ଭୁକ୍ତ",
         "sending": "ପଠାଯାଉଛି…",
         "sendRequest": "ପରାମର୍ଶ ଅନୁରୋଧ ପଠାନ୍ତୁ →",
         "startOver": "↺ ପୁଣି ଆରମ୍ଭ କରନ୍ତୁ"
@@ -2472,6 +2474,7 @@
         "cropLabel": "କାଟନ୍ତୁ",
         "packageLabel": "ପରାମର୍ଶଦାତା ପ୍ୟାକେଜ୍",
         "selectionsLabel": "ଆପଣଙ୍କର ଚୟନଗୁଡ଼ିକ",
+        "alsoIncludedLabel": "ଏହି ପ୍ୟାକେଜରେ ଏହା ମଧ୍ୟ ଅନ୍ତର୍ଭୁକ୍ତ",
         "sending": "ପଠାଯାଉଛି…",
         "sendRequest": "ପରାମର୍ଶ ଅନୁରୋଧ ପଠାନ୍ତୁ →",
         "startOver": "↺ ପୁଣି ଆରମ୍ଭ କରନ୍ତୁ"

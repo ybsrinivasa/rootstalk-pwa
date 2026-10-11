@@ -811,6 +811,7 @@
       "subtitleOnly": "ਤੁਹਾਡੇ ਖੇਤਰ ਨਾਲ ਮੇਲ ਖਾਂਦੀ ਇੱਕੋ ਇੱਕ ਸਲਾਹ",
       "fallbackPackageName": "{crop} ਸਲਾਹ",
       "selectionsLabel": "ਤੁਹਾਡੀਆਂ ਚੋਣਾਂ",
+      "alsoIncludedLabel": "ਇਸ ਪੈਕੇਜ ਵਿੱਚ ਇਹ ਵੀ ਸ਼ਾਮਲ ਹੈ",
       "priceLabel": "ਗਾਹਕੀ ਦੀ ਕੀਮਤ",
       "priceAmount": "₹ {price}",
       "settingUp": "ਸੈੱਟਅੱਪ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "ਕੱਟੋ",
         "packageLabel": "ਸਲਾਹਕਾਰ ਪੈਕੇਜ",
         "selectionsLabel": "ਤੁਹਾਡੀਆਂ ਚੋਣਾਂ",
+        "alsoIncludedLabel": "ਇਸ ਪੈਕੇਜ ਵਿੱਚ ਇਹ ਵੀ ਸ਼ਾਮਲ ਹੈ",
         "sending": "ਭੇਜਿਆ ਜਾ ਰਿਹਾ ਹੈ...",
         "sendRequest": "ਸਲਾਹਕਾਰੀ ਬੇਨਤੀ ਭੇਜੋ →",
         "startOver": "↺ ਦੁਬਾਰਾ ਸ਼ੁਰੂ ਕਰੋ"
@@ -2472,6 +2474,7 @@
         "cropLabel": "ਕੱਟੋ",
         "packageLabel": "ਸਲਾਹਕਾਰ ਪੈਕੇਜ",
         "selectionsLabel": "ਤੁਹਾਡੀਆਂ ਚੋਣਾਂ",
+        "alsoIncludedLabel": "ਇਸ ਪੈਕੇਜ ਵਿੱਚ ਇਹ ਵੀ ਸ਼ਾਮਲ ਹੈ",
         "sending": "ਭੇਜਿਆ ਜਾ ਰਿਹਾ ਹੈ...",
         "sendRequest": "ਸਲਾਹਕਾਰੀ ਬੇਨਤੀ ਭੇਜੋ →",
         "startOver": "↺ ਦੁਬਾਰਾ ਸ਼ੁਰੂ ਕਰੋ"
