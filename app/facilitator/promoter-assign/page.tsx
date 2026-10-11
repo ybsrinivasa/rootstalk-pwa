@@ -38,6 +38,12 @@ interface CropOption {
   name?: string | null
 }
 
+interface PackagePVEntry {
+  parameter_name: string
+  variable_name: string
+  source: 'answered' | 'inherited'
+  display_order: number
+}
 interface GuidedStep {
   done: boolean
   package?: { id: string; name: string; description: string | null }
@@ -45,6 +51,7 @@ interface GuidedStep {
   variables?: { id: string; name: string }[]
   remaining_count?: number
   error?: string
+  all_parameters?: PackagePVEntry[]
 }
 
 function formatCropName(coshId: string, name?: string | null): string {
@@ -585,18 +592,39 @@ export default function FacilitatorPromoterAssignPage() {
                   <p className="text-xs text-[#7A8C7E] uppercase tracking-wide">{t('confirm.cropLabel')}</p>
                   <p className="font-semibold text-[#6B3F1F]">{formatCropName(selectedCrop)}</p>
                 </div>
-                {answerHistory.length > 0 && (
-                  <div className="border-t border-[#DDD0B8] pt-3">
-                    <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">{t('confirm.selectionsLabel')}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {answerHistory.map((a, i) => (
-                        <span key={i} className="text-xs bg-slate-100 text-[#6B3F1F] px-2 py-1 rounded-full">
-                          {a.param}: <span className="font-medium">{a.varName}</span>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {(() => {
+                  const all = guidedStep?.all_parameters || []
+                  const answered = all.filter(p => p.source === 'answered')
+                  const inherited = all.filter(p => p.source === 'inherited')
+                  return (
+                    <>
+                      {answered.length > 0 && (
+                        <div className="border-t border-[#DDD0B8] pt-3">
+                          <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">{t('confirm.selectionsLabel')}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {answered.map((p, i) => (
+                              <span key={i} className="text-xs bg-slate-100 text-[#6B3F1F] px-2 py-1 rounded-full">
+                                {p.parameter_name}: <span className="font-medium">{p.variable_name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {inherited.length > 0 && (
+                        <div className="border-t border-[#DDD0B8] pt-3">
+                          <p className="text-xs text-[#7A8C7E] uppercase tracking-wide mb-2">{t('confirm.alsoIncludedLabel')}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {inherited.map((p, i) => (
+                              <span key={i} className="text-xs bg-white border border-[#DDD0B8] text-[#6B3F1F] px-2 py-1 rounded-full">
+                                {p.parameter_name}: <span className="font-medium">{p.variable_name}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
 
               {error && <p className="text-[#D4682E] text-xs mb-3">{error}</p>}

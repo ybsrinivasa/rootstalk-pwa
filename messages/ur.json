@@ -811,6 +811,7 @@
       "subtitleOnly": "آپ کے علاقے سے ملنے والی واحد ایڈوائزری",
       "fallbackPackageName": "{crop} ایڈوائزری",
       "selectionsLabel": "آپ کے انتخاب",
+      "alsoIncludedLabel": "اس پیکیج میں یہ بھی شامل ہے",
       "priceLabel": "سبسکرپشن کی قیمت",
       "priceAmount": "₹ {price}",
       "settingUp": "ترتیب دیا جا رہا ہے…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "فصل",
         "packageLabel": "مشاورتی پیکیج",
         "selectionsLabel": "آپ کے انتخاب",
+        "alsoIncludedLabel": "اس پیکیج میں یہ بھی شامل ہے",
         "sending": "بھیج رہا ہے…",
         "sendRequest": "مشاورتی درخواست بھیجیں →",
         "startOver": "↺ دوبارہ شروع کریں۔"
@@ -2484,6 +2486,7 @@
         "cropLabel": "فصل",
         "packageLabel": "مشاورتی پیکیج",
         "selectionsLabel": "آپ کے انتخاب",
+        "alsoIncludedLabel": "اس پیکیج میں یہ بھی شامل ہے",
         "sending": "بھیج رہا ہے…",
         "sendRequest": "مشاورتی درخواست بھیجیں →",
         "startOver": "↺ دوبارہ شروع کریں۔"

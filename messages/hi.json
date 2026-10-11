@@ -811,6 +811,7 @@
       "subtitleOnly": "आपके क्षेत्र के लिए उपयुक्त एकमात्र सलाह",
       "fallbackPackageName": "{crop} सलाह",
       "selectionsLabel": "आपके चयन",
+      "alsoIncludedLabel": "इस पैकेज में यह भी शामिल है",
       "priceLabel": "सदस्यता कीमत",
       "priceAmount": "₹ {price}",
       "settingUp": "की स्थापना…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "काटना",
         "packageLabel": "सलाहकार पैकेज",
         "selectionsLabel": "आपके चयन",
+        "alsoIncludedLabel": "इस पैकेज में यह भी शामिल है",
         "sending": "भेजा जा रहा है…",
         "sendRequest": "परामर्श अनुरोध भेजें →",
         "startOver": "↺ फिर से शुरू करें"
@@ -2484,6 +2486,7 @@
         "cropLabel": "काटना",
         "packageLabel": "सलाहकार पैकेज",
         "selectionsLabel": "आपके चयन",
+        "alsoIncludedLabel": "इस पैकेज में यह भी शामिल है",
         "sending": "भेजा जा रहा है…",
         "sendRequest": "परामर्श अनुरोध भेजें →",
         "startOver": "↺ फिर से शुरू करें"

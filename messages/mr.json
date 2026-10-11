@@ -811,6 +811,7 @@
       "subtitleOnly": "तुमच्या परिसराशी जुळणारी एकमेव सल्ला सेवा",
       "fallbackPackageName": "{crop} सल्ला",
       "selectionsLabel": "तुमची निवड",
+      "alsoIncludedLabel": "या पॅकेजमध्ये हे देखील समाविष्ट आहे",
       "priceLabel": "वर्गणीची किंमत",
       "priceAmount": "₹ {price}",
       "settingUp": "मांडणी करत आहे…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "पीक",
         "packageLabel": "सल्लागार पॅकेज",
         "selectionsLabel": "तुमची निवड",
+        "alsoIncludedLabel": "या पॅकेजमध्ये हे देखील समाविष्ट आहे",
         "sending": "पाठवत आहे…",
         "sendRequest": "सल्ला विनंती पाठवा →",
         "startOver": "↺ पुन्हा सुरू करा"
@@ -2484,6 +2486,7 @@
         "cropLabel": "पीक",
         "packageLabel": "सल्लागार पॅकेज",
         "selectionsLabel": "तुमची निवड",
+        "alsoIncludedLabel": "या पॅकेजमध्ये हे देखील समाविष्ट आहे",
         "sending": "पाठवत आहे…",
         "sendRequest": "सल्ला विनंती पाठवा →",
         "startOver": "↺ पुन्हा सुरू करा"

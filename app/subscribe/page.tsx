@@ -42,6 +42,12 @@ interface CompanyInfo {
   subscription_fee_paise?: number | null
 }
 
+interface PackagePVEntry {
+  parameter_name: string
+  variable_name: string
+  source: 'answered' | 'inherited'
+  display_order: number
+}
 interface GuidedStep {
   done: boolean
   package?: { id: string; name: string; description: string | null }
@@ -49,6 +55,7 @@ interface GuidedStep {
   variables?: { id: string; name: string }[]
   remaining_count?: number
   error?: string
+  all_parameters?: PackagePVEntry[]
 }
 
 // Crop label resolver lives in lib/crop-name. Pass the resolved
@@ -956,18 +963,39 @@ function SubscribeFlow() {
                             </p>
                           </div>
                         )}
-                        {selectedVars.length > 0 && (
-                          <div className="mt-3 pt-3 border-t border-[#DDD0B8] space-y-1">
-                            <p className="text-[11px] uppercase tracking-wide text-[#7A8C7E] font-semibold mb-1">
-                              {t('confirm.selectionsLabel')}
-                            </p>
-                            {selectedVars.map((sv, i) => (
-                              <p key={i} className="text-sm text-[#6B3F1F]">
-                                • {sv.paramName}: <span className="font-medium">{sv.varName}</span>
-                              </p>
-                            ))}
-                          </div>
-                        )}
+                        {(() => {
+                          const all = guidedStep?.all_parameters || []
+                          const answered = all.filter(p => p.source === 'answered')
+                          const inherited = all.filter(p => p.source === 'inherited')
+                          return (
+                            <>
+                              {answered.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-[#DDD0B8] space-y-1">
+                                  <p className="text-[11px] uppercase tracking-wide text-[#7A8C7E] font-semibold mb-1">
+                                    {t('confirm.selectionsLabel')}
+                                  </p>
+                                  {answered.map((p, i) => (
+                                    <p key={i} className="text-sm text-[#6B3F1F]">
+                                      • {p.parameter_name}: <span className="font-medium">{p.variable_name}</span>
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
+                              {inherited.length > 0 && (
+                                <div className="mt-3 pt-3 border-t border-[#DDD0B8] space-y-1">
+                                  <p className="text-[11px] uppercase tracking-wide text-[#7A8C7E] font-semibold mb-1">
+                                    {t('confirm.alsoIncludedLabel')}
+                                  </p>
+                                  {inherited.map((p, i) => (
+                                    <p key={i} className="text-sm text-[#6B3F1F]/80">
+                                      • {p.parameter_name}: <span className="font-medium">{p.variable_name}</span>
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
                         <div className="mt-4 pt-4 border-t border-[#DDD0B8] flex items-center justify-between">
                           <span className="text-[#7A8C7E] text-sm">{t('confirm.priceLabel')}</span>
                           <span className="text-[#6B3F1F] font-bold text-lg">{t('confirm.priceAmount', { price: user?.subscription_amount_inr ?? 199 })}</span>

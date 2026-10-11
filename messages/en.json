@@ -1083,6 +1083,7 @@
       "fallbackPackageName": "{crop} advisory",
       "aboutAdvisoryLabel": "About this advisory",
       "selectionsLabel": "Your selections",
+      "alsoIncludedLabel": "Also included in this package",
       "priceLabel": "Subscription price",
       "priceAmount": "₹{price}",
       "settingUp": "Setting up…",
@@ -2755,6 +2756,7 @@
         "cropLabel": "Crop",
         "packageLabel": "Advisory Package",
         "selectionsLabel": "Your selections",
+        "alsoIncludedLabel": "Also included in this package",
         "sending": "Sending…",
         "sendRequest": "Send advisory request →",
         "startOver": "↺ Start over"
@@ -3013,6 +3015,7 @@
         "cropLabel": "Crop",
         "packageLabel": "Advisory Package",
         "selectionsLabel": "Your selections",
+        "alsoIncludedLabel": "Also included in this package",
         "sending": "Sending…",
         "sendRequest": "Send advisory request →",
         "startOver": "↺ Start over"

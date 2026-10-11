@@ -851,6 +851,7 @@
       "fallbackPackageName": "{crop} ಸಲಹಾ",
       "aboutAdvisoryLabel": "ಈ ಸಲಹೆಯ ಬಗ್ಗೆ",
       "selectionsLabel": "ನಿಮ್ಮ ಆಯ್ಕೆಗಳು",
+      "alsoIncludedLabel": "ಈ ಪ್ಯಾಕೇಜ್‌ನಲ್ಲಿ ಇದನ್ನೂ ಒಳಗೊಂಡಿದೆ",
       "priceLabel": "ಚಂದಾದಾರಿಕೆ ಬೆಲೆ",
       "priceAmount": "₹ {price}",
       "settingUp": "ಹೊಂದಿಸಲಾಗುತ್ತಿದೆ...",
@@ -2522,6 +2523,7 @@
         "cropLabel": "ಬೆಳೆ",
         "packageLabel": "ಸಲಹಾ ಪ್ಯಾಕೇಜ್",
         "selectionsLabel": "ನಿಮ್ಮ ಆಯ್ಕೆಗಳು",
+        "alsoIncludedLabel": "ಈ ಪ್ಯಾಕೇಜ್‌ನಲ್ಲಿ ಇದನ್ನೂ ಒಳಗೊಂಡಿದೆ",
         "sending": "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...",
         "sendRequest": "ಸಲಹಾ ವಿನಂತಿಯನ್ನು ಕಳುಹಿಸಿ →",
         "startOver": "↺ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ"
@@ -2780,6 +2782,7 @@
         "cropLabel": "ಬೆಳೆ",
         "packageLabel": "ಸಲಹಾ ಪ್ಯಾಕೇಜ್",
         "selectionsLabel": "ನಿಮ್ಮ ಆಯ್ಕೆಗಳು",
+        "alsoIncludedLabel": "ಈ ಪ್ಯಾಕೇಜ್‌ನಲ್ಲಿ ಇದನ್ನೂ ಒಳಗೊಂಡಿದೆ",
         "sending": "ಕಳುಹಿಸಲಾಗುತ್ತಿದೆ...",
         "sendRequest": "ಸಲಹಾ ವಿನಂತಿಯನ್ನು ಕಳುಹಿಸಿ →",
         "startOver": "↺ ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ"

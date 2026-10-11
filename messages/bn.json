@@ -811,6 +811,7 @@
       "subtitleOnly": "আপনার এলাকার সাথে মেলে এমন একমাত্র পরামর্শ",
       "fallbackPackageName": "{crop} পরামর্শ",
       "selectionsLabel": "আপনার পছন্দগুলি",
+      "alsoIncludedLabel": "এই প্যাকেজে এটিও অন্তর্ভুক্ত",
       "priceLabel": "সাবস্ক্রিপশন মূল্য",
       "priceAmount": "₹ {price}",
       "settingUp": "স্থাপন করা হচ্ছে…",
@@ -2214,6 +2215,7 @@
         "cropLabel": "ফসল",
         "packageLabel": "পরামর্শ প্যাকেজ",
         "selectionsLabel": "আপনার পছন্দগুলি",
+        "alsoIncludedLabel": "এই প্যাকেজে এটিও অন্তর্ভুক্ত",
         "sending": "প্রেরণ করা হচ্ছে…",
         "sendRequest": "পরামর্শমূলক অনুরোধ পাঠান →",
         "startOver": "↺ নতুন করে শুরু করুন"
@@ -2484,6 +2486,7 @@
         "cropLabel": "ফসল",
         "packageLabel": "পরামর্শ প্যাকেজ",
         "selectionsLabel": "আপনার পছন্দগুলি",
+        "alsoIncludedLabel": "এই প্যাকেজে এটিও অন্তর্ভুক্ত",
         "sending": "প্রেরণ করা হচ্ছে…",
         "sendRequest": "পরামর্শমূলক অনুরোধ পাঠান →",
         "startOver": "↺ নতুন করে শুরু করুন"
