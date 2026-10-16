@@ -9,7 +9,7 @@ import api from '@/lib/api'
 import { locationMatches } from '@/lib/location-match'
 import AppMark from '@/components/AppMark'
 
-type Stage = 'loading' | 'landing' | 'install-required' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome'
+type Stage = 'loading' | 'landing' | 'install-required' | 'phone' | 'otp' | 'profile' | 'location' | 'gps' | 'welcome' | 'coaching-archived'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -367,7 +367,18 @@ export default function RootPage() {
       // fill to preserve the manual test flow.
       if (isCoachingTemp && res.dev_otp) setOtp(res.dev_otp)
       setStage('otp'); setResend(30); setOtpEpoch(e => e + 1)
-    } catch { setError(tAuth('errors.phoneSendFailed')) }
+    } catch (err) {
+      // 2026-10-16 — Coaching archived phones get a dedicated screen
+      // directing them to the portal archive instead of a generic
+      // "phone send failed" error.
+      const code = (err as { response?: { data?: { detail?: { code?: string } } } })
+        ?.response?.data?.detail?.code
+      if (code === 'coaching_session_archived') {
+        setStage('coaching-archived')
+      } else {
+        setError(tAuth('errors.phoneSendFailed'))
+      }
+    }
     finally { setBusy(false) }
   }
 
@@ -466,6 +477,32 @@ export default function RootPage() {
         }
       },
       { timeout: 10000 }
+    )
+  }
+
+  // ── Coaching archived — ARCHIVED students hitting PWA login ─────────────
+  if (stage === 'coaching-archived') {
+    const portalBase = process.env.NEXT_PUBLIC_PORTAL_URL || 'https://rstalk-ca.eywa.farm'
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: BG }}>
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-6">
+          <div className="text-5xl text-center mb-3">🎓</div>
+          <h1 className="text-xl font-bold text-slate-900 mb-2 text-center">
+            Your coaching session is archived
+          </h1>
+          <p className="text-sm text-slate-600 text-center mb-4">
+            The PWA practice phase is complete. You can still review your workspace from the portal archive — your certification remains valid.
+          </p>
+          <a href={portalBase} target="_blank" rel="noopener noreferrer"
+            className="block w-full text-center bg-emerald-700 hover:bg-emerald-800 text-white font-medium py-3 rounded-lg">
+            Open the portal archive
+          </a>
+          <button onClick={() => { setStage('phone'); setPhone(''); setError('') }}
+            className="w-full mt-3 text-sm text-slate-500 hover:text-slate-700 py-2">
+            Use a different phone
+          </button>
+        </div>
+      </div>
     )
   }
 
