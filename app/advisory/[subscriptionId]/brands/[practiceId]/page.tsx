@@ -63,12 +63,6 @@ function formulationAcronym(name: string): string {
   return (m ? m[1] : name).trim()
 }
 
-function shortBrandName(fullName: string): string {
-  if (!fullName) return ''
-  const idx = fullName.indexOf(' - ')
-  return idx > 0 ? fullName.slice(0, idx).trim() : fullName.trim()
-}
-
 function composeChemistryLine(data: BrandsResponse): string | null {
   const cn = (data.practice_common_name || '').trim()
   const ai = (data.practice_ai_display || '').trim()
@@ -249,7 +243,7 @@ export default function AdvisoryBrandsPage() {
                   {t('recommendedBy', { client: data.client_name || '' })}
                 </p>
                 <p className="text-base font-bold text-[#6B3F1F] mt-1">
-                  {shortBrandName(data.recommended_brand_name)}
+                  {data.recommended_brand_name}
                 </p>
                 {data.recommended_manufacturer_name && (
                   <p className="text-xs text-[#7A8C7E] mt-0.5">
@@ -298,7 +292,7 @@ export default function AdvisoryBrandsPage() {
                   {data.brands.map((b, idx) => (
                     <div key={`${b.name}-${idx}`}
                       className={`px-4 py-3 ${idx > 0 ? 'border-t border-[#EEE4D2]' : ''}`}>
-                      <p className="font-semibold text-[#6B3F1F]">{shortBrandName(b.name)}</p>
+                      <p className="font-semibold text-[#6B3F1F]">{b.name}</p>
                       {b.manufacturer && (
                         <p className="text-xs text-[#7A8C7E] mt-0.5">{b.manufacturer}</p>
                       )}
@@ -351,7 +345,7 @@ export default function AdvisoryBrandsPage() {
                               </svg>
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="font-semibold text-[#6B3F1F]">{shortBrandName(b.name)}</p>
+                              <p className="font-semibold text-[#6B3F1F]">{b.name}</p>
                               {b.manufacturer && (
                                 <p className="text-xs text-[#7A8C7E] mt-0.5">{b.manufacturer}</p>
                               )}
