@@ -76,11 +76,13 @@ interface NPKTradeNamesResponse {
 // render ✓ Bought instantly.
 interface NPKPurchase {
   id: string
-  trade_name_cosh_id: string
+  trade_name_cosh_id: string | null
   trade_name_display: string
-  common_name_cosh_id: string
+  common_name_cosh_id: string | null
   product_role: 'MIXED' | 'STRAIGHT_N' | 'STRAIGHT_P' | 'STRAIGHT_K'
   match_target: 'N' | 'P' | 'K' | null
+  source: 'COSH' | 'FARMER_ENTERED'
+  photo_url: string | null
   apply_kg: number | null
   // 2026-10-30 — human scope label ("2 acres" / "1000 plants") so
   // the UI renders "~X kg for your N <scope>" without having to know
@@ -154,8 +156,14 @@ export default function NpkBrandsPage() {
       const r = await api.get<{ purchases: NPKPurchase[] }>(
         `/farmer/subscriptions/${subscriptionId}/practices/${practiceId}/npk-purchases`,
       )
+      // Key by trade_name_cosh_id for O(1) "already bought" checks
+      // on the Cosh brands list. FARMER_ENTERED rows have a NULL
+      // trade_name_cosh_id so we key them by the record id instead
+      // (they still appear in purchaseList via Object.values).
       const next: Record<string, NPKPurchase> = {}
-      for (const p of r.data.purchases) next[p.trade_name_cosh_id] = p
+      for (const p of r.data.purchases) {
+        next[p.trade_name_cosh_id || p.id] = p
+      }
       setPurchases(next)
     } catch {
       // non-fatal — screen still works, buy buttons will just not show ticks
@@ -360,6 +368,44 @@ export default function NpkBrandsPage() {
     }
   }
 
+  async function handleBuyFreeText(
+    ctx: PurchaseContext,
+    args: { brand: string; photoFile: File | null },
+  ) {
+    const brand = (args.brand || '').trim()
+    if (!brand) return
+    try {
+      let photoUrl: string | null = null
+      if (args.photoFile) {
+        const fd = new FormData()
+        fd.append('file', args.photoFile)
+        fd.append('folder', 'npk-brand-photos')
+        const { data: up } = await api.post<{ url: string }>(
+          '/media/upload', fd,
+          { headers: { 'Content-Type': 'multipart/form-data' } },
+        )
+        photoUrl = up?.url || null
+      }
+      await api.post(
+        `/farmer/subscriptions/${subscriptionId}/practices/${practiceId}/npk-purchases`,
+        {
+          source: 'FARMER_ENTERED',
+          trade_name_display: brand,
+          photo_url: photoUrl,
+          product_role: ctx.product_role,
+          match_target: ctx.match_target,
+        },
+      )
+      await loadPurchases()
+      try {
+        window.dispatchEvent(new Event('rt-npk-purchases-changed'))
+      } catch { /* non-browser env */ }
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
+      alert(err?.response?.data?.detail || 'Could not record the brand.')
+    }
+  }
+
   async function handleRemoveBrand(purchaseId: string) {
     try {
       await api.delete(
@@ -439,10 +485,25 @@ export default function NpkBrandsPage() {
                     <span className="font-semibold text-[#6B3F1F]">
                       {p.trade_name_display}
                     </span>
+                    {p.source === 'FARMER_ENTERED' && (
+                      <span className="text-[11px] text-slate-500 ml-1">(you added)</span>
+                    )}
                     {p.apply_kg != null && p.scope_text ? (
                       <> — apply ~{fmt(p.apply_kg)} kg for your {p.scope_text}</>
+                    ) : p.source === 'FARMER_ENTERED' ? (
+                      <span className="text-[#7A8C7E]"> — ask dealer for the amount to apply</span>
                     ) : (
                       <span className="text-[#7A8C7E]"> — quantity needs your field size + Cosh concentration</span>
+                    )}
+                    {p.photo_url && (
+                      <> {' '}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <a href={p.photo_url} target="_blank" rel="noopener noreferrer"
+                          className="inline-block align-middle">
+                          <img src={p.photo_url} alt="bag"
+                            className="inline-block h-6 w-6 object-cover rounded border border-slate-300" />
+                        </a>
+                      </>
                     )}
                   </span>
                   <button onClick={() => handleRemoveBrand(p.id)}
@@ -547,6 +608,7 @@ export default function NpkBrandsPage() {
                           }}
                           buyingBrand={buyingBrand}
                           onBuy={handleBuyBrand}
+                          onBuyFreeText={handleBuyFreeText}
                         />
                       )}
                     </div>
@@ -597,6 +659,7 @@ export default function NpkBrandsPage() {
                       }}
                       buyingBrand={buyingBrand}
                       onBuy={handleBuyBrand}
+                      onBuyFreeText={handleBuyFreeText}
                     />
                   )}
                 </div>
@@ -619,6 +682,7 @@ export default function NpkBrandsPage() {
                     purchases={purchases}
                     buyingBrand={buyingBrand}
                     onBuy={handleBuyBrand}
+                    onBuyFreeText={handleBuyFreeText}
                   />
                 )}
               </>
@@ -639,6 +703,7 @@ export default function NpkBrandsPage() {
             purchases={purchases}
             buyingBrand={buyingBrand}
             onBuy={handleBuyBrand}
+            onBuyFreeText={handleBuyFreeText}
           />
         )}
 
@@ -673,7 +738,7 @@ export default function NpkBrandsPage() {
 
 function StraightsByNutrient({
   straights, gap, headerLabel, tradeNamesFor, tradeNames, tradeNamesLoading,
-  onShowBrands, purchases, buyingBrand, onBuy,
+  onShowBrands, purchases, buyingBrand, onBuy, onBuyFreeText,
 }: {
   straights: NPKStraight[]
   gap: { n: number; p: number; k: number } | null
@@ -685,6 +750,9 @@ function StraightsByNutrient({
   purchases: Record<string, NPKPurchase>
   buyingBrand: string | null
   onBuy: (trade: NPKTradeName, ctx: PurchaseContext) => void | Promise<void>
+  onBuyFreeText: (ctx: PurchaseContext, args: {
+    brand: string; photoFile: File | null
+  }) => void | Promise<void>
 }) {
   if (!gap) return null
   // Group by nutrient target. Skip nutrients with gap = 0.
@@ -736,6 +804,9 @@ function StraightsByNutrient({
                 className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
                 <p className="text-xs text-emerald-800">
                   ✓ For {g.label} — <span className="font-semibold">{bought.trade_name_display}</span>
+                  {bought.source === 'FARMER_ENTERED' && (
+                    <span className="text-[11px] text-slate-500 ml-1">(you added)</span>
+                  )}
                   {bought.apply_kg != null && (
                     <> · ~{fmt(bought.apply_kg)} kg</>
                   )}
@@ -791,6 +862,7 @@ function StraightsByNutrient({
                           }}
                           buyingBrand={buyingBrand}
                           onBuy={onBuy}
+                          onBuyFreeText={onBuyFreeText}
                         />
                       )}
                     </div>
@@ -807,7 +879,7 @@ function StraightsByNutrient({
 }
 
 function BrandList({
-  rows, loading, purchases, purchaseCtx, buyingBrand, onBuy,
+  rows, loading, purchases, purchaseCtx, buyingBrand, onBuy, onBuyFreeText,
 }: {
   rows: NPKTradeName[]
   loading: boolean
@@ -815,43 +887,119 @@ function BrandList({
   purchaseCtx: PurchaseContext | null
   buyingBrand: string | null
   onBuy: (trade: NPKTradeName, ctx: PurchaseContext) => void | Promise<void>
+  onBuyFreeText: (ctx: PurchaseContext, args: {
+    brand: string; photoFile: File | null
+  }) => void | Promise<void>
 }) {
+  const [showFreeText, setShowFreeText] = useState(false)
+  const [freeBrand, setFreeBrand] = useState('')
+  const [freePhoto, setFreePhoto] = useState<File | null>(null)
+  const [freeSaving, setFreeSaving] = useState(false)
+
+  async function handleFreeSubmit() {
+    if (!purchaseCtx || !freeBrand.trim()) return
+    setFreeSaving(true)
+    try {
+      await onBuyFreeText(purchaseCtx, {
+        brand: freeBrand.trim(),
+        photoFile: freePhoto,
+      })
+      setShowFreeText(false)
+      setFreeBrand('')
+      setFreePhoto(null)
+    } finally {
+      setFreeSaving(false)
+    }
+  }
+
   return (
     <div className="mt-3 pl-3 border-l-2 border-purple-200">
       {loading ? (
         <p className="text-xs text-[#7A8C7E] py-1">Loading brands…</p>
-      ) : rows.length === 0 ? (
-        <p className="text-xs text-[#7A8C7E] py-1">
-          No brands found for this common name. Ask your dealer.
-        </p>
       ) : (
-        <ul className="space-y-1 py-1">
-          {rows.map(tn => {
-            const bought = !!purchases[tn.cosh_id]
-            const busy = buyingBrand === tn.cosh_id
-            const canBuy = !!purchaseCtx && !bought && !busy
-            return (
-              <li key={tn.cosh_id} className="flex items-center justify-between gap-3 py-1">
-                <span className="text-sm text-[#4A3528] flex-1 min-w-0">
-                  {bought && <span className="text-emerald-700 mr-1">✓</span>}
-                  {tn.name}
-                </span>
-                {bought ? (
-                  <span className="text-xs font-medium text-emerald-700 shrink-0">
-                    Bought
-                  </span>
-                ) : (
-                  <button
-                    disabled={!canBuy}
-                    onClick={() => purchaseCtx && onBuy(tn, purchaseCtx)}
-                    className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-600 border border-emerald-700 text-white disabled:opacity-50 shrink-0">
-                    {busy ? 'Saving…' : 'I bought this'}
-                  </button>
-                )}
-              </li>
-            )
-          })}
-        </ul>
+        <>
+          {rows.length === 0 ? (
+            <p className="text-xs text-[#7A8C7E] py-1">
+              No brands listed. If the shop sells one, enter it below.
+            </p>
+          ) : (
+            <ul className="space-y-1 py-1">
+              {rows.map(tn => {
+                const bought = !!purchases[tn.cosh_id]
+                const busy = buyingBrand === tn.cosh_id
+                const canBuy = !!purchaseCtx && !bought && !busy
+                return (
+                  <li key={tn.cosh_id} className="flex items-center justify-between gap-3 py-1">
+                    <span className="text-sm text-[#4A3528] flex-1 min-w-0">
+                      {bought && <span className="text-emerald-700 mr-1">✓</span>}
+                      {tn.name}
+                    </span>
+                    {bought ? (
+                      <span className="text-xs font-medium text-emerald-700 shrink-0">
+                        Bought
+                      </span>
+                    ) : (
+                      <button
+                        disabled={!canBuy}
+                        onClick={() => purchaseCtx && onBuy(tn, purchaseCtx)}
+                        className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-600 border border-emerald-700 text-white disabled:opacity-50 shrink-0">
+                        {busy ? 'Saving…' : 'I bought this'}
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          {/* Free-text brand entry — fallback when the shop sells
+              something not in Cosh. 2026-10-30 per YB. */}
+          {!showFreeText ? (
+            <button onClick={() => setShowFreeText(true)}
+              disabled={!purchaseCtx}
+              className="text-xs text-purple-700 underline mt-1 disabled:opacity-50">
+              Not on this list? Enter it →
+            </button>
+          ) : (
+            <div className="mt-2 bg-white border border-slate-300 rounded-lg p-3 space-y-2">
+              <label className="block text-[11px] uppercase tracking-wider text-slate-600 font-medium">
+                Brand name on the bag
+              </label>
+              <input type="text" value={freeBrand}
+                onChange={e => setFreeBrand(e.target.value)}
+                placeholder="e.g. Spic Super Urea Plus"
+                className="w-full text-sm border border-slate-300 rounded-md px-2 py-1.5" />
+              <label className="block text-[11px] uppercase tracking-wider text-slate-600 font-medium mt-2">
+                Photo of the bag (optional)
+              </label>
+              <input type="file" accept="image/*" capture="environment"
+                onChange={e => setFreePhoto(e.target.files?.[0] || null)}
+                className="w-full text-xs" />
+              {freePhoto && (
+                <p className="text-[11px] text-emerald-700">
+                  ✓ Photo attached: {freePhoto.name}
+                </p>
+              )}
+              <div className="flex gap-2 pt-1">
+                <button onClick={handleFreeSubmit}
+                  disabled={freeSaving || !freeBrand.trim()}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-md bg-emerald-600 border border-emerald-700 text-white disabled:opacity-50">
+                  {freeSaving ? 'Saving…' : 'Save brand'}
+                </button>
+                <button onClick={() => {
+                  setShowFreeText(false); setFreeBrand(''); setFreePhoto(null)
+                }}
+                  className="text-xs font-medium px-3 py-1.5 rounded-md bg-white border border-slate-300 text-slate-700">
+                  Cancel
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1">
+                We&apos;ll show the brand name and photo, but can&apos;t compute
+                an application quantity without concentration data.
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   )
