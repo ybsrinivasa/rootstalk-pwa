@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
@@ -431,6 +431,63 @@ const _NPK_DOSAGE_L2_TYPES = new Set<string>([
   'CHEMICAL_FERTILIZERS_NPK_DOSAGES',
   'FERTIGATION_NPK_DOSAGES',
 ])
+
+// 2026-10-30 — Apply-quantity block for NPK dosage practices. Fetches
+// the farmer's recorded brand purchases + computed kg per record from
+// the backend; renders one row per purchased brand: "Apply ~X kg of
+// Spic Urea for your 2 acres". Nothing renders when there are no
+// purchases yet (the farmer hasn't walked the Brands → "I bought this"
+// flow). Fetches on mount; a window event ('rt-npk-purchases-changed')
+// lets the Brands screen trigger a refetch when the farmer records a
+// new brand mid-session.
+function NpkApplyQuantities({
+  subscriptionId, practiceId,
+}: {
+  subscriptionId: string
+  practiceId: string
+}) {
+  interface Row {
+    id: string
+    trade_name_display: string
+    apply_kg: number | null
+    area_acres: number | null
+  }
+  const [rows, setRows] = useState<Row[]>([])
+  const load = useCallback(async () => {
+    try {
+      const r = await api.get<{ purchases: Row[] }>(
+        `/farmer/subscriptions/${subscriptionId}/practices/${practiceId}/npk-purchases`,
+      )
+      setRows(r.data.purchases || [])
+    } catch {
+      setRows([])
+    }
+  }, [subscriptionId, practiceId])
+  useEffect(() => {
+    load()
+    const handler = () => load()
+    window.addEventListener('rt-npk-purchases-changed', handler)
+    return () => window.removeEventListener('rt-npk-purchases-changed', handler)
+  }, [load])
+  if (rows.length === 0) return null
+  return (
+    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 text-sm">
+      <p className="text-[11px] uppercase tracking-wider text-emerald-800 font-semibold mb-1">
+        Apply from what you&apos;ve bought
+      </p>
+      <ul className="space-y-0.5">
+        {rows.map(r => (
+          <li key={r.id} className="text-[#4A3528]">
+            <span className="font-semibold text-[#6B3F1F]">{r.trade_name_display}</span>
+            {r.apply_kg != null && r.area_acres != null && (
+              <> — ~{r.apply_kg} kg for your {r.area_acres} {r.area_acres === 1 ? 'acre' : 'acres'}</>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 function computeNpkDosageLine(
   l2Type: string | null | undefined,
@@ -2075,6 +2132,8 @@ function PracticeCard({
         const npkDosageLine = advisoryOnly
           ? computeNpkDosageLine(practice.l2_type, practice.elements)
           : null
+        const npkDosagePractice = advisoryOnly
+          && _NPK_DOSAGE_L2_TYPES.has(practice.l2_type || '')
         return (
           <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-2">
             {npkDosageLine && (
@@ -2082,6 +2141,12 @@ function PracticeCard({
                 <p className="text-[#6B3F1F] font-medium text-xs mb-0.5">Nutrient dosages</p>
                 <p className="text-[#4A3528]">{npkDosageLine}</p>
               </div>
+            )}
+            {npkDosagePractice && (
+              <NpkApplyQuantities
+                subscriptionId={subscriptionId}
+                practiceId={practice.id}
+              />
             )}
             {orderedVisibleEls.map((el, i) => {
               const type = (el.element_type || '').toUpperCase()
