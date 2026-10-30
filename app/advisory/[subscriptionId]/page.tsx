@@ -452,6 +452,8 @@ function NpkApplyQuantities({
     apply_kg: number | null
     scope_text: string | null
     area_acres: number | null  // legacy; kept for pre-scope_text responses
+    source?: 'COSH' | 'FARMER_ENTERED'
+    photo_url?: string | null
   }
   const [rows, setRows] = useState<Row[]>([])
   const load = useCallback(async () => {
@@ -480,8 +482,21 @@ function NpkApplyQuantities({
         {rows.map(r => (
           <li key={r.id} className="text-[#4A3528]">
             <span className="font-semibold text-[#6B3F1F]">{r.trade_name_display}</span>
+            {r.source === 'FARMER_ENTERED' && (
+              <span className="text-[11px] text-slate-500 ml-1">(you added)</span>
+            )}
             {r.apply_kg != null && r.scope_text && (
               <> — ~{r.apply_kg} kg for your {r.scope_text}</>
+            )}
+            {r.photo_url && (
+              <> {' '}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <a href={r.photo_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-block align-middle">
+                  <img src={r.photo_url} alt="bag"
+                    className="inline-block h-6 w-6 object-cover rounded border border-slate-300" />
+                </a>
+              </>
             )}
           </li>
         ))}
