@@ -66,6 +66,28 @@ interface NPKTradeNamesResponse {
   fertigation: boolean
   trade_names: NPKTradeName[]
 }
+// 2026-10-30 — purchase record returned by the backend list endpoint.
+// Keyed by trade_name_cosh_id in the client state so Brands rows can
+// render ✓ Bought instantly.
+interface NPKPurchase {
+  id: string
+  trade_name_cosh_id: string
+  trade_name_display: string
+  common_name_cosh_id: string
+  product_role: 'MIXED' | 'STRAIGHT_N' | 'STRAIGHT_P' | 'STRAIGHT_K'
+  match_target: 'N' | 'P' | 'K' | null
+  apply_kg: number | null
+  area_acres: number | null
+}
+// Context needed to POST a purchase from a trade-name row — the row
+// itself only knows its own cosh_id + name; the parent context
+// supplies the common_name, product_role, and match_target
+// recovered from the ranked_mixed / enabled_straights entry.
+interface PurchaseContext {
+  common_name_cosh_id: string
+  product_role: 'MIXED' | 'STRAIGHT_N' | 'STRAIGHT_P' | 'STRAIGHT_K'
+  match_target: 'N' | 'P' | 'K' | null
+}
 
 type Route = 'initial' | 'mixed' | 'straights'
 
@@ -109,6 +131,26 @@ export default function NpkBrandsPage() {
   const [tradeNamesLoading, setTradeNamesLoading] = useState(false)
   const [tradeNames, setTradeNames] = useState<NPKTradeName[]>([])
 
+  // 2026-10-30 — purchase records keyed by trade_name_cosh_id for
+  // O(1) "already bought" ticks. Loaded on mount; re-loaded after
+  // every POST/DELETE.
+  const [purchases, setPurchases] = useState<Record<string, NPKPurchase>>({})
+  const [buyingBrand, setBuyingBrand] = useState<string | null>(null)
+  const purchaseList = useMemo(() => Object.values(purchases), [purchases])
+
+  const loadPurchases = useCallback(async () => {
+    try {
+      const r = await api.get<{ purchases: NPKPurchase[] }>(
+        `/farmer/subscriptions/${subscriptionId}/practices/${practiceId}/npk-purchases`,
+      )
+      const next: Record<string, NPKPurchase> = {}
+      for (const p of r.data.purchases) next[p.trade_name_cosh_id] = p
+      setPurchases(next)
+    } catch {
+      // non-fatal — screen still works, buy buttons will just not show ticks
+    }
+  }, [subscriptionId, practiceId])
+
   const load = useCallback(
     async (nextPickedMixedCoshId: string | null) => {
       try {
@@ -135,6 +177,7 @@ export default function NpkBrandsPage() {
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
     load(null)
+    loadPurchases()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subscriptionId, practiceId])
 
@@ -196,6 +239,50 @@ export default function NpkBrandsPage() {
     await load(null)
   }
 
+  async function handleBuyBrand(
+    trade: NPKTradeName, ctx: PurchaseContext,
+  ) {
+    if (purchases[trade.cosh_id]) return  // already bought
+    setBuyingBrand(trade.cosh_id)
+    try {
+      await api.post(
+        `/farmer/subscriptions/${subscriptionId}/practices/${practiceId}/npk-purchases`,
+        {
+          common_name_cosh_id: ctx.common_name_cosh_id,
+          trade_name_cosh_id: trade.cosh_id,
+          trade_name_display: trade.name,
+          product_role: ctx.product_role,
+          match_target: ctx.match_target,
+        },
+      )
+      await loadPurchases()
+      // Signal to the practice card on the advisory page to refetch
+      // its apply-quantity block.
+      try {
+        window.dispatchEvent(new Event('rt-npk-purchases-changed'))
+      } catch { /* non-browser env */ }
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { detail?: string } } }
+      alert(err?.response?.data?.detail || 'Could not record purchase.')
+    } finally {
+      setBuyingBrand(null)
+    }
+  }
+
+  async function handleRemoveBrand(purchaseId: string) {
+    try {
+      await api.delete(
+        `/farmer/subscriptions/${subscriptionId}/practices/${practiceId}/npk-purchases/${purchaseId}`,
+      )
+      await loadPurchases()
+      try {
+        window.dispatchEvent(new Event('rt-npk-purchases-changed'))
+      } catch { /* non-browser env */ }
+    } catch {
+      alert('Could not remove purchase.')
+    }
+  }
+
   if (loading && !data) {
     return (
       <div className="min-h-screen bg-[#FDF6E3] pb-24">
@@ -245,6 +332,35 @@ export default function NpkBrandsPage() {
             <p className="text-base font-semibold text-[#6B3F1F] mt-1">
               {nutrientsLine(dose.n, dose.p, dose.k) || '—'}
             </p>
+          </div>
+        )}
+
+        {/* Your purchases summary strip */}
+        {purchaseList.length > 0 && (
+          <div className="bg-emerald-50 border border-emerald-300 rounded-2xl px-4 py-3 mb-4">
+            <p className="text-[11px] uppercase tracking-wider text-emerald-800 font-semibold mb-2">
+              What to apply (based on what you&apos;ve bought)
+            </p>
+            <ul className="space-y-1.5">
+              {purchaseList.map(p => (
+                <li key={p.id} className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-[#4A3528] flex-1 min-w-0">
+                    <span className="font-semibold text-[#6B3F1F]">
+                      {p.trade_name_display}
+                    </span>
+                    {p.apply_kg != null && p.area_acres != null ? (
+                      <> — apply ~{fmt(p.apply_kg)} kg for your {fmt(p.area_acres)} {p.area_acres === 1 ? 'acre' : 'acres'}</>
+                    ) : (
+                      <span className="text-[#7A8C7E]"> — quantity will show after your area + Cosh data load</span>
+                    )}
+                  </span>
+                  <button onClick={() => handleRemoveBrand(p.id)}
+                    className="text-xs font-medium text-red-700 shrink-0">
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -330,7 +446,17 @@ export default function NpkBrandsPage() {
                         </div>
                       </div>
                       {tradeNamesFor === m.cosh_id && (
-                        <BrandList rows={tradeNames} loading={tradeNamesLoading} />
+                        <BrandList
+                          rows={tradeNames} loading={tradeNamesLoading}
+                          purchases={purchases}
+                          purchaseCtx={{
+                            common_name_cosh_id: m.cosh_id,
+                            product_role: 'MIXED',
+                            match_target: m.match_target,
+                          }}
+                          buyingBrand={buyingBrand}
+                          onBuy={handleBuyBrand}
+                        />
                       )}
                     </div>
                   ))}
@@ -370,7 +496,17 @@ export default function NpkBrandsPage() {
                     </div>
                   </div>
                   {tradeNamesFor === pickedMixedCand.cosh_id && (
-                    <BrandList rows={tradeNames} loading={tradeNamesLoading} />
+                    <BrandList
+                      rows={tradeNames} loading={tradeNamesLoading}
+                      purchases={purchases}
+                      purchaseCtx={{
+                        common_name_cosh_id: pickedMixedCand.cosh_id,
+                        product_role: 'MIXED',
+                        match_target: pickedMixedCand.match_target,
+                      }}
+                      buyingBrand={buyingBrand}
+                      onBuy={handleBuyBrand}
+                    />
                   )}
                 </div>
 
@@ -389,6 +525,9 @@ export default function NpkBrandsPage() {
                     tradeNames={tradeNames}
                     tradeNamesLoading={tradeNamesLoading}
                     onShowBrands={handleShowBrands}
+                    purchases={purchases}
+                    buyingBrand={buyingBrand}
+                    onBuy={handleBuyBrand}
                   />
                 )}
               </>
@@ -406,6 +545,9 @@ export default function NpkBrandsPage() {
             tradeNames={tradeNames}
             tradeNamesLoading={tradeNamesLoading}
             onShowBrands={handleShowBrands}
+            purchases={purchases}
+            buyingBrand={buyingBrand}
+            onBuy={handleBuyBrand}
           />
         )}
 
@@ -422,7 +564,7 @@ export default function NpkBrandsPage() {
 
 function StraightsByNutrient({
   straights, gap, headerLabel, tradeNamesFor, tradeNames, tradeNamesLoading,
-  onShowBrands,
+  onShowBrands, purchases, buyingBrand, onBuy,
 }: {
   straights: NPKStraight[]
   gap: { n: number; p: number; k: number } | null
@@ -431,6 +573,9 @@ function StraightsByNutrient({
   tradeNames: NPKTradeName[]
   tradeNamesLoading: boolean
   onShowBrands: (coshId: string) => void
+  purchases: Record<string, NPKPurchase>
+  buyingBrand: string | null
+  onBuy: (trade: NPKTradeName, ctx: PurchaseContext) => void | Promise<void>
 }) {
   if (!gap) return null
   // Group by nutrient target. Skip nutrients with gap = 0.
@@ -507,7 +652,17 @@ function StraightsByNutrient({
                         </button>
                       </div>
                       {tradeNamesFor === s.cosh_id && (
-                        <BrandList rows={tradeNames} loading={tradeNamesLoading} />
+                        <BrandList
+                          rows={tradeNames} loading={tradeNamesLoading}
+                          purchases={purchases}
+                          purchaseCtx={{
+                            common_name_cosh_id: s.cosh_id,
+                            product_role: g.straightClass,
+                            match_target: null,
+                          }}
+                          buyingBrand={buyingBrand}
+                          onBuy={onBuy}
+                        />
                       )}
                     </div>
                   )
@@ -521,9 +676,15 @@ function StraightsByNutrient({
   )
 }
 
-function BrandList({ rows, loading }: {
+function BrandList({
+  rows, loading, purchases, purchaseCtx, buyingBrand, onBuy,
+}: {
   rows: NPKTradeName[]
   loading: boolean
+  purchases: Record<string, NPKPurchase>
+  purchaseCtx: PurchaseContext | null
+  buyingBrand: string | null
+  onBuy: (trade: NPKTradeName, ctx: PurchaseContext) => void | Promise<void>
 }) {
   return (
     <div className="mt-3 pl-3 border-l-2 border-purple-200">
@@ -535,11 +696,31 @@ function BrandList({ rows, loading }: {
         </p>
       ) : (
         <ul className="space-y-1 py-1">
-          {rows.map(tn => (
-            <li key={tn.cosh_id} className="text-sm text-[#4A3528]">
-              {tn.name}
-            </li>
-          ))}
+          {rows.map(tn => {
+            const bought = !!purchases[tn.cosh_id]
+            const busy = buyingBrand === tn.cosh_id
+            const canBuy = !!purchaseCtx && !bought && !busy
+            return (
+              <li key={tn.cosh_id} className="flex items-center justify-between gap-3 py-1">
+                <span className="text-sm text-[#4A3528] flex-1 min-w-0">
+                  {bought && <span className="text-emerald-700 mr-1">✓</span>}
+                  {tn.name}
+                </span>
+                {bought ? (
+                  <span className="text-xs font-medium text-emerald-700 shrink-0">
+                    Bought
+                  </span>
+                ) : (
+                  <button
+                    disabled={!canBuy}
+                    onClick={() => purchaseCtx && onBuy(tn, purchaseCtx)}
+                    className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-600 border border-emerald-700 text-white disabled:opacity-50 shrink-0">
+                    {busy ? 'Saving…' : 'I bought this'}
+                  </button>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
     </div>
