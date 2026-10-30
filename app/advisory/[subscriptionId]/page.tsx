@@ -2520,11 +2520,29 @@ function PracticeAckFooter({
               active={purchased}
               enabled={purchaseEnabled}
               label={tAck('purchased')}
-              onTap={() => {
+              onTap={async () => {
                 if (purchased) {
                   // Un-marking clears everything (brand + photo + ack).
                   call('unpurchase')
                   return
+                }
+                // 2026-10-30 — NPK dosage shortcut: if the farmer has
+                // already recorded brands via the NPK Brands screen
+                // (per-nutrient Mixed/Straight picks + optional free-
+                // text entries), tapping "I've purchased this" should
+                // just mark the ack — routing them BACK to the NPK
+                // Brands screen contradicts the "I'm done buying"
+                // intent and bakes in a confusing dead-end.
+                if (_NPK_DOSAGE_L2_TYPES.has(practice.l2_type || '')) {
+                  try {
+                    const r = await api.get<{ purchases: unknown[] }>(
+                      `/farmer/subscriptions/${subscriptionId}/practices/${practice.id}/npk-purchases`,
+                    )
+                    if ((r.data.purchases || []).length > 0) {
+                      await call('purchase')
+                      return
+                    }
+                  } catch { /* fall through to routing */ }
                 }
                 // v2 (2026-09-23 Option A): recording a fresh purchase
                 // navigates to the unified Brands + record-purchase
