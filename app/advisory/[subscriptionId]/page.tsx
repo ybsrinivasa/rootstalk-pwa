@@ -450,7 +450,8 @@ function NpkApplyQuantities({
     id: string
     trade_name_display: string
     apply_kg: number | null
-    area_acres: number | null
+    scope_text: string | null
+    area_acres: number | null  // legacy; kept for pre-scope_text responses
   }
   const [rows, setRows] = useState<Row[]>([])
   const load = useCallback(async () => {
@@ -479,8 +480,8 @@ function NpkApplyQuantities({
         {rows.map(r => (
           <li key={r.id} className="text-[#4A3528]">
             <span className="font-semibold text-[#6B3F1F]">{r.trade_name_display}</span>
-            {r.apply_kg != null && r.area_acres != null && (
-              <> — ~{r.apply_kg} kg for your {r.area_acres} {r.area_acres === 1 ? 'acre' : 'acres'}</>
+            {r.apply_kg != null && r.scope_text && (
+              <> — ~{r.apply_kg} kg for your {r.scope_text}</>
             )}
           </li>
         ))}

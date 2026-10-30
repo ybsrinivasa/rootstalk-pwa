@@ -82,7 +82,13 @@ interface NPKPurchase {
   product_role: 'MIXED' | 'STRAIGHT_N' | 'STRAIGHT_P' | 'STRAIGHT_K'
   match_target: 'N' | 'P' | 'K' | null
   apply_kg: number | null
-  area_acres: number | null
+  // 2026-10-30 — human scope label ("2 acres" / "1000 plants") so
+  // the UI renders "~X kg for your N <scope>" without having to know
+  // which subscription type (acre vs plant-wise) is in play. Replaces
+  // the earlier hardcoded "for your N acres" text that broke on
+  // plant-wise crops.
+  scope_text: string | null
+  area_acres: number | null  // retained for backwards compat
 }
 // Context needed to POST a purchase from a trade-name row — the row
 // itself only knows its own cosh_id + name; the parent context
@@ -433,10 +439,10 @@ export default function NpkBrandsPage() {
                     <span className="font-semibold text-[#6B3F1F]">
                       {p.trade_name_display}
                     </span>
-                    {p.apply_kg != null && p.area_acres != null ? (
-                      <> — apply ~{fmt(p.apply_kg)} kg for your {fmt(p.area_acres)} {p.area_acres === 1 ? 'acre' : 'acres'}</>
+                    {p.apply_kg != null && p.scope_text ? (
+                      <> — apply ~{fmt(p.apply_kg)} kg for your {p.scope_text}</>
                     ) : (
-                      <span className="text-[#7A8C7E]"> — quantity will show after your area + Cosh data load</span>
+                      <span className="text-[#7A8C7E]"> — quantity needs your field size + Cosh concentration</span>
                     )}
                   </span>
                   <button onClick={() => handleRemoveBrand(p.id)}
