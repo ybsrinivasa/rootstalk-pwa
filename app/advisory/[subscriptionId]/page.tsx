@@ -1916,7 +1916,14 @@ function PracticeCard({
                     // screen renders read-only (list visible, actions
                     // disabled).
                     if (pastWindow) q.set('past', '1')
-                    router.push(`/advisory/${subscriptionId}/brands/${practice.id}?${q.toString()}`)
+                    // 2026-10-30 — NPK dosage practices get the ranked
+                    // Mixed + Straights picker screen, not the regular
+                    // Brands list (which short-circuits with empty
+                    // brands because NPK practices have no COMMON_NAME).
+                    const route = _NPK_DOSAGE_L2_TYPES.has(practice.l2_type || '')
+                      ? 'npk-brands'
+                      : 'brands'
+                    router.push(`/advisory/${subscriptionId}/${route}/${practice.id}?${q.toString()}`)
                   }}
                   className="text-xs font-semibold px-3 py-2 rounded-xl bg-purple-100 text-purple-800 border border-purple-200">
                   {tAdvisoryOnlyLocal('brandsButton')}
@@ -2449,7 +2456,13 @@ function PracticeAckFooter({
                   lineage: timelineLineageId || '',
                   date: practice.occurrence_date || '',
                 })
-                router.push(`/advisory/${subscriptionId}/brands/${practice.id}?${q.toString()}`)
+                // 2026-10-30 — NPK dosage practices use the npk-brands
+                // picker (ranked Mixed + Straights) instead of the
+                // regular brands list.
+                const route = _NPK_DOSAGE_L2_TYPES.has(practice.l2_type || '')
+                  ? 'npk-brands'
+                  : 'brands'
+                router.push(`/advisory/${subscriptionId}/${route}/${practice.id}?${q.toString()}`)
               }}
             />
           )}
