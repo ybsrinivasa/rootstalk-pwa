@@ -417,6 +417,34 @@ function computeSynopsis(
   return null
 }
 
+// 2026-10-30 — Mirrors backend's compute_number_of_applications
+// (app/modules/advisory/router.py:737). Fertigation practices carry
+// a FERTIGATION_INTERVAL element (days between applications). Given
+// the timeline's from/to dates, we compute how many application
+// cycles fall within the window using the backend's exact formula:
+//   (|to - from| - 1) // interval + 1
+// Returns null when any input is missing / unparseable so the caller
+// can omit the "N applications" tail without a wrong number.
+function computeFertigationApplications(
+  elements: Element[],
+  timelineFromDate?: string,
+  timelineToDate?: string,
+): number | null {
+  if (!timelineFromDate || !timelineToDate) return null
+  const intervalEl = elements.find(
+    e => (e.element_type || '').toUpperCase() === 'FERTIGATION_INTERVAL',
+  )
+  if (!intervalEl || !intervalEl.value) return null
+  const interval = parseInt(intervalEl.value, 10)
+  if (!Number.isFinite(interval) || interval < 1) return null
+  const fromMs = Date.parse(timelineFromDate)
+  const toMs = Date.parse(timelineToDate)
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs)) return null
+  const duration = Math.abs(Math.round((toMs - fromMs) / (1000 * 60 * 60 * 24)))
+  if (duration < 1) return 0
+  return Math.floor((duration - 1) / interval) + 1
+}
+
 // 2026-10-30 — Advisory-Only Mode: for NPK dosage practices
 // (CHEMICAL_FERTILIZERS_NPK_DOSAGES / FERTIGATION_NPK_DOSAGES) the
 // SE authors N / P / K dosages + a UNIT (kg/acre, g/L, etc.) as
@@ -508,6 +536,7 @@ function NpkApplyQuantities({
 function computeNpkDosageLine(
   l2Type: string | null | undefined,
   elements: Element[],
+  numApplications?: number | null,
 ): string | null {
   if (!l2Type || !_NPK_DOSAGE_L2_TYPES.has(l2Type)) return null
   const byType = new Map<string, Element>()
@@ -538,7 +567,12 @@ function computeNpkDosageLine(
   if (p > 0) pieces.push(`P ${fmt(p)}`)
   if (k > 0) pieces.push(`K ${fmt(k)}`)
   const unitTail = unitLabel ? ` ${unitLabel}` : ''
-  return `${pieces.join(', ')}${unitTail}`
+  // 2026-10-30 — Fertigation NPK dosage: append number of applications
+  // so the farmer multiplies dose × applications when planning purchase.
+  const appsTail = (numApplications && numApplications > 0)
+    ? ` · ${numApplications} ${numApplications === 1 ? 'application' : 'applications'}`
+    : ''
+  return `${pieces.join(', ')}${unitTail}${appsTail}`
 }
 
 // Author tools store a unit as its own Element row with
@@ -1343,6 +1377,8 @@ export default function AdvisoryPage() {
                             advisoryOnly={!!subscription?.advisory_only_mode}
                             enableInAppOrders={!subscription?.advisory_only_mode || !!subscription?.in_app_orders_enabled}
                             pastWindow={!!tl.past_window}
+                            timelineFromDate={tl.from_date}
+                            timelineToDate={tl.to_date}
                           />
                         )
                       }
@@ -1355,6 +1391,8 @@ export default function AdvisoryPage() {
                           orderingPractice={orderingPractice}
                           orderSuccess={orderSuccess}
                           pastWindow={!!tl.past_window}
+                          timelineFromDate={tl.from_date}
+                          timelineToDate={tl.to_date}
                           onOrder={(ids, orMutexCamps) => {
                             // Relation-group order tap. Regular Mode
                             // still uses the group button (bundles by
@@ -1704,6 +1742,8 @@ function PracticeCard({
   pastWindow = false,
   hideAckFooter = false,
   hideDoneAck = false,
+  timelineFromDate,
+  timelineToDate,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1712,6 +1752,11 @@ function PracticeCard({
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
+  // 2026-10-30 — Fertigation practices (NPK dosages + products)
+  // show "N applications" derived from FERTIGATION_INTERVAL +
+  // timeline window. Null when not fertigation or inputs missing.
+  timelineFromDate?: string
+  timelineToDate?: string
   purchaseCrossOptionLocked?: boolean
   // 2026-09-27 — Past-window read-only mode. When true (today >=
   // timeline.to_date under half-open semantics), the Order button
@@ -2145,17 +2190,41 @@ function PracticeCard({
         // keeps the four raw N_DOSAGE / P_DOSAGE / K_DOSAGE / UNIT
         // bullets suppressed so the synthetic line is the only
         // dosage surface.
+        // 2026-10-30 — Fertigation applications count (both NPK dosage
+        // and PRODUCT fertigation L2s). Shared helper mirrors backend
+        // formula so dealer-side kg × applications and farmer-side
+        // display stay consistent.
+        const isFertigationL2 = (practice.l2_type || '') === 'FERTIGATION_NPK_DOSAGES'
+          || (practice.l2_type || '') === 'CHEMICAL_FERTILIZER_FERTIGATION_PRODUCTS'
+        const numApplications = (advisoryOnly && isFertigationL2)
+          ? computeFertigationApplications(
+              practice.elements, timelineFromDate, timelineToDate,
+            )
+          : null
         const npkDosageLine = advisoryOnly
-          ? computeNpkDosageLine(practice.l2_type, practice.elements)
+          ? computeNpkDosageLine(practice.l2_type, practice.elements, numApplications)
           : null
         const npkDosagePractice = advisoryOnly
           && _NPK_DOSAGE_L2_TYPES.has(practice.l2_type || '')
+        // Standalone applications bullet only for PRODUCT fertigation
+        // (NPK dosage already shows it inline on the dosage line).
+        const showApplicationsBullet = advisoryOnly
+          && (practice.l2_type || '') === 'CHEMICAL_FERTILIZER_FERTIGATION_PRODUCTS'
+          && numApplications != null && numApplications > 0
         return (
           <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-2">
             {npkDosageLine && (
               <div className="text-sm">
                 <p className="text-[#6B3F1F] font-medium text-xs mb-0.5">Nutrient dosages</p>
                 <p className="text-[#4A3528]">{npkDosageLine}</p>
+              </div>
+            )}
+            {showApplicationsBullet && (
+              <div className="text-sm">
+                <p className="text-[#6B3F1F] font-medium text-xs mb-0.5">Number of applications</p>
+                <p className="text-[#4A3528]">
+                  {numApplications} {numApplications === 1 ? 'application' : 'applications'}
+                </p>
               </div>
             )}
             {npkDosagePractice && (
@@ -2751,6 +2820,8 @@ function RelationGroup({
   advisoryOnly = false,
   enableInAppOrders,
   pastWindow = false,
+  timelineFromDate,
+  timelineToDate,
 }: {
   relationType: 'AND' | 'OR' | 'IF'
   parts: PartGroup[]
@@ -2781,6 +2852,10 @@ function RelationGroup({
   // 2026-09-27 — forwarded to nested PracticeCards so past-window
   // TLs disable Order + ack across every AND/OR arrangement.
   pastWindow?: boolean
+  // 2026-10-30 — forwarded to nested PracticeCards so fertigation
+  // practices inside AND/OR groups also show "N applications".
+  timelineFromDate?: string
+  timelineToDate?: string
 }) {
   const tAction = useTranslations('practice.action')
   const tRel = useTranslations('practice.relations')
@@ -2914,6 +2989,8 @@ function RelationGroup({
         advisoryOnly={advisoryOnly}
         enableInAppOrders={canOrderInApp}
         pastWindow={pastWindow}
+        timelineFromDate={timelineFromDate}
+        timelineToDate={timelineToDate}
       />
     )
   }
@@ -2984,6 +3061,8 @@ function RelationGroup({
                 // Pure Advisory-Only: no Order buttons at all.
                 enableInAppOrders={canOrderInApp}
                 pastWindow={pastWindow}
+        timelineFromDate={timelineFromDate}
+        timelineToDate={timelineToDate}
                 insideContainer
                 // 2026-10-06 — Advisory-Only AND: keep the per-row
                 // "I've purchased this" pill + inline photo capture
@@ -3128,6 +3207,8 @@ function RelationGroup({
                 advisoryOnly={advisoryOnly}
                 enableInAppOrders={canOrderInApp}
                 pastWindow={pastWindow}
+        timelineFromDate={timelineFromDate}
+        timelineToDate={timelineToDate}
               />
               {partIdx < parts.length - 1 && (
                 <div className="flex items-center my-3">
@@ -3233,6 +3314,8 @@ function RelationGroup({
                             // below; Pure Advisory-Only shows neither.
                             enableInAppOrders={canOrderInApp}
                             pastWindow={pastWindow}
+        timelineFromDate={timelineFromDate}
+        timelineToDate={timelineToDate}
                             insideContainer
                             hideAckFooter
                             // 2026-09-29 — Collapse/expand
@@ -3301,6 +3384,8 @@ function RelationGroup({
                     advisoryOnly={advisoryOnly}
                     enableInAppOrders={canOrderInApp && !(isPurePartOrOfSingles && advisoryOnly)}
                     pastWindow={pastWindow}
+        timelineFromDate={timelineFromDate}
+        timelineToDate={timelineToDate}
                     insideContainer={advisoryOnly && isChoice}
                     {...cardCollapseProps(opt.practices[0])}
                   />
