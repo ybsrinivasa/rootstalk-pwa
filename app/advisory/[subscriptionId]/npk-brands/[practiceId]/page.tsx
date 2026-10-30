@@ -39,6 +39,10 @@ interface NPKMixed {
   delivered: { n: number; p: number; k: number }
   match_target: 'N' | 'P' | 'K'
   total_delivered: number
+  // 2026-10-30 — backend flag; false when the candidate has no active
+  // trade name in Cosh. PWA filters these out so the farmer only
+  // sees shelf-available options.
+  has_brands?: boolean
 }
 interface NPKStraight {
   cosh_id: string
@@ -47,6 +51,7 @@ interface NPKStraight {
   class: 'STRAIGHT_N' | 'STRAIGHT_P' | 'STRAIGHT_K' | 'MIXED'
   water_soluble: boolean
   kg_product_needed: number | null
+  has_brands?: boolean
 }
 interface NPKOptions {
   is_npk_practice: boolean
@@ -181,17 +186,47 @@ export default function NpkBrandsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subscriptionId, practiceId])
 
-  // Route availability — derived from backend response.
+  // 2026-10-30 — Filter out candidates with no brands in Cosh so the
+  // picker only shows products the farmer can actually walk into a
+  // shop and buy. Legacy clients that pre-date the has_brands flag
+  // read undefined → treat as "available" so nothing hides when
+  // the backend is temporarily behind.
+  const rankedMixedWithBrands = useMemo(
+    () => (data?.ranked_mixed || []).filter(m => m.has_brands !== false),
+    [data],
+  )
+  const straightsWithBrands = useMemo(
+    () => (data?.enabled_straights || []).filter(s => s.has_brands !== false),
+    [data],
+  )
+
+  // Route availability — derived from the filtered lists.
   const dose = data?.required_dose || null
   const singleNutrientDose = countNonZero(dose) <= 1
   const mixedRouteAvailable = useMemo(
-    () => !!data && !singleNutrientDose && data.ranked_mixed.length > 0,
-    [data, singleNutrientDose],
+    () => !!data && !singleNutrientDose && rankedMixedWithBrands.length > 0,
+    [data, singleNutrientDose, rankedMixedWithBrands],
   )
   const straightsRouteAvailable = useMemo(
-    () => !!data && data.enabled_straights.length > 0,
-    [data],
+    () => !!data && straightsWithBrands.length > 0,
+    [data, straightsWithBrands],
   )
+
+  // Nutrient-group completion from purchases. A group collapses to a
+  // one-line summary when the farmer has recorded a purchase for its
+  // straight class (STRAIGHT_N / P / K). Mixed collapse analogous
+  // via productRole === 'MIXED'.
+  const purchaseByRole = useMemo(() => {
+    const m = { MIXED: null as NPKPurchase | null,
+      STRAIGHT_N: null as NPKPurchase | null,
+      STRAIGHT_P: null as NPKPurchase | null,
+      STRAIGHT_K: null as NPKPurchase | null,
+    }
+    for (const p of purchaseList) {
+      if (m[p.product_role] == null) m[p.product_role] = p
+    }
+    return m
+  }, [purchaseList])
 
   // Auto-select the only available route (so landing isn't a one-card
   // picker that reads like a dead-end).
@@ -200,6 +235,28 @@ export default function NpkBrandsPage() {
     if (mixedRouteAvailable && !straightsRouteAvailable) setRoute('mixed')
     else if (!mixedRouteAvailable && straightsRouteAvailable) setRoute('straights')
   }, [data, mixedRouteAvailable, straightsRouteAvailable, route])
+
+  // If the farmer has an existing Mixed purchase on this practice,
+  // auto-pick that Mixed on landing so the picker shows "Your pick"
+  // + straights-for-gap directly (no re-tap required). Only runs on
+  // first data arrival, and only when nothing is picked yet, so
+  // mid-session Change-pick isn't fought.
+  useEffect(() => {
+    if (!data || pickedMixedCoshId) return
+    const mixedPurchase = purchaseByRole.MIXED
+    if (mixedPurchase && mixedRouteAvailable) {
+      const matching = rankedMixedWithBrands.find(
+        m => m.cosh_id === mixedPurchase.common_name_cosh_id,
+      )
+      if (matching) {
+        setRoute('mixed')
+        setPickedMixedCoshId(mixedPurchase.common_name_cosh_id)
+        load(mixedPurchase.common_name_cosh_id)
+      }
+    }
+    // intentionally not depending on load; one-shot on data arrival
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, purchaseByRole.MIXED])
 
   async function handlePickMixed(cand: NPKMixed) {
     const nextPick = pickedMixedCoshId === cand.cosh_id ? null : cand.cosh_id
@@ -269,6 +326,34 @@ export default function NpkBrandsPage() {
     }
   }
 
+  const [startingOver, setStartingOver] = useState(false)
+  async function handleStartOver() {
+    if (purchaseList.length === 0) return
+    if (!confirm('Remove all your picks for this fertilizer? Start over.')) return
+    setStartingOver(true)
+    try {
+      for (const p of purchaseList) {
+        try {
+          await api.delete(
+            `/farmer/subscriptions/${subscriptionId}/practices/${practiceId}/npk-purchases/${p.id}`,
+          )
+        } catch { /* keep going; worst case Done surfaces the error */ }
+      }
+      await loadPurchases()
+      // Reset in-memory picker state too so the view returns to clean.
+      setPickedMixedCoshId(null)
+      setTradeNamesFor(null)
+      setTradeNames([])
+      setRoute('initial')
+      await load(null)
+      try {
+        window.dispatchEvent(new Event('rt-npk-purchases-changed'))
+      } catch { /* non-browser env */ }
+    } finally {
+      setStartingOver(false)
+    }
+  }
+
   async function handleRemoveBrand(purchaseId: string) {
     try {
       await api.delete(
@@ -313,7 +398,7 @@ export default function NpkBrandsPage() {
   const gapAllZero = !!gap && gap.n === 0 && gap.p === 0 && gap.k === 0
   const bothRoutesAvailable = mixedRouteAvailable && straightsRouteAvailable
   const pickedMixedCand = pickedMixedCoshId
-    ? data.ranked_mixed.find(m => m.cosh_id === pickedMixedCoshId) || null
+    ? rankedMixedWithBrands.find(m => m.cosh_id === pickedMixedCoshId) || null
     : null
 
   return (
@@ -420,7 +505,7 @@ export default function NpkBrandsPage() {
                   Mixed fertilizers {data.fertigation ? '(water-soluble)' : ''}
                 </p>
                 <div className="bg-white rounded-2xl border border-[#DDD0B8] overflow-hidden">
-                  {data.ranked_mixed.map((m, idx) => (
+                  {rankedMixedWithBrands.map((m, idx) => (
                     <div key={m.cosh_id}
                       className={`px-4 py-3 ${idx > 0 ? 'border-t border-[#EEE4D2]' : ''}`}>
                       <div className="flex items-start justify-between gap-3">
@@ -518,7 +603,7 @@ export default function NpkBrandsPage() {
                   </div>
                 ) : (
                   <StraightsByNutrient
-                    straights={data.enabled_straights}
+                    straights={straightsWithBrands}
                     gap={gap}
                     headerLabel="Top up with straight fertilizers"
                     tradeNamesFor={tradeNamesFor}
@@ -538,7 +623,7 @@ export default function NpkBrandsPage() {
         {/* Straights route (no Mixed in the picture) */}
         {route === 'straights' && (
           <StraightsByNutrient
-            straights={data.enabled_straights}
+            straights={straightsWithBrands}
             gap={gap}
             headerLabel="Straight fertilizers for your full dose"
             tradeNamesFor={tradeNamesFor}
@@ -556,6 +641,24 @@ export default function NpkBrandsPage() {
           influence the final choice. Any fertilizer that delivers the required
           NPK dose will work.
         </p>
+
+        {/* 2026-10-30 — Action bar: Done returns to the practice card;
+            Start over wipes all records for this practice so the farmer
+            can restart. All picks are already persisted per-tap so
+            no explicit Save is needed. */}
+        <div className="mt-6 flex items-center gap-3">
+          <button onClick={() => router.back()}
+            className="flex-1 text-sm font-semibold py-3 rounded-xl bg-emerald-600 text-white">
+            Done
+          </button>
+          {purchaseList.length > 0 && (
+            <button onClick={handleStartOver}
+              disabled={startingOver}
+              className="text-sm font-medium py-3 px-4 rounded-xl bg-white border border-slate-300 text-slate-700 disabled:opacity-50">
+              {startingOver ? 'Clearing…' : 'Start over'}
+            </button>
+          )}
+        </div>
       </div>
       <BottomNav />
     </div>
@@ -614,7 +717,27 @@ function StraightsByNutrient({
         {headerLabel}
       </p>
       <div className="space-y-4">
-        {groups.map(g => (
+        {groups.map(g => {
+          // Collapsed state: a purchase already exists for this
+          // nutrient group → show a one-line summary with Change (reset
+          // via Remove from the top strip) instead of the full list.
+          const bought = Object.values(purchases).find(
+            p => p.product_role === g.straightClass,
+          )
+          if (bought) {
+            return (
+              <div key={g.letter}
+                className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                <p className="text-xs text-emerald-800">
+                  ✓ For {g.label} — <span className="font-semibold">{bought.trade_name_display}</span>
+                  {bought.apply_kg != null && (
+                    <> · ~{fmt(bought.apply_kg)} kg</>
+                  )}
+                </p>
+              </div>
+            )
+          }
+          return (
           <div key={g.letter}>
             <p className="text-xs text-[#4A3528] mb-1 font-medium">
               For {g.label} — need {fmt(g.gapValue)} kg
@@ -670,7 +793,8 @@ function StraightsByNutrient({
               </div>
             )}
           </div>
-        ))}
+          )
+        })}
       </div>
     </>
   )
