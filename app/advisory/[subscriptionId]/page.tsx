@@ -417,6 +417,57 @@ function computeSynopsis(
   return null
 }
 
+// 2026-10-30 — Advisory-Only Mode: for NPK dosage practices
+// (CHEMICAL_FERTILIZERS_NPK_DOSAGES / FERTIGATION_NPK_DOSAGES) the
+// SE authors N / P / K dosages + a UNIT (kg/acre, g/L, etc.) as
+// four separate Elements. Rendering them as four bullets reads as
+// four unrelated facts; synthesising one line "Nutrient dosages:
+// N 27, P 36, K 24 kg/acre" matches the way the Dealer, SE, and
+// Soil Nutrient engine already talk about these recommendations
+// (per YB 2026-10-30 — present the SE's authored numbers as-is,
+// no per-area multiplication). Returns null when the practice has
+// no NPK elements or all three dosages are zero/absent.
+const _NPK_DOSAGE_L2_TYPES = new Set<string>([
+  'CHEMICAL_FERTILIZERS_NPK_DOSAGES',
+  'FERTIGATION_NPK_DOSAGES',
+])
+
+function computeNpkDosageLine(
+  l2Type: string | null | undefined,
+  elements: Element[],
+): string | null {
+  if (!l2Type || !_NPK_DOSAGE_L2_TYPES.has(l2Type)) return null
+  const byType = new Map<string, Element>()
+  for (const el of elements) {
+    const t = (el.element_type || '').toUpperCase()
+    if (t === 'N_DOSAGE' || t === 'P_DOSAGE' || t === 'K_DOSAGE' || t === 'UNIT') {
+      byType.set(t, el)
+    }
+  }
+  const asNum = (el: Element | undefined): number => {
+    if (!el || el.value == null) return 0
+    const n = parseFloat(el.value)
+    return Number.isFinite(n) ? n : 0
+  }
+  const n = asNum(byType.get('N_DOSAGE'))
+  const p = asNum(byType.get('P_DOSAGE'))
+  const k = asNum(byType.get('K_DOSAGE'))
+  if (n === 0 && p === 0 && k === 0) return null
+  const unitEl = byType.get('UNIT')
+  const unitLabel = unitEl
+    ? (unitEl.value
+       || (unitEl.cosh_ref && !isUuid(unitEl.cosh_ref) ? unitEl.cosh_ref : ''))
+    : ''
+  const fmt = (v: number): string =>
+    v === Math.trunc(v) ? String(v) : v.toFixed(2).replace(/\.?0+$/, '')
+  const pieces: string[] = []
+  if (n > 0) pieces.push(`N ${fmt(n)}`)
+  if (p > 0) pieces.push(`P ${fmt(p)}`)
+  if (k > 0) pieces.push(`K ${fmt(k)}`)
+  const unitTail = unitLabel ? ` ${unitLabel}` : ''
+  return `${pieces.join(', ')}${unitTail}`
+}
+
 // Author tools store a unit as its own Element row with
 // element_type ending in `_UNIT` (e.g. DOSAGE / DOSAGE_UNIT pair).
 // "Dosage Unit" should never appear as its own label to the
@@ -1981,7 +2032,13 @@ function PracticeCard({
             // missing" mid-flow). Prior filter dropped.
             return true
           })
-        if (visibleEls.length === 0) return null
+        // 2026-10-30 — don't early-exit if the synthetic NPK dosage
+        // line will render below; a Chemical NPK Practice may have
+        // zero other visible elements but still deserves the dosage
+        // bullet in advisory-only mode.
+        const willRenderNpkDosageLine = advisoryOnly
+          && !!computeNpkDosageLine(practice.l2_type, practice.elements)
+        if (visibleEls.length === 0 && !willRenderNpkDosageLine) return null
         // v1.12.1 (2026-09-18) — when the SE brand-locked this practice
         // in advisory-only mode, hoist BRAND_NAME then MANUFACTURER to
         // the top of the list so the farmer's shop-label reading order
@@ -1999,8 +2056,26 @@ function PracticeCard({
               }),
             ]
           : visibleEls
+        // 2026-10-30 — Advisory-Only Mode: inject one synthetic
+        // "Nutrient dosages: N 27, P 36, K 24 kg/acre" bullet above
+        // the real element bullets for NPK dosage practices. Lets
+        // the farmer see the SE's authored dose up-front — critical
+        // when they're the buyer (no dealer in the loop to decode
+        // the N/P/K math into a product recommendation). Hidden set
+        // keeps the four raw N_DOSAGE / P_DOSAGE / K_DOSAGE / UNIT
+        // bullets suppressed so the synthetic line is the only
+        // dosage surface.
+        const npkDosageLine = advisoryOnly
+          ? computeNpkDosageLine(practice.l2_type, practice.elements)
+          : null
         return (
           <div className="border-t border-[#DDD0B8] px-4 pb-3 pt-2 space-y-2">
+            {npkDosageLine && (
+              <div className="text-sm">
+                <p className="text-[#6B3F1F] font-medium text-xs mb-0.5">Nutrient dosages</p>
+                <p className="text-[#4A3528]">{npkDosageLine}</p>
+              </div>
+            )}
             {orderedVisibleEls.map((el, i) => {
               const type = (el.element_type || '').toUpperCase()
               const url = (el.value || '').trim()
