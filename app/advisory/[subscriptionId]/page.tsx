@@ -811,6 +811,22 @@ export default function AdvisoryPage() {
     load()
   }, [router, subscriptionId, clusterOffset])
 
+  // 2026-10-31 — the NPK Brands screen fires this when it POSTs the
+  // practice-ack directly (so the "I've purchased this" pill goes
+  // green the moment a brand is recorded instead of needing a second
+  // tap). Also fires on Start Over (unpurchase). Refetching here means
+  // when the farmer returns via Done / Back, the card already shows
+  // the correct ack state.
+  useEffect(() => {
+    const handler = () => load()
+    window.addEventListener('rt-practice-ack-changed', handler)
+    return () => window.removeEventListener('rt-practice-ack-changed', handler)
+    // load() reads subscriptionId + clusterOffset from closure; keeping
+    // deps empty is intentional — we want a single listener for the
+    // page's lifetime, same as the npk-purchases handler above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     const hasStart = !!subscription?.crop_start_date
     if (advisory && advisory.timelines.length === 0 && hasStart) {
