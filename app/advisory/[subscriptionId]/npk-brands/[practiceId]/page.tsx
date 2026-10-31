@@ -24,7 +24,7 @@
  */
 'use client'
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
 import BottomNav from '@/components/layout/BottomNav'
@@ -131,6 +131,16 @@ export default function NpkBrandsPage() {
   const params = useParams<{ subscriptionId: string; practiceId: string }>()
   const subscriptionId = params?.subscriptionId as string
   const practiceId = params?.practiceId as string
+  // 2026-10-31 — lineage + occurrence_date come in via the parent card's
+  // link (`?lineage=…&date=…`). Needed to POST /farmer/practice-ack/purchase
+  // so the "I've purchased this" pill flips green the moment the farmer
+  // records a brand — the yesterday-shipped shortcut proved unreliable
+  // in the first live class (students tapped the pill, GET /npk-purchases
+  // raced the brand POST or returned [], and the fallback routed them
+  // back to this screen).
+  const searchParams = useSearchParams()
+  const timelineLineageId = searchParams?.get('lineage') || ''
+  const occurrenceDate = searchParams?.get('date') || ''
 
   const [data, setData] = useState<NPKOptions | null>(null)
   const [loading, setLoading] = useState(true)
@@ -310,6 +320,44 @@ export default function NpkBrandsPage() {
     await load(null)
   }
 
+  // 2026-10-31 — flip the practice-card "I've purchased this" pill to
+  // green the moment a brand gets recorded, instead of waiting for the
+  // farmer to come back and tap it. In the first class, students who
+  // completed the brands flow kept finding the pill unlit — tapping it
+  // only routed them back here. Marking the ack proactively (and
+  // dispatching an event so the parent page refetches) removes that
+  // dead-end entirely. Best-effort: lineage/date missing from URL →
+  // skip; backend 4xx → swallow (the brand is still recorded).
+  const markPurchaseAck = useCallback(async () => {
+    if (!timelineLineageId || !occurrenceDate) return
+    try {
+      await api.post('/farmer/practice-ack/purchase', {
+        subscription_id: subscriptionId,
+        timeline_lineage_id: timelineLineageId,
+        practice_id: practiceId,
+        occurrence_date: occurrenceDate,
+      })
+      try {
+        window.dispatchEvent(new Event('rt-practice-ack-changed'))
+      } catch { /* non-browser env */ }
+    } catch { /* non-fatal: brand record still persists */ }
+  }, [subscriptionId, practiceId, timelineLineageId, occurrenceDate])
+
+  const unmarkPurchaseAck = useCallback(async () => {
+    if (!timelineLineageId || !occurrenceDate) return
+    try {
+      await api.post('/farmer/practice-ack/unpurchase', {
+        subscription_id: subscriptionId,
+        timeline_lineage_id: timelineLineageId,
+        practice_id: practiceId,
+        occurrence_date: occurrenceDate,
+      })
+      try {
+        window.dispatchEvent(new Event('rt-practice-ack-changed'))
+      } catch { /* non-browser env */ }
+    } catch { /* non-fatal */ }
+  }, [subscriptionId, practiceId, timelineLineageId, occurrenceDate])
+
   async function handleBuyBrand(
     trade: NPKTradeName, ctx: PurchaseContext,
   ) {
@@ -327,6 +375,7 @@ export default function NpkBrandsPage() {
         },
       )
       await loadPurchases()
+      await markPurchaseAck()
       // Signal to the practice card on the advisory page to refetch
       // its apply-quantity block.
       try {
@@ -354,6 +403,11 @@ export default function NpkBrandsPage() {
         } catch { /* keep going; worst case Done surfaces the error */ }
       }
       await loadPurchases()
+      // 2026-10-31 — Start Over wipes picks; also clear the practice-
+      // card ack so the pill reflects "nothing purchased" again. The
+      // backend's /unpurchase also clears `marked_at` as a state
+      // consistency gesture, which matches the farmer's intent here.
+      await unmarkPurchaseAck()
       // Reset in-memory picker state too so the view returns to clean.
       setPickedMixedCoshId(null)
       setTradeNamesFor(null)
@@ -397,6 +451,7 @@ export default function NpkBrandsPage() {
         },
       )
       await loadPurchases()
+      await markPurchaseAck()
       try {
         window.dispatchEvent(new Event('rt-npk-purchases-changed'))
       } catch { /* non-browser env */ }
