@@ -107,6 +107,13 @@ export default function ProfilePage() {
     api.get<Subscription[]>('/farmer/my-subscriptions')
       .then(r => setSubscriptions(r.data.filter(s => s.status === 'ACTIVE')))
       .catch(() => {})
+    // 2026-11-04 — probe whether this caller has been certified on
+    // any coaching session; drives the "My Portfolio" tile below.
+    // Cheap endpoint — the SA backend answers with a single bool.
+    // Non-students get `eligible: false` and no tile renders.
+    api.get<{ eligible: boolean }>('/coaching/me/portfolio-eligible')
+      .then(r => setPortfolioEligible(!!r.data.eligible))
+      .catch(() => setPortfolioEligible(false))
     // Load the Cosh location universe so we can resolve the
     // farmer's stored cosh_ids to display names. One small payload,
     // cached by the browser anyway.
@@ -116,6 +123,9 @@ export default function ProfilePage() {
   }, [router])
 
   const [coshLocations, setCoshLocations] = useState<CoshLocations | null>(null)
+  // 2026-11-04 — null = still probing, false = not a certified student,
+  // true = show the "My Portfolio" tile.
+  const [portfolioEligible, setPortfolioEligible] = useState<boolean | null>(null)
   // Recompute the location label whenever user or universe changes.
   useEffect(() => {
     if (!user || !coshLocations) return
@@ -597,6 +607,22 @@ export default function ProfilePage() {
             </div>
           )
         })()}
+
+        {/* ── MY PORTFOLIO (coaching alumni only, 2026-11-04) ── */}
+        {portfolioEligible && (
+          <div className="mt-5">
+            <button onClick={() => router.push('/portfolio')}
+              className="w-full text-left rounded-2xl p-4 border bg-white flex items-center justify-between gap-3 active:scale-[0.99] transition-transform"
+              style={{ borderColor: '#DDD0B8' }}>
+              <div className="min-w-0">
+                <p className="font-semibold text-[15px]" style={{ color: '#6B3F1F' }}>My Portfolio →</p>
+                <p className="text-[13px] mt-0.5" style={{ color: '#7A8C7E' }}>
+                  Share your testimonial and CV with RootsTalk and partner companies.
+                </p>
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* ── PREFERENCES ── */}
         <div className="mt-5">
