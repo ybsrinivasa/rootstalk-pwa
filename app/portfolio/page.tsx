@@ -215,6 +215,10 @@ export default function PortfolioPage() {
     <div className="min-h-screen bg-[#FDF6E3] pb-24">
       <PWAHeader back={true} title="My Portfolio" />
       <div className="px-4 pt-3">
+        <p className="text-xs text-[#7A8C7E] mb-3 leading-relaxed">
+          Share a testimonial RootsTalk can use on our website, and upload your CV
+          for us to forward to partner companies.
+        </p>
         {/* Tabs */}
         <div className="flex gap-2 bg-white border border-[#DDD0B8] rounded-xl p-1">
           <button onClick={() => setTab('testimonial')}
@@ -231,7 +235,7 @@ export default function PortfolioPage() {
                 ? 'bg-emerald-600 text-white'
                 : 'text-[#6B3F1F]'
             }`}>
-            Hiring
+            CV &amp; Hiring
           </button>
         </div>
 
