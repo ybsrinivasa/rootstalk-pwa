@@ -39,6 +39,11 @@ interface CompanyInfo {
   //   - hides dealer/facilitator payment routing (only farmer-direct)
   advisory_only_mode?: boolean
   dealer_list_enabled?: boolean
+  // 2026-11-09 — paired with dealer_list_enabled to decide which of
+  // the delegate-pays options (Ask a dealer / Ask a facilitator)
+  // surface alongside "Pay myself" + "Share QR" on Advisory-Only subs.
+  // Both flags are only meaningful when advisory_only_mode=true.
+  in_app_orders_enabled?: boolean
   subscription_fee_paise?: number | null
 }
 
@@ -454,7 +459,8 @@ function SubscribeFlow() {
     setChecking(true); setCheckError(''); setDelegateLookup(null); setError('')
     try {
       const { data } = await api.get<DelegateLookup>(
-        `/farmer/delegate-lookup?phone=${encodeURIComponent(fullPhone)}`,
+        `/farmer/delegate-lookup?phone=${encodeURIComponent(fullPhone)}`
+        + `&role=${delegateRole}`,
       )
       setDelegateLookup(data)
     } catch (err: unknown) {
@@ -1081,64 +1087,80 @@ function SubscribeFlow() {
                         )}
                       </div>
 
-                      {/* Advisory-Only Mode (2026-09-16): dealer/
-                          facilitator/share-link payment routing is
-                          hidden — farmer must pay directly. Backend
-                          gates block these paths too as defence-in-depth. */}
-                      {!company?.advisory_only_mode && (<>
-                      {/* Ask a dealer */}
-                      <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
-                        <p className="font-semibold text-[#6B3F1F]">{t('payment.askDealer')}</p>
-                        <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                          {t('payment.askDealerBody')}
-                        </p>
-                        <button
-                          onClick={() => { setDelegateRole('DEALER'); setStage('delegate') }}
-                          className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
-                          style={{ background: '#3A7D44' }}>
-                          {t('payment.selectDealer')}
-                        </button>
-                      </div>
+                      {/* Per-option visibility (2026-11-09):
+                          Regular Mode shows all three extra options.
+                          Advisory-Only Mode:
+                            - Ask a dealer      → dealer_list_enabled OR in_app_orders_enabled
+                            - Ask a facilitator → in_app_orders_enabled only
+                            - Share QR          → always on
+                          Backend has matching per-option gates as
+                          defence-in-depth against direct API calls. */}
+                      {(() => {
+                        const isAo = !!company?.advisory_only_mode
+                        const showDealer = !isAo
+                          || !!company?.dealer_list_enabled
+                          || !!company?.in_app_orders_enabled
+                        const showFacilitator = !isAo
+                          || !!company?.in_app_orders_enabled
+                        return <>
+                          {showDealer && (
+                            <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
+                              <p className="font-semibold text-[#6B3F1F]">{t('payment.askDealer')}</p>
+                              <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
+                                {t('payment.askDealerBody')}
+                              </p>
+                              <button
+                                onClick={() => { setDelegateRole('DEALER'); setStage('delegate') }}
+                                className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
+                                style={{ background: '#3A7D44' }}>
+                                {t('payment.selectDealer')}
+                              </button>
+                            </div>
+                          )}
 
-                      {/* Ask a facilitator */}
-                      <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
-                        <p className="font-semibold text-[#6B3F1F]">{t('payment.askFacilitator')}</p>
-                        <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                          {t('payment.askFacilitatorBody')}
-                        </p>
-                        <button
-                          onClick={() => { setDelegateRole('FACILITATOR'); setStage('delegate') }}
-                          className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
-                          style={{ background: '#3A7D44' }}>
-                          {t('payment.selectFacilitator')}
-                        </button>
-                      </div>
+                          {showFacilitator && (
+                            <div className="rounded-2xl border-2 border-[#DDD0B8] p-4">
+                              <p className="font-semibold text-[#6B3F1F]">{t('payment.askFacilitator')}</p>
+                              <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
+                                {t('payment.askFacilitatorBody')}
+                              </p>
+                              <button
+                                onClick={() => { setDelegateRole('FACILITATOR'); setStage('delegate') }}
+                                className="w-full py-3.5 rounded-xl text-white font-semibold text-sm"
+                                style={{ background: '#3A7D44' }}>
+                                {t('payment.selectFacilitator')}
+                              </button>
+                            </div>
+                          )}
 
-                      {/* Share a payment link / QR — V1.1 (2026-05-29).
-                          Anyone (relative in a city, friend) can pay via
-                          any UPI app. They don't need to be on RootsTalk. */}
-                      <div className="rounded-2xl border-2 p-4"
-                        style={{ borderColor: '#3A7D44', background: '#F0F9F2' }}>
-                        <div className="flex items-start gap-2">
-                          <span className="text-xl leading-none mt-0.5">🔗</span>
-                          <div className="flex-1">
-                            <p className="font-semibold text-[#6B3F1F]">
-                              {t('payment.shareLink')}
-                            </p>
-                            <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
-                              {t('payment.shareLinkBody')}
-                            </p>
+                          {/* Share a payment link / QR — V1.1 (2026-05-29);
+                              restored on Advisory-Only subs 2026-11-09.
+                              Anyone (relative in a city, friend) can pay
+                              via any UPI app. They don't need to be on
+                              RootsTalk — self-contained flow. */}
+                          <div className="rounded-2xl border-2 p-4"
+                            style={{ borderColor: '#3A7D44', background: '#F0F9F2' }}>
+                            <div className="flex items-start gap-2">
+                              <span className="text-xl leading-none mt-0.5">🔗</span>
+                              <div className="flex-1">
+                                <p className="font-semibold text-[#6B3F1F]">
+                                  {t('payment.shareLink')}
+                                </p>
+                                <p className="text-[#7A8C7E] text-sm mt-0.5 mb-3">
+                                  {t('payment.shareLinkBody')}
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={generateShareLink}
+                              disabled={busy}
+                              className="w-full py-3.5 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
+                              style={{ background: '#3A7D44' }}>
+                              {busy ? t('payment.generating') : t('payment.generateCta')}
+                            </button>
                           </div>
-                        </div>
-                        <button
-                          onClick={generateShareLink}
-                          disabled={busy}
-                          className="w-full py-3.5 rounded-xl text-white font-semibold text-sm disabled:opacity-50"
-                          style={{ background: '#3A7D44' }}>
-                          {busy ? t('payment.generating') : t('payment.generateCta')}
-                        </button>
-                      </div>
-                      </>)}
+                        </>
+                      })()}
                     </div>
 
                     {error && <p className="text-sm text-[#D4682E] mt-3">{error}</p>}
