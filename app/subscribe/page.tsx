@@ -1009,7 +1009,20 @@ function SubscribeFlow() {
                       </div>
                     </div>
 
-                    {error && <p className="text-sm text-[#D4682E] mb-3">{error}</p>}
+                    {/* 2026-11-10 — Privacy disclosure for the Farmer
+                        Support View in the Client Portal. The company's
+                        RM can see this subscription's practices, input
+                        status, diagnoses, and expert queries to follow
+                        up proactively. Shown ONCE at subscribe time;
+                        the farmer can't act after this, so it needs to
+                        be here, not buried later. */}
+                    <div className="mt-3 text-[11px] text-[#7A8C7E] bg-[#F5F0E8] border border-[#DDD0B8] rounded-xl px-3 py-2 leading-snug">
+                      {company?.display_name
+                        ? `${company.display_name}'s support team may follow up with you about this advisory — reminders on inputs, help with pest diagnoses, or answers to your questions. Your personal information is not shared beyond the company.`
+                        : `Your subscription company's support team may follow up with you about this advisory — reminders on inputs, help with pest diagnoses, or answers to your questions. Your personal information is not shared beyond the company.`}
+                    </div>
+
+                    {error && <p className="text-sm text-[#D4682E] mb-3 mt-3">{error}</p>}
 
                     <button
                       onClick={proceedToPayment}
