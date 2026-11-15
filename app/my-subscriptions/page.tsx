@@ -40,6 +40,13 @@ interface Subscription {
   // sub without).
   advisory_only_mode?: boolean
   dealer_list_enabled?: boolean
+  // 2026-11-15 — Training Sandbox marker. Widens the Unsubscribe
+  // button to also appear on ASSIGNED training subs (the training
+  // remove endpoint soft-deletes via Subscription.deleted_at
+  // instead of flipping to UNSUBSCRIBED, so the row disappears
+  // from the list on reload — intentional for throwaway training
+  // data).
+  client_is_training?: boolean
 }
 
 export default function MySubscriptionsPage() {
@@ -114,7 +121,17 @@ export default function MySubscriptionsPage() {
   async function unsubscribe(sub: Subscription) {
     setUnsubBusy(true)
     try {
-      await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`, {})
+      // 2026-11-15 — Training subs use a different mechanism (soft-
+      // delete via Subscription.deleted_at, not UNSUBSCRIBED status)
+      // so they vanish from the list on next load. Keeps training
+      // data throwaway as intended + sidesteps the SELF-only gate on
+      // the regular unsubscribe endpoint (training subs are
+      // ASSIGNED by the promoter).
+      if (sub.client_is_training) {
+        await api.delete(`/farmer/training-subscriptions/${sub.id}`)
+      } else {
+        await api.put(`/farmer/subscriptions/${sub.id}/unsubscribe`, {})
+      }
       setConfirmUnsub(null)
       load()
     } catch (err: unknown) {
@@ -281,7 +298,14 @@ function SubCard({
   // are still ACTIVE. Promoter-assigned subs must go through the
   // company channel (same rule the backend enforces at PUT
   // /unsubscribe via is_self_unsubscribable).
-  const canUnsubscribe = kind === 'active' && sub.subscription_type === 'SELF'
+  // 2026-11-15 — Training ASSIGNED subs are now also unsubscribable
+  // (hits the /farmer/training-subscriptions/{id} soft-remove
+  // endpoint instead). Lets the farmer bin a demo crop that was
+  // assigned to them for training purposes.
+  const canUnsubscribe = kind === 'active' && (
+    sub.subscription_type === 'SELF'
+    || sub.client_is_training === true
+  )
   const start = sub.crop_start_date
     ? new Date(sub.crop_start_date).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
     : null

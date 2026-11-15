@@ -26,6 +26,11 @@ interface PromotedFarmer {
   area_unit: string | null
   number_of_plants: number | null
   planting_year: number | null
+  // 2026-11-15 — Training Sandbox marker. Rows where this is true
+  // get a TRAINING chip + a Remove button (soft-deletes via
+  // DELETE /promoter/training-subscriptions/{id}). Non-training
+  // rows stay clean to avoid accidental removal of real farmer data.
+  is_training: boolean
 }
 
 const COLOUR = '#7D4196'
@@ -45,13 +50,36 @@ export default function DealerPromotedFarmersPage() {
   const t = useTranslations('dealer.promotedFarmers')
   const [farmers, setFarmers] = useState<PromotedFarmer[]>([])
   const [loading, setLoading] = useState(true)
+  // 2026-11-15 — Training per-sub remove confirm + mutation state.
+  const [confirmRemove, setConfirmRemove] = useState<PromotedFarmer | null>(null)
+  const [removeBusy, setRemoveBusy] = useState(false)
+  const [removeErr, setRemoveErr] = useState<string | null>(null)
+
+  async function loadFarmers() {
+    const r = await api.get<PromotedFarmer[]>('/dealer/promoted-farmers')
+    setFarmers(r.data)
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<PromotedFarmer[]>('/dealer/promoted-farmers')
-      .then(r => setFarmers(r.data))
-      .finally(() => setLoading(false))
+    loadFarmers().finally(() => setLoading(false))
   }, [router])
+
+  async function doRemoveTraining(sub: PromotedFarmer) {
+    setRemoveBusy(true); setRemoveErr(null)
+    try {
+      await api.delete(`/promoter/training-subscriptions/${sub.subscription_id}`)
+      setConfirmRemove(null)
+      await loadFarmers()
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string | { message?: string } } } }
+      const detail = e?.response?.data?.detail
+      const msg = typeof detail === 'object' ? detail?.message : (detail as string)
+      setRemoveErr(msg || t('removeError'))
+    } finally {
+      setRemoveBusy(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
@@ -116,6 +144,11 @@ export default function DealerPromotedFarmersPage() {
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-semibold text-[#6B3F1F] truncate flex-1">{farmerName}</p>
+                        {f.is_training && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 shrink-0 uppercase font-bold tracking-wide">
+                            {t('trainingChip')}
+                          </span>
+                        )}
                         {f.status !== 'ACTIVE' && (
                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-[#7A8C7E] shrink-0 uppercase font-medium tracking-wide">
                             {f.status}
@@ -127,6 +160,15 @@ export default function DealerPromotedFarmersPage() {
                       )}
                       {f.reference_number && (
                         <p className="text-[11px] font-mono text-[#7A8C7E] mt-1">{f.reference_number}</p>
+                      )}
+                      {/* Remove-training affordance — only on training rows,
+                          scoped to promoter-ownership by the backend. */}
+                      {f.is_training && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setConfirmRemove(f); setRemoveErr(null) }}
+                          className="mt-2 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-red-200 text-[#D4682E] bg-red-50 active:bg-red-100">
+                          {t('removeTrainingBtn')}
+                        </button>
                       )}
                     </div>
                     {f.farmer_phone && (
@@ -149,6 +191,37 @@ export default function DealerPromotedFarmersPage() {
         )}
       </div>
       <BottomNav color={COLOUR} activeRole="DEALER" />
+
+      {/* 2026-11-15 — Remove-training confirm modal. */}
+      {confirmRemove && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl">
+            <p className="text-base font-bold text-[#6B3F1F] mb-2">
+              {t('removeConfirmTitle')}
+            </p>
+            <p className="text-sm text-[#7A8C7E] mb-4">
+              {t('removeConfirmBody', { name: confirmRemove.farmer_name || t('unknownFarmer') })}
+            </p>
+            {removeErr && (
+              <p className="text-xs text-[#D4682E] mb-3">{removeErr}</p>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setConfirmRemove(null); setRemoveErr(null) }}
+                disabled={removeBusy}
+                className="px-3 py-2 text-sm font-medium text-[#7A8C7E] disabled:opacity-50">
+                {t('cancelBtn')}
+              </button>
+              <button
+                onClick={() => doRemoveTraining(confirmRemove)}
+                disabled={removeBusy}
+                className="px-4 py-2 text-sm font-semibold text-white rounded-lg bg-[#D4682E] active:bg-[#B5551E] disabled:opacity-50">
+                {removeBusy ? t('removingBtn') : t('removeConfirmBtn')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
