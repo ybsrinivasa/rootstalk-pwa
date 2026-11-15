@@ -19,9 +19,17 @@ import { getUser } from '@/lib/auth'
 
 const PWA_URL = 'https://rootstalk.in'
 const LOGO_PATH = '/logos/eywa-logo-notext-square.png'
-const CANVAS_PX = 720          // exported image size — plenty for print + share previews
-const QR_PX = 560              // QR module area within the canvas — leaves room for text below
-const LOGO_FRACTION = 0.20     // logo occupies 20% of QR width, ECC-H can absorb this
+const MISSED_CALL_NUMBER = '9187952956'
+
+// 2026-11-15 — canvas rewritten from a square QR-only composition
+// to a portrait poster. Top band: "RootsTalk" title. Middle: QR
+// code (unchanged). Bottom band: URL + missed-call call-out so the
+// facilitator-promoter can print a single sheet to paste in a
+// shop — every piece a farmer needs to join is on one page.
+const CANVAS_W = 720
+const CANVAS_H = 1200           // taller than square to fit header + footer text blocks
+const QR_PX = 560               // QR module area — kept at previous size for scan reliability
+const LOGO_FRACTION = 0.20      // logo occupies 20% of QR width; ECC-H absorbs the obscured modules
 
 export default function SharePage() {
   const t = useTranslations('shareQr')
@@ -42,13 +50,35 @@ export default function SharePage() {
     async function render() {
       const canvas = canvasRef.current
       if (!canvas) return
-      canvas.width = CANVAS_PX
-      canvas.height = CANVAS_PX
+      canvas.width = CANVAS_W
+      canvas.height = CANVAS_H
       const ctx = canvas.getContext('2d')
       if (!ctx) return
 
+      // Background — warm cream matches the PWA's palette; prints
+      // readably on standard inkjet A4 without eating too much ink.
+      ctx.fillStyle = '#F7F0E0'
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
+
+      // Top band — "rootsTALK.in" wordmark + short tagline. Sits
+      // above the QR so a printed poster reads top-down.
+      ctx.textAlign = 'center'
+      ctx.fillStyle = '#0F2A0F'
+      ctx.font = 'bold 64px system-ui, -apple-system, sans-serif'
+      ctx.fillText('rootsTALK.in', CANVAS_W / 2, 90)
+      ctx.font = '26px system-ui, -apple-system, sans-serif'
+      ctx.fillStyle = '#6B3F1F'
+      ctx.fillText('Your crop advisory network', CANVAS_W / 2, 135)
+
+      // QR card — white rounded panel that visually separates the
+      // QR from the cream bg and mirrors the on-screen card.
+      const qrCardPad = 24
+      const qrCardSize = QR_PX + qrCardPad * 2
+      const qrCardX = Math.round((CANVAS_W - qrCardSize) / 2)
+      const qrCardY = 175
       ctx.fillStyle = '#FFFFFF'
-      ctx.fillRect(0, 0, CANVAS_PX, CANVAS_PX)
+      roundRect(ctx, qrCardX, qrCardY, qrCardSize, qrCardSize, 20)
+      ctx.fill()
 
       const qrOffscreen = document.createElement('canvas')
       await QRCode.toCanvas(qrOffscreen, PWA_URL, {
@@ -57,19 +87,19 @@ export default function SharePage() {
         margin: 1,
         color: { dark: '#0F2A0F', light: '#FFFFFF' },   // dark forest green on white
       })
+      const qrX = qrCardX + qrCardPad
+      const qrY = qrCardY + qrCardPad
+      ctx.drawImage(qrOffscreen, qrX, qrY)
 
-      const qrOffset = Math.round((CANVAS_PX - QR_PX) / 2) - 20   // slight upward bias — text sits below
-      ctx.drawImage(qrOffscreen, qrOffset, qrOffset)
-
-      // Logo in the middle of the QR. Sits on a white rounded card
-      // so the modules under it stay visually distinct from the logo.
+      // Logo centered in the QR. Sits on a white rounded card so
+      // the modules under it stay visually distinct from the logo.
       try {
         const logo = await loadImage(LOGO_PATH)
         const logoSize = Math.round(QR_PX * LOGO_FRACTION)
         const pad = Math.round(logoSize * 0.14)
         const cardSize = logoSize + pad * 2
-        const cx = qrOffset + Math.round(QR_PX / 2)
-        const cy = qrOffset + Math.round(QR_PX / 2)
+        const cx = qrX + Math.round(QR_PX / 2)
+        const cy = qrY + Math.round(QR_PX / 2)
         ctx.fillStyle = '#FFFFFF'
         roundRect(ctx, cx - cardSize / 2, cy - cardSize / 2, cardSize, cardSize, 12)
         ctx.fill()
@@ -78,12 +108,44 @@ export default function SharePage() {
         // Logo failed to load — QR itself still scans, ship without it.
       }
 
-      // Wordmark under the QR. Two lines: "rootsTALK.in" then the URL.
-      const wordmarkY = qrOffset + QR_PX + 30
-      ctx.textAlign = 'center'
+      // Bottom band — URL line + missed-call call-out. Baked into
+      // the image so a printed poster is fully self-contained:
+      // farmer can scan OR type the URL OR give a missed call.
+      const belowQrY = qrCardY + qrCardSize + 40
+
+      // "Scan the QR" cue first, then the URL as the second route.
+      ctx.fillStyle = '#6B3F1F'
+      ctx.font = '22px system-ui, -apple-system, sans-serif'
+      ctx.fillText('Scan the QR, or visit:', CANVAS_W / 2, belowQrY)
+
+      ctx.fillStyle = '#0F2A0F'
+      ctx.font = 'bold 40px system-ui, -apple-system, sans-serif'
+      ctx.fillText('rootstalk.in', CANVAS_W / 2, belowQrY + 50)
+
+      // Missed-call call-out — bordered rounded block to visually
+      // distinguish it as a THIRD route (no camera, no typing).
+      const callBlockY = belowQrY + 90
+      const callBlockH = 130
+      const callBlockPad = 40
+      ctx.fillStyle = '#FFFFFF'
+      ctx.strokeStyle = '#DDD0B8'
+      ctx.lineWidth = 2
+      roundRect(
+        ctx, callBlockPad, callBlockY,
+        CANVAS_W - callBlockPad * 2, callBlockH, 16,
+      )
+      ctx.fill()
+      ctx.stroke()
+
+      ctx.fillStyle = '#6B3F1F'
+      ctx.font = '22px system-ui, -apple-system, sans-serif'
+      ctx.fillText(
+        "Can't scan? Give a missed call to",
+        CANVAS_W / 2, callBlockY + 42,
+      )
       ctx.fillStyle = '#0F2A0F'
       ctx.font = 'bold 44px system-ui, -apple-system, sans-serif'
-      ctx.fillText('rootsTALK.in', CANVAS_PX / 2, wordmarkY + 40)
+      ctx.fillText(MISSED_CALL_NUMBER, CANVAS_W / 2, callBlockY + 92)
 
       if (!cancelled) {
         setPreviewUrl(canvas.toDataURL('image/png'))
@@ -175,11 +237,33 @@ export default function SharePage() {
           <canvas ref={canvasRef} className="hidden" />
         </div>
 
+        {/* URL line — now explicit about the copy affordance so the
+            promoter isn't guessing whether it's tappable. */}
         <button
           onClick={copyLink}
-          className="w-full mt-3 text-center text-sm text-[#3A7D44] font-medium py-2 rounded-lg active:bg-white/60">
-          {t('urlLine')}
+          className="w-full mt-3 flex items-center justify-center gap-2 text-sm text-[#3A7D44] font-medium py-2 rounded-lg active:bg-white/60">
+          <span>📋</span>
+          <span>{t('urlLine')}</span>
+          <span className="text-xs text-[#7A8C7E]">· {t('urlTapToCopy')}</span>
         </button>
+
+        {/* Missed-call call-out — third route for farmers who can't
+            scan (no camera) or can't type (low-tech phone). Number
+            is a tel: link so the promoter can tap to dial from
+            their own device if they want to verify it. */}
+        <div className="mt-3 bg-white border border-[#DDD0B8] rounded-xl p-4 text-center">
+          <p className="text-xs text-[#6B3F1F]">
+            {t('missedCallHint')}
+          </p>
+          <a
+            href={`tel:${MISSED_CALL_NUMBER}`}
+            className="block mt-1 text-2xl font-bold text-[#0F2A0F] tracking-wider active:text-[#3A7D44]">
+            {MISSED_CALL_NUMBER}
+          </a>
+          <p className="text-[11px] text-[#7A8C7E] mt-1">
+            {t('missedCallSubtitle')}
+          </p>
+        </div>
 
         <div className="grid grid-cols-2 gap-3 mt-5">
           <button
