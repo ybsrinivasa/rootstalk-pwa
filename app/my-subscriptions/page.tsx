@@ -47,6 +47,11 @@ interface Subscription {
   // from the list on reload — intentional for throwaway training
   // data).
   client_is_training?: boolean
+  // 2026-11-16 — Per-training-crop auto-remove clock. NULL on non-
+  // training subs; set on training subs at farmer-accept time
+  // (farmer_responded_at + 12d). Powers the amber "Auto-removes in N
+  // days" pill on training rows.
+  auto_remove_at?: string | null
 }
 
 export default function MySubscriptionsPage() {
@@ -354,6 +359,12 @@ function SubCard({
                 : t('endedOn', { date: end as string })}
           </p>
         )}
+        {sub.client_is_training && sub.auto_remove_at && (
+          <TrainingAutoRemoveChip
+            autoRemoveAtIso={sub.auto_remove_at}
+            t={t}
+          />
+        )}
       </div>
       <div className="px-4 pt-3 pb-3 flex gap-2 flex-wrap">
         {kind === 'active' && (
@@ -378,6 +389,33 @@ function SubCard({
         )}
       </div>
     </div>
+  )
+}
+
+// 2026-11-16 — Training Sandbox per-crop countdown. Renders only on
+// training subs with a non-null auto_remove_at (set at farmer-accept
+// time on the backend). Shows an amber pill with "Auto-removes in N
+// days" copy; the chip is informational only — the user can still
+// use the existing Unsubscribe affordance to remove it earlier.
+function TrainingAutoRemoveChip({ autoRemoveAtIso, t }: {
+  autoRemoveAtIso: string
+  t: ReturnType<typeof useTranslations>
+}) {
+  const diffMs = new Date(autoRemoveAtIso).getTime() - Date.now()
+  const days = Math.ceil(diffMs / (24 * 60 * 60 * 1000))
+  if (days <= 0) {
+    // Clock already elapsed — sweep hasn't fired yet. Render a
+    // "clearing shortly" hint instead of a negative count.
+    return (
+      <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-100 border border-amber-200 rounded-full px-2.5 py-0.5">
+        🎓 {t('trainingAutoRemoveSoon')}
+      </p>
+    )
+  }
+  return (
+    <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-amber-900 bg-amber-100 border border-amber-200 rounded-full px-2.5 py-0.5">
+      🎓 {t('trainingAutoRemoveInDays', { count: days })}
+    </p>
   )
 }
 

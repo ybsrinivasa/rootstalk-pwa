@@ -28,6 +28,9 @@ interface PromotedFarmer {
   planting_year: number | null
   // 2026-11-15 — Training Sandbox marker; see dealer sibling page.
   is_training: boolean
+  // 2026-11-16 — Per-training-crop auto-remove clock (12d from farmer
+  // acceptance). Drives the inline countdown on training rows.
+  auto_remove_at?: string | null
 }
 
 const COLOUR = '#7D4E00'
@@ -156,6 +159,12 @@ export default function FacilitatorPromotedFarmersPage() {
                       {(f.reference_number) && (
                         <p className="text-[11px] font-mono text-[#7A8C7E] mt-1">{f.reference_number}</p>
                       )}
+                      {f.is_training && f.auto_remove_at && (
+                        <TrainingAutoRemoveHint
+                          autoRemoveAtIso={f.auto_remove_at}
+                          t={t}
+                        />
+                      )}
                       {f.is_training && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setConfirmRemove(f); setRemoveErr(null) }}
@@ -216,5 +225,23 @@ export default function FacilitatorPromotedFarmersPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// 2026-11-16 — Per-training-crop auto-remove countdown, shown inline
+// on the promoter's farmer card. Clock starts at farmer acceptance.
+function TrainingAutoRemoveHint({ autoRemoveAtIso, t }: {
+  autoRemoveAtIso: string
+  t: ReturnType<typeof useTranslations>
+}) {
+  const diffMs = new Date(autoRemoveAtIso).getTime() - Date.now()
+  const days = Math.ceil(diffMs / (24 * 60 * 60 * 1000))
+  const label = days <= 0
+    ? t('trainingAutoRemoveSoon')
+    : t('trainingAutoRemoveInDays', { count: days })
+  return (
+    <p className="mt-1.5 text-[11px] text-amber-800">
+      🎓 {label}
+    </p>
   )
 }

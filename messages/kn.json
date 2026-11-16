@@ -2577,6 +2577,8 @@
       "removingBtn": "ತೆಗೆದುಹಾಕಲಾಗುತ್ತಿದೆ…",
       "cancelBtn": "ರದ್ದುಮಾಡಿ",
       "removeError": "ತೆಗೆದುಹಾಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "trainingAutoRemoveInDays": "{count, plural, one {# ದಿನದಲ್ಲಿ} other {# ದಿನಗಳಲ್ಲಿ}} ಸ್ವಯಂ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ",
+      "trainingAutoRemoveSoon": "ಶೀಘ್ರದಲ್ಲೇ ತೆರವುಗೊಳಿಸಲಾಗುತ್ತಿದೆ",
       "detail": {
         "headerTitle": "ರೈತರ ಸಲಹೆ",
         "errorTitleWaiting": "ರೈತನಿಗಾಗಿ ಕಾಯುತ್ತಿದೆ.",
@@ -3457,6 +3459,8 @@
     "startedOn": "ಪ್ರಾರಂಭವಾದ ದಿನಾಂಕ {date}",
     "endedOn": "{date} ರಂದು ಮುಕ್ತಾಯಗೊಂಡಿದೆ",
     "startToEnd": "{start} → {end}",
+    "trainingAutoRemoveInDays": "ತರಬೇತಿ ಬೆಳೆ · {count, plural, one {# ದಿನದಲ್ಲಿ} other {# ದಿನಗಳಲ್ಲಿ}} ಸ್ವಯಂ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ",
+    "trainingAutoRemoveSoon": "ತರಬೇತಿ ಬೆಳೆ · ಶೀಘ್ರದಲ್ಲೇ ತೆರವುಗೊಳಿಸಲಾಗುತ್ತಿದೆ",
     "qr": {
       "title": "ಬೆಳೆಯ ದಾಖಲೆ QR",
       "alt": "ಬೆಳೆಯ QR",

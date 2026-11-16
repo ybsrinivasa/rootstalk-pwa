@@ -2814,6 +2814,8 @@
       "removingBtn": "Removing…",
       "cancelBtn": "Cancel",
       "removeError": "Could not remove. Please try again.",
+      "trainingAutoRemoveInDays": "Auto-removes in {count, plural, one {# day} other {# days}}",
+      "trainingAutoRemoveSoon": "Clearing shortly",
       "detail": {
         "headerTitle": "Farmer advisory",
         "errorTitleWaiting": "Waiting on the farmer",
@@ -3305,6 +3307,8 @@
       "removingBtn": "Removing…",
       "cancelBtn": "Cancel",
       "removeError": "Could not remove. Please try again.",
+      "trainingAutoRemoveInDays": "Auto-removes in {count, plural, one {# day} other {# days}}",
+      "trainingAutoRemoveSoon": "Clearing shortly",
       "detail": {
         "headerTitle": "Farmer advisory",
         "errorTitleWaiting": "Waiting on the farmer",
@@ -3694,6 +3698,8 @@
     "startedOn": "Started {date}",
     "endedOn": "Ended {date}",
     "startToEnd": "{start} → {end}",
+    "trainingAutoRemoveInDays": "Training crop · auto-removes in {count, plural, one {# day} other {# days}}",
+    "trainingAutoRemoveSoon": "Training crop · clearing shortly",
     "qr": {
       "title": "Crop Record QR",
       "alt": "Crop QR",
