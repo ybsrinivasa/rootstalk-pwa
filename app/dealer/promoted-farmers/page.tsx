@@ -31,6 +31,11 @@ interface PromotedFarmer {
   // DELETE /promoter/training-subscriptions/{id}). Non-training
   // rows stay clean to avoid accidental removal of real farmer data.
   is_training: boolean
+  // 2026-11-16 — Per-training-crop auto-remove clock (12d from farmer
+  // acceptance). NULL on non-training rows + on training rows still
+  // in PENDING_FARMER_APPROVAL. Drives the "auto-removes in N days"
+  // hint on the row so the promoter knows the clock is running.
+  auto_remove_at?: string | null
 }
 
 const COLOUR = '#7D4196'
@@ -161,6 +166,16 @@ export default function DealerPromotedFarmersPage() {
                       {f.reference_number && (
                         <p className="text-[11px] font-mono text-[#7A8C7E] mt-1">{f.reference_number}</p>
                       )}
+                      {/* 2026-11-16 — Auto-remove countdown on training
+                          rows whose clock is running (set at farmer
+                          acceptance). Nothing shown for still-PENDING
+                          invites — the clock starts only after accept. */}
+                      {f.is_training && f.auto_remove_at && (
+                        <TrainingAutoRemoveHint
+                          autoRemoveAtIso={f.auto_remove_at}
+                          t={t}
+                        />
+                      )}
                       {/* Remove-training affordance — only on training rows,
                           scoped to promoter-ownership by the backend. */}
                       {f.is_training && (
@@ -223,5 +238,24 @@ export default function DealerPromotedFarmersPage() {
         </div>
       )}
     </div>
+  )
+}
+
+// 2026-11-16 — Per-training-crop auto-remove countdown, shown inline
+// on the promoter's farmer card. Clock starts at farmer acceptance
+// (backend stamps auto_remove_at = farmer_responded_at + 12d).
+function TrainingAutoRemoveHint({ autoRemoveAtIso, t }: {
+  autoRemoveAtIso: string
+  t: ReturnType<typeof useTranslations>
+}) {
+  const diffMs = new Date(autoRemoveAtIso).getTime() - Date.now()
+  const days = Math.ceil(diffMs / (24 * 60 * 60 * 1000))
+  const label = days <= 0
+    ? t('trainingAutoRemoveSoon')
+    : t('trainingAutoRemoveInDays', { count: days })
+  return (
+    <p className="mt-1.5 text-[11px] text-amber-800">
+      🎓 {label}
+    </p>
   )
 }
