@@ -27,6 +27,20 @@ interface ClientInfo {
   id: string; display_name: string; primary_colour: string
   tagline: string | null; logo_url: string | null
 }
+// 2026-11-17 — Pundit Exclusivity. GET /pundit/me/exclusivity-requests
+// returns PENDING + ACTIVE rows only (terminal rows are audit history).
+interface ExclusivityRequest {
+  id: string
+  pundit_profile_id: string
+  client_id: string
+  status: 'PENDING_PUNDIT_APPROVAL' | 'ACTIVE'
+         | 'DECLINED_BY_PUNDIT' | 'ENDED_BY_CLIENT' | 'ENDED_BY_PUNDIT_REQUEST'
+  requested_at: string
+  responded_at: string | null
+  ended_at: string | null
+  pundit_end_requested_at: string | null
+  client_name: string | null
+}
 
 const COLOUR = '#3C3489'
 
@@ -51,6 +65,51 @@ export default function PunditHomePage() {
   const [phoneHidden, setPhoneHidden] = useState(false)
   const [privacyLoading, setPrivacyLoading] = useState(false)
   const [showRoleDrawer, setShowRoleDrawer] = useState(false)
+  // 2026-11-17 — Exclusivity agreements for this Pundit. GET only
+  // returns PENDING + ACTIVE; terminal rows (DECLINED / ENDED_*)
+  // are history, not actionable.
+  const [exclusivities, setExclusivities] = useState<ExclusivityRequest[]>([])
+  const [exBusy, setExBusy] = useState<string | null>(null)
+
+  const loadExclusivities = async () => {
+    try {
+      const r = await api.get<ExclusivityRequest[]>('/pundit/me/exclusivity-requests')
+      setExclusivities(r.data)
+    } catch {
+      setExclusivities([])
+    }
+  }
+
+  async function respond(id: string, accept: boolean, companyName: string | null) {
+    const confirmMsg = accept
+      ? `Accept exclusivity with ${companyName || 'this company'}? You will no longer appear in any other company's Primary / Panel Expert search. Your existing commitments at other companies continue.`
+      : `Decline exclusivity with ${companyName || 'this company'}?`
+    if (!confirm(confirmMsg)) return
+    setExBusy(id)
+    try {
+      await api.post(`/pundit/me/exclusivity-requests/${id}/respond`, { accept })
+      await loadExclusivities()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } | string } } }
+      const d = e?.response?.data?.detail
+      const msg = typeof d === 'object' ? d?.message : (d as string)
+      alert(msg || 'Could not respond. Please try again.')
+    } finally { setExBusy(null) }
+  }
+
+  async function requestRemoval(id: string, companyName: string | null) {
+    if (!confirm(`Request ${companyName || 'the company'} to end this exclusivity? They have 7 days to approve. After that, the exclusivity ends automatically.`)) return
+    setExBusy(id)
+    try {
+      await api.post(`/pundit/me/exclusivity/${id}/request-end`, {})
+      await loadExclusivities()
+    } catch (err) {
+      const e = err as { response?: { data?: { detail?: { message?: string } | string } } }
+      const d = e?.response?.data?.detail
+      const msg = typeof d === 'object' ? d?.message : (d as string)
+      alert(msg || 'Could not request removal. Please try again.')
+    } finally { setExBusy(null) }
+  }
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
@@ -58,7 +117,8 @@ export default function PunditHomePage() {
       api.get<QuerySummary[]>('/pundit/queries'),
       api.get<{ companies: Company[]; phone_privacy?: boolean }>('/pundit/profile'),
       api.get<unknown[]>('/pundit/invitations'),
-    ]).then(([qRes, pRes, iRes]) => {
+      api.get<ExclusivityRequest[]>('/pundit/me/exclusivity-requests'),
+    ]).then(([qRes, pRes, iRes, eRes]) => {
       if (qRes.status === 'fulfilled') setQueries(qRes.value.data)
       if (pRes.status === 'fulfilled') {
         const profile = pRes.value.data
@@ -76,6 +136,7 @@ export default function PunditHomePage() {
         }
       }
       if (iRes.status === 'fulfilled') setInvitations(iRes.value.data)
+      if (eRes.status === 'fulfilled') setExclusivities(eRes.value.data)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -154,6 +215,70 @@ export default function PunditHomePage() {
             </div>
           </div>
         )}
+
+        {/* 2026-11-17 — Pundit Exclusivity cards. PENDING requests
+            appear here with Accept / Decline; ACTIVE agreements show
+            status + "Request removal" affordance. Both sit above the
+            My Companies list so the Pundit sees them first. */}
+        {exclusivities.filter(e => e.status === 'PENDING_PUNDIT_APPROVAL').map(e => (
+          <div key={e.id} className="mb-4 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
+            <p className="text-xs uppercase tracking-wider text-amber-700 font-bold mb-1">
+              Exclusivity Request
+            </p>
+            <p className="text-sm font-semibold text-amber-900">
+              {e.client_name || 'A company'} wants you to serve them exclusively
+            </p>
+            <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+              If you accept, you will no longer appear in any other company's Primary / Panel Expert search.
+              Your existing commitments at other companies continue — but you can't accept new company invitations.
+            </p>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => respond(e.id, true, e.client_name)}
+                disabled={exBusy === e.id}
+                className="flex-1 py-2 rounded-xl text-white text-sm font-semibold disabled:opacity-50"
+                style={{ background: '#10b981' }}>
+                {exBusy === e.id ? '...' : 'Accept'}
+              </button>
+              <button
+                onClick={() => respond(e.id, false, e.client_name)}
+                disabled={exBusy === e.id}
+                className="flex-1 py-2 rounded-xl text-sm font-semibold border-2 border-rose-300 text-rose-700 disabled:opacity-50">
+                Decline
+              </button>
+            </div>
+          </div>
+        ))}
+        {exclusivities.filter(e => e.status === 'ACTIVE').map(e => {
+          const endRequested = !!e.pundit_end_requested_at
+          return (
+            <div key={e.id} className="mb-4 bg-emerald-50 border border-emerald-300 rounded-2xl p-4">
+              <p className="text-xs uppercase tracking-wider text-emerald-700 font-bold mb-1">
+                🔒 Exclusive
+              </p>
+              <p className="text-sm font-semibold text-emerald-900">
+                You are exclusive with {e.client_name || 'a company'}
+              </p>
+              {endRequested ? (
+                <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
+                  Removal request sent. {e.client_name || 'The company'} has 7 days to approve. If they don't respond, the exclusivity will auto-end.
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
+                    You don't appear in any other company's Primary / Panel search. Existing commitments at other companies continue.
+                  </p>
+                  <button
+                    onClick={() => requestRemoval(e.id, e.client_name)}
+                    disabled={exBusy === e.id}
+                    className="mt-3 w-full py-2 rounded-xl text-sm font-semibold border-2 border-emerald-300 text-emerald-800 disabled:opacity-50">
+                    {exBusy === e.id ? '...' : 'Request removal from exclusivity'}
+                  </button>
+                </>
+              )}
+            </div>
+          )
+        })}
 
         {/* My Companies — now the primary action surface. Each row shows
             per-org counts as clickable pills that drill into a filtered
