@@ -264,7 +264,7 @@ export default function DealerHomePage() {
             the amber payment-requests banner above the grid still
             fires when there are pending requests). New row order:
             Row 1: Alerts | Packing
-            Row 2: My Farmers | Sale Ledger
+            Row 2: My Farmers | Sale Notes
             Row 3: My Dealerships | Brand Submissions
             Training Sandbox (conditional) appended after Row 3 when
             active so the 6 base tiles stay in clean 3×2 rhythm. */}

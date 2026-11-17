@@ -1705,12 +1705,12 @@
         "unreadCount": "{count} ಓದಿಲ್ಲ",
         "brandForms": "ಬ್ರ್ಯಾಂಡ್ ಸಲ್ಲಿಕೆಗಳು",
         "brandFormsSubtitle": "ಬ್ರ್ಯಾಂಡ್ ಸಿಗುತ್ತಿಲ್ಲವೇ? ಕಳುಹಿಸಿ.",
-        "farmerLedger": "ರೈತರ ಖಾತೆ",
+        "farmerLedger": "ಮಾರಾಟ ಟಿಪ್ಪಣಿಗಳು",
         "farmerLedgerSubtitle": "ನನ್ನ ಗ್ರಾಹಕರು + ಖರೀದಿಗಳು"
       }
     },
     "ledger": {
-      "headerTitle": "ಮಾರಾಟ ಖಾತೆ",
+      "headerTitle": "ಮಾರಾಟ ಟಿಪ್ಪಣಿಗಳು",
       "detailHeaderTitle": "ಖರೀದಿ ಇತಿಹಾಸ",
       "addSaleHeaderTitle": "ಖರೀದಿ ನಮೂದನ್ನು ಸೇರಿಸಿ",
       "addSaleCta": "+ ಮಾರಾಟವನ್ನು ಸೇರಿಸಿ",
