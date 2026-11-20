@@ -2611,6 +2611,19 @@ function PracticeAckFooter({
                   call('unpurchase')
                   return
                 }
+                // 2026-11-20 — Brand-locked shortcut. The SE has
+                // locked the brand on this practice; the Brands
+                // picker would render one disabled row with nothing
+                // to choose — just ceremony + a confusing dead-end.
+                // Same reasoning as the NPK shortcut below; direct
+                // ack, no routing. Backend derives the brand from the
+                // locked BRAND_NAME element on the practice itself,
+                // so reports stay accurate without a client-side
+                // brand param.
+                if (practice.is_brand_locked) {
+                  await call('purchase')
+                  return
+                }
                 // 2026-10-30 — NPK dosage shortcut: if the farmer has
                 // already recorded brands via the NPK Brands screen
                 // (per-nutrient Mixed/Straight picks + optional free-
