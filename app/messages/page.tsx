@@ -9,10 +9,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import api from '@/lib/api'
 import BottomNav from '@/components/layout/BottomNav'
 import { C } from '@/lib/tokens'
+import { getActiveRoleFromPath } from '@/lib/roles'
 
 interface InboxItem {
   recipient_id: string
@@ -49,6 +50,14 @@ function fmtRelative(iso: string | null): string {
 
 export default function MessagesInboxPage() {
   const router = useRouter()
+  const pathname = usePathname() || '/messages'
+  const activeRole = getActiveRoleFromPath(pathname)
+  // Route tap-targets per role so the detail page keeps its own
+  // role prefix (/dealer/messages/{id} vs /messages/{id}) — nav stays
+  // consistent + back-stack behaves correctly on each role.
+  const detailBase = activeRole === 'DEALER' ? '/dealer/messages'
+    : activeRole === 'FACILITATOR' ? '/facilitator/messages'
+    : '/messages'
   const [items, setItems] = useState<InboxItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -83,7 +92,7 @@ export default function MessagesInboxPage() {
         {items.map(item => (
           <button
             key={item.recipient_id}
-            onClick={() => router.push(`/messages/${item.campaign_id}`)}
+            onClick={() => router.push(`${detailBase}/${item.campaign_id}`)}
             className="w-full text-left rounded-xl p-4 relative"
             style={{
               background: C.cardBg,
@@ -124,7 +133,7 @@ export default function MessagesInboxPage() {
         ))}
       </div>
 
-      <BottomNav activeRole="FARMER" />
+      <BottomNav activeRole={activeRole} />
     </div>
   )
 }

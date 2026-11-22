@@ -11,10 +11,11 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, usePathname } from 'next/navigation'
 import api from '@/lib/api'
 import BottomNav from '@/components/layout/BottomNav'
 import { C } from '@/lib/tokens'
+import { getActiveRoleFromPath } from '@/lib/roles'
 
 type CampaignType = 'ANNOUNCEMENT' | 'INTEREST_CAPTURE' | 'FEEDBACK' | 'SURVEY'
 type QuestionType =
@@ -85,6 +86,11 @@ function fmtDate(iso: string | null): string {
 
 export default function MessageDetailPage() {
   const params = useParams()
+  const pathname = usePathname() || '/messages'
+  const activeRole = getActiveRoleFromPath(pathname)
+  const inboxPath = activeRole === 'DEALER' ? '/dealer/messages'
+    : activeRole === 'FACILITATOR' ? '/facilitator/messages'
+    : '/messages'
   const campaignId = params?.campaignId as string | undefined
   const [data, setData] = useState<MessageDetail | null>(null)
   const [loading, setLoading] = useState(true)
@@ -112,18 +118,18 @@ export default function MessageDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen pb-20" style={{ background: C.background }}>
-        <TopBar />
+        <TopBar inboxPath={inboxPath} />
         <p className="px-4 py-6 text-sm" style={{ color: C.textSecond }}>Loading…</p>
-        <BottomNav activeRole="FARMER" />
+        <BottomNav activeRole={activeRole} />
       </div>
     )
   }
   if (error || !data) {
     return (
       <div className="min-h-screen pb-20" style={{ background: C.background }}>
-        <TopBar />
+        <TopBar inboxPath={inboxPath} />
         <p className="px-4 py-6 text-sm text-red-600">{error || 'Message not found.'}</p>
-        <BottomNav activeRole="FARMER" />
+        <BottomNav activeRole={activeRole} />
       </div>
     )
   }
@@ -135,7 +141,7 @@ export default function MessageDetailPage() {
 
   return (
     <div className="min-h-screen pb-20" style={{ background: C.background }}>
-      <TopBar />
+      <TopBar inboxPath={inboxPath} />
 
       <main className="px-4 py-4 space-y-4">
         {/* Company header */}
@@ -167,23 +173,48 @@ export default function MessageDetailPage() {
           </p>
         </div>
 
-        {/* Attachments stub */}
+        {/* Attachments — per-kind rendering. Images inline, videos as
+             <video controls>, PDFs as a download link. */}
         {attachments.length > 0 && (
-          <div className="rounded-xl p-4" style={{ background: C.cardBg }}>
-            <p className="text-xs uppercase tracking-wider font-semibold mb-2" style={{ color: C.textSecond }}>
+          <div className="rounded-xl p-4 space-y-3" style={{ background: C.cardBg }}>
+            <p className="text-xs uppercase tracking-wider font-semibold" style={{ color: C.textSecond }}>
               Attached
             </p>
-            <ul className="text-sm space-y-1" style={{ color: C.textSecond }}>
-              {attachments.map(a => (
-                <li key={a.id}>
-                  📎 {a.original_filename}{' '}
-                  <span className="text-xs">({Math.round(a.size_bytes / 1024)} KB)</span>
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs italic mt-2" style={{ color: C.textSecond }}>
-              Attachments will be downloadable in an upcoming update.
-            </p>
+            {attachments.map(a => (
+              <div key={a.id}>
+                {a.url && a.kind === 'IMAGE' && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={a.url} alt={a.original_filename}
+                    className="w-full rounded-lg max-h-96 object-contain bg-slate-50" />
+                )}
+                {a.url && a.kind === 'VIDEO' && (
+                  <video src={a.url} controls className="w-full rounded-lg" />
+                )}
+                {a.url && a.kind === 'PDF' && (
+                  <a href={a.url} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-3 border rounded-lg p-3"
+                    style={{ borderColor: C.divider, color: C.primary }}>
+                    <span className="text-2xl" aria-hidden>📄</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{a.original_filename}</p>
+                      <p className="text-xs" style={{ color: C.textSecond }}>
+                        PDF · {Math.round(a.size_bytes / 1024)} KB · Tap to open
+                      </p>
+                    </div>
+                  </a>
+                )}
+                {!a.url && (
+                  <p className="text-xs" style={{ color: C.textSecond }}>
+                    📎 {a.original_filename} — attachment unavailable
+                  </p>
+                )}
+                {a.url && a.kind !== 'PDF' && (
+                  <p className="text-xs mt-1" style={{ color: C.textSecond }}>
+                    {a.original_filename} · {Math.round(a.size_bytes / 1024)} KB
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
@@ -222,10 +253,10 @@ export default function MessageDetailPage() {
   )
 }
 
-function TopBar() {
+function TopBar({ inboxPath = '/messages' }: { inboxPath?: string }) {
   return (
     <header className="flex items-center gap-3 px-4 py-3" style={{ background: C.cardBg, borderBottom: `1px solid ${C.divider}` }}>
-      <Link href="/messages" className="text-sm" style={{ color: C.primary }}>← Back</Link>
+      <Link href={inboxPath} className="text-sm" style={{ color: C.primary }}>← Back</Link>
     </header>
   )
 }
