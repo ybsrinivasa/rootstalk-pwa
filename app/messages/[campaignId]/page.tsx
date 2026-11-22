@@ -37,6 +37,7 @@ interface Question {
 interface MessageDetail {
   campaign: {
     id: string
+    client_id: string
     title: string
     body: string
     campaign_type: CampaignType
@@ -95,6 +96,13 @@ export default function MessageDetailPage() {
   const [data, setData] = useState<MessageDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  // Back destination — once the detail payload lands with client_id,
+  // back goes to that org's chat view (WhatsApp pattern). Pre-load
+  // and error states fall back to the inbox since we don't know the
+  // client yet.
+  const backPath = data?.campaign?.client_id
+    ? `${inboxPath}/org/${data.campaign.client_id}`
+    : inboxPath
 
   async function load() {
     if (!campaignId) return
@@ -118,7 +126,7 @@ export default function MessageDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen pb-20" style={{ background: C.background }}>
-        <TopBar inboxPath={inboxPath} />
+        <TopBar backPath={backPath} />
         <p className="px-4 py-6 text-sm" style={{ color: C.textSecond }}>Loading…</p>
         <BottomNav activeRole={activeRole} />
       </div>
@@ -127,7 +135,7 @@ export default function MessageDetailPage() {
   if (error || !data) {
     return (
       <div className="min-h-screen pb-20" style={{ background: C.background }}>
-        <TopBar inboxPath={inboxPath} />
+        <TopBar backPath={backPath} />
         <p className="px-4 py-6 text-sm text-red-600">{error || 'Message not found.'}</p>
         <BottomNav activeRole={activeRole} />
       </div>
@@ -141,7 +149,7 @@ export default function MessageDetailPage() {
 
   return (
     <div className="min-h-screen pb-20" style={{ background: C.background }}>
-      <TopBar inboxPath={inboxPath} />
+      <TopBar backPath={backPath} />
 
       <main className="px-4 py-4 space-y-4">
         {/* Company header */}
@@ -253,10 +261,10 @@ export default function MessageDetailPage() {
   )
 }
 
-function TopBar({ inboxPath = '/messages' }: { inboxPath?: string }) {
+function TopBar({ backPath = '/messages' }: { backPath?: string }) {
   return (
     <header className="flex items-center gap-3 px-4 py-3" style={{ background: C.cardBg, borderBottom: `1px solid ${C.divider}` }}>
-      <Link href={inboxPath} className="text-sm" style={{ color: C.primary }}>← Back</Link>
+      <Link href={backPath} className="text-sm" style={{ color: C.primary }}>← Back</Link>
     </header>
   )
 }
