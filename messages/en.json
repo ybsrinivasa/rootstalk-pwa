@@ -129,6 +129,7 @@
     "dashboard": "Dashboard",
     "subscriptions": "Subscriptions",
     "credit": "Credit",
+    "messages": "Messages",
     "exit": {
       "tapAgainToExit": "Tap back once more to close the app"
     }

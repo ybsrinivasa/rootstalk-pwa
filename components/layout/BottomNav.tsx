@@ -1,11 +1,13 @@
 'use client'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { C } from '@/lib/tokens'
+import api from '@/lib/api'
 
 type Role = 'FARMER' | 'DEALER' | 'FACILITATOR' | 'FARM_PUNDIT'
-type NavKey = 'home' | 'orders' | 'queries' | 'subscriptions' | 'profile' | 'payments' | 'alerts' | 'pickup' | 'dashboard' | 'credit'
+type NavKey = 'home' | 'orders' | 'queries' | 'subscriptions' | 'profile' | 'payments' | 'alerts' | 'pickup' | 'dashboard' | 'credit' | 'messages'
 
 const HomeIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
 const BoxIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -18,6 +20,8 @@ const PickupIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentCol
 // Wallet — credit / dues. The "notch" cut-out visually reads as a
 // wallet rather than a generic rectangle; farmers recognise the shape.
 const CreditIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-1"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 12h-4a2 2 0 000 4h4"/><circle cx="17" cy="14" r="0.75" fill="currentColor" stroke="none"/></svg>
+// Inbox/envelope icon for the Messages tab (2026-11-22).
+const MessagesIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
 
 // Label key resolves to nav.<key> in messages/<lang>.json at render time.
 const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType }[]> = {
@@ -43,6 +47,11 @@ const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType 
     { href: '/home',              key: 'home',          Icon: HomeIcon },
     { href: '/credit',            key: 'credit',        Icon: CreditIcon },
     { href: '/my-subscriptions',  key: 'subscriptions', Icon: HistoryIcon },
+    // 2026-11-22 — Messages tab for the Messaging Module. Shown
+    // uniformly to every farmer (no feature-flag gate here — if the
+    // companies they're linked to haven't enabled Messaging, the
+    // inbox simply stays empty). Badge count fetched periodically.
+    { href: '/messages',          key: 'messages',      Icon: MessagesIcon },
   ],
   DEALER: [
     { href: '/dealer/orders',           key: 'orders',   Icon: BoxIcon },
@@ -67,20 +76,52 @@ export default function BottomNav({ color = C.primary, activeRole = 'FARMER' }: 
   const t = useTranslations('nav')
   const tabs = TABS[activeRole] || TABS.FARMER
 
+  // 2026-11-22 — Unread-messages badge for the Messages tab. Refresh
+  // on route change (cheap reset when the user navigates) and every
+  // 60 seconds so a new campaign push doesn't stay invisible.
+  const [unread, setUnread] = useState<number>(0)
+  useEffect(() => {
+    let cancelled = false
+    async function tick() {
+      try {
+        const { data } = await api.get<{ unread_count: number }>(
+          '/pwa/messages/badge',
+        )
+        if (!cancelled) setUnread(Number(data?.unread_count ?? 0))
+      } catch {
+        // Silent — badge is best-effort; the inbox is the truth.
+      }
+    }
+    tick()
+    const id = setInterval(tick, 60_000)
+    return () => { cancelled = true; clearInterval(id) }
+  }, [path])
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 flex z-50 safe-area-bottom"
       style={{ background: C.cardBg, borderTop: `1px solid ${C.divider}` }}>
       {tabs.map(tab => {
         const active = path === tab.href || path.startsWith(tab.href + '/')
+        const showBadge = tab.key === 'messages' && unread > 0
         return (
           // v2 (2026-09-23 exit-PWA nav): use `replace` so tab
           // switches don't stack history entries. Peer tabs are
           // navigation-siblings — jumping Home → Credit → Home
           // shouldn't require three back presses to exit.
           <Link key={tab.href} href={tab.href} replace
-            className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-colors"
+            className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 transition-colors relative"
             style={{ color: active ? color : C.textSecond, minHeight: 56 }}>
-            <tab.Icon />
+            <div className="relative">
+              <tab.Icon />
+              {showBadge && (
+                <span
+                  className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                  style={{ background: '#DC2626', color: '#fff' }}
+                >
+                  {unread > 99 ? '99+' : unread}
+                </span>
+              )}
+            </div>
             <span className="text-xs font-medium">{t(tab.key)}</span>
           </Link>
         )
