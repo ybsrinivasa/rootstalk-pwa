@@ -54,16 +54,21 @@ const TABS: Record<Role, { href: string; key: NavKey; Icon: React.ComponentType 
     { href: '/messages',          key: 'messages',      Icon: MessagesIcon },
   ],
   DEALER: [
-    { href: '/dealer/orders',           key: 'orders',   Icon: BoxIcon },
-    { href: '/dealer/credit',           key: 'credit',   Icon: CreditIcon },
-    { href: '/dealer/payments',         key: 'payments', Icon: PaymentIcon },
-    { href: '/dealer/alerts-incoming',  key: 'alerts',   Icon: BellIcon },
+    { href: '/dealer/orders',    key: 'orders',   Icon: BoxIcon },
+    { href: '/dealer/credit',    key: 'credit',   Icon: CreditIcon },
+    { href: '/dealer/payments',  key: 'payments', Icon: PaymentIcon },
+    // 2026-11-22 — Alerts swapped out in favour of Messages per spec.
+    // Alerts remains available as a tile on the Home page; Messages
+    // replaces it in the bottom nav so the badge-count surface stays
+    // scanable without going to 5 items on small devices.
+    { href: '/dealer/messages',  key: 'messages', Icon: MessagesIcon },
   ],
   FACILITATOR: [
-    { href: '/facilitator/orders',           key: 'orders',   Icon: BoxIcon },
-    { href: '/facilitator/pickup',           key: 'pickup',   Icon: PickupIcon },
-    { href: '/facilitator/payments',         key: 'payments', Icon: PaymentIcon },
-    { href: '/facilitator/alerts-incoming',  key: 'alerts',   Icon: BellIcon },
+    { href: '/facilitator/orders',    key: 'orders',   Icon: BoxIcon },
+    { href: '/facilitator/pickup',    key: 'pickup',   Icon: PickupIcon },
+    { href: '/facilitator/payments',  key: 'payments', Icon: PaymentIcon },
+    // 2026-11-22 — Alerts → Messages swap (same rationale as Dealer).
+    { href: '/facilitator/messages',  key: 'messages', Icon: MessagesIcon },
   ],
   FARM_PUNDIT: [
     { href: '/pundit/home',    key: 'dashboard', Icon: HomeIcon },
