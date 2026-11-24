@@ -1887,7 +1887,7 @@
       "confirmTitle": "Delete your account?",
       "bullets": {
         "advisoriesCancelled": "Your active advisories will be cancelled",
-        "anonymisedIn30": "Your data will be anonymised within 30 days",
+        "anonymisedIn30": "Your data will be anonymised within 5 days",
         "cannotUndo": "This cannot be undone"
       },
       "sendVerifyCode": "Send verification code",
