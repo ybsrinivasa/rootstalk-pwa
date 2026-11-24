@@ -20,17 +20,29 @@ import { C } from '@/lib/tokens'
 import { getActiveRoleFromPath } from '@/lib/roles'
 
 interface OrgMessage {
+  source: 'campaign' | 'touchpoint'
   recipient_id: string
-  campaign_id: string
+  // One of these two is set depending on source. Routing uses
+  // detail_key (campaign_id for campaigns, recipient_id for
+  // touchpoints — see backend org_messages shape).
+  campaign_id?: string
+  touchpoint_id?: string
+  detail_key: string
   title: string
   preview: string
-  campaign_type: 'ANNOUNCEMENT' | 'INTEREST_CAPTURE' | 'FEEDBACK' | 'SURVEY'
+  content_type: 'ANNOUNCEMENT' | 'INTEREST_CAPTURE' | 'FEEDBACK' | 'SURVEY'
   sent_at: string | null
   expires_at: string | null
   is_unread: boolean
   expects_response: boolean
   pending_response: boolean
   is_test: boolean
+  subscription_context: {
+    crop_name: string
+    crop_cosh_id: string | null
+    timeline_name: string | null
+    fire_at: 'BEGINNING' | 'END'
+  } | null
 }
 
 interface OrgPayload {
@@ -61,7 +73,7 @@ function fmtTime(iso: string | null): string {
   return d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }
 
-const TYPE_HINT: Record<OrgMessage['campaign_type'], string> = {
+const TYPE_HINT: Record<OrgMessage['content_type'], string> = {
   ANNOUNCEMENT: 'Announcement',
   INTEREST_CAPTURE: 'Tap to respond — Yes / No / Maybe',
   FEEDBACK: 'Tap to rate',
@@ -152,10 +164,21 @@ export default function OrgMessagesPage() {
                 style={{ color: C.textSecond }}>
                 {group.label}
               </p>
-              {group.items.map(item => (
+              {group.items.map(item => {
+                // Route by source: campaigns use existing
+                // /{inboxPath}/{campaign_id}; touchpoints go to
+                // the new /{inboxPath}/touchpoint/{recipient_id}.
+                const href = item.source === 'touchpoint'
+                  ? `${detailBase}/touchpoint/${item.detail_key}`
+                  : `${detailBase}/${item.detail_key}`
+                const ctx = item.subscription_context
+                const contextLabel = ctx
+                  ? `About your ${ctx.crop_name || 'crop'}${ctx.timeline_name ? ` · ${ctx.fire_at === 'BEGINNING' ? 'Beginning of' : 'End of'} ${ctx.timeline_name}` : ''}`
+                  : null
+                return (
                 <button
-                  key={item.recipient_id}
-                  onClick={() => router.push(`${detailBase}/${item.campaign_id}`)}
+                  key={`${item.source}:${item.recipient_id}`}
+                  onClick={() => router.push(href)}
                   className="w-full text-left rounded-xl p-3"
                   style={{
                     background: C.cardBg,
@@ -171,6 +194,11 @@ export default function OrgMessagesPage() {
                       {fmtTime(item.sent_at)}
                     </span>
                   </div>
+                  {contextLabel && (
+                    <p className="text-[10px] mt-0.5 uppercase tracking-wider font-semibold" style={{ color: C.primary }}>
+                      {contextLabel}
+                    </p>
+                  )}
                   {item.preview && (
                     <p className="text-xs mt-1 line-clamp-2" style={{ color: C.textSecond }}>
                       {item.preview}
@@ -184,11 +212,12 @@ export default function OrgMessagesPage() {
                     )}
                     <span className="text-[10px] font-medium"
                       style={{ color: item.pending_response ? '#B45309' : C.textSecond }}>
-                      {item.pending_response ? 'Response needed' : TYPE_HINT[item.campaign_type]}
+                      {item.pending_response ? 'Response needed' : TYPE_HINT[item.content_type]}
                     </span>
                   </div>
                 </button>
-              ))}
+                )
+              })}
             </div>
           ))
         )}
