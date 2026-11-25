@@ -147,6 +147,12 @@ interface TimelineItem {
   // us tell the farmer WHY a CHA card is empty — covered elsewhere
   // vs no plans yet.
   suppressed_count?: number
+  // 2026-11-25 — ISO timestamp of the most-recent CM/CA force-push
+  // that rewrote this timeline's snapshot content for this farmer.
+  // Null for all unaffected timelines. "Recently updated" banner
+  // renders on practice cards here iff now() - force_pushed_at
+  // < 5 days.
+  force_pushed_at?: string | null
   // 2026-07-02 — Phase 2C merge chip. When BL-03 merged one or more
   // sibling TLs into this one (shared OR identity + united window),
   // this array carries the display names of the members so the card
@@ -1378,6 +1384,12 @@ export default function AdvisoryPage() {
                 ) : (
                   <div className="space-y-3">
                     {groupTimelinePractices(tl.practices).map(row => {
+                      // 2026-11-25 — "Recently updated" chip renders
+                      // for 5 days after a CM/CA force-push rewrote
+                      // this timeline's snapshot content.
+                      const recentlyUpdated = tl.force_pushed_at
+                        ? (Date.now() - new Date(tl.force_pushed_at).getTime() < 5 * 86400 * 1000)
+                        : false
                       if (row.kind === 'standalone' && row.practice) {
                         const p = row.practice
                         return (
@@ -1395,6 +1407,7 @@ export default function AdvisoryPage() {
                             pastWindow={!!tl.past_window}
                             timelineFromDate={tl.from_date}
                             timelineToDate={tl.to_date}
+                            recentlyUpdated={recentlyUpdated}
                           />
                         )
                       }
@@ -1760,6 +1773,7 @@ function PracticeCard({
   hideDoneAck = false,
   timelineFromDate,
   timelineToDate,
+  recentlyUpdated = false,
 }: {
   practice: Practice
   onOrder: () => void
@@ -1768,6 +1782,12 @@ function PracticeCard({
   subscriptionId: string
   timelineLineageId: string | undefined
   onAckChanged: () => void
+  // 2026-11-25 — true when the parent Timeline's snapshot was
+  // force-pushed by CM/CA within the last 5 days. Renders a small
+  // "Recently updated" chip on the practice card so the farmer
+  // notices the guidance changed. No version numbers, no diff —
+  // the SE/CM owns the editorial decision (per 2026-11-25 design).
+  recentlyUpdated?: boolean
   // 2026-10-30 — Fertigation practices (NPK dosages + products)
   // show "N applications" derived from FERTIGATION_INTERVAL +
   // timeline window. Null when not fertigation or inputs missing.
@@ -1912,9 +1932,15 @@ function PracticeCard({
       >
         <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: colour }} />
         <div className="flex-1 min-w-0">
-          {(practice.is_special_input
+          {(recentlyUpdated
+            || practice.is_special_input
             || (practice.frequency_days != null && practice.frequency_days > 0)) && (
             <div className="flex items-center gap-2 flex-wrap">
+              {recentlyUpdated && (
+                <span className="text-xs bg-sky-100 text-sky-700 border border-sky-200 px-2 py-0.5 rounded-full">
+                  Recently updated
+                </span>
+              )}
               {practice.is_special_input && (
                 <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Adjuvant</span>
               )}
