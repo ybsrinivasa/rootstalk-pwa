@@ -2686,6 +2686,7 @@ function PracticeAckFooter({
       </button>
     )
     return (
+      <>
       <div className="border-t border-[#DDD0B8] px-4 py-2.5">
         <div className="flex items-center gap-3">
           {isInput && (
@@ -2855,6 +2856,39 @@ function PracticeAckFooter({
           </div>
         )}
       </div>
+      {/* 2026-11-26 — Un-purchase confirmation modal (AOM branch).
+          Same shape as the Regular Mode branch below; needs to live
+          HERE too because the Advisory-Only Mode return bypasses
+          the Regular Mode's modal block entirely. */}
+      {confirmUnpurchase && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => !busy && setConfirmUnpurchase(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">{tAck('confirmUnpurchaseTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              {practice.is_brand_locked
+                ? tAck('confirmUnpurchaseBodyBrandLocked')
+                : tAck('confirmUnpurchaseBody')}
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmUnpurchase(false)} disabled={busy}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                {tAck('confirmUnpurchaseCancel')}
+              </button>
+              <button onClick={async () => {
+                setConfirmUnpurchase(false)
+                await call('unpurchase')
+              }} disabled={busy}
+                className="flex-1 bg-[#D4682E] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {busy ? '…' : tAck('confirmUnpurchaseYes')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      </>
     )
   }
 
