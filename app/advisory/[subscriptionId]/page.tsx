@@ -2373,6 +2373,22 @@ function PracticeCard({
           card is collapsed. It re-appears on expand.
           2026-09-29 — Also hide when the parent AND container is
           rendering a consolidated group-level ack (hideAckFooter). */}
+      {/* 2026-11-26 — Brand image for brand-locked practices.
+          Rendered BEFORE the ack footer so the ack row stays at the
+          bottom of the card like every other practice (farmer feedback
+          2026-11-26: putting ack at the bottom is the consistent
+          position, and the image sitting between practice body and ack
+          makes it read as part of this practice). Dashed top-border +
+          "Product image" caption tie it visually to the recommendation.
+          Tap to expand full-screen. Hidden when the card is collapsed. */}
+      {!collapsed && practice.is_brand_locked && practice.brand_image_url && (
+        <div className="mt-3 pt-3 border-t border-dashed" style={{ borderColor: '#DDD0B8' }}>
+          <p className="text-[10px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
+            Product image
+          </p>
+          <BrandImageWithLightbox src={practice.brand_image_url} />
+        </div>
+      )}
       {!collapsed && !hideAckFooter && (
         <PracticeAckFooter
           practice={practice}
@@ -2384,20 +2400,6 @@ function PracticeCard({
           pastWindow={pastWindow}
           hideDoneAck={hideDoneAck}
         />
-      )}
-      {/* 2026-11-26 — Brand image for brand-locked practices.
-          Rendered inline inside the same card so the common border
-          visually groups the image with the recommendation. Clickable
-          to expand full-screen via the existing AvatarLightbox. Only
-          renders when both is_brand_locked=true AND brand_image_url
-          is set — otherwise nothing shows. */}
-      {practice.is_brand_locked && practice.brand_image_url && (
-        <div className="mt-3 pt-3 border-t border-dashed" style={{ borderColor: '#DDD0B8' }}>
-          <p className="text-[10px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
-            Product image
-          </p>
-          <BrandImageWithLightbox src={practice.brand_image_url} />
-        </div>
       )}
     </div>
   )
