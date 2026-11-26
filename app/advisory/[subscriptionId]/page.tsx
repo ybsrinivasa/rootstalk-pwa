@@ -100,6 +100,12 @@ interface Practice {
   is_brand_locked?: boolean
   locked_brand_name?: string | null
   locked_manufacturer_name?: string | null
+  // 2026-11-26 — single S3 image per brand-locked practice.
+  // Rendered inline below the PracticeCard so the farmer
+  // recognises the product on the dealer's shelf. NULL when
+  // CM hasn't uploaded one. Only meaningful when
+  // is_brand_locked is true (upload-side enforces this).
+  brand_image_url?: string | null
   // v2 Checkbox 3 follow-up (2026-09-22) — brand + optional photo
   // captured on the "I've purchased this" ack (from the picker). All
   // NULL when no ack recorded or the ack has no brand attached
@@ -2379,7 +2385,55 @@ function PracticeCard({
           hideDoneAck={hideDoneAck}
         />
       )}
+      {/* 2026-11-26 — Brand image for brand-locked practices.
+          Rendered inline inside the same card so the common border
+          visually groups the image with the recommendation. Clickable
+          to expand full-screen via the existing AvatarLightbox. Only
+          renders when both is_brand_locked=true AND brand_image_url
+          is set — otherwise nothing shows. */}
+      {practice.is_brand_locked && practice.brand_image_url && (
+        <div className="mt-3 pt-3 border-t border-dashed" style={{ borderColor: '#DDD0B8' }}>
+          <p className="text-[10px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
+            Product image
+          </p>
+          <BrandImageWithLightbox src={practice.brand_image_url} />
+        </div>
+      )}
     </div>
+  )
+}
+
+// 2026-11-26 — Inline + lightbox-on-tap image for brand-locked
+// practice. Uses inline <img> (not Next/Image) because the URL
+// comes from an S3 bucket and we don't need Next's optimisation
+// pipeline for product packaging photos. Lightbox reuses the
+// same fullscreen-on-tap pattern as the existing AvatarLightbox.
+function BrandImageWithLightbox({ src }: { src: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt="Product"
+        className="w-full max-h-64 object-contain rounded-lg bg-white cursor-zoom-in"
+        onClick={() => setOpen(true)}
+      />
+      {open && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setOpen(false)}
+          role="dialog" aria-modal="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt="Product"
+            className="max-h-full max-w-full object-contain rounded"
+          />
+        </div>
+      )}
+    </>
   )
 }
 
