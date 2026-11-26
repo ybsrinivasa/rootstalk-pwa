@@ -327,7 +327,12 @@
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
       "photoAttached": "Photo attached",
-      "photoRetake": "Retake"
+      "photoRetake": "Retake",
+      "confirmUnpurchaseTitle": "এই কিনাটো আঁতৰাব বিচাৰে নেকি?",
+      "confirmUnpurchaseBody": "আপোনাৰ ব্ৰেণ্ড আৰু ফটো আঁতৰোৱা হ'ব। 'মই এইটো কৰিছোঁ' চিনটোও আঁতৰোৱা হ'ব।",
+      "confirmUnpurchaseBodyBrandLocked": "'মই এইটো কৰিছোঁ' চিনটোও আঁতৰোৱা হ'ব।",
+      "confirmUnpurchaseCancel": "কিনাটো ৰাখক",
+      "confirmUnpurchaseYes": "হয়, আঁতৰাওক"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {একেলগে প্ৰয়োগ কৰক} =2 {দুয়োটা একেলগে প্ৰয়োগ কৰক} other {সকলো # একেলগে প্ৰয়োগ কৰক}}",

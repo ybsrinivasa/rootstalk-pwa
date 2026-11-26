@@ -327,7 +327,12 @@
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
       "photoAttached": "Photo attached",
-      "photoRetake": "Retake"
+      "photoRetake": "Retake",
+      "confirmUnpurchaseTitle": "ଏହି କ୍ରୟ ହଟାଇଦେବେ?",
+      "confirmUnpurchaseBody": "ଆପଣଙ୍କ ବ୍ରାଣ୍ଡ ଏବଂ ଫଟୋ ହଟାଯିବ। 'ମୁଁ ଏହା କରିଛି' ଚିହ୍ନ ମଧ୍ୟ ହଟାଯିବ।",
+      "confirmUnpurchaseBodyBrandLocked": "'ମୁଁ ଏହା କରିଛି' ଚିହ୍ନ ମଧ୍ୟ ହଟାଯିବ।",
+      "confirmUnpurchaseCancel": "କ୍ରୟ ରଖନ୍ତୁ",
+      "confirmUnpurchaseYes": "ହଁ, ହଟାନ୍ତୁ"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ଏକାଠି ଆବେଦନ କରନ୍ତୁ} =2 {ଉଭୟକୁ ଏକାଠି ପ୍ରୟୋଗ କରନ୍ତୁ} other {ସମସ୍ତ # ଏକାଠି ଲାଗୁ କରନ୍ତୁ}}",

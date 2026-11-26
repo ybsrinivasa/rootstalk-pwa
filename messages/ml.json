@@ -327,7 +327,12 @@
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
       "photoAttached": "Photo attached",
-      "photoRetake": "Retake"
+      "photoRetake": "Retake",
+      "confirmUnpurchaseTitle": "ഈ വാങ്ങൽ നീക്കം ചെയ്യണോ?",
+      "confirmUnpurchaseBody": "നിങ്ങളുടെ ബ്രാൻഡും ഫോട്ടോയും നീക്കം ചെയ്യപ്പെടും. 'ഞാൻ ഇത് ചെയ്തു' എന്ന അടയാളവും നീക്കം ചെയ്യപ്പെടും.",
+      "confirmUnpurchaseBodyBrandLocked": "'ഞാൻ ഇത് ചെയ്തു' എന്ന അടയാളവും നീക്കം ചെയ്യപ്പെടും.",
+      "confirmUnpurchaseCancel": "വാങ്ങൽ നിലനിർത്തുക",
+      "confirmUnpurchaseYes": "അതെ, നീക്കം ചെയ്യുക"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ഒരുമിച്ച് പ്രയോഗിക്കുക} =2 {രണ്ടും ഒരുമിച്ച് പ്രയോഗിക്കുക} other {എല്ലാ # ഒരുമിച്ച് പ്രയോഗിക്കുക}}",
