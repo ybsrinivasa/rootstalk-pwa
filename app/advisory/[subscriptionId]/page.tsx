@@ -2488,6 +2488,12 @@ function PracticeAckFooter({
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [confirmHide, setConfirmHide] = useState(false)
+  // 2026-11-26 — Un-marking "I've purchased this" wipes the captured
+  // brand + photo + auto-unmarks "done", AND flips the RM's Farmer
+  // Support status back to Due now. Every-time confirmation (not
+  // one-shot like hide) because the data loss is real and farmers
+  // rarely unmark a genuine purchase — the extra friction is cheap.
+  const [confirmUnpurchase, setConfirmUnpurchase] = useState(false)
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false)
   // 2026-09-25: optional photo capture for the auto-lock case
   // (purchase_locked_by_order = true). Brand comes from the dealer's
@@ -2689,8 +2695,12 @@ function PracticeAckFooter({
               label={tAck('purchased')}
               onTap={async () => {
                 if (purchased) {
-                  // Un-marking clears everything (brand + photo + ack).
-                  call('unpurchase')
+                  // 2026-11-26 — Un-marking is destructive: wipes
+                  // brand + photo + ack, auto-unmarks "done", AND
+                  // flips RM's Farmer Support back to Due now. Show
+                  // confirm dialog every time (not one-shot) — see
+                  // confirmUnpurchase state hook for rationale.
+                  setConfirmUnpurchase(true)
                   return
                 }
                 // 2026-11-20 — Brand-locked shortcut. The SE has
@@ -2901,6 +2911,40 @@ function PracticeAckFooter({
               }} disabled={busy}
                 className="flex-1 bg-[#D4682E] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
                 {busy ? '…' : tAck('confirmYes')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 2026-11-26 — Un-purchase confirmation (see confirmUnpurchase
+          state hook). Destructive action — primary CTA on the LEFT is
+          "Keep purchase" (safe), destructive "Yes, remove" on the
+          right. Body copy varies: brand-locked practices never
+          captured a brand/photo at purchase time, so the body is
+          trimmed to just the "done" cascade warning. */}
+      {confirmUnpurchase && (
+        <div className="fixed inset-0 z-[60] bg-black/50 flex items-end"
+          onClick={() => !busy && setConfirmUnpurchase(false)}>
+          <div className="bg-white w-full max-w-lg mx-auto rounded-t-3xl p-5"
+            style={{ paddingBottom: 'max(2.5rem, calc(env(safe-area-inset-bottom) + 5rem))' }}
+            onClick={e => e.stopPropagation()}>
+            <p className="font-bold text-[#6B3F1F]">{tAck('confirmUnpurchaseTitle')}</p>
+            <p className="text-xs text-[#7A8C7E] mt-2">
+              {practice.is_brand_locked
+                ? tAck('confirmUnpurchaseBodyBrandLocked')
+                : tAck('confirmUnpurchaseBody')}
+            </p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setConfirmUnpurchase(false)} disabled={busy}
+                className="flex-1 border border-[#DDD0B8] text-[#6B3F1F] text-sm font-medium py-2.5 rounded-xl disabled:opacity-50">
+                {tAck('confirmUnpurchaseCancel')}
+              </button>
+              <button onClick={async () => {
+                setConfirmUnpurchase(false)
+                await call('unpurchase')
+              }} disabled={busy}
+                className="flex-1 bg-[#D4682E] text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-50">
+                {busy ? '…' : tAck('confirmUnpurchaseYes')}
               </button>
             </div>
           </div>

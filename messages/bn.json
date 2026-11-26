@@ -327,7 +327,12 @@
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
       "photoAttached": "Photo attached",
-      "photoRetake": "Retake"
+      "photoRetake": "Retake",
+      "confirmUnpurchaseTitle": "এই কেনাকাটা সরাতে চান?",
+      "confirmUnpurchaseBody": "আপনার ব্র্যান্ড এবং ছবি সরানো হবে। 'আমি এটি করেছি' চিহ্নটিও সরানো হবে।",
+      "confirmUnpurchaseBodyBrandLocked": "'আমি এটি করেছি' চিহ্নটিও সরানো হবে।",
+      "confirmUnpurchaseCancel": "কেনাকাটা রাখুন",
+      "confirmUnpurchaseYes": "হ্যাঁ, সরান"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {একসাথে প্রয়োগ করুন} =2 {উভয় একসাথে প্রয়োগ করুন} other {সবগুলো একসাথে প্রয়োগ করুন #}}",

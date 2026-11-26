@@ -327,7 +327,12 @@
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
       "photoAttached": "Photo attached",
-      "photoRetake": "Retake"
+      "photoRetake": "Retake",
+      "confirmUnpurchaseTitle": "இந்த வாங்குதலை நீக்க வேண்டுமா?",
+      "confirmUnpurchaseBody": "உங்கள் பிராண்டும் புகைப்படமும் நீக்கப்படும். 'நான் இதை செய்துவிட்டேன்' குறியும் நீக்கப்படும்.",
+      "confirmUnpurchaseBodyBrandLocked": "'நான் இதை செய்துவிட்டேன்' குறியும் நீக்கப்படும்.",
+      "confirmUnpurchaseCancel": "வாங்குதலை வைத்திருக்க",
+      "confirmUnpurchaseYes": "ஆம், நீக்கு"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ஒன்றாக விண்ணப்பிக்கவும்} =2 {இரண்டையும் ஒன்றாகப் பயன்படுத்துங்கள்} other {# ஒன்றாகப் பயன்படுத்துங்கள்}}",

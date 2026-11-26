@@ -327,7 +327,12 @@
       "addPhoto": "Add a photo of the product",
       "uploadingPhoto": "Uploading…",
       "photoAttached": "Photo attached",
-      "photoRetake": "Retake"
+      "photoRetake": "Retake",
+      "confirmUnpurchaseTitle": "ఈ కొనుగోలును తీసివేయాలా?",
+      "confirmUnpurchaseBody": "మీ బ్రాండ్ మరియు ఫోటో తీసివేయబడతాయి. 'నేను ఇది చేశాను' గుర్తు కూడా తీసివేయబడుతుంది.",
+      "confirmUnpurchaseBodyBrandLocked": "'నేను ఇది చేశాను' గుర్తు కూడా తీసివేయబడుతుంది.",
+      "confirmUnpurchaseCancel": "కొనుగోలును ఉంచండి",
+      "confirmUnpurchaseYes": "అవును, తీసివేయండి"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {కలిసి వర్తింపజేయండి} =2 {రెండింటినీ కలిపి వర్తింపజేయండి} other {అన్ని # కలిపి వర్తింపజేయండి}}",

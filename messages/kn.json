@@ -339,7 +339,12 @@
       "addPhoto": "ಉತ್ಪನ್ನದ ಫೋಟೋ ಸೇರಿಸಿ",
       "uploadingPhoto": "ಅಪ್‌ಲೋಡ್ ಆಗುತ್ತಿದೆ…",
       "photoAttached": "ಫೋಟೋ ಲಗತ್ತಿಸಲಾಗಿದೆ",
-      "photoRetake": "ಮರು-ತೆಗೆದುಕೊಳ್ಳಿ"
+      "photoRetake": "ಮರು-ತೆಗೆದುಕೊಳ್ಳಿ",
+      "confirmUnpurchaseTitle": "ಈ ಖರೀದಿಯನ್ನು ತೆಗೆದುಹಾಕಬೇಕೇ?",
+      "confirmUnpurchaseBody": "ನಿಮ್ಮ ಬ್ರಾಂಡ್ ಮತ್ತು ಫೋಟೋವನ್ನು ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ. 'ನಾನು ಇದನ್ನು ಮಾಡಿದ್ದೇನೆ' ಗುರುತನ್ನೂ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ.",
+      "confirmUnpurchaseBodyBrandLocked": "'ನಾನು ಇದನ್ನು ಮಾಡಿದ್ದೇನೆ' ಗುರುತನ್ನೂ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ.",
+      "confirmUnpurchaseCancel": "ಖರೀದಿಯನ್ನು ಇಡಿ",
+      "confirmUnpurchaseYes": "ಹೌದು, ತೆಗೆಯಿರಿ"
     },
     "relations": {
       "applyAllTogether": "{count, plural, one {ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ} =2 {ಎರಡನ್ನೂ ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ} other {ಎಲ್ಲಾ # ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ}}",
