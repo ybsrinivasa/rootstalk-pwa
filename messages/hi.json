@@ -2291,7 +2291,10 @@
         "farmerPurchased": "✓ किसान ने खरीद लिया है",
         "purchasePending": "खरीद प्रक्रिया लंबित है",
         "frequencyEvery": "{count, plural, one {हर 1 दिन} other {हर # दिन}}",
-        "frequencyNotDueToday": " आज देय नहीं है"
+        "frequencyNotDueToday": " आज देय नहीं है",
+        "dayPrev": "पिछला दिन",
+        "dayNext": "अगला दिन",
+        "dayToday": "आज"
       }
     },
     "alertsIncoming": {
@@ -2800,7 +2803,10 @@
         "ackPending": "किसान ने काम पूरा होने का निशान नहीं लगाया है",
         "andGroupHeader": "दोनों को एक साथ लागू करें — और समूह में भी।",
         "partHeader": "भाग {part}",
-        "orSeparator": "या"
+        "orSeparator": "या",
+        "dayPrev": "पिछला दिन",
+        "dayNext": "अगला दिन",
+        "dayToday": "आज"
       }
     },
     "seedOrders": {

@@ -37,6 +37,16 @@ interface Practice {
     brand_name?: string | null
     manufacturer_name?: string | null
   } | null
+  // 2026-11-28 — Farmer's "I've purchased this" ack surfaces for the
+  // promoter chip. purchased_at is the ISO timestamp set by the
+  // v1.8 (2026-09-17) Advisory-Only Mode ack flow (also populated
+  // on regular-mode subs via order receipt). Brand fields come from
+  // v2 Checkbox 3 (2026-09-22) — populated when the farmer picked
+  // a catalog brand on the ack, OR free text via purchased_brand_text.
+  purchased_at?: string | null
+  purchased_brand_name?: string | null
+  purchased_brand_text?: string | null
+  purchased_brand_manufacturer_name?: string | null
 }
 
 interface TimelineItem {
@@ -256,10 +266,25 @@ function DealerFarmerAdvisoryContent() {
   const [loading, setLoading] = useState(true)
   const [errCode, setErrCode] = useState<string | null>(null)
   const [errMsg, setErrMsg] = useState<string | null>(null)
+  // 2026-11-28 — Previous / Today / Next day navigation. `dayOffset=0`
+  // is today; negative = past days, positive = future. Translated to
+  // a for_date ISO string before being sent to the backend. The
+  // backend added for_date on the same day; defaults to today when
+  // omitted so back-compat holds.
+  const [dayOffset, setDayOffset] = useState<number>(0)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<AdvisoryDay>(`/promoter/assignments/${subscriptionId}/today`)
+    setLoading(true)
+    const params = new URLSearchParams()
+    if (dayOffset !== 0) {
+      const d = new Date()
+      d.setDate(d.getDate() + dayOffset)
+      params.set('for_date', d.toISOString().slice(0, 10))
+    }
+    const qs = params.toString()
+    const url = `/promoter/assignments/${subscriptionId}/today${qs ? `?${qs}` : ''}`
+    api.get<AdvisoryDay>(url)
       .then(r => { setDay(r.data); setErrCode(null); setErrMsg(null) })
       .catch((e: unknown) => {
         const err = e as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } | string } } }
@@ -277,7 +302,7 @@ function DealerFarmerAdvisoryContent() {
         }
       })
       .finally(() => setLoading(false))
-  }, [router, subscriptionId, t])
+  }, [router, subscriptionId, t, dayOffset])
 
   if (loading) {
     return (
@@ -337,6 +362,33 @@ function DealerFarmerAdvisoryContent() {
           <p className="text-xs text-[#7A8C7E] mt-2">
             {t('dayHeader', { day: day.day_offset, count: day.timelines.length })}
           </p>
+          {/* 2026-11-28 — Previous / Today / Next day navigation. Mirrors
+              the farmer's own advisory nav affordance so the promoter can
+              walk the farmer forward ("Day 15 — next, you'll need…") or
+              back ("Yesterday's advisory said…"). Today button disabled
+              when already on today. */}
+          <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-[#DDD0B8]">
+            <button
+              type="button"
+              onClick={() => setDayOffset(o => o - 1)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#DDD0B8] text-[#6B3F1F] hover:bg-[#F5F0E8]">
+              ← {t('dayPrev')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDayOffset(0)}
+              disabled={dayOffset === 0}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border text-[#6B3F1F] disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ borderColor: COLOUR + '66', background: dayOffset === 0 ? COLOUR + '10' : '#fff' }}>
+              {t('dayToday')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDayOffset(o => o + 1)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#DDD0B8] text-[#6B3F1F] hover:bg-[#F5F0E8]">
+              {t('dayNext')} →
+            </button>
+          </div>
         </div>
 
         {day.timelines.length === 0 ? (
@@ -422,18 +474,33 @@ function DealerFarmerAdvisoryContent() {
                           )}
 
                           <div className="flex flex-wrap gap-1.5 mt-2.5">
-                            {/* 2026-09-16 — Pure Advisory-Only has no
-                                purchase concept, so hide the chip.
-                                2026-09-23 — Hybrid (Checkbox 3) DOES
-                                have purchases; keep the chip visible
-                                there, same as Regular Mode. */}
-                            {p.l0_type === 'INPUT' && !(day?.advisory_only_mode && !day?.in_app_orders_enabled) && (
-                              p.is_purchased ? (
-                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-green-50 border border-green-200 text-green-800 font-medium">
+                            {/* 2026-11-28 — Purchase chip for INPUT
+                                practices. Shown for EVERY mode now
+                                (Pure Advisory-Only was previously
+                                hidden; the 2026-09-17 v1.8 ack flow
+                                actually tracks `purchased_at` on those
+                                subs too, so the chip IS meaningful).
+                                Purchased: emerald, decorated with the
+                                ack date + brand when available.
+                                Not purchased: muted stone (not red —
+                                "not yet" is often expected during an
+                                open window). */}
+                            {p.l0_type === 'INPUT' && (
+                              (p.is_purchased || p.purchased_at) ? (
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
                                   {t('farmerPurchased')}
+                                  {p.purchased_at && (
+                                    <span className="opacity-80"> · {fmtDate(p.purchased_at, locale)}</span>
+                                  )}
+                                  {(p.purchased_brand_name || p.purchased_brand_text || p.fulfilment?.brand_name) && (
+                                    <span className="opacity-80">
+                                      {' · '}
+                                      {p.purchased_brand_name || p.purchased_brand_text || p.fulfilment?.brand_name}
+                                    </span>
+                                  )}
                                 </span>
                               ) : (
-                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-medium">
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 font-medium">
                                   {t('purchasePending')}
                                 </span>
                               )

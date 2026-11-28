@@ -2291,7 +2291,10 @@
         "farmerPurchased": "✓ কৃষকে ক্ৰয় কৰিছে",
         "purchasePending": "ক্ৰয় বাকী আছে",
         "frequencyEvery": "{count, plural, one {প্ৰতি ১ দিনৰ মূৰে মূৰে} other {প্ৰতি # দিন}}",
-        "frequencyNotDueToday": " · আজিৰ দিনত নহয়"
+        "frequencyNotDueToday": " · আজিৰ দিনত নহয়",
+        "dayPrev": "যোৱা দিন",
+        "dayNext": "পৰৱৰ্তী দিন",
+        "dayToday": "আজি"
       }
     },
     "alertsIncoming": {
@@ -2800,7 +2803,10 @@
         "ackPending": "কৃষকে মাৰ্ক কৰা নাই কৰা",
         "andGroupHeader": "দুয়োটা একেলগে প্ৰয়োগ কৰক — আৰু গোট",
         "partHeader": "অংশ {part}",
-        "orSeparator": "অথবা"
+        "orSeparator": "অথবা",
+        "dayPrev": "যোৱা দিন",
+        "dayNext": "পৰৱৰ্তী দিন",
+        "dayToday": "আজি"
       }
     },
     "seedOrders": {

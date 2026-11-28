@@ -2291,7 +2291,10 @@
         "farmerPurchased": "✓ రైతు కొనుగోలు చేసాడు",
         "purchasePending": "కొనుగోలు పెండింగ్‌లో ఉంది",
         "frequencyEvery": "{count, plural, one {ప్రతి 1 రోజు} other {ప్రతి # రోజులు}}",
-        "frequencyNotDueToday": " · ఈరోజు గడువు లేదు"
+        "frequencyNotDueToday": " · ఈరోజు గడువు లేదు",
+        "dayPrev": "మునుపటి రోజు",
+        "dayNext": "తర్వాతి రోజు",
+        "dayToday": "నేడు"
       }
     },
     "alertsIncoming": {
@@ -2800,7 +2803,10 @@
         "ackPending": "రైతు పని పూర్తయిందని గుర్తించలేదు",
         "andGroupHeader": "రెండింటినీ కలిపి వర్తింపజేయండి — మరియు సమూహంగా కలపండి",
         "partHeader": "భాగం {part}",
-        "orSeparator": "లేదా"
+        "orSeparator": "లేదా",
+        "dayPrev": "మునుపటి రోజు",
+        "dayNext": "తర్వాతి రోజు",
+        "dayToday": "నేడు"
       }
     },
     "seedOrders": {

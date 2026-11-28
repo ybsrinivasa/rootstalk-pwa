@@ -2847,7 +2847,10 @@
         "farmerPurchased": "✓ Farmer has purchased",
         "purchasePending": "Purchase pending",
         "frequencyEvery": "{count, plural, one {Every 1 day} other {Every # days}}",
-        "frequencyNotDueToday": " · not due today"
+        "frequencyNotDueToday": " · not due today",
+        "dayPrev": "Previous day",
+        "dayNext": "Next day",
+        "dayToday": "Today"
       }
     },
     "alertsIncoming": {
@@ -3357,7 +3360,10 @@
         "ackPending": "Farmer hasn't marked done",
         "andGroupHeader": "Apply both together — AND group",
         "partHeader": "Part {part}",
-        "orSeparator": "OR"
+        "orSeparator": "OR",
+        "dayPrev": "Previous day",
+        "dayNext": "Next day",
+        "dayToday": "Today"
       }
     },
     "seedOrders": {
