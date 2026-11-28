@@ -2312,7 +2312,9 @@
       "cropLabel": "પાક:",
       "callBtn": "📞 {phone} પર કૉલ કરો",
       "callBtnLabel": "કૉલ કરો",
-      "callBtnAria": "{name} પર કૉલ કરો"
+      "callBtnAria": "{name} પર કૉલ કરો",
+      "viewAdvisoryBtnLabel": "સલાહ જુઓ",
+      "viewAdvisoryBtnAria": "{name} ની સલાહ જુઓ"
     },
     "brandForms": {
       "title": "બ્રાન્ડ સબમિશન",
@@ -2404,7 +2406,9 @@
       "cropLabel": "પાક:",
       "callBtn": "📞 {phone} પર કૉલ કરો",
       "callBtnLabel": "કૉલ કરો",
-      "callBtnAria": "{name} પર કૉલ કરો"
+      "callBtnAria": "{name} પર કૉલ કરો",
+      "viewAdvisoryBtnLabel": "સલાહ જુઓ",
+      "viewAdvisoryBtnAria": "{name} ની સલાહ જુઓ"
     },
     "payments": {
       "headerTitle": "ખેડૂત ચુકવણીઓ",

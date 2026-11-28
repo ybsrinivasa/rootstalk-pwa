@@ -2630,7 +2630,9 @@
       "cropLabel": "ಬೆಳೆ:",
       "callBtn": "📞 {phone} ಗೆ ಕರೆ ಮಾಡಿ",
       "callBtnLabel": "ಕರೆ ಮಾಡಿ",
-      "callBtnAria": "{name} ಗೆ ಕರೆ ಮಾಡಿ"
+      "callBtnAria": "{name} ಗೆ ಕರೆ ಮಾಡಿ",
+      "viewAdvisoryBtnLabel": "ಸಲಹೆ ನೋಡಿ",
+      "viewAdvisoryBtnAria": "{name} ಅವರ ಸಲಹೆ ನೋಡಿ"
     },
     "brandForms": {
       "title": "ಬ್ರ್ಯಾಂಡ್ ಸಲ್ಲಿಕೆಗಳು",
@@ -2710,7 +2712,9 @@
       "cropLabel": "ಬೆಳೆ:",
       "callBtn": "📞 {phone} ಗೆ ಕರೆ ಮಾಡಿ",
       "callBtnLabel": "ಕರೆ ಮಾಡಿ",
-      "callBtnAria": "{name} ಗೆ ಕರೆ ಮಾಡಿ"
+      "callBtnAria": "{name} ಗೆ ಕರೆ ಮಾಡಿ",
+      "viewAdvisoryBtnLabel": "ಸಲಹೆ ನೋಡಿ",
+      "viewAdvisoryBtnAria": "{name} ಅವರ ಸಲಹೆ ನೋಡಿ"
     },
     "payments": {
       "headerTitle": "ರೈತರ ಪಾವತಿಗಳು",

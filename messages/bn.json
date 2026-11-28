@@ -2312,7 +2312,9 @@
       "cropLabel": "ফসল:",
       "callBtn": "📞 ফোন করুন {phone}",
       "callBtnLabel": "কল করুন",
-      "callBtnAria": "{name} কে ফোন করুন"
+      "callBtnAria": "{name} কে ফোন করুন",
+      "viewAdvisoryBtnLabel": "পরামর্শ দেখুন",
+      "viewAdvisoryBtnAria": "{name} এর পরামর্শ দেখুন"
     },
     "brandForms": {
       "title": "ব্র্যান্ড জমা",
@@ -2404,7 +2406,9 @@
       "cropLabel": "ফসল:",
       "callBtn": "📞 ফোন করুন {phone}",
       "callBtnLabel": "কল করুন",
-      "callBtnAria": "{name} কে ফোন করুন"
+      "callBtnAria": "{name} কে ফোন করুন",
+      "viewAdvisoryBtnLabel": "পরামর্শ দেখুন",
+      "viewAdvisoryBtnAria": "{name} এর পরামর্শ দেখুন"
     },
     "payments": {
       "headerTitle": "কৃষকদের অর্থপ্রদান",

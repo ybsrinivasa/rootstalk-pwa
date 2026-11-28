@@ -2312,7 +2312,9 @@
       "cropLabel": "పంట:",
       "callBtn": "📞 {phone} కు కాల్ చేయండి",
       "callBtnLabel": "కాల్",
-      "callBtnAria": "{name} ని పిలవండి"
+      "callBtnAria": "{name} ని పిలవండి",
+      "viewAdvisoryBtnLabel": "సలహా చూడండి",
+      "viewAdvisoryBtnAria": "{name} యొక్క సలహా చూడండి"
     },
     "brandForms": {
       "title": "బ్రాండ్ సమర్పణలు",
@@ -2404,7 +2406,9 @@
       "cropLabel": "పంట:",
       "callBtn": "📞 {phone} కు కాల్ చేయండి",
       "callBtnLabel": "కాల్",
-      "callBtnAria": "{name} ని పిలవండి"
+      "callBtnAria": "{name} ని పిలవండి",
+      "viewAdvisoryBtnLabel": "సలహా చూడండి",
+      "viewAdvisoryBtnAria": "{name} యొక్క సలహా చూడండి"
     },
     "payments": {
       "headerTitle": "రైతు చెల్లింపులు",

@@ -34,6 +34,13 @@ interface IncomingAlert {
   area_unit: string | null
   number_of_plants: number | null
   planting_year: number | null
+  // 2026-11-28 — true when the viewing user is also the active
+  // Promoter / Follow-up Promoter on this subscription (i.e. not
+  // just an alert receiver). Enables the "View advisory →"
+  // tap-through to the farmer's current advisory screen —
+  // `/dealer/promoted-farmers/{subscription_id}` — the same view
+  // already reachable via the My Farmers tile.
+  advisory_visible: boolean
 }
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -221,17 +228,39 @@ export default function DealerAlertsIncomingPage() {
                               )}
                             </div>
                           </div>
-                          {r.farmer_phone && (
-                            <div className="mt-3 flex justify-end">
-                              <a href={`tel:${r.farmer_phone}`}
-                                aria-label={t('callBtnAria', { name: r.farmer_name || t('unnamedFarmer') })}
-                                className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full"
-                                style={{ background: '#fff', color: COLOUR, border: `1.5px solid ${COLOUR}66` }}>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
-                                </svg>
-                                {t('callBtnLabel')}
-                              </a>
+                          {(r.farmer_phone || r.advisory_visible) && (
+                            <div className="mt-3 flex justify-end gap-2">
+                              {/* 2026-11-28 — View Advisory tap-through.
+                                  Only renders when advisory_visible=true
+                                  (i.e. this user is also the active
+                                  Promoter/Follow-up Promoter on the sub).
+                                  Backend endpoint on the landing page
+                                  still enforces auth — this is purely a
+                                  UX affordance. */}
+                              {r.advisory_visible && (
+                                <button
+                                  type="button"
+                                  onClick={() => router.push(`/dealer/promoted-farmers/${r.subscription_id}`)}
+                                  aria-label={t('viewAdvisoryBtnAria', { name: r.farmer_name || t('unnamedFarmer') })}
+                                  className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full text-white"
+                                  style={{ background: COLOUR, border: `1.5px solid ${COLOUR}` }}>
+                                  {t('viewAdvisoryBtnLabel')}
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                  </svg>
+                                </button>
+                              )}
+                              {r.farmer_phone && (
+                                <a href={`tel:${r.farmer_phone}`}
+                                  aria-label={t('callBtnAria', { name: r.farmer_name || t('unnamedFarmer') })}
+                                  className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full"
+                                  style={{ background: '#fff', color: COLOUR, border: `1.5px solid ${COLOUR}66` }}>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"/>
+                                  </svg>
+                                  {t('callBtnLabel')}
+                                </a>
+                              )}
                             </div>
                           )}
                         </div>
