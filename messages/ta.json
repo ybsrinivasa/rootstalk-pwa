@@ -2291,7 +2291,10 @@
         "farmerPurchased": "✓ விவசாயி வாங்கியுள்ளார்",
         "purchasePending": "கொள்முதல் நிலுவையில் உள்ளது",
         "frequencyEvery": "{count, plural, one {ஒவ்வொரு 1 நாளும்} other {ஒவ்வொரு # நாட்களும்}}",
-        "frequencyNotDueToday": " · இன்று செலுத்த வேண்டியதில்லை"
+        "frequencyNotDueToday": " · இன்று செலுத்த வேண்டியதில்லை",
+        "dayPrev": "முந்தைய நாள்",
+        "dayNext": "அடுத்த நாள்",
+        "dayToday": "இன்று"
       }
     },
     "alertsIncoming": {
@@ -2800,7 +2803,10 @@
         "ackPending": "விவசாயி முடித்ததாகக் குறியிடவில்லை",
         "andGroupHeader": "இரண்டையும் ஒன்றாகப் பயன்படுத்துங்கள் — மற்றும் குழுவாக்குங்கள்",
         "partHeader": "பகுதி {part}",
-        "orSeparator": "அல்லது"
+        "orSeparator": "அல்லது",
+        "dayPrev": "முந்தைய நாள்",
+        "dayNext": "அடுத்த நாள்",
+        "dayToday": "இன்று"
       }
     },
     "seedOrders": {

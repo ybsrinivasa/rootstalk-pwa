@@ -2291,7 +2291,10 @@
         "farmerPurchased": "✓ ખેડૂતે ખરીદી કરી છે",
         "purchasePending": "ખરીદી બાકી છે",
         "frequencyEvery": "{count, plural, one {દર ૧ દિવસે} other {દર # દિવસે}}",
-        "frequencyNotDueToday": " · આજે બાકી નથી"
+        "frequencyNotDueToday": " · આજે બાકી નથી",
+        "dayPrev": "પાછલો દિવસ",
+        "dayNext": "આગલો દિવસ",
+        "dayToday": "આજે"
       }
     },
     "alertsIncoming": {
@@ -2800,7 +2803,10 @@
         "ackPending": "ખેડૂતે પૂર્ણ થયું તરીકે ચિહ્નિત કર્યું નથી",
         "andGroupHeader": "બંનેને એકસાથે લાગુ કરો — અને જૂથ બનાવો",
         "partHeader": "ભાગ {part}",
-        "orSeparator": "અથવા"
+        "orSeparator": "અથવા",
+        "dayPrev": "પાછલો દિવસ",
+        "dayNext": "આગલો દિવસ",
+        "dayToday": "આજે"
       }
     },
     "seedOrders": {

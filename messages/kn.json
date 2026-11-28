@@ -2609,7 +2609,10 @@
         "farmerPurchased": "✓ ರೈತರು ಖರೀದಿಸಿದ್ದಾರೆ",
         "purchasePending": "ಖರೀದಿ ಬಾಕಿ ಇದೆ",
         "frequencyEvery": "{count, plural, one {ಪ್ರತಿ 1 ದಿನ} other {ಪ್ರತಿ # ದಿನಗಳು}}",
-        "frequencyNotDueToday": " · ಇಂದು ಗಡುವು ಇಲ್ಲ"
+        "frequencyNotDueToday": " · ಇಂದು ಗಡುವು ಇಲ್ಲ",
+        "dayPrev": "ಹಿಂದಿನ ದಿನ",
+        "dayNext": "ಮುಂದಿನ ದಿನ",
+        "dayToday": "ಇಂದು"
       }
     },
     "alertsIncoming": {
@@ -3117,7 +3120,10 @@
         "ackPending": "ರೈತರು ಮುಗಿದಿದೆ ಎಂದು ಗುರುತಿಸಿಲ್ಲ.",
         "andGroupHeader": "ಎರಡನ್ನೂ ಒಟ್ಟಿಗೆ ಅನ್ವಯಿಸಿ — ಮತ್ತು ಗುಂಪು",
         "partHeader": "ಭಾಗ {part}",
-        "orSeparator": "ಅಥವಾ"
+        "orSeparator": "ಅಥವಾ",
+        "dayPrev": "ಹಿಂದಿನ ದಿನ",
+        "dayNext": "ಮುಂದಿನ ದಿನ",
+        "dayToday": "ಇಂದು"
       }
     },
     "seedOrders": {

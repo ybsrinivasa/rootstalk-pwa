@@ -72,6 +72,12 @@ interface Practice {
   fulfilment?: Fulfilment | null
   ack_status?: 'ACTIVE' | 'MARKED'
   occurrence_date?: string
+  // 2026-11-28 — Farmer's "I've purchased this" ack surfaces for the
+  // promoter chip. See dealer page for canonical comment.
+  purchased_at?: string | null
+  purchased_brand_name?: string | null
+  purchased_brand_text?: string | null
+  purchased_brand_manufacturer_name?: string | null
 }
 interface PendingConditionalQuestion {
   question_id: string
@@ -515,6 +521,33 @@ function PracticeCard({
               )}
             </div>
           )}
+          {/* 2026-11-28 — Purchase status chip for INPUT practices.
+              Shows across all modes (Pure Advisory-Only subs track
+              purchase via the v1.8 ack flow too). Emerald when
+              purchased with ack date + brand enrichment; muted
+              stone when pending. */}
+          {practice.l0_type === 'INPUT' && (
+            <div className="mt-1">
+              {(practice.is_purchased || practice.purchased_at) ? (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+                  {t('farmerPurchased')}
+                  {practice.purchased_at && (
+                    <span className="opacity-80"> · {new Date(practice.purchased_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}</span>
+                  )}
+                  {(practice.purchased_brand_name || practice.purchased_brand_text || fulf?.brand_name) && (
+                    <span className="opacity-80">
+                      {' · '}
+                      {practice.purchased_brand_name || practice.purchased_brand_text || fulf?.brand_name}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 font-medium">
+                  {t('purchasePending')}
+                </span>
+              )}
+            </div>
+          )}
           <p className="text-sm font-medium text-[#6B3F1F] mt-1">
             {labelOverride || l2Label || t('generalAdvisory')}
           </p>
@@ -944,10 +977,22 @@ function FacilitatorAdvisoryViewContent() {
   const [loading, setLoading] = useState(true)
   const [errCode, setErrCode] = useState<string | null>(null)
   const [errMsg, setErrMsg] = useState<string | null>(null)
+  // 2026-11-28 — Previous / Today / Next day navigation. See canonical
+  // comment in app/dealer/promoted-farmers/[subscriptionId]/page.tsx.
+  const [dayOffset, setDayOffset] = useState<number>(0)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    api.get<AdvisoryDay>(`/promoter/assignments/${subscriptionId}/today`)
+    setLoading(true)
+    const params = new URLSearchParams()
+    if (dayOffset !== 0) {
+      const d = new Date()
+      d.setDate(d.getDate() + dayOffset)
+      params.set('for_date', d.toISOString().slice(0, 10))
+    }
+    const qs = params.toString()
+    const url = `/promoter/assignments/${subscriptionId}/today${qs ? `?${qs}` : ''}`
+    api.get<AdvisoryDay>(url)
       .then(r => { setDay(r.data); setErrCode(null); setErrMsg(null) })
       .catch((e: unknown) => {
         const err = e as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } | string } } }
@@ -965,7 +1010,7 @@ function FacilitatorAdvisoryViewContent() {
         }
       })
       .finally(() => setLoading(false))
-  }, [router, subscriptionId, t])
+  }, [router, subscriptionId, t, dayOffset])
 
   if (loading) {
     return (
@@ -1027,18 +1072,44 @@ function FacilitatorAdvisoryViewContent() {
         </div>
 
         {/* Day counter — annual shows "Day N", perennial shows today's date */}
-        <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] flex items-center justify-between mb-4">
-          <div>
-            <p className="text-xs text-[#7A8C7E]">{t('todayLabel')}</p>
-            <p className="font-bold text-[#6B3F1F]">
-              {day.package_type === 'PERENNIAL'
-                ? new Date().toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
-                : t('dayN', { day: day.day_offset })}
-            </p>
+        <div className="bg-white rounded-2xl px-4 py-3 border border-[#DDD0B8] mb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-[#7A8C7E]">{t('todayLabel')}</p>
+              <p className="font-bold text-[#6B3F1F]">
+                {day.package_type === 'PERENNIAL'
+                  ? new Date().toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })
+                  : t('dayN', { day: day.day_offset })}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-[#7A8C7E]">{t('activeTimelines')}</p>
+              <p className="font-bold text-[#6B3F1F]">{day.timelines.length}</p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-xs text-[#7A8C7E]">{t('activeTimelines')}</p>
-            <p className="font-bold text-[#6B3F1F]">{day.timelines.length}</p>
+          {/* 2026-11-28 — Previous / Today / Next day nav for the
+              promoter. Mirrors the dealer page added same day. */}
+          <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-[#DDD0B8]">
+            <button
+              type="button"
+              onClick={() => setDayOffset(o => o - 1)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#DDD0B8] text-[#6B3F1F] hover:bg-[#F5F0E8]">
+              ← {t('dayPrev')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDayOffset(0)}
+              disabled={dayOffset === 0}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border text-[#6B3F1F] disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ borderColor: '#7D4E0066', background: dayOffset === 0 ? '#7D4E0010' : '#fff' }}>
+              {t('dayToday')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDayOffset(o => o + 1)}
+              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#DDD0B8] text-[#6B3F1F] hover:bg-[#F5F0E8]">
+              {t('dayNext')} →
+            </button>
           </div>
         </div>
 

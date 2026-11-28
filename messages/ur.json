@@ -2291,7 +2291,10 @@
         "farmerPurchased": "✓ کسان نے خرید لیا ہے۔",
         "purchasePending": "خریداری زیر التواء ہے۔",
         "frequencyEvery": "{count, plural, one {ہر 1 دن} other {ہر # دن میں}}",
-        "frequencyNotDueToday": " آج واجب الادا نہیں۔"
+        "frequencyNotDueToday": " آج واجب الادا نہیں۔",
+        "dayPrev": "پچھلا دن",
+        "dayNext": "اگلا دن",
+        "dayToday": "آج"
       }
     },
     "alertsIncoming": {
@@ -2800,7 +2803,10 @@
         "ackPending": "کسان نے مکمل نشان زد نہیں کیا ہے۔",
         "andGroupHeader": "دونوں کو ایک ساتھ لاگو کریں — اور گروپ",
         "partHeader": "حصہ {part}",
-        "orSeparator": "یا"
+        "orSeparator": "یا",
+        "dayPrev": "پچھلا دن",
+        "dayNext": "اگلا دن",
+        "dayToday": "آج"
       }
     },
     "seedOrders": {
