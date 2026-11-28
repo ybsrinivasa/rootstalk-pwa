@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -914,7 +914,16 @@ function RelationGroup({
 
 // ── Page ───────────────────────────────────────────────────────────
 
+// 2026-11-28 — Suspense wrapper for useSearchParams() (Next.js 16).
 export default function FacilitatorAdvisoryViewPage() {
+  return (
+    <Suspense fallback={null}>
+      <FacilitatorAdvisoryViewContent />
+    </Suspense>
+  )
+}
+
+function FacilitatorAdvisoryViewContent() {
   const router = useRouter()
   const t = useTranslations('facilitator.promotedFarmers.detail')
   const tEl = useTranslations('practice.element')
@@ -926,6 +935,11 @@ export default function FacilitatorAdvisoryViewPage() {
   const locale = useLocale()
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanizeType(et)
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
+  // 2026-11-28 — Contextual back when arrived via Alerts tap-through.
+  const searchParams = useSearchParams()
+  const backHref = searchParams.get('from') === 'alerts'
+    ? '/facilitator/alerts-incoming'
+    : '/facilitator/promoted-farmers'
   const [day, setDay] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
   const [errCode, setErrCode] = useState<string | null>(null)
@@ -956,7 +970,7 @@ export default function FacilitatorAdvisoryViewPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
+        <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back={backHref} />
         <div className="pt-16 px-4 max-w-lg mx-auto">
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4E00] rounded-full animate-spin" />
@@ -971,7 +985,7 @@ export default function FacilitatorAdvisoryViewPage() {
     const isPending = errCode === 'assignment_not_active'
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
+        <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back={backHref} />
         <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
           <div className="mt-8 rounded-2xl border border-[#DDD0B8] bg-white p-5">
             <p className="text-base font-bold text-[#6B3F1F] mb-2">
@@ -995,7 +1009,7 @@ export default function FacilitatorAdvisoryViewPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back="/facilitator/promoted-farmers" />
+      <PWAHeader title={t('headerTitle')} activeRole="FACILITATOR" back={backHref} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         {/* Read-only banner */}
         <div className="mt-3 mb-3 rounded-xl border border-[#DDD0B8] bg-white px-3 py-2 text-[11px] text-[#7A8C7E] text-center">

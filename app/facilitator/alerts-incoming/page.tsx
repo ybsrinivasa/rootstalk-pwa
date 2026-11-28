@@ -240,7 +240,7 @@ export default function FacilitatorAlertsIncomingPage() {
                               {r.advisory_visible && r.alert_type === 'INPUT' && (
                                 <button
                                   type="button"
-                                  onClick={() => router.push(`/facilitator/promoted-farmers/${r.subscription_id}/advisory`)}
+                                  onClick={() => router.push(`/facilitator/promoted-farmers/${r.subscription_id}/advisory?from=alerts`)}
                                   aria-label={t('viewAdvisoryBtnAria', { name: r.farmer_name || t('unnamedFarmer') })}
                                   className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-full text-white"
                                   style={{ background: COLOUR, border: `1.5px solid ${COLOUR}` }}>

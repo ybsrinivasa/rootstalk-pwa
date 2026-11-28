@@ -1,6 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { getToken } from '@/lib/auth'
 import PWAHeader from '@/components/layout/PWAHeader'
@@ -225,13 +225,33 @@ function renderElements(
   return out
 }
 
+// 2026-11-28 — Next.js 16 requires useSearchParams() inside a
+// Suspense boundary during prerender. Wrap the content component
+// so the params-dependent back-nav works at build-time.
 export default function DealerFarmerAdvisoryPage() {
+  return (
+    <Suspense fallback={null}>
+      <DealerFarmerAdvisoryContent />
+    </Suspense>
+  )
+}
+
+function DealerFarmerAdvisoryContent() {
   const router = useRouter()
   const t = useTranslations('dealer.promotedFarmers.detail')
   const tEl = useTranslations('practice.element')
   const locale = useLocale()
   const elementLabel = (et: string) => tEl.has(et) ? tEl(et) : humanize(et)
   const { subscriptionId } = useParams<{ subscriptionId: string }>()
+  // Contextual back. When the user lands here via the Alerts page's
+  // "View advisory →" tap-through, we pass ?from=alerts so the back
+  // arrow returns to /alerts-incoming instead of the default
+  // /promoted-farmers list. Any other entry (My Farmers tile,
+  // direct URL, etc.) keeps the default back.
+  const searchParams = useSearchParams()
+  const backHref = searchParams.get('from') === 'alerts'
+    ? '/dealer/alerts-incoming'
+    : '/dealer/promoted-farmers'
   const [day, setDay] = useState<AdvisoryDay | null>(null)
   const [loading, setLoading] = useState(true)
   const [errCode, setErrCode] = useState<string | null>(null)
@@ -262,7 +282,7 @@ export default function DealerFarmerAdvisoryPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/promoted-farmers" />
+        <PWAHeader title={t('headerTitle')} activeRole="DEALER" back={backHref} />
         <div className="pt-16 px-4 max-w-lg mx-auto">
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-2 border-[#DDD0B8] border-t-[#7D4196] rounded-full animate-spin" />
@@ -277,7 +297,7 @@ export default function DealerFarmerAdvisoryPage() {
     const isPending = errCode === 'assignment_not_active'
     return (
       <div className="min-h-screen bg-[#F5F0E8]">
-        <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/promoted-farmers" />
+        <PWAHeader title={t('headerTitle')} activeRole="DEALER" back={backHref} />
         <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
           <div className="mt-8 rounded-2xl border border-[#DDD0B8] bg-white p-5">
             <p className="text-base font-bold text-[#6B3F1F] mb-2">
@@ -301,7 +321,7 @@ export default function DealerFarmerAdvisoryPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F0E8]">
-      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back="/dealer/promoted-farmers" />
+      <PWAHeader title={t('headerTitle')} activeRole="DEALER" back={backHref} />
       <div className="pt-16 pb-24 px-4 max-w-lg mx-auto">
         <div className="mt-3 mb-3 rounded-xl border border-[#DDD0B8] bg-white px-3 py-2 text-[11px] text-[#7A8C7E] text-center">
           {t('readOnlyHint')}
