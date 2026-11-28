@@ -983,7 +983,9 @@ function FacilitatorAdvisoryViewContent() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    setLoading(true)
+    // 2026-11-28 — Only full-page spinner on INITIAL load. See
+    // canonical comment on dealer page.
+    if (day === null) setLoading(true)
     const params = new URLSearchParams()
     if (dayOffset !== 0) {
       const d = new Date()
@@ -1010,6 +1012,8 @@ function FacilitatorAdvisoryViewContent() {
         }
       })
       .finally(() => setLoading(false))
+    // Intentionally omit `day` from deps — same rationale as dealer page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, subscriptionId, t, dayOffset])
 
   if (loading) {
