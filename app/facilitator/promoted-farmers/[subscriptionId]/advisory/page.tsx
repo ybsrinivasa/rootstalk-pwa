@@ -99,6 +99,22 @@ interface TimelineItem {
   triggered_at?: string
   suppressed_count?: number
 }
+// 2026-11-28 — Cluster-nav shape for advisory-only subs. Mirrors the
+// farmer response. See dealer page for canonical comment.
+interface ClusterMeta {
+  offset: number
+  position: 'past' | 'current' | 'future' | 'before_start' | 'after_end'
+  day_from: number | null
+  day_to: number | null
+  date_from: string | null
+  date_to: string | null
+  has_prev: boolean
+  has_next: boolean
+  index: number
+  total: number
+  current_index: number
+}
+
 interface AdvisoryDay {
   subscription_id: string
   client_id: string
@@ -116,6 +132,10 @@ interface AdvisoryDay {
   advisory_only_mode?: boolean
   dealer_list_enabled?: boolean
   timelines: TimelineItem[]
+  // 2026-11-28 — Present only when sub is advisory_only_mode AND the
+  // response came from /promoter/assignments/{sid}/cluster.
+  cluster?: ClusterMeta | null
+  ongoing_timelines?: TimelineItem[]
 }
 
 // ── Style constants mirror the farmer page ─────────────────────────
@@ -977,29 +997,29 @@ function FacilitatorAdvisoryViewContent() {
   const [loading, setLoading] = useState(true)
   const [errCode, setErrCode] = useState<string | null>(null)
   const [errMsg, setErrMsg] = useState<string | null>(null)
-  // 2026-11-28 — Previous / Today / Next day navigation. See canonical
-  // comment in app/dealer/promoted-farmers/[subscriptionId]/page.tsx.
-  const [dayOffset, setDayOffset] = useState<number>(0)
+  // 2026-11-28 — Cluster navigation state. See dealer page for
+  // canonical comment. Only meaningful on advisory_only_mode subs.
+  const [clusterOffset, setClusterOffset] = useState<number>(0)
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    // 2026-11-28 — Only full-page spinner on INITIAL load. See
-    // canonical comment on dealer page.
     if (day === null) setLoading(true)
-    const params = new URLSearchParams()
-    if (dayOffset !== 0) {
-      const d = new Date()
-      d.setDate(d.getDate() + dayOffset)
-      params.set('for_date', d.toISOString().slice(0, 10))
-    }
-    const qs = params.toString()
-    const url = `/promoter/assignments/${subscriptionId}/today${qs ? `?${qs}` : ''}`
+    const useCluster = day?.advisory_only_mode === true
+    const url = useCluster
+      ? `/promoter/assignments/${subscriptionId}/cluster?offset=${clusterOffset}`
+      : `/promoter/assignments/${subscriptionId}/today`
     api.get<AdvisoryDay>(url)
       .then(r => { setDay(r.data); setErrCode(null); setErrMsg(null) })
       .catch((e: unknown) => {
         const err = e as { response?: { status?: number; data?: { detail?: { code?: string; message?: string } | string } } }
         const status = err?.response?.status
         const detail = err?.response?.data?.detail
+        if (status === 404 && typeof detail === 'object' && detail
+            && detail.code === 'cluster_out_of_range'
+            && clusterOffset !== 0) {
+          setClusterOffset(0)
+          return
+        }
         if (typeof detail === 'object' && detail && detail.code) {
           setErrCode(detail.code)
           setErrMsg(detail.message || null)
@@ -1012,9 +1032,9 @@ function FacilitatorAdvisoryViewContent() {
         }
       })
       .finally(() => setLoading(false))
-    // Intentionally omit `day` from deps — same rationale as dealer page.
+    // Omit `day` from deps — see canonical comment in dealer page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [router, subscriptionId, t, dayOffset])
+  }, [router, subscriptionId, t, clusterOffset])
 
   if (loading) {
     return (
@@ -1091,30 +1111,60 @@ function FacilitatorAdvisoryViewContent() {
               <p className="font-bold text-[#6B3F1F]">{day.timelines.length}</p>
             </div>
           </div>
-          {/* 2026-11-28 — Previous / Today / Next day nav for the
-              promoter. Mirrors the dealer page added same day. */}
-          <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-[#DDD0B8]">
-            <button
-              type="button"
-              onClick={() => setDayOffset(o => o - 1)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#DDD0B8] text-[#6B3F1F] hover:bg-[#F5F0E8]">
-              ← {t('dayPrev')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setDayOffset(0)}
-              disabled={dayOffset === 0}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full border text-[#6B3F1F] disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ borderColor: '#7D4E0066', background: dayOffset === 0 ? '#7D4E0010' : '#fff' }}>
-              {t('dayToday')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setDayOffset(o => o + 1)}
-              className="text-xs font-semibold px-3 py-1.5 rounded-full border border-[#DDD0B8] text-[#6B3F1F] hover:bg-[#F5F0E8]">
-              {t('dayNext')} →
-            </button>
-          </div>
+          {/* 2026-11-28 — Cluster navigation for Advisory-Only Mode
+              subs ONLY. Matches the farmer's /advisory nav exactly
+              (per user direction 2026-11-28: exact parity). Regular
+              Mode subs have no nav — same as the farmer's own view. */}
+          {day.advisory_only_mode && day.cluster && (() => {
+            const c = day.cluster
+            const isEmpty = c.position === 'before_start' || c.position === 'after_end'
+            const posKey = isEmpty ? 'clusterPositionNone'
+              : c.position === 'past' ? 'clusterPositionPast'
+              : c.position === 'future' ? 'clusterPositionFuture'
+              : 'clusterPositionCurrent'
+            return (
+              <div className="mt-3 pt-3 border-t border-[#DDD0B8] space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    onClick={() => setClusterOffset(o => o - 1)}
+                    disabled={!c.has_prev}
+                    className="text-xs font-semibold text-[#6B3F1F] px-3 py-2 rounded-xl bg-[#F5F0E8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                    ← {tAdvisoryOnly('clusterPrevious')}
+                  </button>
+                  <button
+                    onClick={() => setClusterOffset(0)}
+                    disabled={c.offset === 0}
+                    className="text-xs font-semibold text-[#7D4E00] px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                    {tAdvisoryOnly('clusterToday')}
+                  </button>
+                  <button
+                    onClick={() => setClusterOffset(o => o + 1)}
+                    disabled={!c.has_next}
+                    className="text-xs font-semibold text-[#6B3F1F] px-3 py-2 rounded-xl bg-[#F5F0E8] disabled:opacity-40 disabled:cursor-not-allowed active:scale-95">
+                    {tAdvisoryOnly('clusterNext')} →
+                  </button>
+                </div>
+                <div className="text-center">
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-[#7A8C7E]">
+                    {tAdvisoryOnly(posKey)}
+                  </p>
+                  {!isEmpty && c.date_from && c.date_to && c.day_from != null && c.day_to != null && (() => {
+                    const lastInclusiveDay = c.day_to - 1
+                    const dateToInclusive = new Date(c.date_to + 'T00:00:00')
+                    dateToInclusive.setDate(dateToInclusive.getDate() - 1)
+                    const singleDay = c.day_from === lastInclusiveDay
+                    return (
+                      <p className="text-sm font-medium text-[#6B3F1F] mt-0.5">
+                        {singleDay
+                          ? `Day ${c.day_from} · ${new Date(c.date_from).toLocaleDateString(locale, { day: '2-digit', month: 'short' })}`
+                          : `Day ${c.day_from} – ${lastInclusiveDay} · ${new Date(c.date_from).toLocaleDateString(locale, { day: '2-digit', month: 'short' })} – ${dateToInclusive.toLocaleDateString(locale, { day: '2-digit', month: 'short' })}`}
+                      </p>
+                    )
+                  })()}
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Timelines */}
