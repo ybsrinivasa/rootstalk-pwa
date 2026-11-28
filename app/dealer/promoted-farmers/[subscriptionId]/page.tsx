@@ -275,7 +275,12 @@ function DealerFarmerAdvisoryContent() {
 
   useEffect(() => {
     if (!getToken()) { router.replace('/register'); return }
-    setLoading(true)
+    // 2026-11-28 — Only trigger full-page spinner on the INITIAL
+    // load (day === null). On subsequent fetches (day-nav clicks)
+    // keep the stale day visible so the nav stays on screen and
+    // the user can tell the click registered (the data swaps in
+    // when the new fetch returns).
+    if (day === null) setLoading(true)
     const params = new URLSearchParams()
     if (dayOffset !== 0) {
       const d = new Date()
@@ -302,6 +307,10 @@ function DealerFarmerAdvisoryContent() {
         }
       })
       .finally(() => setLoading(false))
+    // Intentionally omit `day` from the dep array — it would re-fire
+    // the effect on every setDay(), causing an infinite loop. The
+    // day === null check inside reads the latest value correctly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router, subscriptionId, t, dayOffset])
 
   if (loading) {
@@ -440,20 +449,54 @@ function DealerFarmerAdvisoryContent() {
                           {l2Label}
                         </div>
                         <div className="p-3 text-sm">
+                          {/* 2026-11-28 — Chips row at the TOP of the
+                              card (moved from bottom per user feedback
+                              to match the facilitator layout). Promoter
+                              scanning the day's practices answers
+                              "which of these has the farmer already
+                              handled?" at a glance. */}
+                          {(p.l0_type === 'INPUT' || p.frequency_days != null) && (
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {p.l0_type === 'INPUT' && (
+                                (p.is_purchased || p.purchased_at) ? (
+                                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
+                                    {t('farmerPurchased')}
+                                    {p.purchased_at && (
+                                      <span className="opacity-80"> · {fmtDate(p.purchased_at, locale)}</span>
+                                    )}
+                                    {(p.purchased_brand_name || p.purchased_brand_text || p.fulfilment?.brand_name) && (
+                                      <span className="opacity-80">
+                                        {' · '}
+                                        {p.purchased_brand_name || p.purchased_brand_text || p.fulfilment?.brand_name}
+                                      </span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 font-medium">
+                                    {t('purchasePending')}
+                                  </span>
+                                )
+                              )}
+                              {p.frequency_days != null && (
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-[#7A8C7E]">
+                                  {t('frequencyEvery', { count: p.frequency_days })}
+                                  {p.is_frequency_due_today === false && t('frequencyNotDueToday')}
+                                </span>
+                              )}
+                            </div>
+                          )}
                           {chemistryLine && (
                             <p className="text-sm font-bold text-[#6B3F1F] mb-2">
                               {chemistryLine}
                             </p>
                           )}
-                          {/* 2026-06-12 — When the farmer has purchased
-                              this input, surface the brand + manufacturer
-                              the dealer actually delivered. Promoter
-                              needs this to speak to the farmer about
-                              their actual product ("use this, use
-                              that"). Matches the farmer's
-                              PurchasedSummary block on /advisory. */}
+                          {/* 2026-06-12 — Approved fulfilment brand
+                              strip (dealer-delivered brand). Still
+                              rendered below chemistry — this is the
+                              "what you actually have in hand" surface
+                              for the ordering flow. */}
                           {p.fulfilment?.status === 'APPROVED' && p.fulfilment?.brand_name && (
-                            <div className="-mx-3 -mt-3 mb-3 px-3 py-2 border-b border-purple-100 bg-purple-50/40">
+                            <div className="-mx-3 -mt-2 mb-3 px-3 py-2 border-b border-purple-100 bg-purple-50/40">
                               <p className="text-sm font-bold text-purple-900 truncate">{p.fulfilment.brand_name}</p>
                               {p.fulfilment.manufacturer_name && (
                                 <p className="text-[11px] text-purple-800">by {p.fulfilment.manufacturer_name}</p>
@@ -472,46 +515,6 @@ function DealerFarmerAdvisoryContent() {
                               ))}
                             </dl>
                           )}
-
-                          <div className="flex flex-wrap gap-1.5 mt-2.5">
-                            {/* 2026-11-28 — Purchase chip for INPUT
-                                practices. Shown for EVERY mode now
-                                (Pure Advisory-Only was previously
-                                hidden; the 2026-09-17 v1.8 ack flow
-                                actually tracks `purchased_at` on those
-                                subs too, so the chip IS meaningful).
-                                Purchased: emerald, decorated with the
-                                ack date + brand when available.
-                                Not purchased: muted stone (not red —
-                                "not yet" is often expected during an
-                                open window). */}
-                            {p.l0_type === 'INPUT' && (
-                              (p.is_purchased || p.purchased_at) ? (
-                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
-                                  {t('farmerPurchased')}
-                                  {p.purchased_at && (
-                                    <span className="opacity-80"> · {fmtDate(p.purchased_at, locale)}</span>
-                                  )}
-                                  {(p.purchased_brand_name || p.purchased_brand_text || p.fulfilment?.brand_name) && (
-                                    <span className="opacity-80">
-                                      {' · '}
-                                      {p.purchased_brand_name || p.purchased_brand_text || p.fulfilment?.brand_name}
-                                    </span>
-                                  )}
-                                </span>
-                              ) : (
-                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 font-medium">
-                                  {t('purchasePending')}
-                                </span>
-                              )
-                            )}
-                            {p.frequency_days != null && (
-                              <span className="text-[11px] px-2 py-0.5 rounded-full bg-slate-100 text-[#7A8C7E]">
-                                {t('frequencyEvery', { count: p.frequency_days })}
-                                {p.is_frequency_due_today === false && t('frequencyNotDueToday')}
-                              </span>
-                            )}
-                          </div>
                         </div>
                       </div>
                     )
