@@ -2312,7 +2312,9 @@
       "cropLabel": "വിള:",
       "callBtn": "📞 {phone} വിളിക്കുക",
       "callBtnLabel": "വിളി",
-      "callBtnAria": "{name} നെ വിളിക്കുക"
+      "callBtnAria": "{name} നെ വിളിക്കുക",
+      "viewAdvisoryBtnLabel": "ഉപദേശം കാണുക",
+      "viewAdvisoryBtnAria": "{name} ന്റെ ഉപദേശം കാണുക"
     },
     "brandForms": {
       "title": "ബ്രാൻഡ് സമർപ്പണങ്ങൾ",
@@ -2404,7 +2406,9 @@
       "cropLabel": "വിള:",
       "callBtn": "📞 {phone} വിളിക്കുക",
       "callBtnLabel": "വിളി",
-      "callBtnAria": "{name} നെ വിളിക്കുക"
+      "callBtnAria": "{name} നെ വിളിക്കുക",
+      "viewAdvisoryBtnLabel": "ഉപദേശം കാണുക",
+      "viewAdvisoryBtnAria": "{name} ന്റെ ഉപദേശം കാണുക"
     },
     "payments": {
       "headerTitle": "കർഷക പേയ്‌മെന്റുകൾ",

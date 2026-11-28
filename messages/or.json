@@ -2312,7 +2312,9 @@
       "cropLabel": "କଟାନ୍ତୁ:",
       "callBtn": "📞 {phone} କୁ କଲ୍ କରନ୍ତୁ",
       "callBtnLabel": "କଲ୍ କରନ୍ତୁ",
-      "callBtnAria": "{name} କୁ କଲ୍ କରନ୍ତୁ"
+      "callBtnAria": "{name} କୁ କଲ୍ କରନ୍ତୁ",
+      "viewAdvisoryBtnLabel": "ଉପଦେଶ ଦେଖନ୍ତୁ",
+      "viewAdvisoryBtnAria": "{name} ର ଉପଦେଶ ଦେଖନ୍ତୁ"
     },
     "brandForms": {
       "title": "ବ୍ରାଣ୍ଡ ଦାଖଲଗୁଡ଼ିକ",
@@ -2404,7 +2406,9 @@
       "cropLabel": "କଟାନ୍ତୁ:",
       "callBtn": "📞 {phone} କୁ କଲ୍ କରନ୍ତୁ",
       "callBtnLabel": "କଲ୍ କରନ୍ତୁ",
-      "callBtnAria": "{name} କୁ କଲ୍ କରନ୍ତୁ"
+      "callBtnAria": "{name} କୁ କଲ୍ କରନ୍ତୁ",
+      "viewAdvisoryBtnLabel": "ଉପଦେଶ ଦେଖନ୍ତୁ",
+      "viewAdvisoryBtnAria": "{name} ର ଉପଦେଶ ଦେଖନ୍ତୁ"
     },
     "payments": {
       "headerTitle": "କୃଷକଙ୍କ ଦେୟ",

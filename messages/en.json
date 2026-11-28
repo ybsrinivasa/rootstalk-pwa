@@ -2868,7 +2868,9 @@
       "cropLabel": "Crop:",
       "callBtn": "📞 Call {phone}",
       "callBtnLabel": "Call",
-      "callBtnAria": "Call {name}"
+      "callBtnAria": "Call {name}",
+      "viewAdvisoryBtnLabel": "View advisory",
+      "viewAdvisoryBtnAria": "View {name}'s advisory"
     },
     "brandForms": {
       "title": "Brand Submissions",
@@ -2948,7 +2950,9 @@
       "cropLabel": "Crop:",
       "callBtn": "📞 Call {phone}",
       "callBtnLabel": "Call",
-      "callBtnAria": "Call {name}"
+      "callBtnAria": "Call {name}",
+      "viewAdvisoryBtnLabel": "View advisory",
+      "viewAdvisoryBtnAria": "View {name}'s advisory"
     },
     "payments": {
       "headerTitle": "Farmer Payments",

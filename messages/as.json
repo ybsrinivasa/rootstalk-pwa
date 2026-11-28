@@ -2312,7 +2312,9 @@
       "cropLabel": "শস্য:",
       "callBtn": "📞 ফোন কৰক {phone}",
       "callBtnLabel": "কল কৰা",
-      "callBtnAria": "{name} কল কৰক"
+      "callBtnAria": "{name} কল কৰক",
+      "viewAdvisoryBtnLabel": "পৰামৰ্শ চাওক",
+      "viewAdvisoryBtnAria": "{name} ৰ পৰামৰ্শ চাওক"
     },
     "brandForms": {
       "title": "ব্ৰেণ্ড জমা দিয়া",
@@ -2404,7 +2406,9 @@
       "cropLabel": "শস্য:",
       "callBtn": "📞 ফোন কৰক {phone}",
       "callBtnLabel": "কল কৰা",
-      "callBtnAria": "{name} কল কৰক"
+      "callBtnAria": "{name} কল কৰক",
+      "viewAdvisoryBtnLabel": "পৰামৰ্শ চাওক",
+      "viewAdvisoryBtnAria": "{name} ৰ পৰামৰ্শ চাওক"
     },
     "payments": {
       "headerTitle": "কৃষকৰ পেমেণ্ট",

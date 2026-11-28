@@ -2312,7 +2312,9 @@
       "cropLabel": "فصل:",
       "callBtn": "📞 {phone} پر کال کریں",
       "callBtnLabel": "کال کریں۔",
-      "callBtnAria": "{name} کو کال کریں"
+      "callBtnAria": "{name} کو کال کریں",
+      "viewAdvisoryBtnLabel": "مشورہ دیکھیں",
+      "viewAdvisoryBtnAria": "{name} کا مشورہ دیکھیں"
     },
     "brandForms": {
       "title": "برانڈ کی گذارشات",
@@ -2404,7 +2406,9 @@
       "cropLabel": "فصل:",
       "callBtn": "📞 {phone} پر کال کریں",
       "callBtnLabel": "کال کریں۔",
-      "callBtnAria": "{name} کو کال کریں"
+      "callBtnAria": "{name} کو کال کریں",
+      "viewAdvisoryBtnLabel": "مشورہ دیکھیں",
+      "viewAdvisoryBtnAria": "{name} کا مشورہ دیکھیں"
     },
     "payments": {
       "headerTitle": "کسانوں کی ادائیگی",

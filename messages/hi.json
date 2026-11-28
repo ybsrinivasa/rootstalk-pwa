@@ -2312,7 +2312,9 @@
       "cropLabel": "काटना:",
       "callBtn": "📞 {phone} पर कॉल करें",
       "callBtnLabel": "पुकारना",
-      "callBtnAria": "{name} को कॉल करें"
+      "callBtnAria": "{name} को कॉल करें",
+      "viewAdvisoryBtnLabel": "सलाह देखें",
+      "viewAdvisoryBtnAria": "{name} की सलाह देखें"
     },
     "brandForms": {
       "title": "ब्रांड सबमिशन",
@@ -2404,7 +2406,9 @@
       "cropLabel": "काटना:",
       "callBtn": "📞 {phone} पर कॉल करें",
       "callBtnLabel": "पुकारना",
-      "callBtnAria": "{name} को कॉल करें"
+      "callBtnAria": "{name} को कॉल करें",
+      "viewAdvisoryBtnLabel": "सलाह देखें",
+      "viewAdvisoryBtnAria": "{name} की सलाह देखें"
     },
     "payments": {
       "headerTitle": "किसान भुगतान",
