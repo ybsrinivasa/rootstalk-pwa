@@ -228,16 +228,20 @@ export default function DealerAlertsIncomingPage() {
                               )}
                             </div>
                           </div>
-                          {(r.farmer_phone || r.advisory_visible) && (
+                          {(r.farmer_phone || (r.advisory_visible && r.alert_type === 'INPUT')) && (
                             <div className="mt-3 flex justify-end gap-2">
                               {/* 2026-11-28 — View Advisory tap-through.
-                                  Only renders when advisory_visible=true
-                                  (i.e. this user is also the active
-                                  Promoter/Follow-up Promoter on the sub).
-                                  Backend endpoint on the landing page
-                                  still enforces auth — this is purely a
-                                  UX affordance. */}
-                              {r.advisory_visible && (
+                                  Shown only for INPUT alerts where the
+                                  user is also the active Promoter /
+                                  Follow-up Promoter on the sub. Not
+                                  shown on START_DATE alerts because
+                                  those fire precisely BECAUSE the
+                                  farmer hasn't set the crop start date,
+                                  so the advisory endpoint 404s with
+                                  `no_advisory_yet` — misleading tap.
+                                  Backend endpoint still enforces auth.
+                                  See 2026-11-28 fix for the 404 report. */}
+                              {r.advisory_visible && r.alert_type === 'INPUT' && (
                                 <button
                                   type="button"
                                   onClick={() => router.push(`/dealer/promoted-farmers/${r.subscription_id}`)}

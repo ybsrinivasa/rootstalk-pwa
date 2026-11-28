@@ -230,13 +230,14 @@ export default function FacilitatorAlertsIncomingPage() {
                               )}
                             </div>
                           </div>
-                          {(r.farmer_phone || r.advisory_visible) && (
+                          {(r.farmer_phone || (r.advisory_visible && r.alert_type === 'INPUT')) && (
                             <div className="mt-3 flex justify-end gap-2">
                               {/* 2026-11-28 — View Advisory tap-through.
-                                  Only renders when the viewing user is
-                                  also the active Promoter / Follow-up
-                                  Promoter on this sub. */}
-                              {r.advisory_visible && (
+                                  Shown only for INPUT alerts (START_DATE
+                                  alerts fire precisely because no start
+                                  date → advisory would 404 with
+                                  `no_advisory_yet`). */}
+                              {r.advisory_visible && r.alert_type === 'INPUT' && (
                                 <button
                                   type="button"
                                   onClick={() => router.push(`/facilitator/promoted-farmers/${r.subscription_id}`)}
