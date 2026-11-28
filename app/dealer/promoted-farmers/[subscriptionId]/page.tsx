@@ -47,6 +47,12 @@ interface Practice {
   purchased_brand_name?: string | null
   purchased_brand_text?: string | null
   purchased_brand_manufacturer_name?: string | null
+  // 2026-11-28 — Brand-lock parity with farmer view. See facilitator
+  // page for canonical comment.
+  is_brand_locked?: boolean
+  brand_image_url?: string | null
+  locked_brand_name?: string | null
+  locked_manufacturer_name?: string | null
 }
 
 interface TimelineItem {
@@ -233,8 +239,11 @@ function renderElements(
   isPurchased: boolean,
   elementLabel: (et: string) => string,
   advisoryOnly = false,
-): { label: string; value: string }[] {
-  const out: { label: string; value: string }[] = []
+): { label: string; value: string; type: string }[] {
+  // 2026-11-28 — Returns `type` too so the UI can style BRAND_NAME /
+  // MANUFACTURER with the amber-locked-brand accent on brand-locked
+  // practices (mirror of farmer /advisory render).
+  const out: { label: string; value: string; type: string }[] = []
   for (const e of elements) {
     const type = (e.element_type || '').toUpperCase()
     if (advisoryOnly) {
@@ -253,7 +262,7 @@ function renderElements(
     const label = elementLabel(type)
     const value = isUuid(valueStr) ? '' : valueStr
     if (!value) continue
-    out.push({ label, value })
+    out.push({ label, value, type })
   }
   return out
 }
@@ -528,6 +537,13 @@ function DealerFarmerAdvisoryContent() {
                               handled?" at a glance. */}
                           {(p.l0_type === 'INPUT' || p.frequency_days != null) && (
                             <div className="flex flex-wrap gap-1.5 mb-2">
+                              {/* 2026-11-28 — Brand-lock chip for
+                                  parity with farmer view. */}
+                              {p.l0_type === 'INPUT' && p.is_brand_locked && (
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-medium">
+                                  🔒 Brand Locked
+                                </span>
+                              )}
                               {p.l0_type === 'INPUT' && (
                                 (p.is_purchased || p.purchased_at) ? (
                                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
@@ -578,13 +594,45 @@ function DealerFarmerAdvisoryContent() {
                             <p className="text-[#7A8C7E] text-xs">{t('noSpecificInstructions')}</p>
                           ) : (
                             <dl className="space-y-1.5">
-                              {rows.map((r, i) => (
-                                <div key={i} className="flex justify-between gap-3 text-[13px]">
-                                  <dt className="text-[#7A8C7E] shrink-0">{r.label}</dt>
-                                  <dd className="text-[#6B3F1F] font-medium text-right">{r.value}</dd>
-                                </div>
-                              ))}
+                              {rows.map((r, i) => {
+                                // 2026-11-28 — Amber-locked-brand
+                                // accent on BRAND_NAME + MANUFACTURER
+                                // rows when the practice is
+                                // brand-locked. Mirror of farmer
+                                // /advisory render.
+                                const isLockedIdentityRow = !!p.is_brand_locked
+                                  && (r.type === 'BRAND_NAME' || r.type === 'MANUFACTURER')
+                                if (isLockedIdentityRow) {
+                                  return (
+                                    <div key={i} className="flex justify-between gap-3 text-[13px] border-l-2 border-amber-400 bg-amber-50/50 pl-2 py-0.5 rounded-r">
+                                      <dt className="text-amber-900 font-bold shrink-0">
+                                        <span className="mr-1">{r.type === 'BRAND_NAME' ? '🔒' : '•'}</span>
+                                        {r.label}
+                                      </dt>
+                                      <dd className="text-amber-900 font-bold text-right">{r.value}</dd>
+                                    </div>
+                                  )
+                                }
+                                return (
+                                  <div key={i} className="flex justify-between gap-3 text-[13px]">
+                                    <dt className="text-[#7A8C7E] shrink-0">{r.label}</dt>
+                                    <dd className="text-[#6B3F1F] font-medium text-right">{r.value}</dd>
+                                  </div>
+                                )
+                              })}
                             </dl>
+                          )}
+                          {/* 2026-11-28 — Product image for brand-locked
+                              practices. Mirror of farmer /advisory
+                              render. Dashed top-border + caption, tap
+                              to expand. */}
+                          {p.is_brand_locked && p.brand_image_url && (
+                            <div className="mt-3 pt-3 border-t border-dashed" style={{ borderColor: '#DDD0B8' }}>
+                              <p className="text-[10px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
+                                Product image
+                              </p>
+                              <BrandImageWithLightbox src={p.brand_image_url} />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -597,5 +645,38 @@ function DealerFarmerAdvisoryContent() {
         )}
       </div>
     </div>
+  )
+}
+
+// 2026-11-28 — Inline + lightbox-on-tap image for brand-locked
+// practice. Mirror of BrandImageWithLightbox on /advisory and
+// /facilitator/promoted-farmers/[sub]/advisory. Three copies now;
+// if a 4th appears, worth extracting to components/.
+function BrandImageWithLightbox({ src }: { src: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt="Product"
+        className="w-full max-h-64 object-contain rounded-lg bg-white cursor-zoom-in"
+        onClick={() => setOpen(true)}
+      />
+      {open && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setOpen(false)}
+          role="dialog" aria-modal="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt="Product"
+            className="max-h-full max-w-full object-contain rounded"
+          />
+        </div>
+      )}
+    </>
   )
 }

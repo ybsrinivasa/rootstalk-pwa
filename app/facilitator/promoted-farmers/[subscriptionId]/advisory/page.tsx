@@ -78,6 +78,14 @@ interface Practice {
   purchased_brand_name?: string | null
   purchased_brand_text?: string | null
   purchased_brand_manufacturer_name?: string | null
+  // 2026-11-28 — Brand-lock parity with farmer view. Drives (a) the
+  // "🔒 Brand Locked" chip in the chips row, (b) amber accent on
+  // BRAND_NAME + MANUFACTURER element rows, (c) product image block
+  // below the practice. See dealer page for same fields.
+  is_brand_locked?: boolean
+  brand_image_url?: string | null
+  locked_brand_name?: string | null
+  locked_manufacturer_name?: string | null
 }
 interface PendingConditionalQuestion {
   question_id: string
@@ -541,13 +549,17 @@ function PracticeCard({
               )}
             </div>
           )}
-          {/* 2026-11-28 — Purchase status chip for INPUT practices.
-              Shows across all modes (Pure Advisory-Only subs track
-              purchase via the v1.8 ack flow too). Emerald when
-              purchased with ack date + brand enrichment; muted
-              stone when pending. */}
+          {/* 2026-11-28 — Chips row: brand-lock + purchase status.
+              Shows for INPUT practices. Matches the farmer view —
+              brand-lock reads as a locked product recommendation,
+              purchase chip reads as the farmer's own ack state. */}
           {practice.l0_type === 'INPUT' && (
-            <div className="mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              {practice.is_brand_locked && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-800 font-medium">
+                  🔒 Brand Locked
+                </span>
+              )}
               {(practice.is_purchased || practice.purchased_at) ? (
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-medium">
                   {t('farmerPurchased')}
@@ -658,6 +670,29 @@ function PracticeCard({
             const inlineUnit =
               (el.unit_cosh_id && !isUuid(el.unit_cosh_id) ? el.unit_cosh_id : '')
               || el.trailing_unit || ''
+            // 2026-11-28 — Mirror farmer's amber-accent + 🔒 prefix
+            // on BRAND_NAME / MANUFACTURER rows when the practice is
+            // brand-locked. Makes the "locked product" stand out of
+            // the regular element list, exactly as the farmer sees it.
+            const isLockedIdentityRow = !!practice.is_brand_locked
+              && (type === 'BRAND_NAME' || type === 'MANUFACTURER')
+            if (isLockedIdentityRow) {
+              return (
+                <div key={i} className="flex items-start gap-2 text-sm border-l-2 border-amber-400 bg-amber-50/50 pl-2 py-0.5 rounded-r">
+                  <span className="text-amber-700 text-xs mt-0.5">{type === 'BRAND_NAME' ? '🔒' : '•'}</span>
+                  <div>
+                    <span className="text-amber-900 font-bold">{elementLabel(type)}</span>
+                    {el.value
+                      ? <span className="text-amber-900 font-bold ml-1">: {el.value}{inlineUnit ? ` ${inlineUnit}` : ''}</span>
+                      : showRef
+                        ? <span className="text-amber-900 font-bold ml-1">: {el.cosh_ref}</span>
+                        : inlineUnit
+                          ? <span className="text-amber-900 font-bold ml-1">: {inlineUnit}</span>
+                          : null}
+                  </div>
+                </div>
+              )
+            }
             return (
               <div key={i} className="flex items-start gap-2 text-sm">
                 <span className="text-[#7A8C7E] text-xs mt-0.5">•</span>
@@ -674,6 +709,18 @@ function PracticeCard({
               </div>
             )
           })}
+          {/* 2026-11-28 — Product image block for brand-locked
+              practices (mirror of farmer render). Dashed top-border +
+              "Product image" caption tie it visually to the
+              recommendation. Tap to expand full-screen via lightbox. */}
+          {practice.is_brand_locked && practice.brand_image_url && (
+            <div className="mt-3 pt-3 border-t border-dashed" style={{ borderColor: '#DDD0B8' }}>
+              <p className="text-[10px] uppercase tracking-wider text-[#7A8C7E] font-semibold mb-2">
+                Product image
+              </p>
+              <BrandImageWithLightbox src={practice.brand_image_url} />
+            </div>
+          )}
         </div>
       )}
 
@@ -1247,5 +1294,38 @@ function FacilitatorAdvisoryViewContent() {
         )}
       </div>
     </div>
+  )
+}
+
+// 2026-11-28 — Inline + lightbox-on-tap image for brand-locked
+// practice. Mirror of BrandImageWithLightbox on /advisory and
+// /dealer/promoted-farmers. Shared as a plain helper; not worth
+// extracting to a shared module for three callsites.
+function BrandImageWithLightbox({ src }: { src: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt="Product"
+        className="w-full max-h-64 object-contain rounded-lg bg-white cursor-zoom-in"
+        onClick={() => setOpen(true)}
+      />
+      {open && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setOpen(false)}
+          role="dialog" aria-modal="true"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt="Product"
+            className="max-h-full max-w-full object-contain rounded"
+          />
+        </div>
+      )}
+    </>
   )
 }
